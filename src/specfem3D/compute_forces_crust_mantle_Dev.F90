@@ -256,7 +256,7 @@
       enddo
     enddo
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
        if(ATTENUATION_NEW_VAL) then
           ! takes new routines
           ! use first order Taylor expansion of displacement for local storage of stresses 
@@ -270,72 +270,72 @@
                 ! since we know that NGLLX = 5, this should help pipelining
                 iglobv5(:) = ibool(:,j,k,ispec)
 
-                dummyx_loc_att(1,j,k) = displ_crust_mantle(1,iglobv5(1)) + deltat*veloc_crust_mantle(1,iglobv5(1))
-                dummyy_loc_att(1,j,k) = displ_crust_mantle(2,iglobv5(1)) + deltat*veloc_crust_mantle(2,iglobv5(1))
-                dummyz_loc_att(1,j,k) = displ_crust_mantle(3,iglobv5(1)) + deltat*veloc_crust_mantle(3,iglobv5(1))
+                dummyx_loc_att(1,j,k) = deltat*veloc_crust_mantle(1,iglobv5(1))
+                dummyy_loc_att(1,j,k) = deltat*veloc_crust_mantle(2,iglobv5(1))
+                dummyz_loc_att(1,j,k) = deltat*veloc_crust_mantle(3,iglobv5(1))
 
-                dummyx_loc_att(2,j,k) = displ_crust_mantle(1,iglobv5(2)) + deltat*veloc_crust_mantle(1,iglobv5(2))
-                dummyy_loc_att(2,j,k) = displ_crust_mantle(2,iglobv5(2)) + deltat*veloc_crust_mantle(2,iglobv5(2))
-                dummyz_loc_att(2,j,k) = displ_crust_mantle(3,iglobv5(2)) + deltat*veloc_crust_mantle(3,iglobv5(2))
+                dummyx_loc_att(2,j,k) = deltat*veloc_crust_mantle(1,iglobv5(2))
+                dummyy_loc_att(2,j,k) = deltat*veloc_crust_mantle(2,iglobv5(2))
+                dummyz_loc_att(2,j,k) = deltat*veloc_crust_mantle(3,iglobv5(2))
 
-                dummyx_loc_att(3,j,k) = displ_crust_mantle(1,iglobv5(3)) + deltat*veloc_crust_mantle(1,iglobv5(3))
-                dummyy_loc_att(3,j,k) = displ_crust_mantle(2,iglobv5(3)) + deltat*veloc_crust_mantle(2,iglobv5(3))
-                dummyz_loc_att(3,j,k) = displ_crust_mantle(3,iglobv5(3)) + deltat*veloc_crust_mantle(3,iglobv5(3))
+                dummyx_loc_att(3,j,k) = deltat*veloc_crust_mantle(1,iglobv5(3))
+                dummyy_loc_att(3,j,k) = deltat*veloc_crust_mantle(2,iglobv5(3))
+                dummyz_loc_att(3,j,k) = deltat*veloc_crust_mantle(3,iglobv5(3))
 
-                dummyx_loc_att(4,j,k) = displ_crust_mantle(1,iglobv5(4)) + deltat*veloc_crust_mantle(1,iglobv5(4))
-                dummyy_loc_att(4,j,k) = displ_crust_mantle(2,iglobv5(4)) + deltat*veloc_crust_mantle(2,iglobv5(4))
-                dummyz_loc_att(4,j,k) = displ_crust_mantle(3,iglobv5(4)) + deltat*veloc_crust_mantle(3,iglobv5(4))
+                dummyx_loc_att(4,j,k) = deltat*veloc_crust_mantle(1,iglobv5(4))
+                dummyy_loc_att(4,j,k) = deltat*veloc_crust_mantle(2,iglobv5(4))
+                dummyz_loc_att(4,j,k) = deltat*veloc_crust_mantle(3,iglobv5(4))
 
-                dummyx_loc_att(5,j,k) = displ_crust_mantle(1,iglobv5(5)) + deltat*veloc_crust_mantle(1,iglobv5(5))
-                dummyy_loc_att(5,j,k) = displ_crust_mantle(2,iglobv5(5)) + deltat*veloc_crust_mantle(2,iglobv5(5))
-                dummyz_loc_att(5,j,k) = displ_crust_mantle(3,iglobv5(5)) + deltat*veloc_crust_mantle(3,iglobv5(5))
+                dummyx_loc_att(5,j,k) = deltat*veloc_crust_mantle(1,iglobv5(5))
+                dummyy_loc_att(5,j,k) = deltat*veloc_crust_mantle(2,iglobv5(5))
+                dummyz_loc_att(5,j,k) = deltat*veloc_crust_mantle(3,iglobv5(5))
 
 #else
                 ! way 1:
                 do i=1,NGLLX
                    iglob1 = ibool(i,j,k,ispec)
-                   dummyx_loc_att(i,j,k) = displ_crust_mantle(1,iglob1) + deltat*veloc_crust_mantle(1,iglob1)
-                   dummyy_loc_att(i,j,k) = displ_crust_mantle(2,iglob1) + deltat*veloc_crust_mantle(2,iglob1)
-                   dummyz_loc_att(i,j,k) = displ_crust_mantle(3,iglob1) + deltat*veloc_crust_mantle(3,iglob1)
+                   dummyx_loc_att(i,j,k) = deltat*veloc_crust_mantle(1,iglob1)
+                   dummyy_loc_att(i,j,k) = deltat*veloc_crust_mantle(2,iglob1)
+                   dummyz_loc_att(i,j,k) = deltat*veloc_crust_mantle(3,iglob1)
                 enddo
 
 #endif
              enddo
           enddo
-       endif
-    else 
-       ! takes old routines
-       do k=1,NGLLZ
-          do j=1,NGLLY
+       else 
+          ! takes old routines
+          do k=1,NGLLZ
+             do j=1,NGLLY
 #ifdef _HANDOPT
-             dummyx_loc_att(1,j,k) = dummyx_loc(1,j,k)
-             dummyy_loc_att(1,j,k) = dummyx_loc(1,j,k)
-             dummyz_loc_att(1,j,k) = dummyx_loc(1,j,k)
-
-             dummyx_loc_att(2,j,k) = dummyx_loc(2,j,k)
-             dummyy_loc_att(2,j,k) = dummyx_loc(2,j,k)
-             dummyz_loc_att(2,j,k) = dummyx_loc(2,j,k)
-
-             dummyx_loc_att(3,j,k) = dummyx_loc(3,j,k)
-             dummyy_loc_att(3,j,k) = dummyx_loc(3,j,k)
-             dummyz_loc_att(3,j,k) = dummyx_loc(3,j,k)
-
-             dummyx_loc_att(4,j,k) = dummyx_loc(4,j,k)
-             dummyy_loc_att(4,j,k) = dummyx_loc(4,j,k)
-             dummyz_loc_att(4,j,k) = dummyx_loc(4,j,k)
-
-             dummyx_loc_att(5,j,k) = dummyx_loc(5,j,k)
-             dummyy_loc_att(5,j,k) = dummyx_loc(5,j,k)
-             dummyz_loc_att(5,j,k) = dummyx_loc(5,j,k)
+                dummyx_loc_att(1,j,k) = 0._CUSTOM_REAL
+                dummyy_loc_att(1,j,k) = 0._CUSTOM_REAL
+                dummyz_loc_att(1,j,k) = 0._CUSTOM_REAL
+                
+                dummyx_loc_att(2,j,k) = 0._CUSTOM_REAL
+                dummyy_loc_att(2,j,k) = 0._CUSTOM_REAL
+                dummyz_loc_att(2,j,k) = 0._CUSTOM_REAL
+                
+                dummyx_loc_att(3,j,k) = 0._CUSTOM_REAL
+                dummyy_loc_att(3,j,k) = 0._CUSTOM_REAL
+                dummyz_loc_att(3,j,k) = 0._CUSTOM_REAL
+                
+                dummyx_loc_att(4,j,k) = 0._CUSTOM_REAL
+                dummyy_loc_att(4,j,k) = 0._CUSTOM_REAL
+                dummyz_loc_att(4,j,k) = 0._CUSTOM_REAL
+                
+                dummyx_loc_att(5,j,k) = 0._CUSTOM_REAL
+                dummyy_loc_att(5,j,k) = 0._CUSTOM_REAL
+                dummyz_loc_att(5,j,k) = 0._CUSTOM_REAL
 #else  
-             do i=1,NGLLX
-                dummyx_loc_att(i,j,k) = dummyx_loc(i,j,k)
-                dummyy_loc_att(i,j,k) = dummyy_loc(i,j,k)
-                dummyz_loc_att(i,j,k) = dummyz_loc(i,j,k)
-             enddo
+                do i=1,NGLLX
+                   dummyx_loc_att(i,j,k) = 0._CUSTOM_REAL
+                   dummyy_loc_att(i,j,k) = 0._CUSTOM_REAL
+                   dummyz_loc_att(i,j,k) = 0._CUSTOM_REAL
+                enddo
 #endif    
+             enddo
           enddo
-       enddo
+       endif
     endif
 
     do j=1,m2
@@ -360,29 +360,36 @@
        enddo
     enddo
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m2
           do i=1,m1
-             C1_m1_m2_5points_att(i,j) = hprime_xx(i,1)*B1_m1_m2_5points_att(1,j) + &
+             C1_m1_m2_5points_att(i,j) = C1_m1_m2_5points(i,j) + & 
+                  hprime_xx(i,1)*B1_m1_m2_5points_att(1,j) + &
                   hprime_xx(i,2)*B1_m1_m2_5points_att(2,j) + &
                   hprime_xx(i,3)*B1_m1_m2_5points_att(3,j) + &
                   hprime_xx(i,4)*B1_m1_m2_5points_att(4,j) + &
                   hprime_xx(i,5)*B1_m1_m2_5points_att(5,j)
 
-             C2_m1_m2_5points_att(i,j) = hprime_xx(i,1)*B2_m1_m2_5points_att(1,j) + &
+             C2_m1_m2_5points_att(i,j) = C2_m1_m2_5points(i,j) + &
+                  hprime_xx(i,1)*B2_m1_m2_5points_att(1,j) + &
                   hprime_xx(i,2)*B2_m1_m2_5points_att(2,j) + &
                   hprime_xx(i,3)*B2_m1_m2_5points_att(3,j) + &
                   hprime_xx(i,4)*B2_m1_m2_5points_att(4,j) + &
                   hprime_xx(i,5)*B2_m1_m2_5points_att(5,j)
 
-             C3_m1_m2_5points_att(i,j) = hprime_xx(i,1)*B3_m1_m2_5points_att(1,j) + &
+             C3_m1_m2_5points_att(i,j) = C3_m1_m2_5points(i,j) + &
+                  hprime_xx(i,1)*B3_m1_m2_5points_att(1,j) + &
                   hprime_xx(i,2)*B3_m1_m2_5points_att(2,j) + &
                   hprime_xx(i,3)*B3_m1_m2_5points_att(3,j) + &
                   hprime_xx(i,4)*B3_m1_m2_5points_att(4,j) + &
                   hprime_xx(i,5)*B3_m1_m2_5points_att(5,j)
           enddo
        enddo
+    else
+       tempx1_att(:,:,:) = 0._CUSTOM_REAL
+       tempy1_att(:,:,:) = 0._CUSTOM_REAL
+       tempz1_att(:,:,:) = 0._CUSTOM_REAL
     endif
 
     do j=1,m1
@@ -410,25 +417,28 @@
        enddo
     enddo
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m1
           do i=1,m1
              ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
              do k = 1,NGLLX
-                tempx2_att(i,j,k) = dummyx_loc_att(i,1,k)*hprime_xxT(1,j) + &
+                tempx2_att(i,j,k) = tempx2(i,j,k) + &
+                     dummyx_loc_att(i,1,k)*hprime_xxT(1,j) + &
                      dummyx_loc_att(i,2,k)*hprime_xxT(2,j) + &
                      dummyx_loc_att(i,3,k)*hprime_xxT(3,j) + &
                      dummyx_loc_att(i,4,k)*hprime_xxT(4,j) + &
                      dummyx_loc_att(i,5,k)*hprime_xxT(5,j)
 
-                tempy2_att(i,j,k) = dummyy_loc_att(i,1,k)*hprime_xxT(1,j) + &
+                tempy2_att(i,j,k) = tempy2(i,j,k) + &
+                     dummyy_loc_att(i,1,k)*hprime_xxT(1,j) + &
                      dummyy_loc_att(i,2,k)*hprime_xxT(2,j) + &
                      dummyy_loc_att(i,3,k)*hprime_xxT(3,j) + &
                      dummyy_loc_att(i,4,k)*hprime_xxT(4,j) + &
                      dummyy_loc_att(i,5,k)*hprime_xxT(5,j)
 
-                tempz2_att(i,j,k) = dummyz_loc_att(i,1,k)*hprime_xxT(1,j) + &
+                tempz2_att(i,j,k) = tempz2(i,j,k) + &
+                     dummyz_loc_att(i,1,k)*hprime_xxT(1,j) + &
                      dummyz_loc_att(i,2,k)*hprime_xxT(2,j) + &
                      dummyz_loc_att(i,3,k)*hprime_xxT(3,j) + &
                      dummyz_loc_att(i,4,k)*hprime_xxT(4,j) + &
@@ -436,6 +446,10 @@
              enddo
           enddo
        enddo
+    else
+       tempx2_att(:,:,:) = 0._CUSTOM_REAL
+       tempy2_att(:,:,:) = 0._CUSTOM_REAL
+       tempz2_att(:,:,:) = 0._CUSTOM_REAL
     endif
 
     do j=1,m1
@@ -460,137 +474,103 @@
        enddo
     enddo
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m1
           do i=1,m2
-             C1_mxm_m2_m1_5points_att(i,j) = A1_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
+             C1_mxm_m2_m1_5points_att(i,j) = C1_mxm_m2_m1_5points(i,j) + &
+                  A1_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
                   A1_mxm_m2_m1_5points_att(i,2)*hprime_xxT(2,j) + &
                   A1_mxm_m2_m1_5points_att(i,3)*hprime_xxT(3,j) + &
                   A1_mxm_m2_m1_5points_att(i,4)*hprime_xxT(4,j) + &
                   A1_mxm_m2_m1_5points_att(i,5)*hprime_xxT(5,j)
 
-             C2_mxm_m2_m1_5points_att(i,j) = A2_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
+             C2_mxm_m2_m1_5points_att(i,j) = C2_mxm_m2_m1_5points(i,j) + &
+                  A2_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
                   A2_mxm_m2_m1_5points_att(i,2)*hprime_xxT(2,j) + &
                   A2_mxm_m2_m1_5points_att(i,3)*hprime_xxT(3,j) + &
                   A2_mxm_m2_m1_5points_att(i,4)*hprime_xxT(4,j) + &
                   A2_mxm_m2_m1_5points_att(i,5)*hprime_xxT(5,j)
 
-             C3_mxm_m2_m1_5points_att(i,j) = A3_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
+             C3_mxm_m2_m1_5points_att(i,j) = C3_mxm_m2_m1_5points(i,j) + &
+                  A3_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
                   A3_mxm_m2_m1_5points_att(i,2)*hprime_xxT(2,j) + &
                   A3_mxm_m2_m1_5points_att(i,3)*hprime_xxT(3,j) + &
                   A3_mxm_m2_m1_5points_att(i,4)*hprime_xxT(4,j) + &
                   A3_mxm_m2_m1_5points_att(i,5)*hprime_xxT(5,j)
           enddo
        enddo
+    else
+       tempx3_att(:,:,:) = 0._CUSTOM_REAL
+       tempy3_att(:,:,:) = 0._CUSTOM_REAL
+       tempz3_att(:,:,:) = 0._CUSTOM_REAL
     endif
 
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
     !
     if(ANISOTROPIC_3D_MANTLE_VAL) then
-      ! anisotropic element
+       ! anisotropic element
 
-       if(ATTENUATION_VAL) then
-          call compute_element_aniso(ispec, &
+       call compute_element_aniso(ispec, &
+            minus_gravity_table,density_table,minus_deriv_gravity_table, &
+            xstore,ystore,zstore, &
+            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+            wgll_cube, &
+            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+            ibool, &
+            R_xx,R_yy,R_xy,R_xz,R_yz, &
+            epsilon_trace_over_3, &
+            one_minus_sum_beta,vx,vy,vz,vnspec, &
+            tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+            dummyx_loc,dummyy_loc,dummyz_loc, &
+            tempx1_att,tempx2_att,tempx3_att, &
+            tempy1_att,tempy2_att,tempy3_att, &
+            tempz1_att,tempz2_att,tempz3_att, &
+            epsilondev_loc,rho_s_H)
+    else
+
+       if( .not. ispec_is_tiso(ispec) ) then
+          ! isotropic element
+
+          call compute_element_iso(ispec, &
                minus_gravity_table,density_table,minus_deriv_gravity_table, &
                xstore,ystore,zstore, &
                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                wgll_cube, &
-               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-               ibool, &
-               R_xx,R_yy,R_xy,R_xz,R_yz, &
-               epsilon_trace_over_3, &
-               one_minus_sum_beta,vx,vy,vz,vnspec, &
-               tempx1_att,tempx2_att,tempx3_att, &
-               tempy1_att,tempy2_att,tempy3_att, &
-               tempz1_att,tempz2_att,tempz3_att, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-       else
-          call compute_element_aniso(ispec, &
-               minus_gravity_table,density_table,minus_deriv_gravity_table, &
-               xstore,ystore,zstore, &
-               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-               wgll_cube, &
-               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+               kappavstore,muvstore, &
                ibool, &
                R_xx,R_yy,R_xy,R_xz,R_yz, &
                epsilon_trace_over_3, &
                one_minus_sum_beta,vx,vy,vz,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-       endif
-    else
-      if( .not. ispec_is_tiso(ispec) ) then
-        ! isotropic element
+               dummyx_loc,dummyy_loc,dummyz_loc, &
+               tempx1_att,tempx2_att,tempx3_att, &
+               tempy1_att,tempy2_att,tempy3_att, &
+               tempz1_att,tempz2_att,tempz3_att, &
+               epsilondev_loc,rho_s_H)
+       else
+          ! transverse isotropic element
 
-         if(ATTENUATION_VAL) then
-            call compute_element_iso(ispec, &
-                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                 xstore,ystore,zstore, &
-                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                 wgll_cube, &
-                 kappavstore,muvstore, &
-                 ibool, &
-                 R_xx,R_yy,R_xy,R_xz,R_yz, &
-                 epsilon_trace_over_3, &
-                 one_minus_sum_beta,vx,vy,vz,vnspec, &
-                 tempx1_att,tempx2_att,tempx3_att, &
-                 tempy1_att,tempy2_att,tempy3_att, &
-                 tempz1_att,tempz2_att,tempz3_att, &
-                 dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-         else
-            call compute_element_iso(ispec, &
-                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                 xstore,ystore,zstore, &
-                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                 wgll_cube, &
-                 kappavstore,muvstore, &
-                 ibool, &
-                 R_xx,R_yy,R_xy,R_xz,R_yz, &
-                 epsilon_trace_over_3, &
-                 one_minus_sum_beta,vx,vy,vz,vnspec, &
-                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                 dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-         endif
-
-      else
-        ! transverse isotropic element
-
-         if(ATTENUATION_VAL) then
-            call compute_element_tiso(ispec, &
-                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                 xstore,ystore,zstore, &
-                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                 wgll_cube, &
-                 kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                 ibool, &
-                 R_xx,R_yy,R_xy,R_xz,R_yz, &
-                 epsilon_trace_over_3, &
-                 one_minus_sum_beta,vx,vy,vz,vnspec, &
-                 tempx1_att,tempx2_att,tempx3_att, &
-                 tempy1_att,tempy2_att,tempy3_att, &
-                 tempz1_att,tempz2_att,tempz3_att, &
-                 dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-         else
-            call compute_element_tiso(ispec, &
-                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                 xstore,ystore,zstore, &
-                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                 wgll_cube, &
-                 kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                 ibool, &
-                 R_xx,R_yy,R_xy,R_xz,R_yz, &
-                 epsilon_trace_over_3, &
-                 one_minus_sum_beta,vx,vy,vz,vnspec, &
-                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                 dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-         endif
-      endif ! .not. ispec_is_tiso
+          call compute_element_tiso(ispec, &
+               minus_gravity_table,density_table,minus_deriv_gravity_table, &
+               xstore,ystore,zstore, &
+               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+               wgll_cube, &
+               kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+               ibool, &
+               R_xx,R_yy,R_xy,R_xz,R_yz, &
+               epsilon_trace_over_3, &
+               one_minus_sum_beta,vx,vy,vz,vnspec, &
+               tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+               dummyx_loc,dummyy_loc,dummyz_loc, &
+               tempx1_att,tempx2_att,tempx3_att, &
+               tempy1_att,tempy2_att,tempy3_att, &
+               tempz1_att,tempz2_att,tempz3_att, &
+               epsilondev_loc,rho_s_H)
+       endif ! .not. ispec_is_tiso
     endif
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods

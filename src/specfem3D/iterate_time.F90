@@ -573,6 +573,6 @@
   endif
 
   ! frees allocated memory on GPU
-  call prepare_cleanup_device(Mesh_pointer)
+  call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 
   end subroutine it_transfer_from_GPU

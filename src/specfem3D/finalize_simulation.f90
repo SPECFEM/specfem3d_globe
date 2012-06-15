@@ -140,6 +140,16 @@
 
   ! frees dynamically allocated memory
 
+  ! mass matrices
+  
+  deallocate(rmassx_crust_mantle)
+  deallocate(rmassy_crust_mantle)
+  deallocate(rmassz_crust_mantle)
+
+  deallocate(rmass_outer_core)
+  deallocate(rmass_inner_core)
+
+
   ! mpi buffers
   deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
             request_send_vector_crust_mantle,request_recv_vector_crust_mantle)

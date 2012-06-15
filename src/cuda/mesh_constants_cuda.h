@@ -181,7 +181,9 @@ typedef struct mesh_ {
   realw* d_kappavstore_crust_mantle; realw* d_muvstore_crust_mantle;
   realw* d_kappahstore_crust_mantle; realw* d_muhstore_crust_mantle;
   realw* d_eta_anisostore_crust_mantle;
-  realw* d_rmass_crust_mantle;
+  realw* d_rmassx_crust_mantle;
+  realw* d_rmassy_crust_mantle;
+  realw* d_rmassz_crust_mantle;
 
   // global indexing
   int* d_ibool_crust_mantle;

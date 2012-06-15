@@ -84,7 +84,7 @@
       call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)
     endif
 
-    if( .NOT. GPU_MODE) then
+    if ( .NOT. GPU_MODE) then
       ! on CPU
       do ispec2D=1,nspec2D_xmin_crust_mantle
 
@@ -158,7 +158,7 @@
 
         ispec=ibelm_xmax_crust_mantle(ispec2D)
 
-      ! exclude elements that are not on absorbing edges
+        ! exclude elements that are not on absorbing edges
         if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
         i=NGLLX
@@ -294,7 +294,7 @@
 
       ispec=ibelm_ymax_crust_mantle(ispec2D)
 
-    ! exclude elements that are not on absorbing edges
+      ! exclude elements that are not on absorbing edges
       if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
       j=NGLLY
