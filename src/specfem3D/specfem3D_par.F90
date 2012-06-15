@@ -363,8 +363,17 @@ module specfem_par_crustmantle
   ! flag for transversely isotropic elements
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
-  ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
+  ! mass matrices
+  ! 
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  ! 
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassz_crust_mantle
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -509,7 +518,7 @@ module specfem_par_innercore
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inner_core
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
@@ -597,7 +606,7 @@ module specfem_par_outercore
     rhostore_outer_core,kappavstore_outer_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_outer_core
 
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &

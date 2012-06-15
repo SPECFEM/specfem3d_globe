@@ -273,14 +273,16 @@
     ! on CPU
     call compute_forces_ac_update_veloc(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
                                        deltatover2,rmass_outer_core)
-    ! adjoint / kernel runs
+ 
+   ! adjoint / kernel runs
     if (SIMULATION_TYPE == 3) &
       call compute_forces_ac_update_veloc(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
                                          b_deltatover2,rmass_outer_core)
+
   else
     ! on GPU
     call kernel_3_outer_core_cuda(Mesh_pointer, &
-                                deltatover2,SIMULATION_TYPE,b_deltatover2)
+                                 deltatover2,SIMULATION_TYPE,b_deltatover2)
   endif
 
   end subroutine compute_forces_acoustic
@@ -288,7 +290,7 @@
 !=====================================================================
 
   subroutine compute_forces_ac_update_veloc(NGLOB,veloc_outer_core,accel_outer_core, &
-                                          deltatover2,rmass_outer_core)
+                                           deltatover2,rmass_outer_core)
 
   use constants_solver,only: CUSTOM_REAL
 

@@ -297,15 +297,17 @@ void FC_FUNC_(it_update_displacement_oc_cuda,
 __global__ void kernel_3_cuda_device(realw* veloc,
                                      realw* accel, int size,
                                      realw deltatover2,
-                                     realw* rmass) {
+                                     realw* rmassx,
+				     realw* rmassy,
+				     realw* rmassz) {
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   /* because of block and grid sizing problems, there is a small */
   /* amount of buffer at the end of the calculation */
   if(id < size) {
-    accel[3*id] = accel[3*id]*rmass[id];
-    accel[3*id+1] = accel[3*id+1]*rmass[id];
-    accel[3*id+2] = accel[3*id+2]*rmass[id];
+    accel[3*id] = accel[3*id]*rmassx[id];
+    accel[3*id+1] = accel[3*id+1]*rmassy[id];
+    accel[3*id+2] = accel[3*id+2]*rmassz[id];
 
     veloc[3*id] = veloc[3*id] + deltatover2*accel[3*id];
     veloc[3*id+1] = veloc[3*id+1] + deltatover2*accel[3*id+1];
@@ -317,15 +319,17 @@ __global__ void kernel_3_cuda_device(realw* veloc,
 
 __global__ void kernel_3_accel_cuda_device(realw* accel,
                                            int size,
-                                           realw* rmass) {
+                                           realw* rmassx,
+					   realw* rmassy,
+					   realw* rmassz) {
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   /* because of block and grid sizing problems, there is a small */
   /* amount of buffer at the end of the calculation */
   if(id < size) {
-    accel[3*id] = accel[3*id]*rmass[id];
-    accel[3*id+1] = accel[3*id+1]*rmass[id];
-    accel[3*id+2] = accel[3*id+2]*rmass[id];
+    accel[3*id] = accel[3*id]*rmassx[id];
+    accel[3*id+1] = accel[3*id+1]*rmassy[id];
+    accel[3*id+2] = accel[3*id+2]*rmassz[id];
   }
 }
 
@@ -354,7 +358,8 @@ void FC_FUNC_(kernel_3_a_cuda,
                                realw* deltatover2_F,
                                int* SIMULATION_TYPE_f,
                                realw* b_deltatover2_F,
-                               int* OCEANS) {
+                               int* OCEANS,
+			       int* NCHUNKS_VAL) {
   TRACE("kernel_3_a_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
@@ -380,27 +385,76 @@ void FC_FUNC_(kernel_3_a_cuda,
   // check whether we can update accel and veloc, or only accel at this point
   if( *OCEANS == 0 ){
     // updates both, accel and veloc
-    kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
-                                             mp->d_accel_crust_mantle,
-                                             mp->NGLOB_CRUST_MANTLE,
-                                             deltatover2, mp->d_rmass_crust_mantle);
 
-    if(SIMULATION_TYPE == 3) {
-      kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
-                                               mp->d_b_accel_crust_mantle,
-                                               mp->NGLOB_CRUST_MANTLE,
-                                               b_deltatover2,mp->d_rmass_crust_mantle);
+    if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+      kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
+					       mp->d_accel_crust_mantle,
+					       mp->NGLOB_CRUST_MANTLE,
+					       deltatover2, 
+					       mp->d_rmassx_crust_mantle,
+					       mp->d_rmassy_crust_mantle,
+					       mp->d_rmassz_crust_mantle);
+
+      if(SIMULATION_TYPE == 3){
+	kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
+						 mp->d_b_accel_crust_mantle,
+						 mp->NGLOB_CRUST_MANTLE,
+						 b_deltatover2, 
+						 mp->d_rmassx_crust_mantle,
+						 mp->d_rmassy_crust_mantle,
+						 mp->d_rmassz_crust_mantle);
+      }
+    }else{
+      kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
+					       mp->d_accel_crust_mantle,
+					       mp->NGLOB_CRUST_MANTLE,
+					       deltatover2, 
+					       mp->d_rmassz_crust_mantle,
+					       mp->d_rmassz_crust_mantle,
+					       mp->d_rmassz_crust_mantle);
+
+      if(SIMULATION_TYPE == 3){
+	kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
+						 mp->d_b_accel_crust_mantle,
+						 mp->NGLOB_CRUST_MANTLE,
+						 b_deltatover2, 
+						 mp->d_rmassz_crust_mantle,
+						 mp->d_rmassz_crust_mantle,
+						 mp->d_rmassz_crust_mantle);      
+      }
     }
+
   }else{
     // updates only accel
-    kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
-                                                   mp->NGLOB_CRUST_MANTLE,
-                                                   mp->d_rmass_crust_mantle);
 
-    if(SIMULATION_TYPE == 3) {
-      kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
-                                                     mp->NGLOB_CRUST_MANTLE,
-                                                     mp->d_rmass_crust_mantle);
+    if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+      kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
+						     mp->NGLOB_CRUST_MANTLE, 
+						     mp->d_rmassx_crust_mantle,
+						     mp->d_rmassy_crust_mantle,
+						     mp->d_rmassz_crust_mantle);
+
+      if(SIMULATION_TYPE == 3) {
+	kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
+						       mp->NGLOB_CRUST_MANTLE, 
+						       mp->d_rmassx_crust_mantle,
+						       mp->d_rmassy_crust_mantle,
+						       mp->d_rmassz_crust_mantle);
+      }
+    }else{
+      kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
+						     mp->NGLOB_CRUST_MANTLE, 
+						     mp->d_rmassz_crust_mantle,
+						     mp->d_rmassz_crust_mantle,
+						     mp->d_rmassz_crust_mantle);
+
+      if(SIMULATION_TYPE == 3) {
+	kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
+						       mp->NGLOB_CRUST_MANTLE, 
+						       mp->d_rmassz_crust_mantle,
+						       mp->d_rmassz_crust_mantle,
+						       mp->d_rmassz_crust_mantle);
+      }
     }
   }
 
@@ -472,13 +526,19 @@ void FC_FUNC_(kernel_3_b_cuda,
   kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_inner_core,
                                            mp->d_accel_inner_core,
                                            mp->NGLOB_INNER_CORE,
-                                           deltatover2, mp->d_rmass_inner_core);
+                                           deltatover2, 
+					   mp->d_rmass_inner_core,
+					   mp->d_rmass_inner_core,
+					   mp->d_rmass_inner_core);
 
   if(SIMULATION_TYPE == 3) {
     kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_inner_core,
                                              mp->d_b_accel_inner_core,
                                              mp->NGLOB_INNER_CORE,
-                                             b_deltatover2,mp->d_rmass_inner_core);
+                                             b_deltatover2,
+					     mp->d_rmass_inner_core,
+					     mp->d_rmass_inner_core,
+					     mp->d_rmass_inner_core);
   }
 
 

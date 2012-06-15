@@ -193,17 +193,32 @@
     if(minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
-  if(minval(rmass_crust_mantle) <= 0._CUSTOM_REAL) &
-    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+
+  ! add C*deltat/2 contribution to the mass matrices on Stacey edges
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+          call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+     if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+          call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+  endif
+
+  if(minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+       call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
   if(minval(rmass_inner_core) <= 0._CUSTOM_REAL) &
-    call exit_MPI(myrank,'negative mass matrix term for the inner core')
+       call exit_MPI(myrank,'negative mass matrix term for the inner core')
   if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
-    call exit_MPI(myrank,'negative mass matrix term for the outer core')
+       call exit_MPI(myrank,'negative mass matrix term for the outer core')
 
   ! for efficiency, invert final mass matrix once and for all on each slice
   if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
 
-  rmass_crust_mantle = 1._CUSTOM_REAL / rmass_crust_mantle
+  ! add C*deltat/2 contribution to the mass matrices on Stacey edges
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
+     rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+  endif
+
+  rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
   rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
   rmass_inner_core = 1._CUSTOM_REAL / rmass_inner_core
 
@@ -233,8 +248,22 @@
   endif
 
   ! crust and mantle
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                           rmassx_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
+
+     call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                           rmassy_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
+  endif
+
   call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
-                        rmass_crust_mantle, &
+                        rmassz_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                         nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                         my_neighbours_crust_mantle)
@@ -1265,32 +1294,36 @@
 
   ! crust/mantle region
   if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
+  
   call prepare_crust_mantle_device(Mesh_pointer, &
-                                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                  rhostore_crust_mantle, &
-                                  kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                  kappahstore_crust_mantle,muhstore_crust_mantle, &
-                                  eta_anisostore_crust_mantle, &
-                                  rmass_crust_mantle, &
-                                  normal_top_crust_mantle, &
-                                  ibelm_top_crust_mantle, &
-                                  ibelm_bottom_crust_mantle, &
-                                  ibool_crust_mantle, &
-                                  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                  ispec_is_tiso_crust_mantle, &
-                                  c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-                                  c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-                                  c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-                                  c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-                                  c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-                                  c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                                  c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                                  num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                                  nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
-                                  NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                                  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
+       xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+       gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+       rhostore_crust_mantle, &
+       kappavstore_crust_mantle,muvstore_crust_mantle, &
+       kappahstore_crust_mantle,muhstore_crust_mantle, &
+       eta_anisostore_crust_mantle, &
+       rmassx_crust_mantle, &
+       rmassy_crust_mantle, &
+       rmassz_crust_mantle, &
+       normal_top_crust_mantle, &
+       ibelm_top_crust_mantle, &
+       ibelm_bottom_crust_mantle, &
+       ibool_crust_mantle, &
+       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+       ispec_is_tiso_crust_mantle, &
+       c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+       c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+       c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+       c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+       c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+       c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+       c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+       num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+       nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
+       NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+       NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
+       NCHUNKS_VAL)
   call sync_all()
 
 

@@ -212,7 +212,7 @@
             tempz3l = tempz3l + displ_inner_core(3,iglob)*hp3
           enddo
 
-          if(ATTENUATION_VAL) then
+          if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
              ! temporary variables used for fixing attenuation in a consistent way
 
              tempx1l_att = 0._CUSTOM_REAL
@@ -317,7 +317,7 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
-          if(ATTENUATION_VAL) then
+          if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
              ! temporary variables used for fixing attenuation in a consistent way
              duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att
              duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att
@@ -337,19 +337,17 @@
              duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att
 
              ! compute deviatoric strain
-             if (COMPUTE_AND_STORE_STRAIN) then
-                if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-                   ispec_strain = 1
-                else
-                   ispec_strain = ispec
-                endif
-                epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
-                epsilondev_loc(1,i,j,k) = duxdxl_att - epsilon_trace_over_3(i,j,k,ispec_strain)
-                epsilondev_loc(2,i,j,k) = duydyl_att - epsilon_trace_over_3(i,j,k,ispec_strain)
-                epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
-                epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
-                epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
+             if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                ispec_strain = 1
+             else
+                ispec_strain = ispec
              endif
+             epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
+             epsilondev_loc(1,i,j,k) = duxdxl_att - epsilon_trace_over_3(i,j,k,ispec_strain)
+             epsilondev_loc(2,i,j,k) = duydyl_att - epsilon_trace_over_3(i,j,k,ispec_strain)
+             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
+             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
+             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
           else
              ! compute deviatoric strain
              if (COMPUTE_AND_STORE_STRAIN) then

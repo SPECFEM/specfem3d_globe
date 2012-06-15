@@ -90,7 +90,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani
+  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
   logical :: READ_KAPPA_MU,READ_TISO
   ! dummy array that does not need to be actually read
   integer, dimension(:),allocatable :: dummy_i
@@ -122,6 +122,27 @@
   ! sets number of top elements for surface movies & noise tomography
   NSPEC_TOP = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
 
+  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  !
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  ! 
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     NGLOB_XY = NGLOB_CRUST_MANTLE
+  else
+     NGLOB_XY = 1
+  endif
+
+  allocate(rmassx_crust_mantle(NGLOB_XY),stat=ier)
+  if(ier /= 0) stop 'error in allocate 21'
+  allocate(rmassy_crust_mantle(NGLOB_XY),stat=ier)
+  if(ier /= 0) stop 'error in allocate 21'
+  allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
+  if(ier /= 0) stop 'error in allocate 21'
+
   ! reads databases file
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
             rho_vp_crust_mantle,rho_vs_crust_mantle, &
@@ -139,10 +160,8 @@
             c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,dummy_i, &
-            ispec_is_tiso_crust_mantle, &
-            rmass_crust_mantle,rmass_ocean_load, &
-            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+            ibool_crust_mantle,dummy_i,ispec_is_tiso_crust_mantle,NGLOB_XY,NGLOB_CRUST_MANTLE, &
+            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load,NSPEC_CRUST_MANTLE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
 
@@ -168,14 +187,16 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani
+  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
   logical :: READ_KAPPA_MU,READ_TISO
+  integer :: ier
 
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: dummy_rmass
 
-  logical, dimension(:),allocatable:: dummy_ispec_is_tiso
-  integer, dimension(:),allocatable :: dummy_idoubling_outer_core
+  logical, dimension(:), allocatable :: dummy_ispec_is_tiso
+  integer, dimension(:), allocatable :: dummy_idoubling_outer_core
 
   ! outer core (no anisotropy nor S velocity)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
@@ -186,8 +207,22 @@
   nspec_ani = 1
 
   ! dummy allocation
+  NGLOB_XY = 1
+
+  allocate(dummy_rmass(NGLOB_XY))
   allocate(dummy_ispec_is_tiso(NSPEC_OUTER_CORE))
   allocate(dummy_idoubling_outer_core(NSPEC_OUTER_CORE))
+
+  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  !
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  ! 
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
+  if(ier /= 0) stop 'error in allocate 21'
 
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
             vp_outer_core,dummy_array, &
@@ -205,14 +240,14 @@
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-            rmass_outer_core,rmass_ocean_load, &
-            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso,NGLOB_XY,NGLOB_OUTER_CORE, &
+            dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load,NSPEC_OUTER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
 
   deallocate(dummy_idoubling_outer_core)
   deallocate(dummy_ispec_is_tiso)
+  deallocate(dummy_rmass)
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_outer_core(:,:,:,:)) /= 1 .or. &
@@ -234,11 +269,13 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani
+  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
   logical :: READ_KAPPA_MU,READ_TISO
+  integer :: ier
 
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: dummy_rmass
   logical, dimension(:),allocatable:: dummy_ispec_is_tiso
 
   ! inner core (no anisotropy)
@@ -254,7 +291,21 @@
   endif
 
   ! dummy allocation
+  NGLOB_XY = 1
+
+  allocate(dummy_rmass(NGLOB_XY))
   allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE))
+
+  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  !
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  ! 
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
+  if(ier /= 0) stop 'error in allocate 21'
 
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
             dummy_array,dummy_array, &
@@ -272,13 +323,13 @@
             dummy_array,dummy_array,dummy_array, &
             c44store_inner_core,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-            rmass_inner_core,rmass_ocean_load, &
-            NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso,NGLOB_XY,NGLOB_INNER_CORE, &
+            dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load,NSPEC_INNER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
 
   deallocate(dummy_ispec_is_tiso)
+  deallocate(dummy_rmass)
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &

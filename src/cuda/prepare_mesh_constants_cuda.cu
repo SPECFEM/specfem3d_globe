@@ -1345,7 +1345,7 @@ void FC_FUNC_(prepare_fields_noise_device,
 
 extern "C"
 void FC_FUNC_(prepare_crust_mantle_device,
-              PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
+             PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
              realw* h_xix, realw* h_xiy, realw* h_xiz,
              realw* h_etax, realw* h_etay, realw* h_etaz,
              realw* h_gammax, realw* h_gammay, realw* h_gammaz,
@@ -1353,7 +1353,9 @@ void FC_FUNC_(prepare_crust_mantle_device,
              realw* h_kappav, realw* h_muv,
              realw* h_kappah, realw* h_muh,
              realw* h_eta_aniso,
-             realw* h_rmass,
+             realw* h_rmassx,
+             realw* h_rmassy,
+             realw* h_rmassz,
              realw* h_normal_top_crust_mantle,
              int* h_ibelm_top_crust_mantle,
              int* h_ibelm_bottom_crust_mantle,
@@ -1372,7 +1374,8 @@ void FC_FUNC_(prepare_crust_mantle_device,
              int* nspec_outer,
              int* nspec_inner,
              int* NSPEC2D_TOP_CM,
-             int* NSPEC2D_BOTTOM_CM
+	     int* NSPEC2D_BOTTOM_CM,
+	     int* NCHUNKS_VAL
              ) {
 
   TRACE("prepare_crust_mantle_device");
@@ -1610,9 +1613,18 @@ void FC_FUNC_(prepare_crust_mantle_device,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_crust_mantle),sizeof(realw)*size),4003);
   }
 
-  // mass matrix
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmass_crust_mantle),sizeof(realw)*size_glob),2005);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_rmass_crust_mantle,h_rmass,
+  // mass matrices
+  if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmassx_crust_mantle),sizeof(realw)*size_glob),2005);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_rmassx_crust_mantle,h_rmassx,
+				       sizeof(realw)*size_glob,cudaMemcpyHostToDevice),2100);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmassy_crust_mantle),sizeof(realw)*size_glob),2005);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_rmassy_crust_mantle,h_rmassy,
+				       sizeof(realw)*size_glob,cudaMemcpyHostToDevice),2100);
+  }
+
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmassz_crust_mantle),sizeof(realw)*size_glob),2005);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_rmassz_crust_mantle,h_rmassz,
                                      sizeof(realw)*size_glob,cudaMemcpyHostToDevice),2100);
 
   // kernels
@@ -1669,20 +1681,20 @@ void FC_FUNC_(prepare_outer_core_device,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav,
                                          realw* h_rmass,
-           realw* h_normal_top_outer_core,
-           realw* h_normal_bottom_outer_core,
-           realw* h_jacobian2D_top_outer_core,
-           realw* h_jacobian2D_bottom_outer_core,
-           int* h_ibelm_top_outer_core,
-           int* h_ibelm_bottom_outer_core,
+					 realw* h_normal_top_outer_core,
+					 realw* h_normal_bottom_outer_core,
+					 realw* h_jacobian2D_top_outer_core,
+					 realw* h_jacobian2D_bottom_outer_core,
+					 int* h_ibelm_top_outer_core,
+					 int* h_ibelm_bottom_outer_core,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          int* num_phase_ispec,
                                          int* phase_ispec_inner,
                                          int* nspec_outer,
                                          int* nspec_inner,
-           int* NSPEC2D_TOP_OC,
-           int* NSPEC2D_BOTTOM_OC
+					 int* NSPEC2D_TOP_OC,
+					 int* NSPEC2D_BOTTOM_OC
                                          ) {
 
   TRACE("prepare_outer_core_device");
@@ -1836,23 +1848,23 @@ void FC_FUNC_(prepare_outer_core_device,
 extern "C"
 void FC_FUNC_(prepare_inner_core_device,
               PREPARE_INNER_CORE_DEVICE)(long* Mesh_pointer_f,
-           realw* h_xix, realw* h_xiy, realw* h_xiz,
-           realw* h_etax, realw* h_etay, realw* h_etaz,
-           realw* h_gammax, realw* h_gammay, realw* h_gammaz,
-           realw* h_rho, realw* h_kappav, realw* h_muv,
-           realw* h_rmass,
-           int* h_ibelm_top_inner_core,
-           int* h_ibool,
-           realw* h_xstore, realw* h_ystore, realw* h_zstore,
-           realw *c11store,realw *c12store,realw *c13store,
-           realw *c33store,realw *c44store,
-           int* h_idoubling_inner_core,
-           int* num_phase_ispec,
-           int* phase_ispec_inner,
-           int* nspec_outer,
-           int* nspec_inner,
-           int* NSPEC2D_TOP_IC) {
-
+					 realw* h_xix, realw* h_xiy, realw* h_xiz,
+					 realw* h_etax, realw* h_etay, realw* h_etaz,
+					 realw* h_gammax, realw* h_gammay, realw* h_gammaz,
+					 realw* h_rho, realw* h_kappav, realw* h_muv,
+					 realw* h_rmass,
+					 int* h_ibelm_top_inner_core,
+					 int* h_ibool,
+					 realw* h_xstore, realw* h_ystore, realw* h_zstore,
+					 realw *c11store,realw *c12store,realw *c13store,
+					 realw *c33store,realw *c44store,
+					 int* h_idoubling_inner_core,
+					 int* num_phase_ispec,
+					 int* phase_ispec_inner,
+					 int* nspec_outer,
+					 int* nspec_inner,
+					 int* NSPEC2D_TOP_IC) {
+  
   TRACE("prepare_inner_core_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f);
@@ -2419,7 +2431,8 @@ TRACE("prepare_fields_elastic_device");
 
 extern "C"
 void FC_FUNC_(prepare_cleanup_device,
-              PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f) {
+              PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f,
+				      int* NCHUNKS_VAL) {
 
 TRACE("prepare_cleanup_device");
 
@@ -2748,7 +2761,11 @@ TRACE("prepare_cleanup_device");
     }
     if(mp->approximate_hess_kl){ cudaFree(mp->d_hess_kl_crust_mantle);}
   }
-  cudaFree(mp->d_rmass_crust_mantle);
+  if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+    cudaFree(mp->d_rmassx_crust_mantle);
+    cudaFree(mp->d_rmassy_crust_mantle);
+  }
+  cudaFree(mp->d_rmassz_crust_mantle);
 
   //------------------------------------------
   // outer_core
