@@ -537,8 +537,19 @@
 !  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
-! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
+! mass matrices
+! 
+! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+! 
+! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
+
+  integer :: NGLOB_XY
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -624,10 +635,10 @@
      alpha_kl_outer_core
 
   ! approximate hessian
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: hess_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
 
   ! check for deviatoric kernel for outer core region
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
   logical,parameter:: deviatoric_outercore = .false.
 
@@ -1034,6 +1045,25 @@
 !!!!!!!    print *,'starting doing serialized I/Os on rank ',myrank
 #endif
 
+  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  !
+  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  ! 
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     NGLOB_XY = NGLOB_CRUST_MANTLE
+  else
+     NGLOB_XY = 1
+  endif
+
+  allocate(rmassx_crust_mantle(NGLOB_XY),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassx_crust_mantle')
+  allocate(rmassy_crust_mantle(NGLOB_XY),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassy_crust_mantle')
+
   call read_mesh_databases(myrank,rho_vp_crust_mantle,rho_vs_crust_mantle, &
               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
               xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -1051,7 +1081,8 @@
               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
               ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
             ! -- idoubling_crust_mantle,
-              is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
+              is_on_a_slice_edge_crust_mantle,rmass_ocean_load, &
+              rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
               vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
               xix_outer_core,xiy_outer_core,xiz_outer_core, &
               etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -1068,7 +1099,7 @@
               c33store_inner_core,c44store_inner_core, &
               ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
               is_on_a_slice_edge_inner_core,rmass_inner_core, &
-              ABSORBING_CONDITIONS,LOCAL_PATH)
+              ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY)
 
   ! read 2-D addressing for summation between slices with MPI
   call read_mesh_databases_addressing(myrank, &
@@ -1513,8 +1544,8 @@
   endif
 
   ! the mass matrix needs to be assembled with MPI here once and for all
-  call prepare_timerun_rmass(myrank,rmass_ocean_load,rmass_crust_mantle, &
-                      rmass_outer_core,rmass_inner_core, &
+  call prepare_timerun_rmass(myrank,rmass_ocean_load,rmassx_crust_mantle,rmassy_crust_mantle, &
+                      rmassz_crust_mantle,rmass_outer_core,rmass_inner_core, &
                       iproc_xi,iproc_eta,ichunk,addressing, &
                       iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
                       iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -1532,7 +1563,7 @@
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
                       buffer_send_faces,buffer_received_faces, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY,ABSORBING_CONDITIONS, &
                       NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,npoin2D_max_all_CM_IC)
 
   ! mass matrix including central cube
@@ -1610,16 +1641,34 @@
   if(OCEANS_VAL) then
     if(minval(rmass_ocean_load) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
-  if(minval(rmass_crust_mantle) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
-  if(minval(rmass_inner_core) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the inner core')
-  if(minval(rmass_outer_core) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the outer core')
+
+  ! add C*delta/2 contribution to the mass matrices on the Stacey edges
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+          call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+     if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+          call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+  endif
+
+  if(minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+       call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+  if(minval(rmass_inner_core) <= 0._CUSTOM_REAL) &
+       call exit_MPI(myrank,'negative mass matrix term for the inner core')
+  if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
+       call exit_MPI(myrank,'negative mass matrix term for the outer core')
 
   ! for efficiency, invert final mass matrix once and for all on each slice
   if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
-  rmass_crust_mantle = 1._CUSTOM_REAL / rmass_crust_mantle
+
+ ! add C*delta/2 contribution to the mass matrices on the Stacey edges
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+     rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
+     rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+  endif
+
+  rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
   rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
   rmass_inner_core = 1._CUSTOM_REAL / rmass_inner_core
-
 
   ! change x, y, z to r, theta and phi once and for all
   ! IMPROVE dangerous: old name kept (xstore ystore zstore) for new values
@@ -3400,52 +3449,105 @@
       endif
     endif   ! end of assembling forces with the central cube
 
+    if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+       
 #ifdef _HANDOPT
-! way 2:
-    if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
-      do i=1,imodulo_NGLOB_CRUST_MANTLE4
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+       ! way 2:
+       if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
+          do i=1,imodulo_NGLOB_CRUST_MANTLE4
+             accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
+                  + two_omega_earth*veloc_crust_mantle(2,i)
+             accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
+                  - two_omega_earth*veloc_crust_mantle(1,i)
+             accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+          enddo
+       endif
+       do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
+          accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+          accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
                - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-      enddo
-    endif
-    do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-      accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-               + two_omega_earth*veloc_crust_mantle(2,i)
-      accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-               - two_omega_earth*veloc_crust_mantle(1,i)
-      accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+          accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
 
-      accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmass_crust_mantle(i+1) &
+          accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmassx_crust_mantle(i+1) &
                + two_omega_earth*veloc_crust_mantle(2,i+1)
-      accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmass_crust_mantle(i+1) &
+          accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmassy_crust_mantle(i+1) &
                - two_omega_earth*veloc_crust_mantle(1,i+1)
-      accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmass_crust_mantle(i+1)
+          accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
 
-      accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmass_crust_mantle(i+2) &
+          accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmassx_crust_mantle(i+2) &
                + two_omega_earth*veloc_crust_mantle(2,i+2)
-      accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmass_crust_mantle(i+2) &
+          accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmassy_crust_mantle(i+2) &
                - two_omega_earth*veloc_crust_mantle(1,i+2)
-      accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmass_crust_mantle(i+2)
+          accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
 
-      accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmass_crust_mantle(i+3) &
+          accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmassx_crust_mantle(i+3) &
                + two_omega_earth*veloc_crust_mantle(2,i+3)
-      accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmass_crust_mantle(i+3) &
+          accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmassy_crust_mantle(i+3) &
                - two_omega_earth*veloc_crust_mantle(1,i+3)
-      accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmass_crust_mantle(i+3)
-    enddo
+          accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
+       enddo
 #else
-! way 1:
-    do i=1,NGLOB_CRUST_MANTLE
-      accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+       ! way 1:
+       do i=1,NGLOB_CRUST_MANTLE
+          accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
-      accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+          accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
                - two_omega_earth*veloc_crust_mantle(1,i)
-      accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-    enddo
+          accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+       enddo
 #endif
+
+    else
+
+#ifdef _HANDOPT
+       ! way 2:
+       if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
+          do i=1,imodulo_NGLOB_CRUST_MANTLE4
+             accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+                  + two_omega_earth*veloc_crust_mantle(2,i)
+             accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+                  - two_omega_earth*veloc_crust_mantle(1,i)
+             accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+          enddo
+       endif
+       do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB,4
+          accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+               + two_omega_earth*veloc_crust_mantle(2,i)
+          accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+               - two_omega_earth*veloc_crust_mantle(1,i)
+          accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+
+          accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmassz_crust_mantle(i+1) &
+               + two_omega_earth*veloc_crust_mantle(2,i+1)
+          accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmassz_crust_mantle(i+1) &
+               - two_omega_earth*veloc_crust_mantle(1,i+1)
+          accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
+
+          accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmassz_crust_mantle(i+2) &
+               + two_omega_earth*veloc_crust_mantle(2,i+2)
+          accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmassz_crust_mantle(i+2) &
+               - two_omega_earth*veloc_crust_mantle(1,i+2)
+          accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
+
+          accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmassz_crust_mantle(i+3) &
+               + two_omega_earth*veloc_crust_mantle(2,i+3)
+          accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmassz_crust_mantle(i+3) &
+               - two_omega_earth*veloc_crust_mantle(1,i+3)
+          accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
+       enddo
+#else
+       ! way 1:
+       do i=1,NGLOB_CRUST_MANTLE
+          accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+               + two_omega_earth*veloc_crust_mantle(2,i)
+          accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+               - two_omega_earth*veloc_crust_mantle(1,i)
+          accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+       enddo
+#endif
+
+    endif
 
     if (SIMULATION_TYPE == 3) then
 
@@ -3715,63 +3817,117 @@
 
 ! ------------------- new non blocking implementation -------------------
 
+      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+
 #ifdef _HANDOPT
-! way 2:
-      if( imodulo_NGLOB_CRUST_MANTLE4 >=1 ) then
-        do i=1,imodulo_NGLOB_CRUST_MANTLE4
-          b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+         ! way 2:
+         if( imodulo_NGLOB_CRUST_MANTLE4 >=1 ) then
+            do i=1,imodulo_NGLOB_CRUST_MANTLE4
+               b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
+                    + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+               b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
+                    - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+               b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+            enddo
+         endif
+         do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
+            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-          b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-          b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-        enddo
-      endif
-      do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-        b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-        b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-        b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
 
-        b_accel_crust_mantle(1,i+1) = b_accel_crust_mantle(1,i+1)*rmass_crust_mantle(i+1) &
+            b_accel_crust_mantle(1,i+1) = b_accel_crust_mantle(1,i+1)*rmassx_crust_mantle(i+1) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i+1)
-        b_accel_crust_mantle(2,i+1) = b_accel_crust_mantle(2,i+1)*rmass_crust_mantle(i+1) &
+            b_accel_crust_mantle(2,i+1) = b_accel_crust_mantle(2,i+1)*rmassy_crust_mantle(i+1) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i+1)
-        b_accel_crust_mantle(3,i+1) = b_accel_crust_mantle(3,i+1)*rmass_crust_mantle(i+1)
+            b_accel_crust_mantle(3,i+1) = b_accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
 
-        b_accel_crust_mantle(1,i+2) = b_accel_crust_mantle(1,i+2)*rmass_crust_mantle(i+2) &
+            b_accel_crust_mantle(1,i+2) = b_accel_crust_mantle(1,i+2)*rmassx_crust_mantle(i+2) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i+2)
-        b_accel_crust_mantle(2,i+2) = b_accel_crust_mantle(2,i+2)*rmass_crust_mantle(i+2) &
+            b_accel_crust_mantle(2,i+2) = b_accel_crust_mantle(2,i+2)*rmassy_crust_mantle(i+2) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i+2)
-        b_accel_crust_mantle(3,i+2) = b_accel_crust_mantle(3,i+2)*rmass_crust_mantle(i+2)
+            b_accel_crust_mantle(3,i+2) = b_accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
 
-        b_accel_crust_mantle(1,i+3) = b_accel_crust_mantle(1,i+3)*rmass_crust_mantle(i+3) &
+            b_accel_crust_mantle(1,i+3) = b_accel_crust_mantle(1,i+3)*rmassx_crust_mantle(i+3) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i+3)
-        b_accel_crust_mantle(2,i+3) = b_accel_crust_mantle(2,i+3)*rmass_crust_mantle(i+3) &
+            b_accel_crust_mantle(2,i+3) = b_accel_crust_mantle(2,i+3)*rmassy_crust_mantle(i+3) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i+3)
-        b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmass_crust_mantle(i+3)
-      enddo
+            b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
+         enddo
 #else
-! way 1:
-      do i=1,NGLOB_CRUST_MANTLE
-        b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+         ! way 1:
+         do i=1,NGLOB_CRUST_MANTLE
+            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-        b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-        b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-      enddo
+            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+         enddo
 #endif
 
-    endif ! SIMULATION_TYPE == 3
+      else
+
+#ifdef _HANDOPT
+         ! way 2:
+         if( imodulo_NGLOB_CRUST_MANTLE4 >=1 ) then
+            do i=1,imodulo_NGLOB_CRUST_MANTLE4
+               b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+                    + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+               b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+                    - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+               b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+            enddo
+         endif
+         do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
+            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+
+            b_accel_crust_mantle(1,i+1) = b_accel_crust_mantle(1,i+1)*rmassz_crust_mantle(i+1) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+1)
+            b_accel_crust_mantle(2,i+1) = b_accel_crust_mantle(2,i+1)*rmassz_crust_mantle(i+1) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+1)
+            b_accel_crust_mantle(3,i+1) = b_accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
+
+            b_accel_crust_mantle(1,i+2) = b_accel_crust_mantle(1,i+2)*rmassz_crust_mantle(i+2) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+2)
+            b_accel_crust_mantle(2,i+2) = b_accel_crust_mantle(2,i+2)*rmassz_crust_mantle(i+2) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+2)
+            b_accel_crust_mantle(3,i+2) = b_accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
+
+            b_accel_crust_mantle(1,i+3) = b_accel_crust_mantle(1,i+3)*rmassz_crust_mantle(i+3) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+3)
+            b_accel_crust_mantle(2,i+3) = b_accel_crust_mantle(2,i+3)*rmassz_crust_mantle(i+3) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+3)
+            b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
+         enddo
+#else
+         ! way 1:
+         do i=1,NGLOB_CRUST_MANTLE
+            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
+         enddo
+#endif
+
+      endif
+
+   endif ! SIMULATION_TYPE == 3
 
     ! couples ocean with crust mantle
-    if(OCEANS_VAL) &
-      call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
-                            rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
-                            ibool_crust_mantle,ibelm_top_crust_mantle, &
-                            updated_dof_ocean_load, &
-                            SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
-
+   if(OCEANS_VAL) &
+        call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
+                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                   rmass_ocean_load,normal_top_crust_mantle, &
+                                   ibool_crust_mantle,ibelm_top_crust_mantle, &
+                                   updated_dof_ocean_load,NGLOB_XY, &
+                                   SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                                   ABSORBING_CONDITIONS)
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -4645,6 +4801,10 @@
             mask_noise, &
             noise_surface_movie)
   endif
+
+  ! mass matrices
+  deallocate(rmassx_crust_mantle)
+  deallocate(rmassy_crust_mantle)
 
   ! close the main output file
   if(myrank == 0) then

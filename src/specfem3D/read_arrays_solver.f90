@@ -35,9 +35,9 @@
               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-              ibool,idoubling,ispec_is_tiso, &
-              is_on_a_slice_edge,rmass,rmass_ocean_load,nspec,nglob, &
-              READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
+              ibool,idoubling,ispec_is_tiso,nglob_xy,nglob, &
+              rmassx,rmassy,rmassz,rmass_ocean_load,nspec, &
+              is_on_a_slice_edge,READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
               ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
   implicit none
@@ -54,7 +54,7 @@
 
   character(len=150) LOCAL_PATH
 
-  integer nspec,nglob
+  integer nspec,nglob,nglob_xy
 
   integer nspec_iso,nspec_tiso,nspec_ani
 
@@ -83,8 +83,11 @@
   real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
 
-! mass matrix and additional ocean load mass matrix
-  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass,rmass_ocean_load
+! mass matrices and additional ocean load mass matrix
+  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass_ocean_load
+
+  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
 
 ! global addressing
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
@@ -173,8 +176,20 @@
 
   endif
 
-! mass matrix
-  read(IIN) rmass
+! mass matrices
+!
+! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+! 
+! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
+     read(IIN) rmassx
+     read(IIN) rmassy
+  endif
+
+  read(IIN) rmassz
 
 ! read additional ocean load mass matrix
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
