@@ -215,17 +215,17 @@
           if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
              ! temporary variables used for fixing attenuation in a consistent way
 
-             tempx1l_att = 0._CUSTOM_REAL
-             tempx2l_att = 0._CUSTOM_REAL
-             tempx3l_att = 0._CUSTOM_REAL
+             tempx1l_att = tempx1l
+             tempx2l_att = tempx2l
+             tempx3l_att = tempx3l
 
-             tempy1l_att = 0._CUSTOM_REAL
-             tempy2l_att = 0._CUSTOM_REAL
-             tempy3l_att = 0._CUSTOM_REAL
-
-             tempz1l_att = 0._CUSTOM_REAL
-             tempz2l_att = 0._CUSTOM_REAL
-             tempz3l_att = 0._CUSTOM_REAL
+             tempy1l_att = tempy1l
+             tempy2l_att = tempy2l
+             tempy3l_att = tempy3l
+             
+             tempz1l_att = tempz1l
+             tempz2l_att = tempz2l
+             tempz3l_att = tempz3l
 
              if(ATTENUATION_NEW_VAL) then
                 ! takes new routines
@@ -234,50 +234,28 @@
                 do l=1,NGLLX
                    hp1 = hprime_xx(i,l)
                    iglob = ibool(l,j,k,ispec)
-                   tempx1l_att = tempx1l_att + &
-                        (displ_inner_core(1,iglob) + deltat*veloc_inner_core(1,iglob))*hp1
-                   tempy1l_att = tempy1l_att + &
-                        (displ_inner_core(2,iglob) + deltat*veloc_inner_core(2,iglob))*hp1
-                   tempz1l_att = tempz1l_att + &
-                        (displ_inner_core(3,iglob) + deltat*veloc_inner_core(3,iglob))*hp1
+                   tempx1l_att = tempx1l_att + deltat*veloc_inner_core(1,iglob)*hp1
+                   tempy1l_att = tempy1l_att + deltat*veloc_inner_core(2,iglob)*hp1
+                   tempz1l_att = tempz1l_att + deltat*veloc_inner_core(3,iglob)*hp1
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
                    hp2 = hprime_yy(j,l)
                    iglob = ibool(i,l,k,ispec)
-                   tempx2l_att = tempx2l_att + &
-                        (displ_inner_core(1,iglob) + deltat*veloc_inner_core(1,iglob))*hp2
-                   tempy2l_att = tempy2l_att + &
-                        (displ_inner_core(2,iglob) + deltat*veloc_inner_core(2,iglob))*hp2
-                   tempz2l_att = tempz2l_att + &
-                        (displ_inner_core(3,iglob) + deltat*veloc_inner_core(3,iglob))*hp2
+                   tempx2l_att = tempx2l_att + deltat*veloc_inner_core(1,iglob)*hp2
+                   tempy2l_att = tempy2l_att + deltat*veloc_inner_core(2,iglob)*hp2
+                   tempz2l_att = tempz2l_att + deltat*veloc_inner_core(3,iglob)*hp2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
                    hp3 = hprime_zz(k,l)
                    iglob = ibool(i,j,l,ispec)
-                   tempx3l_att = tempx3l_att + &
-                        (displ_inner_core(1,iglob) + deltat*veloc_inner_core(1,iglob))*hp3
-                   tempy3l_att = tempy3l_att + &
-                        (displ_inner_core(2,iglob) + deltat*veloc_inner_core(2,iglob))*hp3
-                   tempz3l_att = tempz3l_att + &
-                        (displ_inner_core(3,iglob) + deltat*veloc_inner_core(3,iglob))*hp3
+                   tempx3l_att = tempx3l_att + deltat*veloc_inner_core(1,iglob)*hp3
+                   tempy3l_att = tempy3l_att + deltat*veloc_inner_core(2,iglob)*hp3
+                   tempz3l_att = tempz3l_att + deltat*veloc_inner_core(3,iglob)*hp3
                 enddo
              endif
-          else 
-             ! takes old routines
-             tempx1l_att = tempx1l
-             tempy1l_att = tempy1l
-             tempz1l_att = tempz1l
-
-             tempx2l_att = tempx2l
-             tempy2l_att = tempy2l
-             tempz2l_att = tempz2l
-
-             tempx3l_att = tempx3l
-             tempy3l_att = tempy3l
-             tempz3l_att = tempz3l
           endif
 
 !         get derivatives of ux, uy and uz with respect to x, y and z
