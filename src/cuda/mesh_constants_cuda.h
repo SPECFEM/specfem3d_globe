@@ -478,15 +478,11 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   // gravity
   // ------------------------------------------------------------------ //
-  realw* d_d_ln_density_dr_table; // needed for no gravity case
+  realw* d_d_ln_density_dr_table; // needed also for no gravity case
   realw* d_minus_rho_g_over_kappa_fluid;
   realw* d_minus_gravity_table;
   realw* d_minus_deriv_gravity_table;
   realw* d_density_table;
-
-  //daniel: TODO old...
-  //realw* d_minus_g;
-  //realw* d_minus_deriv_gravity;
 
   // ------------------------------------------------------------------ //
   // rotation

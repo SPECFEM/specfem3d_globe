@@ -686,12 +686,14 @@ __device__ void compute_element_cm_tiso(int offset,
     // or with loss of accuracy:  __sincosf(theta, &sintheta, &costheta);
     // or compile with: -use_fast_math
 
-    costheta = cosf(theta);
-    sintheta = sinf(theta);
-
-    cosphi = cosf(phi);
-    sinphi = sinf(phi);
-
+    //costheta = cosf(theta);
+    //sintheta = sinf(theta);
+    sincosf(theta, &sintheta, &costheta);
+    
+    //cosphi = cosf(phi);
+    //sinphi = sinf(phi);
+    sincosf(phi, &sinphi, &cosphi);
+    
     costwotheta = cosf(2.0f * theta);
     sintwotheta = sinf(2.0f * theta);
     costwophi = cosf(2.0f * phi);

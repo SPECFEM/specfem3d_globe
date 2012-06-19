@@ -232,9 +232,9 @@
 ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-!<YANGL
-  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1   ! time steps needs to be doubled, due to +/- branches
-!>YANGL
+  ! noise tomography: 
+  ! time steps needs to be doubled, due to +/- branches
+  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory

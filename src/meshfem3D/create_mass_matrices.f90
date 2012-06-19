@@ -124,7 +124,7 @@
   double precision :: elevation,height_oceans
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
-  integer :: ispec,i,j,k,iglob
+  integer :: ispec,i,j,k,iglob,ier
   integer :: ix_oceans,iy_oceans,iz_oceans,ispec_oceans,ispec2D_top_crust
 
   ! initializes matrices
@@ -333,7 +333,8 @@
 
      ! read arrays for Stacey conditions
      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-          status='old',form='unformatted',action='read')
+          status='old',form='unformatted',action='read',iostat=ier)
+     if( ier /= 0 ) call exit_mpi(myrank,'error opening stacey.bin in create_mass_matrices')
      read(27) nimin
      read(27) nimax
      read(27) njmin
@@ -664,6 +665,7 @@
   endif
 
   ! check that mass matrix is positive
-  if(minval(rmassz(:)) <= 0.) call exit_MPI(myrank,'negative rmassz matrix term')
+  ! note: in fictitious elements it is still zero
+  if(minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
 
   end subroutine create_mass_matrices

@@ -168,7 +168,9 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/moho_stretching.o \
 	$O/read_arrays_buffers_mesher.mpi.o \
 	$O/save_arrays_solver.o \
-	$O/setup_color_perm.mpi.o \
+	$O/setup_color_perm.o \
+	$O/setup_inner_outer.o \
+	$O/setup_MPI_interfaces.o \
 	$O/sort_array_coordinates.o \
 	$O/stretching_function.o \
 	$O/test_MPI_interfaces.mpi.o \

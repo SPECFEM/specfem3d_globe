@@ -280,7 +280,7 @@ void write_abs_fbin(int *fid, char *buffer, int *length, int *index){
 
   FILE *ft;
   int itemlen,remlen,donelen,ret;
-  void *buf;
+  char *buf;
 
   // file pointer
   ft = fp_abs[*fid];
@@ -317,7 +317,7 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index){
   FILE *ft;
   int ret,itemlen,remlen,donelen;
   long long pos;
-  void *buf;
+  char *buf;
 
   // file pointer
   ft = fp_abs[*fid];
