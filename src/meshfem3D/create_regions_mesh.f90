@@ -770,10 +770,10 @@
     !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
 
-    ! mesh sorting and coloring
-    call setup_color_perm(myrank,iregion_code,nspec,nglob, &
-                              ibool,is_on_a_slice_edge,prname, &
-                              npoin2D_xi,npoin2D_eta)
+    ! daniel: deprecated - mesh sorting and coloring
+    !call setup_color_perm(myrank,iregion_code,nspec,nglob, &
+    !                          ibool,is_on_a_slice_edge,prname, &
+    !                          npoin2D_xi,npoin2D_eta)
 
     ! precomputes jacobian for 2d absorbing boundary surfaces
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &

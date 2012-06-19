@@ -101,7 +101,7 @@ void get_max_from_surface_file_(int* nodes_per_iterationf,int* NSTEP) {
   //char* errorstr;
   if(fp == 0) {
     //errorstr = (char*) strerror(errno);
-    printf("FILE ERROR:%s\n",strerror(errno));
+    printf("FILE ERROR:%s\n",(char*) strerror(errno));
     perror("file error\n");
     exit(1);
   }
@@ -181,7 +181,7 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
   if(fp_cpu == 0) {
     //errorstr = (char*) strerror(errno);
     //printf("CPU FILE ERROR:%s\n",errorstr);
-    printf("CPU FILE ERROR:%s\n",strerror(errno));
+    printf("CPU FILE ERROR:%s\n",(char*) strerror(errno));
     perror("cpu file error\n");
   }
   FILE* fp_gpu;
@@ -190,7 +190,7 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
   if(fp_gpu == NULL) {
     //errorstr = (char*) strerror(errno);
     //printf("GPU FILE ERROR:%s\n",errorstr);
-    printf("GPU FILE ERROR:%s\n",strerror(errno));
+    printf("GPU FILE ERROR:%s\n",(char*) strerror(errno));
     perror("gpu file error\n");
   }
 
@@ -265,7 +265,7 @@ void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
   for(i=0;i<*size;i++) {
     if((fabs(vector[i] - compare_vector[i])/vector[i] > 0.0001)) {
       if(error_count < 30) {
-  printf("ERROR[%d]: %g != %g\n",i,compare_vector[i], vector[i]);
+  printf("ERROR[%d]: %f != %f\n",i,compare_vector[i], vector[i]);
       }
       error_count++;
       /* if(compare_vector[i] > 1e-30) error_count++; */
@@ -308,7 +308,7 @@ void compare_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
   int error_count=0;
   for(i=0;i<*size;i++) {
     if((abs(vector[i] - compare_vector[i])/vector[i] > 0.01) && error_count < 30) {
-      printf("ERROR[%d]: %g != %g\n",i,compare_vector[i], vector[i]);
+      printf("ERROR[%d]: %d != %d\n",i, compare_vector[i], vector[i]);
       error_count++;
     }
   }

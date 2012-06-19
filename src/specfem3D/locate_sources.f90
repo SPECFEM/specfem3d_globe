@@ -146,6 +146,7 @@
 
   ! make sure we clean the future final array
   ispec_selected_source(:) = 0
+  final_distance_source(:) = HUGEVAL
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -208,10 +209,12 @@
             y_found_source(NSOURCES_SUBSET_current_size), &
             z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary source arrays')
-
+    
     ! make sure we clean the subset array before the gather
     ispec_selected_source_subset(:) = 0
-
+    final_distance_source_subset(:) = HUGEVAL
+    final_distance_source_all(:,:) = HUGEVAL    
+    
     ! loop over sources within this subset
     do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
 
@@ -330,12 +333,14 @@
       do ispec = 1,nspec
 
         ! exclude elements that are too far from target
-        iglob = ibool(MIDX,MIDY,MIDZ,ispec)
-        dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
-                   + (y_target_source - dble(ystore(iglob)))**2 &
-                   + (z_target_source - dble(zstore(iglob)))**2)
-        if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
-
+        if( USE_DISTANCE_CRITERION ) then
+          iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+          dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
+                     + (y_target_source - dble(ystore(iglob)))**2 &
+                     + (z_target_source - dble(zstore(iglob)))**2)
+          if( dist > typical_size ) cycle
+        endif
+        
         ! define the interval in which we look for points
         if(USE_FORCE_POINT_SOURCE) then
           ! force sources will be put on an exact GLL point
@@ -578,6 +583,7 @@
         distmin = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
           if(final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
+            ! stores this slice infos
             distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
             islice_selected_source(isource) = iprocloop
             ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
@@ -692,7 +698,7 @@
       enddo ! end of loop on all the sources within current source subset
 
     endif ! end of section executed by main process only
-
+    
     ! deallocate arrays specific to each subset
     deallocate(final_distance_source_subset)
     deallocate(ispec_selected_source_subset)
@@ -710,7 +716,8 @@
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
   endif
-
+  call sync_all()
+  
   ! main process broadcasts the results to all the slices
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)

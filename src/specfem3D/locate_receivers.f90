@@ -197,7 +197,10 @@
           z_found_all(nrec,0:NPROCTOT_VAL-1), &
           final_distance_all(nrec,0:NPROCTOT_VAL-1),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
-
+  ! initializes
+  final_distance(:) = HUGEVAL
+  final_distance_all(:,:) = HUGEVAL
+  
   ! read that STATIONS file on the master
   if(myrank == 0) then
     call get_value_string(STATIONS, 'solver.STATIONS', trim(rec_filename))
@@ -336,12 +339,14 @@
     do ispec=1,nspec
 
       ! exclude elements that are too far from target
-      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
-      dist = dsqrt((x_target_rec - dble(xstore(iglob)))**2 &
-                 + (y_target_rec - dble(ystore(iglob)))**2 &
-                 + (z_target_rec - dble(zstore(iglob)))**2)
-      if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
-
+      if( USE_DISTANCE_CRITERION ) then
+        iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+        dist = dsqrt((x_target_rec - dble(xstore(iglob)))**2 &
+                   + (y_target_rec - dble(ystore(iglob)))**2 &
+                   + (z_target_rec - dble(zstore(iglob)))**2)
+        if(dist > typical_size) cycle
+      endif
+      
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
       do k=2,NGLLZ-1
@@ -598,6 +603,7 @@
       final_distance(irec) = distmin
     enddo
 
+    islice_selected_rec_found(:) = -1
     nrec_found = 0
     do irec=1,nrec
 
@@ -708,6 +714,8 @@
 
   endif    ! end of section executed by main process only
 
+  call sync_all()
+  
   ! deallocate arrays
   deallocate(epidist)
   deallocate(ix_initial_guess,iy_initial_guess,iz_initial_guess)

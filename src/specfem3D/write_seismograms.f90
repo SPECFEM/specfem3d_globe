@@ -96,8 +96,10 @@
   ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      ! writes out seismogram files
       call write_seismograms_to_file()
 
+      ! user output
       if(myrank==0) then
         write(IMAIN,*)
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
@@ -206,7 +208,7 @@
 
     if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
-
+    ! user output
     if(myrank == 0) then
       write_time = MPI_WTIME() - write_time_begin
       write(IMAIN,*)
@@ -251,6 +253,12 @@
       islice_num_rec_local(:) = 0
       do irec = 1,nrec
         iproc = islice_selected_rec(irec)
+        ! checks iproc value
+        if( iproc < 0 .or. iproc >= NPROCTOT_VAL ) then
+          print*,'error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
+          call exit_mpi(myrank,'error iproc in islice_selected_rec')
+        endif
+        ! sums number of receivers for each slice
         islice_num_rec_local(iproc) = islice_num_rec_local(iproc) + 1
       enddo
 
