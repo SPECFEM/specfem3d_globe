@@ -300,7 +300,7 @@
 
   ! suppress fictitious mass matrix elements in central cube
   ! because the slices do not compute all their spectral elements in the cube
-  where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1.
+  where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1._CUSTOM_REAL
 
   end subroutine prepare_timerun_centralcube
 

@@ -675,6 +675,7 @@
   endif
 
   ! check that mass matrix is positive
-  if(minval(rmassz(:)) <= 0.) call exit_MPI(myrank,'negative rmassz matrix term')
+  ! note: in fictitious elements it is still zero
+  if(minval(rmassz(:)) < 0.) call exit_MPI(myrank,'negative rmassz matrix term')
 
   end subroutine create_mass_matrices
