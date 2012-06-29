@@ -171,8 +171,11 @@
 ! dimensionalize
   depth = R_EARTH_KM*(R_UNIT_SPHERE - r)
   if(depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
-  itheta = int(theta + pxy0)/pxy0
-  ilon = int(phi + pxy0)/pxy0
+!! DK DK  itheta = int(theta + pxy0)/pxy0
+!! DK DK  ilon = int(phi + pxy0)/pxy0
+!! DK DK fixed that because the above contained an automatic conversion from real to int
+  itheta = int((theta + pxy0)/pxy0)
+  ilon = int((phi + pxy0)/pxy0)
   tet = theta
   ph = phi
 
