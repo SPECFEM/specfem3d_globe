@@ -174,8 +174,8 @@
 !! DK DK  itheta = int(theta + pxy0)/pxy0
 !! DK DK  ilon = int(phi + pxy0)/pxy0
 !! DK DK fixed that because the above contained an automatic conversion from real to int
-  itheta = int((theta + pxy0)/pxy0)
-  ilon = int((phi + pxy0)/pxy0)
+  itheta = int(int(theta + pxy0)/pxy0)
+  ilon = int(int(phi + pxy0)/pxy0)
   tet = theta
   ph = phi
 
