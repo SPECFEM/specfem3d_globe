@@ -406,16 +406,18 @@
 !
 
   subroutine get_element(points, ispec, npts, pts)
+    implicit none
+    integer :: npts,ispec,istart_left,istart_right
+    integer, parameter :: NBNODE = 8
+    double precision pts(NBNODE+1,2), points(npts,2)
 
-  implicit none
-  integer npts, ispec,istart,iend
-  integer, parameter :: NBNODE = 8
-  double precision pts(NBNODE+1,2), points(npts,2)
-
-  istart = 1
-  iend = 8
-  pts(istart:iend,:) = points( ( (ispec-1) * NBNODE)+1 : ( (ispec) * NBNODE )+1, : )
-  pts(NBNODE+1,:) = pts(1,:)  ! Use first point as the last point
+    istart_left = 1
+    istart_right = (ispec-1)*NBNODE + 1
+    do i = 0,NBNODE-1
+      pts(istart_left + i,1) = points(istart_right + i,1)
+      pts(istart_left + i,2) = points(istart_right + i,2)
+    enddo
+    pts(NBNODE+1,:) = pts(1,:)  ! Use first point as the last point
 
   end subroutine get_element
 
