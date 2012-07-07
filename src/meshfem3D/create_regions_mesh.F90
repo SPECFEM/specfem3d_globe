@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -166,7 +166,7 @@
   integer nglob,nglob_theor,ieoff,ilocnum,ier
 
   ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz 
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz
   integer :: nglob_xy
 
   ! mass matrix and bathymetry for ocean load
@@ -998,15 +998,15 @@
               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
               xigll,yigll,zigll)
 
-    ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+    ! allocates mass matrices in this slice (will be fully assembled in the solver)
     !
-    ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+    ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
     ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
     ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-    ! 
+    !
     ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
     ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-    
+
     if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
        select case(iregion_code)
        case( IREGION_CRUST_MANTLE )

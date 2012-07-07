@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -140,9 +140,9 @@
      NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROC_XI,NPROC_ETA,LOCAL_PATH)
 
-  
+
   endif
-  
+
 
   end subroutine read_arrays_buffers_solver
 
@@ -192,7 +192,7 @@
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
         status='old',action='read',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening iboolleft_xi file')
-  
+
   npoin2D_xi(1) = 1
  350  continue
   read(IIN,*) iboolleft_xi(npoin2D_xi(1)),xdummy,ydummy,zdummy
@@ -240,7 +240,7 @@
   ! synchronizes processes
   call sync_all()
 
-  
+
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! read 2-D addressing for summation between slices along eta with MPI
@@ -264,7 +264,7 @@
 
   ! synchronizes processes
   call sync_all()
-  
+
 ! read iboolright_eta of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='old',action='read')
   npoin2D_eta(2) = 1
@@ -293,7 +293,7 @@
 
   ! synchronizes processes
   call sync_all()
-  
+
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   end subroutine read_arrays_buffers_1

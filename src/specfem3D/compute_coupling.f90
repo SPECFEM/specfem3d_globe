@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -457,11 +457,11 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_accel_crust_mantle
 
   ! mass matrices
-  ! 
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+  !
+  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
@@ -475,7 +475,7 @@
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
-  logical :: ABSORBING_CONDITIONS 
+  logical :: ABSORBING_CONDITIONS
 
   integer SIMULATION_TYPE
   integer nspec_top

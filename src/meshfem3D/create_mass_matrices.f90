@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,7 @@
   ! Stacey conditions put back
   integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
   integer :: nspec_stacey
-  
+
   double precision, dimension(NGLLX) :: wxgll
   double precision, dimension(NGLLY) :: wygll
   double precision, dimension(NGLLZ) :: wzgll
@@ -130,11 +130,11 @@
   integer :: ix_oceans,iy_oceans,iz_oceans,ispec_oceans,ispec2D_top_crust
 
   ! initializes matrices
-  ! 
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+  !
+  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
 
@@ -350,7 +350,7 @@
 
         rmassx(:) = rmassz(:)
         rmassy(:) = rmassz(:)
-        
+
         !   xmin
         ! if two chunks exclude this face for one of them
         if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then

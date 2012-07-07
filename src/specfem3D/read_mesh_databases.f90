@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -103,11 +103,11 @@
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
   ! mass matrices
-  ! 
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+  !
+  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   integer :: NGLOB_XY, NGLOB_DUMMY
@@ -171,7 +171,7 @@
   ! read arrays created by the mesher
   ! user output
   if( myrank == 0 ) write(IMAIN,*) 'reading mesh databases...'
-  
+
   ! synchronizes processes
   call sync_all()
 
@@ -390,7 +390,7 @@
 
   ! user output
   if( myrank == 0 ) write(IMAIN,*) 'reading MPI addressing...'
-  
+
   ! synchronizes processes
   call sync_all()
 
@@ -469,10 +469,10 @@
     enddo
     write(IMAIN, *) ' '
   endif
-  
+
   ! synchronizes processes
   call sync_all()
-  
+
   ! determine chunk number and local slice coordinates using addressing
   ichunk = ichunk_slice(myrank)
   iproc_xi = iproc_xi_slice(myrank)
@@ -555,7 +555,7 @@
 
   ! synchronizes processes
   call sync_all()
-  
+
   end subroutine read_mesh_databases_addressing
 
 
@@ -671,7 +671,7 @@
 
   ! user output
   if( myrank == 0 ) write(IMAIN,*) 'reading coupling surfaces...'
-  
+
   ! synchronizes processes
   call sync_all()
 
@@ -819,7 +819,7 @@
 
   ! synchronizes processes
   call sync_all()
-  
+
   end subroutine read_mesh_databases_coupling
 
 
@@ -886,7 +886,7 @@
 
   ! user output
   if( myrank == 0 ) write(IMAIN,*) 'reading Stacey boundaries...'
-  
+
   ! synchronizes processes
   call sync_all()
 
@@ -1175,5 +1175,5 @@
 
   ! synchronizes processes
   call sync_all()
-  
+
   end subroutine read_mesh_databases_stacey
