@@ -94,8 +94,7 @@
 \title{\thispagestyle{empty}\textbf{SPECFEM3D\_GLOBE}\\
 \textbf{User Manual}}
 %
-\author{$\copyright$ Princeton University / California Institute of Technology (USA) and\\
-University of Pau / CNRS / INRIA (France)\\
+\author{$\copyright$ Princeton University (USA) and CNRS / INRIA / University of Pau (France)\\
 Version 5.1}
 
 \date{\noindent \today}
@@ -112,7 +111,6 @@ Ebru Bozda\u{g},
 Emanuele Casarotti,
 Joseph Charles,
 Min Chen,
-Hom Nath Gharti,
 Vala Hj\"orleifsd\'ottir,
 Sue Kientz,
 Dimitri Komatitsch,
@@ -149,8 +147,10 @@ by Santiago Lombeyda from Caltech's Center for Advanced Computing Research (CACR
 \chapter{Introduction}
 
 The software package SPECFEM3D\_GLOBE simulates three-dimensional
-global and regional seismic wave propagation based upon the spectral-element
-method (SEM). The SEM is a continuous Galerkin technique, which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11}; it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
+global and regional seismic wave propagation based upon the spectral-element method (SEM).
+The SEM is a continuous Galerkin technique \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11},
+which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11};
+it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
 In particular, it can accurately handle very distorted mesh elements \citep{OlSe11}.\\
 
 It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08}.
@@ -164,7 +164,7 @@ conforming mesh doubling bricks can efficiently handle mesh size variations \cit
 This is particularly true at the scale of the full Earth.\\
 
 For a detailed introduction to the SEM as applied to
-global and regional seismic wave propagation, please consult \citet{KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07,TrKoLi08}.
+global and regional seismic wave propagation, please consult \citet{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07}.
 A detailed theoretical analysis of the dispersion
 and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07} and \citet{SeOl08}.\\
 
@@ -174,7 +174,7 @@ topography and bathymetry, the oceans, rotation, and self-gravitation are includ
 The package can accommodate full 21-parameter anisotropy \citep{ChTr07}
 as well as lateral variations in attenuation \citep{SaKoTr10}. Adjoint
 capabilities and finite-frequency kernel simulations are also included
-\citep{LiTr06,TrKoLi08,LiTr08,FiIgBuKe09,ViOp09}.\\
+\citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,LiTr06,LiTr08,FiIgBuKe09,ViOp09}.\\
 
 The SEM was originally developed in computational fluid dynamics \citep{Pat84,MaPa89}
 and has been successfully adapted to address problems in seismic wave propagation.
@@ -196,18 +196,20 @@ and \url{www.sc-conference.org/sc2003/nr_finalaward.html}).
 It was a finalist again in 2008 for a run at 0.16 petaflops (sustained) on 149,784 processors of the `Jaguar' Cray XT5 system at Oak Ridge National Laboratories (USA) \citep{CaKoLaTiMiLeSnTr08}.
 It also won the BULL Joseph Fourier supercomputing award in 2010.\\
 
-The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}
-as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML) \citep{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10}.
+The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoGoErMi10,KoErGoMi10,MiKo10,Kom11}
+as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML)
+\citep{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10} for the case of single-chunk simulations in regional models.
 
 \section{Citation}
 
 If you use SPECFEM3D\_GLOBE for your own research, please cite at least one
-of the following articles: \cite{TrKoLi08,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,KoGoErMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
+of the following articles: \cite{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,KoGoErMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
 
 If you use this new version 5.1, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
-in which results of 3D non blocking MPI runs are presented: \cite{KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.\\
+in which results of 3D non blocking MPI runs are presented: \cite{KoGoErMi10,KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.\\
 
-If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others: \cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
+If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others:
+\cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
 If you use 3D mantle model S20RTS, please cite \citet{RiVaWo99}.\\
 
 Domain decomposition is explained in detail in \cite{MaKoBlLe08}, and excellent scaling up to 150,000 processor cores in shown for instance in
@@ -237,9 +239,9 @@ The SPECFEM3D\_GLOBE software package comes in a gzipped tar ball.
 In the directory in which you want to install the package, type
 
 \begin{lyxcode}
-tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.2.tar.gz
+tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.4.tar.gz
 \end{lyxcode}
-The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.2} will then contain
+The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.4} will then contain
 the source code.\\
 
 We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
@@ -383,7 +385,7 @@ If you run scaling benchmarks of the code, for instance to measure its performan
 
 Finally, before compiling, make sure that the subdirectories \texttt{obj},
 \texttt{bak} and \texttt{OUTPUT\_FILES} exist within the directory
-with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.2}). The \texttt{go\_mesher}
+with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.4}). The \texttt{go\_mesher}
 script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES}
 directory.
 
@@ -3277,10 +3279,9 @@ to Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu} or to the CIG Compu
 
 Main authors: Dimitri Komatitsch and Jeroen Tromp
 
-Princeton University, USA,
-and University of Pau / CNRS / INRIA, France
+Princeton University, USA, and CNRS / INRIA / University of Pau, France
 
-$\copyright$ Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA, December 2010
+$\copyright$ Princeton University and CNRS / INRIA / University of Pau, April 2011
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -3383,7 +3384,7 @@ and the Harvard CMT convention is
 Conventions{\small{} }}
 
 All physical parameters used are non-dimensionalized internally in the code
-in order to work in a reference Earth of radius 1. In Table~{\small \ref{table:conventions} in the right column are the values by which 
+in order to work in a reference Earth of radius 1. In Table~{\small \ref{table:conventions} in the right column are the values by which
 we divide the parameters of the left column internally to perform the calculations.
 The values output and saved by the code (seismograms, sensitivity kernels...) are then
 scaled back to the right physical dimensions before being saved.
