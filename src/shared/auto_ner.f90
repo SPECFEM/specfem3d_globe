@@ -407,7 +407,7 @@
 
   subroutine get_element(points, ispec, npts, pts)
     implicit none
-    integer :: npts,ispec,istart_left,istart_right
+    integer :: npts,ispec,istart_left,istart_right,i
     integer, parameter :: NBNODE = 8
     double precision pts(NBNODE+1,2), points(npts,2)
 
