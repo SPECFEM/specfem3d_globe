@@ -119,6 +119,8 @@
     write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
     !  LQY -- won't be able to know NSOURCES+nrec at this point...
     write(IOVTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
+    ! closing file, rest of informations will be appended later on
+    close(IOVTK)
   endif
 
   ! locate sources in the mesh
@@ -405,7 +407,7 @@
 
   subroutine setup_sources_receivers_VTKfile()
 
-  use specfem_par
+  use specfem_par,only: myrank,OUTPUT_FILES,NSOURCES,nrec
   implicit none
 
   ! local parameters
@@ -415,9 +417,6 @@
   if(myrank == 0) then
 
     ! finishes vtk file
-    write(IOVTK,*) ""
-    close(IOVTK)
-
     !  we should know NSOURCES+nrec at this point...
     ! creates source/receiver location file
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'

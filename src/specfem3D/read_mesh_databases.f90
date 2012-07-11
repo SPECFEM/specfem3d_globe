@@ -31,12 +31,15 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+
   implicit none
 
-  include 'mpif.h'
-
+  ! local parameters
+  ! timing
+  double precision, external :: wtime
+  
   ! get MPI starting time
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   ! start reading the databases
   ! read arrays created by the mesher
@@ -53,7 +56,7 @@
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
   call read_mesh_databases_coupling()
 
-  ! reads "addressing.txt" 2-D addressing for summation between slices with MPI
+  ! reads "addressing.txt" 2-D addressing (needed for stacey boundaries)
   call read_mesh_databases_addressing()
 
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
@@ -69,7 +72,7 @@
   call sync_all()
   if( myrank == 0 ) then
     ! elapsed time since beginning of mesh generation
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for reading mesh in seconds = ',sngl(tCPU)
     write(IMAIN,*)
@@ -509,7 +512,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine read_mesh_databases_addressing()
 
   use specfem_par
@@ -522,7 +524,9 @@
   include 'mpif.h'
 
   ! local parameters
-  integer :: ier,iproc,iproc_read
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+  integer :: ier,iproc,iproc_read,iproc_xi,iproc_eta
 
   ! open file with global slice number addressing
   if(myrank == 0) then
@@ -602,8 +606,9 @@
   ! determine chunk number and local slice coordinates using addressing
   ! (needed for stacey conditions)
   ichunk = ichunk_slice(myrank)
-  iproc_xi = iproc_xi_slice(myrank)
-  iproc_eta = iproc_eta_slice(myrank)
+  
+  !iproc_xi = iproc_xi_slice(myrank)
+  !iproc_eta = iproc_eta_slice(myrank)
 
   end subroutine read_mesh_databases_addressing
 

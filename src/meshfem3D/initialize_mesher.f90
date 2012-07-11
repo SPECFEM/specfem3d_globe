@@ -35,7 +35,9 @@
 
   ! local parameters
   integer :: ier
-
+  ! timing
+  double precision, external :: wtime
+  
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and NPROCTOT-1.
 ! as usual in MPI, process 0 is in charge of coordinating everything
@@ -52,7 +54,7 @@
     open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
 
 ! get MPI starting time
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   if(myrank == 0) then
     write(IMAIN,*)

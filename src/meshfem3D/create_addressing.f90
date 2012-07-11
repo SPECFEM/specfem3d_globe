@@ -73,4 +73,57 @@
 
   if(myrank == 0) close(IOUT)
 
+  ! output a topology map of slices - fix 20x by nproc
+  if (myrank == 0 ) then 
+    if( NCHUNKS == 6 .and. NPROC < 1000 ) then
+      write(IMAIN,*) 'Spatial distribution of the slices'
+      do iproc_xi = NPROC_XI-1, 0, -1
+        write(IMAIN,'(20x)',advance='no')
+        do iproc_eta = NPROC_ETA -1, 0, -1
+          ichunk = CHUNK_AB
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
+      enddo
+      write(IMAIN, *) ' '
+      do iproc_xi = NPROC_XI-1, 0, -1
+        write(IMAIN,'(1x)',advance='no')
+        do iproc_eta = NPROC_ETA -1, 0, -1
+          ichunk = CHUNK_BC
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(3x)',advance='no')
+        do iproc_eta = NPROC_ETA -1, 0, -1
+          ichunk = CHUNK_AC
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(3x)',advance='no')
+        do iproc_eta = NPROC_ETA -1, 0, -1
+          ichunk = CHUNK_BC_ANTIPODE
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
+      enddo
+      write(IMAIN, *) ' '
+      do iproc_xi = NPROC_XI-1, 0, -1
+        write(IMAIN,'(20x)',advance='no')
+        do iproc_eta = NPROC_ETA -1, 0, -1
+          ichunk = CHUNK_AB_ANTIPODE
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
+      enddo
+      write(IMAIN, *) ' '
+      do iproc_xi = NPROC_XI-1, 0, -1
+        write(IMAIN,'(20x)',advance='no')
+        do iproc_eta = NPROC_ETA -1, 0, -1
+          ichunk = CHUNK_AC_ANTIPODE
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
+      enddo
+      write(IMAIN, *) ' '
+    endif
+  endif
+
   end subroutine create_addressing

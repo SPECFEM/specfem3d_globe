@@ -196,3 +196,17 @@
 
   end subroutine wait_req
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function wtime()
+
+  implicit none
+
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  wtime = MPI_WTIME()
+
+  end function wtime

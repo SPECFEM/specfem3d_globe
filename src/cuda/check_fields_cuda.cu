@@ -81,7 +81,7 @@ void pause_for_debugger(int pause) {
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
     printf("PID %d on %s:%d ready for attach\n", getpid(), hostname,myrank);
-    FILE *file = fopen("/scratch/eiger/rietmann/attach_gdb.txt","w+");
+    FILE *file = fopen("./attach_gdb.txt","w+");
     if( file != NULL ){
       fprintf(file,"PID %d on %s:%d ready for attach\n", getpid(), hostname,myrank);
       fclose(file);
@@ -98,21 +98,61 @@ void exit_on_cuda_error(char* kernel_name) {
   // sync and check to catch errors from previous async operations
   cudaThreadSynchronize();
   cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr,"Error after: %s --- %s\n", kernel_name, cudaGetErrorString(err));
-    pause_for_debugger(0);
+  if (err != cudaSuccess){
+    fprintf(stderr,"Error after %s: %s\n", kernel_name, cudaGetErrorString(err));
+    
+    //debugging
+    //pause_for_debugger(0);
+    
+    // outputs error file
+    FILE* fp;
+    int myrank;
+    char filename[BUFSIZ];  
+#ifdef WITH_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+#else
+    myrank = 0;
+#endif  
+    sprintf(filename,"../in_out_files/OUTPUT_FILES/error_message_%06d.txt",myrank);
+    fp = fopen(filename,"a+");
+    if (fp != NULL){
+      fprintf(fp,"Error after %s: %s\n", kernel_name, cudaGetErrorString(err));
+      fclose(fp);
+    }
+    
+    // stops program
     //free(kernel_name);
+#ifdef WITH_MPI
+    MPI_Abort(MPI_COMM_WORLD,1);
+#endif
     exit(EXIT_FAILURE);
   }
 }
 
+
 /* ----------------------------------------------------------------------------------------------- */
 
-void exit_on_error(char* info)
-{
+void exit_on_error(char* info) {
   printf("\nERROR: %s\n",info);
   fflush(stdout);
+  
+  // outputs error file
+  FILE* fp;
+  int myrank;
+  char filename[BUFSIZ];  
+#ifdef WITH_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+#else
+  myrank = 0;
+#endif  
+  sprintf(filename,"../in_out_files/OUTPUT_FILES/error_message_%06d.txt",myrank);
+  fp = fopen(filename,"a+");
+  if (fp != NULL){
+    fprintf(fp,"ERROR: %s\n",info);
+    fclose(fp);
+  }
+  
+  // stops program
 #ifdef WITH_MPI
   MPI_Abort(MPI_COMM_WORLD,1);
 #endif
@@ -123,12 +163,29 @@ void exit_on_error(char* info)
 
 /* ----------------------------------------------------------------------------------------------- */
 
-void print_CUDA_error_if_any(cudaError_t err, int num)
-{
+void print_CUDA_error_if_any(cudaError_t err, int num) {
   if (cudaSuccess != err)
   {
     printf("\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
     fflush(stdout);
+    
+    // outputs error file
+    FILE* fp;
+    int myrank;
+    char filename[BUFSIZ];  
+#ifdef WITH_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+#else
+    myrank = 0;
+#endif  
+    sprintf(filename,"../in_out_files/OUTPUT_FILES/error_message_%06d.txt",myrank);
+    fp = fopen(filename,"a+");
+    if (fp != NULL){
+      fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
+      fclose(fp);
+    }
+    
+    // stops program
 #ifdef WITH_MPI
     MPI_Abort(MPI_COMM_WORLD,1);
 #endif
@@ -663,19 +720,20 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
    }
    *d_max = max;
    */
-
+  
   // reduction example:
-  __shared__ realw sdata[256] ;
-
+  __shared__ realw sdata[BLOCKSIZE_TRANSFER] ;
+  
   // load shared mem
   unsigned int tid = threadIdx.x;
-  unsigned int i = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-
+  unsigned int bx = blockIdx.y*gridDim.x+blockIdx.x;
+  unsigned int i = tid + bx*blockDim.x;  
+  
   // loads absolute values into shared memory
   sdata[tid] = (i < size) ? fabs(array[i]) : 0.0 ;
-
+  
   __syncthreads();
-
+  
   // do reduction in shared mem
   for(unsigned int s=blockDim.x/2; s>0; s>>=1)
   {
@@ -687,10 +745,10 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
     }
     __syncthreads();
   }
-
+  
   // write result for this block to global mem
-  if (tid == 0) d_max[blockIdx.x] = sdata[0];
-
+  if (tid == 0) d_max[bx] = sdata[0];
+  
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -708,7 +766,7 @@ TRACE("check_norm_acoustic_from_device");
   realw max;
   realw *d_max;
 
-  max = 0;
+  max = 0.0;
 
   /* way 1 : timing Elapsed time: 8.464813e-03
    realw* h_array;
@@ -743,7 +801,7 @@ TRACE("check_norm_acoustic_from_device");
   // way 2 b: timing Elapsed time: 1.236916e-03
   // launch simple reduction kernel
   realw* h_max;
-  int blocksize = 256;
+  int blocksize = BLOCKSIZE_TRANSFER;
 
   // outer core
   int size = mp->NGLOB_OUTER_CORE;
@@ -835,19 +893,20 @@ TRACE("check_norm_acoustic_from_device");
 __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
 
   // reduction example:
-  __shared__ realw sdata[256] ;
-
+  __shared__ realw sdata[BLOCKSIZE_TRANSFER] ;
+  
   // load shared mem
   unsigned int tid = threadIdx.x;
-  unsigned int i = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-
+  unsigned int bx = blockIdx.y*gridDim.x+blockIdx.x;
+  unsigned int i = tid + bx*blockDim.x;  
+  
   // loads values into shared memory: assume array is a vector array
   sdata[tid] = (i < size) ? sqrt(array[i*3]*array[i*3]
                                  + array[i*3+1]*array[i*3+1]
                                  + array[i*3+2]*array[i*3+2]) : 0.0 ;
-
+  
   __syncthreads();
-
+  
   // do reduction in shared mem
   for(unsigned int s=blockDim.x/2; s>0; s>>=1)
   {
@@ -859,10 +918,10 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
     }
     __syncthreads();
   }
-
+  
   // write result for this block to global mem
-  if (tid == 0) d_max[blockIdx.x] = sdata[0];
-
+  if (tid == 0) d_max[bx] = sdata[0];
+  
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -886,10 +945,10 @@ void FC_FUNC_(check_norm_elastic_from_device,
 
   // launch simple reduction kernel
   realw* h_max;
-  int blocksize = 256;
+  int blocksize = BLOCKSIZE_TRANSFER;
 
   // crust_mantle
-  max = 0;
+  max = 0.0;
   size = mp->NGLOB_CRUST_MANTLE;
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
@@ -927,7 +986,7 @@ void FC_FUNC_(check_norm_elastic_from_device,
   free(h_max);
 
   // inner_core
-  max = 0;
+  max = 0.0;
   size = mp->NGLOB_INNER_CORE;
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
@@ -997,8 +1056,8 @@ void FC_FUNC_(check_norm_strain_from_device,
 
   // launch simple reduction kernel
   realw* h_max;
-  int blocksize = 256;
-
+  int blocksize = BLOCKSIZE_TRANSFER;
+  
   // crust_mantle strain arrays
   size = NGLL3*(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
 

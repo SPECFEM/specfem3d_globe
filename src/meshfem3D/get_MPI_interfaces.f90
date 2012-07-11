@@ -47,7 +47,7 @@
   integer, dimension(MAX_NEIGHBOURS),intent(inout) :: my_neighbours,nibool_neighbours
   integer, dimension(max_nibool,MAX_NEIGHBOURS),intent(inout) :: ibool_neighbours
 
-  integer,intent(out) :: num_interfaces,max_nibool_interfaces
+  integer,intent(inout) :: num_interfaces,max_nibool_interfaces
 
   integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 

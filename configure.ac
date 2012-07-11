@@ -115,8 +115,20 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h])
+AC_CONFIG_FILES([
+  Makefile 
+  src/auxiliaries/Makefile 
+  src/meshfem3D/Makefile 
+  src/specfem3D/Makefile 
+  src/create_header_file/Makefile 
+  setup/constants.h setup/precision.h])
 AC_OUTPUT
 
+#daniel: adding custom lines to config.h.in through autoheader
+AH_BOTTOM([
+/* Uncomment and define to select optimized file i/o for regional simulations */
+/* map fails when output files are > 4GB, which is often the case for GPU simulations */
+// #define USE_MAP_FUNCTION
+])
 
 dnl end of configure.ac

@@ -302,6 +302,11 @@ end module create_MPI_interfaces_par
   ! use number of elements found in the mantle since it is the largest region
   NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
 
+  ! initializes
+  NCORNERSCHUNKS = 0
+  NUM_FACES = 0
+  NUM_MSG_TYPES = 0
+
   ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1
@@ -318,11 +323,11 @@ end module create_MPI_interfaces_par
   else
     call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
   endif
+  
   ! if more than one chunk then same number of processors in each direction
   NPROC_ONE_DIRECTION = NPROC_XI
   ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
-
 
   allocate(iprocfrom_faces(NUMMSGS_FACES), &
           iprocto_faces(NUMMSGS_FACES), &
@@ -334,7 +339,6 @@ end module create_MPI_interfaces_par
           iproc_worker1_corners(NCORNERSCHUNKS), &
           iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating iproc corner arrays')
-
 
   ! parameters from header file
   NGLOB1D_RADIAL_CM = NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)

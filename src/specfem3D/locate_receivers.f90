@@ -143,9 +143,11 @@
   integer,parameter :: MIDY = (NGLLY+1)/2
   integer,parameter :: MIDZ = (NGLLZ+1)/2
 
-
+  ! timing
+  double precision, external :: wtime
+  
   ! get MPI starting time
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   ! make sure we clean the array before the gather
   ispec_selected_rec(:) = 0
@@ -398,8 +400,10 @@
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
-
+    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
+          status='unknown',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file RECORDHEADERS')
+    
     nsamp = nint(dble(NSTEP-1)*DT)
 
     do irec = 1,nrec
@@ -449,6 +453,7 @@
     ! define coordinates of the control points of the element
     do ia=1,NGNOD
 
+      iax = 0
       if(iaddx(ia) == 0) then
         iax = 1
       else if(iaddx(ia) == 1) then
@@ -459,6 +464,7 @@
         call exit_MPI(myrank,'incorrect value of iaddx')
       endif
 
+      iay = 0
       if(iaddy(ia) == 0) then
         iay = 1
       else if(iaddy(ia) == 1) then
@@ -469,6 +475,7 @@
         call exit_MPI(myrank,'incorrect value of iaddy')
       endif
 
+      iaz = 0      
       if(iaddr(ia) == 0) then
         iaz = 1
       else if(iaddr(ia) == 1) then
@@ -603,8 +610,13 @@
       final_distance(irec) = distmin
     enddo
 
+    ! appends receiver locations to sr.vtk file
+    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+          position='append',status='old',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
+
     islice_selected_rec_found(:) = -1
-    nrec_found = 0
+    nrec_found = 0    
     do irec=1,nrec
 
       if(final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'error locating receiver')
@@ -651,8 +663,11 @@
         ! writes out actual receiver location to vtk file
         write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
-
     enddo
+    
+    ! finishes sr_tmp.vtk file
+    write(IOVTK,*)
+    close(IOVTK)
 
     ! compute maximal distance for all the receivers
     final_distance_max = maxval(final_distance(:))
@@ -688,7 +703,9 @@
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
-    open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
+    open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
+          status='unknown',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file output_list_stations.txt')
     write(27,*)
     write(27,*) 'total number of stations: ',nrec
     write(27,*)
@@ -701,7 +718,9 @@
 
     ! write out a filtered station list
     if( NCHUNKS /= 6 ) then
-      open(unit=27,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED',status='unknown')
+      open(unit=27,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
+            status='unknown',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
         write(27,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
@@ -747,7 +766,7 @@
 
   ! elapsed time since beginning of mesh generation
   if( myrank == 0 ) then
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for receiver detection in seconds = ',tCPU
     write(IMAIN,*)

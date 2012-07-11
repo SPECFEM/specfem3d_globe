@@ -37,9 +37,11 @@
 
   ! local parameters
   integer :: ier
-
+  ! timing
+  double precision, external :: wtime
+  
   ! get MPI starting time
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   ! make ellipticity
   if( ELLIPTICITY_VAL ) then
@@ -70,7 +72,7 @@
   call sync_all()
   if( myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL .or. ELLIPTICITY_VAL)) then
     ! elapsed time since beginning of mesh generation
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for reading topo/bathy in seconds = ',sngl(tCPU)
     write(IMAIN,*)

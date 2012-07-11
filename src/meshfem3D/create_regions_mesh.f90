@@ -185,6 +185,10 @@
   ! variables for creating array ibool (some arrays also used for AVS or DX files)
   integer, dimension(:), allocatable :: locval
   logical, dimension(:), allocatable :: ifseg
+
+  integer, dimension(:), allocatable :: num_ibool_AVS_DX
+  logical, dimension(:), allocatable :: mask_ibool
+  
   double precision, dimension(:), allocatable :: xp,yp,zp
   integer :: nglob
   integer :: ieoff,ilocnum,ier
@@ -254,21 +258,30 @@
 
   integer i,j,k,ispec
 
+  ! timing
+  double precision, external :: wtime
+  double precision :: time_start,tCPU
+
   ! name of the database file
   character(len=150) :: prname
   character(len=150) :: errmsg
 
   ! user output
   if(myrank == 0 ) then
-    if(ipass == 1 ) write(IMAIN,*) 'first pass'
-    if(ipass == 2 ) write(IMAIN,*) 'second pass'
+    select case(ipass)
+    case(1)
+      write(IMAIN,*) 'first pass'
+    case(2)
+      write(IMAIN,*) 'second pass'
+    case default
+      call exit_MPI(myrank,'error ipass value in create_regions_mesh')
+    end select
   endif
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
 ! initializes arrays
-  call sync_all()
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...allocating arrays '
@@ -492,6 +505,9 @@
 !----  creates mesh elements
 !----
 
+  ! get MPI starting time
+  time_start = wtime()
+
   ! loop on all the layers in this region of the mesh
   ispec = 0 ! counts all the elements in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
@@ -499,9 +515,11 @@
     ilayer = perm_layer(ilayer_loop)
 
     ! user output
-    if(myrank == 0 ) write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
+    if(myrank == 0 ) then
+      write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
                                    'out of ',ilast_region-ifirst_region+1
-
+    endif
+    
     ! determine the radii that define the shell
     rmin = rmins(ilayer)
     rmax = rmaxs(ilayer)
@@ -592,14 +610,26 @@
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
                     ispec_is_tiso)
 
-  enddo !ilayer_loop
+    ! user output
+    if(myrank == 0 ) then
+      ! time estimate
+      tCPU = wtime() - time_start
+      ! remaining
+      tCPU = (1.0-(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)) &
+                /(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)*tCPU
+      write(IMAIN,*) "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0," %", &
+                    " time remaining:", tCPU,"s"
+    endif
 
+  enddo !ilayer_loop
+  if(myrank == 0 ) write(IMAIN,*)
+  
   ! define central cube in inner core
   if(INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) then
     ! user output
     if(myrank == 0 ) write(IMAIN,*) '  creating central cube'
 
-    call create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz, &
+    call create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
@@ -641,18 +671,6 @@
     ! user output
     if(myrank == 0 ) write(IMAIN,*) '  creating global addressing'
 
-    !uncomment: adds model smoothing for point profile models
-    !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
-    !     call smooth_model(myrank, nproc_xi,nproc_eta,&
-    !        rho_vp,rho_vs,nspec_stacey, &
-    !        iregion_code,xixstore,xiystore,xizstore, &
-    !        etaxstore,etaystore,etazstore, &
-    !        gammaxstore,gammaystore,gammazstore, &
-    !        xstore,ystore,zstore,rhostore,dvpstore, &
-    !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
-    !        nspec,HETEROGEN_3D_MANTLE, &
-    !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
-
     ! allocate memory for arrays
     allocate(locval(npointot), &
             ifseg(npointot), &
@@ -687,6 +705,7 @@
     call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
 
     deallocate(xp,yp,zp)
+    deallocate(locval,ifseg)
 
     ! check that number of points found equals theoretical value
     if(nglob /= nglob_theor) then
@@ -704,58 +723,31 @@
     if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
 
     ! create MPI buffers
-    ! arrays locval(npointot) and ifseg(npointot) used to save memory
+    ! arrays mask_ibool(npointot) used to save memory
+    ! allocate memory for arrays
+    allocate(mask_ibool(npointot), &
+            stat=ier)
+    if(ier /= 0) stop 'error in allocate 20b'
+    
     call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
-                    xstore,ystore,zstore,ifseg,npointot, &
+                    xstore,ystore,zstore,mask_ibool,npointot, &
                     NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi)
 
     call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
-                    xstore,ystore,zstore,ifseg,npointot, &
+                    xstore,ystore,zstore,mask_ibool,npointot, &
                     NSPEC2D_XI_FACE,iregion_code,npoin2D_eta)
 
     call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
-                    xstore,ystore,zstore,ifseg,npointot, &
+                    xstore,ystore,zstore,mask_ibool,npointot, &
                     NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
+
+    deallocate(mask_ibool)
 
     ! Stacey
     if(NCHUNKS /= 6) &
          call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
     
-    ! create AVS or DX mesh data for the slices
-    if(SAVE_MESH_FILES) then
-      call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-
-      call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code)
-
-      call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code)
-
-      call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code)
-
-      !> Hejun
-      ! Output material information for all GLL points
-      ! Can be use to check the mesh
-      !    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore,&
-      !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
-    endif
-
-    deallocate(locval,ifseg)
-
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
     ! user output
@@ -789,6 +781,18 @@
               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
               xigll,yigll,zigll)
+
+    !uncomment: adds model smoothing for point profile models
+    !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
+    !     call smooth_model(myrank, nproc_xi,nproc_eta,&
+    !        rho_vp,rho_vs,nspec_stacey, &
+    !        iregion_code,xixstore,xiystore,xizstore, &
+    !        etaxstore,etaystore,etazstore, &
+    !        gammaxstore,gammaystore,gammazstore, &
+    !        xstore,ystore,zstore,rhostore,dvpstore, &
+    !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+    !        nspec,HETEROGEN_3D_MANTLE, &
+    !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
 
     ! allocates mass matrices in this slice (will be fully assembled in the solver) 
     !
@@ -874,8 +878,17 @@
     deallocate(rmassx,rmassy,rmassz)
     deallocate(rmass_ocean_load)
 
+    ! compute volume, bottom and top area of that part of the slice
+    call compute_volumes(volume_local,area_local_bottom,area_local_top, &
+                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+
     ! boundary mesh
     if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+      ! user output
+      if(myrank == 0 ) write(IMAIN,*) '  saving boundary mesh files'    
+
       ! first check the number of surface elements are the same for Moho, 400, 670
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
         if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
@@ -904,12 +917,50 @@
       close(27)
     endif
 
-    ! compute volume, bottom and top area of that part of the slice
-    call compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+    ! create AVS or DX mesh data for the slices
+    if(SAVE_MESH_FILES) then
+      ! user output
+      if(myrank == 0 ) write(IMAIN,*) '  saving AVS mesh files'
+      
+      ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
+      ! allocate memory for arrays
+      allocate(num_ibool_AVS_DX(npointot), &
+              mask_ibool(npointot), &
+              stat=ier)
+      if(ier /= 0) stop 'error in allocate 21'
+    
+      call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore, &
+                                    num_ibool_AVS_DX,mask_ibool,npointot)
 
+      call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
+              idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,iregion_code)
+
+      call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,iregion_code)
+
+      call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,iregion_code)
+      
+      !> Hejun
+      ! Output material information for all GLL points
+      ! Can be use to check the mesh
+      !    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore,&
+      !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
+
+      deallocate(num_ibool_AVS_DX,mask_ibool)      
+    endif
 
   case default
     stop 'there cannot be more than two passes in mesh creation'
@@ -951,8 +1002,11 @@
   deallocate(normal_moho,normal_400,normal_670)
   deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
 
+  ! user output
+  if(myrank == 0 ) write(IMAIN,*)  
+
   ! synchronizes processes
-  call sync_all()
+  !call sync_all()
 
   end subroutine create_regions_mesh
 
