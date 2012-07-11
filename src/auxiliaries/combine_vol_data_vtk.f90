@@ -151,6 +151,7 @@ program combine_vol_data_vtk
 
   ! resolution
   read(arg(6),*) ires
+  di = 0; dj = 0; dk = 0  
   if (ires == 0) then
     HIGH_RESOLUTION_MESH = .false.
     di = NGLLX-1; dj = NGLLY-1; dk = NGLLZ-1

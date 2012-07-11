@@ -258,13 +258,9 @@ module specfem_par
   ! MPI partitions
   !-----------------------------------------------------------------
 
-  ! for addressing of the slices
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
-
   ! proc numbers for MPI
   integer :: myrank
-  integer :: ichunk,iproc_xi,iproc_eta
+  integer :: ichunk ! needed for stacey boundaries
 
   ! time loop timing
   double precision :: time_start,tCPU

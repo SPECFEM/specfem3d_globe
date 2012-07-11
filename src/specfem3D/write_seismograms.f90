@@ -153,7 +153,9 @@
   integer,dimension(:),allocatable:: islice_num_rec_local
   integer :: msg_status(MPI_STATUS_SIZE)
   character(len=256) :: sisname
-
+  ! timing
+  double precision, external :: wtime
+  
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if(ier /= 0) call exit_mpi(myrank,'error while allocating one temporary seismogram')
@@ -164,7 +166,7 @@
   ! all the processes write their local seismograms themselves
   if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
-    write_time_begin = MPI_WTIME()
+    write_time_begin = wtime()
 
     if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
       write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
@@ -210,7 +212,7 @@
 
     ! user output
     if(myrank == 0) then
-      write_time = MPI_WTIME() - write_time_begin
+      write_time = wtime() - write_time_begin
       write(IMAIN,*)
       write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
       write(IMAIN,*)
@@ -220,7 +222,7 @@
   ! collects the data from all other processes
   else ! WRITE_SEISMOGRAMS_BY_MASTER
 
-    write_time_begin = MPI_WTIME()
+    write_time_begin = wtime()
 
     if(myrank == 0) then ! on the master, gather all the seismograms
 
@@ -325,7 +327,7 @@
 
 
     if(myrank == 0) then
-      write_time  = MPI_WTIME() - write_time_begin
+      write_time  = wtime() - write_time_begin
       write(IMAIN,*)
       write(IMAIN,*) 'Writing the seismograms by master proc alone took ',write_time,' seconds'
       write(IMAIN,*)

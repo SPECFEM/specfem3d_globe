@@ -39,15 +39,15 @@
 
 
 //  cuda constant arrays
-__constant__ realw d_hprime_xx[NGLL2];
-__constant__ realw d_hprime_yy[NGLL2];
-__constant__ realw d_hprime_zz[NGLL2];
-__constant__ realw d_hprimewgll_xx[NGLL2];
-__constant__ realw d_hprimewgll_yy[NGLL2];
-__constant__ realw d_hprimewgll_zz[NGLL2];
-__constant__ realw d_wgllwgll_xy[NGLL2];
-__constant__ realw d_wgllwgll_xz[NGLL2];
-__constant__ realw d_wgllwgll_yz[NGLL2];
+__device__ realw d_hprime_xx[NGLL2];
+__device__ realw d_hprime_yy[NGLL2];
+__device__ realw d_hprime_zz[NGLL2];
+__device__ realw d_hprimewgll_xx[NGLL2];
+__device__ realw d_hprimewgll_yy[NGLL2];
+__device__ realw d_hprimewgll_zz[NGLL2];
+__device__ realw d_wgllwgll_xy[NGLL2];
+__device__ realw d_wgllwgll_xz[NGLL2];
+__device__ realw d_wgllwgll_yz[NGLL2];
 
 __constant__ realw d_wgll_cube[NGLL3]; // needed only for gravity case
 

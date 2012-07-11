@@ -31,9 +31,10 @@
   use meshfem3D_par
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
-
+  ! local parameters
+  ! timing
+  double precision, external :: wtime
+  
   !--- print number of points and elements in the mesh for each region
   if(myrank == 0) then
 
@@ -154,7 +155,7 @@
 
   ! elapsed time since beginning of mesh generation
   if(myrank == 0) then
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
     write(IMAIN,*) 'End of mesh generation'

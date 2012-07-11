@@ -334,7 +334,7 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-        call compute_element_properties(ispec,iregion_code,idoubling, &
+        call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
                          RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
                          R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &

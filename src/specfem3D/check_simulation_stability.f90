@@ -94,7 +94,9 @@
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer :: ier
   integer, external :: idaywk
-
+  ! timing
+  double precision, external :: wtime
+  
   double precision,parameter :: scale_displ = R_EARTH
 
 
@@ -203,7 +205,7 @@
     endif
 
     ! elapsed time since beginning of the simulation
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     int_tCPU = int(tCPU)
     ihours = int_tCPU / 3600
     iminutes = (int_tCPU - 3600*ihours) / 60

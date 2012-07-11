@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz, &
+  subroutine create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
@@ -110,7 +110,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
   integer ispec
-  integer iproc_xi,iproc_eta,ichunk
+  integer iproc_xi,iproc_eta,ichunk,ipass
 
 ! attenuation
   integer nspec_att
@@ -257,7 +257,7 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-        call compute_element_properties(ispec,iregion_code,idoubling, &
+        call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
                          RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
                          R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &

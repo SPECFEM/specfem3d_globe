@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! compute several rheological and geometrical properties for a given spectral element
-  subroutine compute_element_properties(ispec,iregion_code,idoubling, &
+  subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
                          RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
                          R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -61,6 +61,9 @@
 ! code for the four regions of the mesh
   integer iregion_code
 
+! meshing phase
+  integer ipass
+  
 ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
 
@@ -192,7 +195,9 @@
 
 
   ! computes model's velocity/density/... values for the chosen Earth model
-  call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
+  ! (only needed for second meshing phase)
+  if( ipass == 2 ) then
+    call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
                       kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                       rhostore,dvpstore,nspec_ani, &
                       c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -206,7 +211,8 @@
                       size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5), &
                       ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
 
-
+  endif
+  
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   ! note:  using gll points to capture them results in a slightly more accurate mesh.
   !           however, it introduces more deformations to the elements which might lead to
@@ -283,12 +289,15 @@
                                       xstore,ystore,zstore,shape3D)
 
   ! updates jacobian
-  call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
+  ! (only needed for second meshing phase)
+  if( ipass == 2 ) then  
+    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
                                 ispec,nspec,ACTUALLY_STORE_ARRAYS,&
                                 xixstore,xiystore,xizstore,&
                                 etaxstore,etaystore,etazstore,&
                                 gammaxstore,gammaystore,gammazstore)
-
+  endif
+  
   end subroutine compute_element_properties
 
 !

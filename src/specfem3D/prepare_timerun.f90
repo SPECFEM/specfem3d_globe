@@ -29,12 +29,15 @@
 
   use specfem_par
   use specfem_par_movie
+
   implicit none
 
-  include 'mpif.h'
-
+  ! local parameters
+  ! timing
+  double precision, external :: wtime
+  
   ! get MPI starting time
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   ! user output infos
   call prepare_timerun_user_output()
@@ -78,10 +81,13 @@
   ! prepares GPU arrays
   if(GPU_MODE) call prepare_timerun_GPU()
 
+  ! synchronize all the processes
+  call sync_all()
+
   ! user output
   if( myrank == 0 ) then
     ! elapsed time since beginning of mesh generation
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for preparing timerun in seconds = ',sngl(tCPU)
     write(IMAIN,*)
@@ -93,8 +99,6 @@
     write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
     write(IMAIN,*)
   endif
-
-  call sync_all()
 
   end subroutine prepare_timerun
 

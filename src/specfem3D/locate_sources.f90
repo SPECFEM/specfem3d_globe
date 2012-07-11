@@ -141,8 +141,11 @@
   integer,parameter :: MIDY = (NGLLY+1)/2
   integer,parameter :: MIDZ = (NGLLZ+1)/2
 
+  ! timing
+  double precision, external :: wtime
+  
   ! get MPI starting time for all sources
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   ! make sure we clean the future final array
   ispec_selected_source(:) = 0
@@ -181,6 +184,13 @@
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
+  ! appends receiver locations to sr.vtk file
+  if( myrank == 0 ) then
+    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+          position='append',status='old',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
+  endif
+  
   ! loop on all the sources
   ! gather source information in subsets to reduce memory requirements
 
@@ -329,6 +339,9 @@
 
       ! flag to check that we located at least one target element
       located_target = .false.
+      ix_initial_guess_source = 0
+      iy_initial_guess_source = 0
+      iz_initial_guess_source = 0
 
       do ispec = 1,nspec
 
@@ -440,6 +453,7 @@
         ! define coordinates of the control points of the element
         do ia=1,NGNOD
 
+          iax = 0
           if(iaddx(ia) == 0) then
             iax = 1
           else if(iaddx(ia) == 1) then
@@ -449,7 +463,8 @@
           else
             call exit_MPI(myrank,'incorrect value of iaddx')
           endif
-
+          
+          iay = 0
           if(iaddy(ia) == 0) then
             iay = 1
           else if(iaddy(ia) == 1) then
@@ -460,6 +475,7 @@
             call exit_MPI(myrank,'incorrect value of iaddy')
           endif
 
+          iaz = 0
           if(iaddr(ia) == 0) then
             iaz = 1
           else if(iaddr(ia) == 1) then
@@ -715,6 +731,9 @@
     write(IMAIN,*)
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
+    
+    ! closing sr_tmp.vtk
+    close(IOVTK)
   endif
   call sync_all()
   
@@ -733,7 +752,7 @@
 
   ! elapsed time since beginning of source detection
   if(myrank == 0) then
-    tCPU = MPI_WTIME() - time_start
+    tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for detection of sources in seconds = ',tCPU
     write(IMAIN,*)

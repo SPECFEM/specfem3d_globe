@@ -34,7 +34,8 @@
   use specfem_par_movie
   implicit none
 
-  include 'mpif.h'
+  ! timing
+  double precision, external :: wtime
 
 !
 !   s t a r t   t i m e   i t e r a t i o n s
@@ -68,7 +69,7 @@
 #endif
 
   ! get MPI starting time
-  time_start = MPI_WTIME()
+  time_start = wtime()
 
   ! *********************************************************
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
@@ -430,14 +431,15 @@
   use specfem_par
   implicit none
 
-  include 'mpif.h'
-
   ! local parameters
   integer :: ihours,iminutes,iseconds,int_tCPU
+  ! timing
+  double precision, external :: wtime
 
   if(myrank == 0) then
      ! elapsed time since beginning of the simulation
-     tCPU = MPI_WTIME() - time_start
+     tCPU = wtime() - time_start
+     
      int_tCPU = int(tCPU)
      ihours = int_tCPU / 3600
      iminutes = (int_tCPU - 3600*ihours) / 60
