@@ -439,7 +439,7 @@
   if(myrank == 0) then
      ! elapsed time since beginning of the simulation
      tCPU = wtime() - time_start
-     
+
      int_tCPU = int(tCPU)
      ihours = int_tCPU / 3600
      iminutes = (int_tCPU - 3600*ihours) / 60

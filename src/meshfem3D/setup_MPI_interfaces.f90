@@ -28,32 +28,19 @@
 
   subroutine setup_MPI_interfaces()
 
-  use meshfem3D_par
+  use meshfem3D_par,only: INCLUDE_CENTRAL_CUBE,myrank
   use create_MPI_interfaces_par
   implicit none
 
-!  include 'mpif.h'
-
   ! local parameters
-  integer :: ier,ndim_assemble
-
-  ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
-
   ! assigns initial maximum arrays
   ! for global slices, maximum number of neighbor is around 17 ( 8 horizontal, max of 8 on bottom )
-  integer :: MAX_NEIGHBOURS
+  integer :: MAX_NEIGHBOURS,max_nibool
   integer, dimension(:),allocatable :: my_neighbours,nibool_neighbours
   integer, dimension(:,:),allocatable :: ibool_neighbours
-  integer :: max_nibool
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
-  integer,dimension(:),allocatable :: dummy_i
-  integer :: i,j,k,ispec,iglob
-  ! debug
-  character(len=150) :: filename
-  logical,parameter :: DEBUG_INTERFACES = .false.
+  integer :: ier
 
+  ! allocates temporary arrays for setup routines
   ! estimates a maximum size of needed arrays
   MAX_NEIGHBOURS = 8 + NCORNERSCHUNKS
   if( INCLUDE_CENTRAL_CUBE ) MAX_NEIGHBOURS = MAX_NEIGHBOURS + NUMMSGS_FACES
@@ -69,9 +56,56 @@
   allocate(ibool_neighbours(max_nibool,MAX_NEIGHBOURS), stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating ibool_neighbours')
 
+  ! sets up MPI interfaces between different processes
+  ! crust/mantle
+  call setup_MPI_interfaces_cm(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
+                              max_nibool,ibool_neighbours)
 
-! sets up MPI interfaces
-! crust mantle region
+  ! outer core
+  call setup_MPI_interfaces_oc(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
+                              max_nibool,ibool_neighbours)
+
+  ! inner core
+  call setup_MPI_interfaces_ic(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
+                              max_nibool,ibool_neighbours)
+
+  ! frees temporary array
+  deallocate(ibool_neighbours)
+  deallocate(my_neighbours,nibool_neighbours)
+
+  ! synchronizes MPI processes
+  call sync_all()
+
+  end subroutine setup_MPI_interfaces
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_MPI_interfaces_cm(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
+                                    max_nibool,ibool_neighbours)
+
+  use meshfem3D_par
+  use create_MPI_interfaces_par
+  implicit none
+
+  integer :: MAX_NEIGHBOURS,max_nibool
+  integer, dimension(MAX_NEIGHBOURS) :: my_neighbours,nibool_neighbours
+  integer, dimension(max_nibool,MAX_NEIGHBOURS) :: ibool_neighbours
+
+  ! local parameters
+  ! temporary buffers for send and receive between faces of the slices and the chunks
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
+    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer,dimension(:),allocatable :: dummy_i
+  integer :: i,ier
+  ! debug
+  character(len=150) :: filename
+  logical,parameter :: DEBUG_INTERFACES = .false.
+
+  ! sets up MPI interfaces
+  ! crust mantle region
   if( myrank == 0 ) write(IMAIN,*) 'crust mantle mpi:'
   allocate(test_flag(NGLOB_CRUST_MANTLE), &
           stat=ier)
@@ -97,12 +131,6 @@
 
   ! removes own myrank id (+1)
   test_flag(:) = test_flag(:) - ( myrank + 1.0)
-
-  ! debug: saves array
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_crust_mantle_proc',myrank
-  !call write_VTK_glob_points(NGLOB_CRUST_MANTLE, &
-  !                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-  !                      test_flag,filename)
 
   allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i')
@@ -149,15 +177,15 @@
 
   ! debug: outputs MPI interface
   if( DEBUG_INTERFACES ) then
-  do i=1,num_interfaces_crust_mantle
-    write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_crust_mantle_proc',myrank, &
-                    '_',my_neighbours_crust_mantle(i)
-    call write_VTK_data_points(NGLOB_crust_mantle, &
-                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                      ibool_interfaces_crust_mantle(1:nibool_interfaces_crust_mantle(i),i), &
-                      nibool_interfaces_crust_mantle(i),filename)
-  enddo
-  call sync_all()
+    do i=1,num_interfaces_crust_mantle
+      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_crust_mantle_proc',myrank, &
+                      '_',my_neighbours_crust_mantle(i)
+      call write_VTK_data_points(NGLOB_crust_mantle, &
+                        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                        ibool_interfaces_crust_mantle(1:nibool_interfaces_crust_mantle(i),i), &
+                        nibool_interfaces_crust_mantle(i),filename)
+    enddo
+    call sync_all()
   endif
 
   ! checks addressing
@@ -178,8 +206,36 @@
   ! checks with assembly of test fields
   call test_MPI_cm()
 
+  end subroutine setup_MPI_interfaces_cm
 
-! outer core region
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_MPI_interfaces_oc(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
+                                    max_nibool,ibool_neighbours)
+
+  use meshfem3D_par
+  use create_MPI_interfaces_par
+  implicit none
+
+  integer :: MAX_NEIGHBOURS,max_nibool
+  integer, dimension(MAX_NEIGHBOURS) :: my_neighbours,nibool_neighbours
+  integer, dimension(max_nibool,MAX_NEIGHBOURS) :: ibool_neighbours
+
+  ! local parameters
+  ! temporary buffers for send and receive between faces of the slices and the chunks
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
+    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer,dimension(:),allocatable :: dummy_i
+  integer :: i,ier
+  ! debug
+  character(len=150) :: filename
+  logical,parameter :: DEBUG_INTERFACES = .false.
+
+  ! sets up MPI interfaces
+  ! outer core region
   if( myrank == 0 ) write(IMAIN,*) 'outer core mpi:'
 
   allocate(test_flag(NGLOB_OUTER_CORE), &
@@ -207,12 +263,6 @@
 
   ! removes own myrank id (+1)
   test_flag(:) = test_flag(:) - ( myrank + 1.0)
-
-  ! debug: saves array
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_outer_core_proc',myrank
-  !call write_VTK_glob_points(NGLOB_OUTER_CORE, &
-  !                      xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-  !                      test_flag,filename)
 
   allocate(dummy_i(NSPEC_OUTER_CORE),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i')
@@ -259,15 +309,15 @@
 
   ! debug: outputs MPI interface
   if( DEBUG_INTERFACES ) then
-  do i=1,num_interfaces_outer_core
-    write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_outer_core_proc',myrank, &
-                    '_',my_neighbours_outer_core(i)
-    call write_VTK_data_points(NGLOB_OUTER_CORE, &
-                      xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                      ibool_interfaces_outer_core(1:nibool_interfaces_outer_core(i),i), &
-                      nibool_interfaces_outer_core(i),filename)
-  enddo
-  call sync_all()
+    do i=1,num_interfaces_outer_core
+      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_outer_core_proc',myrank, &
+                      '_',my_neighbours_outer_core(i)
+      call write_VTK_data_points(NGLOB_OUTER_CORE, &
+                        xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                        ibool_interfaces_outer_core(1:nibool_interfaces_outer_core(i),i), &
+                        nibool_interfaces_outer_core(i),filename)
+    enddo
+    call sync_all()
   endif
 
   ! checks addressing
@@ -288,8 +338,36 @@
   ! checks with assembly of test fields
   call test_MPI_oc()
 
+  end subroutine setup_MPI_interfaces_oc
 
-! inner core
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_MPI_interfaces_ic(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
+                                    max_nibool,ibool_neighbours)
+
+  use meshfem3D_par
+  use create_MPI_interfaces_par
+  implicit none
+
+  integer :: MAX_NEIGHBOURS,max_nibool
+  integer, dimension(MAX_NEIGHBOURS) :: my_neighbours,nibool_neighbours
+  integer, dimension(max_nibool,MAX_NEIGHBOURS) :: ibool_neighbours
+
+  ! local parameters
+  ! temporary buffers for send and receive between faces of the slices and the chunks
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
+    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer :: i,j,k,ispec,iglob,ier
+  integer :: ndim_assemble
+  ! debug
+  character(len=150) :: filename
+  logical,parameter :: DEBUG_INTERFACES = .false.
+
+  ! sets up MPI interfaces
+  ! inner core
   if( myrank == 0 ) write(IMAIN,*) 'inner core mpi:'
 
   allocate(test_flag(NGLOB_INNER_CORE), &
@@ -327,12 +405,6 @@
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
-  ! debug: saves array
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_A_proc',myrank
-  !call write_VTK_glob_points(NGLOB_INNER_CORE, &
-  !                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-  !                      test_flag,filename)
-
   ! debug: idoubling inner core
   if( DEBUG_INTERFACES ) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
@@ -367,34 +439,35 @@
   test_flag = test_flag - ( myrank + 1.0)
   where( test_flag < 0.0 ) test_flag = 0.0
 
-  ! debug: saves array
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_B_proc',myrank
-  !call write_VTK_glob_points(NGLOB_INNER_CORE, &
-  !                    xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-  !                    test_flag,filename)
-  !call sync_all()
+  ! debug: in sequential order, for testing purpose
+  !do i=0,NPROCTOT - 1
+  !  if( myrank == i ) then
+  !    ! gets new interfaces for inner_core without central cube yet
+  !    ! determines neighbor rank for shared faces
+  !    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+  !                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+  !                          num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+  !                          max_nibool,MAX_NEIGHBOURS, &
+  !                          ibool_inner_core,&
+  !                          is_on_a_slice_edge_inner_core, &
+  !                          IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE, &
+  !                          xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
+  !  endif
+  !  call sync_all()
+  !enddo
 
-  ! in sequential order, for testing purpose
-  do i=0,NPROCTOT - 1
-    if( myrank == i ) then
-      ! gets new interfaces for inner_core without central cube yet
-      ! determines neighbor rank for shared faces
-      call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-                            max_nibool,MAX_NEIGHBOURS, &
-                            ibool_inner_core,&
-                            is_on_a_slice_edge_inner_core, &
-                            IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE, &
-                            xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
-
-    endif
-    call sync_all()
-  enddo
-
+  ! gets new interfaces for inner_core without central cube yet
+  ! determines neighbor rank for shared faces
+  call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                        test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                        num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                        max_nibool,MAX_NEIGHBOURS, &
+                        ibool_inner_core,&
+                        is_on_a_slice_edge_inner_core, &
+                        IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE, &
+                        xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
 
   deallocate(test_flag)
-  call sync_all()
 
   ! stores MPI interfaces informations
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
@@ -425,15 +498,15 @@
 
   ! debug: saves MPI interfaces
   if( DEBUG_INTERFACES ) then
-  do i=1,num_interfaces_inner_core
-    write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
-                    '_',my_neighbours_inner_core(i)
-    call write_VTK_data_points(NGLOB_INNER_CORE, &
-                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                      ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
-                      nibool_interfaces_inner_core(i),filename)
-  enddo
-  call sync_all()
+    do i=1,num_interfaces_inner_core
+      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
+                      '_',my_neighbours_inner_core(i)
+      call write_VTK_data_points(NGLOB_INNER_CORE, &
+                        xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                        ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
+                        nibool_interfaces_inner_core(i),filename)
+    enddo
+    call sync_all()
   endif
 
   ! checks addressing
@@ -454,11 +527,5 @@
   ! checks with assembly of test fields
   call test_MPI_ic()
 
-  ! synchronizes MPI processes
-  call sync_all()
+  end subroutine setup_MPI_interfaces_ic
 
-  ! frees temporary array
-  deallocate(ibool_neighbours)
-  deallocate(my_neighbours,nibool_neighbours)
-
-  end subroutine setup_MPI_interfaces

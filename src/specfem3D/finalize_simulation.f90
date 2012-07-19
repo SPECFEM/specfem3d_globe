@@ -141,7 +141,7 @@
   ! frees dynamically allocated memory
 
   ! mass matrices
-  
+
   deallocate(rmassx_crust_mantle)
   deallocate(rmassy_crust_mantle)
   deallocate(rmassz_crust_mantle)

@@ -610,7 +610,7 @@ __global__ void compute_coupling_ocean_cuda_kernel(realw* accel_crust_mantle,
       // we divide by rmass() which is 1 / M
       // we use the total force which includes the Coriolis term above
       force_normal_comp = accel_crust_mantle[iglob*3]*nx / rmassx_crust_mantle[iglob]
-	                   + accel_crust_mantle[iglob*3+1]*ny / rmassy_crust_mantle[iglob]
+                     + accel_crust_mantle[iglob*3+1]*ny / rmassy_crust_mantle[iglob]
                            + accel_crust_mantle[iglob*3+2]*nz / rmassz_crust_mantle[iglob];
 
       additional_term_x = (rmass_ocean_load[iglob] - rmassx_crust_mantle[iglob]) * force_normal_comp;
@@ -630,7 +630,7 @@ __global__ void compute_coupling_ocean_cuda_kernel(realw* accel_crust_mantle,
 extern "C"
 void FC_FUNC_(compute_coupling_ocean_cuda,
               COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f,
-					   int* NCHUNKS_VAL) {
+             int* NCHUNKS_VAL) {
 
   TRACE("compute_coupling_ocean_cuda");
 
@@ -656,61 +656,61 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
   if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
     compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
-							 mp->d_rmassx_crust_mantle,
-							 mp->d_rmassy_crust_mantle,
-							 mp->d_rmassz_crust_mantle,
-							 mp->d_rmass_ocean_load,
-							 mp->d_normal_top_crust_mantle,
-							 mp->d_ibool_crust_mantle,
-							 mp->d_ibelm_top_crust_mantle,
-							 mp->d_updated_dof_ocean_load,
-							 mp->nspec2D_top_crust_mantle);
+               mp->d_rmassx_crust_mantle,
+               mp->d_rmassy_crust_mantle,
+               mp->d_rmassz_crust_mantle,
+               mp->d_rmass_ocean_load,
+               mp->d_normal_top_crust_mantle,
+               mp->d_ibool_crust_mantle,
+               mp->d_ibelm_top_crust_mantle,
+               mp->d_updated_dof_ocean_load,
+               mp->nspec2D_top_crust_mantle);
 
     // for backward/reconstructed potentials
     if( mp->simulation_type == 3 ) {
       // re-initializes array
       print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-					 sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
+           sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
 
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
-							   mp->d_rmassx_crust_mantle,
-							   mp->d_rmassy_crust_mantle,
-							   mp->d_rmassz_crust_mantle,
-							   mp->d_rmass_ocean_load,
-							   mp->d_normal_top_crust_mantle,
-							   mp->d_ibool_crust_mantle,
-							   mp->d_ibelm_top_crust_mantle,
-							   mp->d_updated_dof_ocean_load,
-							   mp->nspec2D_top_crust_mantle);
+                 mp->d_rmassx_crust_mantle,
+                 mp->d_rmassy_crust_mantle,
+                 mp->d_rmassz_crust_mantle,
+                 mp->d_rmass_ocean_load,
+                 mp->d_normal_top_crust_mantle,
+                 mp->d_ibool_crust_mantle,
+                 mp->d_ibelm_top_crust_mantle,
+                 mp->d_updated_dof_ocean_load,
+                 mp->nspec2D_top_crust_mantle);
     }
   }else{
     compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
-							 mp->d_rmassz_crust_mantle,
-							 mp->d_rmassz_crust_mantle,
-							 mp->d_rmassz_crust_mantle,
-							 mp->d_rmass_ocean_load,
-							 mp->d_normal_top_crust_mantle,
-							 mp->d_ibool_crust_mantle,
-							 mp->d_ibelm_top_crust_mantle,
-							 mp->d_updated_dof_ocean_load,
-							 mp->nspec2D_top_crust_mantle);
+               mp->d_rmassz_crust_mantle,
+               mp->d_rmassz_crust_mantle,
+               mp->d_rmassz_crust_mantle,
+               mp->d_rmass_ocean_load,
+               mp->d_normal_top_crust_mantle,
+               mp->d_ibool_crust_mantle,
+               mp->d_ibelm_top_crust_mantle,
+               mp->d_updated_dof_ocean_load,
+               mp->nspec2D_top_crust_mantle);
 
     // for backward/reconstructed potentials
     if( mp->simulation_type == 3 ) {
       // re-initializes array
       print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-					 sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
+           sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
 
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
-							   mp->d_rmassz_crust_mantle,
-							   mp->d_rmassz_crust_mantle,
-							   mp->d_rmassz_crust_mantle,
-							   mp->d_rmass_ocean_load,
-							   mp->d_normal_top_crust_mantle,
-							   mp->d_ibool_crust_mantle,
-							   mp->d_ibelm_top_crust_mantle,
-							   mp->d_updated_dof_ocean_load,
-							   mp->nspec2D_top_crust_mantle);
+                 mp->d_rmassz_crust_mantle,
+                 mp->d_rmassz_crust_mantle,
+                 mp->d_rmassz_crust_mantle,
+                 mp->d_rmass_ocean_load,
+                 mp->d_normal_top_crust_mantle,
+                 mp->d_ibool_crust_mantle,
+                 mp->d_ibelm_top_crust_mantle,
+                 mp->d_updated_dof_ocean_load,
+                 mp->nspec2D_top_crust_mantle);
     }
   }
 

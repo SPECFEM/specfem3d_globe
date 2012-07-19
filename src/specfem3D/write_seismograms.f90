@@ -155,7 +155,7 @@
   character(len=256) :: sisname
   ! timing
   double precision, external :: wtime
-  
+
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if(ier /= 0) call exit_mpi(myrank,'error while allocating one temporary seismogram')

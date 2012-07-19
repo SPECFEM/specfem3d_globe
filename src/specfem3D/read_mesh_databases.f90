@@ -37,7 +37,7 @@
   ! local parameters
   ! timing
   double precision, external :: wtime
-  
+
   ! get MPI starting time
   time_start = wtime()
 
@@ -125,12 +125,12 @@
   ! sets number of top elements for surface movies & noise tomography
   NSPEC_TOP = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
 
-  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
@@ -216,12 +216,12 @@
   allocate(dummy_ispec_is_tiso(NSPEC_OUTER_CORE))
   allocate(dummy_idoubling_outer_core(NSPEC_OUTER_CORE))
 
-  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
@@ -299,12 +299,12 @@
   allocate(dummy_rmass(NGLOB_XY))
   allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE))
 
-  ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+  ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
@@ -606,7 +606,7 @@
   ! determine chunk number and local slice coordinates using addressing
   ! (needed for stacey conditions)
   ichunk = ichunk_slice(myrank)
-  
+
   !iproc_xi = iproc_xi_slice(myrank)
   !iproc_eta = iproc_eta_slice(myrank)
 

@@ -119,7 +119,7 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/compute_volumes.o \
 	$O/create_central_cube.o \
 	$O/create_central_cube_buffers.mpi.o \
-	$O/create_chunk_buffers.mpi.o \
+	$O/create_chunk_buffers.o \
 	$O/create_doubling_elements.o \
 	$O/create_mass_matrices.o \
 	$O/create_regions_mesh.o \
@@ -181,14 +181,14 @@ libspecfem_a_OBJECTS_MESHER = \
 	$(EMPTY_MACRO)
 
 MESHER_ARRAY_OBJECTS = \
-	$O/meshfem3D_models.mpi.o \
 	$O/meshfem3D_par.o \
-	$O/compute_area.mpi.o \
+	$O/meshfem3D_models.o \
+	$O/compute_area.o \
 	$O/create_addressing.o \
-	$O/create_meshes.mpi.o \
+	$O/create_meshes.o \
 	$O/create_MPI_interfaces.mpi.o \
-	$O/finalize_mesher.mpi.o \
-	$O/initialize_mesher.mpi.o \
+	$O/finalize_mesher.o \
+	$O/initialize_mesher.o \
 	$O/meshfem3D.mpi.o \
 	$O/setup_counters.o \
 	$O/setup_model.o \

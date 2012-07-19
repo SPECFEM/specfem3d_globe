@@ -29,6 +29,8 @@ module create_MPI_interfaces_par
 
   use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR,NDIM,IMAIN
 
+  implicit none
+
   ! indirect addressing for each message for faces and corners of the chunks
   ! a given slice can belong to at most one corner and at most two faces
   integer :: NGLOB2DMAX_XY
@@ -41,41 +43,6 @@ module create_MPI_interfaces_par
 
   ! number of message types
   integer :: NUM_MSG_TYPES
-
-  integer :: NGLOB1D_RADIAL_CM
-  integer :: NGLOB1D_RADIAL_OC
-  integer :: NGLOB1D_RADIAL_IC
-
-  integer :: NGLOB2DMAX_XMIN_XMAX_CM
-  integer :: NGLOB2DMAX_XMIN_XMAX_OC
-  integer :: NGLOB2DMAX_XMIN_XMAX_IC
-
-  integer :: NGLOB2DMAX_YMIN_YMAX_CM
-  integer :: NGLOB2DMAX_YMIN_YMAX_OC
-  integer :: NGLOB2DMAX_YMIN_YMAX_IC
-
-  integer :: NSPEC2DMAX_XMIN_XMAX_CM
-  integer :: NSPEC2DMAX_YMIN_YMAX_CM
-  integer :: NSPEC2D_BOTTOM_CM
-  integer :: NSPEC2D_TOP_CM
-
-  integer :: NSPEC2DMAX_XMIN_XMAX_IC
-  integer :: NSPEC2DMAX_YMIN_YMAX_IC
-  integer :: NSPEC2D_BOTTOM_IC
-  integer :: NSPEC2D_TOP_IC
-
-  integer :: NSPEC2DMAX_XMIN_XMAX_OC
-  integer :: NSPEC2DMAX_YMIN_YMAX_OC
-  integer :: NSPEC2D_BOTTOM_OC
-  integer :: NSPEC2D_TOP_OC
-
-  integer :: NSPEC_CRUST_MANTLE
-  integer :: NSPEC_INNER_CORE
-  integer :: NSPEC_OUTER_CORE
-
-  integer :: NGLOB_CRUST_MANTLE
-  integer :: NGLOB_INNER_CORE
-  integer :: NGLOB_OUTER_CORE
 
   !-----------------------------------------------------------------
   ! assembly
@@ -106,7 +73,9 @@ module create_MPI_interfaces_par
 
 
   ! collected MPI interfaces
+  !--------------------------------------
   ! MPI crust/mantle mesh
+  !--------------------------------------
   integer :: num_interfaces_crust_mantle
   integer :: max_nibool_interfaces_crust_mantle
   integer, dimension(:), allocatable :: my_neighbours_crust_mantle,nibool_interfaces_crust_mantle
@@ -116,7 +85,9 @@ module create_MPI_interfaces_par
 
   integer, dimension(:), allocatable :: request_send_vector_crust_mantle,request_recv_vector_crust_mantle
 
+  !--------------------------------------
   ! MPI inner core mesh
+  !--------------------------------------
   integer :: num_interfaces_inner_core
   integer :: max_nibool_interfaces_inner_core
   integer, dimension(:), allocatable :: my_neighbours_inner_core,nibool_interfaces_inner_core
@@ -126,7 +97,9 @@ module create_MPI_interfaces_par
 
   integer, dimension(:), allocatable :: request_send_vector_inner_core,request_recv_vector_inner_core
 
+  !--------------------------------------
   ! MPI outer core mesh
+  !--------------------------------------
   integer :: num_interfaces_outer_core
   integer :: max_nibool_interfaces_outer_core
   integer, dimension(:), allocatable :: my_neighbours_outer_core,nibool_interfaces_outer_core
@@ -145,6 +118,17 @@ module create_MPI_interfaces_par
   !--------------------------------------
   ! crust mantle
   !--------------------------------------
+  integer :: NSPEC_CRUST_MANTLE
+  integer :: NGLOB_CRUST_MANTLE
+
+  integer :: NGLOB1D_RADIAL_CM
+  integer :: NGLOB2DMAX_XMIN_XMAX_CM
+  integer :: NGLOB2DMAX_YMIN_YMAX_CM
+  integer :: NSPEC2DMAX_XMIN_XMAX_CM
+  integer :: NSPEC2DMAX_YMIN_YMAX_CM
+  integer :: NSPEC2D_BOTTOM_CM
+  integer :: NSPEC2D_TOP_CM
+
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
   integer, dimension(:),allocatable :: idoubling_crust_mantle
@@ -175,6 +159,17 @@ module create_MPI_interfaces_par
   !--------------------------------------
   ! outer core
   !--------------------------------------
+  integer :: NSPEC_OUTER_CORE
+  integer :: NGLOB_OUTER_CORE
+
+  integer :: NGLOB1D_RADIAL_OC
+  integer :: NGLOB2DMAX_XMIN_XMAX_OC
+  integer :: NGLOB2DMAX_YMIN_YMAX_OC
+  integer :: NSPEC2DMAX_XMIN_XMAX_OC
+  integer :: NSPEC2DMAX_YMIN_YMAX_OC
+  integer :: NSPEC2D_BOTTOM_OC
+  integer :: NSPEC2D_TOP_OC
+
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core
   integer, dimension(:),allocatable :: idoubling_outer_core
@@ -206,6 +201,16 @@ module create_MPI_interfaces_par
   !--------------------------------------
   ! inner core
   !--------------------------------------
+  integer :: NSPEC_INNER_CORE
+  integer :: NGLOB_INNER_CORE
+
+  integer :: NGLOB1D_RADIAL_IC
+  integer :: NGLOB2DMAX_XMIN_XMAX_IC
+  integer :: NGLOB2DMAX_YMIN_YMAX_IC
+  integer :: NSPEC2DMAX_XMIN_XMAX_IC
+  integer :: NSPEC2DMAX_YMIN_YMAX_IC
+  integer :: NSPEC2D_BOTTOM_IC
+  integer :: NSPEC2D_TOP_IC
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_inner_core,ystore_inner_core,zstore_inner_core
@@ -257,8 +262,6 @@ end module create_MPI_interfaces_par
 
   subroutine create_MPI_interfaces()
 
-  use meshfem3D_par
-  use create_MPI_interfaces_par
   implicit none
 
   ! sets up arrays
@@ -323,7 +326,7 @@ end module create_MPI_interfaces_par
   else
     call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
   endif
-  
+
   ! if more than one chunk then same number of processors in each direction
   NPROC_ONE_DIRECTION = NPROC_XI
   ! total number of messages corresponding to these common faces

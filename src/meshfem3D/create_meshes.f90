@@ -38,6 +38,9 @@
   integer, dimension(:,:,:,:), allocatable :: ibool
   ! arrays with the mesh in double precision
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
+  ! this for non blocking MPI
+  logical, dimension(:), allocatable :: is_on_a_slice_edge
+  integer :: ipass
   integer :: ier
 
   ! get addressing for this process
@@ -98,59 +101,16 @@
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
       call create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
-                          xstore,ystore,zstore,rmins,rmaxs, &
-                          iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
-                          volume_local,area_local_bottom,area_local_top, &
+                          xstore,ystore,zstore, &
+                          NSPEC(iregion_code), &
                           NGLOB(iregion_code),npointot, &
-                          NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                          NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+                          NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
                           NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-                          NPROC_XI,NPROC_ETA, &
-                          NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-                          myrank,LOCAL_PATH,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-                          SAVE_MESH_FILES,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
-                          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                          ner,ratio_sampling_array,doubling_index,r_bottom,r_top,&
-                          this_region_has_a_doubling,ratio_divide_central_cube, &
-                          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                           mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
                           ipass)
     enddo
-
-    ! checks number of anisotropic elements found in the mantle
-    if(iregion_code /= IREGION_CRUST_MANTLE .and. nspec_tiso /= 0 ) &
-      call exit_MPI(myrank,'found anisotropic elements outside of the mantle')
-
-    if( TRANSVERSE_ISOTROPY ) then
-      if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
-        call exit_MPI(myrank,'found no anisotropic elements in the mantle')
-    endif
-
-    ! computes total area and volume
-    call compute_area(myrank,NCHUNKS,iregion_code, &
-                              area_local_bottom,area_local_top,&
-                              volume_local,volume_total, &
-                              RCMB,RICB,R_CENTRAL_CUBE)
-
-    ! create chunk buffers if more than one chunk
-    if(NCHUNKS > 1) then
-      call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool,idoubling, &
-                              xstore,ystore,zstore, &
-                              NGLOB(iregion_code), &
-                              NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
-                              NPROC_XI,NPROC_ETA,NPROC,NPROCTOT, &
-                              NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
-                              NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
-                              myrank,LOCAL_PATH,addressing, &
-                              ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
-    else
-      if(myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
-        write(IMAIN,*)
-      endif
-    endif
 
     ! deallocate arrays used for that region
     deallocate(idoubling)

@@ -162,7 +162,6 @@
 
   implicit none
 
-  include 'mpif.h'
   include 'constants.h'
 
 ! model_attenuation_variables
@@ -281,14 +280,14 @@
   double precision RICB, RCMB, R670, R220, R80
   double precision tau_e(N_SLS)
 
-  integer i,ier
+  integer i
   double precision Qb
   double precision R120
 
   Qb = 57287.0d0
   R120 = 6251.d3 ! as defined by IASP91
 
-  call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+  call world_rank(myrank)
   if(myrank > 0) return
 
 
@@ -440,7 +439,7 @@
   subroutine model_attenuation_storage(Qmu, tau_e, rw, AM_S)
 
   implicit none
-  include 'mpif.h'
+
   include 'constants.h'
 
 ! model_attenuation_storage_var
@@ -455,7 +454,7 @@
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
 
-  integer myrank, ier
+  integer myrank
   double precision Qmu, Qmu_new
   double precision, dimension(N_SLS) :: tau_e
   integer rw
@@ -477,7 +476,7 @@
      write(IMAIN,*) 'Error attenuation_storage()'
      write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
      write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+     call world_rank(myrank)
      call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
@@ -582,8 +581,6 @@
 
   implicit none
 
-  include 'mpif.h'
-
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
@@ -602,7 +599,7 @@
 ! attenuation_simplex_variables
 
   ! Input / Output
-  integer myrank, ier
+  integer myrank
   double precision  t1, t2
   double precision  Q_real
   double precision  omega_not
@@ -633,8 +630,8 @@
   exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
+    call world_rank(myrank)
+    call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
   ! Determine the Source frequency
@@ -670,7 +667,7 @@
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
      write(*,*)'    Aborting program'
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+     call world_rank(myrank)
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
   deallocate(f)

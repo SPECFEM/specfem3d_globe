@@ -1,11 +1,12 @@
 /*
 !=====================================================================
 !
-!               S p e c f e m 3 D  V e r s i o n  2 . 0
-!               ---------------------------------------
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Princeton University, USA and University of Pau / CNRS / INRIA
+!                        Princeton University, USA
+!             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
 !                            April 2011
 !
@@ -172,7 +173,8 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
                                                int GRAVITY_VAL) {}
 
 void FC_FUNC_(compute_coupling_ocean_cuda,
-              COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f) {}
+              COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f,
+             int* NCHUNKS_VAL) {}
 
 
 //
@@ -191,7 +193,8 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
 
 void FC_FUNC_(compute_forces_inner_core_cuda,
               COMPUTE_FORCES_INNER_CORE_CUDA)(long* Mesh_pointer_f,
-                                                int* iphase) {}
+                realw* deltat,
+                int* iphase) {}
 
 
 //
@@ -249,6 +252,17 @@ void FC_FUNC_(compute_stacey_elastic_cuda,
 
 
 //
+// src/cuda/initialize_cuda.cu
+//
+
+void FC_FUNC_(initialize_cuda_device,
+              INITIALIZE_CUDA_DEVICE)(int* myrank_f,int* ncuda_devices) {
+ fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA Support. To enable GPU support, reconfigure with --with-cuda flag.\n");
+ exit(1);
+}
+
+
+//
 // src/cuda/it_update_displacement_cuda.cu
 //
 
@@ -284,7 +298,8 @@ void FC_FUNC_(kernel_3_a_cuda,
                                realw* deltatover2_F,
                                int* SIMULATION_TYPE_f,
                                realw* b_deltatover2_F,
-                               int* OCEANS) {}
+                               int* OCEANS,
+             int* NCHUNKS_VAL) {}
 
 void FC_FUNC_(kernel_3_b_cuda,
               KERNEL_3_B_CUDA)(long* Mesh_pointer,
@@ -333,12 +348,6 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
 // src/cuda/prepare_mesh_constants_cuda.cu
 //
 
-void FC_FUNC_(prepare_cuda_device,
-              PREPARE_CUDA_DEVICE)(int* myrank_f,int* ncuda_devices) {
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA Support. To enable GPU support, reconfigure with --with-cuda flag.\n");
- exit(1);
-}
-
 void FC_FUNC_(prepare_constants_device,
               PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
                                         int* myrank_f,
@@ -365,6 +374,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,
+                                        int* ATTENUATION_NEW_f,
                                         int* USE_ATTENUATION_MIMIC_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
                                         int* ANISOTROPIC_3D_MANTLE_f,
@@ -507,7 +517,7 @@ void FC_FUNC_(prepare_fields_noise_device,
                                            realw* jacobian2D_top_crust_mantle) {}
 
 void FC_FUNC_(prepare_crust_mantle_device,
-              PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
+             PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
              realw* h_xix, realw* h_xiy, realw* h_xiz,
              realw* h_etax, realw* h_etay, realw* h_etaz,
              realw* h_gammax, realw* h_gammay, realw* h_gammaz,
@@ -515,7 +525,9 @@ void FC_FUNC_(prepare_crust_mantle_device,
              realw* h_kappav, realw* h_muv,
              realw* h_kappah, realw* h_muh,
              realw* h_eta_aniso,
-             realw* h_rmass,
+             realw* h_rmassx,
+             realw* h_rmassy,
+             realw* h_rmassz,
              realw* h_normal_top_crust_mantle,
              int* h_ibelm_top_crust_mantle,
              int* h_ibelm_bottom_crust_mantle,
@@ -534,7 +546,8 @@ void FC_FUNC_(prepare_crust_mantle_device,
              int* nspec_outer,
              int* nspec_inner,
              int* NSPEC2D_TOP_CM,
-             int* NSPEC2D_BOTTOM_CM
+       int* NSPEC2D_BOTTOM_CM,
+       int* NCHUNKS_VAL
              ) {}
 
 void FC_FUNC_(prepare_outer_core_device,
@@ -639,7 +652,8 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              realw *c66store){}
 
 void FC_FUNC_(prepare_cleanup_device,
-              PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f) {}
+              PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f,
+              int* NCHUNKS_VAL) {}
 
 
 //

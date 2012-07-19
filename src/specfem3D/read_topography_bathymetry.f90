@@ -39,7 +39,7 @@
   integer :: ier
   ! timing
   double precision, external :: wtime
-  
+
   ! get MPI starting time
   time_start = wtime()
 

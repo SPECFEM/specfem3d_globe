@@ -144,7 +144,7 @@
 
   ! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt', &
-       status='unknown',action='write',iostat=ier)
+        status='unknown',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening array_dims file')
 
   nspec1 = nspec
@@ -154,6 +154,7 @@
   write(27,*) nglob1
   close(27)
 
+  ! mesh parameters
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
        status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin file')
@@ -243,17 +244,17 @@
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
      write(27) rmassx
      write(27) rmassy
   endif
-     
+
   write(27) rmassz
 
   ! additional ocean load mass matrix if oceans and if we are in the crust
@@ -261,6 +262,7 @@
 
   close(27)
 
+  ! mesh topology
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_2.bin file')
@@ -327,11 +329,8 @@
   write(27) rmassz
 
   write(27) ibool
-
   write(27) idoubling
-
   write(27) is_on_a_slice_edge
-
   write(27) ispec_is_tiso
 
   close(27)

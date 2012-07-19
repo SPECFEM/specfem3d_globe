@@ -28,10 +28,13 @@
 # @configure_input@
 
 # CUDA
-@COND_CUDA_TRUE@CUDA_LIBS = -lcuda -lcudart -lcublas
+# with configure: ./configure --with-cuda CUDA_LIB=.. CUDA_INC=.. MPI_INC=..
+
+# default cuda libraries
+# runtime library -lcudart needed, others are optional -lcuda -lcublas
+@COND_CUDA_TRUE@CUDA_LIBS = -lcudart
 @COND_CUDA_FALSE@CUDA_LIBS = 
 
-# with configure: ./configure CUDA_LIB=.. CUDA_INC=.. MPI_INC=..
 CUDA_LIB_LOCATION = @CUDA_LIB@
 CUDA_LINK = $(CUDA_LIB_LOCATION) $(CUDA_LIBS)
 CUDA_INC = @CUDA_INC@ -I../../setup -I../../
@@ -165,7 +168,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_stacey_crust_mantle.solver.o \
 	$O/compute_stacey_outer_core.solver.o \
 	$O/finalize_simulation.mpisolver.o \
-	$O/initialize_simulation.mpisolver.o \
+	$O/initialize_simulation.solver.o \
 	$O/iterate_time.mpisolver.o \
 	$O/noise_tomography.mpisolver.o \
 	$O/prepare_timerun.mpisolver.o \
@@ -195,6 +198,7 @@ CUDA_OBJECTS = \
 	$O/compute_kernels_cuda.cuda.o \
 	$O/compute_stacey_acoustic_cuda.cuda.o \
 	$O/compute_stacey_elastic_cuda.cuda.o \
+	$O/initialize_cuda.cuda.o \
 	$O/it_update_displacement_cuda.cuda.o \
 	$O/noise_tomography_cuda.cuda.o \
 	$O/prepare_mesh_constants_cuda.cuda.o \

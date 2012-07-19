@@ -29,9 +29,8 @@
   subroutine initialize_simulation()
 
   use specfem_par
-  implicit none
 
-  include 'mpif.h'
+  implicit none
 
   ! local parameters
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed,NGLOB_computed, &
@@ -41,7 +40,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   integer :: ratio_divide_central_cube
   integer :: sizeprocs
-  integer :: ier,ios
+  integer :: ios
   integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,NPROC_XI,NPROC_ETA
   double precision :: RMOHO_FICTITIOUS_IN_MESHER,R120,R_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,&
     CENTER_LATITUDE_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
@@ -57,8 +56,8 @@
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
   ! as usual in MPI, process 0 is in charge of coordinating everything
   ! and also takes care of the main output
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  call world_size(sizeprocs)
+  call world_rank(myrank)
 
   if (myrank == 0) then
 
@@ -266,8 +265,13 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_singlei(nrec)
+
+  ! checks number of total receivers
   if(nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
+
+  ! initializes GPU cards
+  if( GPU_MODE ) call initialize_GPU()
 
   end subroutine initialize_simulation
 
@@ -452,3 +456,48 @@
   endif
 
   end subroutine initialize_simulation_check
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine initialize_GPU()
+
+! initialization for GPU cards
+
+  use specfem_par
+  implicit none
+  ! local parameters
+  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+
+  ! GPU_MODE now defined in Par_file
+  if(myrank == 0 ) then
+    write(IMAIN,*)
+    write(IMAIN,*) "GPU_MODE Active."
+  endif
+
+  ! check for GPU runs
+  if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
+    stop 'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5'
+  if( CUSTOM_REAL /= 4 ) &
+    stop 'GPU mode runs only with CUSTOM_REAL == 4'
+  if( ATTENUATION_VAL ) then
+    if( N_SLS /= 3 ) &
+      stop 'GPU mode does not support N_SLS /= 3 yet'
+  endif
+
+  ! initializes GPU and outputs info to files for all processes
+  call initialize_cuda_device(myrank,ncuda_devices)
+
+  ! collects min/max of local devices found for statistics
+  call sync_all()
+  call min_all_i(ncuda_devices,ncuda_devices_min)
+  call max_all_i(ncuda_devices,ncuda_devices_max)
+
+  if( myrank == 0 ) then
+    write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min
+    write(IMAIN,*) "                                max =",ncuda_devices_max
+    write(IMAIN,*)
+  endif
+
+  end subroutine initialize_GPU
