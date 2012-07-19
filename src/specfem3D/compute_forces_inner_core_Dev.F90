@@ -275,11 +275,11 @@
 #endif
         enddo
       enddo
-      
+
       if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
          if(ATTENUATION_NEW_VAL) then
             ! takes new routines
-            ! use first order Taylor expansion of displacement for local storage of stresses 
+            ! use first order Taylor expansion of displacement for local storage of stresses
             ! at this current time step, to fix attenuation in a consistent way
 
             do k=1,NGLLZ
@@ -322,7 +322,7 @@
 #endif
                enddo
             enddo
-         else 
+         else
             ! takes old routines
             do k=1,NGLLZ
                do j=1,NGLLY
@@ -346,13 +346,13 @@
                   dummyx_loc_att(5,j,k) = 0._CUSTOM_REAL
                   dummyy_loc_att(5,j,k) = 0._CUSTOM_REAL
                   dummyz_loc_att(5,j,k) = 0._CUSTOM_REAL
-#else  
+#else
                   do i=1,NGLLX
                      dummyx_loc_att(i,j,k) = 0._CUSTOM_REAL
                      dummyy_loc_att(i,j,k) = 0._CUSTOM_REAL
                      dummyz_loc_att(i,j,k) = 0._CUSTOM_REAL
                   enddo
-#endif    
+#endif
                enddo
             enddo
          endif

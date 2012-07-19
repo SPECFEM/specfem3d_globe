@@ -41,10 +41,6 @@
 
   include "constants.h"
 
-  ! standard include of the MPI library
-  include 'mpif.h'
-  include "precision.h"
-
   integer iregion_code
   integer nspec
 
@@ -135,7 +131,7 @@
 
   integer npoin2D,npoin2D_send_local,npoin2D_receive_local
 
-  integer i,j,k,ispec,ispec2D,ipoin2D,ier
+  integer i,j,k,ispec,ispec2D,ipoin2D
 
   ! current message number
   integer imsg
@@ -770,19 +766,23 @@
 !
 
 ! synchronize all the processes to make sure all the buffers are ready
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  call sync_all()
 
 ! gather information about all the messages on all processes
   do imsg = 1,NUMMSGS_FACES
 
 !     gather number of points for sender
       npoin2D_send_local = npoin2D_send(imsg)
-      call MPI_BCAST(npoin2D_send_local,1,MPI_INTEGER,iproc_sender(imsg),MPI_COMM_WORLD,ier)
+
+      call bcast_iproc_i(npoin2D_send_local,iproc_sender(imsg))
+
       if(myrank /= iproc_sender(imsg)) npoin2D_send(imsg) = npoin2D_send_local
 
 !     gather number of points for receiver
       npoin2D_receive_local = npoin2D_receive(imsg)
-      call MPI_BCAST(npoin2D_receive_local,1,MPI_INTEGER,iproc_receiver(imsg),MPI_COMM_WORLD,ier)
+
+      call bcast_iproc_i(npoin2D_receive_local,iproc_receiver(imsg))
+
       if(myrank /= iproc_receiver(imsg)) npoin2D_receive(imsg) = npoin2D_receive_local
 
   enddo
@@ -824,68 +824,68 @@
 ! this only if more than 3 chunks
   if(NCHUNKS > 3) then
 
-  ichunk = 2
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,0)
+    ichunk = 2
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,0)
 
-  itypecorner(1,ichunk) = IUPPERLOWER
-  itypecorner(2,ichunk) = ILOWERLOWER
-  itypecorner(3,ichunk) = IUPPERLOWER
+    itypecorner(1,ichunk) = IUPPERLOWER
+    itypecorner(2,ichunk) = ILOWERLOWER
+    itypecorner(3,ichunk) = IUPPERLOWER
 
-  ichunk = 3
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,0,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_AC,NPROC_XI-1,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
+    ichunk = 3
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,0,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_AC,NPROC_XI-1,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = ILOWERLOWER
-  itypecorner(2,ichunk) = IUPPERLOWER
-  itypecorner(3,ichunk) = IUPPERUPPER
+    itypecorner(1,ichunk) = ILOWERLOWER
+    itypecorner(2,ichunk) = IUPPERLOWER
+    itypecorner(3,ichunk) = IUPPERUPPER
 
-  ichunk = 4
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,NPROC_ETA-1)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,NPROC_XI-1,NPROC_ETA-1)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,NPROC_ETA-1)
+    ichunk = 4
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,NPROC_ETA-1)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,NPROC_XI-1,NPROC_ETA-1)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = IUPPERUPPER
-  itypecorner(2,ichunk) = IUPPERUPPER
-  itypecorner(3,ichunk) = ILOWERUPPER
+    itypecorner(1,ichunk) = IUPPERUPPER
+    itypecorner(2,ichunk) = IUPPERUPPER
+    itypecorner(3,ichunk) = ILOWERUPPER
 
-  ichunk = 5
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,NPROC_ETA-1)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,0)
+    ichunk = 5
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,NPROC_ETA-1)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,0)
 
-  itypecorner(1,ichunk) = ILOWERLOWER
-  itypecorner(2,ichunk) = ILOWERUPPER
-  itypecorner(3,ichunk) = IUPPERLOWER
+    itypecorner(1,ichunk) = ILOWERLOWER
+    itypecorner(2,ichunk) = ILOWERUPPER
+    itypecorner(3,ichunk) = IUPPERLOWER
 
-  ichunk = 6
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,0)
+    ichunk = 6
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,0)
 
-  itypecorner(1,ichunk) = IUPPERLOWER
-  itypecorner(2,ichunk) = ILOWERLOWER
-  itypecorner(3,ichunk) = ILOWERLOWER
+    itypecorner(1,ichunk) = IUPPERLOWER
+    itypecorner(2,ichunk) = ILOWERLOWER
+    itypecorner(3,ichunk) = ILOWERLOWER
 
-  ichunk = 7
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,NPROC_ETA-1)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,0,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
+    ichunk = 7
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,NPROC_ETA-1)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,0,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = ILOWERUPPER
-  itypecorner(2,ichunk) = ILOWERLOWER
-  itypecorner(3,ichunk) = IUPPERUPPER
+    itypecorner(1,ichunk) = ILOWERUPPER
+    itypecorner(2,ichunk) = ILOWERLOWER
+    itypecorner(3,ichunk) = IUPPERUPPER
 
-  ichunk = 8
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_BC,0,NPROC_ETA-1)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,NPROC_ETA-1)
+    ichunk = 8
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_BC,0,NPROC_ETA-1)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = ILOWERUPPER
-  itypecorner(2,ichunk) = IUPPERUPPER
-  itypecorner(3,ichunk) = ILOWERUPPER
+    itypecorner(1,ichunk) = ILOWERUPPER
+    itypecorner(2,ichunk) = IUPPERUPPER
+    itypecorner(3,ichunk) = ILOWERUPPER
 
   endif
 
@@ -895,71 +895,71 @@
 ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
 
-  if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
+    if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
 
 ! save triplet of processors in list of messages
-  if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
+    if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
 
 ! loop on the three processors of a given corner
-  do imember_corner = 1,3
+    do imember_corner = 1,3
 
-    if(imember_corner == 1) then
-      write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
-    else if(imember_corner == 2) then
-      write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
-    else
-      write(filename_out,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
-    endif
+      if(imember_corner == 1) then
+        write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
+      else if(imember_corner == 2) then
+        write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
+      else
+        write(filename_out,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
+      endif
 
 ! only do this if current processor is the right one for MPI version
 ! this line is ok even for NCHUNKS = 2
-  if(iprocscorners(imember_corner,imsg) == myrank) then
+      if(iprocscorners(imember_corner,imsg) == myrank) then
 
 ! pick the correct 1D buffer
 ! this scheme works fine even if NPROC_XI = NPROC_ETA = 1
-  if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,1)
-  else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,4)
-  else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,2)
-  else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,3)
-  else
-    call exit_MPI(myrank,'incorrect corner coordinates')
-  endif
+      if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
+        filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
+        NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,1)
+      else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
+        filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
+        NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,4)
+      else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
+        filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
+        NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,2)
+      else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
+        filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
+        NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,3)
+      else
+        call exit_MPI(myrank,'incorrect corner coordinates')
+      endif
 
 ! read 1D buffer for corner
-    open(unit=IIN,file=filename_in,status='old',action='read')
-    do ipoin1D = 1,NGLOB1D_RADIAL
-      read(IIN,*) ibool1D(ipoin1D), &
-              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
-    enddo
-    close(IIN)
+      open(unit=IIN,file=filename_in,status='old',action='read')
+      do ipoin1D = 1,NGLOB1D_RADIAL
+        read(IIN,*) ibool1D(ipoin1D), &
+                xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
+      enddo
+      close(IIN)
 
 ! sort array read based upon the coordinates of the points
 ! to ensure conforming matching with other buffers from neighbors
-    call sort_array_coordinates(NGLOB1D_RADIAL,xread1D,yread1D,zread1D, &
-            ibool1D,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+      call sort_array_coordinates(NGLOB1D_RADIAL,xread1D,yread1D,zread1D, &
+              ibool1D,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
 
 ! check that no duplicates have been found
-    if(nglob /= NGLOB1D_RADIAL) call exit_MPI(myrank,'duplicates found for corners')
+      if(nglob /= NGLOB1D_RADIAL) call exit_MPI(myrank,'duplicates found for corners')
 
 ! write file with 1D buffer for corner
-    open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
-    write(IOUT_BUFFERS,*) NGLOB1D_RADIAL
-    do ipoin1D = 1,NGLOB1D_RADIAL
-      write(IOUT_BUFFERS,*) ibool1D(ipoin1D), &
-              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
-    enddo
-    close(IOUT_BUFFERS)
+      open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
+      write(IOUT_BUFFERS,*) NGLOB1D_RADIAL
+      do ipoin1D = 1,NGLOB1D_RADIAL
+        write(IOUT_BUFFERS,*) ibool1D(ipoin1D), &
+                xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
+      enddo
+      close(IOUT_BUFFERS)
 
 ! end of section done only if right processor for MPI
-  endif
+    endif
 
   enddo
 

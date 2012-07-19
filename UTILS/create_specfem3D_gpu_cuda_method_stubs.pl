@@ -17,11 +17,12 @@ $header = <<END;
 /* 
 !=====================================================================
 !
-!               S p e c f e m 3 D  V e r s i o n  2 . 0
-!               ---------------------------------------
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Princeton University, USA and University of Pau / CNRS / INRIA
+!                        Princeton University, USA
+!             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
 !                            April 2011
 !
@@ -107,7 +108,7 @@ foreach $name (@objects) {
       # function declaration
       if($line =~ /{/){
         # function declaration ends
-        if( $line =~ /PREPARE_CUDA_DEVICE/ ){
+        if( $line =~ /INITIALIZE_CUDA_DEVICE/ ){
           # adds warning
           print IOUT "$line \n$warning\} \n\n";
         }else{

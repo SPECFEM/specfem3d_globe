@@ -35,8 +35,6 @@
 
   implicit none
 
-  include 'mpif.h'
-
   integer :: myrank,NCHUNKS,iregion_code
 
   double precision :: area_local_bottom,area_local_top,volume_local
@@ -45,18 +43,15 @@
 
   ! local parameters
   double precision :: volume_total_region,area_total_bottom,area_total_top
-  integer :: ier
 
   ! use MPI reduction to compute total area and volume
   volume_total_region = ZERO
   area_total_bottom   = ZERO
   area_total_top   = ZERO
-  call MPI_REDUCE(area_local_bottom,area_total_bottom,1,MPI_DOUBLE_PRECISION,MPI_SUM,0, &
-                          MPI_COMM_WORLD,ier)
-  call MPI_REDUCE(area_local_top,area_total_top,1,MPI_DOUBLE_PRECISION,MPI_SUM,0, &
-                          MPI_COMM_WORLD,ier)
-  call MPI_REDUCE(volume_local,volume_total_region,1,MPI_DOUBLE_PRECISION,MPI_SUM,0, &
-                          MPI_COMM_WORLD,ier)
+
+  call sum_all_dp(area_local_bottom,area_total_bottom)
+  call sum_all_dp(area_local_top,area_total_top)
+  call sum_all_dp(volume_local,volume_total_region)
 
   if(myrank == 0) then
     !   sum volume over all the regions

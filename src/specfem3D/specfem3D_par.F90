@@ -360,11 +360,11 @@ module specfem_par_crustmantle
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
   ! mass matrices
-  ! 
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  !
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle

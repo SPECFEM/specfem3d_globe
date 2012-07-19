@@ -96,7 +96,7 @@
   integer, external :: idaywk
   ! timing
   double precision, external :: wtime
-  
+
   double precision,parameter :: scale_displ = R_EARTH
 
 

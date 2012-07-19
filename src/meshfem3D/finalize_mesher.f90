@@ -29,12 +29,14 @@
   subroutine finalize_mesher()
 
   use meshfem3D_par
+  use meshfem3D_models_par
+
   implicit none
 
   ! local parameters
   ! timing
   double precision, external :: wtime
-  
+
   !--- print number of points and elements in the mesh for each region
   if(myrank == 0) then
 

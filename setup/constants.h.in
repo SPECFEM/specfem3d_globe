@@ -46,16 +46,6 @@
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 
-! this for non blocking assembly
-  integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
-  integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
-
-! add mesh coloring for the GPU + MPI implementation
-  logical, parameter :: USE_MESH_COLORING_GPU = .false.
-  integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
-  integer, parameter :: NGNOD_HEXAHEDRA = 8
-
-
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
 ! set to .false. typically on a cluster of nodes with local disks used to store the mesh (not very common these days)
@@ -241,6 +231,19 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
+! add mesh coloring for the GPU + MPI implementation
+  logical, parameter :: USE_MESH_COLORING_GPU = .false.
+  integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
+
+! enhanced coloring:
+!
+! using Droux algorithm
+! try several times with one more color before giving up
+  logical, parameter :: USE_DROUX_OPTIMIZATION = .false.
+  integer, parameter :: MAX_NB_TRIES_OF_DROUX_1993 = 15
+!
+! postprocess the colors to balance them if Droux (1993) algorithm is not used
+  logical, parameter :: BALANCE_COLORS_SIMPLE_ALGO = .false.
 
 !!-----------------------------------------------------------
 !!

@@ -149,7 +149,7 @@ enddo
 
   include "constants.h"
 
-  integer :: nspec,nglob
+  integer,intent(in) :: nspec,nglob
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
 
   ! mask to sort ibool

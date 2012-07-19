@@ -74,7 +74,7 @@
   if(myrank == 0) close(IOUT)
 
   ! output a topology map of slices - fix 20x by nproc
-  if (myrank == 0 ) then 
+  if (myrank == 0 ) then
     if( NCHUNKS == 6 .and. NPROC < 1000 ) then
       write(IMAIN,*) 'Spatial distribution of the slices'
       do iproc_xi = NPROC_XI-1, 0, -1

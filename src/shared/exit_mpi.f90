@@ -105,9 +105,13 @@
 
   end subroutine exit_MPI_without_rank
 
-!
+
 !-------------------------------------------------------------------------------------------------
 !
+! MPI wrapper functions
+!
+!-------------------------------------------------------------------------------------------------
+
 
   subroutine sync_all()
 
@@ -210,3 +214,142 @@
   wtime = MPI_WTIME()
 
   end function wtime
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine min_all_i(sendbuf, recvbuf)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  include "constants.h"
+  include "precision.h"
+
+  integer:: sendbuf, recvbuf
+  integer ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
+                  MPI_MIN,0,MPI_COMM_WORLD,ier)
+
+  end subroutine min_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_all_i(sendbuf, recvbuf)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  include "constants.h"
+  include "precision.h"
+
+  integer :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
+                  MPI_MAX,0,MPI_COMM_WORLD,ier)
+
+  end subroutine max_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_dp(sendbuf, recvbuf)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  double precision sendbuf, recvbuf
+  integer ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION, &
+                  MPI_SUM,0,MPI_COMM_WORLD,ier)
+
+  end subroutine sum_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_iproc_i(buffer,iproc)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: iproc
+  integer :: buffer
+
+  integer ier
+
+  call MPI_BCAST(buffer,1,MPI_INTEGER,iproc,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_iproc_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singlei(buffer)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: buffer
+
+  integer ier
+
+  call MPI_BCAST(buffer,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_size(size)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer size
+  integer ier
+
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,size,ier)
+
+  end subroutine world_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_rank(rank)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer rank
+  integer ier
+
+  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
+
+  end subroutine world_rank
+

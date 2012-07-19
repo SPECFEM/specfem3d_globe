@@ -28,23 +28,22 @@
   subroutine initialize_mesher()
 
   use meshfem3D_par
+  use meshfem3D_models_par
+
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
-
   ! local parameters
-  integer :: ier
+  integer, external :: err_occurred
   ! timing
   double precision, external :: wtime
-  
+
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and NPROCTOT-1.
 ! as usual in MPI, process 0 is in charge of coordinating everything
 ! and also takes care of the main output
 ! do not create anything for the inner core here, will be done in solver
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  call world_size(sizeprocs)
+  call world_rank(myrank)
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')

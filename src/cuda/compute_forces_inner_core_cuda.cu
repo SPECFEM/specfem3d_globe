@@ -434,28 +434,28 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
         s_dummyz_loc[tx] = d_displ[iglob*3 + 2];
 #endif
 
-	if(ATTENUATION){
-	  if(ATTENUATION_NEW){
-	    // takes new routines
-	    // use first order Taylor expansion of displacement for local storage of stresses 
-	    // at this current time step, to fix attenuation in a consistent way
+  if(ATTENUATION){
+    if(ATTENUATION_NEW){
+      // takes new routines
+      // use first order Taylor expansion of displacement for local storage of stresses
+      // at this current time step, to fix attenuation in a consistent way
 #ifdef USE_TEXTURES
-	    s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
-	    s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
-	    s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
+      s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
+      s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
+      s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
 #else
-	    s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-	    s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-	    s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+      s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
+      s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
+      s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
 #endif
-	  }
-	  else{
-	    // takes old routines
-	    s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
-	    s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
-	    s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
-	  }
-	}
+    }
+    else{
+      // takes old routines
+      s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
+      s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
+      s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
+    }
+  }
       }
     }
 
@@ -689,40 +689,40 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       duzdyl_plus_duydzl = duzdyl + duydzl;
 
       if(ATTENUATION){
-	// temporary variables used for fixing attenuation in a consistent way
+  // temporary variables used for fixing attenuation in a consistent way
 
-	duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
-	duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
-	duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
+  duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
+  duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
+  duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
 
-	duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
-	duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
-	duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
+  duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
+  duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
+  duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
 
-	duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
-	duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
-	duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
+  duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
+  duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
+  duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
 
-	// precompute some sums to save CPU time
-	duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
-	duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
-	duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
+  // precompute some sums to save CPU time
+  duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
+  duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
+  duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
 
-	// computes deviatoric strain attenuation and/or for kernel calculations
-	if(COMPUTE_AND_STORE_STRAIN) {
-	  realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
+  // computes deviatoric strain attenuation and/or for kernel calculations
+  if(COMPUTE_AND_STORE_STRAIN) {
+    realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
 
-	  // local storage: stresses at this current time step
-	  epsilondev_xx_loc = duxdxl_att - templ;
-	  epsilondev_yy_loc = duydyl_att - templ;
-	  epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
-	  epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
-	  epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
+    // local storage: stresses at this current time step
+    epsilondev_xx_loc = duxdxl_att - templ;
+    epsilondev_yy_loc = duydyl_att - templ;
+    epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
+    epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
+    epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
 
-	  if(SIMULATION_TYPE == 3) {
-	    epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-	  }
-	}
+    if(SIMULATION_TYPE == 3) {
+      epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
+    }
+  }
       }else{
   // computes deviatoric strain attenuation and/or for kernel calculations
   if(COMPUTE_AND_STORE_STRAIN) {

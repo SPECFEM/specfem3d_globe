@@ -259,7 +259,7 @@
     if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
        if(ATTENUATION_NEW_VAL) then
           ! takes new routines
-          ! use first order Taylor expansion of displacement for local storage of stresses 
+          ! use first order Taylor expansion of displacement for local storage of stresses
           ! at this current time step, to fix attenuation in a consistent way
 
           do k=1,NGLLZ
@@ -302,7 +302,7 @@
 #endif
              enddo
           enddo
-       else 
+       else
           ! takes old routines
           do k=1,NGLLZ
              do j=1,NGLLY
@@ -310,29 +310,29 @@
                 dummyx_loc_att(1,j,k) = 0._CUSTOM_REAL
                 dummyy_loc_att(1,j,k) = 0._CUSTOM_REAL
                 dummyz_loc_att(1,j,k) = 0._CUSTOM_REAL
-                
+
                 dummyx_loc_att(2,j,k) = 0._CUSTOM_REAL
                 dummyy_loc_att(2,j,k) = 0._CUSTOM_REAL
                 dummyz_loc_att(2,j,k) = 0._CUSTOM_REAL
-                
+
                 dummyx_loc_att(3,j,k) = 0._CUSTOM_REAL
                 dummyy_loc_att(3,j,k) = 0._CUSTOM_REAL
                 dummyz_loc_att(3,j,k) = 0._CUSTOM_REAL
-                
+
                 dummyx_loc_att(4,j,k) = 0._CUSTOM_REAL
                 dummyy_loc_att(4,j,k) = 0._CUSTOM_REAL
                 dummyz_loc_att(4,j,k) = 0._CUSTOM_REAL
-                
+
                 dummyx_loc_att(5,j,k) = 0._CUSTOM_REAL
                 dummyy_loc_att(5,j,k) = 0._CUSTOM_REAL
                 dummyz_loc_att(5,j,k) = 0._CUSTOM_REAL
-#else  
+#else
                 do i=1,NGLLX
                    dummyx_loc_att(i,j,k) = 0._CUSTOM_REAL
                    dummyy_loc_att(i,j,k) = 0._CUSTOM_REAL
                    dummyz_loc_att(i,j,k) = 0._CUSTOM_REAL
                 enddo
-#endif    
+#endif
              enddo
           enddo
        endif
@@ -364,7 +364,7 @@
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m2
           do i=1,m1
-             C1_m1_m2_5points_att(i,j) = C1_m1_m2_5points(i,j) + & 
+             C1_m1_m2_5points_att(i,j) = C1_m1_m2_5points(i,j) + &
                   hprime_xx(i,1)*B1_m1_m2_5points_att(1,j) + &
                   hprime_xx(i,2)*B1_m1_m2_5points_att(2,j) + &
                   hprime_xx(i,3)*B1_m1_m2_5points_att(3,j) + &

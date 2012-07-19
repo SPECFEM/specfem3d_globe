@@ -143,7 +143,7 @@
 
   ! timing
   double precision, external :: wtime
-  
+
   ! get MPI starting time for all sources
   time_start = wtime()
 
@@ -190,7 +190,7 @@
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
   endif
-  
+
   ! loop on all the sources
   ! gather source information in subsets to reduce memory requirements
 
@@ -219,12 +219,12 @@
             y_found_source(NSOURCES_SUBSET_current_size), &
             z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary source arrays')
-    
+
     ! make sure we clean the subset array before the gather
     ispec_selected_source_subset(:) = 0
     final_distance_source_subset(:) = HUGEVAL
-    final_distance_source_all(:,:) = HUGEVAL    
-    
+    final_distance_source_all(:,:) = HUGEVAL
+
     ! loop over sources within this subset
     do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
 
@@ -353,7 +353,7 @@
                      + (z_target_source - dble(zstore(iglob)))**2)
           if( dist > typical_size ) cycle
         endif
-        
+
         ! define the interval in which we look for points
         if(USE_FORCE_POINT_SOURCE) then
           ! force sources will be put on an exact GLL point
@@ -463,7 +463,7 @@
           else
             call exit_MPI(myrank,'incorrect value of iaddx')
           endif
-          
+
           iay = 0
           if(iaddy(ia) == 0) then
             iay = 1
@@ -714,7 +714,7 @@
       enddo ! end of loop on all the sources within current source subset
 
     endif ! end of section executed by main process only
-    
+
     ! deallocate arrays specific to each subset
     deallocate(final_distance_source_subset)
     deallocate(ispec_selected_source_subset)
@@ -731,12 +731,12 @@
     write(IMAIN,*)
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
-    
+
     ! closing sr_tmp.vtk
     close(IOVTK)
   endif
   call sync_all()
-  
+
   ! main process broadcasts the results to all the slices
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)

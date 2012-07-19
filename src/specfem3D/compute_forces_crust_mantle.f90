@@ -241,14 +241,14 @@
              tempy1l_att = tempy1l
              tempy2l_att = tempy2l
              tempy3l_att = tempy3l
-             
+
              tempz1l_att = tempz1l
              tempz2l_att = tempz2l
              tempz3l_att = tempz3l
 
              if(ATTENUATION_NEW_VAL) then
                 ! takes new routines
-                ! use first order Taylor expansion of displacement for local storage of stresses 
+                ! use first order Taylor expansion of displacement for local storage of stresses
                 ! at this current time step, to fix attenuation in a consistent way
                 do l=1,NGLLX
                    hp1 = hprime_xx(i,l)

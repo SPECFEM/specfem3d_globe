@@ -178,10 +178,10 @@
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix 
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  ! 
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then

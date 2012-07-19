@@ -63,7 +63,7 @@
 
 ! meshing phase
   integer ipass
-  
+
 ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
 
@@ -212,7 +212,7 @@
                       ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
 
   endif
-  
+
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   ! note:  using gll points to capture them results in a slightly more accurate mesh.
   !           however, it introduces more deformations to the elements which might lead to
@@ -290,14 +290,14 @@
 
   ! updates jacobian
   ! (only needed for second meshing phase)
-  if( ipass == 2 ) then  
+  if( ipass == 2 ) then
     call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
                                 ispec,nspec,ACTUALLY_STORE_ARRAYS,&
                                 xixstore,xiystore,xizstore,&
                                 etaxstore,etaystore,etazstore,&
                                 gammaxstore,gammaystore,gammazstore)
   endif
-  
+
   end subroutine compute_element_properties
 
 !

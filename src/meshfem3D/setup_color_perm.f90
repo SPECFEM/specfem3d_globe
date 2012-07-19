@@ -29,13 +29,19 @@
 
   subroutine setup_color_perm()
 
-  use meshfem3D_par
+  use meshfem3D_par,only: &
+    myrank,IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+
   use create_MPI_interfaces_par
+
   implicit none
 
   ! local parameters
   integer, dimension(:), allocatable :: perm
   integer :: ier
+  integer :: nspec,nglob
+  integer :: idomain
 
   ! user output
   if(myrank == 0) then
@@ -50,16 +56,44 @@
   ! mesh coloring
   if( USE_MESH_COLORING_GPU ) then
 
+    !daniel: safety stop...
+    call exit_mpi(myrank,'MESH COLORING not fully implemented yet, please recompile...')
+
     ! user output
     if(myrank == 0) write(IMAIN,*) '  coloring crust mantle... '
 
+    ! crust/mantle region
+    nspec = NSPEC_CRUST_MANTLE
+    nglob = NGLOB_CRUST_MANTLE
+    idomain = IREGION_CRUST_MANTLE
+
     ! creates coloring of elements
-    allocate(perm(NSPEC_CRUST_MANTLE),stat=ier)
+    allocate(perm(nspec),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm crust mantle array')
     perm(:) = 0
 
-    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle+num_colors_inner_crust_mantle),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_crust_mantle array')
+    call setup_color(myrank,nspec,nglob,ibool_crust_mantle,perm, &
+                    idomain,is_on_a_slice_edge_crust_mantle, &
+                    num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                    SAVE_MESH_FILES)
+
+    ! checks
+    if(minval(perm) /= 1) &
+      call exit_MPI(myrank, 'minval(perm) should be 1')
+    if(maxval(perm) /= num_phase_ispec_crust_mantle) &
+      call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_crust_mantle')
+
+    ! sorts array according to permutation
+    call sync_all()
+    if(myrank == 0) then
+      write(IMAIN,*) '     mesh permutation:'
+    endif
+    call setup_permutation(myrank,nspec,nglob,ibool_crust_mantle, &
+                          idomain,perm, &
+                          num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
+                          num_elem_colors_crust_mantle, &
+                          num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                          SAVE_MESH_FILES)
 
     deallocate(perm)
   else
@@ -79,13 +113,38 @@
     ! user output
     if(myrank == 0) write(IMAIN,*) '  coloring outer core... '
 
+    ! outer core region
+    nspec = NSPEC_OUTER_CORE
+    nglob = NGLOB_OUTER_CORE
+    idomain = IREGION_OUTER_CORE
+
     ! creates coloring of elements
-    allocate(perm(NSPEC_OUTER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm outer core array')
+    allocate(perm(nspec),stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm outer_core array')
     perm(:) = 0
 
-    allocate(num_elem_colors_outer_core(num_colors_outer_outer_core+num_colors_inner_outer_core),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_outer_core array')
+    call setup_color(myrank,nspec,nglob,ibool_outer_core,perm, &
+                    idomain,is_on_a_slice_edge_outer_core, &
+                    num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                    SAVE_MESH_FILES)
+
+    ! checks
+    if(minval(perm) /= 1) &
+      call exit_MPI(myrank, 'minval(perm) should be 1')
+    if(maxval(perm) /= num_phase_ispec_outer_core) &
+      call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_outer_core')
+
+    ! sorts array according to permutation
+    call sync_all()
+    if(myrank == 0) then
+      write(IMAIN,*) '     mesh permutation:'
+    endif
+    call setup_permutation(myrank,nspec,nglob,ibool_outer_core, &
+                          idomain,perm, &
+                          num_colors_outer_outer_core,num_colors_inner_outer_core, &
+                          num_elem_colors_outer_core, &
+                          num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                          SAVE_MESH_FILES)
 
     deallocate(perm)
   else
@@ -105,13 +164,41 @@
     ! user output
     if(myrank == 0) write(IMAIN,*) '  coloring inner core... '
 
+    ! inner core region
+    nspec = NSPEC_INNER_CORE
+    nglob = NGLOB_INNER_CORE
+    idomain = IREGION_INNER_CORE
+
     ! creates coloring of elements
-    allocate(perm(NSPEC_INNER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm inner core array')
+    allocate(perm(nspec),stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm inner_core array')
     perm(:) = 0
 
-    allocate(num_elem_colors_inner_core(num_colors_outer_inner_core+num_colors_inner_inner_core),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
+    call setup_color(myrank,nspec,nglob,ibool_inner_core,perm, &
+                    idomain,is_on_a_slice_edge_inner_core, &
+                    num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                    SAVE_MESH_FILES)
+
+    ! checks
+    ! inner core contains ficticious elements not counted for
+    if(minval(perm) < 0) &
+      call exit_MPI(myrank, 'minval(perm) should be at least 0')
+    if(maxval(perm) > num_phase_ispec_inner_core) then
+      print*,'error perm inner core:',minval(perm),maxval(perm),num_phase_ispec_inner_core
+      call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_inner_core')
+    endif
+
+    ! sorts array according to permutation
+    call sync_all()
+    if(myrank == 0) then
+      write(IMAIN,*) '     mesh permutation:'
+    endif
+    call setup_permutation(myrank,nspec,nglob,ibool_inner_core, &
+                          idomain,perm, &
+                          num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                          num_elem_colors_inner_core, &
+                          num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                          SAVE_MESH_FILES)
 
     deallocate(perm)
   else
@@ -122,6 +209,552 @@
 
   end subroutine setup_color_perm
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_color(myrank,nspec,nglob,ibool,perm, &
+                            idomain,is_on_a_slice_edge, &
+                            num_phase_ispec_d,phase_ispec_inner_d, &
+                            SAVE_MESH_FILES)
+
+! sets up mesh coloring
+  use meshfem3D_par,only: &
+    LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+
+  use create_MPI_interfaces_par,only: &
+    num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle, &
+    num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core, &
+    num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core, &
+    idoubling_inner_core, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  implicit none
+
+  integer :: myrank,nspec,nglob
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
+  integer, dimension(nspec) :: perm
+
+  ! wrapper array for ispec is in domain:
+  ! idomain: 1 == crust/mantle, 2 == outer core, 3 == inner core
+  integer :: idomain
+  logical, dimension(nspec) :: is_on_a_slice_edge
+  integer :: num_phase_ispec_d
+  integer, dimension(num_phase_ispec_d,2) :: phase_ispec_inner_d
+
+  logical :: SAVE_MESH_FILES
+
+  ! local parameters
+  ! added for color permutation
+  integer :: nb_colors_outer_elements,nb_colors_inner_elements
+  integer, dimension(:), allocatable :: num_of_elems_in_this_color
+  integer, dimension(:), allocatable :: color
+  integer, dimension(:), allocatable :: first_elem_number_in_this_color
+  logical, dimension(:), allocatable :: ispec_is_d
+
+  integer :: nspec_outer,nspec_inner,nspec_domain
+  integer :: nspec_outer_min_global,nspec_outer_max_global
+  integer :: nb_colors,nb_colors_min,nb_colors_max
+
+  integer :: icolor,ispec,ispec_counter
+  integer :: ispec_inner,ispec_outer
+  integer :: ier
+
+  character(len=2),dimension(3) :: str_domain = (/ "cm", "oc", "ic" /)
+  character(len=256) :: filename
+
+  logical, parameter :: DEBUG = .true.
+  character(len=150) :: prname
+
+  !!!! David Michea: detection of the edges, coloring and permutation separately
+
+  ! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
+  ! to remove dependencies and the need for atomic operations in the sum of
+  ! elemental contributions in the solver
+
+  ! allocates temporary array with colors
+  allocate(color(nspec),stat=ier)
+  if( ier /= 0 ) stop 'error allocating temporary color array'
+  allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1),stat=ier)
+  if( ier /= 0 ) stop 'error allocating first_elem_number_in_this_color array'
+
+  ! flags for elements in this domain
+  ! for compatiblity with SPECFEM3D mesh coloring routine
+  allocate(ispec_is_d(nspec),stat=ier)
+  if( ier /= 0 ) stop 'error allocating ispec_is_d array'
+
+  ! sets up domain coloring arrays
+  select case(idomain)
+  case( IREGION_CRUST_MANTLE,IREGION_OUTER_CORE )
+    ! crust/mantle and outer core region meshes use all elements
+    ispec_is_d(:) = .true.
+  case( IREGION_INNER_CORE )
+    ! initializes
+    ispec_is_d(:) = .true.
+    ! excludes ficticious elements from coloring
+    where(idoubling_inner_core == IFLAG_IN_FICTITIOUS_CUBE) ispec_is_d = .false.
+    ! checks
+    if( count(ispec_is_d) == 0 ) then
+      stop 'error no inner core elements'
+    endif
+  case default
+    stop 'error idomain in setup_color'
+  end select
+
+  ! fast element coloring scheme
+  call get_perm_color_faster(is_on_a_slice_edge,ispec_is_d, &
+                            ibool,perm,color, &
+                            nspec,nglob, &
+                            nb_colors_outer_elements,nb_colors_inner_elements, &
+                            nspec_outer,nspec_inner,nspec_domain, &
+                            first_elem_number_in_this_color, &
+                            myrank)
+
+  ! debug: file output
+  if( SAVE_MESH_FILES .and. DEBUG .and. idomain == 1 ) then
+    call create_name_database(prname,myrank,idomain,LOCAL_PATH)
+    filename = prname(1:len_trim(prname))//'color_'//str_domain(idomain)
+    call write_VTK_data_elem_i(nspec,nglob, &
+                              xstore,ystore,zstore,ibool, &
+                              color,filename)
+  endif
+  deallocate(color)
+
+  ! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
+  first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) &
+    = nspec_domain + 1
+
+  allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements),stat=ier)
+  if( ier /= 0 ) then
+    print*,'error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
+          nb_colors_outer_elements + nb_colors_inner_elements
+    call exit_MPI(myrank,'error allocating num_of_elems_in_this_color array')
+  endif
+
+  num_of_elems_in_this_color(:) = 0
+  do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
+    num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) - first_elem_number_in_this_color(icolor)
+  enddo
+  deallocate(first_elem_number_in_this_color)
+
+  ! check that the sum of all the numbers of elements found in each color is equal
+  ! to the total number of elements in the mesh
+  if(sum(num_of_elems_in_this_color) /= nspec_domain) then
+    print *,'error number of elements in this color:',idomain
+    print *,'rank: ',myrank,' nspec = ',nspec_domain
+    print *,'  total number of elements in all the colors of the mesh = ', &
+      sum(num_of_elems_in_this_color)
+    call exit_MPI(myrank, 'incorrect total number of elements in all the colors of the mesh')
+  endif
+
+  ! check that the sum of all the numbers of elements found in each color for the outer elements is equal
+  ! to the total number of outer elements found in the mesh
+  if(sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
+    print *,'error number of outer elements in this color:',idomain
+    print *,'rank: ',myrank,' nspec_outer = ',nspec_outer
+    print*,'nb_colors_outer_elements = ',nb_colors_outer_elements
+    print *,'total number of elements in all the colors of the mesh for outer elements = ', &
+      sum(num_of_elems_in_this_color(1:nb_colors_outer_elements))
+    call exit_MPI(myrank, 'incorrect total number of elements in all the colors of the mesh for outer elements')
+  endif
+
+
+
+  ! debug: no mesh coloring, only creates dummy coloring arrays
+  if( DEBUG ) then
+    nb_colors_outer_elements = 0
+    nb_colors_inner_elements = 0
+    ispec_counter = 0
+
+    ! first generate all the outer elements
+    do ispec = 1,nspec
+      if( ispec_is_d(ispec) ) then
+        if( is_on_a_slice_edge(ispec) .eqv. .true. ) then
+          ispec_counter = ispec_counter + 1
+          perm(ispec) = ispec_counter
+        endif
+      endif
+    enddo
+
+    ! store total number of outer elements
+    nspec_outer = ispec_counter
+
+    ! only single color
+    if(nspec_outer > 0 ) nb_colors_outer_elements = 1
+
+    ! then generate all the inner elements
+    do ispec = 1,nspec
+      if( ispec_is_d(ispec) ) then
+        if( is_on_a_slice_edge(ispec) .eqv. .false. ) then
+          ispec_counter = ispec_counter + 1
+          perm(ispec) = ispec_counter - nspec_outer ! starts again at 1
+        endif
+      endif
+    enddo
+    nspec_inner = ispec_counter - nspec_outer
+
+    ! only single color
+    if(nspec_inner > 0 ) nb_colors_inner_elements = 1
+
+    ! user output
+    if(myrank == 0 ) then
+      write(IMAIN,*) 'debugging mesh coloring:'
+      write(IMAIN,*) 'nb_colors inner / outer: ',nb_colors_inner_elements,nb_colors_outer_elements
+    endif
+
+    ! re-allocate
+    if(allocated(num_of_elems_in_this_color) ) deallocate(num_of_elems_in_this_color)
+    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements),stat=ier)
+    if( ier /= 0 ) then
+      print*,'error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
+          nb_colors_outer_elements + nb_colors_inner_elements
+      call exit_MPI(myrank,'error allocating num_of_elems_in_this_color array')
+    endif
+
+    if( nspec_outer > 0 ) num_of_elems_in_this_color(1) = nspec_outer
+    if( nspec_inner > 0 ) num_of_elems_in_this_color(2) = nspec_inner
+  endif ! debug
+
+  ! debug: saves mesh coloring numbers into files
+  if( DEBUG ) then
+    ! debug file output
+    call create_name_database(prname,myrank,idomain,LOCAL_PATH)
+    filename = prname(1:len_trim(prname))//'num_of_elems_in_this_color_'//str_domain(idomain)//'.dat'
+    open(unit=99,file=trim(filename),status='unknown',iostat=ier)
+    if( ier /= 0 ) stop 'error opening num_of_elems_in_this_color file'
+    ! number of colors for outer elements
+    write(99,*) nb_colors_outer_elements
+    ! number of colors for inner elements
+    write(99,*) nb_colors_inner_elements
+    ! number of elements in each color
+    ! outer elements
+    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
+      write(99,*) num_of_elems_in_this_color(icolor)
+    enddo
+    close(99)
+  endif
+
+  ! sets up domain coloring arrays
+  select case(idomain)
+  case( IREGION_CRUST_MANTLE )
+    ! crust/mantle domains
+    num_colors_outer_crust_mantle = nb_colors_outer_elements
+    num_colors_inner_crust_mantle = nb_colors_inner_elements
+
+    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle),stat=ier)
+    if( ier /= 0 ) stop 'error allocating num_elem_colors_crust_mantle array'
+
+    num_elem_colors_crust_mantle(:) = num_of_elems_in_this_color(:)
+
+  case( IREGION_OUTER_CORE )
+    ! outer core domains
+    num_colors_outer_outer_core = nb_colors_outer_elements
+    num_colors_inner_outer_core = nb_colors_inner_elements
+
+    allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core),stat=ier)
+    if( ier /= 0 ) stop 'error allocating num_elem_colors_outer_core array'
+
+    num_elem_colors_outer_core(:) = num_of_elems_in_this_color(:)
+
+  case( IREGION_INNER_CORE )
+    ! inner core domains
+    num_colors_outer_inner_core = nb_colors_outer_elements
+    num_colors_inner_inner_core = nb_colors_inner_elements
+
+    allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core),stat=ier)
+    if( ier /= 0 ) stop 'error allocating num_elem_colors_inner_core array'
+
+    num_elem_colors_inner_core(:) = num_of_elems_in_this_color(:)
+
+  case default
+    stop 'error idomain not recognized'
+  end select
+
+  ! sets up elements for loops in simulations
+  ispec_inner = 0
+  ispec_outer = 0
+  do ispec = 1, nspec
+    ! only elements in this domain
+    if( ispec_is_d(ispec) ) then
+
+      ! sets phase_ispec arrays with ordering of elements
+      if( is_on_a_slice_edge(ispec) .eqv. .true. ) then
+        ! outer elements
+        ispec_outer = perm(ispec)
+
+        ! checks
+        if( ispec_outer < 1 .or. ispec_outer > num_phase_ispec_d ) then
+          print*,'error outer permutation:',idomain
+          print*,'rank:',myrank,'  ispec_inner = ',ispec_outer
+          print*,'num_phase_ispec_d = ',num_phase_ispec_d
+          call exit_MPI(myrank,'error outer permutation')
+        endif
+
+        phase_ispec_inner_d(ispec_outer,1) = ispec
+
+      else
+        ! inner elements
+        ispec_inner = perm(ispec)
+
+        ! checks
+        if( ispec_inner < 1 .or. ispec_inner > num_phase_ispec_d ) then
+          print*,'error inner permutation:',idomain
+          print*,'rank:',myrank,'  ispec_inner = ',ispec_inner
+          print*,'num_phase_ispec_d = ',num_phase_ispec_d
+          call exit_MPI(myrank,'error inner permutation')
+        endif
+
+        phase_ispec_inner_d(ispec_inner,2) = ispec
+
+      endif
+    endif
+  enddo
+
+  ! total number of colors
+  nb_colors = nb_colors_inner_elements + nb_colors_outer_elements
+  call min_all_i(nb_colors,nb_colors_min)
+  call max_all_i(nb_colors,nb_colors_max)
+
+  ! user output
+  call min_all_i(nspec_outer,nspec_outer_min_global)
+  call max_all_i(nspec_outer,nspec_outer_max_global)
+  call min_all_i(nspec_outer,nspec_outer_min_global)
+  call max_all_i(nspec_outer,nspec_outer_max_global)
+  if(myrank == 0) then
+    write(IMAIN,*) '       colors min = ',nb_colors_min
+    write(IMAIN,*) '       colors max = ',nb_colors_max
+    write(IMAIN,*) '       outer elements: min = ',nspec_outer_min_global
+    write(IMAIN,*) '       outer elements: max = ',nspec_outer_max_global
+  endif
+
+  ! debug: outputs permutation array as vtk file
+  if( DEBUG .and. idomain == IREGION_CRUST_MANTLE ) then
+    call create_name_database(prname,myrank,idomain,LOCAL_PATH)
+    filename = prname(1:len_trim(prname))//'perm_'//str_domain(idomain)
+    call write_VTK_data_elem_i(nspec,nglob, &
+                        xstore,ystore,zstore,ibool, &
+                        perm,filename)
+  endif
+
+  deallocate(ispec_is_d)
+  deallocate(num_of_elems_in_this_color)
+
+  end subroutine setup_color
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_permutation(myrank,nspec,nglob,ibool, &
+                              idomain,perm, &
+                              num_colors_outer,num_colors_inner, &
+                              num_elem_colors, &
+                              num_phase_ispec_d,phase_ispec_inner_d, &
+                              SAVE_MESH_FILES)
+
+  use meshfem3D_par,only: &
+    CUSTOM_REAL,LOCAL_PATH,NGLLX,NGLLY,NGLLZ,IMAIN, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+
+  use create_MPI_interfaces_par,only: &
+    NSPEC_CRUST_MANTLE,ibool_crust_mantle,is_on_a_slice_edge_crust_mantle, &
+    NSPEC_OUTER_CORE,ibool_outer_core,is_on_a_slice_edge_outer_core, &
+    NSPEC_INNER_CORE,ibool_inner_core,is_on_a_slice_edge_inner_core, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  implicit none
+
+  integer :: myrank,nspec,nglob
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
+  integer :: idomain
+  integer, dimension(nspec),intent(inout) :: perm
+
+  integer :: num_colors_outer,num_colors_inner
+  integer, dimension(num_colors_outer + num_colors_inner) :: num_elem_colors
+  integer :: num_phase_ispec_d
+  integer, dimension(num_phase_ispec_d,2) :: phase_ispec_inner_d
+
+  logical :: SAVE_MESH_FILES
+
+  ! local parameters
+  ! added for sorting
+  integer, dimension(:,:,:,:), allocatable :: temp_array_int
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
+  logical, dimension(:), allocatable :: temp_array_logical_1D
+
+  integer, dimension(:), allocatable :: temp_perm_global
+  logical, dimension(:), allocatable :: mask_global
+
+  integer :: icolor,icounter,ispec,ielem,ier,i
+  integer :: iface,old_ispec,new_ispec
+
+  character(len=256) :: filename
+
+  logical,parameter :: DEBUG = .true.
+  character(len=150) :: prname
+
+  ! sorts array according to permutation
+  allocate(temp_perm_global(nspec),stat=ier)
+  if( ier /= 0 ) stop 'error temp_perm_global array'
+
+  ! global ordering
+  temp_perm_global(:) = 0
+  icounter = 0
+
+  ! fills global permutation array
+
+  ! first outer elements coloring
+  ! phase element counter
+  ielem = 0
+  do icolor = 1,num_colors_outer
+    ! loops through elements
+    do i = 1,num_elem_colors(icolor)
+      ielem = ielem + 1
+      ispec = phase_ispec_inner_d(ielem,1) ! 1 <-- first phase, outer elements
+      ! reorders elements
+      icounter = icounter + 1
+      temp_perm_global(ispec) = icounter
+      ! resets to new order
+      phase_ispec_inner_d(ielem,1) = icounter
+    enddo
+  enddo
+  ! inner elements coloring
+  ielem = 0
+  do icolor = num_colors_outer+1,num_colors_outer+num_colors_inner
+    ! loops through elements
+    do i = 1,num_elem_colors(icolor)
+      ielem = ielem + 1
+      ispec = phase_ispec_inner_d(ielem,2) ! 2 <-- second phase, inner elements
+      ! reorders elements
+      icounter = icounter + 1
+      temp_perm_global(ispec) = icounter
+      ! resets to new order
+      phase_ispec_inner_d(ielem,2) = icounter
+    enddo
+  enddo
+
+  ! checks
+  if( icounter /= nspec ) then
+    print*,'error temp perm: ',icounter,nspec
+    stop 'error temporary global permutation incomplete'
+  endif
+
+  ! checks perm entries
+  if( idomain /= IREGION_INNER_CORE ) then
+    ! exclude inner core: contains ficticious elements not counted for
+    if(minval(temp_perm_global) /= 1) call exit_MPI(myrank, 'minval(temp_perm_global) should be 1')
+    if(maxval(temp_perm_global) /= nspec) call exit_MPI(myrank, 'maxval(temp_perm_global) should be nspec')
+  endif
+
+  ! checks if every element was uniquely set
+  allocate(mask_global(nspec),stat=ier)
+  if( ier /= 0 ) stop 'error allocating temporary mask_global'
+  mask_global(:) = .false.
+  icounter = 0 ! counts permutations
+  do ispec = 1, nspec
+    new_ispec = temp_perm_global(ispec)
+    ! checks bounds
+    if( new_ispec < 1 .or. new_ispec > nspec ) call exit_MPI(myrank,'error temp_perm_global ispec bounds')
+    ! checks if already set
+    if( mask_global(new_ispec) ) then
+      print*,'error temp_perm_global:',ispec,new_ispec,'element already set'
+      call exit_MPI(myrank,'error global permutation')
+    else
+      mask_global(new_ispec) = .true.
+    endif
+    ! counts permutations
+    if( new_ispec /= ispec ) icounter = icounter + 1
+  enddo
+
+  ! checks number of set elements
+  if( count(mask_global(:)) /= nspec ) then
+    print*,'error temp_perm_global:',count(mask_global(:)),nspec,'permutation incomplete'
+    call exit_MPI(myrank,'error global permutation incomplete')
+  endif
+  deallocate(mask_global)
+
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*) '       number of permutations = ',icounter
+  endif
+
+  ! outputs permutation array as vtk file
+  if( SAVE_MESH_FILES .and. DEBUG .and. idomain == IREGION_CRUST_MANTLE ) then
+    call create_name_database(prname,myrank,idomain,LOCAL_PATH)
+    filename = prname(1:len_trim(prname))//'perm_global'
+    call write_VTK_data_elem_i(nspec,nglob, &
+                        xstore,ystore,zstore,ibool, &
+                        temp_perm_global,filename)
+  endif
+
+  ! store as new permutation
+  perm(:) = temp_perm_global(:)
+  deallocate(temp_perm_global)
+
+  ! permutes all required mesh arrays according to new ordering
+  select case( idomain )
+  case( IREGION_CRUST_MANTLE )
+    ! region
+    nspec = NSPEC_CRUST_MANTLE
+
+    ! permutation of ibool
+    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
+    call permute_elements_integer(ibool_crust_mantle,temp_array_int,perm,nspec)
+    deallocate(temp_array_int)
+
+    ! element domain flags
+    allocate(temp_array_logical_1D(nspec))
+    call permute_elements_logical1D(is_on_a_slice_edge_crust_mantle,temp_array_logical_1D,perm,nspec)
+    deallocate(temp_array_logical_1D)
+
+    ! mesh arrays
+
+    ! material parameters
+    ! crust/mantle arrays
+    ! outer core arrays
+    ! inner core arrays
+
+    ! boundary surface
+    ! free surface
+    ! coupling surface
+    ! moho surface
+
+  case( IREGION_OUTER_CORE )
+    ! region
+    nspec = NSPEC_OUTER_CORE
+
+    ! permutation of ibool
+    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
+    call permute_elements_integer(ibool_outer_core,temp_array_int,perm,nspec)
+    deallocate(temp_array_int)
+
+    ! element domain flags
+    allocate(temp_array_logical_1D(nspec))
+    call permute_elements_logical1D(is_on_a_slice_edge_outer_core,temp_array_logical_1D,perm,nspec)
+    deallocate(temp_array_logical_1D)
+
+  case( IREGION_INNER_CORE )
+    ! region
+    nspec = NSPEC_INNER_CORE
+
+    ! permutation of ibool
+    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
+    call permute_elements_integer(ibool_inner_core,temp_array_int,perm,nspec)
+    deallocate(temp_array_int)
+
+    ! element domain flags
+    allocate(temp_array_logical_1D(nspec))
+    call permute_elements_logical1D(is_on_a_slice_edge_inner_core,temp_array_logical_1D,perm,nspec)
+    deallocate(temp_array_logical_1D)
+
+  case default
+    stop 'error idomain in setup_permutation'
+  end select
+
+  end subroutine setup_permutation
 
 !
 !-------------------------------------------------------------------------------------------------

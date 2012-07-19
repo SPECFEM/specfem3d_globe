@@ -35,7 +35,7 @@
   ! local parameters
   ! timing
   double precision, external :: wtime
-  
+
   ! get MPI starting time
   time_start = wtime()
 
@@ -1091,7 +1091,6 @@
   ! local parameters
   integer :: ier
   real :: free_mb,used_mb,total_mb
-  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
   ! dummy custom_real variables to convert from double precision
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable:: cr_wgll_cube
   real(kind=CUSTOM_REAL),dimension(:),allocatable:: &
@@ -1099,20 +1098,11 @@
     cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
     cr_density_table
 
-  ! GPU_MODE now defined in Par_file
+  ! user output
   if(myrank == 0 ) then
-    write(IMAIN,*) "GPU_MODE Active."
-    write(IMAIN,*)
     write(IMAIN,*) "preparing Fields and Constants on GPU Device."
     write(IMAIN,*)
   endif
-
-  ! initializes GPU and outputs info to files for all processes
-  call prepare_cuda_device(myrank,ncuda_devices)
-
-  ! collects min/max of local devices found for statistics
-  call MPI_REDUCE(ncuda_devices,ncuda_devices_min,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
-  call MPI_REDUCE(ncuda_devices,ncuda_devices_max,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   ! prepares general fields on GPU
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
@@ -1298,7 +1288,7 @@
 
   ! crust/mantle region
   if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
-  
+
   call prepare_crust_mantle_device(Mesh_pointer, &
        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
@@ -1404,17 +1394,14 @@
 
   ! outputs usage for main process
   if( myrank == 0 ) then
-    write(IMAIN,*)"  GPU number of devices per node: min =",ncuda_devices_min
-    write(IMAIN,*)"                                  max =",ncuda_devices_max
-    write(IMAIN,*)
-
+    ! gets memory usage for main process
     call get_free_device_memory(free_mb,used_mb,total_mb)
+    ! outputs info
+    write(IMAIN,*)
     write(IMAIN,*)"  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
     write(IMAIN,*)"             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
     write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
     write(IMAIN,*)
   endif
-
-  call sync_all()
 
   end subroutine prepare_timerun_GPU

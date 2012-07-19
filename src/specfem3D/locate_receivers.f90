@@ -145,7 +145,7 @@
 
   ! timing
   double precision, external :: wtime
-  
+
   ! get MPI starting time
   time_start = wtime()
 
@@ -202,7 +202,7 @@
   ! initializes
   final_distance(:) = HUGEVAL
   final_distance_all(:,:) = HUGEVAL
-  
+
   ! read that STATIONS file on the master
   if(myrank == 0) then
     call get_value_string(STATIONS, 'solver.STATIONS', trim(rec_filename))
@@ -348,7 +348,7 @@
                    + (z_target_rec - dble(zstore(iglob)))**2)
         if(dist > typical_size) cycle
       endif
-      
+
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
       do k=2,NGLLZ-1
@@ -403,7 +403,7 @@
     open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file RECORDHEADERS')
-    
+
     nsamp = nint(dble(NSTEP-1)*DT)
 
     do irec = 1,nrec
@@ -475,7 +475,7 @@
         call exit_MPI(myrank,'incorrect value of iaddy')
       endif
 
-      iaz = 0      
+      iaz = 0
       if(iaddr(ia) == 0) then
         iaz = 1
       else if(iaddr(ia) == 1) then
@@ -616,7 +616,7 @@
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     islice_selected_rec_found(:) = -1
-    nrec_found = 0    
+    nrec_found = 0
     do irec=1,nrec
 
       if(final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'error locating receiver')
@@ -664,7 +664,7 @@
         write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
     enddo
-    
+
     ! finishes sr_tmp.vtk file
     write(IOVTK,*)
     close(IOVTK)
@@ -734,7 +734,7 @@
   endif    ! end of section executed by main process only
 
   call sync_all()
-  
+
   ! deallocate arrays
   deallocate(epidist)
   deallocate(ix_initial_guess,iy_initial_guess,iz_initial_guess)
