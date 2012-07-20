@@ -114,17 +114,17 @@
       write(55) B_array_rotation
     endif
     if (ATTENUATION_VAL) then
-      write(55) R_xx_crust_mantle
-      write(55) R_yy_crust_mantle
-      write(55) R_xy_crust_mantle
-      write(55) R_xz_crust_mantle
-      write(55) R_yz_crust_mantle
+       write(55) R_xx_crust_mantle
+       write(55) R_yy_crust_mantle
+       write(55) R_xy_crust_mantle
+       write(55) R_xz_crust_mantle
+       write(55) R_yz_crust_mantle
 
-      write(55) R_xx_inner_core
-      write(55) R_yy_inner_core
-      write(55) R_xy_inner_core
-      write(55) R_xz_inner_core
-      write(55) R_yz_inner_core
+       write(55) R_xx_inner_core
+       write(55) R_yy_inner_core
+       write(55) R_xy_inner_core
+       write(55) R_xz_inner_core
+       write(55) R_yz_inner_core
 
     endif
     close(55)

@@ -251,7 +251,7 @@
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-! initializes arrays
+  ! initializes arrays
   call sync_all()
   if( myrank == 0) then
     write(IMAIN,*) '  ...allocating arrays '
@@ -555,8 +555,8 @@
     NCHUNKS
 
   use meshfem3D_models_par,only: &
-    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE,SAVE_BOUNDARY_MESH, &
-    AM_V
+    ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
+    SAVE_BOUNDARY_MESH,AM_V
 
   use create_regions_mesh_par2
 
@@ -579,8 +579,18 @@
   else
     nspec_att = 1
   end if
-  allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
-          tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+
+  if (ATTENUATION) then
+     if (ATTENUATION_3D) then
+        ! attenuation arrays are fully 3D
+        allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
+             tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+     else if (.not. ATTENUATION_3D) then
+        ! save some memory in case of 1D attenuation models
+        allocate(Qmu_store(1,1,1,nspec_att), &
+             tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
+     endif
+  endif
   if(ier /= 0) stop 'error in allocate 1'
 
   ! array with model density
@@ -958,6 +968,7 @@
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
+                    size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     stretch_tab,ACTUALLY_STORE_ARRAYS, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
@@ -990,6 +1001,7 @@
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
+                    size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB,ACTUALLY_STORE_ARRAYS, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
@@ -1036,6 +1048,7 @@
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
+                        size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                         rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
                         ispec_is_tiso)
   endif

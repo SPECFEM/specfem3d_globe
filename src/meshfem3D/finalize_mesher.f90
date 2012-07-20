@@ -100,7 +100,7 @@
     ! evaluate the amount of static memory needed by the solver
     call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
                    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY, &
-                   ONE_CRUST,doubling_index,this_region_has_a_doubling, &
+                   ONE_CRUST,doubling_index,this_region_has_a_doubling,NCHUNKS, &
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                    ratio_sampling_array,NPROCTOT, &
                    NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &

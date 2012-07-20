@@ -79,13 +79,14 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_crust_mantle
 
+  ! variable sized array variables 
+  integer :: vx,vy,vz,vnspec
+
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
 !  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
-    R_xx,R_yy,R_xy,R_xz,R_yz
-
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
 !  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
@@ -93,10 +94,8 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
-  ! variable sized array variables for one_minus_sum_beta and factor_common
-  integer vx, vy, vz, vnspec
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
@@ -107,7 +106,7 @@
   ! for attenuation
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ)   :: factor_common_c44_muv
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
@@ -363,14 +362,16 @@
           endif
 
           ! precompute terms for attenuation if needed
-          if(ATTENUATION_VAL) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-            minus_sum_beta =  one_minus_sum_beta_use - 1.0
+          if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
+             one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
+             one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
           endif
+          minus_sum_beta =  one_minus_sum_beta_use - 1.0
 
-        !
-        ! compute either isotropic or anisotropic elements
-        !
+          !
+          ! compute either isotropic or anisotropic elements
+          !
 
           if(ANISOTROPIC_3D_MANTLE_VAL) then
 
@@ -663,16 +664,16 @@
 
         ! subtract memory variables if attenuation
           if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
-            do i_SLS = 1,N_SLS
-              R_xx_val = R_xx(i_SLS,i,j,k,ispec)
-              R_yy_val = R_yy(i_SLS,i,j,k,ispec)
-              sigma_xx = sigma_xx - R_xx_val
-              sigma_yy = sigma_yy - R_yy_val
-              sigma_zz = sigma_zz + R_xx_val + R_yy_val
-              sigma_xy = sigma_xy - R_xy(i_SLS,i,j,k,ispec)
-              sigma_xz = sigma_xz - R_xz(i_SLS,i,j,k,ispec)
-              sigma_yz = sigma_yz - R_yz(i_SLS,i,j,k,ispec)
-            enddo
+             do i_SLS = 1,N_SLS
+                R_xx_val = R_xx(i_SLS,i,j,k,ispec)
+                R_yy_val = R_yy(i_SLS,i,j,k,ispec)
+                sigma_xx = sigma_xx - R_xx_val
+                sigma_yy = sigma_yy - R_yy_val
+                sigma_zz = sigma_zz + R_xx_val + R_yy_val
+                sigma_xy = sigma_xy - R_xy(i_SLS,i,j,k,ispec)
+                sigma_xz = sigma_xz - R_xz(i_SLS,i,j,k,ispec)
+                sigma_yz = sigma_yz - R_yz(i_SLS,i,j,k,ispec)
+             enddo
           endif
 
         ! define symmetric components of sigma for gravity
@@ -891,12 +892,19 @@
 ! IMPROVE we should probably use an average value instead
 
         ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-        factor_common_c44_muv = factor_common(i_SLS,:,:,:,ispec)
-        if(ANISOTROPIC_3D_MANTLE_VAL) then
-          factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
-        else
-          factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)
-        endif
+         if (ATTENUATION_3D_VAL) then
+            if(ANISOTROPIC_3D_MANTLE_VAL) then
+               factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
+            else
+               factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+            endif
+         else if (.not. ATTENUATION_3D_VAL) then
+            if(ANISOTROPIC_3D_MANTLE_VAL) then
+               factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
+            else
+               factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+            endif
+         endif
 
 !        do i_memory = 1,5
 !          R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * &
@@ -906,23 +914,22 @@
 !                    gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
 !        enddo
 
-        R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv * &
-                    (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+         R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+              (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
 
-        R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv * &
-                    (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+         R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+              (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
 
-        R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv * &
-                    (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+         R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+              (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
 
-        R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv * &
-                    (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+         R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+              (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
 
-        R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv * &
-                    (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+         R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+              (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
 
       enddo
-
     endif
 
 ! save deviatoric strain for Runge-Kutta scheme

@@ -38,7 +38,7 @@
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
+                         vx,vy,vz,rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
                          xigll,yigll,zigll,ispec_is_tiso)
 
   use meshfem3D_models_par
@@ -97,10 +97,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
 ! attenuation
-  integer nspec_att
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
-  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS)                  :: tau_s
+  integer vx,vy,vz,nspec_att
+  double precision, dimension(vx,vy,vz,nspec_att) :: Qmu_store
+  double precision, dimension(N_SLS,vx,vy,vz,nspec_att) :: tau_e_store
+  double precision, dimension(N_SLS) :: tau_s
   double precision  T_c_source
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points

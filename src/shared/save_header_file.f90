@@ -450,17 +450,23 @@
   write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
   if(ATTENUATION) then
-    att1     = NGLLX
-    att2     = NGLLY
-    att3     = NGLLZ
-    att4     = NSPEC(IREGION_CRUST_MANTLE)
-    att5     = NSPEC(IREGION_INNER_CORE)
+     if(ATTENUATION_3D) then
+        att1 = NGLLX
+        att2 = NGLLY
+        att3 = NGLLZ
+     else
+        att1 = 1
+        att2 = 1
+        att3 = 1
+     endif
+     att4 = NSPEC(IREGION_CRUST_MANTLE)
+     att5 = NSPEC(IREGION_INNER_CORE)
   else
-    att1     = 1
-    att2     = 1
-    att3     = 1
-    att4     = 1
-    att5     = 1
+     att1 = 1
+     att2 = 1
+     att3 = 1
+     att4 = 1
+     att5 = 1
   endif
 
   write(IOUT,*) 'integer, parameter :: ATT1 = ',att1

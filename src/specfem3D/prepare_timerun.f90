@@ -705,13 +705,15 @@
 
   ! CRUST_MANTLE ATTENUATION
   call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  call get_attenuation_model_3D(myrank, prnamel, omsb_crust_mantle_dble, &
-           factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble,NSPEC_CRUST_MANTLE)
+  call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_crust_mantle_dble, &
+           factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble, &
+           ATT1,ATT2,ATT3,ATT4,NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
   call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-  call get_attenuation_model_3D(myrank, prnamel, omsb_inner_core_dble, &
-           factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble,NSPEC_INNER_CORE)
+  call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_inner_core_dble, &
+           factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble, &
+           ATT1,ATT2,ATT3,ATT5,NSPEC_INNER_CORE)
 
   if(CUSTOM_REAL == SIZE_REAL) then
     factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
@@ -748,48 +750,52 @@
   ! rescale in crust and mantle
 
   do ispec = 1,NSPEC_CRUST_MANTLE
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+     do k=1,NGLLZ
+        do j=1,NGLLY
+           do i=1,NGLLX
+              if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
+                 scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+              else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
+                 scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
+              endif
+                 
+              if(ANISOTROPIC_3D_MANTLE_VAL) then
+                 scale_factor_minus_one = scale_factor - 1.
+                 mul = c44store_crust_mantle(i,j,k,ispec)
+                 c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
+                      + FOUR_THIRDS * scale_factor_minus_one * mul
+                 c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) &
+                      - TWO_THIRDS * scale_factor_minus_one * mul
+                 c13store_crust_mantle(i,j,k,ispec) = c13store_crust_mantle(i,j,k,ispec) &
+                      - TWO_THIRDS * scale_factor_minus_one * mul
+                 c22store_crust_mantle(i,j,k,ispec) = c22store_crust_mantle(i,j,k,ispec) &
+                      + FOUR_THIRDS * scale_factor_minus_one * mul
+                 c23store_crust_mantle(i,j,k,ispec) = c23store_crust_mantle(i,j,k,ispec) &
+                      - TWO_THIRDS * scale_factor_minus_one * mul
+                 c33store_crust_mantle(i,j,k,ispec) = c33store_crust_mantle(i,j,k,ispec) &
+                      + FOUR_THIRDS * scale_factor_minus_one * mul
+                 c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) &
+                      + scale_factor_minus_one * mul
+                 c55store_crust_mantle(i,j,k,ispec) = c55store_crust_mantle(i,j,k,ispec) &
+                      + scale_factor_minus_one * mul
+                 c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
+                      + scale_factor_minus_one * mul
+              else
+                 if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
+                    ! store the original value of \mu to comput \mu*\eps
+                    muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
+                 endif
+                 muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
 
-          if(ANISOTROPIC_3D_MANTLE_VAL) then
-            scale_factor_minus_one = scale_factor - 1.
-            mul = c44store_crust_mantle(i,j,k,ispec)
-            c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
-                    + FOUR_THIRDS * scale_factor_minus_one * mul
-            c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) &
-                    - TWO_THIRDS * scale_factor_minus_one * mul
-            c13store_crust_mantle(i,j,k,ispec) = c13store_crust_mantle(i,j,k,ispec) &
-                    - TWO_THIRDS * scale_factor_minus_one * mul
-            c22store_crust_mantle(i,j,k,ispec) = c22store_crust_mantle(i,j,k,ispec) &
-                    + FOUR_THIRDS * scale_factor_minus_one * mul
-            c23store_crust_mantle(i,j,k,ispec) = c23store_crust_mantle(i,j,k,ispec) &
-                    - TWO_THIRDS * scale_factor_minus_one * mul
-            c33store_crust_mantle(i,j,k,ispec) = c33store_crust_mantle(i,j,k,ispec) &
-                    + FOUR_THIRDS * scale_factor_minus_one * mul
-            c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) &
-                    + scale_factor_minus_one * mul
-            c55store_crust_mantle(i,j,k,ispec) = c55store_crust_mantle(i,j,k,ispec) &
-                    + scale_factor_minus_one * mul
-            c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
-                    + scale_factor_minus_one * mul
-          else
-            if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
-              ! store the original value of \mu to comput \mu*\eps
-              muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
-            endif
-            muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
+                 ! scales transverse isotropic values for mu_h
+                 if( ispec_is_tiso_crust_mantle(ispec) ) then
+                    muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
+                 endif
+              endif
 
-            ! scales transverse isotropic values for mu_h
-            if( ispec_is_tiso_crust_mantle(ispec) ) then
-              muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
-            endif
-          endif
-
+           enddo
         enddo
-      enddo
-    enddo
+     enddo
   enddo ! END DO CRUST MANTLE
 
   ! rescale in inner core
@@ -798,7 +804,11 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
+           if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
+              scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
+           else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
+              scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.0
+           endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
             mul = muvstore_inner_core(i,j,k,ispec)
@@ -814,7 +824,11 @@
                     + scale_factor_minus_one * mul
           endif
 
-          muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+          if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
+             muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+          else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
+             muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
+          endif
 
         enddo
       enddo
