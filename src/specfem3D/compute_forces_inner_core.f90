@@ -77,19 +77,16 @@
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common and one_minus_sum_beta
 
-  ! variable sized array variables 
+  ! variable sized array variables
   integer vx, vy, vz, vnspec
 
   real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! inner/outer element run flag
@@ -346,10 +343,12 @@
           endif
 
           ! precompute terms for attenuation if needed
-          if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
-             minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-          else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
-             minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
+          if( ATTENUATION_VAL ) then
+            if( ATTENUATION_3D_VAL ) then
+              minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+            else
+              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+            endif
           endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -401,10 +400,12 @@
             mul = muvstore(i,j,k,ispec)
 
             ! use unrelaxed parameters if attenuation
-            if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
-               mul = mul * one_minus_sum_beta(i,j,k,ispec)
-            else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
-               mul = mul * one_minus_sum_beta(1,1,1,ispec)
+            if( ATTENUATION_VAL ) then
+              if( ATTENUATION_3D_VAL ) then
+                mul = mul * one_minus_sum_beta(i,j,k,ispec)
+              else
+                mul = mul * one_minus_sum_beta(1,1,1,ispec)
+              endif
             endif
 
             lambdalplus2mul = kappal + FOUR_THIRDS * mul
@@ -652,12 +653,12 @@
 
       do i_SLS = 1,N_SLS
 
-         ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-         if (ATTENUATION_3D_VAL) then
-            factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-         else if (.not. ATTENUATION_3D_VAL) then
-            factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-         endif
+        ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+        if (ATTENUATION_3D_VAL) then
+          factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+        else
+          factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+        endif
 
 !        do i_memory = 1,5
 !          R_memory(i_memory,i_SLS,:,:,:,ispec) = &
@@ -667,20 +668,20 @@
 !                  (betaval(i_SLS) * &
 !                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
 !        enddo
-         
-         R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+
+        R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
               (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
 
-         R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+        R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
               (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
 
-         R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+        R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
               (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
 
-         R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+        R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
               (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
 
-         R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+        R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
               (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
 
       enddo

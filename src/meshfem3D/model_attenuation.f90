@@ -356,6 +356,7 @@
 !
 
   subroutine model_attenuation_getstored_tau(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+
 ! includes min_period, max_period, and N_SLS
 
   implicit none

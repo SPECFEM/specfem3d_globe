@@ -241,7 +241,7 @@
      static_memory_size = static_memory_size + &
           6.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
   else
-     ! one only keeps one mass matrix for the calculations: rmassz 
+     ! one only keeps one mass matrix for the calculations: rmassz
      static_memory_size = static_memory_size + &
           4.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
   endif

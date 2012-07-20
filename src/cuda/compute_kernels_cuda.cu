@@ -100,6 +100,8 @@ __global__ void compute_kernels_cudakernel(int* ibool,
   }
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 __device__ void compute_strain_product(realw* prod,
                                        realw eps_trace_over_3,
                                        realw* epsdev,
@@ -149,6 +151,8 @@ __device__ void compute_strain_product(realw* prod,
     }
   }
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_kernels_ani_cudakernel(int* ibool,
                                                realw* epsilondev_xx,

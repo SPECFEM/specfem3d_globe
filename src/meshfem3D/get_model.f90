@@ -42,54 +42,49 @@
 
   implicit none
 
-  integer myrank,iregion_code,ispec,nspec,idoubling
+  integer :: myrank,iregion_code,ispec,nspec,idoubling
 
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) dvpstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore, &
+    muvstore,muhstore,eta_anisostore,rhostore,dvpstore
 
-  integer nspec_ani
+  integer :: nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store, &
     c33store,c34store,c35store,c36store, &
     c44store,c45store,c46store,c55store,c56store,c66store
 
-  integer nspec_stacey
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
+  integer :: nspec_stacey
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey):: rho_vp,rho_vs
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision rmin,rmax,RCMB,RICB,R670,RMOHO, &
+  double precision :: rmin,rmax,RCMB,RICB,R670,RMOHO, &
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
   ! attenuation values
-  integer vx,vy,vz,vnspec
+  integer :: vx,vy,vz,vnspec
   double precision, dimension(N_SLS)                     :: tau_s
   double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
   double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
-  double precision  T_c_source
+  double precision :: T_c_source
 
-  logical ABSORBING_CONDITIONS
-  logical elem_in_crust,elem_in_mantle
+  logical :: ABSORBING_CONDITIONS
+  logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
-  double precision xmesh,ymesh,zmesh
+  double precision :: xmesh,ymesh,zmesh
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
   double precision, dimension(N_SLS) :: tau_e
 
   ! local parameters
-  double precision rho,dvp
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision Qkappa,Qmu
-  double precision r,r_prem,moho
-  integer i,j,k
+  double precision :: rho,dvp
+  double precision :: vpv,vph,vsv,vsh,eta_aniso
+  double precision :: Qkappa,Qmu
+  double precision :: r,r_prem,moho
+  integer :: i,j,k
 
   ! loops over all gll points for this spectral element
   do k=1,NGLLZ
@@ -312,19 +307,27 @@
 
         endif !CUSTOM_REAL
 
-        if(ATTENUATION .and. ATTENUATION_3D) then
-          tau_e_store(:,i,j,k,ispec) = tau_e(:)
-          Qmu_store(i,j,k,ispec)     = Qmu
+        if( ATTENUATION ) then
+          if( ATTENUATION_3D ) then
+            tau_e_store(:,i,j,k,ispec) = tau_e(:)
+            Qmu_store(i,j,k,ispec)     = Qmu
+          else
+            ! store values from mid-point for whole element
+            if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+              tau_e_store(:,1,1,1,ispec) = tau_e(:)
+              Qmu_store(1,1,1,ispec)     = Qmu
+            endif
+          endif
         endif
 
       enddo
     enddo
   enddo
 
-  if (ATTENUATION .and. .not. ATTENUATION_3D) then
-     tau_e_store(:,1,1,1,ispec) = tau_e(:)
-     Qmu_store(1,1,1,ispec)     = Qmu
-  endif
+  !if (ATTENUATION .and. .not. ATTENUATION_3D) then
+  !   tau_e_store(:,1,1,1,ispec) = tau_e(:)
+  !   Qmu_store(1,1,1,ispec)     = Qmu
+  !endif
 
   end subroutine get_model
 

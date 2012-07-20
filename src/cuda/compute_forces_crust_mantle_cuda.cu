@@ -313,7 +313,8 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
                                               reald epsilondev_xx_loc,reald epsilondev_yy_loc,reald epsilondev_xy_loc,
                                               reald epsilondev_xz_loc,reald epsilondev_yz_loc,
                                               int ANISOTROPY,
-                                              realw* d_c44store
+                                              realw* d_c44store,
+                                              int ATTENUATION_3D
                                               ){
 
   int i_sls;
@@ -346,8 +347,12 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
 
     // either mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
-    factor_loc = fac * factor_common[offset];
-
+    if( ATTENUATION_3D ){
+      factor_loc = fac * factor_common[offset];
+    }else{
+      factor_loc = fac * factor_common[i_sls + N_SLS*working_element];    
+    }
+    
     alphaval_loc = alphaval[i_sls]; // (i_sls)
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
@@ -917,6 +922,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           int ATTENUATION,
                                           int ATTENUATION_NEW,
                                           int USE_ATTENUATION_MIMIC,
+                                          int ATTENUATION_3D,
                                           realw* one_minus_sum_beta,realw* factor_common,
                                           realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
                                           realw* alphaval,realw* betaval,realw* gammaval,
@@ -1034,26 +1040,26 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 #endif
 
       if(ATTENUATION){
-  if(ATTENUATION_NEW){
-    // takes new routines
-    // use first order Taylor expansion of displacement for local storage of stresses
-    // at this current time step, to fix attenuation in a consistent way
+        if(ATTENUATION_NEW){
+          // takes new routines
+          // use first order Taylor expansion of displacement for local storage of stresses
+          // at this current time step, to fix attenuation in a consistent way
 #ifdef USE_TEXTURES
-    s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
-    s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
-    s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
+          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
+          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
+          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
 #else
-    s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-    s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-    s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
+          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
+          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
 #endif
-  }
-  else{
-    // takes old routines
-    s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
-    s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
-    s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
-  }
+        }
+        else{
+          // takes old routines
+          s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
+          s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
+          s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
+        }
       }
     }
 
@@ -1103,40 +1109,39 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 
 
       if( ATTENUATION){
-  // temporary variables used for fixing attenuation in a consistent way
+        // temporary variables used for fixing attenuation in a consistent way
+        tempx1l_att = 0.f;
+        tempx2l_att = 0.f;
+        tempx3l_att = 0.f;
 
-  tempx1l_att = 0.f;
-  tempx2l_att = 0.f;
-  tempx3l_att = 0.f;
+        tempy1l_att = 0.f;
+        tempy2l_att = 0.f;
+        tempy3l_att = 0.f;
 
-  tempy1l_att = 0.f;
-  tempy2l_att = 0.f;
-  tempy3l_att = 0.f;
+        tempz1l_att = 0.f;
+        tempz2l_att = 0.f;
+        tempz3l_att = 0.f;
 
-  tempz1l_att = 0.f;
-  tempz2l_att = 0.f;
-  tempz3l_att = 0.f;
+        for (l=0;l<NGLLX;l++) {
+                hp1 = d_hprime_xx[l*NGLLX+I];
+                offset = K*NGLL2+J*NGLLX+l;
+                tempx1l_att += s_dummyx_loc_att[offset]*hp1;
+                tempy1l_att += s_dummyy_loc_att[offset]*hp1;
+                tempz1l_att += s_dummyz_loc_att[offset]*hp1;
 
-  for (l=0;l<NGLLX;l++) {
-          hp1 = d_hprime_xx[l*NGLLX+I];
-          offset = K*NGLL2+J*NGLLX+l;
-          tempx1l_att += s_dummyx_loc_att[offset]*hp1;
-          tempy1l_att += s_dummyy_loc_att[offset]*hp1;
-          tempz1l_att += s_dummyz_loc_att[offset]*hp1;
+                hp2 = d_hprime_xx[l*NGLLX+J];
+                offset = K*NGLL2+l*NGLLX+I;
+                tempx2l_att += s_dummyx_loc_att[offset]*hp2;
+                tempy2l_att += s_dummyy_loc_att[offset]*hp2;
+                tempz2l_att += s_dummyz_loc_att[offset]*hp2;
 
-          hp2 = d_hprime_xx[l*NGLLX+J];
-          offset = K*NGLL2+l*NGLLX+I;
-          tempx2l_att += s_dummyx_loc_att[offset]*hp2;
-          tempy2l_att += s_dummyy_loc_att[offset]*hp2;
-          tempz2l_att += s_dummyz_loc_att[offset]*hp2;
+                hp3 = d_hprime_xx[l*NGLLX+K];
+                offset = l*NGLL2+J*NGLLX+I;
+                tempx3l_att += s_dummyx_loc_att[offset]*hp3;
+                tempy3l_att += s_dummyy_loc_att[offset]*hp3;
+                tempz3l_att += s_dummyz_loc_att[offset]*hp3;
 
-          hp3 = d_hprime_xx[l*NGLLX+K];
-          offset = l*NGLL2+J*NGLLX+I;
-          tempx3l_att += s_dummyx_loc_att[offset]*hp3;
-          tempy3l_att += s_dummyy_loc_att[offset]*hp3;
-          tempz3l_att += s_dummyz_loc_att[offset]*hp3;
-
-  }
+        }
       }
 #else
 
@@ -1195,61 +1200,60 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
               + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
       if( ATTENUATION){
-  // temporary variables used for fixing attenuation in a consistent way
+        // temporary variables used for fixing attenuation in a consistent way
+        tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-  tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+        tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-  tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+        tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-  tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+        tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+          + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+          + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+          + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+          + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-  tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-    + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-    + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-    + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-    + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+        tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+          + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+          + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+          + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+          + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-  tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-    + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-    + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-    + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-    + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+        tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+          + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+          + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+          + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+          + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-  tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-    + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-    + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-    + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-    + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+        tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+          + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+          + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+          + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+          + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-  tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-    + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-    + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-    + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-    + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+        tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+          + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+          + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+          + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+          + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-  tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-    + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-    + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-    + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-    + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
-
-  tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-    + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-    + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-    + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-    + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+        tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+          + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+          + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+          + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+          + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
       }
 
 #endif
@@ -1288,66 +1292,69 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       duzdyl_plus_duydzl = duzdyl + duydzl;
 
       if( ATTENUATION){
-  // temporary variables used for fixing attenuation in a consistent way
+        // temporary variables used for fixing attenuation in a consistent way
+        duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
+        duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
+        duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
 
-  duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
-  duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
-  duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
+        duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
+        duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
+        duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
 
-  duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
-  duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
-  duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
+        duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
+        duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
+        duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
 
-  duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
-  duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
-  duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
+        // precompute some sums to save CPU time
+        duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
+        duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
+        duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
 
-  // precompute some sums to save CPU time
-  duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
-  duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
-  duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
+        // computes deviatoric strain attenuation and/or for kernel calculations
+        if(COMPUTE_AND_STORE_STRAIN) {
+          realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
 
-  // computes deviatoric strain attenuation and/or for kernel calculations
-  if(COMPUTE_AND_STORE_STRAIN) {
-    realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
+          // local storage: stresses at this current time step
+          epsilondev_xx_loc = duxdxl_att - templ;
+          epsilondev_yy_loc = duydyl_att - templ;
+          epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
+          epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
+          epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
 
-    // local storage: stresses at this current time step
-    epsilondev_xx_loc = duxdxl_att - templ;
-    epsilondev_yy_loc = duydyl_att - templ;
-    epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
-    epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
-    epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
-
-    if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-      epsilon_trace_over_3[tx] = templ;
-    }else{
-      epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-    }
-  }
+          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+            epsilon_trace_over_3[tx] = templ;
+          }else{
+            epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
+          }
+        }
       }else{
-  // computes deviatoric strain attenuation and/or for kernel calculations
-  if(COMPUTE_AND_STORE_STRAIN) {
-    realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
+        // computes deviatoric strain attenuation and/or for kernel calculations
+        if(COMPUTE_AND_STORE_STRAIN) {
+          realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
 
-    // local storage: stresses at this current time step
-    epsilondev_xx_loc = duxdxl - templ;
-    epsilondev_yy_loc = duydyl - templ;
-    epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl;
-    epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
-    epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
+          // local storage: stresses at this current time step
+          epsilondev_xx_loc = duxdxl - templ;
+          epsilondev_yy_loc = duydyl - templ;
+          epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl;
+          epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
+          epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
 
-    if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-      epsilon_trace_over_3[tx] = templ;
-    }else{
-      epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-    }
-  }
+          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+            epsilon_trace_over_3[tx] = templ;
+          }else{
+            epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
+          }
+        }
       }
 
       // attenuation
       if(ATTENUATION){
         // use unrelaxed parameters if attenuation
-        one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
+        if( ATTENUATION_3D ){
+          one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
+        }else{
+          one_minus_sum_beta_use = one_minus_sum_beta[working_element]; // (1,1,1,ispec)        
+        }
         minus_sum_beta = one_minus_sum_beta_use - 1.0f;
       }
 
@@ -1603,7 +1610,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                   R_xx,R_yy,R_xy,R_xz,R_yz,
                                   epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,
                                   epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc,
-                                  ANISOTROPY,d_c44store);
+                                  ANISOTROPY,d_c44store,ATTENUATION_3D);
       }
 
       // save deviatoric strain for Runge-Kutta scheme
@@ -1725,6 +1732,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                   mp->attenuation,
                                   mp->attenuation_new,
                                   mp->use_attenuation_mimic,
+                                  mp->attenuation_3D,
                                   d_one_minus_sum_beta,d_factor_common,
                                   d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
                                   mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
@@ -1772,6 +1780,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                      mp->attenuation,
                                      mp->attenuation_new,
                                      mp->use_attenuation_mimic,
+                                     mp->attenuation_3D,
                                      d_one_minus_sum_beta,d_factor_common,
                                      d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
                                      mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
@@ -1864,7 +1873,11 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       // array offsets
       color_offset = (mp->nspec_outer_crust_mantle) * NGLL3_PADDED;
       color_offset_nonpadded = (mp->nspec_outer_crust_mantle) * NGLL3;
-      color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
+      if( mp->attenuation_3D ){
+        color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
+      }else{
+        color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * 1 * N_SLS;      
+      }
       color_offset_ispec = mp->nspec_outer_crust_mantle;
     }
 
@@ -1950,7 +1963,11 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       // for no-aligned arrays
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
       // for factor_common array
-      color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3 * N_SLS;
+      if( mp->attenuation_3D ){
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3 * N_SLS;
+      }else{
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * 1 * N_SLS;      
+      }
       // for array(ispec)
       color_offset_ispec += nb_blocks_to_compute;
     }

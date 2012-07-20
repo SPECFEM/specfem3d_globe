@@ -92,7 +92,8 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
                                               realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
                                               realw* epsilondev_xz,realw* epsilondev_yz,
                                               reald epsilondev_xx_loc,reald epsilondev_yy_loc,reald epsilondev_xy_loc,
-                                              reald epsilondev_xz_loc,reald epsilondev_yz_loc
+                                              reald epsilondev_xz_loc,reald epsilondev_yz_loc,
+                                              int ATTENUATION_3D
                                               ){
 
   int i_sls;
@@ -117,8 +118,11 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
     // index for (i_sls,i,j,k,ispec)
     offset = i_sls + N_SLS*(tx + NGLL3*working_element);
 
-    factor_loc = mul * factor_common[offset]; //mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
-
+    if( ATTENUATION_3D ){
+      factor_loc = mul * factor_common[offset]; //mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
+    }else{
+      factor_loc = mul * factor_common[i_sls + N_SLS*working_element]; //mustore(i,j,k,ispec) * factor_common(i_sls,1,1,1,ispec)
+    }
     alphaval_loc = alphaval[i_sls]; // (i_sls)
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
@@ -292,45 +296,46 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
 /* ----------------------------------------------------------------------------------------------- */
 
 __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
-                                        int NGLOB,
-                                        int* d_ibool,
-                                        int* d_idoubling,
-                                        int* d_phase_ispec_inner,
-                                        int num_phase_ispec,
-                                        int d_iphase,
-                                        realw d_deltat,
-                                        int use_mesh_coloring_gpu,
-                                        realw* d_displ,
-          realw* d_veloc,
-                                        realw* d_accel,
-                                        realw* d_xix, realw* d_xiy, realw* d_xiz,
-                                        realw* d_etax, realw* d_etay, realw* d_etaz,
-                                        realw* d_gammax, realw* d_gammay, realw* d_gammaz,
-                                        realw* d_hprime_xx, realw* d_hprime_yy, realw* d_hprime_zz,
-                                        realw* d_hprimewgll_xx, realw* d_hprimewgll_yy, realw* d_hprimewgll_zz,
-                                        realw* d_wgllwgll_xy,realw* d_wgllwgll_xz,realw* d_wgllwgll_yz,
-                                        realw* d_kappav,
-                                        realw* d_muv,
-                                        int COMPUTE_AND_STORE_STRAIN,
-                                        realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
-                                        realw* epsilondev_xz,realw* epsilondev_yz,
-                                        realw* epsilon_trace_over_3,
-                                        int SIMULATION_TYPE,
-                                        int ATTENUATION,
-                                        int ATTENUATION_NEW,
-                                        int USE_ATTENUATION_MIMIC,
-                                        realw* one_minus_sum_beta,realw* factor_common,
-                                        realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
-                                        realw* alphaval,realw* betaval,realw* gammaval,
-                                        int ANISOTROPY,
-                                        realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                                        realw* d_c33store,realw* d_c44store,
-                                        int GRAVITY,
-                                        realw* d_xstore,realw* d_ystore,realw* d_zstore,
-                                        realw* d_minus_gravity_table,
-                                        realw* d_minus_deriv_gravity_table,
-                                        realw* d_density_table,
-                                        realw* wgll_cube){
+                                         int NGLOB,
+                                         int* d_ibool,
+                                         int* d_idoubling,
+                                         int* d_phase_ispec_inner,
+                                         int num_phase_ispec,
+                                         int d_iphase,
+                                         realw d_deltat,
+                                         int use_mesh_coloring_gpu,
+                                         realw* d_displ,
+                                         realw* d_veloc,
+                                         realw* d_accel,
+                                         realw* d_xix, realw* d_xiy, realw* d_xiz,
+                                         realw* d_etax, realw* d_etay, realw* d_etaz,
+                                         realw* d_gammax, realw* d_gammay, realw* d_gammaz,
+                                         realw* d_hprime_xx, realw* d_hprime_yy, realw* d_hprime_zz,
+                                         realw* d_hprimewgll_xx, realw* d_hprimewgll_yy, realw* d_hprimewgll_zz,
+                                         realw* d_wgllwgll_xy,realw* d_wgllwgll_xz,realw* d_wgllwgll_yz,
+                                         realw* d_kappav,
+                                         realw* d_muv,
+                                         int COMPUTE_AND_STORE_STRAIN,
+                                         realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
+                                         realw* epsilondev_xz,realw* epsilondev_yz,
+                                         realw* epsilon_trace_over_3,
+                                         int SIMULATION_TYPE,
+                                         int ATTENUATION,
+                                         int ATTENUATION_NEW,
+                                         int USE_ATTENUATION_MIMIC,
+                                         int ATTENUATION_3D,
+                                         realw* one_minus_sum_beta,realw* factor_common,
+                                         realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
+                                         realw* alphaval,realw* betaval,realw* gammaval,
+                                         int ANISOTROPY,
+                                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
+                                         realw* d_c33store,realw* d_c44store,
+                                         int GRAVITY,
+                                         realw* d_xstore,realw* d_ystore,realw* d_zstore,
+                                         realw* d_minus_gravity_table,
+                                         realw* d_minus_deriv_gravity_table,
+                                         realw* d_density_table,
+                                         realw* wgll_cube){
 
   /* int bx = blockIdx.y*blockDim.x+blockIdx.x; //possible bug in original code*/
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -434,28 +439,28 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
         s_dummyz_loc[tx] = d_displ[iglob*3 + 2];
 #endif
 
-  if(ATTENUATION){
-    if(ATTENUATION_NEW){
-      // takes new routines
-      // use first order Taylor expansion of displacement for local storage of stresses
-      // at this current time step, to fix attenuation in a consistent way
+        if(ATTENUATION){
+          if(ATTENUATION_NEW){
+            // takes new routines
+            // use first order Taylor expansion of displacement for local storage of stresses
+            // at this current time step, to fix attenuation in a consistent way
 #ifdef USE_TEXTURES
-      s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
-      s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
-      s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
+            s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
+            s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
+            s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
 #else
-      s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-      s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-      s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+            s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
+            s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
+            s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
 #endif
-    }
-    else{
-      // takes old routines
-      s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
-      s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
-      s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
-    }
-  }
+          }
+          else{
+            // takes old routines
+            s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
+            s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
+            s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
+          }
+        }
       }
     }
 
@@ -504,40 +509,39 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       }
 
       if( ATTENUATION ){
-  // temporary variables used for fixing attenuation in a consistent way
+        // temporary variables used for fixing attenuation in a consistent way
+        tempx1l_att = 0.f;
+        tempx2l_att = 0.f;
+        tempx3l_att = 0.f;
 
-  tempx1l_att = 0.f;
-  tempx2l_att = 0.f;
-  tempx3l_att = 0.f;
+        tempy1l_att = 0.f;
+        tempy2l_att = 0.f;
+        tempy3l_att = 0.f;
 
-  tempy1l_att = 0.f;
-  tempy2l_att = 0.f;
-  tempy3l_att = 0.f;
+        tempz1l_att = 0.f;
+        tempz2l_att = 0.f;
+        tempz3l_att = 0.f;
 
-  tempz1l_att = 0.f;
-  tempz2l_att = 0.f;
-  tempz3l_att = 0.f;
+        for (l=0;l<NGLLX;l++) {
+                hp1 = d_hprime_xx[l*NGLLX+I];
+                offset = K*NGLL2+J*NGLLX+l;
+                tempx1l_att += s_dummyx_loc_att[offset]*hp1;
+                tempy1l_att += s_dummyy_loc_att[offset]*hp1;
+                tempz1l_att += s_dummyz_loc_att[offset]*hp1;
 
-  for (l=0;l<NGLLX;l++) {
-          hp1 = d_hprime_xx[l*NGLLX+I];
-          offset = K*NGLL2+J*NGLLX+l;
-          tempx1l_att += s_dummyx_loc_att[offset]*hp1;
-          tempy1l_att += s_dummyy_loc_att[offset]*hp1;
-          tempz1l_att += s_dummyz_loc_att[offset]*hp1;
+                hp2 = d_hprime_xx[l*NGLLX+J];
+                offset = K*NGLL2+l*NGLLX+I;
+                tempx2l_att += s_dummyx_loc_att[offset]*hp2;
+                tempy2l_att += s_dummyy_loc_att[offset]*hp2;
+                tempz2l_att += s_dummyz_loc_att[offset]*hp2;
 
-          hp2 = d_hprime_xx[l*NGLLX+J];
-          offset = K*NGLL2+l*NGLLX+I;
-          tempx2l_att += s_dummyx_loc_att[offset]*hp2;
-          tempy2l_att += s_dummyy_loc_att[offset]*hp2;
-          tempz2l_att += s_dummyz_loc_att[offset]*hp2;
+                hp3 = d_hprime_xx[l*NGLLX+K];
+                offset = l*NGLL2+J*NGLLX+I;
+                tempx3l_att += s_dummyx_loc_att[offset]*hp3;
+                tempy3l_att += s_dummyy_loc_att[offset]*hp3;
+                tempz3l_att += s_dummyz_loc_att[offset]*hp3;
 
-          hp3 = d_hprime_xx[l*NGLLX+K];
-          offset = l*NGLL2+J*NGLLX+I;
-          tempx3l_att += s_dummyx_loc_att[offset]*hp3;
-          tempy3l_att += s_dummyy_loc_att[offset]*hp3;
-          tempz3l_att += s_dummyz_loc_att[offset]*hp3;
-
-  }
+        }
       }
 #else
 
@@ -596,61 +600,60 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
               + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
       if( ATTENUATION ){
-  // temporary variables used for fixing attenuation in a consistent way
+        // temporary variables used for fixing attenuation in a consistent way
+        tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-  tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-    + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+        tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-  tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-    + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+        tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-  tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-    + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+        tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+          + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+          + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+          + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+          + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-  tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-    + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-    + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-    + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-    + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+        tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+          + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+          + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+          + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+          + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-  tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-    + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-    + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-    + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-    + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+        tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+          + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+          + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+          + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+          + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-  tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-    + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-    + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-    + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-    + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+        tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+          + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+          + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+          + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+          + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-  tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-    + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-    + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-    + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-    + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+        tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+          + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+          + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+          + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+          + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-  tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-    + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-    + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-    + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-    + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
-
-  tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-    + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-    + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-    + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-    + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+        tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+          + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+          + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+          + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+          + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
       }
 
 #endif
@@ -689,56 +692,55 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       duzdyl_plus_duydzl = duzdyl + duydzl;
 
       if(ATTENUATION){
-  // temporary variables used for fixing attenuation in a consistent way
+        // temporary variables used for fixing attenuation in a consistent way
+        duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
+        duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
+        duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
 
-  duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
-  duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
-  duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
+        duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
+        duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
+        duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
 
-  duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
-  duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
-  duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
+        duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
+        duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
+        duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
 
-  duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
-  duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
-  duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
+        // precompute some sums to save CPU time
+        duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
+        duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
+        duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
 
-  // precompute some sums to save CPU time
-  duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
-  duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
-  duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
+        // computes deviatoric strain attenuation and/or for kernel calculations
+        if(COMPUTE_AND_STORE_STRAIN) {
+          realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
 
-  // computes deviatoric strain attenuation and/or for kernel calculations
-  if(COMPUTE_AND_STORE_STRAIN) {
-    realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
+          // local storage: stresses at this current time step
+          epsilondev_xx_loc = duxdxl_att - templ;
+          epsilondev_yy_loc = duydyl_att - templ;
+          epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
+          epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
+          epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
 
-    // local storage: stresses at this current time step
-    epsilondev_xx_loc = duxdxl_att - templ;
-    epsilondev_yy_loc = duydyl_att - templ;
-    epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
-    epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
-    epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
-
-    if(SIMULATION_TYPE == 3) {
-      epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-    }
-  }
+          if(SIMULATION_TYPE == 3) {
+            epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
+          }
+        }
       }else{
-  // computes deviatoric strain attenuation and/or for kernel calculations
-  if(COMPUTE_AND_STORE_STRAIN) {
-    realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
+        // computes deviatoric strain attenuation and/or for kernel calculations
+        if(COMPUTE_AND_STORE_STRAIN) {
+          realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
 
-    // local storage: stresses at this current time step
-    epsilondev_xx_loc = duxdxl - templ;
-    epsilondev_yy_loc = duydyl - templ;
-    epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl;
-    epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
-    epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
+          // local storage: stresses at this current time step
+          epsilondev_xx_loc = duxdxl - templ;
+          epsilondev_yy_loc = duydyl - templ;
+          epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl;
+          epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
+          epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
 
-    if(SIMULATION_TYPE == 3) {
-      epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-    }
-  }
+          if(SIMULATION_TYPE == 3) {
+            epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
+          }
+        }
       }
 
       // compute elements with an elastic isotropic rheology
@@ -748,8 +750,13 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       // attenuation
       if(ATTENUATION){
         // use unrelaxed parameters if attenuation
-        mul_iso  = mul * one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
-        mul_aniso = mul *( one_minus_sum_beta[tx+working_element*NGLL3] - 1.0f );
+        if( ATTENUATION_3D ){
+          mul_iso  = mul * one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
+          mul_aniso = mul *( one_minus_sum_beta[tx+working_element*NGLL3] - 1.0f );
+        }else{
+          mul_iso  = mul * one_minus_sum_beta[working_element]; // (1,1,1,ispec)
+          mul_aniso = mul *( one_minus_sum_beta[working_element] - 1.0f );        
+        }
       }else{
         mul_iso = mul;
       }
@@ -1017,7 +1024,8 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                   factor_common,alphaval,betaval,gammaval,
                                   R_xx,R_yy,R_xy,R_xz,R_yz,
                                   epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,
-                                  epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc);
+                                  epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc,
+                                  ATTENUATION_3D);
       }
 
       // save deviatoric strain for Runge-Kutta scheme
@@ -1044,42 +1052,42 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
 /* ----------------------------------------------------------------------------------------------- */
 
 void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
-      realw d_deltat,
-                        int d_iphase,
-                        int* d_ibool,
-                        int* d_idoubling,
-                        realw* d_xix,realw* d_xiy,realw* d_xiz,
-                        realw* d_etax,realw* d_etay,realw* d_etaz,
-                        realw* d_gammax,realw* d_gammay,realw* d_gammaz,
-                        realw* d_kappav,
-                        realw* d_muv,
-                        realw* d_epsilondev_xx,
-                        realw* d_epsilondev_yy,
-                        realw* d_epsilondev_xy,
-                        realw* d_epsilondev_xz,
-                        realw* d_epsilondev_yz,
-                        realw* d_epsilon_trace_over_3,
-                        realw* d_one_minus_sum_beta,
-                        realw* d_factor_common,
-                        realw* d_R_xx,
-                        realw* d_R_yy,
-                        realw* d_R_xy,
-                        realw* d_R_xz,
-                        realw* d_R_yz,
-                        realw* d_b_epsilondev_xx,
-                        realw* d_b_epsilondev_yy,
-                        realw* d_b_epsilondev_xy,
-                        realw* d_b_epsilondev_xz,
-                        realw* d_b_epsilondev_yz,
-                        realw* d_b_epsilon_trace_over_3,
-                        realw* d_b_R_xx,
-                        realw* d_b_R_yy,
-                        realw* d_b_R_xy,
-                        realw* d_b_R_xz,
-                        realw* d_b_R_yz,
-                        realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                        realw* d_c33store,realw* d_c44store
-                        ){
+                         realw d_deltat,
+                         int d_iphase,
+                         int* d_ibool,
+                         int* d_idoubling,
+                         realw* d_xix,realw* d_xiy,realw* d_xiz,
+                         realw* d_etax,realw* d_etay,realw* d_etaz,
+                         realw* d_gammax,realw* d_gammay,realw* d_gammaz,
+                         realw* d_kappav,
+                         realw* d_muv,
+                         realw* d_epsilondev_xx,
+                         realw* d_epsilondev_yy,
+                         realw* d_epsilondev_xy,
+                         realw* d_epsilondev_xz,
+                         realw* d_epsilondev_yz,
+                         realw* d_epsilon_trace_over_3,
+                         realw* d_one_minus_sum_beta,
+                         realw* d_factor_common,
+                         realw* d_R_xx,
+                         realw* d_R_yy,
+                         realw* d_R_xy,
+                         realw* d_R_xz,
+                         realw* d_R_yz,
+                         realw* d_b_epsilondev_xx,
+                         realw* d_b_epsilondev_yy,
+                         realw* d_b_epsilondev_xy,
+                         realw* d_b_epsilondev_xz,
+                         realw* d_b_epsilondev_yz,
+                         realw* d_b_epsilon_trace_over_3,
+                         realw* d_b_R_xx,
+                         realw* d_b_R_yy,
+                         realw* d_b_R_xy,
+                         realw* d_b_R_xz,
+                         realw* d_b_R_yz,
+                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
+                         realw* d_c33store,realw* d_c44store
+                         ){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before kernel Kernel_2_inner_core");
@@ -1108,94 +1116,96 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventRecord( start, 0 );
 
   Kernel_2_inner_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                  mp->NGLOB_INNER_CORE,
-                                  d_ibool,
-                                  d_idoubling,
-                                  mp->d_phase_ispec_inner_inner_core,
-                                  mp->num_phase_ispec_inner_core,
-                                  d_iphase,
-          d_deltat,
-                                  mp->use_mesh_coloring_gpu,
-                                  mp->d_displ_inner_core,
-          mp->d_veloc_inner_core,
-                                  mp->d_accel_inner_core,
-                                  d_xix, d_xiy, d_xiz,
-                                  d_etax, d_etay, d_etaz,
-                                  d_gammax, d_gammay, d_gammaz,
-                                  mp->d_hprime_xx, mp->d_hprime_yy, mp->d_hprime_zz,
-                                  mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
-                                  mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                  d_kappav, d_muv,
-                                  mp->compute_and_store_strain,
-                                  d_epsilondev_xx,
-                                  d_epsilondev_yy,
-                                  d_epsilondev_xy,
-                                  d_epsilondev_xz,
-                                  d_epsilondev_yz,
-                                  d_epsilon_trace_over_3,
-                                  mp->simulation_type,
-                                  mp->attenuation,
-                                  mp->attenuation_new,
-                                  mp->use_attenuation_mimic,
-                                  d_one_minus_sum_beta,
-                                  d_factor_common,
-                                  d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
-                                  mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
-                                  mp->anisotropic_inner_core,
-                                  d_c11store,d_c12store,d_c13store,
-                                  d_c33store,d_c44store,
-                                  mp->gravity,
-                                  mp->d_xstore_inner_core,mp->d_ystore_inner_core,mp->d_zstore_inner_core,
-                                  mp->d_minus_gravity_table,
-                                  mp->d_minus_deriv_gravity_table,
-                                  mp->d_density_table,
-                                  mp->d_wgll_cube);
+                                             mp->NGLOB_INNER_CORE,
+                                             d_ibool,
+                                             d_idoubling,
+                                             mp->d_phase_ispec_inner_inner_core,
+                                             mp->num_phase_ispec_inner_core,
+                                             d_iphase,
+                                             d_deltat,
+                                             mp->use_mesh_coloring_gpu,
+                                             mp->d_displ_inner_core,
+                                             mp->d_veloc_inner_core,
+                                             mp->d_accel_inner_core,
+                                             d_xix, d_xiy, d_xiz,
+                                             d_etax, d_etay, d_etaz,
+                                             d_gammax, d_gammay, d_gammaz,
+                                             mp->d_hprime_xx, mp->d_hprime_yy, mp->d_hprime_zz,
+                                             mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                             mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                             d_kappav, d_muv,
+                                             mp->compute_and_store_strain,
+                                             d_epsilondev_xx,
+                                             d_epsilondev_yy,
+                                             d_epsilondev_xy,
+                                             d_epsilondev_xz,
+                                             d_epsilondev_yz,
+                                             d_epsilon_trace_over_3,
+                                             mp->simulation_type,
+                                             mp->attenuation,
+                                             mp->attenuation_new,
+                                             mp->use_attenuation_mimic,
+                                             mp->attenuation_3D,
+                                             d_one_minus_sum_beta,
+                                             d_factor_common,
+                                             d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
+                                             mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
+                                             mp->anisotropic_inner_core,
+                                             d_c11store,d_c12store,d_c13store,
+                                             d_c33store,d_c44store,
+                                             mp->gravity,
+                                             mp->d_xstore_inner_core,mp->d_ystore_inner_core,mp->d_zstore_inner_core,
+                                             mp->d_minus_gravity_table,
+                                             mp->d_minus_deriv_gravity_table,
+                                             mp->d_density_table,
+                                             mp->d_wgll_cube);
 
 
   if(mp->simulation_type == 3) {
     Kernel_2_inner_core_impl<<< grid,threads>>>(nb_blocks_to_compute,
-                                     mp->NGLOB_INNER_CORE,
-                                     d_ibool,
-                                     d_idoubling,
-                                     mp->d_phase_ispec_inner_inner_core,
-                                     mp->num_phase_ispec_inner_core,
-                                     d_iphase,
-             d_deltat,
-                                     mp->use_mesh_coloring_gpu,
-                                     mp->d_b_displ_inner_core,
-                                     mp->d_b_veloc_inner_core,
-                                     mp->d_b_accel_inner_core,
-                                     d_xix, d_xiy, d_xiz,
-                                     d_etax, d_etay, d_etaz,
-                                     d_gammax, d_gammay, d_gammaz,
-                                     mp->d_hprime_xx, mp->d_hprime_yy, mp->d_hprime_zz,
-                                     mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
-                                     mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                     d_kappav, d_muv,
-                                     mp->compute_and_store_strain,
-                                     d_b_epsilondev_xx,
-                                     d_b_epsilondev_yy,
-                                     d_b_epsilondev_xy,
-                                     d_b_epsilondev_xz,
-                                     d_b_epsilondev_yz,
-                                     d_b_epsilon_trace_over_3,
-                                     mp->simulation_type,
-                                     mp->attenuation,
-                                     mp->attenuation_new,
-                                     mp->use_attenuation_mimic,
-                                     d_one_minus_sum_beta,
-                                     d_factor_common,
-                                     d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
-                                     mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
-                                     mp->anisotropic_inner_core,
-                                     d_c11store,d_c12store,d_c13store,
-                                     d_c33store,d_c44store,
-                                     mp->gravity,
-                                     mp->d_xstore_inner_core,mp->d_ystore_inner_core,mp->d_zstore_inner_core,
-                                     mp->d_minus_gravity_table,
-                                     mp->d_minus_deriv_gravity_table,
-                                     mp->d_density_table,
-                                     mp->d_wgll_cube);
+                                                mp->NGLOB_INNER_CORE,
+                                                d_ibool,
+                                                d_idoubling,
+                                                mp->d_phase_ispec_inner_inner_core,
+                                                mp->num_phase_ispec_inner_core,
+                                                d_iphase,
+                                                d_deltat,
+                                                mp->use_mesh_coloring_gpu,
+                                                mp->d_b_displ_inner_core,
+                                                mp->d_b_veloc_inner_core,
+                                                mp->d_b_accel_inner_core,
+                                                d_xix, d_xiy, d_xiz,
+                                                d_etax, d_etay, d_etaz,
+                                                d_gammax, d_gammay, d_gammaz,
+                                                mp->d_hprime_xx, mp->d_hprime_yy, mp->d_hprime_zz,
+                                                mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                d_kappav, d_muv,
+                                                mp->compute_and_store_strain,
+                                                d_b_epsilondev_xx,
+                                                d_b_epsilondev_yy,
+                                                d_b_epsilondev_xy,
+                                                d_b_epsilondev_xz,
+                                                d_b_epsilondev_yz,
+                                                d_b_epsilon_trace_over_3,
+                                                mp->simulation_type,
+                                                mp->attenuation,
+                                                mp->attenuation_new,
+                                                mp->use_attenuation_mimic,
+                                                mp->attenuation_3D,
+                                                d_one_minus_sum_beta,
+                                                d_factor_common,
+                                                d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
+                                                mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
+                                                mp->anisotropic_inner_core,
+                                                d_c11store,d_c12store,d_c13store,
+                                                d_c33store,d_c44store,
+                                                mp->gravity,
+                                                mp->d_xstore_inner_core,mp->d_ystore_inner_core,mp->d_zstore_inner_core,
+                                                mp->d_minus_gravity_table,
+                                                mp->d_minus_deriv_gravity_table,
+                                                mp->d_density_table,
+                                                mp->d_wgll_cube);
   }
 
   // cudaEventRecord( stop, 0 );
@@ -1218,8 +1228,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
 extern "C"
 void FC_FUNC_(compute_forces_inner_core_cuda,
               COMPUTE_FORCES_INNER_CORE_CUDA)(long* Mesh_pointer_f,
-                realw* deltat,
-                int* iphase) {
+                                              realw* deltat,
+                                              int* iphase) {
 
   TRACE("compute_forces_inner_core_cuda");
 
@@ -1270,7 +1280,11 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       // array offsets
       color_offset = (mp->nspec_outer_inner_core) * NGLL3_PADDED;
       color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
-      color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+      if( mp->attenuation_3D ){
+        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+      }else{
+        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * 1 * N_SLS;      
+      }
       color_offset_ispec = mp->nspec_outer_inner_core;
     }
 
@@ -1286,7 +1300,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       //}
 
       Kernel_2_inner_core(nb_blocks_to_compute,mp,
-        *deltat,
+                          *deltat,
                           *iphase,
                           mp->d_ibool_inner_core + color_offset_nonpadded,
                           mp->d_idoubling_inner_core + color_offset_ispec,
@@ -1337,7 +1351,11 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       // for no-aligned arrays
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
       // for factor_common array
-      color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3 * N_SLS;
+      if( mp->attenuation_3D ){
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3 * N_SLS;
+      }else{
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * 1 * N_SLS;      
+      }
       // for array(ispec)
       color_offset_ispec += nb_blocks_to_compute;
     }
@@ -1347,7 +1365,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
     // no mesh coloring: uses atomic updates
 
     Kernel_2_inner_core(num_elements,mp,
-      *deltat,
+                        *deltat,
                         *iphase,
                         mp->d_ibool_inner_core,
                         mp->d_idoubling_inner_core,

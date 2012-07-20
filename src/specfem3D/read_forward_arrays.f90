@@ -250,13 +250,13 @@
      read(55) b_R_xy_crust_mantle
      read(55) b_R_xz_crust_mantle
      read(55) b_R_yz_crust_mantle
-     
+
      read(55) b_R_xx_inner_core
      read(55) b_R_yy_inner_core
      read(55) b_R_xy_inner_core
      read(55) b_R_xz_inner_core
      read(55) b_R_yz_inner_core
-     
+
      ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is
      !          only mimicking effects on phase shifts, but not on amplitudes.
      !          flag USE_ATTENUATION_MIMIC will have to be set to true in this case.
@@ -265,7 +265,7 @@
      ! therefore no need to transfer arrays onto GPU
      !if(GPU_MODE) then
      !endif
-     
+
   endif
   close(55)
 

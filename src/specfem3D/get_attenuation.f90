@@ -27,7 +27,8 @@
 
 
   subroutine get_attenuation_model_3D_or_1D(myrank, prname, one_minus_sum_beta, &
-                                factor_common, scale_factor, tau_s, vx, vy, vz, vnspec)
+                                factor_common, scale_factor, tau_s, &
+                                vx, vy, vz, vnspec)
 
   use specfem_par,only: ATTENUATION_VAL, ATTENUATION_3D_VAL
 
@@ -35,21 +36,26 @@
 
   include 'constants.h'
 
-  integer myrank,vx,vy,vz,vnspec
-  character(len=150) prname
+  integer :: myrank,vx,vy,vz,vnspec
+  character(len=150) :: prname
   double precision, dimension(vx,vy,vz,vnspec)       :: one_minus_sum_beta, scale_factor
   double precision, dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
   double precision, dimension(N_SLS)                 :: tau_s
 
-  integer i,j,k,ispec
-
+  ! local parameters
+  integer :: i,j,k,ispec,ier
   double precision, dimension(N_SLS) :: tau_e, fc
-  double precision  omsb, Q_mu, sf, T_c_source, scale_t
+  double precision :: omsb, Q_mu, sf, T_c_source, scale_t
+  
+  ! checks if attenuation is on and anything to do
+  if( .not. ATTENUATION_VAL) return
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
   open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
-        status='old',action='read',form='unformatted')
+        status='old',action='read',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening file attenuation.bin')
+
   read(27) tau_s
   read(27) factor_common
   read(27) scale_factor
@@ -63,42 +69,42 @@
   T_c_source               = 1000.0d0 / T_c_source
   T_c_source               = T_c_source / scale_t
 
-  if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
-     do ispec = 1, vnspec
-        do k = 1, NGLLZ
-           do j = 1, NGLLY
-              do i = 1, NGLLX
-                 tau_e(:) = factor_common(:,i,j,k,ispec)
-                 Q_mu     = scale_factor(i,j,k,ispec)
+  if( ATTENUATION_3D_VAL ) then
+    do ispec = 1, vnspec
+      do k = 1, NGLLZ
+        do j = 1, NGLLY
+          do i = 1, NGLLX
+            tau_e(:) = factor_common(:,i,j,k,ispec)
+            Q_mu     = scale_factor(i,j,k,ispec)
 
-                 ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
-                 call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
+            ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
+            call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
 
-                 factor_common(:,i,j,k,ispec)    = fc(:)
-                 one_minus_sum_beta(i,j,k,ispec) = omsb
+            factor_common(:,i,j,k,ispec)    = fc(:)
+            one_minus_sum_beta(i,j,k,ispec) = omsb
 
-                 ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
-                 call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
-                 scale_factor(i,j,k,ispec) = sf
-              enddo
-           enddo
+            ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
+            call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
+            scale_factor(i,j,k,ispec) = sf
+          enddo
         enddo
-     enddo
-  else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
-     do ispec = 1, vnspec
-        tau_e(:) = factor_common(:,1,1,1,ispec)
-        Q_mu     = scale_factor(1,1,1,ispec)
-        
-        ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
-        call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
-        
-        factor_common(:,1,1,1,ispec)   = fc(:)
-        one_minus_sum_beta(1,1,1,ispec) = omsb
-        
-        ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
-        call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
-        scale_factor(1,1,1,ispec) = sf
-     enddo
+      enddo
+    enddo
+  else
+    do ispec = 1, vnspec
+      tau_e(:) = factor_common(:,1,1,1,ispec)
+      Q_mu     = scale_factor(1,1,1,ispec)
+
+      ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
+      call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
+
+      factor_common(:,1,1,1,ispec)   = fc(:)
+      one_minus_sum_beta(1,1,1,ispec) = omsb
+
+      ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
+      call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
+      scale_factor(1,1,1,ispec) = sf
+    enddo
   endif
 
   end subroutine get_attenuation_model_3D_or_1D
@@ -214,14 +220,14 @@
 
   double precision, dimension(N_SLS) :: tauinv
 
-  tauinv(:) = - 1.0 / tau_s(:)
+  tauinv(:) = - 1.d0 / tau_s(:)
 
-  alphaval(:)  = 1 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2. + &
-                    deltat**3*tauinv(:)**3 / 6. + deltat**4*tauinv(:)**4 / 24.
-  betaval(:)   = deltat / 2. + deltat**2*tauinv(:) / 3. &
-                + deltat**3*tauinv(:)**2 / 8. + deltat**4*tauinv(:)**3 / 24.
-  gammaval(:)  = deltat / 2. + deltat**2*tauinv(:) / 6. &
-                + deltat**3*tauinv(:)**2 / 24.0
+  alphaval(:)  = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 + &
+                    deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
+  betaval(:)   = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
+                + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
+  gammaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
+                + deltat**3*tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
 

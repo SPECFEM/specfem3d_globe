@@ -262,7 +262,7 @@
                                 ipass)
 
 
-! initialize number of layers
+  ! initialize number of layers
   call sync_all()
   if( myrank == 0) then
     write(IMAIN,*) '  ...setting up layers '
@@ -271,7 +271,7 @@
                               xstore,ystore,zstore,ibool,idoubling, &
                               NEX_PER_PROC_ETA,is_on_a_slice_edge)
 
-!  creates mesh elements
+  !  creates mesh elements
   call sync_all()
   if( myrank == 0) then
     write(IMAIN,*) '  ...creating mesh elements '
@@ -576,21 +576,22 @@
     T_c_source = AM_V%QT_c_source
     tau_s(:)   = AM_V%Qtau_s(:)
     nspec_att = nspec
-  else
-    nspec_att = 1
-  end if
 
-  if (ATTENUATION) then
-     if (ATTENUATION_3D) then
-        ! attenuation arrays are fully 3D
-        allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
-             tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
-     else if (.not. ATTENUATION_3D) then
-        ! save some memory in case of 1D attenuation models
-        allocate(Qmu_store(1,1,1,nspec_att), &
-             tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
-     endif
-  endif
+    if (ATTENUATION_3D) then
+      ! attenuation arrays are fully 3D
+      allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
+              tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+    else if (.not. ATTENUATION_3D) then
+      ! save some memory in case of 1D attenuation models
+      allocate(Qmu_store(1,1,1,nspec_att), &
+              tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
+    endif
+  else
+    ! allocates dummy size arrays
+    nspec_att = 1
+    allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
+            tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+  end if
   if(ier /= 0) stop 'error in allocate 1'
 
   ! array with model density
