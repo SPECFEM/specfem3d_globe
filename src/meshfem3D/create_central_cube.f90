@@ -269,7 +269,7 @@
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                         size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), & 
+                         size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
                          xigll,yigll,zigll,ispec_is_tiso)
       enddo

@@ -64,7 +64,7 @@
   call prepare_timerun_gravity()
 
   ! precomputes attenuation factors
-  if(ATTENUATION_VAL) call prepare_timerun_attenuation()
+  call prepare_timerun_attenuation()
 
   ! initializes arrays
   call prepare_timerun_init_wavefield()
@@ -682,6 +682,9 @@
   integer :: ispec,i,j,k,ier
   character(len=150) :: prnamel
 
+  ! checks if attenuation is on and anything to do
+  if( .not. ATTENUATION_VAL ) return
+
   ! get and store PREM attenuation model
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing attenuation."
@@ -705,15 +708,29 @@
 
   ! CRUST_MANTLE ATTENUATION
   call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+
+  ! initializes
+  omsb_crust_mantle_dble = 0.d0
+  factor_common_crust_mantle_dble = 0.d0
+  factor_scale_crust_mantle_dble = 0.d0
+  tau_sigma_dble = 0.d0
+  
   call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_crust_mantle_dble, &
            factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble, &
-           ATT1,ATT2,ATT3,ATT4,NSPEC_CRUST_MANTLE)
+           ATT1,ATT2,ATT3,ATT4)
 
   ! INNER_CORE ATTENUATION
   call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+
+  ! initializes
+  omsb_inner_core_dble = 0.d0
+  factor_common_inner_core_dble = 0.d0
+  factor_scale_inner_core_dble = 0.d0
+  tau_sigma_dble = 0.d0
+  
   call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_inner_core_dble, &
            factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble, &
-           ATT1,ATT2,ATT3,ATT5,NSPEC_INNER_CORE)
+           ATT1,ATT2,ATT3,ATT5)
 
   if(CUSTOM_REAL == SIZE_REAL) then
     factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
@@ -748,67 +765,64 @@
   ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
 
   ! rescale in crust and mantle
-
   do ispec = 1,NSPEC_CRUST_MANTLE
-     do k=1,NGLLZ
-        do j=1,NGLLY
-           do i=1,NGLLX
-              if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
-                 scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
-              else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
-                 scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
-              endif
-                 
-              if(ANISOTROPIC_3D_MANTLE_VAL) then
-                 scale_factor_minus_one = scale_factor - 1.
-                 mul = c44store_crust_mantle(i,j,k,ispec)
-                 c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
-                      + FOUR_THIRDS * scale_factor_minus_one * mul
-                 c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) &
-                      - TWO_THIRDS * scale_factor_minus_one * mul
-                 c13store_crust_mantle(i,j,k,ispec) = c13store_crust_mantle(i,j,k,ispec) &
-                      - TWO_THIRDS * scale_factor_minus_one * mul
-                 c22store_crust_mantle(i,j,k,ispec) = c22store_crust_mantle(i,j,k,ispec) &
-                      + FOUR_THIRDS * scale_factor_minus_one * mul
-                 c23store_crust_mantle(i,j,k,ispec) = c23store_crust_mantle(i,j,k,ispec) &
-                      - TWO_THIRDS * scale_factor_minus_one * mul
-                 c33store_crust_mantle(i,j,k,ispec) = c33store_crust_mantle(i,j,k,ispec) &
-                      + FOUR_THIRDS * scale_factor_minus_one * mul
-                 c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) &
-                      + scale_factor_minus_one * mul
-                 c55store_crust_mantle(i,j,k,ispec) = c55store_crust_mantle(i,j,k,ispec) &
-                      + scale_factor_minus_one * mul
-                 c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
-                      + scale_factor_minus_one * mul
-              else
-                 if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
-                    ! store the original value of \mu to comput \mu*\eps
-                    muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
-                 endif
-                 muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          if( ATTENUATION_3D_VAL ) then
+            scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+          else
+            scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
+          endif
 
-                 ! scales transverse isotropic values for mu_h
-                 if( ispec_is_tiso_crust_mantle(ispec) ) then
-                    muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
-                 endif
-              endif
+          if(ANISOTROPIC_3D_MANTLE_VAL) then
+            scale_factor_minus_one = scale_factor - 1.d0
+            mul = c44store_crust_mantle(i,j,k,ispec)
+            c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
+                    + FOUR_THIRDS * scale_factor_minus_one * mul
+            c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) &
+                    - TWO_THIRDS * scale_factor_minus_one * mul
+            c13store_crust_mantle(i,j,k,ispec) = c13store_crust_mantle(i,j,k,ispec) &
+                    - TWO_THIRDS * scale_factor_minus_one * mul
+            c22store_crust_mantle(i,j,k,ispec) = c22store_crust_mantle(i,j,k,ispec) &
+                    + FOUR_THIRDS * scale_factor_minus_one * mul
+            c23store_crust_mantle(i,j,k,ispec) = c23store_crust_mantle(i,j,k,ispec) &
+                    - TWO_THIRDS * scale_factor_minus_one * mul
+            c33store_crust_mantle(i,j,k,ispec) = c33store_crust_mantle(i,j,k,ispec) &
+                    + FOUR_THIRDS * scale_factor_minus_one * mul
+            c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) &
+                    + scale_factor_minus_one * mul
+            c55store_crust_mantle(i,j,k,ispec) = c55store_crust_mantle(i,j,k,ispec) &
+                    + scale_factor_minus_one * mul
+            c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
+                    + scale_factor_minus_one * mul
+          else
+            if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
+              ! store the original value of \mu to comput \mu*\eps
+              muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
+            endif
+            muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
 
-           enddo
+            ! scales transverse isotropic values for mu_h
+            if( ispec_is_tiso_crust_mantle(ispec) ) then
+              muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
+            endif
+          endif
         enddo
-     enddo
+      enddo
+    enddo
   enddo ! END DO CRUST MANTLE
 
   ! rescale in inner core
-
   do ispec = 1,NSPEC_INNER_CORE
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-           if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
-              scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
-           else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
-              scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.0
-           endif
+          if( ATTENUATION_3D_VAL ) then
+            scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.d0
+          else
+            scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.d0
+          endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
             mul = muvstore_inner_core(i,j,k,ispec)
@@ -824,12 +838,11 @@
                     + scale_factor_minus_one * mul
           endif
 
-          if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
-             muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
-          else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
-             muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
+          if( ATTENUATION_3D_VAL ) then
+            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+          else
+            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
           endif
-
         enddo
       enddo
     enddo
@@ -860,6 +873,7 @@
    endif
   endif
 
+  ! synchronizes processes
   call sync_all()
 
   end subroutine prepare_timerun_attenuation
@@ -1134,7 +1148,8 @@
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                   SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                   OCEANS_VAL,GRAVITY_VAL,ROTATION_VAL, &
-                                  ATTENUATION_VAL,ATTENUATION_NEW_VAL,USE_ATTENUATION_MIMIC, &
+                                  ATTENUATION_VAL,ATTENUATION_NEW_VAL, &
+                                  USE_ATTENUATION_MIMIC,ATTENUATION_3D_VAL, &
                                   COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &

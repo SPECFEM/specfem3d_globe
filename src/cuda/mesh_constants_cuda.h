@@ -461,9 +461,12 @@ typedef struct mesh_ {
   // simulation flags
   int save_forward;
   int absorbing_conditions;
+  
   int attenuation;
   int attenuation_new;
   int use_attenuation_mimic;
+  int attenuation_3D;
+  
   int compute_and_store_strain;
   int anisotropic_3D_mantle;
   int gravity;

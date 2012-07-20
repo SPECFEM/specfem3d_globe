@@ -42,6 +42,9 @@ foreach $name (@objects) {
 # suppress trailing white spaces and carriage return
     $line =~ s/\s*$//;
 
+# converts tabs to space
+    $line =~ s/\t/ /g;
+    
 # change the version number and copyright information
 #    $line =~ s#\(c\) California Institute of Technology and University of Pau, October 2007#\(c\) California Institute of Technology and University of Pau, November 2007#og;
 #    $line =~ s#rmass_sigma#rmass_time_integral_of_sigma#og;

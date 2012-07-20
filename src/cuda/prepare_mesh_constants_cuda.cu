@@ -78,6 +78,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* ATTENUATION_f,
                                         int* ATTENUATION_NEW_f,
                                         int* USE_ATTENUATION_MIMIC_f,
+                                        int* ATTENUATION_3D_VAL_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
                                         int* ANISOTROPIC_3D_MANTLE_f,
                                         int* ANISOTROPIC_INNER_CORE_f,
@@ -129,9 +130,12 @@ TRACE("prepare_constants_device");
   mp->oceans = *OCEANS_f;
   mp->gravity = *GRAVITY_f;
   mp->rotation = *ROTATION_f;
+  
   mp->attenuation = *ATTENUATION_f;
   mp->attenuation_new = *ATTENUATION_NEW_f;
   mp->use_attenuation_mimic = *USE_ATTENUATION_MIMIC_f;
+  mp->attenuation_3D = *ATTENUATION_3D_VAL_f;
+  
   mp->compute_and_store_strain = *COMPUTE_AND_STORE_STRAIN_f;
   mp->anisotropic_3D_mantle = *ANISOTROPIC_3D_MANTLE_f;
   mp->anisotropic_inner_core = *ANISOTROPIC_INNER_CORE_f;
@@ -397,10 +401,16 @@ void FC_FUNC_(prepare_fields_attenuat_device,
   if( ! mp->attenuation ){ exit_on_cuda_error("prepare_fields_attenuat_device attenuation not properly initialized"); }
 
   // crust_mantle
-  R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
-  R_size2 = NGLL3*mp->NSPEC_CRUST_MANTLE;
-  R_size3 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
-
+  if( mp->attenuation_3D ){
+    R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
+    R_size2 = NGLL3*mp->NSPEC_CRUST_MANTLE;
+    R_size3 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
+  }else{
+    R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
+    R_size2 = 1*mp->NSPEC_CRUST_MANTLE;
+    R_size3 = N_SLS*1*mp->NSPEC_CRUST_MANTLE;    
+  }
+  
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_one_minus_sum_beta_crust_mantle,
                                      R_size2*sizeof(realw)),4430);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_one_minus_sum_beta_crust_mantle,one_minus_sum_beta_crust_mantle,
@@ -438,10 +448,16 @@ void FC_FUNC_(prepare_fields_attenuat_device,
   }
 
   // inner_core
-  R_size1 = 5*N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
-  R_size2 = NGLL3*mp->NSPEC_INNER_CORE;
-  R_size3 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
-
+  if( mp->attenuation_3D ){
+    R_size1 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
+    R_size2 = NGLL3*mp->NSPEC_INNER_CORE;
+    R_size3 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
+  }else{
+    R_size1 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
+    R_size2 = 1*mp->NSPEC_INNER_CORE;
+    R_size3 = N_SLS*1*mp->NSPEC_INNER_CORE;    
+  }
+  
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_one_minus_sum_beta_inner_core,
                                      R_size2*sizeof(realw)),4430);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_one_minus_sum_beta_inner_core,one_minus_sum_beta_inner_core,
@@ -456,7 +472,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
 
     // memory variables
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_R_xx_inner_core,
-                                     R_size1*sizeof(realw)),4401);
+                                       R_size1*sizeof(realw)),4401);
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_R_yy_inner_core,
                                        R_size1*sizeof(realw)),4401);
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_R_xy_inner_core,
@@ -467,7 +483,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                        R_size1*sizeof(realw)),4401);
 
     print_CUDA_error_if_any(cudaMemcpy(mp->d_R_xx_inner_core,R_xx_inner_core,
-                                     R_size1*sizeof(realw),cudaMemcpyHostToDevice),4402);
+                                       R_size1*sizeof(realw),cudaMemcpyHostToDevice),4402);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_R_yy_inner_core,R_yy_inner_core,
                                        R_size1*sizeof(realw),cudaMemcpyHostToDevice),4402);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_R_xy_inner_core,R_xy_inner_core,
