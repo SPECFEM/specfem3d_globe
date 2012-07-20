@@ -312,9 +312,7 @@
 
         endif !CUSTOM_REAL
 
-        !> Hejun
-        ! No matter 1D or 3D attenuation, we save all gll point values
-        if(ATTENUATION) then
+        if(ATTENUATION .and. ATTENUATION_3D) then
           tau_e_store(:,i,j,k,ispec) = tau_e(:)
           Qmu_store(i,j,k,ispec)     = Qmu
         endif
@@ -322,6 +320,11 @@
       enddo
     enddo
   enddo
+
+  if (ATTENUATION .and. .not. ATTENUATION_3D) then
+     tau_e_store(:,1,1,1,ispec) = tau_e(:)
+     Qmu_store(1,1,1,ispec)     = Qmu
+  endif
 
   end subroutine get_model
 

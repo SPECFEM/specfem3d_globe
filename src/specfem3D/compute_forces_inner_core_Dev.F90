@@ -616,8 +616,10 @@
                endif
             endif
 
-            if(ATTENUATION_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+            if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
+               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+            else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
+               minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
             endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -667,8 +669,10 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL) then
-                mul = mul * one_minus_sum_beta(i,j,k,ispec)
+              if (ATTENUATION_VAL .and. ATTENUATION_3D_VAL) then
+                 mul = mul * one_minus_sum_beta(i,j,k,ispec)
+              else if (ATTENUATION_VAL .and. .not. ATTENUATION_3D_VAL) then
+                 mul = mul * one_minus_sum_beta(1,1,1,ispec)
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul

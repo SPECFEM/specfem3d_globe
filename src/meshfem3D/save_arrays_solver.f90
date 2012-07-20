@@ -370,7 +370,6 @@
 
   close(27)
 
-  ! No matter 1D or 3D Attenuation, we save value for gll points
   if(ATTENUATION) then
      open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)

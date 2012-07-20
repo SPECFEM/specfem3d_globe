@@ -27,9 +27,9 @@
 
 ! compute the approximate amount of static memory needed to run the solver
 
-  subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
-                         TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY,&
-                         ONE_CRUST,doubling_index,this_region_has_a_doubling,&
+  subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
+                         TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY, &
+                         ONE_CRUST,doubling_index,this_region_has_a_doubling,NCHUNKS, &
                          ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                          ratio_sampling_array,NPROCTOT, &
                          NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
@@ -54,7 +54,7 @@
 
   ! input
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             ROTATION,TOPOGRAPHY, &
+             ROTATION,TOPOGRAPHY,NCHUNKS, &
              ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS, &
              MOVIE_VOLUME,SAVE_FORWARD
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob, &
@@ -236,8 +236,15 @@
     9.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
   ! xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rmass_crust_mantle
-  static_memory_size = static_memory_size + &
-    4.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+     ! three mass matrices for the crust and mantle region: rmassx, rmassy and rmassz
+     static_memory_size = static_memory_size + &
+          6.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  else
+     ! one only keeps one mass matrix for the calculations: rmassz 
+     static_memory_size = static_memory_size + &
+          4.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  endif
 
   ! rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
   static_memory_size = static_memory_size + &
