@@ -39,7 +39,6 @@
 
 #include "config.h"
 #include "mesh_constants_cuda.h"
-#include "prepare_constants_cuda.h"
 
 /* ----------------------------------------------------------------------------------------------- */
 

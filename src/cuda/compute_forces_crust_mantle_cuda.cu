@@ -38,222 +38,14 @@
 #include "mesh_constants_cuda.h"
 
 
-//  cuda constant arrays
-__device__ realw d_hprime_xx[NGLL2];
-__device__ realw d_hprime_yy[NGLL2];
-__device__ realw d_hprime_zz[NGLL2];
-__device__ realw d_hprimewgll_xx[NGLL2];
-__device__ realw d_hprimewgll_yy[NGLL2];
-__device__ realw d_hprimewgll_zz[NGLL2];
-__device__ realw d_wgllwgll_xy[NGLL2];
-__device__ realw d_wgllwgll_xz[NGLL2];
-__device__ realw d_wgllwgll_yz[NGLL2];
+#ifdef USE_TEXTURES_FIELDS
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_cm_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_cm_tex;
+#endif
 
-__constant__ realw d_wgll_cube[NGLL3]; // needed only for gravity case
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// CONSTANT arrays setup
-
-/* ----------------------------------------------------------------------------------------------- */
-
-/* note:
- constant arrays when used in other compute_forces_***_cuda.cu routines stay zero,
- constant declaration and cudaMemcpyToSymbol would have to be in the same file...
-
- extern keyword doesn't work for __constant__ declarations.
-
- also:
- cudaMemcpyToSymbol("deviceCaseParams", caseParams, sizeof(CaseParams));
- ..
- and compile with -arch=sm_20
-
- see also: http://stackoverflow.com/questions/4008031/how-to-use-cuda-constant-memory-in-a-programmer-pleasant-way
- doesn't seem to work.
-
- we could keep arrays separated for acoustic and elastic routines...
-
- workaround:
-
-    for now, we store pointers with cudaGetSymbolAddress() function calls.
-    we pass those pointers in all other compute_forces_..() routines
-
-    in this file, we can use the above constant array declarations without need of the pointers.
-
- */
-
-// constant arrays
-
-void setConst_hprime_xx(realw* array,Mesh* mp)
-{
-
-  cudaError_t err = cudaMemcpyToSymbol(d_hprime_xx, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_hprime_xx: %s\n", cudaGetErrorString(err));
-    fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
-    exit(1);
-  }
-
-  err = cudaGetSymbolAddress((void**)&(mp->d_hprime_xx),"d_hprime_xx");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_hprime_xx: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-}
-
-void setConst_hprime_yy(realw* array,Mesh* mp)
-{
-
-  cudaError_t err = cudaMemcpyToSymbol(d_hprime_yy, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_hprime_yy: %s\n", cudaGetErrorString(err));
-    fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
-    exit(1);
-  }
-
-  err = cudaGetSymbolAddress((void**)&(mp->d_hprime_yy),"d_hprime_yy");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_hprime_yy: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-}
-
-void setConst_hprime_zz(realw* array,Mesh* mp)
-{
-
-  cudaError_t err = cudaMemcpyToSymbol(d_hprime_zz, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_hprime_zz: %s\n", cudaGetErrorString(err));
-    fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
-    exit(1);
-  }
-
-  err = cudaGetSymbolAddress((void**)&(mp->d_hprime_zz),"d_hprime_zz");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_hprime_zz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-}
-
-
-void setConst_hprimewgll_xx(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_xx, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_hprimewgll_xx: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-  err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_xx),"d_hprimewgll_xx");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_hprimewgll_xx: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-}
-
-void setConst_hprimewgll_yy(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_yy, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_hprimewgll_yy: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-  err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_yy),"d_hprimewgll_yy");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_hprimewgll_yy: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-}
-
-void setConst_hprimewgll_zz(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_zz, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_hprimewgll_zz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-  err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_zz),"d_hprimewgll_zz");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_hprimewgll_zz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-}
-
-void setConst_wgllwgll_xy(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_wgllwgll_xy, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_wgllwgll_xy: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-  //mp->d_wgllwgll_xy = d_wgllwgll_xy;
-  err = cudaGetSymbolAddress((void**)&(mp->d_wgllwgll_xy),"d_wgllwgll_xy");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_wgllwgll_xy: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-}
-
-void setConst_wgllwgll_xz(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_wgllwgll_xz, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in  setConst_wgllwgll_xz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-  //mp->d_wgllwgll_xz = d_wgllwgll_xz;
-  err = cudaGetSymbolAddress((void**)&(mp->d_wgllwgll_xz),"d_wgllwgll_xz");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_wgllwgll_xz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-}
-
-void setConst_wgllwgll_yz(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_wgllwgll_yz, array, NGLL2*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_wgllwgll_yz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-  //mp->d_wgllwgll_yz = d_wgllwgll_yz;
-  err = cudaGetSymbolAddress((void**)&(mp->d_wgllwgll_yz),"d_wgllwgll_yz");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_wgllwgll_yz: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-}
-
-void setConst_wgll_cube(realw* array,Mesh* mp)
-{
-  cudaError_t err = cudaMemcpyToSymbol(d_wgll_cube, array, NGLL3*sizeof(realw));
-  if (err != cudaSuccess)
-  {
-    fprintf(stderr, "Error in setConst_wgll_cube: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-  //mp->d_wgll_cube = d_wgll_cube;
-  err = cudaGetSymbolAddress((void**)&(mp->d_wgll_cube),"d_wgll_cube");
-  if(err != cudaSuccess) {
-    fprintf(stderr, "Error with d_wgll_cube: %s\n", cudaGetErrorString(err));
-    exit(1);
-  }
-
-}
+#ifdef USE_TEXTURES_CONSTANTS
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_cm_tex;
+#endif
 
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -270,31 +62,29 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
                                               realw* R_xy,
                                               realw* R_xz,
                                               realw* R_yz,
-                                              reald* sigma_xx,
-                                              reald* sigma_yy,
-                                              reald* sigma_zz,
-                                              reald* sigma_xy,
-                                              reald* sigma_xz,
-                                              reald* sigma_yz) {
+                                              realw* sigma_xx,
+                                              realw* sigma_yy,
+                                              realw* sigma_zz,
+                                              realw* sigma_xy,
+                                              realw* sigma_xz,
+                                              realw* sigma_yz) {
 
-  int i_sls,offset;
-  reald R_xx_val,R_yy_val;
+  int i_sls;
+  realw R_xx_val,R_yy_val;
 
   for(i_sls = 0; i_sls < N_SLS; i_sls++){
     // index
     // note: index for R_xx,.. here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
     //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
-    offset = i_sls + N_SLS*(tx + NGLL3*working_element);
-
-    R_xx_val = R_xx[offset];
-    R_yy_val = R_yy[offset];
+    R_xx_val = R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    R_yy_val = R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)];
 
     *sigma_xx = *sigma_xx - R_xx_val;
     *sigma_yy = *sigma_yy - R_yy_val;
     *sigma_zz = *sigma_zz + R_xx_val + R_yy_val;
-    *sigma_xy = *sigma_xy - R_xy[offset];
-    *sigma_xz = *sigma_xz - R_xz[offset];
-    *sigma_yz = *sigma_yz - R_yz[offset];
+    *sigma_xy = *sigma_xy - R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    *sigma_xz = *sigma_xz - R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    *sigma_yz = *sigma_yz - R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)];
   }
   return;
 }
@@ -310,29 +100,23 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
                                               realw* R_xx,realw* R_yy,realw* R_xy,realw* R_xz,realw* R_yz,
                                               realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
                                               realw* epsilondev_xz,realw* epsilondev_yz,
-                                              reald epsilondev_xx_loc,reald epsilondev_yy_loc,reald epsilondev_xy_loc,
-                                              reald epsilondev_xz_loc,reald epsilondev_yz_loc,
+                                              realw epsilondev_xx_loc,realw epsilondev_yy_loc,realw epsilondev_xy_loc,
+                                              realw epsilondev_xz_loc,realw epsilondev_yz_loc,
                                               int ANISOTROPY,
                                               realw* d_c44store,
                                               int ATTENUATION_3D
                                               ){
 
   int i_sls;
-  int ijk_ispec;
-  int offset_align,offset;
-  reald fac;
-  reald alphaval_loc,betaval_loc,gammaval_loc;
-  reald factor_loc,Sn,Snp1;
-
-  // indices
-  offset_align = tx + NGLL3_PADDED * working_element;
-  ijk_ispec = tx + NGLL3 * working_element;
+  realw fac;
+  realw alphaval_loc,betaval_loc,gammaval_loc;
+  realw factor_loc,Sn,Snp1;
 
   // shear moduli for common factor (only Q_mu attenuation)
   if( ANISOTROPY ){
-    fac = d_c44store[offset_align];
+    fac = d_c44store[tx + NGLL3_PADDED * working_element];
   }else{
-    fac = d_muvstore[offset_align];
+    fac = d_muvstore[tx + NGLL3_PADDED * working_element];
   }
 
   // use Runge-Kutta scheme to march in time
@@ -340,48 +124,49 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     // indices
     // note: index for R_xx,... here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
     //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
-    // index for (i_sls,i,j,k,ispec)
-    offset = i_sls + N_SLS*(tx + NGLL3*working_element);
-    // index for (i,j,k,ispec,i_sls)
-    //offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
-
+    //
     // either mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
     if( ATTENUATION_3D ){
-      factor_loc = fac * factor_common[offset];
+      factor_loc = fac * factor_common[i_sls + N_SLS*(tx + NGLL3*working_element)];
     }else{
-      factor_loc = fac * factor_common[i_sls + N_SLS*working_element];    
+      factor_loc = fac * factor_common[i_sls + N_SLS*working_element];
     }
-    
+
     alphaval_loc = alphaval[i_sls]; // (i_sls)
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
 
     // term in xx
-    Sn   = factor_loc * epsilondev_xx[ijk_ispec]; //(i,j,k,ispec)
+    Sn   = factor_loc * epsilondev_xx[tx + NGLL3 * working_element]; //(i,j,k,ispec)
     Snp1   = factor_loc * epsilondev_xx_loc; //(i,j,k)
-    R_xx[offset] = alphaval_loc * R_xx[offset] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yy
-    Sn   = factor_loc * epsilondev_yy[ijk_ispec];
+    Sn   = factor_loc * epsilondev_yy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yy_loc;
-    R_yy[offset] = alphaval_loc * R_yy[offset] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
     // term in zz not computed since zero trace
 
     // term in xy
-    Sn   = factor_loc * epsilondev_xy[ijk_ispec];
+    Sn   = factor_loc * epsilondev_xy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xy_loc;
-    R_xy[offset] = alphaval_loc * R_xy[offset] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in xz
-    Sn   = factor_loc * epsilondev_xz[ijk_ispec];
+    Sn   = factor_loc * epsilondev_xz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xz_loc;
-    R_xz[offset] = alphaval_loc * R_xz[offset] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yz
-    Sn   = factor_loc * epsilondev_yz[ijk_ispec];
+    Sn   = factor_loc * epsilondev_yz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yz_loc;
-    R_yz[offset] = alphaval_loc * R_yz[offset] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
   }
   return;
 }
@@ -397,38 +182,38 @@ __device__ void compute_element_cm_gravity(int tx,int working_element,
                                           realw* d_minus_deriv_gravity_table,
                                           realw* d_density_table,
                                           realw* wgll_cube,
-                                          reald jacobianl,
-                                          reald* s_dummyx_loc,
-                                          reald* s_dummyy_loc,
-                                          reald* s_dummyz_loc,
-                                          reald* sigma_xx,
-                                          reald* sigma_yy,
-                                          reald* sigma_zz,
-                                          reald* sigma_xy,
-                                          reald* sigma_yx,
-                                          reald* sigma_xz,
-                                          reald* sigma_zx,
-                                          reald* sigma_yz,
-                                          reald* sigma_zy,
-                                          reald* rho_s_H1,
-                                          reald* rho_s_H2,
-                                          reald* rho_s_H3){
+                                          realw jacobianl,
+                                          realw* s_dummyx_loc,
+                                          realw* s_dummyy_loc,
+                                          realw* s_dummyz_loc,
+                                          realw* sigma_xx,
+                                          realw* sigma_yy,
+                                          realw* sigma_zz,
+                                          realw* sigma_xy,
+                                          realw* sigma_yx,
+                                          realw* sigma_xz,
+                                          realw* sigma_zx,
+                                          realw* sigma_yz,
+                                          realw* sigma_zy,
+                                          realw* rho_s_H1,
+                                          realw* rho_s_H2,
+                                          realw* rho_s_H3){
 
-  reald radius,theta,phi;
-  reald cos_theta,sin_theta,cos_phi,sin_phi;
-  reald minus_g,minus_dg;
-  reald rho;
-  reald gxl,gyl,gzl;
-  reald minus_g_over_radius,minus_dg_plus_g_over_radius;
-  reald cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq;
-  reald Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl;
-  reald sx_l,sy_l,sz_l;
-  reald factor;
+  realw radius,theta,phi;
+  realw cos_theta,sin_theta,cos_phi,sin_phi;
+  realw minus_g,minus_dg;
+  realw rho;
+  realw gxl,gyl,gzl;
+  realw minus_g_over_radius,minus_dg_plus_g_over_radius;
+  realw cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq;
+  realw Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl;
+  realw sx_l,sy_l,sz_l;
+  realw factor;
 
   // R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
-  const reald R_EARTH_KM = 6371.0f;
+  //const realw R_EARTH_KM = 6371.0f;
   // uncomment line below for PREM with oceans
-  //const reald R_EARTH_KM = 6368.0f;
+  //const realw R_EARTH_KM = 6368.0f;
 
   // compute non-symmetric terms for gravity
 
@@ -521,18 +306,17 @@ __device__ void compute_element_cm_aniso(int offset,
                                          realw* d_c44store,realw* d_c45store,realw* d_c46store,
                                          realw* d_c55store,realw* d_c56store,realw* d_c66store,
                                          int ATTENUATION,
-                                         reald minus_sum_beta,
-                                         reald duxdxl,reald duxdyl,reald duxdzl,
-                                         reald duydxl,reald duydyl,reald duydzl,
-                                         reald duzdxl,reald duzdyl,reald duzdzl,
-                                         reald duxdxl_plus_duydyl,reald duxdxl_plus_duzdzl,reald duydyl_plus_duzdzl,
-                                         reald duxdyl_plus_duydxl,reald duzdxl_plus_duxdzl,reald duzdyl_plus_duydzl,
-                                         reald* sigma_xx,reald* sigma_yy,reald* sigma_zz,
-                                         reald* sigma_xy,reald* sigma_xz,reald* sigma_yz
+                                         realw minus_sum_beta,
+                                         realw duxdxl,realw duxdyl,realw duxdzl,
+                                         realw duydxl,realw duydyl,realw duydzl,
+                                         realw duzdxl,realw duzdyl,realw duzdzl,
+                                         realw duxdyl_plus_duydxl,realw duzdxl_plus_duxdzl,realw duzdyl_plus_duydzl,
+                                         realw* sigma_xx,realw* sigma_yy,realw* sigma_zz,
+                                         realw* sigma_xy,realw* sigma_xz,realw* sigma_yz
                                          ){
 
-  reald c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
-  reald mul;
+  realw c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
+  realw mul;
 
   c11 = d_c11store[offset];
   c12 = d_c12store[offset];
@@ -592,14 +376,14 @@ __device__ void compute_element_cm_aniso(int offset,
 __device__ void compute_element_cm_iso(int offset,
                                        realw* d_kappavstore,realw* d_muvstore,
                                        int ATTENUATION,
-                                       reald one_minus_sum_beta_use,
-                                       reald duxdxl,reald duydyl,reald duzdzl,
-                                       reald duxdxl_plus_duydyl,reald duxdxl_plus_duzdzl,reald duydyl_plus_duzdzl,
-                                       reald duxdyl_plus_duydxl,reald duzdxl_plus_duxdzl,reald duzdyl_plus_duydzl,
-                                       reald* sigma_xx,reald* sigma_yy,reald* sigma_zz,
-                                       reald* sigma_xy,reald* sigma_xz,reald* sigma_yz){
+                                       realw one_minus_sum_beta_use,
+                                       realw duxdxl,realw duydyl,realw duzdzl,
+                                       realw duxdxl_plus_duydyl,realw duxdxl_plus_duzdzl,realw duydyl_plus_duzdzl,
+                                       realw duxdyl_plus_duydxl,realw duzdxl_plus_duxdzl,realw duzdyl_plus_duydzl,
+                                       realw* sigma_xx,realw* sigma_yy,realw* sigma_zz,
+                                       realw* sigma_xy,realw* sigma_xz,realw* sigma_yz){
 
-  reald lambdal,mul,lambdalplus2mul,kappal;
+  realw lambdal,mul,lambdalplus2mul,kappal;
 
   // compute elements with an elastic isotropic rheology
   kappal = d_kappavstore[offset];
@@ -630,31 +414,30 @@ __device__ void compute_element_cm_tiso(int offset,
                                         realw* d_kappavstore,realw* d_muvstore,
                                         realw* d_kappahstore,realw* d_muhstore,realw* d_eta_anisostore,
                                         int ATTENUATION,
-                                        reald one_minus_sum_beta_use,
-                                        reald duxdxl,reald duxdyl,reald duxdzl,
-                                        reald duydxl,reald duydyl,reald duydzl,
-                                        reald duzdxl,reald duzdyl,reald duzdzl,
-                                        reald duxdxl_plus_duydyl,reald duxdxl_plus_duzdzl,reald duydyl_plus_duzdzl,
-                                        reald duxdyl_plus_duydxl,reald duzdxl_plus_duxdzl,reald duzdyl_plus_duydzl,
+                                        realw one_minus_sum_beta_use,
+                                        realw duxdxl,realw duxdyl,realw duxdzl,
+                                        realw duydxl,realw duydyl,realw duydzl,
+                                        realw duzdxl,realw duzdyl,realw duzdzl,
+                                        realw duxdyl_plus_duydxl,realw duzdxl_plus_duxdzl,realw duzdyl_plus_duydzl,
                                         int iglob,int NGLOB,
                                         realw* d_ystore, realw* d_zstore,
-                                        reald* sigma_xx,reald* sigma_yy,reald* sigma_zz,
-                                        reald* sigma_xy,reald* sigma_xz,reald* sigma_yz){
+                                        realw* sigma_xx,realw* sigma_yy,realw* sigma_zz,
+                                        realw* sigma_xy,realw* sigma_xz,realw* sigma_yz){
 
-  reald kappavl,muvl,kappahl,muhl;
-  reald rhovpvsq,rhovphsq,rhovsvsq,rhovshsq,eta_aniso;
-  reald costheta,sintheta,cosphi,sinphi;
-  reald costhetasq,sinthetasq,cosphisq,sinphisq,costhetafour,sinthetafour,cosphifour,sinphifour;
-  reald costwotheta,sintwotheta,costwophi,sintwophi,cosfourtheta,cosfourphi;
-  reald costwothetasq,costwophisq,sintwophisq;
-  reald etaminone,twoetaminone;
-  reald two_eta_aniso,four_eta_aniso,six_eta_aniso;
-  reald two_rhovsvsq,two_rhovshsq; // two_rhovpvsq,two_rhovphsq
-  reald four_rhovsvsq,four_rhovshsq; // four_rhovpvsq,four_rhovphsq
-  reald c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
+  realw kappavl,muvl,kappahl,muhl;
+  realw rhovpvsq,rhovphsq,rhovsvsq,rhovshsq,eta_aniso;
+  realw costheta,sintheta,cosphi,sinphi;
+  realw costhetasq,sinthetasq,cosphisq,sinphisq,costhetafour,sinthetafour,cosphifour,sinphifour;
+  realw costwotheta,sintwotheta,costwophi,sintwophi,cosfourtheta,cosfourphi;
+  realw costwothetasq,costwophisq,sintwophisq;
+  realw etaminone,twoetaminone;
+  realw two_eta_aniso,four_eta_aniso,six_eta_aniso;
+  realw two_rhovsvsq,two_rhovshsq; // two_rhovpvsq,two_rhovphsq
+  realw four_rhovsvsq,four_rhovshsq; // four_rhovpvsq,four_rhovphsq
+  realw c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
 
   // cosine and sine function in CUDA only supported for float
-  reald theta,phi;
+  realw theta,phi;
 
   // use Kappa and mu from transversely isotropic model
   kappavl = d_kappavstore[offset];
@@ -699,10 +482,14 @@ __device__ void compute_element_cm_tiso(int offset,
     //sinphi = sinf(phi);
     sincosf(phi, &sinphi, &cosphi);
 
-    costwotheta = cosf(2.0f * theta);
-    sintwotheta = sinf(2.0f * theta);
-    costwophi = cosf(2.0f * phi);
-    sintwophi = sinf(2.0f * phi);
+    //costwotheta = cosf(2.0f * theta);
+    //sintwotheta = sinf(2.0f * theta);
+    sincosf(2.0f * theta, &sintwotheta, &costwotheta);
+
+    //costwophi = cosf(2.0f * phi);
+    //sintwophi = sinf(2.0f * phi);
+    sincosf(2.0f * phi, &sintwophi, &costwophi);
+
     cosfourtheta = cosf(4.0f * theta);
     cosfourphi = cosf(4.0f * phi);
   }else{
@@ -911,6 +698,9 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           realw* d_xix, realw* d_xiy, realw* d_xiz,
                                           realw* d_etax, realw* d_etay, realw* d_etaz,
                                           realw* d_gammax, realw* d_gammay, realw* d_gammaz,
+                                          realw* d_hprime_xx,
+                                          realw* d_hprimewgll_xx, realw* d_hprimewgll_yy, realw* d_hprimewgll_zz,
+                                          realw* d_wgllwgll_xy,realw* d_wgllwgll_xz,realw* d_wgllwgll_yz,
                                           realw* d_kappavstore, realw* d_muvstore,
                                           realw* d_kappahstore, realw* d_muhstore,
                                           realw* d_eta_anisostore,
@@ -947,11 +737,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
   /* int bx = blockIdx.x; */
   int tx = threadIdx.x;
 
-  //const int NGLLX = 5;
-  // const int NGLL2 = 25;
-  //const int NGLL3 = NGLL3;
-  const int NGLL3_ALIGN = NGLL3_PADDED;
-
   int K = (tx/NGLL2);
   int J = ((tx-K*NGLL2)/NGLLX);
   int I = (tx-K*NGLL2-J*NGLLX);
@@ -960,680 +745,670 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
   int iglob = 0;
   int working_element;
 
-  reald tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l;
-  reald xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
-  reald duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
-  reald duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
-  reald duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl;
+  realw tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l;
+  realw xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
+  realw duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
+  realw duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
+  realw duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl;
 
-  reald tempx1l_att,tempx2l_att,tempx3l_att,tempy1l_att,tempy2l_att,tempy3l_att,tempz1l_att,tempz2l_att,tempz3l_att;
-  reald duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att,duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att;
-  reald duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att;
+  realw tempx1l_att,tempx2l_att,tempx3l_att,tempy1l_att,tempy2l_att,tempy3l_att,tempz1l_att,tempz2l_att,tempz3l_att;
+  realw duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att,duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att;
+  realw duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att;
 
-  reald fac1,fac2,fac3;
-  reald minus_sum_beta,one_minus_sum_beta_use;
+  realw fac1,fac2,fac3;
+  realw minus_sum_beta,one_minus_sum_beta_use;
 
-  reald sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
-  reald epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc;
-  //reald c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
-  reald sum_terms1,sum_terms2,sum_terms3;
+  realw sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
+  realw epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc;
+  realw sum_terms1,sum_terms2,sum_terms3;
 
   // gravity variables
-  reald sigma_yx,sigma_zx,sigma_zy;
-  reald rho_s_H1,rho_s_H2,rho_s_H3;
+  realw sigma_yx,sigma_zx,sigma_zy;
+  realw rho_s_H1,rho_s_H2,rho_s_H3;
 
 #ifndef MANUALLY_UNROLLED_LOOPS
     int l;
-    realw hp1,hp2,hp3;
 #endif
 
-    __shared__ reald s_dummyx_loc[NGLL3];
-    __shared__ reald s_dummyy_loc[NGLL3];
-    __shared__ reald s_dummyz_loc[NGLL3];
+  __shared__ realw s_dummyx_loc[NGLL3];
+  __shared__ realw s_dummyy_loc[NGLL3];
+  __shared__ realw s_dummyz_loc[NGLL3];
 
-    __shared__ reald s_dummyx_loc_att[NGLL3];
-    __shared__ reald s_dummyy_loc_att[NGLL3];
-    __shared__ reald s_dummyz_loc_att[NGLL3];
+  __shared__ realw s_dummyx_loc_att[NGLL3];
+  __shared__ realw s_dummyy_loc_att[NGLL3];
+  __shared__ realw s_dummyz_loc_att[NGLL3];
 
-    __shared__ reald s_tempx1[NGLL3];
-    __shared__ reald s_tempx2[NGLL3];
-    __shared__ reald s_tempx3[NGLL3];
-    __shared__ reald s_tempy1[NGLL3];
-    __shared__ reald s_tempy2[NGLL3];
-    __shared__ reald s_tempy3[NGLL3];
-    __shared__ reald s_tempz1[NGLL3];
-    __shared__ reald s_tempz2[NGLL3];
-    __shared__ reald s_tempz3[NGLL3];
+  __shared__ realw s_tempx1[NGLL3];
+  __shared__ realw s_tempx2[NGLL3];
+  __shared__ realw s_tempx3[NGLL3];
+  __shared__ realw s_tempy1[NGLL3];
+  __shared__ realw s_tempy2[NGLL3];
+  __shared__ realw s_tempy3[NGLL3];
+  __shared__ realw s_tempz1[NGLL3];
+  __shared__ realw s_tempz2[NGLL3];
+  __shared__ realw s_tempz3[NGLL3];
+
+  __shared__ realw sh_hprime_xx[NGLL2];
 
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
 // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
-    active = (tx < NGLL3 && bx < nb_blocks_to_compute) ? 1:0;
+  active = (tx < NGLL3 && bx < nb_blocks_to_compute) ? 1:0;
 
 // copy from global memory to shared memory
 // each thread writes one of the NGLL^3 = 125 data points
-    if (active) {
+  if (active) {
 
 #ifdef USE_MESH_COLORING_GPU
+    working_element = bx;
+#else
+    //mesh coloring
+    if( use_mesh_coloring_gpu ){
       working_element = bx;
+    }else{
+      // iphase-1 and working_element-1 for Fortran->C array conventions
+      working_element = d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1;
+    }
+#endif
+
+    // iglob = d_ibool[working_element*NGLL3_PADDED + tx]-1;
+    iglob = d_ibool[working_element*NGLL3 + tx]-1;
+
+#ifdef USE_TEXTURES_FIELDS
+    s_dummyx_loc[tx] = tex1Dfetch(d_displ_cm_tex, iglob*3);
+    s_dummyy_loc[tx] = tex1Dfetch(d_displ_cm_tex, iglob*3 + 1);
+    s_dummyz_loc[tx] = tex1Dfetch(d_displ_cm_tex, iglob*3 + 2);
 #else
-      //mesh coloring
-      if( use_mesh_coloring_gpu ){
-        working_element = bx;
-      }else{
-        // iphase-1 and working_element-1 for Fortran->C array conventions
-        working_element = d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1;
+    // changing iglob indexing to match fortran row changes fast style
+    s_dummyx_loc[tx] = d_displ[iglob*3];
+    s_dummyy_loc[tx] = d_displ[iglob*3 + 1];
+    s_dummyz_loc[tx] = d_displ[iglob*3 + 2];
+#endif
+
+    if(ATTENUATION){
+      if(ATTENUATION_NEW){
+        // takes new routines
+        // use first order Taylor expansion of displacement for local storage of stresses
+        // at this current time step, to fix attenuation in a consistent way
+#ifdef USE_TEXTURES_FIELDS
+        s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(d_displ_cm_tex, iglob*3);
+        s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(d_displ_cm_tex, iglob*3 + 1);
+        s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(d_displ_cm_tex, iglob*3 + 2);
+#else
+        s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
+        s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
+        s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+#endif
       }
-#endif
-
-      // iglob = d_ibool[working_element*NGLL3_ALIGN + tx]-1;
-      iglob = d_ibool[working_element*NGLL3 + tx]-1;
-
-#ifdef USE_TEXTURES
-      s_dummyx_loc[tx] = tex1Dfetch(tex_displ, iglob);
-      s_dummyy_loc[tx] = tex1Dfetch(tex_displ, iglob + NGLOB);
-      s_dummyz_loc[tx] = tex1Dfetch(tex_displ, iglob + 2*NGLOB);
-#else
-      // changing iglob indexing to match fortran row changes fast style
-      s_dummyx_loc[tx] = d_displ[iglob*3];
-      s_dummyy_loc[tx] = d_displ[iglob*3 + 1];
-      s_dummyz_loc[tx] = d_displ[iglob*3 + 2];
-#endif
-
-      if(ATTENUATION){
-        if(ATTENUATION_NEW){
-          // takes new routines
-          // use first order Taylor expansion of displacement for local storage of stresses
-          // at this current time step, to fix attenuation in a consistent way
-#ifdef USE_TEXTURES
-          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
-          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
-          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
-#else
-          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
-#endif
-        }
-        else{
+      else{
           // takes old routines
           s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
           s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
           s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
-        }
       }
     }
+  }
+
+  if (tx < NGLL2) {
+#ifdef USE_TEXTURES_CONSTANTS
+    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_cm_tex,tx);
+#else
+    sh_hprime_xx[tx] = d_hprime_xx[tx];
+#endif
+  }
 
 // synchronize all the threads (one thread for each of the NGLL grid points of the
 // current spectral element) because we need the whole element to be ready in order
 // to be able to compute the matrix products along cut planes of the 3D element below
-    __syncthreads();
+  __syncthreads();
 
-#ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
-
-    if (active) {
+  if (active) {
 
 #ifndef MANUALLY_UNROLLED_LOOPS
 
-      tempx1l = 0.f;
-      tempx2l = 0.f;
-      tempx3l = 0.f;
+    tempx1l = 0.f;
+    tempx2l = 0.f;
+    tempx3l = 0.f;
 
-      tempy1l = 0.f;
-      tempy2l = 0.f;
-      tempy3l = 0.f;
+    tempy1l = 0.f;
+    tempy2l = 0.f;
+    tempy3l = 0.f;
 
-      tempz1l = 0.f;
-      tempz2l = 0.f;
-      tempz3l = 0.f;
+    tempz1l = 0.f;
+    tempz2l = 0.f;
+    tempz3l = 0.f;
+
+    for (l=0;l<NGLLX;l++) {
+        fac1 = sh_hprime_xx[l*NGLLX+I];
+        tempx1l += s_dummyx_loc[K*NGLL2+J*NGLLX+l]*fac1;
+        tempy1l += s_dummyy_loc[K*NGLL2+J*NGLLX+l]*fac1;
+        tempz1l += s_dummyz_loc[K*NGLL2+J*NGLLX+l]*fac1;
+
+        fac2 = sh_hprime_xx[l*NGLLX+J];
+        tempx2l += s_dummyx_loc[K*NGLL2+l*NGLLX+I]*fac2;
+        tempy2l += s_dummyy_loc[K*NGLL2+l*NGLLX+I]*fac2;
+        tempz2l += s_dummyz_loc[K*NGLL2+l*NGLLX+I]*fac2;
+
+        fac3 = sh_hprime_xx[l*NGLLX+K];
+        tempx3l += s_dummyx_loc[l*NGLL2+J*NGLLX+I]*fac3;
+        tempy3l += s_dummyy_loc[l*NGLL2+J*NGLLX+I]*fac3;
+        tempz3l += s_dummyz_loc[l*NGLL2+J*NGLLX+I]*fac3;
+    }
+
+
+    if( ATTENUATION){
+      // temporary variables used for fixing attenuation in a consistent way
+      tempx1l_att = 0.f;
+      tempx2l_att = 0.f;
+      tempx3l_att = 0.f;
+
+      tempy1l_att = 0.f;
+      tempy2l_att = 0.f;
+      tempy3l_att = 0.f;
+
+      tempz1l_att = 0.f;
+      tempz2l_att = 0.f;
+      tempz3l_att = 0.f;
 
       for (l=0;l<NGLLX;l++) {
-          hp1 = d_hprime_xx[l*NGLLX+I];
-          offset = K*NGLL2+J*NGLLX+l;
-          tempx1l += s_dummyx_loc[offset]*hp1;
-          tempy1l += s_dummyy_loc[offset]*hp1;
-          tempz1l += s_dummyz_loc[offset]*hp1;
+        fac1 = sh_hprime_xx[l*NGLLX+I];
+        tempx1l_att += s_dummyx_loc_att[K*NGLL2+J*NGLLX+l]*fac1;
+        tempy1l_att += s_dummyy_loc_att[K*NGLL2+J*NGLLX+l]*fac1;
+        tempz1l_att += s_dummyz_loc_att[K*NGLL2+J*NGLLX+l]*fac1;
 
-          hp2 = d_hprime_xx[l*NGLLX+J];
-          offset = K*NGLL2+l*NGLLX+I;
-          tempx2l += s_dummyx_loc[offset]*hp2;
-          tempy2l += s_dummyy_loc[offset]*hp2;
-          tempz2l += s_dummyz_loc[offset]*hp2;
+        fac2 = sh_hprime_xx[l*NGLLX+J];
+        tempx2l_att += s_dummyx_loc_att[K*NGLL2+l*NGLLX+I]*fac2;
+        tempy2l_att += s_dummyy_loc_att[K*NGLL2+l*NGLLX+I]*fac2;
+        tempz2l_att += s_dummyz_loc_att[K*NGLL2+l*NGLLX+I]*fac2;
 
-          hp3 = d_hprime_xx[l*NGLLX+K];
-          offset = l*NGLL2+J*NGLLX+I;
-          tempx3l += s_dummyx_loc[offset]*hp3;
-          tempy3l += s_dummyy_loc[offset]*hp3;
-          tempz3l += s_dummyz_loc[offset]*hp3;
-
+        fac3 = sh_hprime_xx[l*NGLLX+K];
+        tempx3l_att += s_dummyx_loc_att[l*NGLL2+J*NGLLX+I]*fac3;
+        tempy3l_att += s_dummyy_loc_att[l*NGLL2+J*NGLLX+I]*fac3;
+        tempz3l_att += s_dummyz_loc_att[l*NGLL2+J*NGLLX+I]*fac3;
       }
-
-
-      if( ATTENUATION){
-        // temporary variables used for fixing attenuation in a consistent way
-        tempx1l_att = 0.f;
-        tempx2l_att = 0.f;
-        tempx3l_att = 0.f;
-
-        tempy1l_att = 0.f;
-        tempy2l_att = 0.f;
-        tempy3l_att = 0.f;
-
-        tempz1l_att = 0.f;
-        tempz2l_att = 0.f;
-        tempz3l_att = 0.f;
-
-        for (l=0;l<NGLLX;l++) {
-                hp1 = d_hprime_xx[l*NGLLX+I];
-                offset = K*NGLL2+J*NGLLX+l;
-                tempx1l_att += s_dummyx_loc_att[offset]*hp1;
-                tempy1l_att += s_dummyy_loc_att[offset]*hp1;
-                tempz1l_att += s_dummyz_loc_att[offset]*hp1;
-
-                hp2 = d_hprime_xx[l*NGLLX+J];
-                offset = K*NGLL2+l*NGLLX+I;
-                tempx2l_att += s_dummyx_loc_att[offset]*hp2;
-                tempy2l_att += s_dummyy_loc_att[offset]*hp2;
-                tempz2l_att += s_dummyz_loc_att[offset]*hp2;
-
-                hp3 = d_hprime_xx[l*NGLLX+K];
-                offset = l*NGLL2+J*NGLLX+I;
-                tempx3l_att += s_dummyx_loc_att[offset]*hp3;
-                tempy3l_att += s_dummyy_loc_att[offset]*hp3;
-                tempz3l_att += s_dummyz_loc_att[offset]*hp3;
-
-        }
-      }
+    }
 #else
 
-      tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-              + s_dummyx_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-              + s_dummyx_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-              + s_dummyx_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-              + s_dummyx_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-      tempy1l = s_dummyy_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-              + s_dummyy_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-              + s_dummyy_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-              + s_dummyy_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-              + s_dummyy_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    tempy1l = s_dummyy_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-      tempz1l = s_dummyz_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-              + s_dummyz_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-              + s_dummyz_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-              + s_dummyz_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-              + s_dummyz_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    tempz1l = s_dummyz_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-      tempx2l = s_dummyx_loc[K*NGLL2+I]*d_hprime_xx[J]
-              + s_dummyx_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-              + s_dummyx_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-              + s_dummyx_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-              + s_dummyx_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    tempx2l = s_dummyx_loc[K*NGLL2+I]*d_hprime_xx[J]
+            + s_dummyx_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+            + s_dummyx_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+            + s_dummyx_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+            + s_dummyx_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-      tempy2l = s_dummyy_loc[K*NGLL2+I]*d_hprime_xx[J]
-              + s_dummyy_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-              + s_dummyy_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-              + s_dummyy_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-              + s_dummyy_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    tempy2l = s_dummyy_loc[K*NGLL2+I]*d_hprime_xx[J]
+            + s_dummyy_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+            + s_dummyy_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+            + s_dummyy_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+            + s_dummyy_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-      tempz2l = s_dummyz_loc[K*NGLL2+I]*d_hprime_xx[J]
-              + s_dummyz_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-              + s_dummyz_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-              + s_dummyz_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-              + s_dummyz_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    tempz2l = s_dummyz_loc[K*NGLL2+I]*d_hprime_xx[J]
+            + s_dummyz_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+            + s_dummyz_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+            + s_dummyz_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+            + s_dummyz_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-      tempx3l = s_dummyx_loc[J*NGLLX+I]*d_hprime_xx[K]
-              + s_dummyx_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-              + s_dummyx_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-              + s_dummyx_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-              + s_dummyx_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    tempx3l = s_dummyx_loc[J*NGLLX+I]*d_hprime_xx[K]
+            + s_dummyx_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+            + s_dummyx_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+            + s_dummyx_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+            + s_dummyx_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-      tempy3l = s_dummyy_loc[J*NGLLX+I]*d_hprime_xx[K]
-              + s_dummyy_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-              + s_dummyy_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-              + s_dummyy_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-              + s_dummyy_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    tempy3l = s_dummyy_loc[J*NGLLX+I]*d_hprime_xx[K]
+            + s_dummyy_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+            + s_dummyy_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+            + s_dummyy_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+            + s_dummyy_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-      tempz3l = s_dummyz_loc[J*NGLLX+I]*d_hprime_xx[K]
-              + s_dummyz_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-              + s_dummyz_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-              + s_dummyz_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-              + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    tempz3l = s_dummyz_loc[J*NGLLX+I]*d_hprime_xx[K]
+            + s_dummyz_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+            + s_dummyz_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+            + s_dummyz_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+            + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-      if( ATTENUATION){
-        // temporary variables used for fixing attenuation in a consistent way
-        tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-          + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    if( ATTENUATION){
+      // temporary variables used for fixing attenuation in a consistent way
+      tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-        tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-          + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+      tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-        tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-          + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+      tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-        tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-          + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-          + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-          + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-          + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+      tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+        + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+        + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+        + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+        + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-        tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-          + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-          + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-          + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-          + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+      tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+        + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+        + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+        + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+        + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-        tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-          + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-          + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-          + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-          + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+      tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
+        + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+        + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+        + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+        + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-        tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-          + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-          + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-          + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-          + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+      tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+        + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+        + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+        + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+        + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-        tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-          + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-          + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-          + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-          + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+      tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+        + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+        + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+        + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+        + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
-        tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-          + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-          + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-          + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-          + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
-      }
+      tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
+        + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+        + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+        + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+        + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    }
 
 #endif
 
-      // compute derivatives of ux, uy and uz with respect to x, y and z
-      offset = working_element*NGLL3_ALIGN + tx;
+    // compute derivatives of ux, uy and uz with respect to x, y and z
+    offset = working_element*NGLL3_PADDED + tx;
 
-      xixl = d_xix[offset];
-      xiyl = d_xiy[offset];
-      xizl = d_xiz[offset];
-      etaxl = d_etax[offset];
-      etayl = d_etay[offset];
-      etazl = d_etaz[offset];
-      gammaxl = d_gammax[offset];
-      gammayl = d_gammay[offset];
-      gammazl = d_gammaz[offset];
+    xixl = d_xix[offset];
+    xiyl = d_xiy[offset];
+    xizl = d_xiz[offset];
+    etaxl = d_etax[offset];
+    etayl = d_etay[offset];
+    etazl = d_etaz[offset];
+    gammaxl = d_gammax[offset];
+    gammayl = d_gammay[offset];
+    gammazl = d_gammaz[offset];
 
-      duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l;
-      duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l;
-      duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l;
+    duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l;
+    duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l;
+    duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l;
 
-      duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l;
-      duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l;
-      duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l;
+    duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l;
+    duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l;
+    duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l;
 
-      duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l;
-      duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l;
-      duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l;
+    duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l;
+    duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l;
+    duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l;
+
+    // precompute some sums to save CPU time
+    duxdxl_plus_duydyl = duxdxl + duydyl;
+    duxdxl_plus_duzdzl = duxdxl + duzdzl;
+    duydyl_plus_duzdzl = duydyl + duzdzl;
+    duxdyl_plus_duydxl = duxdyl + duydxl;
+    duzdxl_plus_duxdzl = duzdxl + duxdzl;
+    duzdyl_plus_duydzl = duzdyl + duydzl;
+
+    if( ATTENUATION){
+      // temporary variables used for fixing attenuation in a consistent way
+      duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
+      duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
+      duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
+
+      duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
+      duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
+      duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
+
+      duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
+      duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
+      duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
 
       // precompute some sums to save CPU time
-      duxdxl_plus_duydyl = duxdxl + duydyl;
-      duxdxl_plus_duzdzl = duxdxl + duzdzl;
-      duydyl_plus_duzdzl = duydyl + duzdzl;
-      duxdyl_plus_duydxl = duxdyl + duydxl;
-      duzdxl_plus_duxdzl = duzdxl + duxdzl;
-      duzdyl_plus_duydzl = duzdyl + duydzl;
+      duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
+      duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
+      duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
 
-      if( ATTENUATION){
-        // temporary variables used for fixing attenuation in a consistent way
-        duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att;
-        duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att;
-        duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att;
+      // computes deviatoric strain attenuation and/or for kernel calculations
+      if(COMPUTE_AND_STORE_STRAIN) {
+        realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
 
-        duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att;
-        duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att;
-        duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att;
+        // local storage: stresses at this current time step
+        epsilondev_xx_loc = duxdxl_att - templ;
+        epsilondev_yy_loc = duydyl_att - templ;
+        epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
+        epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
+        epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
 
-        duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att;
-        duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att;
-        duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att;
-
-        // precompute some sums to save CPU time
-        duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att;
-        duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att;
-        duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att;
-
-        // computes deviatoric strain attenuation and/or for kernel calculations
-        if(COMPUTE_AND_STORE_STRAIN) {
-          realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
-
-          // local storage: stresses at this current time step
-          epsilondev_xx_loc = duxdxl_att - templ;
-          epsilondev_yy_loc = duydyl_att - templ;
-          epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl_att;
-          epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
-          epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
-
-          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-            epsilon_trace_over_3[tx] = templ;
-          }else{
-            epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-          }
-        }
-      }else{
-        // computes deviatoric strain attenuation and/or for kernel calculations
-        if(COMPUTE_AND_STORE_STRAIN) {
-          realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
-
-          // local storage: stresses at this current time step
-          epsilondev_xx_loc = duxdxl - templ;
-          epsilondev_yy_loc = duydyl - templ;
-          epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl;
-          epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
-          epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
-
-          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-            epsilon_trace_over_3[tx] = templ;
-          }else{
-            epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
-          }
-        }
-      }
-
-      // attenuation
-      if(ATTENUATION){
-        // use unrelaxed parameters if attenuation
-        if( ATTENUATION_3D ){
-          one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
+        if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+          epsilon_trace_over_3[tx] = templ;
         }else{
-          one_minus_sum_beta_use = one_minus_sum_beta[working_element]; // (1,1,1,ispec)        
+          epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
         }
-        minus_sum_beta = one_minus_sum_beta_use - 1.0f;
       }
+    }else{
+      // computes deviatoric strain attenuation and/or for kernel calculations
+      if(COMPUTE_AND_STORE_STRAIN) {
+        realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
 
-      // computes stresses
-      if(ANISOTROPY){
-        // full anisotropic case, stress calculations
-        compute_element_cm_aniso(offset,
-                              d_c11store,d_c12store,d_c13store,d_c14store,d_c15store,d_c16store,d_c22store,
-                              d_c23store,d_c24store,d_c25store,d_c26store,d_c33store,d_c34store,d_c35store,
-                              d_c36store,d_c44store,d_c45store,d_c46store,d_c55store,d_c56store,d_c66store,
-                              ATTENUATION,
-                              minus_sum_beta,
-                              duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl,
-                              duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,
-                              duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
-                              &sigma_xx,&sigma_yy,&sigma_zz,
-                              &sigma_xy,&sigma_xz,&sigma_yz);
+        // local storage: stresses at this current time step
+        epsilondev_xx_loc = duxdxl - templ;
+        epsilondev_yy_loc = duydyl - templ;
+        epsilondev_xy_loc = 0.5f * duxdyl_plus_duydxl;
+        epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
+        epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
 
+        if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+          epsilon_trace_over_3[tx] = templ;
+        }else{
+          epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
+        }
+      }
+    }
+
+    // attenuation
+    if(ATTENUATION){
+      // use unrelaxed parameters if attenuation
+      if( ATTENUATION_3D ){
+        one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
       }else{
-        if( ! d_ispec_is_tiso[working_element] ){
-          // isotropic case
-          compute_element_cm_iso(offset,
+        one_minus_sum_beta_use = one_minus_sum_beta[working_element]; // (1,1,1,ispec)
+      }
+      minus_sum_beta = one_minus_sum_beta_use - 1.0f;
+    }
+
+    // computes stresses
+    if(ANISOTROPY){
+      // full anisotropic case, stress calculations
+      compute_element_cm_aniso(offset,
+                            d_c11store,d_c12store,d_c13store,d_c14store,d_c15store,d_c16store,d_c22store,
+                            d_c23store,d_c24store,d_c25store,d_c26store,d_c33store,d_c34store,d_c35store,
+                            d_c36store,d_c44store,d_c45store,d_c46store,d_c55store,d_c56store,d_c66store,
+                            ATTENUATION,
+                            minus_sum_beta,
+                            duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl,
+                            duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
+                            &sigma_xx,&sigma_yy,&sigma_zz,
+                            &sigma_xy,&sigma_xz,&sigma_yz);
+
+    }else{
+      if( ! d_ispec_is_tiso[working_element] ){
+        // isotropic case
+        compute_element_cm_iso(offset,
+                            d_kappavstore,d_muvstore,
+                            ATTENUATION,
+                            one_minus_sum_beta_use,
+                            duxdxl,duydyl,duzdzl,
+                            duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,
+                            duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
+                            &sigma_xx,&sigma_yy,&sigma_zz,
+                            &sigma_xy,&sigma_xz,&sigma_yz);
+      }else{
+        // transverse isotropy
+        compute_element_cm_tiso(offset,
                               d_kappavstore,d_muvstore,
+                              d_kappahstore,d_muhstore,d_eta_anisostore,
                               ATTENUATION,
                               one_minus_sum_beta_use,
-                              duxdxl,duydyl,duzdzl,
-                              duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,
+                              duxdxl,duxdyl,duxdzl,
+                              duydxl,duydyl,duydzl,
+                              duzdxl,duzdyl,duzdzl,
                               duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
+                              iglob, NGLOB,
+                              d_ystore,d_zstore,
                               &sigma_xx,&sigma_yy,&sigma_zz,
                               &sigma_xy,&sigma_xz,&sigma_yz);
-        }else{
-          // transverse isotropy
-          compute_element_cm_tiso(offset,
-                                d_kappavstore,d_muvstore,
-                                d_kappahstore,d_muhstore,d_eta_anisostore,
-                                ATTENUATION,
-                                one_minus_sum_beta_use,
-                                duxdxl,duxdyl,duxdzl,
-                                duydxl,duydyl,duydzl,
-                                duzdxl,duzdyl,duzdzl,
-                                duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,
-                                duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
-                                iglob, NGLOB,
-                                d_ystore,d_zstore,
-                                &sigma_xx,&sigma_yy,&sigma_zz,
-                                &sigma_xy,&sigma_xz,&sigma_yz);
-        }
-      } // ! end of test whether isotropic or anisotropic element
-
-
-      if(ATTENUATION && (! USE_ATTENUATION_MIMIC ) ){
-        // subtracts memory variables if attenuation
-        compute_element_cm_att_stress(tx,working_element,
-                                      R_xx,R_yy,R_xy,R_xz,R_yz,
-                                      &sigma_xx,&sigma_yy,&sigma_zz,&sigma_xy,&sigma_xz,&sigma_yz);
       }
+    } // ! end of test whether isotropic or anisotropic element
 
-      // define symmetric components (needed for non-symmetric dot product and sigma for gravity)
-      sigma_yx = sigma_xy;
-      sigma_zx = sigma_xz;
-      sigma_zy = sigma_yz;
 
-      // jacobian
-      jacobianl = 1.0f / (xixl*(etayl*gammazl-etazl*gammayl)
-                          -xiyl*(etaxl*gammazl-etazl*gammaxl)
-                          +xizl*(etaxl*gammayl-etayl*gammaxl));
-
-      if( GRAVITY ){
-        //  computes non-symmetric terms for gravity
-        compute_element_cm_gravity(tx,working_element,
-                                   d_ibool,d_xstore,d_ystore,d_zstore,
-                                   d_minus_gravity_table,d_minus_deriv_gravity_table,d_density_table,
-                                   wgll_cube,jacobianl,
-                                   s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
-                                   &sigma_xx,&sigma_yy,&sigma_zz,&sigma_xy,&sigma_yx,
-                                   &sigma_xz,&sigma_zx,&sigma_yz,&sigma_zy,
-                                   &rho_s_H1,&rho_s_H2,&rho_s_H3);
-      }
-
-      // form dot product with test vector, non-symmetric form
-      s_tempx1[tx] = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl);
-      s_tempy1[tx] = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl);
-      s_tempz1[tx] = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl);
-
-      s_tempx2[tx] = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl);
-      s_tempy2[tx] = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl);
-      s_tempz2[tx] = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl);
-
-      s_tempx3[tx] = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl);
-      s_tempy3[tx] = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl);
-      s_tempz3[tx] = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl);
-
+    if(ATTENUATION && (! USE_ATTENUATION_MIMIC ) ){
+      // subtracts memory variables if attenuation
+      compute_element_cm_att_stress(tx,working_element,
+                                    R_xx,R_yy,R_xy,R_xz,R_yz,
+                                    &sigma_xx,&sigma_yy,&sigma_zz,&sigma_xy,&sigma_xz,&sigma_yz);
     }
+
+    // define symmetric components (needed for non-symmetric dot product and sigma for gravity)
+    sigma_yx = sigma_xy;
+    sigma_zx = sigma_xz;
+    sigma_zy = sigma_yz;
+
+    // jacobian
+    jacobianl = 1.0f / (xixl*(etayl*gammazl-etazl*gammayl)
+                        -xiyl*(etaxl*gammazl-etazl*gammaxl)
+                        +xizl*(etaxl*gammayl-etayl*gammaxl));
+
+    if( GRAVITY ){
+      //  computes non-symmetric terms for gravity
+      compute_element_cm_gravity(tx,working_element,
+                                 d_ibool,d_xstore,d_ystore,d_zstore,
+                                 d_minus_gravity_table,d_minus_deriv_gravity_table,d_density_table,
+                                 wgll_cube,jacobianl,
+                                 s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
+                                 &sigma_xx,&sigma_yy,&sigma_zz,&sigma_xy,&sigma_yx,
+                                 &sigma_xz,&sigma_zx,&sigma_yz,&sigma_zy,
+                                 &rho_s_H1,&rho_s_H2,&rho_s_H3);
+    }
+
+    // form dot product with test vector, non-symmetric form
+    s_tempx1[tx] = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl);
+    s_tempy1[tx] = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl);
+    s_tempz1[tx] = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl);
+
+    s_tempx2[tx] = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl);
+    s_tempy2[tx] = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl);
+    s_tempz2[tx] = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl);
+
+    s_tempx3[tx] = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl);
+    s_tempy3[tx] = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl);
+    s_tempz3[tx] = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl);
+
+  }
 
 // synchronize all the threads (one thread for each of the NGLL grid points of the
 // current spectral element) because we need the whole element to be ready in order
 // to be able to compute the matrix products along cut planes of the 3D element below
-    __syncthreads();
+  __syncthreads();
 
-    if (active) {
+  if (active) {
 
 #ifndef MANUALLY_UNROLLED_LOOPS
 
-      tempx1l = 0.f;
-      tempy1l = 0.f;
-      tempz1l = 0.f;
+    tempx1l = 0.f;
+    tempy1l = 0.f;
+    tempz1l = 0.f;
 
-      tempx2l = 0.f;
-      tempy2l = 0.f;
-      tempz2l = 0.f;
+    tempx2l = 0.f;
+    tempy2l = 0.f;
+    tempz2l = 0.f;
 
-      tempx3l = 0.f;
-      tempy3l = 0.f;
-      tempz3l = 0.f;
+    tempx3l = 0.f;
+    tempy3l = 0.f;
+    tempz3l = 0.f;
 
-      for (l=0;l<NGLLX;l++) {
+    for (l=0;l<NGLLX;l++) {
 
-        fac1 = d_hprimewgll_xx[I*NGLLX+l];
-        offset = K*NGLL2+J*NGLLX+l;
-        tempx1l += s_tempx1[offset]*fac1;
-        tempy1l += s_tempy1[offset]*fac1;
-        tempz1l += s_tempz1[offset]*fac1;
+      fac1 = d_hprimewgll_xx[I*NGLLX+l];
+      tempx1l += s_tempx1[K*NGLL2+J*NGLLX+l]*fac1;
+      tempy1l += s_tempy1[K*NGLL2+J*NGLLX+l]*fac1;
+      tempz1l += s_tempz1[K*NGLL2+J*NGLLX+l]*fac1;
 
-        fac2 = d_hprimewgll_yy[J*NGLLX+l];
-        offset = K*NGLL2+l*NGLLX+I;
-        tempx2l += s_tempx2[offset]*fac2;
-        tempy2l += s_tempy2[offset]*fac2;
-        tempz2l += s_tempz2[offset]*fac2;
+      fac2 = d_hprimewgll_yy[J*NGLLX+l];
+      tempx2l += s_tempx2[K*NGLL2+l*NGLLX+I]*fac2;
+      tempy2l += s_tempy2[K*NGLL2+l*NGLLX+I]*fac2;
+      tempz2l += s_tempz2[K*NGLL2+l*NGLLX+I]*fac2;
 
-        fac3 = d_hprimewgll_zz[K*NGLLX+l];
-        offset = l*NGLL2+J*NGLLX+I;
-        tempx3l += s_tempx3[offset]*fac3;
-        tempy3l += s_tempy3[offset]*fac3;
-        tempz3l += s_tempz3[offset]*fac3;
+      fac3 = d_hprimewgll_zz[K*NGLLX+l];
+      tempx3l += s_tempx3[l*NGLL2+J*NGLLX+I]*fac3;
+      tempy3l += s_tempy3[l*NGLL2+J*NGLLX+I]*fac3;
+      tempz3l += s_tempz3[l*NGLL2+J*NGLLX+I]*fac3;
 
-      }
+    }
 #else
 
-      tempx1l = s_tempx1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
-              + s_tempx1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
-              + s_tempx1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
-              + s_tempx1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
-              + s_tempx1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
+    tempx1l = s_tempx1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
+            + s_tempx1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
+            + s_tempx1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
+            + s_tempx1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
+            + s_tempx1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
 
-      tempy1l = s_tempy1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
-              + s_tempy1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
-              + s_tempy1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
-              + s_tempy1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
-              + s_tempy1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
+    tempy1l = s_tempy1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
+            + s_tempy1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
+            + s_tempy1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
+            + s_tempy1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
+            + s_tempy1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
 
-      tempz1l = s_tempz1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
-              + s_tempz1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
-              + s_tempz1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
-              + s_tempz1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
-              + s_tempz1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
+    tempz1l = s_tempz1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
+            + s_tempz1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
+            + s_tempz1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
+            + s_tempz1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
+            + s_tempz1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
 
-      tempx2l = s_tempx2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
-              + s_tempx2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
-              + s_tempx2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
-              + s_tempx2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
-              + s_tempx2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
+    tempx2l = s_tempx2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
+            + s_tempx2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
+            + s_tempx2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
+            + s_tempx2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
+            + s_tempx2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
 
-      tempy2l = s_tempy2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
-              + s_tempy2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
-              + s_tempy2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
-              + s_tempy2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
-              + s_tempy2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
+    tempy2l = s_tempy2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
+            + s_tempy2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
+            + s_tempy2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
+            + s_tempy2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
+            + s_tempy2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
 
-      tempz2l = s_tempz2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
-              + s_tempz2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
-              + s_tempz2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
-              + s_tempz2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
-              + s_tempz2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
+    tempz2l = s_tempz2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
+            + s_tempz2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
+            + s_tempz2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
+            + s_tempz2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
+            + s_tempz2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
 
-      tempx3l = s_tempx3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
-              + s_tempx3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
-              + s_tempx3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
-              + s_tempx3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
-              + s_tempx3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
+    tempx3l = s_tempx3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
+            + s_tempx3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
+            + s_tempx3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
+            + s_tempx3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
+            + s_tempx3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
 
-      tempy3l = s_tempy3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
-              + s_tempy3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
-              + s_tempy3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
-              + s_tempy3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
-              + s_tempy3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
+    tempy3l = s_tempy3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
+            + s_tempy3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
+            + s_tempy3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
+            + s_tempy3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
+            + s_tempy3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
 
-      tempz3l = s_tempz3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
-              + s_tempz3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
-              + s_tempz3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
-              + s_tempz3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
-              + s_tempz3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
+    tempz3l = s_tempz3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
+            + s_tempz3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
+            + s_tempz3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
+            + s_tempz3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
+            + s_tempz3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
 
 #endif
 
-      fac1 = d_wgllwgll_yz[K*NGLLX+J];
-      fac2 = d_wgllwgll_xz[K*NGLLX+I];
-      fac3 = d_wgllwgll_xy[J*NGLLX+I];
+    fac1 = d_wgllwgll_yz[K*NGLLX+J];
+    fac2 = d_wgllwgll_xz[K*NGLLX+I];
+    fac3 = d_wgllwgll_xy[J*NGLLX+I];
 
-      sum_terms1 = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l);
-      sum_terms2 = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l);
-      sum_terms3 = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l);
+    sum_terms1 = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l);
+    sum_terms2 = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l);
+    sum_terms3 = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l);
 
-      // adds gravity term
-      if( GRAVITY ){
-        sum_terms1 += rho_s_H1;
-        sum_terms2 += rho_s_H2;
-        sum_terms3 += rho_s_H3;
-      }
-
-#ifdef USE_TEXTURES
-      d_accel[iglob] = tex1Dfetch(tex_accel, iglob) + sum_terms1 ;
-      d_accel[iglob + NGLOB] = tex1Dfetch(tex_accel, iglob + NGLOB) + sum_terms2 ;
-      d_accel[iglob + 2*NGLOB] = tex1Dfetch(tex_accel, iglob + 2*NGLOB) + sum_terms3 ;
-#else
-  /* OLD/To be implemented version that uses coloring to get around race condition. About 1.6x faster */
+    // adds gravity term
+    if( GRAVITY ){
+      sum_terms1 += rho_s_H1;
+      sum_terms2 += rho_s_H2;
+      sum_terms3 += rho_s_H3;
+    }
 
 
 #ifdef USE_MESH_COLORING_GPU
+    // no atomic operation needed, colors don't share global points between elements
+
+#ifdef USE_TEXTURES_FIELDS
+    d_accel[iglob*3]     = tex1Dfetch(d_accel_cm_tex, iglob*3) + sum_terms1;
+    d_accel[iglob*3 + 1] = tex1Dfetch(d_accel_cm_tex, iglob*3 + 1) + sum_terms2;
+    d_accel[iglob*3 + 2] = tex1Dfetch(d_accel_cm_tex, iglob*3 + 2) + sum_terms3;
+#else
+    d_accel[iglob*3]     += sum_terms1;
+    d_accel[iglob*3 + 1] += sum_terms2;
+    d_accel[iglob*3 + 2] += sum_terms3;
+#endif // USE_TEXTURES_FIELDS
+
+#else // MESH_COLORING
+
+    //mesh coloring
+    if( use_mesh_coloring_gpu ){
+
       // no atomic operation needed, colors don't share global points between elements
+#ifdef USE_TEXTURES_FIELDS
+      d_accel[iglob*3]     = tex1Dfetch(d_accel_cm_tex, iglob*3) + sum_terms1;
+      d_accel[iglob*3 + 1] = tex1Dfetch(d_accel_cm_tex, iglob*3 + 1) + sum_terms2;
+      d_accel[iglob*3 + 2] = tex1Dfetch(d_accel_cm_tex, iglob*3 + 2) + sum_terms3;
+#else
       d_accel[iglob*3]     += sum_terms1;
       d_accel[iglob*3 + 1] += sum_terms2;
       d_accel[iglob*3 + 2] += sum_terms3;
-#else
-      //mesh coloring
-      if( use_mesh_coloring_gpu ){
+#endif // USE_TEXTURES_FIELDS
 
-       // no atomic operation needed, colors don't share global points between elements
-        d_accel[iglob*3]     += sum_terms1;
-        d_accel[iglob*3 + 1] += sum_terms2;
-        d_accel[iglob*3 + 2] += sum_terms3;
+    }else{
 
-      }else{
+      // for testing purposes only: w/out atomic updates
+      //d_accel[iglob*3] -= (0.00000001f*tempx1l + 0.00000001f*tempx2l + 0.00000001f*tempx3l);
+      //d_accel[iglob*3 + 1] -= (0.00000001f*tempy1l + 0.00000001f*tempy2l + 0.00000001f*tempy3l);
+      //d_accel[iglob*3 + 2] -= (0.00000001f*tempz1l + 0.00000001f*tempz2l + 0.00000001f*tempz3l);
 
-        // for testing purposes only: w/out atomic updates
-        //d_accel[iglob*3] -= (0.00000001f*tempx1l + 0.00000001f*tempx2l + 0.00000001f*tempx3l);
-        //d_accel[iglob*3 + 1] -= (0.00000001f*tempy1l + 0.00000001f*tempy2l + 0.00000001f*tempy3l);
-        //d_accel[iglob*3 + 2] -= (0.00000001f*tempz1l + 0.00000001f*tempz2l + 0.00000001f*tempz3l);
-
-        atomicAdd(&d_accel[iglob*3], sum_terms1);
-        atomicAdd(&d_accel[iglob*3+1], sum_terms2);
-        atomicAdd(&d_accel[iglob*3+2], sum_terms3);
-
-      }
-#endif
-
-#endif
-
-      // update memory variables based upon the Runge-Kutta scheme
-      if( ATTENUATION && ( ! USE_ATTENUATION_MIMIC ) ){
-        compute_element_cm_att_memory(tx,working_element,
-                                  d_muvstore,
-                                  factor_common,alphaval,betaval,gammaval,
-                                  R_xx,R_yy,R_xy,R_xz,R_yz,
-                                  epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,
-                                  epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc,
-                                  ANISOTROPY,d_c44store,ATTENUATION_3D);
-      }
-
-      // save deviatoric strain for Runge-Kutta scheme
-      if( COMPUTE_AND_STORE_STRAIN ){
-        int ijk_ispec = tx + working_element*NGLL3;
-
-        // fortran: epsilondev_xx(:,:,:,ispec) = epsilondev_xx_loc(:,:,:)
-        epsilondev_xx[ijk_ispec] = epsilondev_xx_loc;
-        epsilondev_yy[ijk_ispec] = epsilondev_yy_loc;
-        epsilondev_xy[ijk_ispec] = epsilondev_xy_loc;
-        epsilondev_xz[ijk_ispec] = epsilondev_xz_loc;
-        epsilondev_yz[ijk_ispec] = epsilondev_yz_loc;
-      }
+      atomicAdd(&d_accel[iglob*3], sum_terms1);
+      atomicAdd(&d_accel[iglob*3+1], sum_terms2);
+      atomicAdd(&d_accel[iglob*3+2], sum_terms3);
 
     }
+#endif // MESH_COLORING
 
-#else  // of #ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
-    d_accel[iglob] -= 0.00000001f;
-    d_accel[iglob + NGLOB] -= 0.00000001f;
-    d_accel[iglob + 2*NGLOB] -= 0.00000001f;
-#endif // of #ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
+    // update memory variables based upon the Runge-Kutta scheme
+    if( ATTENUATION && ( ! USE_ATTENUATION_MIMIC ) ){
+      compute_element_cm_att_memory(tx,working_element,
+                                d_muvstore,
+                                factor_common,alphaval,betaval,gammaval,
+                                R_xx,R_yy,R_xy,R_xz,R_yz,
+                                epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,
+                                epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc,
+                                ANISOTROPY,d_c44store,ATTENUATION_3D);
+    }
 
+    // save deviatoric strain for Runge-Kutta scheme
+    if( COMPUTE_AND_STORE_STRAIN ){
+      // fortran: epsilondev_xx(:,:,:,ispec) = epsilondev_xx_loc(:,:,:)
+      epsilondev_xx[tx + working_element*NGLL3] = epsilondev_xx_loc;
+      epsilondev_yy[tx + working_element*NGLL3] = epsilondev_yy_loc;
+      epsilondev_xy[tx + working_element*NGLL3] = epsilondev_xy_loc;
+      epsilondev_xz[tx + working_element*NGLL3] = epsilondev_xz_loc;
+      epsilondev_yz[tx + working_element*NGLL3] = epsilondev_yz_loc;
+    }
+  }
 }
+
 /* ----------------------------------------------------------------------------------------------- */
 
 void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
@@ -1707,98 +1482,104 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventRecord( start, 0 );
 
   Kernel_2_crust_mantle_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                  mp->NGLOB_CRUST_MANTLE,
-                                  d_ibool,
-                                  d_ispec_is_tiso,
-                                  mp->d_phase_ispec_inner_crust_mantle,
-                                  mp->num_phase_ispec_crust_mantle,
-                                  d_iphase,
-                                  d_deltat,
-                                  mp->use_mesh_coloring_gpu,
-                                  mp->d_displ_crust_mantle,
-                                  mp->d_veloc_crust_mantle,
-                                  mp->d_accel_crust_mantle,
-                                  d_xix, d_xiy, d_xiz,
-                                  d_etax, d_etay, d_etaz,
-                                  d_gammax, d_gammay, d_gammaz,
-                                  d_kappavstore, d_muvstore,
-                                  d_kappahstore, d_muhstore,
-                                  d_eta_anisostore,
-                                  mp->compute_and_store_strain,
-                                  d_epsilondev_xx,d_epsilondev_yy,d_epsilondev_xy,
-                                  d_epsilondev_xz,d_epsilondev_yz,
-                                  d_epsilon_trace_over_3,
-                                  mp->simulation_type,
-                                  mp->attenuation,
-                                  mp->attenuation_new,
-                                  mp->use_attenuation_mimic,
-                                  mp->attenuation_3D,
-                                  d_one_minus_sum_beta,d_factor_common,
-                                  d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
-                                  mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
-                                  mp->anisotropic_3D_mantle,
-                                  d_c11store,d_c12store,d_c13store,
-                                  d_c14store,d_c15store,d_c16store,
-                                  d_c22store,d_c23store,d_c24store,
-                                  d_c25store,d_c26store,d_c33store,
-                                  d_c34store,d_c35store,d_c36store,
-                                  d_c44store,d_c45store,d_c46store,
-                                  d_c55store,d_c56store,d_c66store,
-                                  mp->gravity,
-                                  mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
-                                  mp->d_minus_gravity_table,
-                                  mp->d_minus_deriv_gravity_table,
-                                  mp->d_density_table,
-                                  mp->d_wgll_cube,
-                                  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
+                                                mp->NGLOB_CRUST_MANTLE,
+                                                d_ibool,
+                                                d_ispec_is_tiso,
+                                                mp->d_phase_ispec_inner_crust_mantle,
+                                                mp->num_phase_ispec_crust_mantle,
+                                                d_iphase,
+                                                d_deltat,
+                                                mp->use_mesh_coloring_gpu,
+                                                mp->d_displ_crust_mantle,
+                                                mp->d_veloc_crust_mantle,
+                                                mp->d_accel_crust_mantle,
+                                                d_xix, d_xiy, d_xiz,
+                                                d_etax, d_etay, d_etaz,
+                                                d_gammax, d_gammay, d_gammaz,
+                                                mp->d_hprime_xx,
+                                                mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                d_kappavstore, d_muvstore,
+                                                d_kappahstore, d_muhstore,
+                                                d_eta_anisostore,
+                                                mp->compute_and_store_strain,
+                                                d_epsilondev_xx,d_epsilondev_yy,d_epsilondev_xy,
+                                                d_epsilondev_xz,d_epsilondev_yz,
+                                                d_epsilon_trace_over_3,
+                                                mp->simulation_type,
+                                                mp->attenuation,
+                                                mp->attenuation_new,
+                                                mp->use_attenuation_mimic,
+                                                mp->attenuation_3D,
+                                                d_one_minus_sum_beta,d_factor_common,
+                                                d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
+                                                mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
+                                                mp->anisotropic_3D_mantle,
+                                                d_c11store,d_c12store,d_c13store,
+                                                d_c14store,d_c15store,d_c16store,
+                                                d_c22store,d_c23store,d_c24store,
+                                                d_c25store,d_c26store,d_c33store,
+                                                d_c34store,d_c35store,d_c36store,
+                                                d_c44store,d_c45store,d_c46store,
+                                                d_c55store,d_c56store,d_c66store,
+                                                mp->gravity,
+                                                mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
+                                                mp->d_minus_gravity_table,
+                                                mp->d_minus_deriv_gravity_table,
+                                                mp->d_density_table,
+                                                mp->d_wgll_cube,
+                                                mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
 
 
   if(mp->simulation_type == 3) {
     Kernel_2_crust_mantle_impl<<< grid,threads>>>(nb_blocks_to_compute,
-                                     mp->NGLOB_CRUST_MANTLE,
-                                     d_ibool,
-                                     d_ispec_is_tiso,
-                                     mp->d_phase_ispec_inner_crust_mantle,
-                                     mp->num_phase_ispec_crust_mantle,
-                                     d_iphase,
-                                     d_deltat,
-                                     mp->use_mesh_coloring_gpu,
-                                     mp->d_b_displ_crust_mantle,
-                                     mp->d_b_veloc_crust_mantle,
-                                     mp->d_b_accel_crust_mantle,
-                                     d_xix, d_xiy, d_xiz,
-                                     d_etax, d_etay, d_etaz,
-                                     d_gammax, d_gammay, d_gammaz,
-                                     d_kappavstore, d_muvstore,
-                                     d_kappahstore, d_muhstore,
-                                     d_eta_anisostore,
-                                     mp->compute_and_store_strain,
-                                     d_b_epsilondev_xx,d_b_epsilondev_yy,d_b_epsilondev_xy,
-                                     d_b_epsilondev_xz,d_b_epsilondev_yz,
-                                     d_b_epsilon_trace_over_3,
-                                     mp->simulation_type,
-                                     mp->attenuation,
-                                     mp->attenuation_new,
-                                     mp->use_attenuation_mimic,
-                                     mp->attenuation_3D,
-                                     d_one_minus_sum_beta,d_factor_common,
-                                     d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
-                                     mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
-                                     mp->anisotropic_3D_mantle,
-                                     d_c11store,d_c12store,d_c13store,
-                                     d_c14store,d_c15store,d_c16store,
-                                     d_c22store,d_c23store,d_c24store,
-                                     d_c25store,d_c26store,d_c33store,
-                                     d_c34store,d_c35store,d_c36store,
-                                     d_c44store,d_c45store,d_c46store,
-                                     d_c55store,d_c56store,d_c66store,
-                                     mp->gravity,
-                                     mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
-                                     mp->d_minus_gravity_table,
-                                     mp->d_minus_deriv_gravity_table,
-                                     mp->d_density_table,
-                                     mp->d_wgll_cube,
-                                     mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
+                                                   mp->NGLOB_CRUST_MANTLE,
+                                                   d_ibool,
+                                                   d_ispec_is_tiso,
+                                                   mp->d_phase_ispec_inner_crust_mantle,
+                                                   mp->num_phase_ispec_crust_mantle,
+                                                   d_iphase,
+                                                   d_deltat,
+                                                   mp->use_mesh_coloring_gpu,
+                                                   mp->d_b_displ_crust_mantle,
+                                                   mp->d_b_veloc_crust_mantle,
+                                                   mp->d_b_accel_crust_mantle,
+                                                   d_xix, d_xiy, d_xiz,
+                                                   d_etax, d_etay, d_etaz,
+                                                   d_gammax, d_gammay, d_gammaz,
+                                                   mp->d_hprime_xx,
+                                                   mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                   mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                   d_kappavstore, d_muvstore,
+                                                   d_kappahstore, d_muhstore,
+                                                   d_eta_anisostore,
+                                                   mp->compute_and_store_strain,
+                                                   d_b_epsilondev_xx,d_b_epsilondev_yy,d_b_epsilondev_xy,
+                                                   d_b_epsilondev_xz,d_b_epsilondev_yz,
+                                                   d_b_epsilon_trace_over_3,
+                                                   mp->simulation_type,
+                                                   mp->attenuation,
+                                                   mp->attenuation_new,
+                                                   mp->use_attenuation_mimic,
+                                                   mp->attenuation_3D,
+                                                   d_one_minus_sum_beta,d_factor_common,
+                                                   d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
+                                                   mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
+                                                   mp->anisotropic_3D_mantle,
+                                                   d_c11store,d_c12store,d_c13store,
+                                                   d_c14store,d_c15store,d_c16store,
+                                                   d_c22store,d_c23store,d_c24store,
+                                                   d_c25store,d_c26store,d_c33store,
+                                                   d_c34store,d_c35store,d_c36store,
+                                                   d_c44store,d_c45store,d_c46store,
+                                                   d_c55store,d_c56store,d_c66store,
+                                                   mp->gravity,
+                                                   mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
+                                                   mp->d_minus_gravity_table,
+                                                   mp->d_minus_deriv_gravity_table,
+                                                   mp->d_density_table,
+                                                   mp->d_wgll_cube,
+                                                   mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
   }
 
   // cudaEventRecord( stop, 0 );
@@ -1876,7 +1657,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       if( mp->attenuation_3D ){
         color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
       }else{
-        color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * 1 * N_SLS;      
+        color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * 1 * N_SLS;
       }
       color_offset_ispec = mp->nspec_outer_crust_mantle;
     }
@@ -1966,7 +1747,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       if( mp->attenuation_3D ){
         color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3 * N_SLS;
       }else{
-        color_offset_nonpadded_att2 += nb_blocks_to_compute * 1 * N_SLS;      
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * 1 * N_SLS;
       }
       // for array(ispec)
       color_offset_ispec += nb_blocks_to_compute;
