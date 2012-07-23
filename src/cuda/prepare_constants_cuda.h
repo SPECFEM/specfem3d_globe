@@ -33,111 +33,231 @@ typedef float realw;  // type of "working" variables
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// setters for these const arrays (very ugly hack, but will have to do)
-
-// elastic
-void setConst_hprime_xx(realw* array,Mesh* mp);
-void setConst_hprime_yy(realw* array,Mesh* mp);
-void setConst_hprime_zz(realw* array,Mesh* mp);
-
-void setConst_hprimewgll_xx(realw* array,Mesh* mp);
-void setConst_hprimewgll_yy(realw* array,Mesh* mp);
-void setConst_hprimewgll_zz(realw* array,Mesh* mp);
-
-void setConst_wgllwgll_xy(realw* array,Mesh* mp);
-void setConst_wgllwgll_xz(realw* array, Mesh* mp);
-void setConst_wgllwgll_yz(realw* array, Mesh* mp);
-
-void setConst_wgll_cube(realw* array, Mesh* mp);
+// CONSTANT arrays setup
 
 /* ----------------------------------------------------------------------------------------------- */
 
-/* CUDA specific things from specfem3D_kernels.cu */
+/* note:
+ constant arrays when used in other compute_forces_***_cuda.cu routines stay zero,
+ constant declaration and cudaMemcpyToSymbol would have to be in the same file...
 
-#ifdef USE_TEXTURES
-  // declaration of textures
-  texture<realw, 1, cudaReadModeElementType> tex_displ;
-  texture<realw, 1, cudaReadModeElementType> tex_veloc;
-  texture<realw, 1, cudaReadModeElementType> tex_accel;
+ extern keyword doesn't work for __constant__ declarations.
 
-  texture<realw, 1, cudaReadModeElementType> tex_potential;
-  texture<realw, 1, cudaReadModeElementType> tex_potential_dot_dot;
+ also:
+ cudaMemcpyToSymbol("deviceCaseParams", caseParams, sizeof(CaseParams));
+ ..
+ and compile with -arch=sm_20
 
-  // for binding the textures
+ see also: http://stackoverflow.com/questions/4008031/how-to-use-cuda-constant-memory-in-a-programmer-pleasant-way
+ doesn't seem to work.
 
-  void bindTexturesDispl(realw* d_displ)
+ we could keep arrays separated for acoustic and elastic routines...
+
+ workaround:
+
+ for now, we store pointers with cudaGetSymbolAddress() function calls.
+ we pass those pointers in all other compute_forces_..() routines
+
+ in this file, we can use the above constant array declarations without need of the pointers.
+
+ */
+
+// cuda constant arrays
+//
+// note: we use definition __device__ to use global memory rather than constant memory registers
+//          to avoid over-loading registers; this should help increasing the occupancy on the GPU
+
+__device__ realw d_hprime_xx[NGLL2];
+//__device__ realw d_hprime_yy[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
+//__device__ realw d_hprime_zz[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
+
+__device__ realw d_hprimewgll_xx[NGLL2];
+__device__ realw d_hprimewgll_yy[NGLL2];
+__device__ realw d_hprimewgll_zz[NGLL2];
+
+__device__ realw d_wgllwgll_xy[NGLL2];
+__device__ realw d_wgllwgll_xz[NGLL2];
+__device__ realw d_wgllwgll_yz[NGLL2];
+
+__device__ realw d_wgll_cube[NGLL3]; // needed only for gravity case
+
+
+// setup functions
+void setConst_hprime_xx(realw* array,Mesh* mp)
+{
+
+  cudaError_t err = cudaMemcpyToSymbol(d_hprime_xx, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
   {
-    cudaError_t err;
-
-    cudaChannelFormatDesc channelDescFloat = cudaCreateChannelDesc<realw>();
-
-    err = cudaBindTexture(NULL,tex_displ, d_displ, channelDescFloat, NDIM*NGLOB*sizeof(realw));
-    if (err != cudaSuccess)
-    {
-      fprintf(stderr, "Error in bindTexturesDispl for displ: %s\n", cudaGetErrorString(err));
-      exit(1);
-    }
+    fprintf(stderr, "Error in setConst_hprime_xx: %s\n", cudaGetErrorString(err));
+    fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
+    exit(1);
   }
 
-  void bindTexturesVeloc(realw* d_veloc)
+  err = cudaGetSymbolAddress((void**)&(mp->d_hprime_xx),"d_hprime_xx");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_hprime_xx: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+}
+
+/*
+ // only needed if NGLLX != NGLLY != NGLLZ
+ void setConst_hprime_yy(realw* array,Mesh* mp)
+ {
+
+ cudaError_t err = cudaMemcpyToSymbol(d_hprime_yy, array, NGLL2*sizeof(realw));
+ if (err != cudaSuccess)
+ {
+ fprintf(stderr, "Error in setConst_hprime_yy: %s\n", cudaGetErrorString(err));
+ fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
+ exit(1);
+ }
+
+ err = cudaGetSymbolAddress((void**)&(mp->d_hprime_yy),"d_hprime_yy");
+ if(err != cudaSuccess) {
+ fprintf(stderr, "Error with d_hprime_yy: %s\n", cudaGetErrorString(err));
+ exit(1);
+ }
+ }
+ */
+
+/*
+ // only needed if NGLLX != NGLLY != NGLLZ
+ void setConst_hprime_zz(realw* array,Mesh* mp)
+ {
+
+ cudaError_t err = cudaMemcpyToSymbol(d_hprime_zz, array, NGLL2*sizeof(realw));
+ if (err != cudaSuccess)
+ {
+ fprintf(stderr, "Error in setConst_hprime_zz: %s\n", cudaGetErrorString(err));
+ fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
+ exit(1);
+ }
+
+ err = cudaGetSymbolAddress((void**)&(mp->d_hprime_zz),"d_hprime_zz");
+ if(err != cudaSuccess) {
+ fprintf(stderr, "Error with d_hprime_zz: %s\n", cudaGetErrorString(err));
+ exit(1);
+ }
+ }
+ */
+
+void setConst_hprimewgll_xx(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_xx, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
   {
-    cudaError_t err;
-
-    cudaChannelFormatDesc channelDescFloat = cudaCreateChannelDesc<realw>();
-
-    err = cudaBindTexture(NULL,tex_veloc, d_veloc, channelDescFloat, NDIM*NGLOB*sizeof(realw));
-    if (err != cudaSuccess)
-    {
-      fprintf(stderr, "Error in bindTexturesVeloc for veloc: %s\n", cudaGetErrorString(err));
-      exit(1);
-    }
+    fprintf(stderr, "Error in setConst_hprimewgll_xx: %s\n", cudaGetErrorString(err));
+    exit(1);
   }
 
-  void bindTexturesAccel(realw* d_accel)
+  err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_xx),"d_hprimewgll_xx");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_hprimewgll_xx: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+}
+
+void setConst_hprimewgll_yy(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_yy, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
   {
-    cudaError_t err;
-
-    cudaChannelFormatDesc channelDescFloat = cudaCreateChannelDesc<realw>();
-
-    err = cudaBindTexture(NULL,tex_accel, d_accel, channelDescFloat, NDIM*NGLOB*sizeof(realw));
-    if (err != cudaSuccess)
-    {
-      fprintf(stderr, "Error in bindTexturesAccel for accel: %s\n", cudaGetErrorString(err));
-      exit(1);
-    }
+    fprintf(stderr, "Error in setConst_hprimewgll_yy: %s\n", cudaGetErrorString(err));
+    exit(1);
   }
 
-  void bindTexturesPotential(realw* d_potential)
+  err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_yy),"d_hprimewgll_yy");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_hprimewgll_yy: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+}
+
+void setConst_hprimewgll_zz(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_zz, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
   {
-    cudaError_t err;
-
-    cudaChannelFormatDesc channelDescFloat = cudaCreateChannelDesc<realw>();
-
-    err = cudaBindTexture(NULL,tex_potential, d_potential,
-                          channelDescFloat, NGLOB*sizeof(realw));
-    if (err != cudaSuccess)
-    {
-      fprintf(stderr, "Error in bindTexturesPotential for potential: %s\n", cudaGetErrorString(err));
-      exit(1);
-    }
+    fprintf(stderr, "Error in setConst_hprimewgll_zz: %s\n", cudaGetErrorString(err));
+    exit(1);
   }
 
-  void bindTexturesPotential_dot_dot(realw* d_potential_dot_dot)
+  err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_zz),"d_hprimewgll_zz");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_hprimewgll_zz: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+}
+
+void setConst_wgllwgll_xy(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_wgllwgll_xy, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
   {
-    cudaError_t err;
-
-    cudaChannelFormatDesc channelDescFloat = cudaCreateChannelDesc<realw>();
-
-    err = cudaBindTexture(NULL,tex_potential_dot_dot, d_potential_dot_dot,
-                          channelDescFloat, NGLOB*sizeof(realw));
-    if (err != cudaSuccess)
-    {
-      fprintf(stderr, "Error in bindTexturesPotential_dot_dot for potential_dot_dot: %s\n", cudaGetErrorString(err));
-      exit(1);
-    }
+    fprintf(stderr, "Error in setConst_wgllwgll_xy: %s\n", cudaGetErrorString(err));
+    exit(1);
   }
 
-#endif // USE_TEXTURES
+  err = cudaGetSymbolAddress((void**)&(mp->d_wgllwgll_xy),"d_wgllwgll_xy");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_wgllwgll_xy: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+}
+
+void setConst_wgllwgll_xz(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_wgllwgll_xz, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
+  {
+    fprintf(stderr, "Error in  setConst_wgllwgll_xz: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+  err = cudaGetSymbolAddress((void**)&(mp->d_wgllwgll_xz),"d_wgllwgll_xz");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_wgllwgll_xz: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+}
+
+void setConst_wgllwgll_yz(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_wgllwgll_yz, array, NGLL2*sizeof(realw));
+  if (err != cudaSuccess)
+  {
+    fprintf(stderr, "Error in setConst_wgllwgll_yz: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+  err = cudaGetSymbolAddress((void**)&(mp->d_wgllwgll_yz),"d_wgllwgll_yz");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_wgllwgll_yz: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+}
+
+void setConst_wgll_cube(realw* array,Mesh* mp)
+{
+  cudaError_t err = cudaMemcpyToSymbol(d_wgll_cube, array, NGLL3*sizeof(realw));
+  if (err != cudaSuccess)
+  {
+    fprintf(stderr, "Error in setConst_wgll_cube: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+  err = cudaGetSymbolAddress((void**)&(mp->d_wgll_cube),"d_wgll_cube");
+  if(err != cudaSuccess) {
+    fprintf(stderr, "Error with d_wgll_cube: %s\n", cudaGetErrorString(err));
+    exit(1);
+  }
+
+}
 
 
 #endif //CUDA_HEADER_H

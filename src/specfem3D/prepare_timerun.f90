@@ -714,7 +714,7 @@
   factor_common_crust_mantle_dble = 0.d0
   factor_scale_crust_mantle_dble = 0.d0
   tau_sigma_dble = 0.d0
-  
+
   call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_crust_mantle_dble, &
            factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble, &
            ATT1,ATT2,ATT3,ATT4)
@@ -727,7 +727,7 @@
   factor_common_inner_core_dble = 0.d0
   factor_scale_inner_core_dble = 0.d0
   tau_sigma_dble = 0.d0
-  
+
   call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_inner_core_dble, &
            factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble, &
            ATT1,ATT2,ATT3,ATT5)

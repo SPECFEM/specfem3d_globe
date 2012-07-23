@@ -671,7 +671,7 @@
               if( ATTENUATION_VAL ) then
                 if( ATTENUATION_3D_VAL ) then
                   mul = mul * one_minus_sum_beta(i,j,k,ispec)
-                else 
+                else
                   mul = mul * one_minus_sum_beta(1,1,1,ispec)
                 endif
               endif

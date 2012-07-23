@@ -112,22 +112,57 @@ void exit_on_error(char* info);
 #define IREGION_CRUST_MANTLE  1
 #define IREGION_INNER_CORE  3
 
+// R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
+#define R_EARTH_KM 6371.0f
+// uncomment line below for PREM with oceans
+//#define R_EARTH_KM 6368.0f
+
+
 /* ----------------------------------------------------------------------------------------------- */
 
-//typedef float real;   // type of variables passed into function
-typedef float realw;  // type of "working" variables
+// type of "working" variables: see also CUSTOM_REAL
+// double precision temporary variables leads to 10% performance decrease
+// in Kernel_2_impl (not very much..)
+typedef float realw;
 
-// double precision temporary variables leads to 10% performance
-// decrease in Kernel_2_impl (not very much..)
-typedef float reald;
+
+/* ----------------------------------------------------------------------------------------------- */
 
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
 // leads up to ~ 5% performance increase
 //#define USE_MESH_COLORING_GPU
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// Texture memory usage:
+// requires CUDA version >= 4.0, see check below
+// Use textures for d_displ and d_accel -- 10% performance boost
+#define USE_TEXTURES_FIELDS
+
+// Using texture memory for the hprime-style constants is slower on
+// Fermi generation hardware, but *may* be faster on Kepler
+// generation.
+// Use textures for hprime_xx
+#define USE_TEXTURES_CONSTANTS
+
+// CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
+#if CUDA_VERSION < 4000
+#undef USE_TEXTURES_FIELDS
+#undef USE_TEXTURES_CONSTANTS
+#endif
+
+#ifdef USE_TEXTURES_FIELDS
+#pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
+#pragma message ("\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
+#endif
+
 // (optional) unrolling loops
 // leads up to ~1% performance increase
 //#define MANUALLY_UNROLLED_LOOPS
+
+/* ----------------------------------------------------------------------------------------------- */
 
 // cuda kernel block size for updating displacements/potential (newmark time scheme)
 // current hardware: 128 is slightly faster than 256 ( ~ 4%)
@@ -221,6 +256,12 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_crust_mantle; realw* d_b_veloc_crust_mantle; realw* d_b_accel_crust_mantle;
 
+#ifdef USE_TEXTURES_FIELDS
+  // Texture references for fast non-coalesced scattered access
+  const textureReference* d_displ_cm_tex_ref_ptr;
+  const textureReference* d_accel_cm_tex_ref_ptr;
+#endif
+
   // attenuation
   realw* d_R_xx_crust_mantle;
   realw* d_R_yy_crust_mantle;
@@ -305,6 +346,12 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_outer_core; realw* d_b_veloc_outer_core; realw* d_b_accel_outer_core;
 
+#ifdef USE_TEXTURES_FIELDS
+  // Texture references for fast non-coalesced scattered access
+  const textureReference* d_displ_oc_tex_ref_ptr;
+  const textureReference* d_accel_oc_tex_ref_ptr;
+#endif
+
   // kernels
   realw* d_rho_kl_outer_core;
   realw* d_alpha_kl_outer_core;
@@ -368,6 +415,12 @@ typedef struct mesh_ {
   realw* d_displ_inner_core; realw* d_veloc_inner_core; realw* d_accel_inner_core;
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_inner_core; realw* d_b_veloc_inner_core; realw* d_b_accel_inner_core;
+
+#ifdef USE_TEXTURES_FIELDS
+  // Texture references for fast non-coalesced scattered access
+  const textureReference* d_displ_ic_tex_ref_ptr;
+  const textureReference* d_accel_ic_tex_ref_ptr;
+#endif
 
   // attenuation
   realw* d_R_xx_inner_core;
@@ -447,7 +500,15 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
 
   // pointers to constant memory arrays
-  realw* d_hprime_xx; realw* d_hprime_yy; realw* d_hprime_zz;
+  realw* d_hprime_xx;
+  //realw* d_hprime_yy; // only needed if NGLLX != NGLLY != NGLLZ
+  //realw* d_hprime_zz; // only needed if NGLLX != NGLLY != NGLLZ
+
+#ifdef USE_TEXTURES_CONSTANTS
+  const textureReference* d_hprime_xx_tex_ptr;
+  realw* d_hprime_xx_tex;
+#endif
+
   realw* d_hprimewgll_xx; realw* d_hprimewgll_yy; realw* d_hprimewgll_zz;
   realw* d_wgllwgll_xy; realw* d_wgllwgll_xz; realw* d_wgllwgll_yz;
   realw* d_wgll_cube;
@@ -461,12 +522,12 @@ typedef struct mesh_ {
   // simulation flags
   int save_forward;
   int absorbing_conditions;
-  
+
   int attenuation;
   int attenuation_new;
   int use_attenuation_mimic;
   int attenuation_3D;
-  
+
   int compute_and_store_strain;
   int anisotropic_3D_mantle;
   int gravity;

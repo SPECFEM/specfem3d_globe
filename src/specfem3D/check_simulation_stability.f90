@@ -38,9 +38,6 @@
 
   implicit none
 
-  include 'mpif.h'
-  include "precision.h"
-
   ! time step
   integer it,NSTEP,myrank
 
@@ -56,8 +53,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
     eps_trace_over_3_crust_mantle
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
-!    epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
@@ -66,8 +61,6 @@
   character(len=150) OUTPUT_FILES
 
   double precision :: time_start,DT,t0
-
-!  logical COMPUTE_AND_STORE_STRAIN
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
@@ -129,10 +122,8 @@
     call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
-  call MPI_REDUCE(Usolidnorm,Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-                      MPI_COMM_WORLD,ier)
-  call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-                      MPI_COMM_WORLD,ier)
+  call max_all_cr(Usolidnorm,Usolidnorm_all)
+  call max_all_cr(Ufluidnorm,Ufluidnorm_all)
 
   if (SIMULATION_TYPE == 3) then
     if( .not. GPU_MODE) then
@@ -157,10 +148,8 @@
       call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
 
     ! compute the maximum of the maxima for all the slices using an MPI reduction
-    call MPI_REDUCE(b_Usolidnorm,b_Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
-    call MPI_REDUCE(b_Ufluidnorm,b_Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
+    call max_all_cr(b_Usolidnorm,b_Usolidnorm_all)
+    call max_all_cr(b_Ufluidnorm,b_Ufluidnorm_all)
   endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
@@ -177,10 +166,8 @@
       call check_norm_strain_from_device(Strain_norm,Strain2_norm,Mesh_pointer)
     endif
 
-    call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
-    call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
+    call max_all_cr(Strain_norm,Strain_norm_all)
+    call max_all_cr(Strain2_norm,Strain2_norm_all)
   endif
 
   if(myrank == 0) then

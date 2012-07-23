@@ -22,7 +22,7 @@
 #
 
 
-@objects = `ls src/*/*.f90 src/*/*.F90 src/*/*.h.in src/*/*.h src/*/*.c src/*/*.cu`;
+@objects = `ls src/*/*.f90 src/*/*.F90 src/*/*.h.in src/*/*.h src/*/*.c src/*/*.cu setup/*.h.in`;
 
 foreach $name (@objects) {
   chop $name;

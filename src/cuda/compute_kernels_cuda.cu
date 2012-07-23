@@ -352,8 +352,6 @@ __device__ void compute_gradient_kernel(int ijk,
                                         realw* scalar_field,
                                         realw* vector_field_element,
                                         realw* hprime_xx,
-                                        realw* hprime_yy,
-                                        realw* hprime_zz,
                                         realw* d_xix,
                                         realw* d_xiy,
                                         realw* d_xiz,
@@ -370,7 +368,7 @@ __device__ void compute_gradient_kernel(int ijk,
   int l,offset,offset1,offset2,offset3;
 
   //const int NGLLX = 5;
-  const int NGLL3_ALIGN = NGLL3_PADDED;
+  //const int NGLL3_ALIGN = NGLL3_PADDED;
 
   int K = (ijk/NGLL2);
   int J = ((ijk-K*NGLL2)/NGLLX);
@@ -387,7 +385,8 @@ __device__ void compute_gradient_kernel(int ijk,
   // derivative along y
   temp2l = 0.f;
   for( l=0; l<NGLLX;l++){
-    hp2 = hprime_yy[l*NGLLX+J];
+    //assumes that hprime_xx = hprime_yy = hprime_zz
+    hp2 = hprime_xx[l*NGLLX+J];
     offset2 = K*NGLL2+l*NGLLX+I;
     temp2l += scalar_field[offset2]*hp2;
   }
@@ -395,12 +394,13 @@ __device__ void compute_gradient_kernel(int ijk,
   // derivative along z
   temp3l = 0.f;
   for( l=0; l<NGLLX;l++){
-    hp3 = hprime_zz[l*NGLLX+K];
+    //assumes that hprime_xx = hprime_yy = hprime_zz
+    hp3 = hprime_xx[l*NGLLX+K];
     offset3 = l*NGLL2+J*NGLLX+I;
     temp3l += scalar_field[offset3]*hp3;
   }
 
-  offset = ispec*NGLL3_ALIGN + ijk;
+  offset = ispec*NGLL3_PADDED + ijk;
 
   xixl = d_xix[offset];
   xiyl = d_xiy[offset];
@@ -429,8 +429,6 @@ __global__ void compute_kernels_acoustic_kernel(int* ibool,
                                                 realw* rhostore,
                                                 realw* kappastore,
                                                 realw* hprime_xx,
-                                                realw* hprime_yy,
-                                                realw* hprime_zz,
                                                 realw* d_xix,
                                                 realw* d_xiy,
                                                 realw* d_xiz,
@@ -476,12 +474,12 @@ __global__ void compute_kernels_acoustic_kernel(int* ibool,
 
     // displacement vector from backward field
     compute_gradient_kernel(ijk,ispec,scalar_field_displ,b_displ_elm,
-                            hprime_xx,hprime_yy,hprime_zz,
+                            hprime_xx,
                             d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz);
 
     // acceleration vector
     compute_gradient_kernel(ijk,ispec,scalar_field_accel,accel_elm,
-                            hprime_xx,hprime_yy,hprime_zz,
+                            hprime_xx,
                             d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz);
 
     // gets material parameter
@@ -530,8 +528,6 @@ TRACE("compute_kernels_oc_cuda");
                                                     mp->d_rhostore_outer_core,
                                                     mp->d_kappavstore_outer_core,
                                                     mp->d_hprime_xx,
-                                                    mp->d_hprime_yy,
-                                                    mp->d_hprime_zz,
                                                     mp->d_xix_outer_core,
                                                     mp->d_xiy_outer_core,
                                                     mp->d_xiz_outer_core,

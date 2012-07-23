@@ -37,6 +37,15 @@
 #include "config.h"
 #include "mesh_constants_cuda.h"
 
+#ifdef USE_TEXTURES_FIELDS
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_oc_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_oc_tex;
+#endif
+
+#ifdef USE_TEXTURES_CONSTANTS
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_oc_tex;
+#endif
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // elemental routines
@@ -51,14 +60,14 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
                                             realw deltat,
                                             realw* d_A_array_rotation,
                                             realw* d_B_array_rotation,
-                                            reald dpotentialdxl, reald dpotentialdyl,
-                                            reald* dpotentialdx_with_rot,
-                                            reald* dpotentialdy_with_rot) {
+                                            realw dpotentialdxl, realw dpotentialdyl,
+                                            realw* dpotentialdx_with_rot,
+                                            realw* dpotentialdy_with_rot) {
 
-  reald two_omega_deltat,cos_two_omega_t,sin_two_omega_t;
-  reald A_rotation,B_rotation;
-  reald ux_rotation,uy_rotation;
-  reald source_euler_A,source_euler_B;
+  realw two_omega_deltat,cos_two_omega_t,sin_two_omega_t;
+  realw A_rotation,B_rotation;
+  realw ux_rotation,uy_rotation;
+  realw source_euler_A,source_euler_B;
 
   // non-padded offset
   int offset_nonpadded = tx + working_element*NGLL3;
@@ -108,7 +117,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
                                        realw* d_xix, realw* d_xiy, realw* d_xiz,
                                        realw* d_etax, realw* d_etay, realw* d_etaz,
                                        realw* d_gammax, realw* d_gammay, realw* d_gammaz,
-                                       realw* hprime_xx, realw* hprime_yy, realw* hprime_zz,
+                                       realw* d_hprime_xx,
                                        realw* hprimewgll_xx, realw* hprimewgll_yy, realw* hprimewgll_zz,
                                        realw* wgllwgll_xy,realw* wgllwgll_xz,realw* wgllwgll_yz,
                                        int GRAVITY,
@@ -125,12 +134,10 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
   int tx = threadIdx.x;
 
-  //const int NGLL3 = NGLL3;
-  const int NGLL3_ALIGN = NGLL3_PADDED;
   // R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
-  const reald R_EARTH_KM = 6371.0f;
+  //const realw R_EARTH_KM = 6371.0f;
   // uncomment line below for PREM with oceans
-  //const reald R_EARTH_KM = 6368.0f;
+  //const realw R_EARTH_KM = 6368.0f;
 
   int K = (tx/NGLL2);
   int J = ((tx-K*NGLL2)/NGLLX);
@@ -139,31 +146,33 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   int active,offset;
   int iglob = 0;
   int working_element;
-  reald temp1l,temp2l,temp3l;
-  reald xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
-  reald dpotentialdxl,dpotentialdyl,dpotentialdzl;
-  reald dpotentialdx_with_rot,dpotentialdy_with_rot;
-  reald fac1,fac2,fac3;
-  reald sum_terms;
-  reald gravity_term;
-  reald gxl,gyl,gzl;
-  reald radius,theta,phi;
-  reald cos_theta,sin_theta,cos_phi,sin_phi;
-  reald grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho;
+
+  realw temp1l,temp2l,temp3l;
+  realw xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
+  realw dpotentialdxl,dpotentialdyl,dpotentialdzl;
+  realw dpotentialdx_with_rot,dpotentialdy_with_rot;
+  realw fac1,fac2,fac3;
+  realw sum_terms;
+  realw gravity_term;
+  realw gxl,gyl,gzl;
+  realw radius,theta,phi;
+  realw cos_theta,sin_theta,cos_phi,sin_phi;
+  realw grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho;
   int int_radius;
 
 
 #ifndef MANUALLY_UNROLLED_LOOPS
   int l;
   int offset1,offset2,offset3;
-  realw hp1,hp2,hp3;
 #endif
 
-  __shared__ reald s_dummy_loc[NGLL3];
+  __shared__ realw s_dummy_loc[NGLL3];
 
-  __shared__ reald s_temp1[NGLL3];
-  __shared__ reald s_temp2[NGLL3];
-  __shared__ reald s_temp3[NGLL3];
+  __shared__ realw s_temp1[NGLL3];
+  __shared__ realw s_temp2[NGLL3];
+  __shared__ realw s_temp3[NGLL3];
+
+  __shared__ realw sh_hprime_xx[NGLL2];
 
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
 // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
@@ -185,14 +194,22 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     }
 #endif
 
-    // iglob = d_ibool[working_element*NGLL3_ALIGN + tx]-1;
+    // iglob = d_ibool[working_element*NGLL3_PADDED + tx]-1;
     iglob = d_ibool[working_element*NGLL3 + tx]-1;
 
-#ifdef USE_TEXTURES
-    s_dummy_loc[tx] = tex1Dfetch(tex_potential, iglob);
+#ifdef USE_TEXTURES_FIELDS
+    s_dummy_loc[tx] = tex1Dfetch(d_displ_oc_tex, iglob);
 #else
     // changing iglob indexing to match fortran row changes fast style
     s_dummy_loc[tx] = d_potential[iglob];
+#endif
+  }
+
+  if (tx < NGLL2) {
+#ifdef USE_TEXTURES_CONSTANTS
+    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_oc_tex,tx);
+#else
+    sh_hprime_xx[tx] = d_hprime_xx[tx];
 #endif
   }
 
@@ -201,14 +218,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
 // to be able to compute the matrix products along cut planes of the 3D element below
   __syncthreads();
 
-#ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
-
   if (active) {
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-//      if(iglob == 0 )printf("kernel 2: iglob %i  hprime_xx %f %f %f \n",iglob,hprime_xx[0],hprime_xx[1],hprime_xx[2]);
-#endif
-
 
 #ifndef MANUALLY_UNROLLED_LOOPS
 
@@ -217,43 +227,43 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     temp3l = 0.f;
 
     for (l=0;l<NGLLX;l++) {
-        hp1 = hprime_xx[l*NGLLX+I];
-        offset1 = K*NGLL2+J*NGLLX+l;
-        temp1l += s_dummy_loc[offset1]*hp1;
+      fac1 = sh_hprime_xx[l*NGLLX+I];
+      offset1 = K*NGLL2+J*NGLLX+l;
+      temp1l += s_dummy_loc[offset1]*fac1;
 
-        //no more assumes that hprime_xx = hprime_yy = hprime_zz
-        hp2 = hprime_yy[l*NGLLX+J];
-        offset2 = K*NGLL2+l*NGLLX+I;
-        temp2l += s_dummy_loc[offset2]*hp2;
+      //assumes that hprime_xx = hprime_yy = hprime_zz
+      fac2 = sh_hprime_xx[l*NGLLX+J];
+      offset2 = K*NGLL2+l*NGLLX+I;
+      temp2l += s_dummy_loc[offset2]*fac2;
 
-        hp3 = hprime_zz[l*NGLLX+K];
-        offset3 = l*NGLL2+J*NGLLX+I;
-        temp3l += s_dummy_loc[offset3]*hp3;
+      fac3 = sh_hprime_xx[l*NGLLX+K];
+      offset3 = l*NGLL2+J*NGLLX+I;
+      temp3l += s_dummy_loc[offset3]*fac3;
     }
 #else
 
-    temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*hprime_xx[I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+1]*hprime_xx[NGLLX+I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+2]*hprime_xx[2*NGLLX+I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+3]*hprime_xx[3*NGLLX+I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+4]*hprime_xx[4*NGLLX+I];
+    temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
 
-    temp2l = s_dummy_loc[K*NGLL2+I]*hprime_yy[J]
-            + s_dummy_loc[K*NGLL2+NGLLX+I]*hprime_yy[NGLLX+J]
-            + s_dummy_loc[K*NGLL2+2*NGLLX+I]*hprime_yy[2*NGLLX+J]
-            + s_dummy_loc[K*NGLL2+3*NGLLX+I]*hprime_yy[3*NGLLX+J]
-            + s_dummy_loc[K*NGLL2+4*NGLLX+I]*hprime_yy[4*NGLLX+J];
+    temp2l = s_dummy_loc[K*NGLL2+I]*d_hprime_xx[J]
+            + s_dummy_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
+            + s_dummy_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
+            + s_dummy_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
+            + s_dummy_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
 
-    temp3l = s_dummy_loc[J*NGLLX+I]*hprime_zz[K]
-            + s_dummy_loc[NGLL2+J*NGLLX+I]*hprime_zz[NGLLX+K]
-            + s_dummy_loc[2*NGLL2+J*NGLLX+I]*hprime_zz[2*NGLLX+K]
-            + s_dummy_loc[3*NGLL2+J*NGLLX+I]*hprime_zz[3*NGLLX+K]
-            + s_dummy_loc[4*NGLL2+J*NGLLX+I]*hprime_zz[4*NGLLX+K];
+    temp3l = s_dummy_loc[J*NGLLX+I]*d_hprime_xx[K]
+            + s_dummy_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
+            + s_dummy_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
+            + s_dummy_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
+            + s_dummy_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
 
 #endif
 
     // compute derivatives of ux, uy and uz with respect to x, y and z
-    offset = working_element*NGLL3_ALIGN + tx;
+    offset = working_element*NGLL3_PADDED + tx;
 
     xixl = d_xix[offset];
     xiyl = d_xiy[offset];
@@ -414,40 +424,40 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     fac3 = wgllwgll_xy[J*NGLLX+I];
 
     sum_terms = -(fac1*temp1l + fac2*temp2l + fac3*temp3l);
+
     if( GRAVITY ) sum_terms += gravity_term;
 
-    iglob = d_ibool[working_element*NGLL3 + tx]-1;
-
-#ifdef USE_TEXTURES
-    d_potential_dot_dot[iglob] = tex1Dfetch(tex_potential_dot_dot, iglob)
-                                            + sum_terms;
-#else
+    //iglob = d_ibool[working_element*NGLL3 + tx]-1;
 
 #ifdef USE_MESH_COLORING_GPU
     // no atomic operation needed, colors don't share global points between elements
-    d_potential_dot_dot[iglob] += sum_terms;
+
+#ifdef USE_TEXTURES_FIELDS
+    d_potential_dot_dot[iglob] = tex1Dfetch(d_accel_oc_tex, iglob) + sum_terms;
 #else
+    d_potential_dot_dot[iglob] += sum_terms;
+#endif // USE_TEXTURES_FIELDS
+
+#else // MESH_COLORING
+
     //mesh coloring
     if( use_mesh_coloring_gpu ){
 
       // no atomic operation needed, colors don't share global points between elements
+#ifdef USE_TEXTURES_FIELDS
+      d_potential_dot_dot[iglob] = tex1Dfetch(d_accel_oc_tex, iglob) + sum_terms;
+#else
       d_potential_dot_dot[iglob] += sum_terms;
+#endif // USE_TEXTURES_FIELDS
 
     }else{
 
       atomicAdd(&d_potential_dot_dot[iglob],sum_terms);
 
     }
-#endif
-
-#endif
+#endif // MESH_COLORING
   }
-
-#else  // of #ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
-  d_potential_dot_dot[iglob] = 123.123f;
-#endif // of #ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
 }
-
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -488,45 +498,18 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   // cudaEventRecord( start, 0 );
 
   Kernel_2_outer_core_impl<<< grid_2, threads_2, 0, 0 >>>(nb_blocks_to_compute,
-                                                        mp->NGLOB_OUTER_CORE,
-                                                        d_ibool,
-                                                        mp->d_phase_ispec_inner_outer_core,
-                                                        mp->num_phase_ispec_outer_core,
-                                                        d_iphase,
-                                                        mp->use_mesh_coloring_gpu,
-                                                        mp->d_displ_outer_core,
-                                                        mp->d_accel_outer_core,
-                                                        d_xix, d_xiy, d_xiz,
-                                                        d_etax, d_etay, d_etaz,
-                                                        d_gammax, d_gammay, d_gammaz,
-                                                        mp->d_hprime_xx, mp->d_hprime_yy, mp->d_hprime_zz,
-                                                        mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
-                                                        mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                                        mp->gravity,
-                                                        mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
-                                                        mp->d_d_ln_density_dr_table,
-                                                        mp->d_minus_rho_g_over_kappa_fluid,
-                                                        mp->d_wgll_cube,
-                                                        mp->rotation,
-                                                        time,
-                                                        mp->d_two_omega_earth,
-                                                        mp->d_deltat,
-                                                        d_A_array_rotation,d_B_array_rotation);
-
-  if(mp->simulation_type == 3) {
-    Kernel_2_outer_core_impl<<< grid_2, threads_2, 0, 0 >>>(nb_blocks_to_compute,
                                                           mp->NGLOB_OUTER_CORE,
                                                           d_ibool,
                                                           mp->d_phase_ispec_inner_outer_core,
                                                           mp->num_phase_ispec_outer_core,
                                                           d_iphase,
                                                           mp->use_mesh_coloring_gpu,
-                                                          mp->d_b_displ_outer_core,
-                                                          mp->d_b_accel_outer_core,
+                                                          mp->d_displ_outer_core,
+                                                          mp->d_accel_outer_core,
                                                           d_xix, d_xiy, d_xiz,
                                                           d_etax, d_etay, d_etaz,
                                                           d_gammax, d_gammay, d_gammaz,
-                                                          mp->d_hprime_xx, mp->d_hprime_yy, mp->d_hprime_zz,
+                                                          mp->d_hprime_xx,
                                                           mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
                                                           mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
                                                           mp->gravity,
@@ -535,10 +518,37 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                           mp->d_minus_rho_g_over_kappa_fluid,
                                                           mp->d_wgll_cube,
                                                           mp->rotation,
-                                                          b_time,
-                                                          mp->d_b_two_omega_earth,
-                                                          mp->d_b_deltat,
-                                                          d_b_A_array_rotation,d_b_B_array_rotation);
+                                                          time,
+                                                          mp->d_two_omega_earth,
+                                                          mp->d_deltat,
+                                                          d_A_array_rotation,d_B_array_rotation);
+
+  if(mp->simulation_type == 3) {
+    Kernel_2_outer_core_impl<<< grid_2, threads_2, 0, 0 >>>(nb_blocks_to_compute,
+                                                            mp->NGLOB_OUTER_CORE,
+                                                            d_ibool,
+                                                            mp->d_phase_ispec_inner_outer_core,
+                                                            mp->num_phase_ispec_outer_core,
+                                                            d_iphase,
+                                                            mp->use_mesh_coloring_gpu,
+                                                            mp->d_b_displ_outer_core,
+                                                            mp->d_b_accel_outer_core,
+                                                            d_xix, d_xiy, d_xiz,
+                                                            d_etax, d_etay, d_etaz,
+                                                            d_gammax, d_gammay, d_gammaz,
+                                                            mp->d_hprime_xx,
+                                                            mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                            mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                            mp->gravity,
+                                                            mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
+                                                            mp->d_d_ln_density_dr_table,
+                                                            mp->d_minus_rho_g_over_kappa_fluid,
+                                                            mp->d_wgll_cube,
+                                                            mp->rotation,
+                                                            b_time,
+                                                            mp->d_b_two_omega_earth,
+                                                            mp->d_b_deltat,
+                                                            d_b_A_array_rotation,d_b_B_array_rotation);
   }
 
   // cudaEventRecord( stop, 0 );

@@ -46,7 +46,7 @@
   integer :: i,j,k,ispec,ier
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, T_c_source, scale_t
-  
+
   ! checks if attenuation is on and anything to do
   if( .not. ATTENUATION_VAL) return
 
