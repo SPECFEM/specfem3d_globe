@@ -180,7 +180,7 @@
 
       if(.NOT. GPU_MODE) then
         ! on CPU
-        call assemble_MPI_scalar_ext_mesh_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+        call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 accel_outer_core, &
                                 buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
@@ -203,7 +203,7 @@
       if( SIMULATION_TYPE == 3 ) then
         if(.NOT. GPU_MODE) then
           ! on CPU
-          call assemble_MPI_scalar_ext_mesh_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+          call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 b_accel_outer_core, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
@@ -228,7 +228,7 @@
       ! waits for send/receive requests to be completed and assembles values
       if(.NOT. GPU_MODE) then
         ! on CPU
-        call assemble_MPI_scalar_ext_mesh_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+        call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 accel_outer_core, &
                                 buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
                                 max_nibool_interfaces_outer_core, &
@@ -247,7 +247,7 @@
       if( SIMULATION_TYPE == 3 ) then
         if(.NOT. GPU_MODE) then
           ! on CPU
-          call assemble_MPI_scalar_ext_mesh_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+          call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 b_accel_outer_core, &
                                 b_buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
                                 max_nibool_interfaces_outer_core, &

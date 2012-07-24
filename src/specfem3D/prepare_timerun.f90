@@ -244,7 +244,7 @@
 
   ! ocean load
   if (OCEANS_VAL) then
-    call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                         rmass_ocean_load, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                         nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
@@ -253,34 +253,34 @@
 
   ! crust and mantle
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                            my_neighbours_crust_mantle)
 
-     call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassy_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                            my_neighbours_crust_mantle)
   endif
 
-  call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                         rmassz_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                         nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                         my_neighbours_crust_mantle)
 
   ! outer core
-  call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                         rmass_outer_core, &
                         num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                         nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
                         my_neighbours_outer_core)
 
   ! inner core
-  call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                         rmass_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                         nibool_interfaces_inner_core,ibool_interfaces_inner_core,&

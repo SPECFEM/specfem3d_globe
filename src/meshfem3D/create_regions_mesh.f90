@@ -25,137 +25,7 @@
 !
 !=====================================================================
 
-  module create_regions_mesh_par
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D
-
-  implicit none
-
-  ! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
-
-  ! Gauss-Lobatto-Legendre points and weights of integration
-  double precision, dimension(NGLLX) :: xigll,wxgll
-  double precision, dimension(NGLLY) :: yigll,wygll
-  double precision, dimension(NGLLZ) :: zigll,wzgll
-
-  ! 3D shape functions and their derivatives
-  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
-  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
-
-  ! 2D shape functions and their derivatives
-  double precision, dimension(NGNOD2D,NGLLY,NGLLZ) :: shape2D_x
-  double precision, dimension(NGNOD2D,NGLLX,NGLLZ) :: shape2D_y
-  double precision, dimension(NGNOD2D,NGLLX,NGLLY) :: shape2D_bottom,shape2D_top
-  double precision, dimension(NDIM2D,NGNOD2D,NGLLY,NGLLZ) :: dershape2D_x
-  double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLZ) :: dershape2D_y
-  double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLY) :: dershape2D_bottom,dershape2D_top
-
-  end module create_regions_mesh_par
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  module create_regions_mesh_par2
-
-  use constants,only: CUSTOM_REAL,N_SLS
-
-  implicit none
-
-  integer :: nspec_stacey,nspec_actually,nspec_att
-
-  integer :: ifirst_region,ilast_region
-  integer, dimension(:), allocatable :: perm_layer
-
-  ! for model density and anisotropy
-  integer :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,dvpstore, &
-    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-
-  ! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-  ! boundary locator
-  logical, dimension(:,:), allocatable :: iboun
-
-  ! arrays with mesh parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xixstore,xiystore,xizstore, &
-    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-  ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz
-  integer :: nglob_xy
-
-  ! mass matrix and bathymetry for ocean load
-  integer nglob_oceans
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
-
-  ! boundary parameters locator
-  integer, dimension(:), allocatable :: ibelm_xmin,ibelm_xmax, &
-    ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top
-
-  ! 2-D jacobians and normals
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    jacobian2D_xmin,jacobian2D_xmax, &
-    jacobian2D_ymin,jacobian2D_ymax,jacobian2D_bottom,jacobian2D_top
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top
-
-  ! MPI cut-planes parameters along xi and along eta
-  logical, dimension(:,:), allocatable :: iMPIcut_xi,iMPIcut_eta
-
-  ! Stacey, indices for Clayton-Engquist absorbing conditions
-  integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
-
-
-  ! number of elements on the boundaries
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-
-  ! attenuation
-  double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
-  double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
-  double precision, dimension(N_SLS)                  :: tau_s
-  double precision  T_c_source
-
-  logical :: USE_ONE_LAYER_SB
-
-  integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
-    first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
-
-  double precision, dimension(:,:), allocatable :: stretch_tab
-
-  integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
-
-  logical :: ACTUALLY_STORE_ARRAYS
-
-  ! Boundary Mesh
-  integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
-  integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
-    ibelm_670_top,ibelm_670_bot
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho,normal_400,normal_670
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_moho,jacobian2D_400,jacobian2D_670
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
-    ispec2D_670_top,ispec2D_670_bot
-  double precision r_moho,r_400,r_670
-
-  ! flags for transverse isotropic elements
-  logical, dimension(:), allocatable :: ispec_is_tiso
-
-  ! name of the database file
-  character(len=150) :: prname
-
-  end module create_regions_mesh_par2
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
 
   subroutine create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
                           xstore,ystore,zstore, &
@@ -307,10 +177,12 @@
 
     ! Stacey
     if(NCHUNKS /= 6) then
-         call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
+      call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
-    endif
 
+      deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+    endif
+    
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
     ! precomputes jacobian for 2d absorbing boundary surfaces
@@ -331,6 +203,32 @@
               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
               xigll,yigll,zigll)
+
+    ! create chunk buffers if more than one chunk
+    call sync_all()
+    if( myrank == 0) then
+      write(IMAIN,*) '  ...creating chunk buffers'
+    endif
+    if(NCHUNKS > 1) then
+      call create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
+                              xstore,ystore,zstore, &
+                              nglob_theor, &
+                              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+                              NPROC_XI,NPROC_ETA, &
+                              NPROC,NPROCTOT, &
+                              NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
+                              NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                              myrank,LOCAL_PATH,addressing, &
+                              ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+                              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+                              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
+    else
+      if(myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
+        write(IMAIN,*)
+      endif
+    endif
 
     !uncomment: adds model smoothing for point profile models
     !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
@@ -438,29 +336,33 @@
     deallocate(rmassx,rmassy,rmassz)
     deallocate(rmass_ocean_load)
 
-    ! create chunk buffers if more than one chunk
+    ! setup mpi communication interfaces
     call sync_all()
     if( myrank == 0) then
-      write(IMAIN,*) '  ...creating chunk buffers'
+      write(IMAIN,*) '  ...preparing MPI interfaces'
+    endif    
+    call create_MPI_interfaces(iregion_code)
+
+    ! sets up inner/outer element arrays
+    call sync_all()
+    if( myrank == 0) then
+      write(IMAIN,*) '  ...element inner/outer separation '
     endif
-    if(NCHUNKS > 1) then
-      call create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
-                              xstore,ystore,zstore, &
-                              nglob_theor, &
-                              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-                              NPROC_XI,NPROC_ETA, &
-                              NPROC,NPROCTOT, &
-                              NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
-                              NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                              myrank,LOCAL_PATH,addressing, &
-                              ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
-    else
-      if(myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
-        write(IMAIN,*)
-      endif
+    call setup_inner_outer(iregion_code)
+    
+    ! sets up mesh coloring
+    call sync_all()
+    if( myrank == 0) then
+      write(IMAIN,*) '  ...element mesh coloring '
     endif
+    call setup_color_perm(iregion_code)
+
+    ! saves MPI interface infos
+    call cmi_save_MPI_interfaces(iregion_code)
+
+    ! frees memory
+    call cmi_free_MPI_arrays(iregion_code)
+
 
     ! boundary mesh
     if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -500,8 +402,6 @@
 
   end select  ! end of test if first or second pass
 
-  deallocate(stretch_tab)
-  deallocate(perm_layer)
 
   ! deallocate these arrays after each pass
   ! because they have a different size in each pass to save memory
@@ -525,15 +425,16 @@
   deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
   deallocate(normal_bottom,normal_top)
   deallocate(iMPIcut_xi,iMPIcut_eta)
-  deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+
   deallocate(rho_vp,rho_vs)
   deallocate(Qmu_store)
   deallocate(tau_e_store)
+  
   deallocate(ibelm_moho_top,ibelm_moho_bot)
   deallocate(ibelm_400_top,ibelm_400_bot)
   deallocate(ibelm_670_top,ibelm_670_bot)
   deallocate(normal_moho,normal_400,normal_670)
-  deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
+
 
   ! user output
   if(myrank == 0 ) write(IMAIN,*)
@@ -679,14 +580,16 @@
   if(ier /= 0) stop 'error in allocate 13'
 
   ! Stacey
-  allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX), &
-          nimax(2,NSPEC2DMAX_YMIN_YMAX), &
-          njmin(2,NSPEC2DMAX_XMIN_XMAX), &
-          njmax(2,NSPEC2DMAX_XMIN_XMAX), &
-          nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
-          nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
-  if(ier /= 0) stop 'error in allocate 14'
-
+  if( ipass == 1 .and. NCHUNKS /= 6 ) then
+    allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX), &
+            nimax(2,NSPEC2DMAX_YMIN_YMAX), &
+            njmin(2,NSPEC2DMAX_XMIN_XMAX), &
+            njmax(2,NSPEC2DMAX_XMIN_XMAX), &
+            nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
+            nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
+    if(ier /= 0) stop 'error in allocate 14'
+  endif
+  
   ! MPI cut-planes parameters along xi and along eta
   allocate(iMPIcut_xi(2,nspec), &
           iMPIcut_eta(2,nspec),stat=ier)
@@ -1027,6 +930,10 @@
 
   enddo !ilayer_loop
 
+  deallocate(stretch_tab)
+  deallocate(perm_layer)
+  deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
+      
   if(myrank == 0 ) write(IMAIN,*)
 
   ! define central cube in inner core
@@ -1182,7 +1089,7 @@
                                   xstore,ystore,zstore,iregion_code, &
                                   npoin2D_xi,npoin2D_eta)
 
-! creates global indexing array ibool
+! sets up MPI cutplane arrays
 
   use meshfem3d_par,only: &
     myrank,NGLLX,NGLLY,NGLLZ, &

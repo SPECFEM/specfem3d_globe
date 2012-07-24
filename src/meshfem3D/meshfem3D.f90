@@ -348,9 +348,6 @@
   ! creates meshes for regions crust/mantle, outer core and inner core
   call create_meshes()
 
-  ! setup mpi communication interfaces
-  call create_MPI_interfaces()
-
   ! outputs mesh infos and saves new header file
   call finalize_mesher()
 

@@ -31,7 +31,7 @@
   subroutine fix_non_blocking_slices(is_on_a_slice_edge,iboolright_xi, &
          iboolleft_xi,iboolright_eta,iboolleft_eta, &
          npoin2D_xi,npoin2D_eta,ibool, &
-         mask_ibool,nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
+         nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
 
   implicit none
 
@@ -48,8 +48,8 @@
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
 
+  ! local parameters
   logical, dimension(nglob) :: mask_ibool
-
   integer :: ipoin,ispec,i,j,k
 
 ! clean the mask
@@ -121,13 +121,10 @@
 
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
-! local to global mapping
   integer, dimension(nspec) :: idoubling_inner_core
 
-! this mask is declared as integer in the calling program because it is used elsewhere
-! to store integers, and it is reused here as a logical to save memory
+  ! local parameters
   logical, dimension(nglob) :: mask_ibool
-
   integer :: ipoin,ispec,i,j,k,imsg,ispec2D
 
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then

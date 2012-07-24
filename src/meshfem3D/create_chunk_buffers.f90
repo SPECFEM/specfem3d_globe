@@ -35,7 +35,9 @@
                                   NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                                   NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                                   myrank,LOCAL_PATH,addressing, &
-                                  ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+                                  ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+                                  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+                                  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
 
   implicit none
 
@@ -57,7 +59,11 @@
   integer nglob_ori
 
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
-  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX
+  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT
+
+  integer NGLOB1D_RADIAL_MAX
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
+    
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
   integer myrank
@@ -71,30 +77,25 @@
 
   integer NCHUNKS
 
+  ! boundary parameters per slice
+  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
+  integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
+  integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
+
   ! local parameters
   integer NGLOB1D_RADIAL
-
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
-
   integer nglob
-
-
   character(len=150) OUTPUT_FILES,ERR_MSG
-
   ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
-
   ! array to store points selected for the chunk face buffer
   integer NGLOB2DMAX_XY
   integer, dimension(:), allocatable :: ibool_selected
-
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
-
   ! arrays for sorting routine
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: work
-
   ! pairs generated theoretically
   ! four sides for each of the three types of messages
   integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
@@ -123,11 +124,6 @@
 
   integer iproc_edge_send,iproc_edge_receive
   integer imsg_type,iside,imode_comm,iedge
-
-  ! boundary parameters per slice
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, njunk
-  integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
-  integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
 
   integer npoin2D,npoin2D_send_local,npoin2D_receive_local
 
@@ -489,24 +485,6 @@
 
             if(minval(ibool(:,:,:,1:nspec)) /= 1 .or. maxval(ibool(:,:,:,1:nspec)) /= nglob) &
               call exit_MPI(myrank,ERR_MSG)
-
-! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-! read boundary parameters
-
-            open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
-            read(IIN) nspec2D_xmin
-            read(IIN) nspec2D_xmax
-            read(IIN) nspec2D_ymin
-            read(IIN) nspec2D_ymax
-            read(IIN) njunk
-            read(IIN) njunk
-
-            read(IIN) ibelm_xmin
-            read(IIN) ibelm_xmax
-            read(IIN) ibelm_ymin
-            read(IIN) ibelm_ymax
-            close(IIN)
 
 ! read 1D buffers to remove corner points
             open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')

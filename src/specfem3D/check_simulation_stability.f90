@@ -85,7 +85,6 @@
   data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week, &
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
-  integer :: ier
   integer, external :: idaywk
   ! timing
   double precision, external :: wtime
