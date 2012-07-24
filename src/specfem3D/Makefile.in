@@ -131,7 +131,6 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/param_reader.cc.o \
 	$O/spline_routines.shared.o \
 	$O/netlib_specfun_erf.check.o \
-	$O/read_arrays_buffers_solver.mpicheck.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \

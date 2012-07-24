@@ -458,7 +458,3 @@
   endif ! SAVE_MESH_FILES
 
   end subroutine save_arrays_solver
-
-
-
-

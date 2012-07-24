@@ -331,7 +331,7 @@
         ! on CPU
         ! sends accel values to corresponding MPI interface neighbors
         ! crust mantle
-        call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+        call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                       accel_crust_mantle, &
                       buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
@@ -339,7 +339,7 @@
                       my_neighbours_crust_mantle, &
                       request_send_vector_crust_mantle,request_recv_vector_crust_mantle)
         ! inner core
-        call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+        call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                       accel_inner_core, &
                       buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
@@ -374,7 +374,7 @@
           ! on CPU
           ! sends accel values to corresponding MPI interface neighbors
           ! crust mantle
-          call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+          call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                         b_accel_crust_mantle, &
                         b_buffer_send_vector_crust_mantle,b_buffer_recv_vector_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
@@ -382,7 +382,7 @@
                         my_neighbours_crust_mantle, &
                         b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle)
           ! inner core
-          call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+          call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                         b_accel_inner_core, &
                         b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
@@ -417,14 +417,14 @@
       if(.NOT. GPU_MODE) then
         ! on CPU
         ! crust mantle
-        call assemble_MPI_vector_ext_mesh_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+        call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                               accel_crust_mantle, &
                               buffer_recv_vector_crust_mantle,num_interfaces_crust_mantle,&
                               max_nibool_interfaces_crust_mantle, &
                               nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                               request_send_vector_crust_mantle,request_recv_vector_crust_mantle)
         ! inner core
-        call assemble_MPI_vector_ext_mesh_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+        call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                               accel_inner_core, &
                               buffer_recv_vector_inner_core,num_interfaces_inner_core,&
                               max_nibool_interfaces_inner_core, &
@@ -455,14 +455,14 @@
         if(.NOT. GPU_MODE) then
           ! on CPU
           ! crust mantle
-          call assemble_MPI_vector_ext_mesh_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+          call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                               b_accel_crust_mantle, &
                               b_buffer_recv_vector_crust_mantle,num_interfaces_crust_mantle,&
                               max_nibool_interfaces_crust_mantle, &
                               nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                               b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle)
           ! inner core
-          call assemble_MPI_vector_ext_mesh_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+          call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                               b_accel_inner_core, &
                               b_buffer_recv_vector_inner_core,num_interfaces_inner_core,&
                               max_nibool_interfaces_inner_core, &

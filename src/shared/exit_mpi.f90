@@ -285,6 +285,25 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine sum_all_i(sendbuf, recvbuf)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
+                  MPI_SUM,0,MPI_COMM_WORLD,ier)
+
+  end subroutine sum_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine sum_all_dp(sendbuf, recvbuf)
 
   implicit none
@@ -338,6 +357,94 @@
   call MPI_BCAST(buffer,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine recv_singlei(recvbuf, dest, recvtag)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: dest,recvtag
+  integer :: recvbuf
+
+  ! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine recv_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine recv_i(recvbuf, recvcount, dest, recvtag)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  integer,dimension(recvcount) :: recvbuf
+
+  ! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine recv_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_i(sendbuf, sendcount, dest, sendtag)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  !integer sendbuf,sendcount,dest,sendtag
+  integer dest,sendtag
+  integer sendcount
+  integer,dimension(sendcount):: sendbuf
+  integer ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_singlei(sendbuf, dest, sendtag)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  !integer sendbuf,sendcount,dest,sendtag
+  integer :: dest,sendtag
+  integer :: sendbuf
+  integer :: ier
+
+  call MPI_SEND(sendbuf,1,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_singlei
 
 !
 !-------------------------------------------------------------------------------------------------

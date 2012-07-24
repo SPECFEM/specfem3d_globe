@@ -30,10 +30,10 @@
 !----
 
 
-  subroutine assemble_MPI_scalar_ext_mesh(NPROC,NGLOB_AB,array_val, &
-                        num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
-                        nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
-                        my_neighbours_ext_mesh)
+  subroutine assemble_MPI_scalar(NPROC,NGLOB_AB,array_val, &
+                        num_interfaces,max_nibool_interfaces, &
+                        nibool_interfaces,ibool_interfaces, &
+                        my_neighbours)
 
 ! blocking send/receive
 
@@ -47,15 +47,15 @@
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
 
-  integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
-  integer, dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: ibool_interfaces_ext_mesh
+  integer :: num_interfaces,max_nibool_interfaces
+  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
+  integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar_ext_mesh
-  integer, dimension(:), allocatable :: request_send_scalar_ext_mesh
-  integer, dimension(:), allocatable :: request_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar
+  integer, dimension(:), allocatable :: request_send_scalar
+  integer, dimension(:), allocatable :: request_recv_scalar
 
 
   integer ipoin,iinterface,ier
@@ -65,66 +65,66 @@
   ! assemble only if more than one partition
   if(NPROC > 1) then
 
-    allocate(buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_send_scalar_ext_mesh'
-    allocate(buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_recv_scalar_ext_mesh'
-    allocate(request_send_scalar_ext_mesh(num_interfaces_ext_mesh),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_send_scalar_ext_mesh'
-    allocate(request_recv_scalar_ext_mesh(num_interfaces_ext_mesh),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_recv_scalar_ext_mesh'
+    allocate(buffer_send_scalar(max_nibool_interfaces,num_interfaces),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array buffer_send_scalar'
+    allocate(buffer_recv_scalar(max_nibool_interfaces,num_interfaces),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array buffer_recv_scalar'
+    allocate(request_send_scalar(num_interfaces),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array request_send_scalar'
+    allocate(request_recv_scalar(num_interfaces),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array request_recv_scalar'
 
     ! partition border copy into the buffer
-    do iinterface = 1, num_interfaces_ext_mesh
-      do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
-        buffer_send_scalar_ext_mesh(ipoin,iinterface) = array_val(ibool_interfaces_ext_mesh(ipoin,iinterface))
+    do iinterface = 1, num_interfaces
+      do ipoin = 1, nibool_interfaces(iinterface)
+        buffer_send_scalar(ipoin,iinterface) = array_val(ibool_interfaces(ipoin,iinterface))
       enddo
     enddo
 
     ! send messages
-    do iinterface = 1, num_interfaces_ext_mesh
+    do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
-      call isend_cr(buffer_send_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(iinterface),iinterface), &
-           nibool_interfaces_ext_mesh(iinterface), &
-           my_neighbours_ext_mesh(iinterface), &
+      call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
+           nibool_interfaces(iinterface), &
+           my_neighbours(iinterface), &
            itag, &
-           request_send_scalar_ext_mesh(iinterface) &
+           request_send_scalar(iinterface) &
            )
       ! receive request
-      call irecv_cr(buffer_recv_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(iinterface),iinterface), &
-           nibool_interfaces_ext_mesh(iinterface), &
-           my_neighbours_ext_mesh(iinterface), &
+      call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
+           nibool_interfaces(iinterface), &
+           my_neighbours(iinterface), &
            itag, &
-           request_recv_scalar_ext_mesh(iinterface) &
+           request_recv_scalar(iinterface) &
            )
     enddo
 
     ! wait for communications completion (recv)
-    do iinterface = 1, num_interfaces_ext_mesh
-      call wait_req(request_recv_scalar_ext_mesh(iinterface))
+    do iinterface = 1, num_interfaces
+      call wait_req(request_recv_scalar(iinterface))
     enddo
 
     ! adding contributions of neighbours
-    do iinterface = 1, num_interfaces_ext_mesh
-      do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
-        array_val(ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-             array_val(ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_scalar_ext_mesh(ipoin,iinterface)
+    do iinterface = 1, num_interfaces
+      do ipoin = 1, nibool_interfaces(iinterface)
+        array_val(ibool_interfaces(ipoin,iinterface)) = &
+             array_val(ibool_interfaces(ipoin,iinterface)) + buffer_recv_scalar(ipoin,iinterface)
       enddo
     enddo
 
     ! wait for communications completion (send)
-    do iinterface = 1, num_interfaces_ext_mesh
-      call wait_req(request_send_scalar_ext_mesh(iinterface))
+    do iinterface = 1, num_interfaces
+      call wait_req(request_send_scalar(iinterface))
     enddo
 
-    deallocate(buffer_send_scalar_ext_mesh)
-    deallocate(buffer_recv_scalar_ext_mesh)
-    deallocate(request_send_scalar_ext_mesh)
-    deallocate(request_recv_scalar_ext_mesh)
+    deallocate(buffer_send_scalar)
+    deallocate(buffer_recv_scalar)
+    deallocate(request_send_scalar)
+    deallocate(request_recv_scalar)
 
   endif
 
-  end subroutine assemble_MPI_scalar_ext_mesh
+  end subroutine assemble_MPI_scalar
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -132,12 +132,12 @@
 
 
 
-  subroutine assemble_MPI_scalar_ext_mesh_s(NPROC,NGLOB_AB,array_val, &
-                        buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
-                        num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
-                        nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
-                        my_neighbours_ext_mesh, &
-                        request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh)
+  subroutine assemble_MPI_scalar_s(NPROC,NGLOB_AB,array_val, &
+                        buffer_send_scalar,buffer_recv_scalar, &
+                        num_interfaces,max_nibool_interfaces, &
+                        nibool_interfaces,ibool_interfaces, &
+                        my_neighbours, &
+                        request_send_scalar,request_recv_scalar)
 
 ! non-blocking MPI send
 
@@ -147,18 +147,18 @@
 
   integer :: NPROC
   integer :: NGLOB_AB
-  integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
+  integer :: num_interfaces,max_nibool_interfaces
 
 ! array to send
   real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
 
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
+       buffer_send_scalar,buffer_recv_scalar
 
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
-  integer, dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: ibool_interfaces_ext_mesh
-  integer, dimension(num_interfaces_ext_mesh) :: request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh
+  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
+  integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
+  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
   integer ipoin,iinterface
 
@@ -166,45 +166,45 @@
   if(NPROC > 1) then
 
     ! partition border copy into the buffer
-    do iinterface = 1, num_interfaces_ext_mesh
-      do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
-        buffer_send_scalar_ext_mesh(ipoin,iinterface) = &
-          array_val(ibool_interfaces_ext_mesh(ipoin,iinterface))
+    do iinterface = 1, num_interfaces
+      do ipoin = 1, nibool_interfaces(iinterface)
+        buffer_send_scalar(ipoin,iinterface) = &
+          array_val(ibool_interfaces(ipoin,iinterface))
       enddo
     enddo
 
     ! send messages
-    do iinterface = 1, num_interfaces_ext_mesh
+    do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
-      call isend_cr(buffer_send_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(iinterface),iinterface), &
-           nibool_interfaces_ext_mesh(iinterface), &
-           my_neighbours_ext_mesh(iinterface), &
+      call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
+           nibool_interfaces(iinterface), &
+           my_neighbours(iinterface), &
            itag, &
-           request_send_scalar_ext_mesh(iinterface) &
+           request_send_scalar(iinterface) &
            )
       ! receive request
-      call irecv_cr(buffer_recv_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(iinterface),iinterface), &
-           nibool_interfaces_ext_mesh(iinterface), &
-           my_neighbours_ext_mesh(iinterface), &
+      call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
+           nibool_interfaces(iinterface), &
+           my_neighbours(iinterface), &
            itag, &
-           request_recv_scalar_ext_mesh(iinterface) &
+           request_recv_scalar(iinterface) &
            )
 
     enddo
 
   endif
 
-  end subroutine assemble_MPI_scalar_ext_mesh_s
+  end subroutine assemble_MPI_scalar_s
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_scalar_ext_mesh_w(NPROC,NGLOB_AB,array_val, &
-                        buffer_recv_scalar_ext_mesh,num_interfaces_ext_mesh, &
-                        max_nibool_interfaces_ext_mesh, &
-                        nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
-                        request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh)
+  subroutine assemble_MPI_scalar_w(NPROC,NGLOB_AB,array_val, &
+                        buffer_recv_scalar,num_interfaces, &
+                        max_nibool_interfaces, &
+                        nibool_interfaces,ibool_interfaces, &
+                        request_send_scalar,request_recv_scalar)
 
 ! waits for send/receiver to be completed and assembles contributions
 
@@ -214,17 +214,17 @@
 
   integer :: NPROC
   integer :: NGLOB_AB
-  integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
+  integer :: num_interfaces,max_nibool_interfaces
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
 
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
+       buffer_recv_scalar
 
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh
-  integer, dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: ibool_interfaces_ext_mesh
-  integer, dimension(num_interfaces_ext_mesh) :: request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh
+  integer, dimension(num_interfaces) :: nibool_interfaces
+  integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
+  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
   integer ipoin,iinterface
 
@@ -232,44 +232,44 @@
   if(NPROC > 1) then
 
     ! wait for communications completion (recv)
-    do iinterface = 1, num_interfaces_ext_mesh
-      call wait_req(request_recv_scalar_ext_mesh(iinterface))
+    do iinterface = 1, num_interfaces
+      call wait_req(request_recv_scalar(iinterface))
     enddo
 
     ! adding contributions of neighbours
-    do iinterface = 1, num_interfaces_ext_mesh
-      do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
-        array_val(ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-             array_val(ibool_interfaces_ext_mesh(ipoin,iinterface)) &
-             + buffer_recv_scalar_ext_mesh(ipoin,iinterface)
+    do iinterface = 1, num_interfaces
+      do ipoin = 1, nibool_interfaces(iinterface)
+        array_val(ibool_interfaces(ipoin,iinterface)) = &
+             array_val(ibool_interfaces(ipoin,iinterface)) &
+             + buffer_recv_scalar(ipoin,iinterface)
       enddo
     enddo
 
     ! wait for communications completion (send)
-    do iinterface = 1, num_interfaces_ext_mesh
-      call wait_req(request_send_scalar_ext_mesh(iinterface))
+    do iinterface = 1, num_interfaces
+      call wait_req(request_send_scalar(iinterface))
     enddo
 
   endif
 
-  end subroutine assemble_MPI_scalar_ext_mesh_w
+  end subroutine assemble_MPI_scalar_w
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
   subroutine assemble_MPI_scalar_send_cuda(NPROC, &
-                                          buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
-                                          num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
-                                          nibool_interfaces_ext_mesh, &
-                                          my_neighbours_ext_mesh, &
-                                          request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh, &
+                                          buffer_send_scalar,buffer_recv_scalar, &
+                                          num_interfaces,max_nibool_interfaces, &
+                                          nibool_interfaces, &
+                                          my_neighbours, &
+                                          request_send_scalar,request_recv_scalar, &
                                           FORWARD_OR_ADJOINT)
 
 ! non-blocking MPI send
 
   ! sends data
-  ! note: assembling data already filled into buffer_send_scalar_ext_mesh array
+  ! note: assembling data already filled into buffer_send_scalar array
 
   use constants_solver
   use specfem_par,only: Mesh_pointer
@@ -277,13 +277,13 @@
   implicit none
 
   integer :: NPROC
-  integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
+  integer :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
+       buffer_send_scalar,buffer_recv_scalar
 
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
-  integer, dimension(num_interfaces_ext_mesh) :: request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh
+  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
+  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
   integer :: FORWARD_OR_ADJOINT
 
@@ -296,24 +296,24 @@
     ! preparation of the contribution between partitions using MPI
     ! transfers mpi buffers to CPU
     call transfer_boun_pot_from_device(Mesh_pointer, &
-                                      buffer_send_scalar_ext_mesh, &
+                                      buffer_send_scalar, &
                                       FORWARD_OR_ADJOINT)
 
     ! send messages
-    do iinterface = 1, num_interfaces_ext_mesh
+    do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
-      call isend_cr(buffer_send_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(iinterface),iinterface), &
-           nibool_interfaces_ext_mesh(iinterface), &
-           my_neighbours_ext_mesh(iinterface), &
+      call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
+           nibool_interfaces(iinterface), &
+           my_neighbours(iinterface), &
            itag, &
-           request_send_scalar_ext_mesh(iinterface) &
+           request_send_scalar(iinterface) &
            )
       ! receive request
-      call irecv_cr(buffer_recv_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(iinterface),iinterface), &
-           nibool_interfaces_ext_mesh(iinterface), &
-           my_neighbours_ext_mesh(iinterface), &
+      call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
+           nibool_interfaces(iinterface), &
+           my_neighbours(iinterface), &
            itag, &
-           request_recv_scalar_ext_mesh(iinterface) &
+           request_recv_scalar(iinterface) &
            )
 
     enddo
@@ -327,9 +327,9 @@
 !
 
   subroutine assemble_MPI_scalar_write_cuda(NPROC, &
-                                            buffer_recv_scalar_ext_mesh, &
-                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
-                                            request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh, &
+                                            buffer_recv_scalar, &
+                                            num_interfaces,max_nibool_interfaces, &
+                                            request_send_scalar,request_recv_scalar, &
                                             FORWARD_OR_ADJOINT)
 
 ! waits for send/receiver to be completed and assembles contributions
@@ -341,11 +341,11 @@
 
   integer :: NPROC
 
-  integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
+  integer :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_recv_scalar_ext_mesh
-  integer, dimension(num_interfaces_ext_mesh) :: request_send_scalar_ext_mesh,request_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
+       buffer_recv_scalar
+  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
   integer :: FORWARD_OR_ADJOINT
 
@@ -356,27 +356,27 @@
   if(NPROC > 1) then
 
     ! wait for communications completion (recv)
-    do iinterface = 1, num_interfaces_ext_mesh
-      call wait_req(request_recv_scalar_ext_mesh(iinterface))
+    do iinterface = 1, num_interfaces
+      call wait_req(request_recv_scalar(iinterface))
     enddo
 
     ! adding contributions of neighbours
     call transfer_asmbl_pot_to_device(Mesh_pointer, &
-                                    buffer_recv_scalar_ext_mesh, &
+                                    buffer_recv_scalar, &
                                     FORWARD_OR_ADJOINT)
 
     ! note: adding contributions of neighbours has been done just above for cuda
-    !do iinterface = 1, num_interfaces_ext_mesh
-    !  do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
-    !    array_val(ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-    !         array_val(ibool_interfaces_ext_mesh(ipoin,iinterface)) &
-    !         + buffer_recv_scalar_ext_mesh(ipoin,iinterface)
+    !do iinterface = 1, num_interfaces
+    !  do ipoin = 1, nibool_interfaces(iinterface)
+    !    array_val(ibool_interfaces(ipoin,iinterface)) = &
+    !         array_val(ibool_interfaces(ipoin,iinterface)) &
+    !         + buffer_recv_scalar(ipoin,iinterface)
     !  enddo
     !enddo
 
     ! wait for communications completion (send)
-    do iinterface = 1, num_interfaces_ext_mesh
-      call wait_req(request_send_scalar_ext_mesh(iinterface))
+    do iinterface = 1, num_interfaces
+      call wait_req(request_send_scalar(iinterface))
     enddo
 
   endif

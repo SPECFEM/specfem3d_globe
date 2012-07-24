@@ -27,16 +27,20 @@
 
 
 
-  subroutine setup_color_perm()
+  subroutine setup_color_perm(iregion_code)
 
   use meshfem3D_par,only: &
     myrank,IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use create_MPI_interfaces_par
+  use MPI_crust_mantle_par
+  use MPI_outer_core_par
+  use MPI_inner_core_par
 
   implicit none
 
+  integer,intent(in) :: iregion_code
+  
   ! local parameters
   integer, dimension(:), allocatable :: perm
   integer :: ier
@@ -48,165 +52,171 @@
     write(IMAIN,*) 'mesh coloring: ',USE_MESH_COLORING_GPU
   endif
 
-  ! crust mantle
-  ! initializes
-  num_colors_outer_crust_mantle = 0
-  num_colors_inner_crust_mantle = 0
+  select case( iregion_code )
+  case( IREGION_CRUST_MANTLE )
+    ! crust mantle
+    ! initializes
+    num_colors_outer_crust_mantle = 0
+    num_colors_inner_crust_mantle = 0
 
-  ! mesh coloring
-  if( USE_MESH_COLORING_GPU ) then
+    ! mesh coloring
+    if( USE_MESH_COLORING_GPU ) then
 
-    !daniel: safety stop...
-    call exit_mpi(myrank,'MESH COLORING not fully implemented yet, please recompile...')
+      !daniel: safety stop...
+      call exit_mpi(myrank,'MESH COLORING not fully implemented yet, please recompile...')
 
-    ! user output
-    if(myrank == 0) write(IMAIN,*) '  coloring crust mantle... '
+      ! user output
+      if(myrank == 0) write(IMAIN,*) '  coloring crust mantle... '
 
-    ! crust/mantle region
-    nspec = NSPEC_CRUST_MANTLE
-    nglob = NGLOB_CRUST_MANTLE
-    idomain = IREGION_CRUST_MANTLE
+      ! crust/mantle region
+      nspec = NSPEC_CRUST_MANTLE
+      nglob = NGLOB_CRUST_MANTLE
+      idomain = IREGION_CRUST_MANTLE
 
-    ! creates coloring of elements
-    allocate(perm(nspec),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm crust mantle array')
-    perm(:) = 0
+      ! creates coloring of elements
+      allocate(perm(nspec),stat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm crust mantle array')
+      perm(:) = 0
 
-    call setup_color(myrank,nspec,nglob,ibool_crust_mantle,perm, &
-                    idomain,is_on_a_slice_edge_crust_mantle, &
-                    num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                    SAVE_MESH_FILES)
+      call setup_color(myrank,nspec,nglob,ibool_crust_mantle,perm, &
+                      idomain,is_on_a_slice_edge_crust_mantle, &
+                      num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                      SAVE_MESH_FILES)
 
-    ! checks
-    if(minval(perm) /= 1) &
-      call exit_MPI(myrank, 'minval(perm) should be 1')
-    if(maxval(perm) /= num_phase_ispec_crust_mantle) &
-      call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_crust_mantle')
+      ! checks
+      if(minval(perm) /= 1) &
+        call exit_MPI(myrank, 'minval(perm) should be 1')
+      if(maxval(perm) /= num_phase_ispec_crust_mantle) &
+        call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_crust_mantle')
 
-    ! sorts array according to permutation
-    call sync_all()
-    if(myrank == 0) then
-      write(IMAIN,*) '     mesh permutation:'
-    endif
-    call setup_permutation(myrank,nspec,nglob,ibool_crust_mantle, &
-                          idomain,perm, &
-                          num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
-                          num_elem_colors_crust_mantle, &
-                          num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                          SAVE_MESH_FILES)
+      ! sorts array according to permutation
+      call sync_all()
+      if(myrank == 0) then
+        write(IMAIN,*) '     mesh permutation:'
+      endif
+      call setup_permutation(myrank,nspec,nglob,ibool_crust_mantle, &
+                            idomain,perm, &
+                            num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
+                            num_elem_colors_crust_mantle, &
+                            num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                            SAVE_MESH_FILES)
 
-    deallocate(perm)
-  else
-    ! dummy array
-    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle+num_colors_inner_crust_mantle),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_crust_mantle array')
-  endif
-
-  ! outer core
-  ! initializes
-  num_colors_outer_outer_core = 0
-  num_colors_inner_outer_core = 0
-
-  ! mesh coloring
-  if( USE_MESH_COLORING_GPU ) then
-
-    ! user output
-    if(myrank == 0) write(IMAIN,*) '  coloring outer core... '
-
-    ! outer core region
-    nspec = NSPEC_OUTER_CORE
-    nglob = NGLOB_OUTER_CORE
-    idomain = IREGION_OUTER_CORE
-
-    ! creates coloring of elements
-    allocate(perm(nspec),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm outer_core array')
-    perm(:) = 0
-
-    call setup_color(myrank,nspec,nglob,ibool_outer_core,perm, &
-                    idomain,is_on_a_slice_edge_outer_core, &
-                    num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                    SAVE_MESH_FILES)
-
-    ! checks
-    if(minval(perm) /= 1) &
-      call exit_MPI(myrank, 'minval(perm) should be 1')
-    if(maxval(perm) /= num_phase_ispec_outer_core) &
-      call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_outer_core')
-
-    ! sorts array according to permutation
-    call sync_all()
-    if(myrank == 0) then
-      write(IMAIN,*) '     mesh permutation:'
-    endif
-    call setup_permutation(myrank,nspec,nglob,ibool_outer_core, &
-                          idomain,perm, &
-                          num_colors_outer_outer_core,num_colors_inner_outer_core, &
-                          num_elem_colors_outer_core, &
-                          num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                          SAVE_MESH_FILES)
-
-    deallocate(perm)
-  else
-    ! dummy array
-    allocate(num_elem_colors_outer_core(num_colors_outer_outer_core+num_colors_inner_outer_core),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_outer_core array')
-  endif
-
-  ! inner core
-  ! initializes
-  num_colors_outer_inner_core = 0
-  num_colors_inner_inner_core = 0
-
-  ! mesh coloring
-  if( USE_MESH_COLORING_GPU ) then
-
-    ! user output
-    if(myrank == 0) write(IMAIN,*) '  coloring inner core... '
-
-    ! inner core region
-    nspec = NSPEC_INNER_CORE
-    nglob = NGLOB_INNER_CORE
-    idomain = IREGION_INNER_CORE
-
-    ! creates coloring of elements
-    allocate(perm(nspec),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm inner_core array')
-    perm(:) = 0
-
-    call setup_color(myrank,nspec,nglob,ibool_inner_core,perm, &
-                    idomain,is_on_a_slice_edge_inner_core, &
-                    num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                    SAVE_MESH_FILES)
-
-    ! checks
-    ! inner core contains ficticious elements not counted for
-    if(minval(perm) < 0) &
-      call exit_MPI(myrank, 'minval(perm) should be at least 0')
-    if(maxval(perm) > num_phase_ispec_inner_core) then
-      print*,'error perm inner core:',minval(perm),maxval(perm),num_phase_ispec_inner_core
-      call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_inner_core')
+      deallocate(perm)
+    else
+      ! dummy array
+      allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle+num_colors_inner_crust_mantle),stat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_crust_mantle array')
     endif
 
-    ! sorts array according to permutation
-    call sync_all()
-    if(myrank == 0) then
-      write(IMAIN,*) '     mesh permutation:'
+  case( IREGION_OUTER_CORE )
+    ! outer core
+    ! initializes
+    num_colors_outer_outer_core = 0
+    num_colors_inner_outer_core = 0
+
+    ! mesh coloring
+    if( USE_MESH_COLORING_GPU ) then
+
+      ! user output
+      if(myrank == 0) write(IMAIN,*) '  coloring outer core... '
+
+      ! outer core region
+      nspec = NSPEC_OUTER_CORE
+      nglob = NGLOB_OUTER_CORE
+      idomain = IREGION_OUTER_CORE
+
+      ! creates coloring of elements
+      allocate(perm(nspec),stat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm outer_core array')
+      perm(:) = 0
+
+      call setup_color(myrank,nspec,nglob,ibool_outer_core,perm, &
+                      idomain,is_on_a_slice_edge_outer_core, &
+                      num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                      SAVE_MESH_FILES)
+
+      ! checks
+      if(minval(perm) /= 1) &
+        call exit_MPI(myrank, 'minval(perm) should be 1')
+      if(maxval(perm) /= num_phase_ispec_outer_core) &
+        call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_outer_core')
+
+      ! sorts array according to permutation
+      call sync_all()
+      if(myrank == 0) then
+        write(IMAIN,*) '     mesh permutation:'
+      endif
+      call setup_permutation(myrank,nspec,nglob,ibool_outer_core, &
+                            idomain,perm, &
+                            num_colors_outer_outer_core,num_colors_inner_outer_core, &
+                            num_elem_colors_outer_core, &
+                            num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                            SAVE_MESH_FILES)
+
+      deallocate(perm)
+    else
+      ! dummy array
+      allocate(num_elem_colors_outer_core(num_colors_outer_outer_core+num_colors_inner_outer_core),stat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_outer_core array')
     endif
-    call setup_permutation(myrank,nspec,nglob,ibool_inner_core, &
-                          idomain,perm, &
-                          num_colors_outer_inner_core,num_colors_inner_inner_core, &
-                          num_elem_colors_inner_core, &
-                          num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                          SAVE_MESH_FILES)
 
-    deallocate(perm)
-  else
-    ! dummy array
-    allocate(num_elem_colors_inner_core(num_colors_outer_inner_core+num_colors_inner_inner_core),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
-  endif
+  case( IREGION_INNER_CORE )
+    ! inner core
+    ! initializes
+    num_colors_outer_inner_core = 0
+    num_colors_inner_inner_core = 0
 
+    ! mesh coloring
+    if( USE_MESH_COLORING_GPU ) then
+
+      ! user output
+      if(myrank == 0) write(IMAIN,*) '  coloring inner core... '
+
+      ! inner core region
+      nspec = NSPEC_INNER_CORE
+      nglob = NGLOB_INNER_CORE
+      idomain = IREGION_INNER_CORE
+
+      ! creates coloring of elements
+      allocate(perm(nspec),stat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm inner_core array')
+      perm(:) = 0
+
+      call setup_color(myrank,nspec,nglob,ibool_inner_core,perm, &
+                      idomain,is_on_a_slice_edge_inner_core, &
+                      num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                      SAVE_MESH_FILES)
+
+      ! checks
+      ! inner core contains ficticious elements not counted for
+      if(minval(perm) < 0) &
+        call exit_MPI(myrank, 'minval(perm) should be at least 0')
+      if(maxval(perm) > num_phase_ispec_inner_core) then
+        print*,'error perm inner core:',minval(perm),maxval(perm),num_phase_ispec_inner_core
+        call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_inner_core')
+      endif
+
+      ! sorts array according to permutation
+      call sync_all()
+      if(myrank == 0) then
+        write(IMAIN,*) '     mesh permutation:'
+      endif
+      call setup_permutation(myrank,nspec,nglob,ibool_inner_core, &
+                            idomain,perm, &
+                            num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                            num_elem_colors_inner_core, &
+                            num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                            SAVE_MESH_FILES)
+
+      deallocate(perm)
+    else
+      ! dummy array
+      allocate(num_elem_colors_inner_core(num_colors_outer_inner_core+num_colors_inner_inner_core),stat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
+    endif
+
+  end select
+  
   end subroutine setup_color_perm
 
 !
@@ -223,13 +233,17 @@
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use create_MPI_interfaces_par,only: &
+  use MPI_crust_mantle_par,only: &
     num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle, &
-    num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core, &
-    num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core, &
-    idoubling_inner_core, &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
-
+    
+  use MPI_outer_core_par,only: &
+    num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core
+  
+  use MPI_inner_core_par,only: &
+    num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core, &
+    idoubling_inner_core  
+  
   implicit none
 
   integer :: myrank,nspec,nglob
@@ -558,11 +572,15 @@
     CUSTOM_REAL,LOCAL_PATH,NGLLX,NGLLY,NGLLZ,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use create_MPI_interfaces_par,only: &
+  use MPI_crust_mantle_par,only: &
     NSPEC_CRUST_MANTLE,ibool_crust_mantle,is_on_a_slice_edge_crust_mantle, &
-    NSPEC_OUTER_CORE,ibool_outer_core,is_on_a_slice_edge_outer_core, &
-    NSPEC_INNER_CORE,ibool_inner_core,is_on_a_slice_edge_inner_core, &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+    
+  use MPI_outer_core_par,only: &
+    NSPEC_OUTER_CORE,ibool_outer_core,is_on_a_slice_edge_outer_core
+  
+  use MPI_inner_core_par,only: &
+    NSPEC_INNER_CORE,ibool_inner_core,is_on_a_slice_edge_inner_core
 
   implicit none
 

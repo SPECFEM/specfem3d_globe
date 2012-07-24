@@ -33,10 +33,11 @@
 
   use constants
   use meshfem3D_par,only: NPROCTOT,myrank
-  use create_MPI_interfaces_par,only: NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE
+  use MPI_crust_mantle_par,only: NGLOB_CRUST_MANTLE
+  use MPI_outer_core_par,only: NGLOB_OUTER_CORE
+  use MPI_inner_core_par,only: NGLOB_INNER_CORE
+  
   implicit none
-
-  include 'mpif.h'
 
   integer,intent(in) :: iregion_code
   integer,intent(in) :: num_interfaces,max_nibool_interfaces
@@ -47,7 +48,6 @@
   integer,dimension(:),allocatable :: dummy_i
   integer,dimension(:,:),allocatable :: test_interfaces
   integer,dimension(:,:),allocatable :: test_interfaces_nibool
-  integer :: msg_status(MPI_STATUS_SIZE)
   integer :: ineighbour,iproc,inum,i,j,ier,ipoints,max_num,iglob
   logical :: is_okay
   logical,dimension(:),allocatable :: mask
@@ -124,7 +124,7 @@
 
   ! checks neighbors
   ! gets maximum interfaces from all processes
-  call MPI_REDUCE(num_interfaces,max_num,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call max_all_i(num_interfaces,max_num)
 
   ! master gathers infos
   if( myrank == 0 ) then
@@ -150,23 +150,32 @@
     ! collects from other processes
     do iproc=1,NPROCTOT-1
       ! gets number of interfaces
-      call MPI_RECV(inum,1,MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+      !call MPI_RECV(inum,1,MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+      call recv_singlei(inum,iproc,itag)
       dummy_i(iproc) = inum
       if( inum > 0 ) then
-        call MPI_RECV(test_interfaces(1:inum,iproc),inum, &
-                      MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
-        call MPI_RECV(test_interfaces_nibool(1:inum,iproc),inum, &
-                      MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+        !call MPI_RECV(test_interfaces(1:inum,iproc),inum, &
+        !              MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+        call recv_i(test_interfaces(1:inum,iproc),inum,iproc,itag)
+        
+        !call MPI_RECV(test_interfaces_nibool(1:inum,iproc),inum, &
+        !              MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+        call recv_i(test_interfaces_nibool(1:inum,iproc),inum,iproc,itag)        
       endif
     enddo
   else
     ! sends infos to master process
-    call MPI_SEND(num_interfaces,1,MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+    !call MPI_SEND(num_interfaces,1,MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+    call send_singlei(num_interfaces,0,itag)
     if( num_interfaces > 0 ) then
-      call MPI_SEND(my_neighbours(1:num_interfaces),num_interfaces, &
-                    MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
-      call MPI_SEND(nibool_interfaces(1:num_interfaces),num_interfaces, &
-                    MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+      !call MPI_SEND(my_neighbours(1:num_interfaces),num_interfaces, &
+      !              MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+      call send_i(my_neighbours(1:num_interfaces),num_interfaces,0,itag)
+
+      !call MPI_SEND(nibool_interfaces(1:num_interfaces),num_interfaces, &
+      !              MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+      call send_i(nibool_interfaces(1:num_interfaces),num_interfaces,0,itag)
+                    
     endif
   endif
   call sync_all()
@@ -239,9 +248,9 @@
 
   use meshfem3D_par,only: NPROCTOT,myrank
   use create_MPI_interfaces_par
-  implicit none
+  use MPI_crust_mantle_par
 
-  include 'mpif.h'
+  implicit none
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector
@@ -270,17 +279,17 @@
   enddo
   ! total number of  interface points
   i = sum(nibool_interfaces_crust_mantle)
-  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,inum)  
 
   ! total number of unique points (some could be shared between different processes)
   i = nint( sum(test_flag_vector) )
   num_unique= i
-  call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,icount)
 
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
-  call MPI_REDUCE(i,ival,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call max_all_i(i,ival)  
 
   ! user output
   if( myrank == 0 ) then
@@ -293,7 +302,7 @@
   test_flag_vector(:,:) = 1.0_CUSTOM_REAL
 
   ! adds contributions from different partitions to flag arrays
-  call assemble_MPI_vector_ext_mesh(NPROCTOT,NGLOB_CRUST_MANTLE, &
+  call assemble_MPI_vector(NPROCTOT,NGLOB_CRUST_MANTLE, &
                       test_flag_vector, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                       nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
@@ -324,7 +333,7 @@
   endif
 
   ! total number of assembly points
-  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,inum)    
 
   ! points defined by interfaces
   if( myrank == 0 ) then
@@ -354,9 +363,9 @@
 
   use meshfem3D_par,only: NPROCTOT,myrank
   use create_MPI_interfaces_par
+  use MPI_outer_core_par
+  
   implicit none
-
-  include 'mpif.h'
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
@@ -383,16 +392,16 @@
     enddo
   enddo
   i = sum(nibool_interfaces_outer_core)
-  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,inum)  
 
   i = nint( sum(test_flag) )
   num_unique = i
-  call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,icount)  
 
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
-  call MPI_REDUCE(i,ival,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call max_all_i(i,ival)  
 
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum
@@ -404,7 +413,7 @@
   test_flag(:) = 1.0_CUSTOM_REAL
 
   ! adds contributions from different partitions to flag arrays
-  call assemble_MPI_scalar_ext_mesh(NPROCTOT,NGLOB_OUTER_CORE, &
+  call assemble_MPI_scalar(NPROCTOT,NGLOB_OUTER_CORE, &
                                 test_flag, &
                                 num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
@@ -432,8 +441,7 @@
     print*,'error test outer core : rank',myrank,'unique mpi points:',i,num_unique
     call exit_mpi(myrank,'error MPI assembly outer core')
   endif
-
-  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,inum)  
 
   ! output
   if( myrank == 0 ) then
@@ -464,9 +472,9 @@
 
   use meshfem3D_par,only: NPROCTOT,myrank
   use create_MPI_interfaces_par
+  use MPI_inner_core_par
+  
   implicit none
-
-  include 'mpif.h'
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector
@@ -494,16 +502,16 @@
     enddo
   enddo
   i = sum(nibool_interfaces_inner_core)
-  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,inum)  
 
   i = nint( sum(test_flag_vector) )
   num_unique= i
-  call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,icount)  
 
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
-  call MPI_REDUCE(i,ival,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call max_all_i(i,ival)  
 
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum
@@ -515,7 +523,7 @@
   test_flag_vector = 1.0_CUSTOM_REAL
 
   ! adds contributions from different partitions to flag arrays
-  call assemble_MPI_vector_ext_mesh(NPROCTOT,NGLOB_INNER_CORE, &
+  call assemble_MPI_vector(NPROCTOT,NGLOB_INNER_CORE, &
                       test_flag_vector, &
                       num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                       nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
@@ -545,8 +553,7 @@
     print*,'error test inner core : rank',myrank,'unique mpi points:',i,num_unique
     call exit_mpi(myrank,'error MPI assembly inner core')
   endif
-
-  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(i,inum)
 
   if( myrank == 0 ) then
     ! checks

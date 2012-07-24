@@ -41,22 +41,22 @@
 // prepares a device array with all inter-element edge-nodes -- this
 // is followed by a memcpy and MPI operations
 __global__ void prepare_boundary_accel_on_device(realw* d_accel, realw* d_send_accel_buffer,
-                                                 int num_interfaces_ext_mesh,
-                                                 int max_nibool_interfaces_ext_mesh,
-                                                 int* d_nibool_interfaces_ext_mesh,
-                                                 int* d_ibool_interfaces_ext_mesh) {
+                                                 int num_interfaces,
+                                                 int max_nibool_interfaces,
+                                                 int* d_nibool_interfaces,
+                                                 int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
   int iinterface=0;
 
-  for( iinterface=0; iinterface < num_interfaces_ext_mesh; iinterface++) {
-    if(id<d_nibool_interfaces_ext_mesh[iinterface]) {
-      d_send_accel_buffer[3*(id + max_nibool_interfaces_ext_mesh*iinterface)] =
-      d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)];
-      d_send_accel_buffer[3*(id + max_nibool_interfaces_ext_mesh*iinterface)+1] =
-      d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)+1];
-      d_send_accel_buffer[3*(id + max_nibool_interfaces_ext_mesh*iinterface)+2] =
-      d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)+2];
+  for( iinterface=0; iinterface < num_interfaces; iinterface++) {
+    if(id<d_nibool_interfaces[iinterface]) {
+      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)] =
+      d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)];
+      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+1] =
+      d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+1];
+      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+2] =
+      d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+2];
     }
   }
 
@@ -165,22 +165,22 @@ void FC_FUNC_(transfer_boun_accel_from_device,
 /* ----------------------------------------------------------------------------------------------- */
 
 __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_accel_buffer,
-                                                  int num_interfaces_ext_mesh,
-                                                  int max_nibool_interfaces_ext_mesh,
-                                                  int* d_nibool_interfaces_ext_mesh,
-                                                  int* d_ibool_interfaces_ext_mesh) {
+                                                  int num_interfaces,
+                                                  int max_nibool_interfaces,
+                                                  int* d_nibool_interfaces,
+                                                  int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
   int iinterface=0;
 
-  for( iinterface=0; iinterface < num_interfaces_ext_mesh; iinterface++) {
-    if(id < d_nibool_interfaces_ext_mesh[iinterface]) {
-      atomicAdd(&d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)],
-                d_send_accel_buffer[3*(id + max_nibool_interfaces_ext_mesh*iinterface)]);
-      atomicAdd(&d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)+1],
-                d_send_accel_buffer[3*(id + max_nibool_interfaces_ext_mesh*iinterface)+1]);
-      atomicAdd(&d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)+2],
-                d_send_accel_buffer[3*(id + max_nibool_interfaces_ext_mesh*iinterface)+2]);
+  for( iinterface=0; iinterface < num_interfaces; iinterface++) {
+    if(id < d_nibool_interfaces[iinterface]) {
+      atomicAdd(&d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)],
+                d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)]);
+      atomicAdd(&d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+1],
+                d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+1]);
+      atomicAdd(&d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+2],
+                d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+2]);
     }
   }
 }
