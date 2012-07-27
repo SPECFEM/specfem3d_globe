@@ -63,7 +63,7 @@
 
   integer NGLOB1D_RADIAL_MAX
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
-    
+
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
   integer myrank

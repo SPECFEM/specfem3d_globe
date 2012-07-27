@@ -45,23 +45,15 @@
     myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
     NPROC,NPROCTOT,NPROC_XI,NPROC_ETA,NCHUNKS, &
-    SAVE_MESH_FILES,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-    R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+    SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
+    R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR,NB_SQUARE_CORNERS, &
-    rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
-    rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-    ratio_sampling_array,doubling_index,this_region_has_a_doubling, &
-    ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-    NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-    ner,r_bottom,r_top
+    NGLOB1D_RADIAL_CORNER
 
   use meshfem3D_models_par,only: &
     ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
-    SAVE_BOUNDARY_MESH,ONE_CRUST,CASE_3D,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
-    OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    AM_V,nspl,rspl,espl,espl2
+    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
+    OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE
 
   use create_regions_mesh_par
   use create_regions_mesh_par2
@@ -182,7 +174,7 @@
 
       deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
     endif
-    
+
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
     ! precomputes jacobian for 2d absorbing boundary surfaces
@@ -340,7 +332,7 @@
     call sync_all()
     if( myrank == 0) then
       write(IMAIN,*) '  ...preparing MPI interfaces'
-    endif    
+    endif
     call create_MPI_interfaces(iregion_code)
 
     ! sets up inner/outer element arrays
@@ -349,7 +341,7 @@
       write(IMAIN,*) '  ...element inner/outer separation '
     endif
     call setup_inner_outer(iregion_code)
-    
+
     ! sets up mesh coloring
     call sync_all()
     if( myrank == 0) then
@@ -429,7 +421,7 @@
   deallocate(rho_vp,rho_vs)
   deallocate(Qmu_store)
   deallocate(tau_e_store)
-  
+
   deallocate(ibelm_moho_top,ibelm_moho_bot)
   deallocate(ibelm_400_top,ibelm_400_bot)
   deallocate(ibelm_670_top,ibelm_670_bot)
@@ -451,7 +443,7 @@
                                 ipass)
 
   use meshfem3D_par,only: &
-    myrank,NGLLX,NGLLY,NGLLZ,NDIM, &
+    NGLLX,NGLLY,NGLLZ,NDIM, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     NCHUNKS
 
@@ -589,7 +581,7 @@
             nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
     if(ier /= 0) stop 'error in allocate 14'
   endif
-  
+
   ! MPI cut-planes parameters along xi and along eta
   allocate(iMPIcut_xi(2,nspec), &
           iMPIcut_eta(2,nspec),stat=ier)
@@ -752,12 +744,11 @@
 ! creates the different regions of the mesh
 
   use meshfem3D_par,only: &
-    IMAIN,volume_total,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
-    myrank,LOCAL_PATH, &
+    IMAIN,myrank, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
-    NPROC,NPROCTOT,NPROC_XI,NPROC_ETA,NCHUNKS, &
-    SAVE_MESH_FILES,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-    R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
+    NPROC_XI,NPROC_ETA,NCHUNKS, &
+    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
+    R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR,NB_SQUARE_CORNERS, &
     rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
@@ -767,11 +758,8 @@
     ner,r_top,r_bottom
 
   use meshfem3D_models_par,only: &
-    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
-    SAVE_BOUNDARY_MESH,ONE_CRUST,CASE_3D,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
-    OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    AM_V,nspl,rspl,espl,espl2
+    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
+    TRANSVERSE_ISOTROPY
 
   use create_regions_mesh_par
   use create_regions_mesh_par2
@@ -933,7 +921,7 @@
   deallocate(stretch_tab)
   deallocate(perm_layer)
   deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
-      
+
   if(myrank == 0 ) write(IMAIN,*)
 
   ! define central cube in inner core

@@ -554,11 +554,7 @@
                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                                      LOCAL_TMP_PATH, &
-                                      displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                                      veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                                      accel_crust_mantle,accel_inner_core, &
-                                      ibool_crust_mantle,ibool_inner_core)
+                                      LOCAL_TMP_PATH)
 
   implicit none
   include "constants.h"
@@ -574,30 +570,15 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
 
-
   character(len=150) LOCAL_TMP_PATH
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: veloc_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: veloc_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: rhol,kappal
@@ -605,15 +586,11 @@
   integer :: ispec,iglob,i,j,k,ier
   character(len=150) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
-  real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc,scale_accel
 
   ! output parameters
   logical,parameter :: MOVIE_OUTPUT_DIV = .true.          ! divergence
-  logical,parameter :: MOVIE_OUTPUT_CURL = .false.        ! curl
+  logical,parameter :: MOVIE_OUTPUT_CURL = .true.        ! curl
   logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! frobenius norm of curl
-  logical,parameter :: MOVIE_OUTPUT_DISPLNORM = .false.   ! norm of displacement
-  logical,parameter :: MOVIE_OUTPUT_VELOCNORM = .false.   ! norm of velocity
-  logical,parameter :: MOVIE_OUTPUT_ACCELNORM = .false.   ! norm of acceleration
 
   ! outputs divergence
   if( MOVIE_OUTPUT_DIV ) then
@@ -751,13 +728,47 @@
     !close(27)
   endif
 
+  end subroutine write_movie_volume_divcurl
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+ subroutine write_movie_volume_displnorm(myrank,it,LOCAL_TMP_PATH, &
+                                      displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                                      ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
+  implicit none
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer :: myrank,it
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+
+  character(len=150) LOCAL_TMP_PATH
+
+  ! local parameters
+  integer :: ispec,iglob,i,j,k,ier
+  character(len=150) outputname
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
+  real(kind=CUSTOM_REAL) :: scale_displ
+
+  logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
+  logical,parameter :: OUTPUT_OUTER_CORE = .true.
+  logical,parameter :: OUTPUT_INNER_CORE = .true.
+
   ! dimensionalized scalings
   scale_displ = R_EARTH
-  scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
-  scale_accel = scale_veloc * dsqrt(PI*GRAV*RHOAV)
 
   ! outputs norm of displacement
-  if( MOVIE_OUTPUT_DISPLNORM ) then
+  if( OUTPUT_CRUST_MANTLE ) then
     ! crust mantle
     ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
@@ -780,7 +791,9 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
+  endif
 
+  if( OUTPUT_OUTER_CORE ) then
     ! outer core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
     do ispec = 1, NSPEC_OUTER_CORE
@@ -802,7 +815,9 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
+  endif
 
+  if( OUTPUT_INNER_CORE ) then
     ! inner core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     do ispec = 1, NSPEC_INNER_CORE
@@ -826,9 +841,49 @@
     deallocate(tmp_data)
   endif
 
+  end subroutine write_movie_volume_displnorm
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+ subroutine write_movie_volume_velnorm(myrank,it,LOCAL_TMP_PATH, &
+                                      veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+                                      ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
+  implicit none
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer :: myrank,it
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: veloc_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: veloc_inner_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+
+  character(len=150) LOCAL_TMP_PATH
+
+  ! local parameters
+  integer :: ispec,iglob,i,j,k,ier
+  character(len=150) outputname
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
+  real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc
+
+  logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
+  logical,parameter :: OUTPUT_OUTER_CORE = .true.
+  logical,parameter :: OUTPUT_INNER_CORE = .true.
+
+  ! dimensionalized scalings
+  scale_displ = R_EARTH
+  scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
 
   ! outputs norm of velocity
-  if( MOVIE_OUTPUT_VELOCNORM ) then
+  if( OUTPUT_CRUST_MANTLE ) then
     ! crust mantle
     ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
@@ -851,7 +906,9 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
+  endif
 
+  if( OUTPUT_OUTER_CORE ) then
     ! outer core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
     do ispec = 1, NSPEC_OUTER_CORE
@@ -873,7 +930,9 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
+  endif
 
+  if( OUTPUT_INNER_CORE ) then
     ! inner core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     do ispec = 1, NSPEC_INNER_CORE
@@ -897,8 +956,49 @@
     deallocate(tmp_data)
   endif
 
+  end subroutine write_movie_volume_velnorm
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+ subroutine write_movie_volume_accelnorm(myrank,it,LOCAL_TMP_PATH, &
+                                      accel_crust_mantle,accel_inner_core,accel_outer_core, &
+                                      ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
+  implicit none
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer :: myrank,it
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+
+  character(len=150) LOCAL_TMP_PATH
+
+  ! local parameters
+  integer :: ispec,iglob,i,j,k,ier
+  character(len=150) outputname
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
+  real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc,scale_accel
+
+  logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
+  logical,parameter :: OUTPUT_OUTER_CORE = .true.
+  logical,parameter :: OUTPUT_INNER_CORE = .true.
+
+  ! dimensionalized scalings
+  scale_displ = R_EARTH
+  scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
+  scale_accel = scale_veloc * dsqrt(PI*GRAV*RHOAV)
+
   ! outputs norm of acceleration
-  if( MOVIE_OUTPUT_ACCELNORM ) then
+  if( OUTPUT_CRUST_MANTLE ) then
     ! acceleration
     ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
@@ -921,7 +1021,9 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
+  endif
 
+  if( OUTPUT_OUTER_CORE ) then
     ! outer core acceleration
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
     do ispec = 1, NSPEC_OUTER_CORE
@@ -943,7 +1045,9 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
+  endif
 
+  if( OUTPUT_INNER_CORE ) then
     ! inner core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     do ispec = 1, NSPEC_INNER_CORE
@@ -967,5 +1071,7 @@
     deallocate(tmp_data)
   endif
 
-  end subroutine write_movie_volume_divcurl
+  end subroutine write_movie_volume_accelnorm
+
+
 

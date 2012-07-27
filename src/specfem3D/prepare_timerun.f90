@@ -449,27 +449,37 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Movie volume:'
     write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
-    if(MOVIE_VOLUME_TYPE == 1) then
-      write(IMAIN,*) '  movie output: strain'
-    else if(MOVIE_VOLUME_TYPE == 2) then
-      write(IMAIN,*) '  movie output: time integral of strain'
-    else if(MOVIE_VOLUME_TYPE == 3) then
+    select case( MOVIE_VOLUME_TYPE )
+    case( 1 )
+      write(IMAIN,*) '  movie output: strains'
+    case( 2 )
+      write(IMAIN,*) '  movie output: time integral of strains'
+    case( 3 )
       write(IMAIN,*) '  movie output: potency or integral of strain'
-    else if(MOVIE_VOLUME_TYPE == 4) then
+    case( 4 )
       write(IMAIN,*) '  movie output: divergence and curl'
-    else if(MOVIE_VOLUME_TYPE == 5) then
+    case( 5 )
       write(IMAIN,*) '  movie output: displacement'
-    else if(MOVIE_VOLUME_TYPE == 6) then
+    case( 6 )
       write(IMAIN,*) '  movie output: velocity'
-    endif
+    case( 7 )
+      write(IMAIN,*) '  movie output: norm of displacement'
+    case( 8 )
+      write(IMAIN,*) '  movie output: norm of velocity'
+    case( 9 )
+      write(IMAIN,*) '  movie output: norm of acceleration'
+    case default
+      call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
+    end select
+    write(IMAIN,*)
     write(IMAIN,*) '  depth(T,B):',MOVIE_TOP,MOVIE_BOTTOM
     write(IMAIN,*) '  lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
     write(IMAIN,*) '  lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
     write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
   endif
 
-  if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 6) &
-      call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be 1,2,3,4,5 or 6')
+  if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
+      call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
 
   call sync_all()
 

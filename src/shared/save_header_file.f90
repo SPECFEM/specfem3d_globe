@@ -29,12 +29,13 @@
 
   subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,TOPOGRAPHY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D, &
+                        ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY, &
+                        OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
                         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
                         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-                        static_memory_size,NGLOB1D_RADIAL, &
-                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                        static_memory_size, &
+                        NSPEC2D_TOP,NSPEC2D_BOTTOM, &
                         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
                         NPROC_XI,NPROC_ETA, &
                         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
@@ -68,8 +69,8 @@
   ! static memory size needed by the solver
   double precision :: static_memory_size
 
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                                    NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
+  integer, dimension(MAX_NUM_REGIONS) :: &
+        NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
   integer :: NPROC_XI,NPROC_ETA
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
@@ -100,7 +101,7 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
+  integer :: att1,att2,att3,att4,att5
   integer :: ier
   character(len=150) HEADER_FILE
 
@@ -393,7 +394,7 @@
   endif
   write(IOUT,*)
 
-  if(TOPOGRAPHY .or. OCEANS) then
+  if(TOPOGRAPHY) then
     write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
     write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
   else
@@ -410,44 +411,11 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = ',NSPEC_OUTER_CORE_ROTATION
   write(IOUT,*)
 
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_CM = ',NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_OC = ',NGLOB1D_RADIAL(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_IC = ',NGLOB1D_RADIAL(IREGION_INNER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_CM = ',NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_OC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_IC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_CM = ',NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_OC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
-
   write(IOUT,*) 'integer, parameter :: NPROC_XI_VAL = ',NPROC_XI
   write(IOUT,*) 'integer, parameter :: NPROC_ETA_VAL = ',NPROC_ETA
   write(IOUT,*) 'integer, parameter :: NCHUNKS_VAL = ',NCHUNKS
   write(IOUT,*) 'integer, parameter :: NPROCTOT_VAL = ',NPROCTOT
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_VAL = ', &
-            max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
-
-  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
-    NCORNERSCHUNKS = 1
-    NUM_FACES = 1
-    NUM_MSG_TYPES = 1
-  else if(NCHUNKS == 3) then
-    NCORNERSCHUNKS = 1
-    NUM_FACES = 1
-    NUM_MSG_TYPES = 3
-  else if(NCHUNKS == 6) then
-    NCORNERSCHUNKS = 8
-    NUM_FACES = 4
-    NUM_MSG_TYPES = 3
-  else
-    stop 'error nchunks in save_header_file()'
-  endif
-
-  write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_VAL = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
-  write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
+  write(IOUT,*)
 
   if(ATTENUATION) then
      if(ATTENUATION_3D) then
@@ -474,6 +442,7 @@
   write(IOUT,*) 'integer, parameter :: ATT3 = ',att3
   write(IOUT,*) 'integer, parameter :: ATT4 = ',att4
   write(IOUT,*) 'integer, parameter :: ATT5 = ',att5
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM = ',NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)

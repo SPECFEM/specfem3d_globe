@@ -36,7 +36,7 @@
   use MPI_crust_mantle_par,only: NGLOB_CRUST_MANTLE
   use MPI_outer_core_par,only: NGLOB_OUTER_CORE
   use MPI_inner_core_par,only: NGLOB_INNER_CORE
-  
+
   implicit none
 
   integer,intent(in) :: iregion_code
@@ -157,10 +157,10 @@
         !call MPI_RECV(test_interfaces(1:inum,iproc),inum, &
         !              MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
         call recv_i(test_interfaces(1:inum,iproc),inum,iproc,itag)
-        
+
         !call MPI_RECV(test_interfaces_nibool(1:inum,iproc),inum, &
         !              MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
-        call recv_i(test_interfaces_nibool(1:inum,iproc),inum,iproc,itag)        
+        call recv_i(test_interfaces_nibool(1:inum,iproc),inum,iproc,itag)
       endif
     enddo
   else
@@ -175,7 +175,7 @@
       !call MPI_SEND(nibool_interfaces(1:num_interfaces),num_interfaces, &
       !              MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
       call send_i(nibool_interfaces(1:num_interfaces),num_interfaces,0,itag)
-                    
+
     endif
   endif
   call sync_all()
@@ -279,7 +279,7 @@
   enddo
   ! total number of  interface points
   i = sum(nibool_interfaces_crust_mantle)
-  call sum_all_i(i,inum)  
+  call sum_all_i(i,inum)
 
   ! total number of unique points (some could be shared between different processes)
   i = nint( sum(test_flag_vector) )
@@ -289,7 +289,7 @@
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
-  call max_all_i(i,ival)  
+  call max_all_i(i,ival)
 
   ! user output
   if( myrank == 0 ) then
@@ -333,7 +333,7 @@
   endif
 
   ! total number of assembly points
-  call sum_all_i(i,inum)    
+  call sum_all_i(i,inum)
 
   ! points defined by interfaces
   if( myrank == 0 ) then
@@ -364,7 +364,7 @@
   use meshfem3D_par,only: NPROCTOT,myrank
   use create_MPI_interfaces_par
   use MPI_outer_core_par
-  
+
   implicit none
 
   ! local parameters
@@ -392,16 +392,16 @@
     enddo
   enddo
   i = sum(nibool_interfaces_outer_core)
-  call sum_all_i(i,inum)  
+  call sum_all_i(i,inum)
 
   i = nint( sum(test_flag) )
   num_unique = i
-  call sum_all_i(i,icount)  
+  call sum_all_i(i,icount)
 
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
-  call max_all_i(i,ival)  
+  call max_all_i(i,ival)
 
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum
@@ -441,7 +441,7 @@
     print*,'error test outer core : rank',myrank,'unique mpi points:',i,num_unique
     call exit_mpi(myrank,'error MPI assembly outer core')
   endif
-  call sum_all_i(i,inum)  
+  call sum_all_i(i,inum)
 
   ! output
   if( myrank == 0 ) then
@@ -473,7 +473,7 @@
   use meshfem3D_par,only: NPROCTOT,myrank
   use create_MPI_interfaces_par
   use MPI_inner_core_par
-  
+
   implicit none
 
   ! local parameters
@@ -502,16 +502,16 @@
     enddo
   enddo
   i = sum(nibool_interfaces_inner_core)
-  call sum_all_i(i,inum)  
+  call sum_all_i(i,inum)
 
   i = nint( sum(test_flag_vector) )
   num_unique= i
-  call sum_all_i(i,icount)  
+  call sum_all_i(i,icount)
 
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
-  call max_all_i(i,ival)  
+  call max_all_i(i,ival)
 
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum

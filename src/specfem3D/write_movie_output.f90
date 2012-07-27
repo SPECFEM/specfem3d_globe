@@ -135,10 +135,6 @@
                                 epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
                                 epsilondev_yz_inner_core)
           ! wavefields
-          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
-          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
           call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
                                 displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
         endif
@@ -151,11 +147,7 @@
                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                         epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                         epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                        LOCAL_TMP_PATH, &
-                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                        accel_crust_mantle,accel_inner_core, &
-                        ibool_crust_mantle,ibool_inner_core)
+                        LOCAL_TMP_PATH)
 
       case( 5 )
         !output displacement
@@ -181,8 +173,63 @@
                     MOVIE_COARSE,ibool_crust_mantle,veloc_crust_mantle, &
                     scalingval,mask_3dmovie,nu_3dmovie)
 
+      case( 7 )
+        ! output norm of displacement
+
+        ! gets resulting array values onto CPU
+        if( GPU_MODE ) then
+          ! wavefields
+          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
+          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+        endif
+
+        call write_movie_volume_displnorm(myrank,it,LOCAL_TMP_PATH, &
+                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
+      case( 8 )
+        ! output norm of velocity
+
+        ! gets resulting array values onto CPU
+        if( GPU_MODE ) then
+          ! wavefields
+          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
+          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+        endif
+
+        call write_movie_volume_velnorm(myrank,it,LOCAL_TMP_PATH, &
+                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
+      case( 9 )
+        ! output norm of acceleration
+
+        ! gets resulting array values onto CPU
+        if( GPU_MODE ) then
+          ! wavefields
+          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
+          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+        endif
+
+        call write_movie_volume_accelnorm(myrank,it,LOCAL_TMP_PATH, &
+                        accel_crust_mantle,accel_inner_core,accel_outer_core, &
+                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
       case default
-        call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be 1,2,3,4,5 or 6')
+        call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
+
       end select ! MOVIE_VOLUME_TYPE
 
     endif

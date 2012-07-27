@@ -45,6 +45,7 @@
   use specfem_par_innercore
   use specfem_par_outercore
   use specfem_par_movie
+
   implicit none
 
   ! standard include of the MPI library
@@ -52,9 +53,6 @@
 
   ! local parameters
   integer :: ier
-
-! include values created by the mesher
-!  include "OUTPUT_FILES/values_from_mesher.h"
 
 !=======================================================================!
 !                                                                       !

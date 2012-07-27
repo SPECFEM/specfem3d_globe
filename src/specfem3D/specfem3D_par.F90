@@ -242,10 +242,7 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-    NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-    NGLOB1D_RADIAL, &
-    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   ! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array

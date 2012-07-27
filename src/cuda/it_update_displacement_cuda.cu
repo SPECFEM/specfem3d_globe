@@ -388,39 +388,39 @@ void FC_FUNC_(kernel_3_a_cuda,
 
     if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
       kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
-                 mp->d_accel_crust_mantle,
-                 mp->NGLOB_CRUST_MANTLE,
-                 deltatover2,
-                 mp->d_rmassx_crust_mantle,
-                 mp->d_rmassy_crust_mantle,
-                 mp->d_rmassz_crust_mantle);
+                                               mp->d_accel_crust_mantle,
+                                               mp->NGLOB_CRUST_MANTLE,
+                                               deltatover2,
+                                               mp->d_rmassx_crust_mantle,
+                                               mp->d_rmassy_crust_mantle,
+                                               mp->d_rmassz_crust_mantle);
 
       if(SIMULATION_TYPE == 3){
-  kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
-             mp->d_b_accel_crust_mantle,
-             mp->NGLOB_CRUST_MANTLE,
-             b_deltatover2,
-             mp->d_rmassx_crust_mantle,
-             mp->d_rmassy_crust_mantle,
-             mp->d_rmassz_crust_mantle);
+        kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
+                                                 mp->d_b_accel_crust_mantle,
+                                                 mp->NGLOB_CRUST_MANTLE,
+                                                 b_deltatover2,
+                                                 mp->d_rmassx_crust_mantle,
+                                                 mp->d_rmassy_crust_mantle,
+                                                 mp->d_rmassz_crust_mantle);
       }
     }else{
       kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
-                 mp->d_accel_crust_mantle,
-                 mp->NGLOB_CRUST_MANTLE,
-                 deltatover2,
-                 mp->d_rmassz_crust_mantle,
-                 mp->d_rmassz_crust_mantle,
-                 mp->d_rmassz_crust_mantle);
+                                               mp->d_accel_crust_mantle,
+                                               mp->NGLOB_CRUST_MANTLE,
+                                               deltatover2,
+                                               mp->d_rmassz_crust_mantle,
+                                               mp->d_rmassz_crust_mantle,
+                                               mp->d_rmassz_crust_mantle);
 
       if(SIMULATION_TYPE == 3){
-  kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
-             mp->d_b_accel_crust_mantle,
-             mp->NGLOB_CRUST_MANTLE,
-             b_deltatover2,
-             mp->d_rmassz_crust_mantle,
-             mp->d_rmassz_crust_mantle,
-             mp->d_rmassz_crust_mantle);
+        kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
+                                                 mp->d_b_accel_crust_mantle,
+                                                 mp->NGLOB_CRUST_MANTLE,
+                                                 b_deltatover2,
+                                                 mp->d_rmassz_crust_mantle,
+                                                 mp->d_rmassz_crust_mantle,
+                                                 mp->d_rmassz_crust_mantle);
       }
     }
 
@@ -429,31 +429,31 @@ void FC_FUNC_(kernel_3_a_cuda,
 
     if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
       kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
-                 mp->NGLOB_CRUST_MANTLE,
-                 mp->d_rmassx_crust_mantle,
-                 mp->d_rmassy_crust_mantle,
-                 mp->d_rmassz_crust_mantle);
+                                                     mp->NGLOB_CRUST_MANTLE,
+                                                     mp->d_rmassx_crust_mantle,
+                                                     mp->d_rmassy_crust_mantle,
+                                                     mp->d_rmassz_crust_mantle);
 
       if(SIMULATION_TYPE == 3) {
-  kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
-                   mp->NGLOB_CRUST_MANTLE,
-                   mp->d_rmassx_crust_mantle,
-                   mp->d_rmassy_crust_mantle,
-                   mp->d_rmassz_crust_mantle);
+        kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
+                                                       mp->NGLOB_CRUST_MANTLE,
+                                                       mp->d_rmassx_crust_mantle,
+                                                       mp->d_rmassy_crust_mantle,
+                                                       mp->d_rmassz_crust_mantle);
       }
     }else{
       kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
-                 mp->NGLOB_CRUST_MANTLE,
-                 mp->d_rmassz_crust_mantle,
-                 mp->d_rmassz_crust_mantle,
-                 mp->d_rmassz_crust_mantle);
+                                                     mp->NGLOB_CRUST_MANTLE,
+                                                     mp->d_rmassz_crust_mantle,
+                                                     mp->d_rmassz_crust_mantle,
+                                                     mp->d_rmassz_crust_mantle);
 
       if(SIMULATION_TYPE == 3) {
-  kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
-                   mp->NGLOB_CRUST_MANTLE,
-                   mp->d_rmassz_crust_mantle,
-                   mp->d_rmassz_crust_mantle,
-                   mp->d_rmassz_crust_mantle);
+        kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
+                                                       mp->NGLOB_CRUST_MANTLE,
+                                                       mp->d_rmassz_crust_mantle,
+                                                       mp->d_rmassz_crust_mantle,
+                                                       mp->d_rmassz_crust_mantle);
       }
     }
   }
