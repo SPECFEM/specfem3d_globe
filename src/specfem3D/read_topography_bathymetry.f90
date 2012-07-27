@@ -51,7 +51,7 @@
   endif
 
   ! read topography and bathymetry file
-  if( TOPOGRAPHY .or. OCEANS_VAL ) then
+  if( TOPOGRAPHY ) then
     ! initializes
     ibathy_topo(:,:) = 0
 

@@ -54,13 +54,13 @@
 
   ! input
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             ROTATION,TOPOGRAPHY,NCHUNKS, &
+             ROTATION,TOPOGRAPHY, &
              ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS, &
              MOVIE_VOLUME,SAVE_FORWARD
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob, &
             NSPEC2D_BOTTOM,NSPEC2D_TOP
 
-  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE
+  integer, intent(in) :: NCHUNKS,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
@@ -236,7 +236,7 @@
     9.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
   ! xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rmass_crust_mantle
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
      ! three mass matrices for the crust and mantle region: rmassx, rmassy and rmassz
      static_memory_size = static_memory_size + &
           6.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)

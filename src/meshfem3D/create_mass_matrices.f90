@@ -141,7 +141,11 @@
   rmassz(:) = 0._CUSTOM_REAL
 
   ! use the non-dimensional time step to make the mass matrix correction
-  deltat = DT*dsqrt(PI*GRAV*RHOAV)
+  if(CUSTOM_REAL == SIZE_REAL) then
+    deltat = sngl(DT*dsqrt(PI*GRAV*RHOAV))
+  else
+    deltat = DT*dsqrt(PI*GRAV*RHOAV)
+  endif
 
   ! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -288,10 +292,12 @@
             ! get geographic latitude and longitude in degrees
             lat = 90.0d0 - colat*180.0d0/PI
             lon = phival*180.0d0/PI
-            elevation = 0.d0
 
             ! compute elevation at current point
-            call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+            elevation = 0.d0
+            if( TOPOGRAPHY ) then
+              call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+            endif
 
             ! non-dimensionalize the elevation, which is in meters
             ! and suppress positive elevation, which means no oceans

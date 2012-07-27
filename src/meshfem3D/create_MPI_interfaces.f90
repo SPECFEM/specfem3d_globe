@@ -31,7 +31,7 @@
 
   implicit none
   integer,intent(in):: iregion_code
-  
+
   ! sets up arrays
   call cmi_allocate_addressing(iregion_code)
 
@@ -56,8 +56,8 @@
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC,NGLOB, &
-    NCHUNKS,myrank,NGLOB1D_RADIAL,NUMCORNERS_SHARED,NPROC_XI,NGLLX,NGLLY,NGLLZ,LOCAL_PATH
-    
+    NCHUNKS,myrank,NGLOB1D_RADIAL,NUMCORNERS_SHARED,NPROC_XI,NGLLX,NGLLY,NGLLZ
+
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -65,7 +65,7 @@
   implicit none
 
   integer,intent(in):: iregion_code
-  
+
   ! local parameters
   integer :: NUM_FACES,NPROC_ONE_DIRECTION
   integer :: ier
@@ -108,13 +108,13 @@
 
   NSPEC_CRUST_MANTLE = 0
   NGLOB_CRUST_MANTLE = 0
-  
+
   NSPEC_OUTER_CORE = 0
   NGLOB_OUTER_CORE = 0
 
   NSPEC_INNER_CORE = 0
   NGLOB_INNER_CORE = 0
-  
+
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     NGLOB2DMAX_XMIN_XMAX_CM = NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
@@ -152,10 +152,10 @@
     NSPEC_INNER_CORE = NSPEC(IREGION_INNER_CORE)
     NGLOB_INNER_CORE = NGLOB(IREGION_INNER_CORE)
 
-  case default 
+  case default
     stop 'error iregion_code value not recognized'
   end select
-  
+
   ! allocates arrays
   allocate(iprocfrom_faces(NUMMSGS_FACES), &
           iprocto_faces(NUMMSGS_FACES), &
@@ -167,7 +167,7 @@
           iproc_worker1_corners(NCORNERSCHUNKS), &
           iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating iproc corner arrays')
-  
+
   allocate(buffer_send_chunkcorn_scalar(NGLOB1D_RADIAL_CM), &
           buffer_recv_chunkcorn_scalar(NGLOB1D_RADIAL_CM))
 
@@ -175,7 +175,7 @@
           buffer_recv_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC))
 
   select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )  
+  case( IREGION_CRUST_MANTLE )
     ! crust mantle
     allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM), &
@@ -267,7 +267,7 @@
 
   use meshfem3D_par,only: &
     myrank,LOCAL_PATH
-    
+
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -275,10 +275,10 @@
   implicit none
 
   integer,intent(in):: iregion_code
-  
+
   ! read coordinates of the mesh
   select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )  
+  case( IREGION_CRUST_MANTLE )
     ! crust mantle
     ibool_crust_mantle(:,:,:,:) = -1
     call cmi_read_solver_data(myrank,IREGION_CRUST_MANTLE, &
@@ -340,15 +340,15 @@
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS,OUTPUT_FILES,IIN,INCLUDE_CENTRAL_CUBE, &
     iproc_xi,iproc_eta,ichunk,addressing
-    
+
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
   use MPI_outer_core_par
-  use MPI_inner_core_par  
+  use MPI_inner_core_par
   implicit none
 
   integer,intent(in):: iregion_code
-  
+
   ! local parameters
   integer :: ier
   integer njunk1,njunk2
@@ -369,7 +369,7 @@
     ! initializes
     npoin2D_xi_crust_mantle(:) = 0
     npoin2D_eta_crust_mantle(:) = 0
-    
+
     call read_arrays_buffers_mesher(IREGION_CRUST_MANTLE,myrank,iboolleft_xi_crust_mantle, &
                iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
                npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -414,10 +414,10 @@
     if(myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'outer core region:'
-    endif    
+    endif
     npoin2D_xi_outer_core(:) = 0
     npoin2D_eta_outer_core(:) = 0
-    
+
     call read_arrays_buffers_mesher(IREGION_OUTER_CORE,myrank, &
                iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
                npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
@@ -462,7 +462,7 @@
       write(IMAIN,*) 'inner core region:'
     endif
     npoin2D_xi_inner_core(:) = 0
-    npoin2D_eta_inner_core(:) = 0    
+    npoin2D_eta_inner_core(:) = 0
     call read_arrays_buffers_mesher(IREGION_INNER_CORE,myrank, &
                iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
                npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -596,7 +596,7 @@
                                 maxval(npoin2D_eta_inner_core(:)))
 
   end select
-  
+
 
   end subroutine cmi_read_buffers
 
@@ -609,16 +609,16 @@
 
   use meshfem3D_par,only: &
     myrank,LOCAL_PATH
-    
+
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
-  
+
   implicit none
 
   integer,intent(in):: iregion_code
-  
+
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
@@ -669,11 +669,11 @@
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
   use MPI_outer_core_par
-  use MPI_inner_core_par  
+  use MPI_inner_core_par
   implicit none
 
   integer,intent(in):: iregion_code
-  
+
   ! free memory
   deallocate(iprocfrom_faces,iprocto_faces,imsg_type)
   deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
@@ -697,7 +697,7 @@
     deallocate(idoubling_crust_mantle,ibool_crust_mantle)
 
     deallocate(is_on_a_slice_edge_crust_mantle)
-    
+
   case( IREGION_OUTER_CORE )
     ! outer core
     deallocate(iboolcorner_outer_core)
@@ -714,7 +714,7 @@
     deallocate(idoubling_outer_core,ibool_outer_core)
 
     deallocate(is_on_a_slice_edge_outer_core)
-    
+
   case( IREGION_INNER_CORE )
     ! inner core
     deallocate(ibelm_xmin_inner_core, &
@@ -738,9 +738,9 @@
     deallocate(num_elem_colors_inner_core)
 
     deallocate(is_on_a_slice_edge_inner_core)
-    
+
   end select
-  
+
   end subroutine cmi_free_MPI_arrays
 
 !

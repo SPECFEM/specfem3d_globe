@@ -31,13 +31,13 @@
   use meshfem3D_par,only: &
     myrank,OUTPUT_FILES,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
-    
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
-  
+
   implicit none
-  
+
   integer,intent(in) :: iregion_code
 
   ! local parameters
@@ -76,7 +76,7 @@
         phase_ispec_inner_crust_mantle(iinner,2) = ispec
       endif
     enddo
-    
+
     ! user output
     if(myrank == 0) then
       write(IMAIN,*)
@@ -163,7 +163,7 @@
         phase_ispec_inner_inner_core(iinner,2) = ispec
       endif
     enddo
-    
+
     ! user output
     if(myrank == 0) then
       percentage_edge = 100. * nspec_outer_inner_core / real(NSPEC_INNER_CORE)
@@ -182,5 +182,5 @@
     endif
 
   end select
-  
+
   end subroutine setup_Inner_Outer

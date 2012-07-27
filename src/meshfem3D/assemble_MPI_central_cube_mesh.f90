@@ -178,7 +178,11 @@
         do ipoin = 1,npoin2D_cube_from_slices
           if(NPROC_XI==1) then
             if(ibool_central_cube(imsg,ipoin) > 0 ) then
-              array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
+              if(CUSTOM_REAL == SIZE_REAL) then
+                array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(imsg,ipoin,idimension))
+              else
+                array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
+              endif
             endif
           else
             if(CUSTOM_REAL == SIZE_REAL) then
@@ -196,9 +200,15 @@
         if(NPROC_XI==1) then
           if( ibool_central_cube(nb_msgs_theor_in_cube,ipoin) > 0 ) then
             if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
-              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-              buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+              if(CUSTOM_REAL == SIZE_REAL) then
+                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+                  array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+                  sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
+              else
+                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+                  array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+                  buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+              endif
             endif
             mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
           endif
@@ -206,12 +216,12 @@
           if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
             if(CUSTOM_REAL == SIZE_REAL) then
               array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-              sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
+                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+                sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
             else
               array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-              buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+                buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
             endif
           endif
           mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.

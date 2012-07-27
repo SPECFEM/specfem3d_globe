@@ -40,7 +40,7 @@
   implicit none
 
   integer,intent(in) :: iregion_code
-  
+
   ! local parameters
   integer, dimension(:), allocatable :: perm
   integer :: ier
@@ -216,7 +216,7 @@
     endif
 
   end select
-  
+
   end subroutine setup_color_perm
 
 !
@@ -236,14 +236,14 @@
   use MPI_crust_mantle_par,only: &
     num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle, &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
-    
+
   use MPI_outer_core_par,only: &
     num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core
-  
+
   use MPI_inner_core_par,only: &
     num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core, &
-    idoubling_inner_core  
-  
+    idoubling_inner_core
+
   implicit none
 
   integer :: myrank,nspec,nglob
@@ -575,10 +575,10 @@
   use MPI_crust_mantle_par,only: &
     NSPEC_CRUST_MANTLE,ibool_crust_mantle,is_on_a_slice_edge_crust_mantle, &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
-    
+
   use MPI_outer_core_par,only: &
     NSPEC_OUTER_CORE,ibool_outer_core,is_on_a_slice_edge_outer_core
-  
+
   use MPI_inner_core_par,only: &
     NSPEC_INNER_CORE,ibool_inner_core,is_on_a_slice_edge_inner_core
 

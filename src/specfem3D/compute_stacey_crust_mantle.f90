@@ -31,7 +31,7 @@
 
   use specfem_par,only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
-    wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
+    wgllwgll_xz,wgllwgll_yz
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
 

@@ -131,10 +131,10 @@
           number_receiver_global,seismograms, &
           islice_selected_rec, &
           seismo_offset,seismo_current, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-          OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+          OUTPUT_SEISMOS_ASCII_TEXT, &
+          NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
-          MODEL,OUTPUT_FILES, &
+          OUTPUT_FILES, &
           WRITE_SEISMOGRAMS_BY_MASTER
 
   implicit none
@@ -349,7 +349,6 @@
   use specfem_par,only: &
           ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
           myrank,nrec, &
-          number_receiver_global, &
           station_name,network_name,stlat,stlon,stele,stbur, &
           DT,seismo_offset,seismo_current,it_end, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &

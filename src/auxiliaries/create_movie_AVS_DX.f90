@@ -848,8 +848,7 @@
 
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC, &
-               NSPEC2D_XI, &
-               NSPEC2D_ETA, &
+               NSPEC2D_XI,NSPEC2D_ETA, &
                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                NSPEC1D_RADIAL,NGLOB1D_RADIAL, &

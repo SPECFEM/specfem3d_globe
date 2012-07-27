@@ -34,7 +34,9 @@
 
   ! local parameters
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed,NGLOB_computed, &
-    NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL
+    NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
@@ -47,7 +49,8 @@
     GAMMA_ROTATION_AZIMUTH
   integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
   logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-    ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
+    ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,ROTATION,ELLIPTICITY, &
+    GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
     HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
   character(len=150) :: dummystring
   integer, external :: err_occurred
@@ -382,7 +385,8 @@
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
-    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
+    call exit_MPI(myrank, &
+    'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
     if ( ATTENUATION_VAL) then
@@ -436,11 +440,6 @@
         call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: needs anisotropic kernel calculations')
       endif
     endif
-  endif
-
-  ! check that buffer size is valid when defining/using buffer_send_chunkcorn_scalar
-  if( NGLOB1D_RADIAL_CM < NGLOB1D_RADIAL_OC .or. NGLOB1D_RADIAL_CM < NGLOB1D_RADIAL_IC ) then
-    call exit_MPI(myrank, 'NGLOB1D_RADIAL_CM must be larger than for outer core or inner core, please check mesh')
   endif
 
   ! check for GPU runs

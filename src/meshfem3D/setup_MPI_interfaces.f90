@@ -30,14 +30,14 @@
 
   use meshfem3D_par,only: &
     INCLUDE_CENTRAL_CUBE,myrank,NUMFACES_SHARED
-    
+
   use create_MPI_interfaces_par
   use MPI_inner_core_par,only: &
     non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices
   implicit none
 
   integer,intent(in):: iregion_code
-  
+
   ! local parameters
   ! assigns initial maximum arrays
   ! for global slices, maximum number of neighbor is around 17 ( 8 horizontal, max of 8 on bottom )
@@ -64,22 +64,22 @@
 
   ! sets up MPI interfaces between different processes
   select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )  
+  case( IREGION_CRUST_MANTLE )
     ! crust/mantle
     call setup_MPI_interfaces_cm(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
 
-  case( IREGION_OUTER_CORE ) 
+  case( IREGION_OUTER_CORE )
     ! outer core
     call setup_MPI_interfaces_oc(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
 
-  case( IREGION_INNER_CORE ) 
+  case( IREGION_INNER_CORE )
     ! inner core
     call setup_MPI_interfaces_ic(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
   end select
-  
+
   ! frees temporary array
   deallocate(ibool_neighbours)
   deallocate(my_neighbours,nibool_neighbours)
@@ -101,9 +101,9 @@
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES
-    
+
   use create_MPI_interfaces_par
-  use MPI_crust_mantle_par  
+  use MPI_crust_mantle_par
   implicit none
 
   integer :: MAX_NEIGHBOURS,max_nibool
@@ -237,7 +237,7 @@
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES
-    
+
   use create_MPI_interfaces_par
   use MPI_outer_core_par
   implicit none
@@ -375,9 +375,9 @@
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,NSPEC2D_BOTTOM
-    
+
   use create_MPI_interfaces_par
-  use MPI_inner_core_par  
+  use MPI_inner_core_par
   implicit none
 
   integer :: MAX_NEIGHBOURS,max_nibool

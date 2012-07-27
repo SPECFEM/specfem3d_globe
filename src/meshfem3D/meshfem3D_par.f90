@@ -562,7 +562,7 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
+!  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
   end module meshfem3D_par
 
@@ -708,7 +708,7 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
   implicit none
-  
+
   ! indirect addressing for each message for faces and corners of the chunks
   ! a given slice can belong to at most one corner and at most two faces
   integer :: NGLOB2DMAX_XY
@@ -747,7 +747,7 @@
   ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
      buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
-  
+
   end module create_MPI_interfaces_par
 
 !
@@ -757,9 +757,9 @@
   module MPI_crust_mantle_par
 
   use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
-  
+
   implicit none
-  
+
   ! collected MPI interfaces
   !--------------------------------------
   ! MPI crust/mantle mesh
@@ -826,9 +826,9 @@
   module MPI_inner_core_par
 
   use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
-  
+
   implicit none
-  
+
   !--------------------------------------
   ! MPI inner core mesh
   !--------------------------------------
@@ -909,9 +909,9 @@
   module MPI_outer_core_par
 
   use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
-  
+
   implicit none
-  
+
   !--------------------------------------
   ! MPI outer core mesh
   !--------------------------------------

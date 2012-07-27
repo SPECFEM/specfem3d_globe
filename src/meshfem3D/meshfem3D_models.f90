@@ -148,7 +148,7 @@
   endif
 
   ! read topography and bathymetry file
-  if(TOPOGRAPHY .or. OCEANS) &
+  if(TOPOGRAPHY) &
     call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
   ! re-defines/initializes models 1066a and ak135 and ref
