@@ -242,17 +242,17 @@
 
     ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
     if(ASSUME_PERFECT_SPHERE) then
-      theta = PI/2.0d0 - stlat(irec)*PI/180.0d0
+      theta = PI_OVER_TWO - stlat(irec)*DEGREES_TO_RADIANS
     else
-      theta = PI/2.0d0 - atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
+      theta = PI_OVER_TWO - atan(0.99329534d0*dtan(stlat(irec)*DEGREES_TO_RADIANS))
     endif
 
-    phi = stlon(irec)*PI/180.0d0
+    phi = stlon(irec)*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
     ! compute epicentral distance
     epidist(irec) = acos(cos(theta)*cos(theta_source) + &
-              sin(theta)*sin(theta_source)*cos(phi-phi_source))*180.0d0/PI
+              sin(theta)*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
 
     ! print some information about stations
     if(myrank == 0) &
@@ -280,8 +280,8 @@
       endif
 
       !     get the orientation of the seismometer
-      thetan=(90.0d0+stdip)*PI/180.0d0
-      phin=stazi*PI/180.0d0
+      thetan=(90.0d0+stdip)*DEGREES_TO_RADIANS
+      phin=stazi*DEGREES_TO_RADIANS
 
       ! we use the same convention as in Harvard normal modes for the orientation
 

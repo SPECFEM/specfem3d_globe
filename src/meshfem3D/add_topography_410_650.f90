@@ -25,11 +25,9 @@
 !
 !=====================================================================
 
-  subroutine add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
-    numker,numhpa,numcof,ihpa,lmax,nylm, &
-    lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-    nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-    coe,ylmcof,wk1,wk2,wk3,varstr)
+  subroutine add_topography_410_650(myrank,xelm,yelm,zelm)
+
+  use meshfem3D_par,only: R220,R400,R670,R771
 
   implicit none
 
@@ -41,8 +39,6 @@
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
 
-  double precision R220,R400,R670,R771
-
   integer ia
 
   real(kind=4) xcolat,xlon
@@ -52,37 +48,6 @@
   double precision r,theta,phi
   double precision gamma
 
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=40) varstr(maxker)
-
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
@@ -91,15 +56,11 @@
     call reduce(theta,phi)
 
 ! get colatitude and longitude in degrees
-    xcolat = sngl(theta*180.0d0/PI)
-    xlon = sngl(phi*180.0d0/PI)
+    xcolat = sngl(theta*RADIANS_TO_DEGREES)
+    xlon = sngl(phi*RADIANS_TO_DEGREES)
 
 ! compute topography on 410 and 650 at current point
-    call subtopo(xcolat,xlon,topo410out,topo650out, &
-                 numker,numhpa,numcof,ihpa,lmax,nylm, &
-                 lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                 nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                 coe,ylmcof,wk1,wk2,wk3,varstr)
+    call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
 ! non-dimensionalize the topography, which is in km
 ! positive for a depression, so change the sign for a perturbation in radius
@@ -139,11 +100,9 @@
   !> Hejun
   ! use GLL points to capture 410_650 topography
   ! JAN08, 2010
-  subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec,R220,R400,R670,R771, &
-        numker,numhpa,numcof,ihpa,lmax,nylm, &
-        lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-        nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-        coe,ylmcof,wk1,wk2,wk3,varstr)
+  subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
+
+  use meshfem3D_par,only: R220,R400,R670,R771
 
   implicit none
 
@@ -153,8 +112,6 @@
   integer:: ispec,nspec
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
 
-  double precision R220,R400,R670,R771
-
   integer i,j,k
 
   real(kind=4) xcolat,xlon
@@ -163,37 +120,6 @@
 
   double precision r,theta,phi
   double precision gamma
-
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=40) varstr(maxker)
 
   ! we loop on all GLL points of the element
   do k = 1,NGLLZ
@@ -205,15 +131,11 @@
         call reduce(theta,phi)
 
         ! get colatitude and longitude in degrees
-        xcolat = sngl(theta*180.0d0/PI)
-        xlon = sngl(phi*180.0d0/PI)
+        xcolat = sngl(theta*RADIANS_TO_DEGREES)
+        xlon = sngl(phi*RADIANS_TO_DEGREES)
 
         ! compute topography on 410 and 650 at current point
-        call subtopo(xcolat,xlon,topo410out,topo650out, &
-                 numker,numhpa,numcof,ihpa,lmax,nylm, &
-                 lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                 nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                 coe,ylmcof,wk1,wk2,wk3,varstr)
+        call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
         ! non-dimensionalize the topography, which is in km
         ! positive for a depression, so change the sign for a perturbation in radius

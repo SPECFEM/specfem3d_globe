@@ -395,15 +395,15 @@
 
     ! converts values into radians
     ! colatitude [0, PI]
-    LAT_SOURCE = (90. - LAT_SOURCE)*PI/180.0
+    LAT_SOURCE = (90.0 - LAT_SOURCE)*DEGREES_TO_RADIANS
 
     ! longitude [-PI, PI]
     if( LON_SOURCE < -180.0 ) LON_SOURCE = LON_SOURCE + 360.0
     if( LON_SOURCE > 180.0 ) LON_SOURCE = LON_SOURCE - 360.0
-    LON_SOURCE = LON_SOURCE *PI/180.0
+    LON_SOURCE = LON_SOURCE * DEGREES_TO_RADIANS
 
     ! mute radius in rad
-    RADIUS_TO_MUTE = RADIUS_TO_MUTE*PI/180.0
+    RADIUS_TO_MUTE = RADIUS_TO_MUTE * DEGREES_TO_RADIANS
   endif
 
   print *,'--------'
@@ -456,7 +456,7 @@
 
             ! approximate wavefront travel distance in degrees
             ! (~3.5 km/s wave speed for surface waves)
-            distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * 180./PI
+            distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
 
             ! approximate distance to source (in degrees)
             ! (shrinks if waves travel back from antipode)
@@ -477,7 +477,7 @@
             print*,'muting radius: ',0.7 * distance,'(degrees)'
 
             ! new radius of mute area (in rad)
-            RADIUS_TO_MUTE = 0.7 * distance * PI/180.
+            RADIUS_TO_MUTE = 0.7 * distance * DEGREES_TO_RADIANS
           else
             ! mute_factor used at the beginning for scaling displacement values
             if( STARTTIME_TO_MUTE > TINYVAL ) then
@@ -586,17 +586,17 @@
                       ! checks source longitude range
                       if( LON_SOURCE - RADIUS_TO_MUTE < -PI .or. LON_SOURCE + RADIUS_TO_MUTE > PI ) then
                         ! source close to 180. longitudes, shifts range to [0, 2PI]
-                        if( phival < 0.0 ) phival = phival + 2.0*PI
+                        if( phival < 0.0 ) phival = phival + TWO_PI
                         if( LON_SOURCE < 0.0 ) then
-                          dist_lon = phival - (LON_SOURCE + 2.0*PI)
+                          dist_lon = phival - (LON_SOURCE + TWO_PI)
                         else
                           dist_lon = phival - LON_SOURCE
                         endif
                       else
                         ! source well between range to [-PI, PI]
                         ! shifts phival to be like LON_SOURCE between [-PI,PI]
-                        if( phival > PI ) phival = phival - 2.0*PI
-                        if( phival < -PI ) phival = phival + 2.0*PI
+                        if( phival > PI ) phival = phival - TWO_PI
+                        if( phival < -PI ) phival = phival + TWO_PI
 
                         dist_lon = phival - LON_SOURCE
                       endif
@@ -765,7 +765,7 @@
 
             if( max_absol < max_average ) then
               ! distance (in degree) of surface waves travelled
-              distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * 180./PI
+              distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
               if( distance > 10.0 .and. distance <= 20.0 ) then
                 ! smooth transition between 10 and 20 degrees
                 ! sets positive and negative maximum
@@ -912,13 +912,13 @@
 
                   ! converts the geocentric colatitude to a geographic colatitude
                   if(.not. ASSUME_PERFECT_SPHERE) then
-                    thetaval = PI/2.0d0 - &
+                    thetaval = PI_OVER_TWO - &
                       datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dble(sin(thetaval))))
                   endif
 
                   ! gets geographic latitude and longitude in degrees
-                  lat = sngl(90.d0 - thetaval*180.0/PI)
-                  long = sngl(phival*180.0/PI)
+                  lat = sngl(90.d0 - thetaval*RADIANS_TO_DEGREES)
+                  long = sngl(phival*RADIANS_TO_DEGREES)
                   if(long > 180.0) long = long-360.0
                 endif
 

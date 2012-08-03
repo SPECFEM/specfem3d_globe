@@ -616,12 +616,12 @@
 
           ! note: converts the geocentric colatitude to a geographic colatitude
           if(.not. ASSUME_PERFECT_SPHERE) then
-            thetaval = PI/2.0d0 - &
+            thetaval = PI_OVER_TWO - &
                     datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dble(sin(thetaval))))
           endif
 
-          lat = (PI/2.0-thetaval)*180.0/PI
-          long = phival*180.0/PI
+          lat = (PI_OVER_TWO-thetaval)*RADIANS_TO_DEGREES
+          long = phival*RADIANS_TO_DEGREES
           if(long > 180.0) long = long-360.0
           write(11,*) long,lat,sngl(field_display(ilocnum+ieoff))
         endif

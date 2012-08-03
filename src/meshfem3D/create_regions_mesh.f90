@@ -73,9 +73,7 @@
   logical, dimension(nspec) :: is_on_a_slice_edge
 
   ! arrays with the mesh in double precision
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   integer :: nglob_theor,npointot
 
@@ -232,7 +230,7 @@
     !        xstore,ystore,zstore,rhostore,dvpstore, &
     !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
     !        nspec,HETEROGEN_3D_MANTLE, &
-    !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
+    !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS )
 
     ! creates mass matrix
     call sync_all()
@@ -253,22 +251,23 @@
     nglob = nglob_theor
 
     if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
-       select case(iregion_code)
-       case( IREGION_CRUST_MANTLE )
-          nglob_xy = nglob
-       case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
-          nglob_xy = 1
-       endselect
+      select case(iregion_code)
+      case( IREGION_CRUST_MANTLE )
+        nglob_xy = nglob
+      case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
+        nglob_xy = 1
+      endselect
     else
        nglob_xy = 1
     endif
 
-    allocate(rmassx(nglob_xy),stat=ier)
+    allocate(rmassx(nglob_xy), &
+            rmassy(nglob_xy), &
+            stat=ier)
     if(ier /= 0) stop 'error in allocate 21'
-    allocate(rmassy(nglob_xy),stat=ier)
-    if(ier /= 0) stop 'error in allocate 21'
+
     allocate(rmassz(nglob),stat=ier)
-    if(ier /= 0) stop 'error in allocate 21'
+    if(ier /= 0) stop 'error in allocate 22'
 
     ! allocates ocean load mass matrix as well if oceans
     if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -281,49 +280,20 @@
     if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
-    call create_mass_matrices(myrank,nspec,idoubling,wxgll,wygll,wzgll,ibool, &
-                          nspec_actually,xixstore,xiystore,xizstore, &
-                          etaxstore,etaystore,etazstore, &
-                          gammaxstore,gammaystore,gammazstore, &
-                          iregion_code,rhostore,kappavstore, &
-                          nglob_xy,nglob,prname, &
-                          rmassx,rmassy,rmassz, &
-                          nglob_oceans,rmass_ocean_load, &
-                          xstore,ystore,zstore,RHO_OCEANS, &
-                          NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-                          ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                          nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                          normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
-                          rho_vp,rho_vs,nspec_stacey, &
-                          jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                          jacobian2D_bottom,jacobian2D_top)
+    call create_mass_matrices(myrank,nspec,idoubling,ibool, &
+                            iregion_code,xstore,ystore,zstore, &
+                            NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
     ! save the binary files
     call sync_all()
     if( myrank == 0) then
       write(IMAIN,*) '  ...saving binary files'
     endif
-    call save_arrays_solver(myrank,rho_vp,rho_vs,nspec_stacey, &
-                  prname,iregion_code,xixstore,xiystore,xizstore, &
-                  etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                  xstore,ystore,zstore,rhostore,dvpstore, &
-                  kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                  nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                  c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                  c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                  ibool,idoubling,is_on_a_slice_edge,nglob_xy,nglob, &
-                  rmassx,rmassy,rmassz,rmass_ocean_load,nglob_oceans, &
-                  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                  normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
-                  jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                  jacobian2D_bottom,jacobian2D_top,nspec, &
-                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                  TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-                  ANISOTROPIC_INNER_CORE,OCEANS, &
-                  tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
-                  size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-                  ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
+    call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+                           iregion_code,xstore,ystore,zstore, &
+                           is_on_a_slice_edge, &
+                           NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
     deallocate(rmassx,rmassy,rmassz)
     deallocate(rmass_ocean_load)
@@ -590,10 +560,8 @@
   ! store and save the final arrays only in the second pass
   ! therefore in the first pass some arrays can be allocated with a dummy size
   if(ipass == 1) then
-    ACTUALLY_STORE_ARRAYS = .false.
     nspec_actually = 1
   else
-    ACTUALLY_STORE_ARRAYS = .true.
     nspec_actually = nspec
   endif
   allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
@@ -747,9 +715,7 @@
     IMAIN,myrank, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
     NPROC_XI,NPROC_ETA,NCHUNKS, &
-    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-    R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+    INCLUDE_CENTRAL_CUBE,R_CENTRAL_CUBE, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR,NB_SQUARE_CORNERS, &
     rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
     rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
@@ -847,9 +813,7 @@
                     xstore,ystore,zstore, &
                     iaddx,iaddy,iaddz,xigll,yigll,zigll, &
                     shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                    RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                    INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
                     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -862,7 +826,7 @@
                     nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                     size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
-                    stretch_tab,ACTUALLY_STORE_ARRAYS, &
+                    stretch_tab, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -880,9 +844,7 @@
                     ner,ratio_sampling_array,r_top,r_bottom, &
                     xstore,ystore,zstore,xigll,yigll,zigll, &
                     shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                    RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                    INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
                     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -894,7 +856,7 @@
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                     size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
-                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB,ACTUALLY_STORE_ARRAYS, &
+                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -934,8 +896,6 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,&
-                        R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                         shape3D,rmin,rmax,rhostore,dvpstore,&
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
@@ -945,7 +905,7 @@
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                         size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
-                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
+                        rho_vp,rho_vs,xigll,yigll,zigll, &
                         ispec_is_tiso)
   endif
 
@@ -992,10 +952,12 @@
 
 ! creates global indexing array ibool
 
-  use meshfem3d_par,only: &
-    myrank,NGLLX,NGLLY,NGLLZ
+  use constants,only: NGLLX,NGLLY,NGLLZ,ZERO
+
+  use meshfem3d_par,only: myrank
 
   use create_regions_mesh_par2
+
   implicit none
 
   ! number of spectral elements in each block
@@ -1024,11 +986,11 @@
           zp(npointot),stat=ier)
   if(ier /= 0) stop 'error in allocate 20'
 
-  locval = 0
-  ifseg = .false.
-  xp = 0.d0
-  yp = 0.d0
-  zp = 0.d0
+  locval(:) = 0
+  ifseg(:) = .false.
+  xp(:) = ZERO
+  yp(:) = ZERO
+  zp(:) = ZERO
 
   ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
   ! these arrays and therefore destroy them
@@ -1058,14 +1020,16 @@
       myrank,nglob,nglob_theor
     call exit_MPI(myrank,errmsg)
   endif
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) &
+    call exit_MPI(myrank,'incorrect global numbering')
 
   ! creates a new indirect addressing to reduce cache misses in memory access in the solver
   ! this is *critical* to improve performance in the solver
   call get_global_indirect_addressing(nspec,nglob_theor,ibool)
 
   ! checks again
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) &
+    call exit_MPI(myrank,'incorrect global numbering after sorting')
 
   end subroutine crm_setup_indexing
 
@@ -1226,8 +1190,8 @@
           RMIDDLE_CRUST,ROCEAN,iregion_code)
 
   call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
-          idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
-          rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+          idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+          npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
           ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
           RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
           RMIDDLE_CRUST,ROCEAN,iregion_code)

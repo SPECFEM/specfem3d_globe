@@ -233,12 +233,12 @@
 
       ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
       if(ASSUME_PERFECT_SPHERE) then
-        theta = PI/2.0d0 - lat(isource)*PI/180.0d0
+        theta = PI_OVER_TWO - lat(isource)*DEGREES_TO_RADIANS
       else
-        theta = PI/2.0d0 - atan(0.99329534d0*dtan(lat(isource)*PI/180.0d0))
+        theta = PI_OVER_TWO - atan(0.99329534d0*dtan(lat(isource)*DEGREES_TO_RADIANS))
       endif
 
-      phi = long(isource)*PI/180.0d0
+      phi = long(isource)*DEGREES_TO_RADIANS
       call reduce(theta,phi)
 
       ! get the moment tensor
@@ -287,8 +287,8 @@
         endif
 
         !   get the orientation of the seismometer
-        thetan=(90.0d0+stdip)*PI/180.0d0
-        phin=stazi*PI/180.0d0
+        thetan=(90.0d0+stdip)*DEGREES_TO_RADIANS
+        phin=stazi*DEGREES_TO_RADIANS
 
         ! we use the same convention as in Harvard normal modes for the orientation
 
@@ -673,7 +673,7 @@
         call reduce(theta_source(isource),phi_source(isource))
 
         ! convert geocentric to geographic colatitude
-        colat_source = PI/2.0d0 &
+        colat_source = PI_OVER_TWO &
           - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
         if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
@@ -688,8 +688,8 @@
         ! compute real position of the source
         write(IMAIN,*) 'position of the source that will be used:'
         write(IMAIN,*)
-        write(IMAIN,*) '      latitude: ',(PI/2.0d0-colat_source)*180.0d0/PI
-        write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
+        write(IMAIN,*) '      latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
+        write(IMAIN,*) '     longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
         write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
         write(IMAIN,*)
 

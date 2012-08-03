@@ -30,6 +30,9 @@
   use meshfem3D_par
   implicit none
 
+  ! user output
+  if(myrank == 0) call sm_output_info()
+
   ! dynamic allocation of mesh arrays
   allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))
   allocate(ichunk_slice(0:NPROCTOT-1))
@@ -51,10 +54,6 @@
                         NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE, &
                         NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
 
-  ! user output
-  if(myrank == 0) call sm_output_info(myrank,sizeprocs,NEX_XI,NEX_ETA, &
-                                           NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
-                                           R_CENTRAL_CUBE)
 
   ! distributes 3D models
   call meshfem3D_models_broadcast(myrank,NSPEC, &
@@ -63,9 +62,9 @@
                                 LOCAL_PATH)
 
 
+  ! user output
   if(myrank == 0 ) then
     write(IMAIN,*)
-    write(IMAIN,*) 'model setup successfully read in'
     write(IMAIN,*)
   endif
   call sync_all()
@@ -76,19 +75,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine sm_output_info(myrank,sizeprocs,NEX_XI,NEX_ETA, &
-                                NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT,&
-                                R_CENTRAL_CUBE)
+  subroutine sm_output_info()
 
   use meshfem3D_models_par
+  use meshfem3D_par,only: &
+    MODEL,sizeprocs,NEX_XI,NEX_ETA, &
+    NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
+    R_CENTRAL_CUBE
 
   implicit none
 
-  integer :: myrank,sizeprocs,NEX_XI,NEX_ETA, &
-           NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT
-  double precision :: R_CENTRAL_CUBE
-
-  write(IMAIN,*) 'This is process ',myrank
+  ! user output
+  write(IMAIN,*)
   write(IMAIN,*) 'There are ',sizeprocs,' MPI processes'
   write(IMAIN,*) 'Processes are numbered from 0 to ',sizeprocs-1
   write(IMAIN,*)
@@ -108,85 +106,77 @@
   write(IMAIN,*) 'Shape functions defined by NGNOD = ',NGNOD,' control nodes'
   write(IMAIN,*) 'Surface shape functions defined by NGNOD2D = ',NGNOD2D,' control nodes'
   write(IMAIN,*)
-  write(IMAIN,*)
-  write(IMAIN,*)
-  if(ELLIPTICITY) then
-    write(IMAIN,*) 'incorporating ellipticity'
-  else
-    write(IMAIN,*) 'no ellipticity'
-  endif
-  write(IMAIN,*)
-  if(TOPOGRAPHY) then
-    write(IMAIN,*) 'incorporating surface topography'
-  else
-    write(IMAIN,*) 'no surface topography'
-  endif
-  write(IMAIN,*)
-  if(ISOTROPIC_3D_MANTLE) then
-    write(IMAIN,*) 'incorporating 3-D lateral variations'
-  else
-    write(IMAIN,*) 'no 3-D lateral variations'
-  endif
-  write(IMAIN,*)
-  if(HETEROGEN_3D_MANTLE) then
-    write(IMAIN,*) 'incorporating heterogeneities in the mantle'
-  else
-    write(IMAIN,*) 'no heterogeneities in the mantle'
-  endif
-  write(IMAIN,*)
-  if(CRUSTAL) then
-    write(IMAIN,*) 'incorporating crustal variations'
-  else
-    write(IMAIN,*) 'no crustal variations'
-  endif
-  write(IMAIN,*)
-  if(ONE_CRUST) then
-    write(IMAIN,*) 'using one layer only in PREM crust'
-  else
-    write(IMAIN,*) 'using unmodified 1D crustal model with two layers'
-  endif
-  write(IMAIN,*)
-  if(GRAVITY) then
-    write(IMAIN,*) 'incorporating self-gravitation (Cowling approximation)'
-  else
-    write(IMAIN,*) 'no self-gravitation'
-  endif
-  write(IMAIN,*)
-  if(ROTATION) then
-    write(IMAIN,*) 'incorporating rotation'
-  else
-    write(IMAIN,*) 'no rotation'
-  endif
-  write(IMAIN,*)
-  if(TRANSVERSE_ISOTROPY) then
-    write(IMAIN,*) 'incorporating anisotropy'
-  else
-    write(IMAIN,*) 'no anisotropy'
-  endif
-  write(IMAIN,*)
-  if(ATTENUATION) then
-    write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-    if(ATTENUATION_3D) write(IMAIN,*)'using 3D attenuation'
-  else
-    write(IMAIN,*) 'no attenuation'
-  endif
-  write(IMAIN,*)
+
+  ! model user parameters
+  write(IMAIN,*) 'model: ',trim(MODEL)
   if(OCEANS) then
-    write(IMAIN,*) 'incorporating the oceans using equivalent load'
+    write(IMAIN,*) '  incorporating the oceans using equivalent load'
   else
-    write(IMAIN,*) 'no oceans'
+    write(IMAIN,*) '  no oceans'
+  endif
+  if(ELLIPTICITY) then
+    write(IMAIN,*) '  incorporating ellipticity'
+  else
+    write(IMAIN,*) '  no ellipticity'
+  endif
+  if(TOPOGRAPHY) then
+    write(IMAIN,*) '  incorporating surface topography'
+  else
+    write(IMAIN,*) '  no surface topography'
+  endif
+  if(GRAVITY) then
+    write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+  else
+    write(IMAIN,*) '  no self-gravitation'
+  endif
+  if(ROTATION) then
+    write(IMAIN,*) '  incorporating rotation'
+  else
+    write(IMAIN,*) '  no rotation'
+  endif
+  if(ATTENUATION) then
+    write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
+    if(ATTENUATION_3D) write(IMAIN,*)'  using 3D attenuation'
+  else
+    write(IMAIN,*) '  no attenuation'
   endif
   write(IMAIN,*)
+
+  ! model mesh parameters
+  if(ISOTROPIC_3D_MANTLE) then
+    write(IMAIN,*) '  incorporating 3-D lateral variations'
+  else
+    write(IMAIN,*) '  no 3-D lateral variations'
+  endif
+  if(HETEROGEN_3D_MANTLE) then
+    write(IMAIN,*) '  incorporating heterogeneities in the mantle'
+  else
+    write(IMAIN,*) '  no heterogeneities in the mantle'
+  endif
+  if(CRUSTAL) then
+    write(IMAIN,*) '  incorporating crustal variations'
+  else
+    write(IMAIN,*) '  no crustal variations'
+  endif
+  if(ONE_CRUST) then
+    write(IMAIN,*) '  using one layer only in PREM crust'
+  else
+    write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
+  endif
+  if(TRANSVERSE_ISOTROPY) then
+    write(IMAIN,*) '  incorporating anisotropy'
+  else
+    write(IMAIN,*) '  no anisotropy'
+  endif
   if(ANISOTROPIC_INNER_CORE) then
-    write(IMAIN,*) 'incorporating anisotropic inner core'
+    write(IMAIN,*) '  incorporating anisotropic inner core'
   else
-    write(IMAIN,*) 'no inner-core anisotropy'
+    write(IMAIN,*) '  no inner-core anisotropy'
   endif
-  write(IMAIN,*)
   if(ANISOTROPIC_3D_MANTLE) then
-    write(IMAIN,*) 'incorporating anisotropic mantle'
+    write(IMAIN,*) '  incorporating anisotropic mantle'
   else
-    write(IMAIN,*) 'no general mantle anisotropy'
+    write(IMAIN,*) '  no general mantle anisotropy'
   endif
   write(IMAIN,*)
   write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'

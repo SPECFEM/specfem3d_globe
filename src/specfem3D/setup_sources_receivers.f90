@@ -104,8 +104,6 @@
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
-  call sync_all()
-
   ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
@@ -128,7 +126,8 @@
                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                      ELLIPTICITY_VAL,min_tshift_cmt_original)
 
-  if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
+  if(abs(minval(tshift_cmt)) > TINYVAL) &
+    call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
   ! count number of sources located in this slice
   nsources_local = 0
@@ -234,8 +233,6 @@
                               elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
 
-  call sync_all()
-
   end subroutine setup_sources
 
 !
@@ -288,7 +285,6 @@
     endif
     write(IMAIN,*)
   endif
-  call sync_all()
 
   ! locate receivers in the crust in the mesh
   call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
@@ -396,7 +392,10 @@
   ! frees arrays
   deallocate(theta_source,phi_source)
 
-  call sync_all()
+  ! topography array no more needed
+  if( TOPOGRAPHY ) then
+    if(allocated(ibathy_topo) ) deallocate(ibathy_topo)
+  endif
 
   end subroutine setup_receivers
 
@@ -462,6 +461,7 @@
     ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating sourcearrays')
+    sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
 
     ! stores source arrays
     call setup_sources_receivers_srcarr()
@@ -482,7 +482,8 @@
 
     if(nadj_rec_local > 0) then
       ! allocate adjoint source arrays
-      allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
+      allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
+              stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
@@ -516,6 +517,9 @@
 
   do isource = 1,NSOURCES
 
+    ! initializes
+    sourcearray(:,:,:,:) = 0._CUSTOM_REAL
+
     !   check that the source slice number is okay
     if(islice_selected_source(isource) < 0 .or. islice_selected_source(isource) > NPROCTOT_VAL-1) &
       call exit_MPI(myrank,'something is wrong with the source slice number')
@@ -538,7 +542,6 @@
                                    nint(gamma_source(isource)), &
                                    ispec_selected_source(isource))
         ! sets sourcearrays
-        sourcearray(:,:,:,:) = 0.0
         ispec = ispec_selected_source(isource)
         do k=1,NGLLZ
           do j=1,NGLLY
@@ -555,6 +558,7 @@
       ! stores source excitations
       sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
     endif
+
   enddo
 
   end subroutine setup_sources_receivers_srcarr

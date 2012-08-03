@@ -52,6 +52,10 @@
 
   ! read topography and bathymetry file
   if( TOPOGRAPHY ) then
+    ! allocates topography array
+    allocate(ibathy_topo(NX_BATHY,NY_BATHY),stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating ibathy_topo array')
+
     ! initializes
     ibathy_topo(:,:) = 0
 
@@ -65,7 +69,7 @@
     endif
 
     ! broadcast the information read on the master to the nodes
-    call MPI_BCAST(ibathy_topo,NX_BATHY_VAL*NY_BATHY_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   endif
 
   ! user output

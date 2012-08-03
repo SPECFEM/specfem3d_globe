@@ -38,30 +38,10 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-  module module_PPM
-
-  include "constants.h"
-
-  ! file
-  character(len=150):: PPM_file_path = "./DATA/PPM/model.txt"
-
-  ! smoothing parameters
-  logical,parameter:: GAUSS_SMOOTHING = .false.
-
-  double precision,parameter:: sigma_h = 10.0 ! 50.0  ! km, horizontal
-  double precision,parameter:: sigma_v = 10.0 ! 20.0   ! km, vertical
-
-  double precision,parameter:: pi_by180 = PI/180.0d0
-  double precision,parameter:: degtokm = pi_by180*R_EARTH_KM
-
-  double precision,parameter:: const_a = sigma_v/3.0
-  double precision,parameter:: const_b = sigma_h/3.0/(R_EARTH_KM*pi_by180)
-  integer,parameter:: NUM_GAUSSPOINTS = 10
-
-  double precision,parameter:: pi_by2 = PI/2.0d0
-  double precision,parameter:: radtodeg = 180.0d0/PI
+  module model_ppm_par
 
   ! ----------------------
+
   ! scale perturbations in shear speed to perturbations in density and vp
   logical,parameter:: SCALE_MODEL = .false.
 
@@ -84,15 +64,39 @@
   ! Qin et al. 2009, sec. 5.2
   double precision, parameter :: SCALE_VP =  0.588d0 ! by Karato, 1993
 
-  end module module_PPM
+  ! ----------------------
+
+
+  ! file
+  character(len=*),parameter :: PPM_file_path = "./DATA/PPM/model.txt"
+
+  ! smoothing parameters
+  logical,parameter:: GAUSS_SMOOTHING = .false.
+
+  double precision,parameter:: sigma_h = 10.0 ! 50.0  ! km, horizontal
+  double precision,parameter:: sigma_v = 10.0 ! 20.0   ! km, vertical
+
+  integer,parameter:: NUM_GAUSSPOINTS = 10
+
+  ! point profile model_variables
+  double precision,dimension(:),allocatable :: PPM_dvs,PPM_lat,PPM_lon,PPM_depth
+
+  double precision :: PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
+  double precision :: PPM_dlat,PPM_dlon,PPM_ddepth,PPM_max_dvs,PPM_min_dvs
+
+  integer :: PPM_num_v,PPM_num_latperlon,PPM_num_lonperdepth
+
+  end module model_ppm_par
 
 !
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_ppm_broadcast(myrank,PPM_V)
+  subroutine model_ppm_broadcast(myrank)
 
 ! standard routine to setup model
+
+  use model_ppm_par
 
   implicit none
 
@@ -100,43 +104,32 @@
   ! standard include of the MPI library
   include 'mpif.h'
 
-! point profile model_variables
-  type model_ppm_variables
-    sequence
-    double precision,dimension(:),pointer :: dvs,lat,lon,depth
-    double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
-    double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
-    integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_ppm_variables
-  type (model_ppm_variables) PPM_V
-
   integer :: myrank
   integer :: ier
 
   ! upper mantle structure
-  if(myrank == 0) call read_model_ppm(PPM_V)
+  if(myrank == 0) call read_model_ppm()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(PPM_V%num_v,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%num_latperlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%num_lonperdepth,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_num_v,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_num_latperlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_num_lonperdepth,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   if( myrank /= 0 ) then
-    allocate(PPM_V%lat(PPM_V%num_v),PPM_V%lon(PPM_V%num_v),PPM_V%depth(PPM_V%num_v),PPM_V%dvs(PPM_V%num_v))
+    allocate(PPM_lat(PPM_num_v),PPM_lon(PPM_num_v),PPM_depth(PPM_num_v),PPM_dvs(PPM_num_v))
   endif
-  call MPI_BCAST(PPM_V%dvs(1:PPM_V%num_v),PPM_V%num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%lat(1:PPM_V%num_v),PPM_V%num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%lon(1:PPM_V%num_v),PPM_V%num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%depth(1:PPM_V%num_v),PPM_V%num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%maxlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%minlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%maxlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%minlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%maxdepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%mindepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%dlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%dlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_V%ddepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_dvs(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_lat(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_lon(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_depth(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_maxlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_minlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_maxlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_minlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_maxdepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_mindepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_dlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_dlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(PPM_ddepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine model_ppm_broadcast
 
@@ -145,22 +138,13 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_model_ppm(PPM_V)
+  subroutine read_model_ppm()
 
-  use module_PPM
+  use model_ppm_par
 
   implicit none
 
-  ! point profile model_variables
-  type model_ppm_variables
-    sequence
-    double precision,dimension(:),pointer :: dvs,lat,lon,depth
-    double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
-    double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
-    integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_ppm_variables
-  type (model_ppm_variables) PPM_V
+  include "constants.h"
 
   ! local parameters
   integer ::            ier,counter,i
@@ -191,7 +175,7 @@
   enddo
   close(10)
 
-  PPM_V%num_v = counter
+  PPM_num_v = counter
   if( counter < 1 ) then
     write(IMAIN,*)
     write(IMAIN,*) '  model PPM:',filename
@@ -206,10 +190,10 @@
     write(IMAIN,*)
   endif
 
-  allocate(PPM_V%lat(counter),PPM_V%lon(counter),PPM_V%depth(counter),PPM_V%dvs(counter))
-  PPM_V%min_dvs = 0.0
-  PPM_V%max_dvs = 0.0
-  PPM_V%dvs(:) = 0.0
+  allocate(PPM_lat(counter),PPM_lon(counter),PPM_depth(counter),PPM_dvs(counter))
+  PPM_min_dvs = 0.0
+  PPM_max_dvs = 0.0
+  PPM_dvs(:) = 0.0
 
   ! vs values
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
@@ -224,45 +208,45 @@
     read(10,*,iostat=ier) lon,lat,depth,dvs,vs
     if( ier == 0 ) then
       counter = counter + 1
-      PPM_V%lat(counter) = lat
-      PPM_V%lon(counter) = lon
-      PPM_V%depth(counter) = depth
-      PPM_V%dvs(counter) = dvs/100.0
+      PPM_lat(counter) = lat
+      PPM_lon(counter) = lon
+      PPM_depth(counter) = depth
+      PPM_dvs(counter) = dvs/100.0
 
       !debug
       !if( abs(depth - 100.0) < 1.e-3) write(IMAIN,*) '  lon/lat/depth : ',lon,lat,depth,' dvs:',dvs
     endif
   enddo
   close(10)
-  if( counter /= PPM_V%num_v ) then
+  if( counter /= PPM_num_v ) then
     write(IMAIN,*)
     write(IMAIN,*) '  model PPM:',filename
     write(IMAIN,*) '     error values read in!!!!!!'
-    write(IMAIN,*) '  expected: ',PPM_V%num_v
+    write(IMAIN,*) '  expected: ',PPM_num_v
     write(IMAIN,*) '  got: ',counter
     call exit_mpi(0,' error model PPM ')
   endif
 
 
   ! gets depths (in km) of upper and lower limit
-  PPM_V%minlat = minval( PPM_V%lat(1:PPM_V%num_v) )
-  PPM_V%maxlat = maxval( PPM_V%lat(1:PPM_V%num_v) )
+  PPM_minlat = minval( PPM_lat(1:PPM_num_v) )
+  PPM_maxlat = maxval( PPM_lat(1:PPM_num_v) )
 
-  PPM_V%minlon = minval( PPM_V%lon(1:PPM_V%num_v) )
-  PPM_V%maxlon = maxval( PPM_V%lon(1:PPM_V%num_v) )
+  PPM_minlon = minval( PPM_lon(1:PPM_num_v) )
+  PPM_maxlon = maxval( PPM_lon(1:PPM_num_v) )
 
-  PPM_V%mindepth = minval( PPM_V%depth(1:PPM_V%num_v) )
-  PPM_V%maxdepth = maxval( PPM_V%depth(1:PPM_V%num_v) )
+  PPM_mindepth = minval( PPM_depth(1:PPM_num_v) )
+  PPM_maxdepth = maxval( PPM_depth(1:PPM_num_v) )
 
-  PPM_V%min_dvs = minval(PPM_V%dvs(1:PPM_V%num_v))
-  PPM_V%max_dvs = maxval(PPM_V%dvs(1:PPM_V%num_v))
+  PPM_min_dvs = minval(PPM_dvs(1:PPM_num_v))
+  PPM_max_dvs = maxval(PPM_dvs(1:PPM_num_v))
 
   write(IMAIN,*) 'model PPM:'
-  write(IMAIN,*) '  latitude min/max   : ',PPM_V%minlat,PPM_V%maxlat
-  write(IMAIN,*) '  longitude min/max: ',PPM_V%minlon,PPM_V%maxlon
-  write(IMAIN,*) '  depth min/max      : ',PPM_V%mindepth,PPM_V%maxdepth
+  write(IMAIN,*) '  latitude min/max   : ',PPM_minlat,PPM_maxlat
+  write(IMAIN,*) '  longitude min/max: ',PPM_minlon,PPM_maxlon
+  write(IMAIN,*) '  depth min/max      : ',PPM_mindepth,PPM_maxdepth
   write(IMAIN,*)
-  write(IMAIN,*) '  dvs min/max : ',PPM_V%min_dvs,PPM_V%max_dvs
+  write(IMAIN,*) '  dvs min/max : ',PPM_min_dvs,PPM_max_dvs
   write(IMAIN,*)
   if( SCALE_MODEL ) then
     write(IMAIN,*) '  scaling: '
@@ -278,46 +262,46 @@
   endif
 
   ! steps lengths
-  PPM_V%dlat = 0.0d0
-  lat = PPM_V%lat(1)
-  do i=1,PPM_V%num_v
-    if( abs(lat - PPM_V%lat(i)) > 1.e-15 ) then
-      PPM_V%dlat = PPM_V%lat(i) - lat
+  PPM_dlat = 0.0d0
+  lat = PPM_lat(1)
+  do i=1,PPM_num_v
+    if( abs(lat - PPM_lat(i)) > 1.e-15 ) then
+      PPM_dlat = PPM_lat(i) - lat
       exit
     endif
   enddo
 
-  PPM_V%dlon = 0.0d0
-  lon = PPM_V%lon(1)
-  do i=1,PPM_V%num_v
-    if( abs(lon - PPM_V%lon(i)) > 1.e-15 ) then
-      PPM_V%dlon = PPM_V%lon(i) - lon
+  PPM_dlon = 0.0d0
+  lon = PPM_lon(1)
+  do i=1,PPM_num_v
+    if( abs(lon - PPM_lon(i)) > 1.e-15 ) then
+      PPM_dlon = PPM_lon(i) - lon
       exit
     endif
   enddo
 
-  PPM_V%ddepth = 0.0d0
-  depth = PPM_V%depth(1)
-  do i=1,PPM_V%num_v
-    if( abs(depth - PPM_V%depth(i)) > 1.e-15 ) then
-      PPM_V%ddepth = PPM_V%depth(i) - depth
+  PPM_ddepth = 0.0d0
+  depth = PPM_depth(1)
+  do i=1,PPM_num_v
+    if( abs(depth - PPM_depth(i)) > 1.e-15 ) then
+      PPM_ddepth = PPM_depth(i) - depth
       exit
     endif
   enddo
 
-  if( abs(PPM_V%dlat) < 1.e-15 .or. abs(PPM_V%dlon) < 1.e-15 .or. abs(PPM_V%ddepth) < 1.e-15) then
+  if( abs(PPM_dlat) < 1.e-15 .or. abs(PPM_dlon) < 1.e-15 .or. abs(PPM_ddepth) < 1.e-15) then
     write(IMAIN,*) '  model PPM:',filename
     write(IMAIN,*) '     error in delta values:'
-    write(IMAIN,*) '     dlat : ',PPM_V%dlat,' dlon: ',PPM_V%dlon,' ddepth: ',PPM_V%ddepth
+    write(IMAIN,*) '     dlat : ',PPM_dlat,' dlon: ',PPM_dlon,' ddepth: ',PPM_ddepth
     call exit_mpi(0,' error model PPM ')
   else
     write(IMAIN,*) '  model increments:'
-    write(IMAIN,*) '  ddepth: ',sngl(PPM_V%ddepth),' dlat:',sngl(PPM_V%dlat),' dlon:',sngl(PPM_V%dlon)
+    write(IMAIN,*) '  ddepth: ',sngl(PPM_ddepth),' dlat:',sngl(PPM_dlat),' dlon:',sngl(PPM_dlon)
     write(IMAIN,*)
   endif
 
-  PPM_V%num_latperlon = int( (PPM_V%maxlat - PPM_V%minlat) / PPM_V%dlat) + 1
-  PPM_V%num_lonperdepth = int( (PPM_V%maxlon - PPM_V%minlon) / PPM_V%dlon ) + 1
+  PPM_num_latperlon = int( (PPM_maxlat - PPM_minlat) / PPM_dlat) + 1
+  PPM_num_lonperdepth = int( (PPM_maxlon - PPM_minlon) / PPM_dlon ) + 1
 
   end subroutine read_model_ppm
 
@@ -326,26 +310,17 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_ppm(radius,theta,phi,dvs,dvp,drho,PPM_V)
+  subroutine model_ppm(radius,theta,phi,dvs,dvp,drho)
 
 ! returns dvs,dvp and drho for given radius,theta,phi  location
 
-  use module_PPM
+  use model_ppm_par
 
   implicit none
 
-  ! point profile model_variables
-  type model_ppm_variables
-    sequence
-    double precision,dimension(:),pointer :: dvs,lat,lon,depth
-    double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
-    double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
-    integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_ppm_variables
-  type (model_ppm_variables) PPM_V
+  include "constants.h"
 
-  double precision radius,theta,phi,dvs,dvp,drho
+  double precision :: radius,theta,phi,dvs,dvp,drho
 
   ! local parameters
   integer:: i,j,k
@@ -354,6 +329,9 @@
 
   double precision:: g_dvs,g_depth,g_lat,g_lon,x,g_weight,weight_sum,weight_prod
 
+  double precision,parameter:: const_a = sigma_v/3.0
+  double precision,parameter:: const_b = sigma_h/3.0/(R_EARTH_KM*DEGREES_TO_RADIANS)
+
   ! initialize
   dvs = 0.0d0
   dvp = 0.0d0
@@ -361,18 +339,18 @@
 
   ! depth of given radius (in km)
   r_depth = R_EARTH_KM*(1.0 - radius)  ! radius is normalized between [0,1]
-  if(r_depth>PPM_V%maxdepth .or. r_depth < PPM_V%mindepth) return
+  if(r_depth>PPM_maxdepth .or. r_depth < PPM_mindepth) return
 
-  lat=(pi_by2-theta)*radtodeg
-  if( lat < PPM_V%minlat .or. lat > PPM_V%maxlat ) return
+  lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
+  if( lat < PPM_minlat .or. lat > PPM_maxlat ) return
 
-  lon=phi*radtodeg
+  lon=phi*RADIANS_TO_DEGREES
   if(lon>180.0d0) lon=lon-360.0d0
-  if( lon < PPM_V%minlon .or. lon > PPM_V%maxlon ) return
+  if( lon < PPM_minlon .or. lon > PPM_maxlon ) return
 
   ! search location value
   if( .not. GAUSS_SMOOTHING ) then
-    call get_PPMmodel_value(lat,lon,r_depth,PPM_V,dvs)
+    call get_PPMmodel_value(lat,lon,r_depth,dvs)
     return
   endif
 
@@ -388,15 +366,15 @@
       do k=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
         g_lat = lat + k*const_b
 
-        call get_PPMmodel_value(g_lat,g_lon,g_depth,PPM_V,g_dvs)
+        call get_PPMmodel_value(g_lat,g_lon,g_depth,g_dvs)
 
         ! horizontal weighting
-        x = (g_lat-lat)*degtokm
+        x = (g_lat-lat)*DEGREES_TO_RADIANS*R_EARTH_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = g_weight
 
-        x = (g_lon-lon)*degtokm
+        x = (g_lon-lon)*DEGREES_TO_RADIANS*R_EARTH_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = weight_prod * g_weight
@@ -418,14 +396,14 @@
 
 
   ! store min/max
-  max_dvs = PPM_V%max_dvs
-  min_dvs = PPM_V%min_dvs
+  max_dvs = PPM_max_dvs
+  min_dvs = PPM_min_dvs
 
   if( dvs > max_dvs ) max_dvs = dvs
   if( dvs < min_dvs ) min_dvs = dvs
 
-  PPM_V%max_dvs = max_dvs
-  PPM_V%min_dvs = min_dvs
+  PPM_max_dvs = max_dvs
+  PPM_min_dvs = min_dvs
 
   !write(IMAIN,*) '    dvs = ',sngl(dvs),' weight: ',sngl(weight_sum),(sngl((2*PI*sigma_h**2)*sqrt(2*PI)*sigma_v))
 
@@ -442,22 +420,13 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_PPMmodel_value(lat,lon,depth,PPM_V,dvs)
+  subroutine get_PPMmodel_value(lat,lon,depth,dvs)
+
+  use model_ppm_par
 
   implicit none
 
   include "constants.h"
-
-  ! point profile model_variables
-  type model_ppm_variables
-    sequence
-    double precision,dimension(:),pointer :: dvs,lat,lon,depth
-    double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
-    double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
-    integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_ppm_variables
-  type (model_ppm_variables) PPM_V
 
   double precision lat,lon,depth,dvs
 
@@ -468,35 +437,35 @@
 
   dvs = 0.0
 
-  if( lat > PPM_V%maxlat ) return
-  if( lat < PPM_V%minlat ) return
-  if( lon > PPM_V%maxlon ) return
-  if( lon < PPM_V%minlon ) return
-  if( depth > PPM_V%maxdepth ) return
-  if( depth < PPM_V%mindepth ) return
+  if( lat > PPM_maxlat ) return
+  if( lat < PPM_minlat ) return
+  if( lon > PPM_maxlon ) return
+  if( lon < PPM_minlon ) return
+  if( depth > PPM_maxdepth ) return
+  if( depth < PPM_mindepth ) return
 
   ! direct access: assumes having a regular interval spacing
-  num_latperlon = PPM_V%num_latperlon ! int( (PPM_V%maxlat - PPM_V%minlat) / PPM_V%dlat) + 1
-  num_lonperdepth = PPM_V%num_lonperdepth ! int( (PPM_V%maxlon - PPM_V%minlon) / PPM_V%dlon ) + 1
+  num_latperlon = PPM_num_latperlon ! int( (PPM_maxlat - PPM_minlat) / PPM_dlat) + 1
+  num_lonperdepth = PPM_num_lonperdepth ! int( (PPM_maxlon - PPM_minlon) / PPM_dlon ) + 1
 
-  index = int( (depth-PPM_V%mindepth)/PPM_V%ddepth )*num_lonperdepth*num_latperlon  &
-          + int( (lon-PPM_V%minlon)/PPM_V%dlon )*num_latperlon &
-          + int( (lat-PPM_V%minlat)/PPM_V%dlat ) + 1
-  dvs = PPM_V%dvs(index)
+  index = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon  &
+          + int( (lon-PPM_minlon)/PPM_dlon )*num_latperlon &
+          + int( (lat-PPM_minlat)/PPM_dlat ) + 1
+  dvs = PPM_dvs(index)
 
   !  ! loop-wise: slower performance
-  !  do i=1,PPM_V%num_v
+  !  do i=1,PPM_num_v
   !    ! depth
-  !    r_top = PPM_V%depth(i)
-  !    r_bottom = PPM_V%depth(i) + PPM_V%ddepth
+  !    r_top = PPM_depth(i)
+  !    r_bottom = PPM_depth(i) + PPM_ddepth
   !    if( depth > r_top .and. depth <= r_bottom ) then
   !      ! longitude
-  !      do j=i,PPM_V%num_v
-  !        if( lon >= PPM_V%lon(j) .and. lon < PPM_V%lon(j)+PPM_V%dlon ) then
+  !      do j=i,PPM_num_v
+  !        if( lon >= PPM_lon(j) .and. lon < PPM_lon(j)+PPM_dlon ) then
   !          ! latitude
-  !          do k=j,PPM_V%num_v
-  !            if( lat >= PPM_V%lat(k) .and. lat < PPM_V%lat(k)+PPM_V%dlat ) then
-  !              dvs = PPM_V%dvs(k)
+  !          do k=j,PPM_num_v
+  !            if( lat >= PPM_lat(k) .and. lat < PPM_lat(k)+PPM_dlat ) then
+  !              dvs = PPM_dvs(k)
   !              return
   !            endif
   !          enddo
@@ -534,33 +503,25 @@
 !
 
   subroutine smooth_model(myrank, nproc_xi,nproc_eta,&
-            rho_vp,rho_vs,nspec_stacey, &
-            iregion_code,xixstore,xiystore,xizstore, &
-            etaxstore,etaystore,etazstore, &
-            gammaxstore,gammaystore,gammazstore, &
-            xstore,ystore,zstore,rhostore,dvpstore, &
-            kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
-            nspec,HETEROGEN_3D_MANTLE, &
-            NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
+                          rho_vp,rho_vs,nspec_stacey, &
+                          iregion_code,xixstore,xiystore,xizstore, &
+                          etaxstore,etaystore,etazstore, &
+                          gammaxstore,gammaystore,gammazstore, &
+                          xstore,ystore,zstore,rhostore,dvpstore, &
+                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+                          nspec,HETEROGEN_3D_MANTLE, &
+                          NEX_XI,NCHUNKS,ABSORBING_CONDITIONS )
 
 ! smooth model parameters
+
+  use model_ppm_par,only: &
+    PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
   implicit none
 
   include 'mpif.h'
   include "constants.h"
   include "precision.h"
-
-  ! point profile model_variables
-  type model_ppm_variables
-    sequence
-    double precision,dimension(:),pointer :: dvs,lat,lon,depth
-    double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
-    double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
-    integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_ppm_variables
-  type (model_ppm_variables) PPM_V
 
   integer :: myrank, nproc_xi, nproc_eta
 
@@ -998,14 +959,14 @@
   if (myrank == 0) write(IMAIN, *) 'Done with integration ...'
 
   ! gets depths (in km) of upper and lower limit
-  maxlat = PPM_V%maxlat
-  minlat = PPM_V%minlat
+  maxlat = PPM_maxlat
+  minlat = PPM_minlat
 
-  maxlon = PPM_V%maxlon
-  minlon = PPM_V%minlon
+  maxlon = PPM_maxlon
+  minlon = PPM_minlon
 
-  maxdepth = PPM_V%maxdepth
-  mindepth = PPM_V%mindepth
+  maxdepth = PPM_maxdepth
+  mindepth = PPM_mindepth
 
   margin_v = sigma_v*R_EARTH/1000.0 ! in km
   margin_h = sigma_h*R_EARTH/1000.0 * 180.0/(R_EARTH_KM*PI) ! in degree

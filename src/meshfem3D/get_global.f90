@@ -25,6 +25,7 @@
 !
 !=====================================================================
 
+
   subroutine get_global(nspec,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
 
 ! this routine MUST be in double precision to avoid sensitivity
@@ -38,28 +39,30 @@
 
   include "constants.h"
 
-! parameters
+  ! input parameters
   integer, intent(in) :: npointot,nspec
-  double precision, intent(in) :: xp(npointot),yp(npointot),zp(npointot)
 
-  integer, intent(out) :: iglob(npointot),loc(npointot)
-  logical, intent(out) :: ifseg(npointot)
+  double precision, dimension(npointot), intent(in) :: xp,yp,zp
+
+  integer, dimension(npointot), intent(out) :: iglob,loc
+  logical, dimension(npointot), intent(out) :: ifseg
   integer, intent(out) :: nglob
 
-! variables
-  integer ispec,i,j
-  integer ieoff,ilocnum,nseg,ioff,iseg,ig
-
-  integer, dimension(:), allocatable :: ind,ninseg,iwork
+  ! local variables
   double precision, dimension(:), allocatable :: work
+  integer, dimension(:), allocatable :: ind,ninseg,iwork
+  integer :: ispec,i,j,ier
+  integer :: ieoff,ilocnum,nseg,ioff,iseg,ig
 
-! dynamically allocate arrays
-  allocate(ind(npointot))
-  allocate(ninseg(npointot))
-  allocate(iwork(npointot))
-  allocate(work(npointot))
+  ! dynamically allocate arrays
+  allocate(ind(npointot), &
+          ninseg(npointot), &
+          iwork(npointot), &
+          work(npointot), &
+          stat=ier)
+  if( ier /= 0 ) stop 'error allocating local array in get_global'
 
-! establish initial pointers
+  ! establish initial pointers
   do ispec=1,nspec
     ieoff=NGLLX * NGLLY * NGLLZ * (ispec-1)
     do ilocnum=1,NGLLX * NGLLY * NGLLZ
@@ -67,57 +70,58 @@
     enddo
   enddo
 
-  ifseg(:)=.false.
+  ifseg(:) = .false.
 
-  nseg=1
-  ifseg(1)=.true.
-  ninseg(1)=npointot
+  nseg = 1
+  ifseg(1) = .true.
+  ninseg(1) = npointot
 
-do j=1,NDIM
-
+  do j=1,NDIM
     ! sort within each segment
     ioff=1
     do iseg=1,nseg
-        if(j == 1) then
-            call rank(xp(ioff),ind,ninseg(iseg))
-        else if(j == 2) then
-            call rank(yp(ioff),ind,ninseg(iseg))
-        else
-            call rank(zp(ioff),ind,ninseg(iseg))
-        endif
-        call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
-        ioff=ioff+ninseg(iseg)
+      if(j == 1) then
+        call rank(xp(ioff),ind,ninseg(iseg))
+      else if(j == 2) then
+        call rank(yp(ioff),ind,ninseg(iseg))
+      else
+        call rank(zp(ioff),ind,ninseg(iseg))
+      endif
+
+      call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
+
+      ioff=ioff+ninseg(iseg)
     enddo
 
-! check for jumps in current coordinate
-! compare the coordinates of the points within a small tolerance
+    ! check for jumps in current coordinate
+    ! compare the coordinates of the points within a small tolerance
     if(j == 1) then
-        do i=2,npointot
-            if(dabs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-        enddo
+      do i=2,npointot
+        if(dabs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+      enddo
     else if(j == 2) then
-        do i=2,npointot
-           if(dabs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-        enddo
+      do i=2,npointot
+        if(dabs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+      enddo
     else
-        do i=2,npointot
-            if(dabs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-        enddo
+      do i=2,npointot
+        if(dabs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+      enddo
     endif
 
-! count up number of different segments
+    ! count up number of different segments
     nseg=0
     do i=1,npointot
-        if(ifseg(i)) then
+      if(ifseg(i)) then
         nseg=nseg+1
         ninseg(nseg)=1
-        else
+      else
         ninseg(nseg)=ninseg(nseg)+1
-        endif
+      endif
     enddo
-enddo
+  enddo
 
-! assign global node numbers (now sorted lexicographically)
+  ! assign global node numbers (now sorted lexicographically)
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
@@ -126,11 +130,8 @@ enddo
 
   nglob=ig
 
-! deallocate arrays
-  deallocate(ind)
-  deallocate(ninseg)
-  deallocate(iwork)
-  deallocate(work)
+  ! deallocate arrays
+  deallocate(ind,ninseg,iwork,work)
 
   end subroutine get_global
 
@@ -152,6 +153,7 @@ enddo
   integer,intent(in) :: nspec,nglob
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
 
+  ! local parameters
   ! mask to sort ibool
   integer, dimension(:), allocatable :: mask_ibool
   integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
@@ -159,9 +161,12 @@ enddo
   integer:: i,j,k,ispec,ier
 
   ! copies original array
-  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(mask_ibool(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &
+          mask_ibool(nglob), &
+          stat=ier)
+  if(ier /= 0) stop 'error allocating local arrays in get_global_indirect_addressing'
 
+  ! initializes arrays
   mask_ibool(:) = -1
   copy_ibool_ori(:,:,:,:) = ibool(:,:,:,:)
 
@@ -186,10 +191,9 @@ enddo
   enddo
 
   ! cleanup
-  deallocate(copy_ibool_ori,stat=ier); if(ier /= 0) stop 'error in deallocate'
-  deallocate(mask_ibool,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(copy_ibool_ori,mask_ibool)
 
-end subroutine get_global_indirect_addressing
+  end subroutine get_global_indirect_addressing
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -203,12 +207,13 @@ end subroutine get_global_indirect_addressing
 !
   implicit none
 
-  integer n
-  double precision A(n)
-  integer IND(n)
+  integer :: n
+  double precision,dimension(n) :: A
+  integer,dimension(n) :: IND
 
-  integer i,j,l,ir,indx
-  double precision q
+  ! local parameters
+  integer :: i,j,l,ir,indx
+  double precision :: q
 
   do j=1,n
    IND(j)=j
@@ -216,41 +221,47 @@ end subroutine get_global_indirect_addressing
 
   if (n == 1) return
 
-  L=n/2+1
-  ir=n
-  100 CONTINUE
-   IF (l>1) THEN
-      l=l-1
-      indx=ind(l)
-      q=a(indx)
-   ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
-      ir=ir-1
+  L = floor(n/2.0) + 1
+  ir = n
+
+  do while( .true. )
+
+    IF ( l > 1 ) THEN
+      l = l-1
+      indx = ind(l)
+      q = a(indx)
+    ELSE
+      indx = ind(ir)
+      q = a(indx)
+      ind(ir) = ind(1)
+      ir = ir-1
+
+      ! checks exit criteria
       if (ir == 1) then
-         ind(1)=indx
+         ind(1) = indx
          return
       endif
-   ENDIF
-   i=l
-   j=l+l
-  200    CONTINUE
-   IF (J <= IR) THEN
-      IF (J<IR) THEN
-         IF ( A(IND(j))<A(IND(j+1)) ) j=j+1
+    ENDIF
+
+    i = l
+    j = l+l
+
+    do while( J <= IR )
+      IF ( J < IR ) THEN
+        IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
       ENDIF
-      IF (q<A(IND(j))) THEN
-         IND(I)=IND(J)
-         I=J
-         J=J+J
+      IF ( q < A(IND(j)) ) THEN
+        IND(I) = IND(J)
+        I = J
+        J = J+J
       ELSE
-         J=IR+1
+        J = IR+1
       ENDIF
-   goto 200
-   ENDIF
-   IND(I)=INDX
-  goto 100
+    enddo
+
+    IND(I)=INDX
+  enddo
+
   end subroutine rank
 
 !
@@ -263,32 +274,32 @@ end subroutine get_global_indirect_addressing
 !
   implicit none
 
-  integer n
+  integer :: n
+  integer,dimension(n) :: IND
+  integer,dimension(n) :: IA,IW
+  double precision,dimension(n) :: A,B,C,W
 
-  integer IND(n)
-  integer IA(n),IW(n)
-  double precision A(n),B(n),C(n),W(n)
-
-  integer i
+  ! local parameter
+  integer :: i
 
   IW(:) = IA(:)
   W(:) = A(:)
 
   do i=1,n
-    IA(i)=IW(ind(i))
-    A(i)=W(ind(i))
+    IA(i) = IW(ind(i))
+    A(i) = W(ind(i))
   enddo
 
   W(:) = B(:)
 
   do i=1,n
-    B(i)=W(ind(i))
+    B(i) = W(ind(i))
   enddo
 
   W(:) = C(:)
 
   do i=1,n
-    C(i)=W(ind(i))
+    C(i) = W(ind(i))
   enddo
 
   end subroutine swap_all

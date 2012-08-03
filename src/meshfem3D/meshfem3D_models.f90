@@ -77,31 +77,30 @@
         call model_s40rts_broadcast(myrank,S40RTS_V)
 
       case(THREE_D_MODEL_SEA99_JP3D)
-        ! the variables read are declared and stored in structure SEA99M_V and JP3DM_V
-        call model_sea99_s_broadcast(myrank,SEA99M_V)
-        call model_jp3d_broadcast(myrank,JP3DM_V)
+        ! the variables read are declared and stored in structure model_sea99_s_par and model_jp3d_par
+        call model_sea99_s_broadcast(myrank)
+        call model_jp3d_broadcast(myrank)
 
       case(THREE_D_MODEL_SEA99)
-        ! the variables read are declared and stored in structure SEA99M_V
-        call model_sea99_s_broadcast(myrank,SEA99M_V)
+        ! the variables read are declared and stored in structure model_sea99_s_par
+        call model_sea99_s_broadcast(myrank)
 
       case(THREE_D_MODEL_JP3D)
-        ! the variables read are declared and stored in structure JP3DM_V
-        call model_jp3d_broadcast(myrank,JP3DM_V)
+        ! the variables read are declared and stored in structure model_jp3d_par
+        call model_jp3d_broadcast(myrank)
 
       case(THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
            THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
-        call model_s362ani_broadcast(myrank,THREE_D_MODEL,numker,numhpa,ihpa,&
-                                lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
-                                xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+        ! the variables read are declared and stored in structure model_s362ani_par
+        call model_s362ani_broadcast(myrank,THREE_D_MODEL)
 
       case(THREE_D_MODEL_PPM)
         ! Point Profile Models
-        ! the variables read are declared and stored in structure PPM_V
-        call model_ppm_broadcast(myrank,PPM_V)
+        ! the variables read are declared and stored in structure model_ppm_par
+        call model_ppm_broadcast(myrank)
 
         ! could use EUcrust07 Vp crustal structure
-        !call model_eucrust_broadcast(myrank,EUCM_V)
+        !call model_eucrust_broadcast(myrank)
 
       case(THREE_D_MODEL_GAPP2)
         ! GAP model
@@ -198,15 +197,15 @@
 
     case (ICRUST_CRUST2)
       ! crust 2.0
-      call model_crust_broadcast(myrank,CM_V)
+      call model_crust_broadcast(myrank)
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
-      call model_crustmaps_broadcast(myrank,GC_V)
+      call model_crustmaps_broadcast(myrank)
 
     case (ICRUST_EPCRUST)
       ! EPcrust
-      call model_epcrust_broadcast(myrank,EPCRUST)
+      call model_epcrust_broadcast(myrank)
 
     case default
       stop 'crustal model type not defined'
@@ -436,14 +435,14 @@
 
       case(THREE_D_MODEL_SEA99_JP3D)
         ! sea99 + jp3d1994
-        call model_sea99_s(r_used,theta,phi,dvs,SEA99M_V)
+        call model_sea99_s(r_used,theta,phi,dvs)
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
         ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
         if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
             .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
           if(r_used > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
-            call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
+            call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv=vpv*(1.0d0+dvp)
             vph=vph*(1.0d0+dvp)
             vsv=vsv*(1.0d0+dvs)
@@ -453,7 +452,7 @@
 
       case(THREE_D_MODEL_SEA99)
         ! sea99 Vs-only
-        call model_sea99_s(r_used,theta,phi,dvs,SEA99M_V)
+        call model_sea99_s(r_used,theta,phi,dvs)
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
 
@@ -462,7 +461,7 @@
         if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
             .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
           if(r_used > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
-            call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
+            call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv=vpv*(1.0d0+dvp)
             vph=vph*(1.0d0+dvp)
             vsv=vsv*(1.0d0+dvs)
@@ -476,11 +475,7 @@
         xcolat = sngl(theta*180.0d0/PI)
         xlon = sngl(phi*180.0d0/PI)
         xrad = sngl(r_used*R_EARTH_KM)
-        call model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
-                    numker,numhpa,numcof,ihpa,lmax,nylm, &
-                    lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                    nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+        call model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
         ! to use speed values from the 1D reference model but with 3D mesh variations
         if( USE_1D_REFERENCE ) then
@@ -514,7 +509,7 @@
 
       case(THREE_D_MODEL_PPM )
         ! point profile model
-        call model_PPM(r_used,theta,phi,dvs,dvp,drho,PPM_V)
+        call model_PPM(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
         vph=vph*(1.0d0+dvp)
         vsv=vsv*(1.0d0+dvs)
@@ -632,17 +627,17 @@
 
   implicit none
 
-  integer iregion_code
+  integer :: iregion_code
   ! note: r is the exact radius (and not r_prem with tolerance)
-  double precision xmesh,ymesh,zmesh,r
-  double precision vpv,vph,vsv,vsh,rho,eta_aniso,dvp
+  double precision :: xmesh,ymesh,zmesh,r
+  double precision :: vpv,vph,vsv,vsh,rho,eta_aniso,dvp
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  logical elem_in_crust
-  double precision moho
+  logical :: elem_in_crust
+  double precision :: moho
 
   ! local parameters
   double precision :: r_dummy,theta,phi
@@ -658,9 +653,11 @@
   ! gets point's position theta/phi, lat/lon
   call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
   call reduce(theta,phi)
-  lat = (PI/2.0d0-theta)*180.0d0/PI
-  lon = phi*180.0d0/PI
-  if(lon>180.0d0) lon = lon-360.0d0
+
+  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+  lon = phi * RADIANS_TO_DEGREES
+  if( lon > 180.0d0 ) lon = lon - 360.0d0
+
 
 !---
 !
@@ -678,7 +675,7 @@
         .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
         ! makes sure radius is fine
         if(r > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
-          call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust,JP3DM_V)
+          call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
         endif
       else
         ! default crust
@@ -690,7 +687,7 @@
       call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
       ! takes vp from eucrust07
-      !call model_eucrust(lat,lon,r,vpc_eu,found_eucrust,EUCM_V)
+      !call model_eucrust(lat,lon,r,vpc_eu,found_eucrust)
       !if( found_eucrust) then
       !  vpc=vpc_eu
       !endif
@@ -775,14 +772,14 @@
 
     case (ICRUST_CRUST2)
       ! crust 2.0
-      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)
+      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
-      call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,GC_V,elem_in_crust)
+      call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case (ICRUST_EPCRUST)
-!      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)
+!      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
       ! within EPCRUST region
 !      if (lat >= EPCRUST_LAT_MIN .and. lat <= EPCRUST_LAT_MAX &
 !          .and. lon >= EPCRUST_LON_MIN .and. lon<=EPCRUST_LON_MAX ) then
@@ -791,7 +788,7 @@
 !          rhoc=0.0d0
 !          moho=0.0d0
 !          found_crust = .false.
-          call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,EPCRUST,elem_in_crust)
+          call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 !      end if
 
     case default

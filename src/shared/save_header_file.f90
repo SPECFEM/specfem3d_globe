@@ -29,7 +29,7 @@
 
   subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY, &
+                        ELLIPTICITY,GRAVITY,ROTATION, &
                         OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
                         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
@@ -61,7 +61,7 @@
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-       ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
+       ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -222,12 +222,12 @@
     call reduce(theta_corner,phi_corner)
 
 ! convert geocentric to geographic colatitude
-    colat_corner=PI/2.0d0-datan(1.006760466d0*dcos(theta_corner)/dmax1(TINYVAL,dsin(theta_corner)))
+    colat_corner=PI_OVER_TWO-datan(1.006760466d0*dcos(theta_corner)/dmax1(TINYVAL,dsin(theta_corner)))
     if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
 
 ! compute real position of the source
-    lat = (PI/2.0d0-colat_corner)*180.0d0/PI
-    long = phi_corner*180.0d0/PI
+    lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
+    long = phi_corner*RADIANS_TO_DEGREES
 
     write(IOUT,*) '!'
     write(IOUT,*) '! corner ',icorner
@@ -391,15 +391,6 @@
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .false.'
-  endif
-  write(IOUT,*)
-
-  if(TOPOGRAPHY) then
-    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
-    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
-  else
-    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
-    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'
   endif
   write(IOUT,*)
 

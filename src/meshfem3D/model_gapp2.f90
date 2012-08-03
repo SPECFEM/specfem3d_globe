@@ -194,8 +194,8 @@
     drho = ZERO_
 
     ! increments in latitude/longitude (in rad)
-    dtheta = dela * PI / 180.0
-    dphi = delo * PI / 180.0
+    dtheta = dela * DEGREES_TO_RADIANS
+    dphi = delo * DEGREES_TO_RADIANS
 
     ! depth given in km
     d=R_EARTH_-radius*R_EARTH_

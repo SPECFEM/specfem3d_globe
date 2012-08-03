@@ -72,7 +72,7 @@
   P_VELOCITY_MAX                  = 11.02827d0
   MIN_GLL_POINT_SPACING_5         =   0.1730d0
 
-  DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * (PI / 180.0d0)) * RADIUS_INNER_CORE) / &
+  DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
        ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
        MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
 
@@ -274,8 +274,8 @@
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
      dr = r(i) - r(i+1)              ! Radial Length of Ragion
-     wt = width * PI/180.0d0 * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
-     wb = width * PI/180.0d0 * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
+     wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
+     wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
      w  = (wt + wb) * 0.5d0          ! Average Width of Region
      ner_test = NER(i)               ! Initial solution
      ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
@@ -334,8 +334,10 @@
      max_aspect_ratio = 0.0d0
      call compute_nex(nex_xi, rcube_test, alpha, nex_eta)
      npts = (4 * nex_xi * nex_eta * NBNODE) + (nex_xi * nex_xi * NBNODE)
+
      allocate(points(npts, 2))
      call compute_IC_mesh(rcube_test, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
+
      nspec = nspec_cube + nspec_chunks
      do ispec = 1,nspec
         call get_element(points, ispec, npts, elem)
@@ -349,6 +351,7 @@
 !       xi = abs(rcube_test - 981.0d0) / 45.0d0
 !       write(*,'(a,5(f14.4,2x))')'rcube, xi, ximin:-',rcube_test, xi, min_edgemin,max_edgemax,max_aspect_ratio
      deallocate(points)
+
      if(xi < ximin) then
         ximin      = xi
         rcube      = rcube_test
@@ -367,8 +370,9 @@
 
   implicit none
 
+  include 'constants.h'
+
   double precision, parameter :: RICB_KM = 1221.0d0
-  double precision, parameter :: PI = 3.1415
 
   integer nex_xi, ner
   double precision rcube, alpha
@@ -385,10 +389,10 @@
      factx = 2.0d0 * ratio_x - 1.0d0
      xi = (PI / 2.0d0) * factx
      x = (rcube / sqrt(2.0d0)) * factx
-     y = (rcube / sqrt(2.0d0)) * (1 + cos(xi) * alpha / (PI / 2.0d0))
+     y = (rcube / sqrt(2.0d0)) * (1 + cos(xi) * alpha / PI_OVER_TWO)
 
-     surfx = RICB_KM * cos(3 * (PI/4.0d0) - ratio_x * (PI/2.0d0))
-     surfy = RICB_KM * sin(3 * (PI/4.0d0) - ratio_x * (PI/2.0d0))
+     surfx = RICB_KM * cos(3 * (PI/4.0d0) - ratio_x * PI_OVER_TWO)
+     surfy = RICB_KM * sin(3 * (PI/4.0d0) - ratio_x * PI_OVER_TWO)
 
      dist_cc_icb = sqrt((surfx -x)**2 + (surfy - y)**2)
      if(ix /= nex_xi/2) then
@@ -408,9 +412,11 @@
   subroutine get_element(points, ispec, npts, pts)
 
   implicit none
+
   integer npts, ispec
   integer, parameter :: NBNODE = 8
   double precision pts(NBNODE+1,2), points(npts,2)
+
   pts(1:8,:) = points( ( (ispec-1) * NBNODE)+1 : ( (ispec) * NBNODE ), : )
   pts(NBNODE+1,:) = pts(1,:)  ! Use first point as the last point
 
@@ -423,11 +429,11 @@
   subroutine get_size_min_max(pts, edgemax, edgemin)
 
   implicit none
+
   integer ie, ix1,ix2,ix3
   integer, parameter :: NBNODE = 8
   double precision edgemax, edgemin, edge
   double precision pts(NBNODE+1, 2)
-
 
   edgemax = -1e7
   edgemin = -edgemax
@@ -506,7 +512,7 @@
 
   implicit none
 
-  double precision, parameter :: PI = 3.1415d0
+  include 'constants.h'
 
   integer ix, iy, nbx, nby
   double precision radius, alpha
@@ -522,11 +528,11 @@
   factx = 2.0d0 * ratio_x - 1.0d0
   facty = 2.0d0 * ratio_y - 1.0d0
 
-  xi  = (PI / 2.0d0) * factx
-  eta = (PI / 2.0d0) * facty
+  xi  = PI_OVER_TWO * factx
+  eta = PI_OVER_TWO * facty
 
-  x = (radius / sqrt(2.0d0)) * factx * ( 1 + cos(eta) * alpha / (PI / 2.0d0))
-  y = (radius / sqrt(2.0d0)) * facty * ( 1 + cos(xi)  * alpha / (PI / 2.0d0))
+  x = (radius / sqrt(2.0d0)) * factx * ( 1 + cos(eta) * alpha / PI_OVER_TWO )
+  y = (radius / sqrt(2.0d0)) * facty * ( 1 + cos(xi)  * alpha / PI_OVER_TWO )
 
   end subroutine compute_coordinate_central_cube
 
@@ -538,7 +544,8 @@
 
   implicit none
 
-  double precision, parameter :: PI      = 3.1415d0
+  include 'constants.h'
+
   double precision, parameter :: RICB_KM = 1221.0d0
 
   integer ix, iy, nbx, nby, ic
@@ -556,13 +563,13 @@
   ratio_y = (iy * 1.0d0) / (nby * 1.0d0)
 
   factx = 2.0d0 * ratio_x - 1.0d0
-  xi = (PI/2.0d0) * factx
+  xi = PI_OVER_TWO * factx
 
   xcc = (rcube / sqrt(2.0d0)) * factx
-  ycc = (rcube / sqrt(2.0d0)) * (1 + cos(xi) * alpha / (PI/2.0d0))
+  ycc = (rcube / sqrt(2.0d0)) * (1 + cos(xi) * alpha / PI_OVER_TWO)
 
-  xsurf = RICB_KM * cos(3.0d0 * (PI/4.0d0) - ratio_x * (PI/2.0d0))
-  ysurf = RICB_KM * sin(3.0d0 * (PI/4.0d0) - ratio_x * (PI/2.0d0))
+  xsurf = RICB_KM * cos(3.0d0 * PI_OVER_FOUR - ratio_x * PI_OVER_TWO)
+  ysurf = RICB_KM * sin(3.0d0 * PI_OVER_FOUR - ratio_x * PI_OVER_TWO)
 
   deltax = xsurf - xcc
   deltay = ysurf - ycc
