@@ -27,9 +27,7 @@
 
 ! compute several rheological and geometrical properties for a given spectral element
   subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
-                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                         xstore,ystore,zstore,nspec,myrank, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -38,31 +36,26 @@
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                         vx,vy,vz,rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
+                         vx,vy,vz,rho_vp,rho_vs,&
                          xigll,yigll,zigll,ispec_is_tiso)
 
   use meshfem3D_models_par
+
+!  use meshfem3D_par,only: R220
 
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
   integer ispec,nspec,nspec_stacey
 
-  logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS
-
-  double precision RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,&
-    R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER
-
 ! arrays with the mesh in double precision
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
 ! code for the four regions of the mesh
-  integer iregion_code
+  integer :: iregion_code
 
 ! meshing phase
-  integer ipass
+  integer :: ipass
 
 ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
@@ -71,42 +64,42 @@
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
-  integer idoubling(nspec)
-  double precision rmin,rmax
+  integer,dimension(nspec) :: idoubling
+  double precision :: rmin,rmax
 
 ! for model density and anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore, &
     kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
-  integer nspec_ani
+  integer :: nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
 ! arrays with mesh parameters
-  integer nspec_actually
+  integer :: nspec_actually
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! proc numbers for MPI
-  integer myrank
+  integer :: myrank
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
 ! attenuation
-  integer vx,vy,vz,nspec_att
+  integer :: vx,vy,vz,nspec_att
   double precision, dimension(vx,vy,vz,nspec_att) :: Qmu_store
   double precision, dimension(N_SLS,vx,vy,vz,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS) :: tau_s
-  double precision  T_c_source
+  double precision :: T_c_source
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
-  double precision:: xigll(NGLLX)
-  double precision:: yigll(NGLLY)
-  double precision:: zigll(NGLLZ)
+  double precision :: xigll(NGLLX)
+  double precision :: yigll(NGLLY)
+  double precision :: zigll(NGLLZ)
 
   logical, dimension(nspec) :: ispec_is_tiso
 
@@ -115,7 +108,7 @@
   ! flag for transverse isotropic elements
   logical:: elem_is_tiso
 
-  ! add topography of the Moho *before* adding the 3D crustal velocity model so that the streched
+  ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
   elem_in_crust = .false.
   elem_in_mantle = .false.
@@ -130,13 +123,11 @@
 
         ! differentiate between regional and global meshing
         if( REGIONAL_MOHO_MESH ) then
-          call moho_stretching_honor_crust_reg(myrank, &
-                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+          call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+                                              elem_in_crust,elem_in_mantle)
         else
-          call moho_stretching_honor_crust(myrank, &
-                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+          call moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+                                          elem_in_crust,elem_in_mantle)
         endif
       else
         ! element below 220km
@@ -205,11 +196,10 @@
                       c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                       nspec_stacey,rho_vp,rho_vs, &
                       xstore,ystore,zstore, &
-                      rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
-                      R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                      rmin,rmax, &
                       tau_s,tau_e_store,Qmu_store,T_c_source, &
                       size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5), &
-                      ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
+                      elem_in_crust,elem_in_mantle)
 
   endif
 
@@ -219,15 +209,16 @@
   !           problems with the jacobian. using the anchors is therefore more robust.
   ! adds surface topography
   if( TOPOGRAPHY ) then
-    if (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
-        .or. idoubling(ispec)==IFLAG_80_MOHO) then
+    if( idoubling(ispec) == IFLAG_CRUST .or. &
+       idoubling(ispec) == IFLAG_220_80 .or. &
+       idoubling(ispec) == IFLAG_80_MOHO) then
       ! stretches mesh between surface and R220 accordingly
       if( USE_GLL ) then
         ! stretches every gll point accordingly
-        call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo,R220)
+        call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo)
       else
         ! stretches anchor points only, interpolates gll points later on
-        call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+        call add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
       endif
     endif
   endif
@@ -237,19 +228,11 @@
     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
     if( USE_GLL ) then
       ! stretches every gll point accordingly
-      call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec,R220,R400,R670,R771, &
-                                      numker,numhpa,numcof,ihpa,lmax,nylm, &
-                                      lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                                      nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                                      coe,ylmcof,wk1,wk2,wk3,varstr)
+      call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
 
     else
       ! stretches anchor points only, interpolates gll points later on
-      call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
-                                      numker,numhpa,numcof,ihpa,lmax,nylm, &
-                                      lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                                      nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                                      coe,ylmcof,wk1,wk2,wk3,varstr)
+      call add_topography_410_650(myrank,xelm,yelm,zelm)
     endif
   endif
 
@@ -291,8 +274,8 @@
   ! updates jacobian
   ! (only needed for second meshing phase)
   if( ipass == 2 ) then
-    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
-                                ispec,nspec,ACTUALLY_STORE_ARRAYS,&
+    call calc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
+                                ispec,nspec,&
                                 xixstore,xiystore,xizstore,&
                                 etaxstore,etaystore,etazstore,&
                                 gammaxstore,gammaystore,gammazstore)
@@ -311,21 +294,17 @@
 
   include "constants.h"
 
-  integer ispec,nspec
+  integer :: ispec,nspec
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision,dimension(NGNOD) :: xelm,yelm,zelm
 
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
+  double precision,dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
 
   ! local parameters
-  double precision xmesh,ymesh,zmesh
-  integer i,j,k,ia
+  double precision :: xmesh,ymesh,zmesh
+  integer :: i,j,k,ia
 
   do k=1,NGLLZ
     do j=1,NGLLY

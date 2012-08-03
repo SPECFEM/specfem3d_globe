@@ -258,20 +258,23 @@
 
   include "constants.h"
 
-  ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
-
   ! location latitude/longitude (in degree)
   double precision,intent(in):: xlat,xlon
 
   ! returns elevation (in meters)
   double precision,intent(out):: value
 
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
+
   ! local parameters
   integer:: iadd1,iel1
   double precision:: samples_per_degree_topo
   double precision:: xlo
   double precision:: lon_corner,lat_corner,ratio_lon,ratio_lat
+
+  ! initializes elevation
+  value = ZERO
 
   ! longitude within range [0,360] degrees
   xlo = xlon

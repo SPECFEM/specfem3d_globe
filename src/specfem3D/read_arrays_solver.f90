@@ -28,35 +28,30 @@
 ! read arrays created by the mesher
 
   subroutine read_arrays_solver(iregion_code,myrank, &
+              nspec,nglob,nglob_xy, &
+              nspec_iso,nspec_tiso,nspec_ani, &
               rho_vp,rho_vs,xstore,ystore,zstore, &
               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
               rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
-              nspec_iso,nspec_tiso,nspec_ani, &
               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-              ibool,idoubling,ispec_is_tiso,nglob_xy,nglob, &
-              rmassx,rmassy,rmassz,rmass_ocean_load,nspec, &
-              READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
-              ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
+              ibool,idoubling,ispec_is_tiso, &
+              rmassx,rmassy,rmassz,rmass_ocean_load, &
+              READ_KAPPA_MU,READ_TISO, &
+              ABSORBING_CONDITIONS,LOCAL_PATH)
 
   implicit none
 
   include "constants.h"
-
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer iregion_code,myrank
+  integer :: iregion_code,myrank
+  integer :: nspec,nglob,nglob_xy
+  integer :: nspec_iso,nspec_tiso,nspec_ani
 
-  ! flags to know if we should read Vs and anisotropy arrays
-  logical READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,OCEANS,ABSORBING_CONDITIONS
-
-  character(len=150) LOCAL_PATH
-
-  integer nspec,nglob,nglob_xy
-
-  integer nspec_iso,nspec_tiso,nspec_ani
+  ! Stacey
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec):: rho_vp,rho_vs
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
@@ -79,28 +74,27 @@
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-  ! Stacey
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
+  ! global addressing
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(nspec) :: idoubling
+  logical, dimension(nspec) :: ispec_is_tiso
 
   ! mass matrices and additional ocean load mass matrix
-  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass_ocean_load
-
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
-  ! global addressing
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  ! flags to know if we should read Vs and anisotropy arrays
+  logical :: READ_KAPPA_MU,READ_TISO, &
+    ABSORBING_CONDITIONS
 
-  integer, dimension(nspec) :: idoubling
-
-  logical, dimension(nspec) :: ispec_is_tiso
+  character(len=150) :: LOCAL_PATH
 
   ! local parameters
   integer :: ier
   logical,dimension(nspec) :: dummy_l
   ! processor identification
-  character(len=150) prname
+  character(len=150) :: prname
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -126,13 +120,13 @@
   if(READ_KAPPA_MU) read(IIN) muvstore
 
   ! for anisotropy, gravity and rotation
-  if(TRANSVERSE_ISOTROPY .and. READ_TISO) then
+  if(TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
     read(IIN) kappahstore
     read(IIN) muhstore
     read(IIN) eta_anisostore
   endif
 
-  if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+  if(ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
     read(IIN) c11store
     read(IIN) c12store
     read(IIN) c13store
@@ -140,7 +134,7 @@
     read(IIN) c44store
   endif
 
-  if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if(ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
     read(IIN) c11store
     read(IIN) c12store
     read(IIN) c13store
@@ -192,7 +186,7 @@
   read(IIN) rmassz
 
   ! read additional ocean load mass matrix
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
+  if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
   close(IIN)
 

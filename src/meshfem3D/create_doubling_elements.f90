@@ -32,9 +32,7 @@
                     ner,ratio_sampling_array,r_top,r_bottom, &
                     xstore,ystore,zstore,xigll,yigll,zigll, &
                     shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                    RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                    INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
                     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -45,7 +43,7 @@
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,vx,vy,vz, &
-                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB,ACTUALLY_STORE_ARRAYS, &
+                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -85,10 +83,7 @@
 ! 2D shape functions and their derivatives
   double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
-
-  double precision RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
+  logical INCLUDE_CENTRAL_CUBE
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision rmin,rmax
@@ -136,7 +131,6 @@
   integer idoubling(nspec)
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   logical :: USE_ONE_LAYER_SB
-  logical :: ACTUALLY_STORE_ARRAYS
 
 ! Boundary Mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
@@ -335,9 +329,7 @@
 
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
-                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                         xstore,ystore,zstore,nspec,myrank, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -347,7 +339,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                          size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
+                         rho_vp,rho_vs, &
                          xigll,yigll,zigll,ispec_is_tiso)
 
         ! boundary mesh

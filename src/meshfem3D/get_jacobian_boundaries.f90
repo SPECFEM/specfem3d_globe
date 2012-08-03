@@ -154,7 +154,7 @@
              end do
           end do
           ! recalculate jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb1,xelm2D,yelm2D,zelm2D, &
+          call calc_jacobian_gll2D(myrank,ispecb1,xelm2D,yelm2D,zelm2D, &
                           yigll,zigll,jacobian2D_xmin,normal_xmin,&
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
      end if
@@ -210,7 +210,7 @@
              end do
           end do
           ! recalculate jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D,&
+          call calc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D,&
                           yigll,zigll,jacobian2D_xmax,normal_xmax,&
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
        end if
@@ -266,7 +266,7 @@
              end do
           end do
           ! recalcualte 2D jacobian according to GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D,&
+          call calc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D,&
                           xigll,zigll,jacobian2D_ymin,normal_ymin,&
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
      end if
@@ -322,7 +322,7 @@
              end do
           end do
           ! recalculate jacobian for 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D,&
+          call calc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D,&
                           xigll,zigll,jacobian2D_ymax,normal_ymax,&
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
       end if
@@ -377,7 +377,7 @@
              end do
           end do
           ! recalcuate 2D jacobian according to GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D,&
+          call calc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D,&
                           xigll,yigll,jacobian2D_bottom,normal_bottom,&
                           NGLLX,NGLLY,NSPEC2D_BOTTOM)
      end if
@@ -432,7 +432,7 @@
              end do
           end do
           ! recalcuate jacobian according to 2D gll points
-          call recalc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D,&
+          call calc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D,&
                   xigll,yigll,jacobian2D_top,normal_top,&
                   NGLLX,NGLLY,NSPEC2D_TOP)
 
@@ -490,6 +490,7 @@
     yeta=ZERO
     zxi=ZERO
     zeta=ZERO
+
     do ia=1,NGNOD2D
       xxi=xxi+dershape2D(1,ia,i,j)*xelm(ia)
       xeta=xeta+dershape2D(2,ia,i,j)*xelm(ia)
@@ -499,16 +500,17 @@
       zeta=zeta+dershape2D(2,ia,i,j)*zelm(ia)
     enddo
 
-!   calculate the unnormalized normal to the boundary
+    !   calculate the unnormalized normal to the boundary
     unx=yxi*zeta-yeta*zxi
     uny=zxi*xeta-zeta*xxi
     unz=xxi*yeta-xeta*yxi
     jacobian=dsqrt(unx**2+uny**2+unz**2)
+
     if(jacobian == ZERO) call exit_MPI(myrank,'2D Jacobian undefined')
 
-!   normalize normal vector and store surface jacobian
+    !   normalize normal vector and store surface jacobian
 
-! distinguish between single and double precision for reals
+    ! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       jacobian2D(i,j,ispecb)=sngl(jacobian)
       normal(1,i,j,ispecb)=sngl(unx/jacobian)

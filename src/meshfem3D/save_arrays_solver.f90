@@ -25,122 +25,60 @@
 !
 !=====================================================================
 
-  subroutine save_arrays_solver(myrank,rho_vp,rho_vs,nspec_stacey, &
-                    prname,iregion_code,xixstore,xiystore,xizstore, &
-                    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                    xstore,ystore,zstore,rhostore,dvpstore, &
-                    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                    nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    ibool,idoubling,is_on_a_slice_edge,nglob_xy,nglob, &
-                    rmassx,rmassy,rmassz,rmass_ocean_load,npointot_oceans, &
-                    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
-                    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                    jacobian2D_bottom,jacobian2D_top,nspec, &
-                    NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                    TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-                    ANISOTROPIC_INNER_CORE,OCEANS, &
-                    tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,vx,vy,vz,vnspec, &
-                    ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
+  subroutine save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+                    iregion_code,xstore,ystore,zstore, &
+                    is_on_a_slice_edge, &
+                    NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
-  use meshfem3D_par,only: NCHUNKS
+  use constants
+
+  use meshfem3D_models_par,only: &
+    OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
+    ANISOTROPIC_INNER_CORE,ATTENUATION
+
+  use meshfem3D_par,only: &
+    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES
+
+  use create_regions_mesh_par2,only: &
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+    gammaxstore,gammaystore,gammazstore, &
+    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    rmassx,rmassy,rmassz,rmass_ocean_load, &
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
+    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
+    jacobian2D_bottom,jacobian2D_top, &
+    rho_vp,rho_vs, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store, &
+    prname
 
   implicit none
 
-  include "constants.h"
-
   integer :: myrank
-
-  character(len=150) prname
-  integer iregion_code
-
-  integer nspec,nglob_xy,nglob,nspec_stacey
-  integer npointot_oceans
-
-  ! Stacey
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey)
-  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
-
-  logical :: TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
-  logical :: ATTENUATION
-
-  ! arrays with jacobian matrix
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-  ! arrays with mesh parameters
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  ! for anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-
-  integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store, &
-    c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
-    c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer :: nspec,nglob
 
   ! doubling mesh flag
   integer, dimension(nspec) :: idoubling
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
+  integer :: iregion_code
+
+  ! arrays with the mesh in double precision
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   ! this for non blocking MPI
   logical, dimension(nspec) :: is_on_a_slice_edge
 
-  ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
-  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
-
-  ! additional ocean load mass matrix
-  real(kind=CUSTOM_REAL) rmass_ocean_load(npointot_oceans)
-
   ! boundary parameters locator
-  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
-
-  integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
-  integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
-  integer ibelm_bottom(NSPEC2D_BOTTOM),ibelm_top(NSPEC2D_TOP)
-
-  ! normals
-  real(kind=CUSTOM_REAL) normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
-  real(kind=CUSTOM_REAL) normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
-
-  ! jacobian on 2D edges
-  real(kind=CUSTOM_REAL) jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM)
-  real(kind=CUSTOM_REAL) jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP)
-
-  ! number of elements on the boundaries
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-
-  ! attenuation
-  integer vx, vy, vz, vnspec
-  double precision  T_c_source
-  double precision, dimension(N_SLS)                     :: tau_s
-  double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
-  double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
-
-  logical ABSORBING_CONDITIONS,SAVE_MESH_FILES
-
-  logical, dimension(nspec) :: ispec_is_tiso
+  integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
 
   ! local parameters
   integer i,j,k,ispec,iglob,nspec1,nglob1,ier
-  real(kind=CUSTOM_REAL) scaleval1,scaleval2
+  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2
 
   ! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt', &

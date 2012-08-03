@@ -122,6 +122,8 @@
   ! layers in the case of 3D models. The purpose of this stretching is to squeeze more
   ! GLL points per km in the upper part of the crust than in the lower part.
   !
+  ! CRUSTAL : flag set to .true. if a 3D crustal model (e.g. Crust-2.0) will be used or
+  !  to .false. for a 1D crustal model.
 
   ! extract ending of model name
   ending = ' '

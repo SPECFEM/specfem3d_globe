@@ -96,12 +96,8 @@
   integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
   logical :: READ_KAPPA_MU,READ_TISO
   ! dummy array that does not need to be actually read
-  integer, dimension(:),allocatable :: dummy_i
+  integer, dimension(:),allocatable :: dummy_idoubling
   integer :: ier
-
-  ! allocates dummy array
-  allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i array in read_mesh_databases_CM')
 
   ! crust and mantle
   if(ANISOTROPIC_3D_MANTLE_VAL) then
@@ -139,15 +135,21 @@
      NGLOB_XY = 1
   endif
 
-  allocate(rmassx_crust_mantle(NGLOB_XY),stat=ier)
-  if(ier /= 0) stop 'error in allocate 21'
-  allocate(rmassy_crust_mantle(NGLOB_XY),stat=ier)
-  if(ier /= 0) stop 'error in allocate 21'
+  ! allocates dummy array
+  allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy idoubling in crust_mantle')
+
+  ! allocates mass matrices
+  allocate(rmassx_crust_mantle(NGLOB_XY), &
+          rmassy_crust_mantle(NGLOB_XY),stat=ier)
+  if(ier /= 0) stop 'error allocating dummy rmassx, rmassy in crust_mantle'
   allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
-  if(ier /= 0) stop 'error in allocate 21'
+  if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
 
   ! reads databases file
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
+            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY, &
+            nspec_iso,nspec_tiso,nspec_ani, &
             rho_vp_crust_mantle,rho_vs_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -155,7 +157,6 @@
             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-            nspec_iso,nspec_tiso,nspec_ani, &
             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
             c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
             c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
@@ -163,17 +164,17 @@
             c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,dummy_i,ispec_is_tiso_crust_mantle,NGLOB_XY,NGLOB_CRUST_MANTLE, &
-            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load,NSPEC_CRUST_MANTLE, &
-            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
-            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+            ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+            READ_KAPPA_MU,READ_TISO, &
+            ABSORBING_CONDITIONS,LOCAL_PATH)
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_crust_mantle(:,:,:,:)) /= 1 .or. &
     maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
-  deallocate(dummy_i)
+  deallocate(dummy_idoubling)
 
   end subroutine read_mesh_databases_CM
 
@@ -212,9 +213,11 @@
   ! dummy allocation
   NGLOB_XY = 1
 
-  allocate(dummy_rmass(NGLOB_XY))
-  allocate(dummy_ispec_is_tiso(NSPEC_OUTER_CORE))
-  allocate(dummy_idoubling_outer_core(NSPEC_OUTER_CORE))
+  allocate(dummy_rmass(NGLOB_XY), &
+          dummy_ispec_is_tiso(NSPEC_OUTER_CORE), &
+          dummy_idoubling_outer_core(NSPEC_OUTER_CORE), &
+          stat=ier)
+  if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec/idoubling in outer core'
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -225,9 +228,11 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
-  if(ier /= 0) stop 'error in allocate 21'
+  if(ier /= 0) stop 'error allocating rmass in outer core'
 
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
+            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY, &
+            nspec_iso,nspec_tiso,nspec_ani, &
             vp_outer_core,dummy_array, &
             xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -235,7 +240,6 @@
             gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
             rhostore_outer_core,kappavstore_outer_core,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            nspec_iso,nspec_tiso,nspec_ani, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
@@ -243,14 +247,12 @@
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso,NGLOB_XY,NGLOB_OUTER_CORE, &
-            dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load,NSPEC_OUTER_CORE, &
-            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
-            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+            dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
+            READ_KAPPA_MU,READ_TISO, &
+            ABSORBING_CONDITIONS,LOCAL_PATH)
 
-  deallocate(dummy_idoubling_outer_core)
-  deallocate(dummy_ispec_is_tiso)
-  deallocate(dummy_rmass)
+  deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_outer_core(:,:,:,:)) /= 1 .or. &
@@ -296,8 +298,10 @@
   ! dummy allocation
   NGLOB_XY = 1
 
-  allocate(dummy_rmass(NGLOB_XY))
-  allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE))
+  allocate(dummy_rmass(NGLOB_XY), &
+          dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
+          stat=ier)
+  if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec in inner core'
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -308,9 +312,11 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
-  if(ier /= 0) stop 'error in allocate 21'
+  if(ier /= 0) stop 'error allocating rmass in inner core'
 
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
+            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY, &
+            nspec_iso,nspec_tiso,nspec_ani, &
             dummy_array,dummy_array, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
             xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -318,7 +324,6 @@
             gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
             rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
             dummy_array,dummy_array,dummy_array, &
-            nspec_iso,nspec_tiso,nspec_ani, &
             c11store_inner_core,c12store_inner_core,c13store_inner_core, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
@@ -326,13 +331,12 @@
             dummy_array,dummy_array,dummy_array, &
             c44store_inner_core,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso,NGLOB_XY,NGLOB_INNER_CORE, &
-            dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load,NSPEC_INNER_CORE, &
-            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
-            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+            dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load, &
+            READ_KAPPA_MU,READ_TISO, &
+            ABSORBING_CONDITIONS,LOCAL_PATH)
 
-  deallocate(dummy_ispec_is_tiso)
-  deallocate(dummy_rmass)
+  deallocate(dummy_ispec_is_tiso,dummy_rmass)
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &

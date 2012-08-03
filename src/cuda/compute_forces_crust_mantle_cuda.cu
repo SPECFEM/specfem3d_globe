@@ -492,6 +492,7 @@ __device__ void compute_element_cm_tiso(int offset,
 
     cosfourtheta = cosf(4.0f * theta);
     cosfourphi = cosf(4.0f * phi);
+
   }else{
     // double operations
     costheta = cos(theta);

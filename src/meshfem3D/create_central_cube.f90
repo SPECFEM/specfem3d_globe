@@ -30,8 +30,6 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,&
-                        R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                         shape3D,rmin,rmax,rhostore,dvpstore,&
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
@@ -40,7 +38,7 @@
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,vx,vy,vz, &
-                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
+                        rho_vp,rho_vs,xigll,yigll,zigll, &
                         ispec_is_tiso)
 
 ! creates the inner core cube of the mesh
@@ -58,8 +56,7 @@
 
   integer NPROC_XI,NPROC_ETA
 
-  double precision R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,&
-    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER
+  double precision R_CENTRAL_CUBE
 
 ! arrays with the mesh in double precision
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -118,8 +115,6 @@
   double precision, dimension(N_SLS,vx,vy,vz,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS) :: tau_s
   double precision  T_c_source
-
-  logical :: ACTUALLY_STORE_ARRAYS,ABSORBING_CONDITIONS
 
   logical, dimension(nspec) :: ispec_is_tiso
 
@@ -258,9 +253,7 @@
 
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
-                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                         xstore,ystore,zstore,nspec,myrank, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -270,7 +263,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                          size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
+                         rho_vp,rho_vs, &
                          xigll,yigll,zigll,ispec_is_tiso)
       enddo
     enddo

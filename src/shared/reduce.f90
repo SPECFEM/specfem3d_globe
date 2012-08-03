@@ -33,19 +33,21 @@
 
   include "constants.h"
 
-  double precision theta,phi
+  double precision :: theta,phi
 
-  integer i
-  double precision th,ph
+  integer :: i
+  double precision :: th,ph
 
   th=theta
   ph=phi
   i=abs(int(ph/TWO_PI))
+
   if(ph<ZERO) then
     ph=ph+(i+1)*TWO_PI
   else
     if(ph>TWO_PI) ph=ph-i*TWO_PI
   endif
+
   phi=ph
   if(th<ZERO .or. th>PI) then
     i=int(th/PI)

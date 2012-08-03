@@ -48,6 +48,28 @@ module specfem_par
   implicit none
 
   !-----------------------------------------------------------------
+  ! GLL points & weights
+  !-----------------------------------------------------------------
+
+  ! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+
+  ! product of weights for gravity term
+  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+
+  ! array with derivatives of Lagrange polynomials and precalculated products
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy,hprimewgll_yy
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
+
+
+  !-----------------------------------------------------------------
   ! attenuation parameters
   !-----------------------------------------------------------------
 
@@ -61,7 +83,7 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! use integer array to store values
-  integer, dimension(NX_BATHY_VAL,NY_BATHY_VAL) :: ibathy_topo
+  integer, dimension(:,:),allocatable :: ibathy_topo
 
   ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
@@ -101,23 +123,6 @@ module specfem_par
   real(kind=CUSTOM_REAL) :: minus_g_cmb,minus_g_icb
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
     minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
-
-  !-----------------------------------------------------------------
-  ! time scheme
-  !-----------------------------------------------------------------
-
-  integer :: it
-
-  ! Newmark time scheme parameters and non-dimensionalization
-  double precision :: scale_t,scale_t_inv,scale_displ,scale_veloc
-  real(kind=CUSTOM_REAL) :: deltat,deltatover2,deltatsqover2
-  ! ADJOINT
-  real(kind=CUSTOM_REAL) :: b_deltat,b_deltatover2,b_deltatsqover2
-
-#ifdef _HANDOPT
-  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_CRUST_MANTLE4, &
-            imodulo_NGLOB_INNER_CORE,imodulo_NGLOB_OUTER_CORE
-#endif
 
   !-----------------------------------------------------------------
   ! sources
@@ -182,34 +187,17 @@ module specfem_par
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,sec_SAC
   character(len=20) :: event_name_SAC
 
-
-  !-----------------------------------------------------------------
-  ! GLL points & weights
-  !-----------------------------------------------------------------
-
-  ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll,wxgll
-  double precision, dimension(NGLLY) :: yigll,wygll
-  double precision, dimension(NGLLZ) :: zigll,wzgll
-
-  ! product of weights for gravity term
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-
-  ! array with derivatives of Lagrange polynomials and precalculated products
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy,hprimewgll_yy
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-
-
   !-----------------------------------------------------------------
   ! file parameters
   !-----------------------------------------------------------------
 
   ! parameters read from parameter file
+  double precision DT,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
+          ANGULAR_WIDTH_XI_IN_DEGREES
+
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
@@ -218,12 +206,6 @@ module specfem_par
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
-
-  double precision DT,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-          ANGULAR_WIDTH_XI_IN_DEGREES
 
   logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
@@ -310,6 +292,23 @@ module specfem_par
   ! CUDA mesh pointer<->integer wrapper
   integer(kind=8) :: Mesh_pointer
   logical :: GPU_MODE
+
+  !-----------------------------------------------------------------
+  ! time scheme
+  !-----------------------------------------------------------------
+
+  integer :: it
+
+  ! Newmark time scheme parameters and non-dimensionalization
+  double precision :: scale_t,scale_t_inv,scale_displ,scale_veloc
+  real(kind=CUSTOM_REAL) :: deltat,deltatover2,deltatsqover2
+  ! ADJOINT
+  real(kind=CUSTOM_REAL) :: b_deltat,b_deltatover2,b_deltatsqover2
+
+#ifdef _HANDOPT
+  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_CRUST_MANTLE4, &
+            imodulo_NGLOB_INNER_CORE,imodulo_NGLOB_OUTER_CORE
+#endif
 
 end module specfem_par
 

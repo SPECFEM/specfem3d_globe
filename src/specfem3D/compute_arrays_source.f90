@@ -35,24 +35,25 @@
 
   include "constants.h"
 
-  integer ispec_selected_source,nspec
+  integer :: ispec_selected_source
 
-  double precision xi_source,eta_source,gamma_source
-  double precision Mxx,Myy,Mzz,Mxy,Mxz,Myz
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xix,xiy,xiz,etax,etay,etaz, &
-        gammax,gammay,gammaz
+  double precision :: xi_source,eta_source,gamma_source
+  double precision :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
 
-  double precision xixd,xiyd,xizd,etaxd,etayd,etazd,gammaxd,gammayd,gammazd
+  integer :: nspec
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xix,xiy,xiz,etax,etay,etaz, &
+        gammax,gammay,gammaz
 
-! Gauss-Lobatto-Legendre points of integration and weights
+  ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
   double precision, dimension(NGLLZ) :: zigll
 
-! source arrays
+  ! local parameters
+  double precision :: xixd,xiyd,xizd,etaxd,etayd,etazd,gammaxd,gammayd,gammazd
+  ! source arrays
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: G11,G12,G13,G21,G22,G23,G31,G32,G33
   double precision, dimension(NGLLX) :: hxis,hpxis
@@ -61,21 +62,33 @@
 
   integer k,l,m
 
-! calculate G_ij for general source location
-! the source does not necessarily correspond to a Gauss-Lobatto point
+  ! calculate G_ij for general source location
+  ! the source does not necessarily correspond to a Gauss-Lobatto point
   do m=1,NGLLZ
     do l=1,NGLLY
       do k=1,NGLLX
 
-        xixd    = dble(xix(k,l,m,ispec_selected_source))
-        xiyd    = dble(xiy(k,l,m,ispec_selected_source))
-        xizd    = dble(xiz(k,l,m,ispec_selected_source))
-        etaxd   = dble(etax(k,l,m,ispec_selected_source))
-        etayd   = dble(etay(k,l,m,ispec_selected_source))
-        etazd   = dble(etaz(k,l,m,ispec_selected_source))
-        gammaxd = dble(gammax(k,l,m,ispec_selected_source))
-        gammayd = dble(gammay(k,l,m,ispec_selected_source))
-        gammazd = dble(gammaz(k,l,m,ispec_selected_source))
+        if( CUSTOM_REAL == SIZE_REAL ) then
+          xixd    = dble(xix(k,l,m,ispec_selected_source))
+          xiyd    = dble(xiy(k,l,m,ispec_selected_source))
+          xizd    = dble(xiz(k,l,m,ispec_selected_source))
+          etaxd   = dble(etax(k,l,m,ispec_selected_source))
+          etayd   = dble(etay(k,l,m,ispec_selected_source))
+          etazd   = dble(etaz(k,l,m,ispec_selected_source))
+          gammaxd = dble(gammax(k,l,m,ispec_selected_source))
+          gammayd = dble(gammay(k,l,m,ispec_selected_source))
+          gammazd = dble(gammaz(k,l,m,ispec_selected_source))
+        else
+          xixd    = xix(k,l,m,ispec_selected_source)
+          xiyd    = xiy(k,l,m,ispec_selected_source)
+          xizd    = xiz(k,l,m,ispec_selected_source)
+          etaxd   = etax(k,l,m,ispec_selected_source)
+          etayd   = etay(k,l,m,ispec_selected_source)
+          etazd   = etaz(k,l,m,ispec_selected_source)
+          gammaxd = gammax(k,l,m,ispec_selected_source)
+          gammayd = gammay(k,l,m,ispec_selected_source)
+          gammazd = gammaz(k,l,m,ispec_selected_source)
+        endif
 
         G11(k,l,m) = Mxx*xixd+Mxy*xiyd+Mxz*xizd
         G12(k,l,m) = Mxx*etaxd+Mxy*etayd+Mxz*etazd

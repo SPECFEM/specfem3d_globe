@@ -427,8 +427,8 @@
          phi = backaz
       endif
 
-      cphi=cos(phi*pi/180)
-      sphi=sin(phi*pi/180)
+      cphi=cos(phi*DEGREES_TO_RADIANS)
+      sphi=sin(phi*DEGREES_TO_RADIANS)
 
       ! BS BS do the rotation of the components and put result in
       ! new variable seismogram_tmp

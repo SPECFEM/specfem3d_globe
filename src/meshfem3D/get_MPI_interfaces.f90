@@ -581,7 +581,7 @@
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
                                     NGLOB,xstore,ystore,zstore)
 
-  use constants,only: CUSTOM_REAL
+  use constants,only: CUSTOM_REAL,SIZE_REAL
 
   implicit none
 
@@ -619,9 +619,16 @@
     ipoin = ibool_n(i)
 
     ibool_selected(i) = ipoin
-    xstore_selected(i) = xstore(ipoin)
-    ystore_selected(i) = ystore(ipoin)
-    zstore_selected(i) = zstore(ipoin)
+
+    if( CUSTOM_REAL == SIZE_REAL ) then
+      xstore_selected(i) = dble(xstore(ipoin))
+      ystore_selected(i) = dble(ystore(ipoin))
+      zstore_selected(i) = dble(zstore(ipoin))
+    else
+      xstore_selected(i) = xstore(ipoin)
+      ystore_selected(i) = ystore(ipoin)
+      zstore_selected(i) = zstore(ipoin)
+    endif
   enddo
 
   ! sort buffer obtained to be conforming with neighbor in other chunk

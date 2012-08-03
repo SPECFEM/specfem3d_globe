@@ -26,36 +26,40 @@
 !=====================================================================
 
 
-  subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+  subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+                                        elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
+! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
+
+  use constants,only: &
+    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE
+
+  use meshfem3D_par,only: &
+    RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+
+  use meshfem3D_models_par,only: &
+    TOPOGRAPHY
 
   implicit none
 
-  include "constants.h"
-
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
-  double precision R220,RMIDDLE_CRUST
-  double precision RMOHO_FICTITIOUS_IN_MESHER
   integer :: myrank
+  double precision,dimension(NGNOD) :: xelm,yelm,zelm
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
-  integer:: ia,count_crust,count_mantle
-  double precision:: r,theta,phi,lat,lon
-  double precision:: vpc,vsc,rhoc,moho,elevation,gamma
-  logical:: found_crust
-
-  double precision, parameter :: RADIANS_TO_DEGREES = 180.d0 / PI
-  double precision, parameter :: PI_OVER_TWO = PI / 2.0d0
-  !double precision :: stretch_factor
+  double precision :: r,theta,phi,lat,lon
+  double precision :: vpc,vsc,rhoc,moho,elevation,gamma
   double precision :: x,y,z
   double precision :: R_moho,R_middlecrust
+  integer:: ia,count_crust,count_mantle
+  logical:: found_crust
+
+  ! minimum/maximum allowed moho depths (5km/90km non-dimensionalized)
+  double precision,parameter :: MOHO_MINIMUM = 5.0 / R_EARTH_KM
+  double precision,parameter :: MOHO_MAXIMUM = 90.0 / R_EARTH_KM
 
   ! radii for stretching criteria
   R_moho = RMOHO_FICTITIOUS_IN_MESHER/R_EARTH
@@ -65,26 +69,42 @@
   count_crust = 0
   count_mantle = 0
   do ia = 1,NGNOD
+    ! gets anchor point location
     x = xelm(ia)
     y = yelm(ia)
     z = zelm(ia)
 
+    ! converts location to lat/lon
     call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
     call reduce(theta,phi)
 
-    lat = 90.d0 - theta * RADIANS_TO_DEGREES
+    ! get geographic latitude and longitude in degrees
+    ! note: at this point, the mesh is still perfectly spherical, thus no need to
+    !         convert the geocentric colatitude to a geographic colatitude
+    lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
     lon = phi * RADIANS_TO_DEGREES
-    if( lon > 180.d0 ) lon = lon - 360.0d0
-
-    ! initializes
-    moho = 0.d0
+    if( lon > 180.0d0 ) lon = lon - 360.0d0
 
     ! gets smoothed moho depth
     call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    ! checks moho depth
-    if( abs(moho) < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
+    ! checks non-dimensionalized moho depth
+    !
+    ! note: flag found_crust returns .false. for points below moho,
+    !          nevertheless its moho depth should be set and will be used in linear stretching
+    if( moho < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
 
+    ! limits moho depth to a threshold value to avoid stretching problems
+    if( moho < MOHO_MINIMUM ) then
+      print*,'moho value exceeds minimum: ',moho,MOHO_MINIMUM,'in km: ',moho*R_EARTH_KM
+      moho = MOHO_MINIMUM
+    endif
+    if( moho > MOHO_MAXIMUM ) then
+      print*,'moho value exceeds maximum: ',moho,MOHO_MAXIMUM,'in km: ',moho*R_EARTH_KM
+      moho = MOHO_MAXIMUM
+    endif
+
+    ! radius of moho depth (normalized)
     moho = ONE - moho
 
     ! checks if moho will be honored by elements
@@ -92,61 +112,69 @@
     ! note: we will honor the moho only, if the moho depth is below R_moho (~35km)
     !          or above R_middlecrust (~15km). otherwise, the moho will be "interpolated"
     !          within the element
-    if (moho < R_moho ) then
-      ! actual moho below fictitious moho
-      ! elements in second layer will stretch down to honor moho topography
 
-      elevation = moho - R_moho
+    if( TOPOGRAPHY ) then
+      ! globe surface honors topography, elements stretched for moho
+      !
+      ! note:  if no topography is honored, stretching may lead to distorted elements and invalid jacobian
 
-      if ( r >= R_moho ) then
-        ! point above fictitious moho
-        ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
-        gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
-      else
-        ! point below fictitious moho
-        ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
-        gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
+      if (moho < R_moho ) then
+        ! actual moho below fictitious moho
+        ! elements in second layer will stretch down to honor moho topography
 
-        ! since not all GLL points are exactlly at R220, use a small
-        ! tolerance for R220 detection, fix R220
-        if (abs(gamma) < SMALLVAL) then
-          gamma = 0.0d0
+        elevation = moho - R_moho
+
+        if ( r >= R_moho ) then
+          ! point above fictitious moho
+          ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
+          gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
+        else
+          ! point below fictitious moho
+          ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
+          gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
+
+          ! since not all GLL points are exactlly at R220, use a small
+          ! tolerance for R220 detection, fix R220
+          if (abs(gamma) < SMALLVAL) then
+            gamma = 0.0d0
+          end if
         end if
+
+        if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+          call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+
+        call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
+      else  if ( moho > R_middlecrust ) then
+        ! moho above middle crust
+        ! elements in first layer will squeeze into crust above moho
+
+        elevation = moho - R_middlecrust
+
+        if ( r > R_middlecrust ) then
+          ! point above middle crust
+          ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
+          gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
+        else
+          ! point below middle crust
+          ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
+          gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
+
+          ! since not all GLL points are exactlly at R220, use a small
+          ! tolerance for R220 detection, fix R220
+          if (abs(gamma) < SMALLVAL) then
+            gamma = 0.0d0
+          end if
+        end if
+
+        if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+          call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+
+        call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
       end if
 
-      if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-        call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
-
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-
-    else  if ( moho > R_middlecrust ) then
-      ! moho above middle crust
-      ! elements in first layer will squeeze into crust above moho
-
-      elevation = moho - R_middlecrust
-
-      if ( r > R_middlecrust ) then
-        ! point above middle crust
-        ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
-        gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
-      else
-        ! point below middle crust
-        ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
-        gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
-
-        ! since not all GLL points are exactlly at R220, use a small
-        ! tolerance for R220 detection, fix R220
-        if (abs(gamma) < SMALLVAL) then
-          gamma = 0.0d0
-        end if
-      end if
-
-      if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-        call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
-
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-
-    end if
+    endif ! TOPOGRAPHY
 
     ! counts corners in above moho
     ! note: uses a small tolerance
@@ -184,28 +212,33 @@
 !
 
 
-  subroutine moho_stretching_honor_crust_reg(myrank, &
-                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+  subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+                                            elem_in_crust,elem_in_mantle)
 
 ! regional routine: for REGIONAL_MOHO_MESH adaptations
 !
 ! uses a 3-layer crust region
 !
 ! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
+! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
+
+  use constants,only: &
+    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO
+
+  use meshfem3D_par,only: &
+    RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+
+  use meshfem3D_models_par,only: &
+    TOPOGRAPHY
 
   implicit none
 
-  include "constants.h"
-
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
-  double precision R220,RMIDDLE_CRUST
-  double precision RMOHO_FICTITIOUS_IN_MESHER
   integer :: myrank
+
+  double precision,dimension(NGNOD) :: xelm,yelm,zelm
+
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
@@ -213,9 +246,6 @@
   double precision:: r,theta,phi,lat,lon
   double precision:: vpc,vsc,rhoc,moho
   logical:: found_crust
-
-  double precision, parameter :: RADIANS_TO_DEGREES = 180.d0 / PI
-  double precision, parameter :: PI_OVER_TWO = PI / 2.0d0
   double precision :: x,y,z
 
   ! loops over element's anchor points
@@ -254,11 +284,9 @@
     !         - below 60 km (in HONOR_DEEP_MOHO case)
     !         otherwise, the moho will be "interpolated" within the element
     if( HONOR_DEEP_MOHO) then
-      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
     else
-      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
     endif
 
     ! counts corners in above moho
@@ -297,10 +325,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+  subroutine stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
+
+  use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -314,9 +343,7 @@
 
   double precision :: x,y,z
 
-  double precision :: r,moho,R220
-  double precision :: RMIDDLE_CRUST
-  double precision :: RMOHO_FICTITIOUS_IN_MESHER
+  double precision :: r,moho
 
   ! local parameters
   double precision :: elevation,gamma
@@ -448,11 +475,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+  subroutine stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
 
 ! honors shallow and middle depth moho, deep moho will be interpolated within elements
 ! mesh will get stretched down to r220
+
+  use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -464,10 +492,8 @@
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
 
-  double precision :: r,moho,R220
+  double precision :: r,moho
   double precision :: x,y,z
-  double precision :: RMIDDLE_CRUST
-  double precision :: RMOHO_FICTITIOUS_IN_MESHER
 
   ! local parameters
   double precision :: elevation,gamma

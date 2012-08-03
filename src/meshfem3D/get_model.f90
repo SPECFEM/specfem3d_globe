@@ -33,10 +33,15 @@
                       c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                       nspec_stacey,rho_vp,rho_vs, &
                       xstore,ystore,zstore, &
-                      rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
-                      R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                      rmin,rmax, &
                       tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
-                      ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
+                      elem_in_crust,elem_in_mantle)
+
+
+  use meshfem3D_par,only: &
+    RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
+    R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+    ABSORBING_CONDITIONS
 
   use meshfem3D_models_par
 
@@ -59,8 +64,7 @@
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision :: rmin,rmax,RCMB,RICB,R670,RMOHO, &
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
+  double precision :: rmin,rmax
 
   ! attenuation values
   integer :: vx,vy,vz,vnspec
@@ -69,7 +73,6 @@
   double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
   double precision :: T_c_source
 
-  logical :: ABSORBING_CONDITIONS
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters

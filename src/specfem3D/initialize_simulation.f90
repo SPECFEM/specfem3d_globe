@@ -198,44 +198,77 @@
       tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
     write(IMAIN,*)
 
-    write(IMAIN,*) 'model:'
+    ! model user parameters
+    write(IMAIN,*) 'model: ',trim(MODEL)
+    if(OCEANS) then
+      write(IMAIN,*) '  incorporating the oceans using equivalent load'
+    else
+      write(IMAIN,*) '  no oceans'
+    endif
+    if(ELLIPTICITY) then
+      write(IMAIN,*) '  incorporating ellipticity'
+    else
+      write(IMAIN,*) '  no ellipticity'
+    endif
+    if(TOPOGRAPHY) then
+      write(IMAIN,*) '  incorporating surface topography'
+    else
+      write(IMAIN,*) '  no surface topography'
+    endif
+    if(GRAVITY) then
+      write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+    else
+      write(IMAIN,*) '  no self-gravitation'
+    endif
+    if(ROTATION) then
+      write(IMAIN,*) '  incorporating rotation'
+    else
+      write(IMAIN,*) '  no rotation'
+    endif
+    if(ATTENUATION) then
+      write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
+      if(ATTENUATION_3D) write(IMAIN,*)'  using 3D attenuation'
+    else
+      write(IMAIN,*) '  no attenuation'
+    endif
+    write(IMAIN,*)
 
+    ! model mesh parameters
     if(ISOTROPIC_3D_MANTLE) then
-      write(IMAIN,*) '  incorporates 3-D lateral variations'
+      write(IMAIN,*) '  incorporating 3-D lateral variations'
     else
       write(IMAIN,*) '  no 3-D lateral variations'
     endif
     if(HETEROGEN_3D_MANTLE) then
-      write(IMAIN,*) '  incorporates heterogeneities in the mantle'
+      write(IMAIN,*) '  incorporating heterogeneities in the mantle'
     else
       write(IMAIN,*) '  no heterogeneities in the mantle'
     endif
     if(CRUSTAL) then
-      write(IMAIN,*) '  incorporates crustal variations'
+      write(IMAIN,*) '  incorporating crustal variations'
     else
       write(IMAIN,*) '  no crustal variations'
     endif
     if(ONE_CRUST) then
-      write(IMAIN,*) '  uses one layer only in PREM crust'
+      write(IMAIN,*) '  using one layer only in PREM crust'
     else
-      write(IMAIN,*) '  uses unmodified 1D crustal model with two layers'
+      write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
     endif
     if(TRANSVERSE_ISOTROPY) then
-      write(IMAIN,*) '  incorporates transverse isotropy'
+      write(IMAIN,*) '  incorporating transverse isotropy'
     else
       write(IMAIN,*) '  no transverse isotropy'
     endif
-    if(ANISOTROPIC_INNER_CORE_VAL) then
-      write(IMAIN,*) '  incorporates anisotropic inner core'
+    if(ANISOTROPIC_INNER_CORE) then
+      write(IMAIN,*) '  incorporating anisotropic inner core'
     else
       write(IMAIN,*) '  no inner-core anisotropy'
     endif
-    if(ANISOTROPIC_3D_MANTLE_VAL) then
-      write(IMAIN,*) '  incorporates anisotropic mantle'
+    if(ANISOTROPIC_3D_MANTLE) then
+      write(IMAIN,*) '  incorporating anisotropic mantle'
     else
       write(IMAIN,*) '  no general mantle anisotropy'
     endif
-
     write(IMAIN,*)
     write(IMAIN,*)
 

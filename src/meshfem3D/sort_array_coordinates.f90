@@ -27,7 +27,9 @@
 
 ! subroutines to sort MPI buffers to assemble between chunks
 
-  subroutine sort_array_coordinates(npointot,x,y,z,ibool,iglob,loc,ifseg,nglob,ind,ninseg,iwork,work)
+  subroutine sort_array_coordinates(npointot,x,y,z, &
+                                    ibool,iglob,loc,ifseg,nglob, &
+                                    ind,ninseg,iwork,work)
 
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
@@ -36,26 +38,25 @@
 
   include "constants.h"
 
-  integer npointot,nglob
+  integer :: npointot,nglob
 
-  integer ibool(npointot),iglob(npointot),loc(npointot)
-  integer ind(npointot),ninseg(npointot)
-  logical ifseg(npointot)
-  double precision x(npointot),y(npointot),z(npointot)
-  integer iwork(npointot)
-  double precision work(npointot)
+  double precision,dimension(npointot) :: x,y,z
 
-  integer ipoin,i,j
-  integer nseg,ioff,iseg,ig
-  double precision xtol
+  integer,dimension(npointot) :: ibool,iglob,loc
+  integer,dimension(npointot) :: ind,ninseg
+  logical,dimension(npointot) :: ifseg
 
-! establish initial pointers
+  integer,dimension(npointot) :: iwork
+  double precision,dimension(npointot) :: work
+
+  ! local parameters
+  integer :: ipoin,i,j
+  integer :: nseg,ioff,iseg,ig
+
+  ! establish initial pointers
   do ipoin=1,npointot
     loc(ipoin)=ipoin
   enddo
-
-! define a tolerance, normalized radius is 1., so let's use a small value
-  xtol = SMALLVALTOL
 
   ifseg(:)=.false.
 
@@ -65,57 +66,53 @@
 
   do j=1,NDIM
 
-! sort within each segment
-  ioff=1
-  do iseg=1,nseg
+    ! sort within each segment
+    ioff=1
+    do iseg=1,nseg
+      if(j == 1) then
+        call rank_buffers(x(ioff),ind,ninseg(iseg))
+      else if(j == 2) then
+        call rank_buffers(y(ioff),ind,ninseg(iseg))
+      else
+        call rank_buffers(z(ioff),ind,ninseg(iseg))
+      endif
+
+      call swap_all_buffers(ibool(ioff),loc(ioff), &
+              x(ioff),y(ioff),z(ioff),iwork,work,ind,ninseg(iseg))
+
+      ioff=ioff+ninseg(iseg)
+    enddo
+
+    ! check for jumps in current coordinate
+    ! define a tolerance, normalized radius is 1., so let's use a small value
     if(j == 1) then
-
-      call rank_buffers(x(ioff),ind,ninseg(iseg))
-
+      do i=2,npointot
+        if(dabs(x(i)-x(i-1)) > SMALLVALTOL ) ifseg(i)=.true.
+      enddo
     else if(j == 2) then
-
-      call rank_buffers(y(ioff),ind,ninseg(iseg))
-
+      do i=2,npointot
+        if(dabs(y(i)-y(i-1)) > SMALLVALTOL ) ifseg(i)=.true.
+      enddo
     else
-
-      call rank_buffers(z(ioff),ind,ninseg(iseg))
-
+      do i=2,npointot
+        if(dabs(z(i)-z(i-1)) > SMALLVALTOL ) ifseg(i)=.true.
+      enddo
     endif
 
-    call swap_all_buffers(ibool(ioff),loc(ioff), &
-            x(ioff),y(ioff),z(ioff),iwork,work,ind,ninseg(iseg))
+    ! count up number of different segments
+    nseg=0
+    do i=1,npointot
+      if(ifseg(i)) then
+        nseg=nseg+1
+        ninseg(nseg)=1
+      else
+        ninseg(nseg)=ninseg(nseg)+1
+      endif
+    enddo
 
-    ioff=ioff+ninseg(iseg)
   enddo
 
-! check for jumps in current coordinate
-  if(j == 1) then
-    do i=2,npointot
-      if(dabs(x(i)-x(i-1)) > xtol) ifseg(i)=.true.
-    enddo
-  else if(j == 2) then
-    do i=2,npointot
-      if(dabs(y(i)-y(i-1)) > xtol) ifseg(i)=.true.
-    enddo
-  else
-    do i=2,npointot
-      if(dabs(z(i)-z(i-1)) > xtol) ifseg(i)=.true.
-    enddo
-  endif
-
-! count up number of different segments
-  nseg=0
-  do i=1,npointot
-    if(ifseg(i)) then
-      nseg=nseg+1
-      ninseg(nseg)=1
-    else
-      ninseg(nseg)=ninseg(nseg)+1
-    endif
-  enddo
-  enddo
-
-! assign global node numbers (now sorted lexicographically)
+  ! assign global node numbers (now sorted lexicographically)
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
@@ -136,12 +133,13 @@
 !
   implicit none
 
-  integer n
-  double precision A(n)
-  integer IND(n)
+  integer :: n
+  double precision,dimension(n) :: A
+  integer,dimension(n) :: IND
 
-  integer i,j,l,ir,indx
-  double precision q
+  ! local parameters
+  integer :: i,j,l,ir,indx
+  double precision :: q
 
   do j=1,n
     IND(j)=j
@@ -149,41 +147,49 @@
 
   if(n == 1) return
 
-  L=n/2+1
-  ir=n
-  100 CONTINUE
-   IF(l>1) THEN
-      l=l-1
-      indx=ind(l)
-      q=a(indx)
-   ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
-      ir=ir-1
+  L = floor(n/2.0) + 1
+  ir = n
+
+  do while( .true. )
+
+    IF ( l > 1 ) THEN
+      l = l-1
+      indx = ind(l)
+      q = a(indx)
+    ELSE
+      indx = ind(ir)
+      q = a(indx)
+      ind(ir) = ind(1)
+      ir = ir-1
+
+      ! checks exit criteria
       if (ir == 1) then
-         ind(1)=indx
+         ind(1) = indx
          return
       endif
-   ENDIF
-   i=l
-   j=l+l
-  200    CONTINUE
-   IF(J <= IR) THEN
-      IF(J < IR) THEN
-         IF(A(IND(j)) < A(IND(j+1))) j=j+1
+
+    ENDIF
+
+    i = l
+    j = l+l
+
+    do while( J <= IR )
+      IF ( J < IR ) THEN
+        IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
       ENDIF
-      IF (q < A(IND(j))) THEN
-         IND(I)=IND(J)
-         I=J
-         J=J+J
+      IF ( q < A(IND(j)) ) THEN
+        IND(I) = IND(J)
+        I = J
+        J = J+J
       ELSE
-         J=IR+1
+        J = IR+1
       ENDIF
-   goto 200
-   ENDIF
-   IND(I)=INDX
-  goto 100
+
+    enddo
+
+    IND(I)=INDX
+  enddo
+
   end subroutine rank_buffers
 
 ! -------------------------------------------------------------------
@@ -194,13 +200,13 @@
 !
   implicit none
 
-  integer n
+  integer :: n
+  integer,dimension(n) :: IND
+  integer,dimension(n) :: IA,IB,IW
+  double precision,dimension(n) :: A,B,C,W
 
-  integer IND(n)
-  integer IA(n),IB(n),IW(n)
-  double precision A(n),B(n),C(n),W(n)
-
-  integer i
+  ! local parameter
+  integer :: i
 
   do i=1,n
     W(i)=A(i)
@@ -231,5 +237,4 @@
   enddo
 
   end subroutine swap_all_buffers
-
 
