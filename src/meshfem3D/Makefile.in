@@ -166,7 +166,6 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_sea1d.o \
 	$O/model_sea99_s.mpi.o \
 	$O/moho_stretching.o \
-	$O/read_arrays_buffers_mesher.mpi.o \
 	$O/save_arrays_solver.o \
 	$O/setup_color_perm.o \
 	$O/setup_inner_outer.o \

@@ -228,10 +228,7 @@
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO
 
   use meshfem3D_par,only: &
-    RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
-
-  use meshfem3D_models_par,only: &
-    TOPOGRAPHY
+    R220
 
   implicit none
 

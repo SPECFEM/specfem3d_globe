@@ -600,19 +600,19 @@
   ! local parameters
   ! added for sorting
   integer, dimension(:,:,:,:), allocatable :: temp_array_int
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
+!  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
   logical, dimension(:), allocatable :: temp_array_logical_1D
 
   integer, dimension(:), allocatable :: temp_perm_global
   logical, dimension(:), allocatable :: mask_global
 
   integer :: icolor,icounter,ispec,ielem,ier,i
-  integer :: iface,old_ispec,new_ispec
-
+  integer :: new_ispec
+!  integer :: iface,old_ispec
   character(len=256) :: filename
+  character(len=150) :: prname
 
   logical,parameter :: DEBUG = .true.
-  character(len=150) :: prname
 
   ! sorts array according to permutation
   allocate(temp_perm_global(nspec),stat=ier)

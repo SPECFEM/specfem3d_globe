@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-!daniel: obsolete...
+! obsolete...
 !
 !  subroutine read_arrays_buffers_solver(iregion_code,myrank, &
 !                               iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &

@@ -396,3 +396,137 @@
   endif ! SAVE_MESH_FILES
 
   end subroutine save_arrays_solver
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine save_arrays_solver_MPI(iregion_code)
+
+  use meshfem3D_par,only: &
+    myrank,LOCAL_PATH, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+
+!  use create_MPI_interfaces_par
+
+  use MPI_crust_mantle_par
+  use MPI_outer_core_par
+  use MPI_inner_core_par
+
+  implicit none
+
+  integer,intent(in):: iregion_code
+
+  select case( iregion_code )
+  case( IREGION_CRUST_MANTLE )
+    ! crust mantle
+    call save_MPI_arrays(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                             my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
+                             ibool_interfaces_crust_mantle, &
+                             nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
+                             num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                             num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
+                             num_elem_colors_crust_mantle)
+
+
+  case( IREGION_OUTER_CORE )
+    ! outer core
+    call save_MPI_arrays(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
+                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                             my_neighbours_outer_core,nibool_interfaces_outer_core, &
+                             ibool_interfaces_outer_core, &
+                             nspec_inner_outer_core,nspec_outer_outer_core, &
+                             num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                             num_colors_outer_outer_core,num_colors_inner_outer_core, &
+                             num_elem_colors_outer_core)
+
+  case( IREGION_INNER_CORE )
+    ! inner core
+    call save_MPI_arrays(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
+                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                             my_neighbours_inner_core,nibool_interfaces_inner_core, &
+                             ibool_interfaces_inner_core, &
+                             nspec_inner_inner_core,nspec_outer_inner_core, &
+                             num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                             num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                             num_elem_colors_inner_core)
+
+  end select
+
+  end subroutine save_arrays_solver_MPI
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_MPI_arrays(myrank,iregion_code,LOCAL_PATH, &
+                                  num_interfaces,max_nibool_interfaces, &
+                                  my_neighbours,nibool_interfaces, &
+                                  ibool_interfaces, &
+                                  nspec_inner,nspec_outer, &
+                                  num_phase_ispec,phase_ispec_inner, &
+                                  num_colors_outer,num_colors_inner, &
+                                  num_elem_colors)
+  implicit none
+
+  include "constants.h"
+
+  integer :: iregion_code,myrank
+
+  character(len=150) :: LOCAL_PATH
+
+  ! MPI interfaces
+  integer :: num_interfaces,max_nibool_interfaces
+  integer, dimension(num_interfaces) :: my_neighbours
+  integer, dimension(num_interfaces) :: nibool_interfaces
+  integer, dimension(max_nibool_interfaces,num_interfaces) :: &
+    ibool_interfaces
+
+  ! inner/outer elements
+  integer :: nspec_inner,nspec_outer
+  integer :: num_phase_ispec
+  integer,dimension(num_phase_ispec,2) :: phase_ispec_inner
+
+  ! mesh coloring
+  integer :: num_colors_outer,num_colors_inner
+  integer, dimension(num_colors_outer + num_colors_inner) :: &
+    num_elem_colors
+
+  ! local parameters
+  character(len=150) :: prname
+  integer :: ier
+
+  ! create the name for the database of the current slide and region
+  call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
+       status='unknown',action='write',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+
+  ! MPI interfaces
+  write(IOUT) num_interfaces
+  if( num_interfaces > 0 ) then
+    write(IOUT) max_nibool_interfaces
+    write(IOUT) my_neighbours
+    write(IOUT) nibool_interfaces
+    write(IOUT) ibool_interfaces
+  endif
+
+  ! inner/outer elements
+  write(IOUT) nspec_inner,nspec_outer
+  write(IOUT) num_phase_ispec
+  if(num_phase_ispec > 0 ) write(IOUT) phase_ispec_inner
+
+  ! mesh coloring
+  if( USE_MESH_COLORING_GPU ) then
+    write(IOUT) num_colors_outer,num_colors_inner
+    write(IOUT) num_elem_colors
+  endif
+
+  close(IOUT)
+
+  end subroutine save_MPI_arrays
+

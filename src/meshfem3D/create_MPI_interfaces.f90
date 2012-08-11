@@ -30,19 +30,17 @@
   subroutine create_MPI_interfaces(iregion_code)
 
   implicit none
+
   integer,intent(in):: iregion_code
 
   ! sets up arrays
   call cmi_allocate_addressing(iregion_code)
 
-  ! reads in arrays
-  call cmi_read_addressing(iregion_code)
+  ! gets in arrays
+  call cmi_get_addressing(iregion_code)
 
   ! reads "iboolleft_..txt", "iboolright_..txt" (and "list_messages_..txt", "buffer_...txt") files and sets up MPI buffers
-  call cmi_read_buffers(iregion_code)
-
-  ! sets up MPI interfaces
-  call setup_MPI_interfaces(iregion_code)
+  call cmi_get_buffers(iregion_code)
 
   end subroutine create_MPI_interfaces
 
@@ -59,53 +57,24 @@
     NCHUNKS,myrank,NGLOB1D_RADIAL,NUMCORNERS_SHARED,NPROC_XI,NGLLX,NGLLY,NGLLZ
 
   use create_MPI_interfaces_par
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
   implicit none
 
   integer,intent(in):: iregion_code
 
   ! local parameters
-  integer :: NUM_FACES,NPROC_ONE_DIRECTION
   integer :: ier
-
-  ! define maximum size for message buffers
-  ! use number of elements found in the mantle since it is the largest region
-  NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
-
-  ! initializes
-  NCORNERSCHUNKS = 0
-  NUM_FACES = 0
-  NUM_MSG_TYPES = 0
-
-  ! number of corners and faces shared between chunks and number of message types
-  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
-    NCORNERSCHUNKS = 1
-    NUM_FACES = 1
-    NUM_MSG_TYPES = 1
-  else if(NCHUNKS == 3) then
-    NCORNERSCHUNKS = 1
-    NUM_FACES = 1
-    NUM_MSG_TYPES = 3
-  else if(NCHUNKS == 6) then
-    NCORNERSCHUNKS = 8
-    NUM_FACES = 4
-    NUM_MSG_TYPES = 3
-  else
-    call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
-  endif
-
-  ! if more than one chunk then same number of processors in each direction
-  NPROC_ONE_DIRECTION = NPROC_XI
-  ! total number of messages corresponding to these common faces
-  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
   ! parameters from header file
   NGLOB1D_RADIAL_CM = NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
   NGLOB1D_RADIAL_OC = NGLOB1D_RADIAL(IREGION_OUTER_CORE)
   NGLOB1D_RADIAL_IC = NGLOB1D_RADIAL(IREGION_INNER_CORE)
 
+  ! initializes
   NSPEC_CRUST_MANTLE = 0
   NGLOB_CRUST_MANTLE = 0
 
@@ -157,17 +126,6 @@
   end select
 
   ! allocates arrays
-  allocate(iprocfrom_faces(NUMMSGS_FACES), &
-          iprocto_faces(NUMMSGS_FACES), &
-          imsg_type(NUMMSGS_FACES),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating iproc faces arrays')
-
-  ! communication pattern for corners between chunks
-  allocate(iproc_master_corners(NCORNERSCHUNKS), &
-          iproc_worker1_corners(NCORNERSCHUNKS), &
-          iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating iproc corner arrays')
-
   allocate(buffer_send_chunkcorn_scalar(NGLOB1D_RADIAL_CM), &
           buffer_recv_chunkcorn_scalar(NGLOB1D_RADIAL_CM))
 
@@ -263,7 +221,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmi_read_addressing(iregion_code)
+  subroutine cmi_get_addressing(iregion_code)
 
   use meshfem3D_par,only: &
     myrank,LOCAL_PATH
@@ -281,12 +239,10 @@
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
     ibool_crust_mantle(:,:,:,:) = -1
-    call cmi_read_solver_data(myrank,IREGION_CRUST_MANTLE, &
-                             NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+    call cmi_read_solver_data(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,&
                              ibool_crust_mantle,idoubling_crust_mantle, &
-                             is_on_a_slice_edge_crust_mantle, &
-                             LOCAL_PATH)
+                             is_on_a_slice_edge_crust_mantle)
 
     ! check that the number of points in this slice is correct
     if(minval(ibool_crust_mantle(:,:,:,:)) /= 1 .or. &
@@ -296,12 +252,10 @@
   case( IREGION_OUTER_CORE )
     ! outer core
     ibool_outer_core(:,:,:,:) = -1
-    call cmi_read_solver_data(myrank,IREGION_OUTER_CORE, &
-                             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+    call cmi_read_solver_data(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                              xstore_outer_core,ystore_outer_core,zstore_outer_core,&
                              ibool_outer_core,idoubling_outer_core, &
-                             is_on_a_slice_edge_outer_core, &
-                             LOCAL_PATH)
+                             is_on_a_slice_edge_outer_core)
 
     ! check that the number of points in this slice is correct
     if(minval(ibool_outer_core(:,:,:,:)) /= 1 .or. &
@@ -311,12 +265,10 @@
   case( IREGION_INNER_CORE )
     ! inner core
     ibool_inner_core(:,:,:,:) = -1
-    call cmi_read_solver_data(myrank,IREGION_INNER_CORE, &
-                             NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+    call cmi_read_solver_data(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                              xstore_inner_core,ystore_inner_core,zstore_inner_core,&
                              ibool_inner_core,idoubling_inner_core, &
-                             is_on_a_slice_edge_inner_core, &
-                             LOCAL_PATH)
+                             is_on_a_slice_edge_inner_core)
 
     ! check that the number of points in this slice is correct
     if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
@@ -327,37 +279,48 @@
   ! synchronize processes
   call sync_all()
 
-  end subroutine cmi_read_addressing
+  end subroutine cmi_get_addressing
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmi_read_buffers(iregion_code)
+  subroutine cmi_get_buffers(iregion_code)
 
   use meshfem3D_par,only: myrank,&
-    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+    NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS,OUTPUT_FILES,IIN,INCLUDE_CENTRAL_CUBE, &
     iproc_xi,iproc_eta,ichunk,addressing
 
+  use create_regions_mesh_par2,only: &
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
+    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
+    jacobian2D_bottom,jacobian2D_top, &
+    rho_vp,rho_vs, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store
+
   use create_MPI_interfaces_par
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
   implicit none
 
   integer,intent(in):: iregion_code
 
   ! local parameters
   integer :: ier
-  integer njunk1,njunk2
-  character(len=150) prname
+
   ! debug
   logical,parameter :: DEBUG_FLAGS = .false.
   character(len=150) :: filename
 
-  ! read 2-D addressing for summation between slices with MPI
+  ! gets 2-D addressing for summation between slices with MPI
 
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
@@ -366,20 +329,15 @@
       write(IMAIN,*)
       write(IMAIN,*) 'crust/mantle region:'
     endif
-    ! initializes
-    npoin2D_xi_crust_mantle(:) = 0
-    npoin2D_eta_crust_mantle(:) = 0
-
-    call read_arrays_buffers_mesher(IREGION_CRUST_MANTLE,myrank,iboolleft_xi_crust_mantle, &
-               iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-               npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-               iprocfrom_faces,iprocto_faces,imsg_type, &
-               iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-               iboolfaces_crust_mantle,npoin2D_faces_crust_mantle, &
-               iboolcorner_crust_mantle, &
-               NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
-               NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-               NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
+    call cmi_read_buffer_data(IREGION_CRUST_MANTLE, &
+                            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
+                            NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+                            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+                            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
+                            iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+                            npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+                            iboolfaces_crust_mantle,npoin2D_faces_crust_mantle, &
+                            iboolcorner_crust_mantle)
 
     ! note: fix_... routines below update is_on_a_slice_edge_.. arrays:
     !          assign flags for each element which is on a rim of the slice
@@ -415,19 +373,15 @@
       write(IMAIN,*)
       write(IMAIN,*) 'outer core region:'
     endif
-    npoin2D_xi_outer_core(:) = 0
-    npoin2D_eta_outer_core(:) = 0
-
-    call read_arrays_buffers_mesher(IREGION_OUTER_CORE,myrank, &
-               iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-               npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-               iprocfrom_faces,iprocto_faces,imsg_type, &
-               iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-               iboolfaces_outer_core,npoin2D_faces_outer_core, &
-               iboolcorner_outer_core, &
-               NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
-               NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-               NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
+    call cmi_read_buffer_data(IREGION_OUTER_CORE, &
+                            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
+                            NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+                            NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+                            iboolleft_xi_outer_core,iboolright_xi_outer_core, &
+                            iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+                            npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+                            iboolfaces_outer_core,npoin2D_faces_outer_core, &
+                            iboolcorner_outer_core)
 
     ! note: fix_... routines below update is_on_a_slice_edge_.. arrays:
     !          assign flags for each element which is on a rim of the slice
@@ -461,43 +415,28 @@
       write(IMAIN,*)
       write(IMAIN,*) 'inner core region:'
     endif
-    npoin2D_xi_inner_core(:) = 0
-    npoin2D_eta_inner_core(:) = 0
-    call read_arrays_buffers_mesher(IREGION_INNER_CORE,myrank, &
-               iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-               npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-               iprocfrom_faces,iprocto_faces,imsg_type, &
-               iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-               iboolfaces_inner_core,npoin2D_faces_inner_core, &
-               iboolcorner_inner_core, &
-               NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
-               NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-               NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
+    call cmi_read_buffer_data(IREGION_INNER_CORE, &
+                            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
+                            NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+                            NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+                            iboolleft_xi_inner_core,iboolright_xi_inner_core, &
+                            iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+                            npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+                            iboolfaces_inner_core,npoin2D_faces_inner_core, &
+                            iboolcorner_inner_core)
 
-    ! read coupling arrays for inner core
-    ! create name of database
-    call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+    ! gets coupling arrays for inner core
+    nspec2D_xmin_inner_core = nspec2D_xmin
+    nspec2D_xmax_inner_core = nspec2D_xmax
+    nspec2D_ymin_inner_core = nspec2D_ymin
+    nspec2D_ymax_inner_core = nspec2D_ymax
 
-    ! read info for vertical edges for central cube matching in inner core
-    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
-
-    read(IIN) nspec2D_xmin_inner_core
-    read(IIN) nspec2D_xmax_inner_core
-    read(IIN) nspec2D_ymin_inner_core
-    read(IIN) nspec2D_ymax_inner_core
-    read(IIN) njunk1
-    read(IIN) njunk2
-
-    ! boundary parameters
-    read(IIN) ibelm_xmin_inner_core
-    read(IIN) ibelm_xmax_inner_core
-    read(IIN) ibelm_ymin_inner_core
-    read(IIN) ibelm_ymax_inner_core
-    read(IIN) ibelm_bottom_inner_core
-    read(IIN) ibelm_top_inner_core
-    close(IIN)
+    ibelm_xmin_inner_core(:) = ibelm_xmin(:)
+    ibelm_xmax_inner_core(:) = ibelm_xmax(:)
+    ibelm_ymin_inner_core(:) = ibelm_ymin(:)
+    ibelm_ymax_inner_core(:) = ibelm_ymax(:)
+    ibelm_bottom_inner_core(:) = ibelm_bottom(:)
+    ibelm_top_inner_core(:) = ibelm_top(:)
 
     ! central cube buffers
     if(INCLUDE_CENTRAL_CUBE) then
@@ -598,267 +537,156 @@
   end select
 
 
-  end subroutine cmi_read_buffers
+  end subroutine cmi_get_buffers
+
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine cmi_read_solver_data(nspec,nglob, &
+                                  xstore_s,ystore_s,zstore_s, &
+                                  ibool_s,idoubling_s,is_on_a_slice_edge_s)
 
-  subroutine cmi_save_MPI_interfaces(iregion_code)
 
   use meshfem3D_par,only: &
-    myrank,LOCAL_PATH
+    ibool,idoubling,is_on_a_slice_edge, &
+    xstore,ystore,zstore
 
-  use create_MPI_interfaces_par
-  use MPI_crust_mantle_par
-  use MPI_outer_core_par
-  use MPI_inner_core_par
-
-  implicit none
-
-  integer,intent(in):: iregion_code
-
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
-    ! crust mantle
-    call cmi_save_solver_data(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
-                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
-                             my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
-                             ibool_interfaces_crust_mantle, &
-                             nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
-                             num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                             num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
-                             num_elem_colors_crust_mantle)
-
-
-  case( IREGION_OUTER_CORE )
-    ! outer core
-    call cmi_save_solver_data(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
-                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
-                             my_neighbours_outer_core,nibool_interfaces_outer_core, &
-                             ibool_interfaces_outer_core, &
-                             nspec_inner_outer_core,nspec_outer_outer_core, &
-                             num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                             num_colors_outer_outer_core,num_colors_inner_outer_core, &
-                             num_elem_colors_outer_core)
-
-  case( IREGION_INNER_CORE )
-    ! inner core
-    call cmi_save_solver_data(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
-                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-                             my_neighbours_inner_core,nibool_interfaces_inner_core, &
-                             ibool_interfaces_inner_core, &
-                             nspec_inner_inner_core,nspec_outer_inner_core, &
-                             num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                             num_colors_outer_inner_core,num_colors_inner_inner_core, &
-                             num_elem_colors_inner_core)
-
-  end select
-
-  end subroutine cmi_save_MPI_interfaces
-
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine cmi_free_MPI_arrays(iregion_code)
-
-  use create_MPI_interfaces_par
-  use MPI_crust_mantle_par
-  use MPI_outer_core_par
-  use MPI_inner_core_par
-  implicit none
-
-  integer,intent(in):: iregion_code
-
-  ! free memory
-  deallocate(iprocfrom_faces,iprocto_faces,imsg_type)
-  deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
-  deallocate(buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar)
-  deallocate(buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector)
-
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
-    ! crust mantle
-    deallocate(iboolcorner_crust_mantle)
-    deallocate(iboolleft_xi_crust_mantle, &
-            iboolright_xi_crust_mantle)
-    deallocate(iboolleft_eta_crust_mantle, &
-            iboolright_eta_crust_mantle)
-    deallocate(iboolfaces_crust_mantle)
-
-    deallocate(phase_ispec_inner_crust_mantle)
-    deallocate(num_elem_colors_crust_mantle)
-
-    deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
-    deallocate(idoubling_crust_mantle,ibool_crust_mantle)
-
-    deallocate(is_on_a_slice_edge_crust_mantle)
-
-  case( IREGION_OUTER_CORE )
-    ! outer core
-    deallocate(iboolcorner_outer_core)
-    deallocate(iboolleft_xi_outer_core, &
-            iboolright_xi_outer_core)
-    deallocate(iboolleft_eta_outer_core, &
-            iboolright_eta_outer_core)
-    deallocate(iboolfaces_outer_core)
-
-    deallocate(phase_ispec_inner_outer_core)
-    deallocate(num_elem_colors_outer_core)
-
-    deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
-    deallocate(idoubling_outer_core,ibool_outer_core)
-
-    deallocate(is_on_a_slice_edge_outer_core)
-
-  case( IREGION_INNER_CORE )
-    ! inner core
-    deallocate(ibelm_xmin_inner_core, &
-            ibelm_xmax_inner_core)
-    deallocate(ibelm_ymin_inner_core, &
-            ibelm_ymax_inner_core)
-    deallocate(ibelm_bottom_inner_core)
-    deallocate(ibelm_top_inner_core)
-
-    deallocate(iboolcorner_inner_core)
-    deallocate(iboolleft_xi_inner_core, &
-            iboolright_xi_inner_core)
-    deallocate(iboolleft_eta_inner_core, &
-            iboolright_eta_inner_core)
-    deallocate(iboolfaces_inner_core)
-
-    deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
-    deallocate(idoubling_inner_core,ibool_inner_core)
-
-    deallocate(phase_ispec_inner_inner_core)
-    deallocate(num_elem_colors_inner_core)
-
-    deallocate(is_on_a_slice_edge_inner_core)
-
-  end select
-
-  end subroutine cmi_free_MPI_arrays
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine cmi_read_solver_data(myrank,iregion_code, &
-                                  nspec,nglob, &
-                                  xstore,ystore,zstore, &
-                                  ibool,idoubling,is_on_a_slice_edge, &
-                                  LOCAL_PATH)
   implicit none
 
   include "constants.h"
-
-  integer :: iregion_code,myrank
 
   integer :: nspec,nglob
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: idoubling
-  logical, dimension(nspec) :: is_on_a_slice_edge
+  ! global mesh points
+  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_s,ystore_s,zstore_s
 
-  character(len=150) :: LOCAL_PATH
+  ! mesh indices
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool_s
+  integer, dimension(nspec) :: idoubling_s
+  logical, dimension(nspec) :: is_on_a_slice_edge_s
 
   ! local parameters
-  character(len=150) prname
-  integer :: ier
+  integer :: i,j,k,ispec,iglob
 
-  ! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+  ! copy arrays
+  ibool_s(:,:,:,:) = ibool(:,:,:,:)
+  idoubling_s(:) = idoubling(:)
+  is_on_a_slice_edge_s(:) = is_on_a_slice_edge(:)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
-       status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_2.bin')
-
-  read(IIN) xstore
-  read(IIN) ystore
-  read(IIN) zstore
-  read(IIN) ibool
-  read(IIN) idoubling
-  read(IIN) is_on_a_slice_edge
-
-  close(IIN)
+  ! fill custom_real arrays
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            xstore_s(iglob) = sngl(xstore(i,j,k,ispec))
+            ystore_s(iglob) = sngl(ystore(i,j,k,ispec))
+            zstore_s(iglob) = sngl(zstore(i,j,k,ispec))
+          else
+            xstore_s(iglob) = xstore(i,j,k,ispec)
+            ystore_s(iglob) = ystore(i,j,k,ispec)
+            zstore_s(iglob) = zstore(i,j,k,ispec)
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
 
   end subroutine cmi_read_solver_data
+
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmi_save_solver_data(myrank,iregion_code,LOCAL_PATH, &
-                                  num_interfaces,max_nibool_interfaces, &
-                                  my_neighbours,nibool_interfaces, &
-                                  ibool_interfaces, &
-                                  nspec_inner,nspec_outer, &
-                                  num_phase_ispec,phase_ispec_inner, &
-                                  num_colors_outer,num_colors_inner, &
-                                  num_elem_colors)
+  subroutine cmi_read_buffer_data(iregion_code, &
+                                  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                                  NGLOB1D_RADIAL, &
+                                  iboolleft_xi_s,iboolright_xi_s, &
+                                  iboolleft_eta_s,iboolright_eta_s, &
+                                  npoin2D_xi_s,npoin2D_eta_s, &
+                                  iboolfaces_s,npoin2D_faces_s, &
+                                  iboolcorner_s)
+
+  use meshfem3D_par,only: &
+    myrank,IMAIN,NDIM,NUMFACES_SHARED,NUMCORNERS_SHARED,NPROC_XI,NPROC_ETA
+
+  use create_MPI_interfaces_par
+
   implicit none
 
-  include "constants.h"
+  integer :: iregion_code
 
-  integer :: iregion_code,myrank
+  integer :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+  integer :: NGLOB1D_RADIAL
 
-  character(len=150) :: LOCAL_PATH
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi_s,iboolright_xi_s
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta_s,iboolright_eta_s
 
-  ! MPI interfaces
-  integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: my_neighbours
-  integer, dimension(num_interfaces) :: nibool_interfaces
-  integer, dimension(max_nibool_interfaces,num_interfaces) :: &
-    ibool_interfaces
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_s,npoin2D_eta_s
 
-  ! inner/outer elements
-  integer :: nspec_inner,nspec_outer
-  integer :: num_phase_ispec
-  integer,dimension(num_phase_ispec,2) :: phase_ispec_inner
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces_s
+  integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_s
 
-  ! mesh coloring
-  integer :: num_colors_outer,num_colors_inner
-  integer, dimension(num_colors_outer + num_colors_inner) :: &
-    num_elem_colors
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner_s
 
   ! local parameters
-  character(len=150) prname
-  integer :: ier
+  integer :: icount_faces,imsg
 
-  ! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+  ! gets 2-D arrays
+  npoin2D_xi_s(:) = npoin2D_xi_all(:)
+  npoin2D_eta_s(:) = npoin2D_eta_all(:)
 
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
-       status='unknown',action='write',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+  ! gets mpi buffers on sides
+  iboolleft_xi_s(:) = iboolleft_xi(:)
+  iboolright_xi_s(:) = iboolright_xi(:)
+  iboolleft_eta_s(:) = iboolleft_eta(:)
+  iboolright_eta_s(:) = iboolright_eta(:)
 
-  ! MPI interfaces
-  write(IOUT) num_interfaces
-  if( num_interfaces > 0 ) then
-    write(IOUT) max_nibool_interfaces
-    write(IOUT) my_neighbours
-    write(IOUT) nibool_interfaces
-    write(IOUT) ibool_interfaces
+  ! gets corner infos
+  iboolcorner_s(:,:) = iboolcorner(:,:)
+
+  ! gets face infos
+  npoin2D_faces_s(:) = npoin2D_faces(:)
+  iboolfaces_s(:,:) = iboolfaces(:,:)
+
+  ! checks indirect addressing for each message for faces of the chunks
+  ! a given slice can belong to at most two faces
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+    if(myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
+      icount_faces = icount_faces + 1
+
+      if(icount_faces > NUMFACES_SHARED) then
+        print*,'error ',myrank,' icount_faces: ',icount_faces,'NUMFACES_SHARED:',NUMFACES_SHARED
+        print*,'iregion_code:',iregion_code
+        call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
+      endif
+      if(icount_faces > 2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
+        print*,'error ',myrank,' icount_faces: ',icount_faces,'NPROC_XI:',NPROC_XI,'NPROC_ETA:',NPROC_ETA
+        print*,'iregion_code:',iregion_code
+        call exit_MPI(myrank,'more than two faces for this slice')
+      endif
+    endif
+  enddo
+
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*) '  #max of points in MPI buffers along xi npoin2D_xi = ', &
+                                maxval(npoin2D_xi_s(:))
+    write(IMAIN,*) '  #max of array elements transferred npoin2D_xi*NDIM = ', &
+                                maxval(npoin2D_xi_s(:))*NDIM
+    write(IMAIN,*)
+    write(IMAIN,*) '  #max of points in MPI buffers along eta npoin2D_eta = ', &
+                                maxval(npoin2D_eta_s(:))
+    write(IMAIN,*) '  #max of array elements transferred npoin2D_eta*NDIM = ', &
+                                maxval(npoin2D_eta_s(:))*NDIM
+    write(IMAIN,*)
   endif
 
-  ! inner/outer elements
-  write(IOUT) nspec_inner,nspec_outer
-  write(IOUT) num_phase_ispec
-  if(num_phase_ispec > 0 ) write(IOUT) phase_ispec_inner
-
-  ! mesh coloring
-  if( USE_MESH_COLORING_GPU ) then
-    write(IOUT) num_colors_outer,num_colors_inner
-    write(IOUT) num_elem_colors
-  endif
-
-  close(IOUT)
-
-  end subroutine cmi_save_solver_data
-
+  end subroutine cmi_read_buffer_data
 

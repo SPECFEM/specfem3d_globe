@@ -32,14 +32,6 @@
   implicit none
 
   ! local parameters
-  ! parameters needed to store the radii of the grid points
-  ! in the spherically symmetric Earth
-  integer, dimension(:), allocatable :: idoubling
-  integer, dimension(:,:,:,:), allocatable :: ibool
-  ! arrays with the mesh in double precision
-  double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
-  ! this for non blocking MPI
-  logical, dimension(:), allocatable :: is_on_a_slice_edge
   integer :: ipass
   integer :: ier
 
@@ -100,13 +92,10 @@
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
-      call create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
-                          xstore,ystore,zstore, &
-                          NSPEC(iregion_code), &
-                          NGLOB(iregion_code),npointot, &
+      call create_regions_mesh(iregion_code, &
+                          NSPEC(iregion_code),NGLOB(iregion_code),npointot, &
                           NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
-                          NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
                           NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
                           mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
                           ipass)
