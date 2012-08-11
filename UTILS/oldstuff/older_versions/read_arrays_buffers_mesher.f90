@@ -44,12 +44,12 @@
   integer iregion_code,myrank,NCHUNKS,ier
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
-  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL
-  integer NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA
+  integer :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL
+  integer :: NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA
 
-  integer npoin2D_faces(NUMFACES_SHARED)
+  integer :: npoin2D_faces(NUMFACES_SHARED)
 
-  character(len=150) LOCAL_PATH
+  character(len=150) :: LOCAL_PATH
 
   integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
   integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
@@ -61,16 +61,16 @@
 ! allocate array for messages for corners
   integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
-  integer npoin2D_xi_mesher,npoin2D_eta_mesher
-  integer npoin1D_corner
+  integer :: npoin2D_xi_mesher,npoin2D_eta_mesher
+  integer :: npoin1D_corner
 
-  integer imsg,icount_faces,icount_corners
-  integer ipoin1D,ipoin2D
+  integer :: imsg,icount_faces,icount_corners
+  integer :: ipoin1D,ipoin2D
 
-  double precision xdummy,ydummy,zdummy
+  double precision :: xdummy,ydummy,zdummy
 
 ! processor identification
-  character(len=150) OUTPUT_FILES,prname,filename
+  character(len=150) :: OUTPUT_FILES,prname,filename
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -186,7 +186,7 @@
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! read chunk messages only if more than one chunk
-  if(NCHUNKS /= 1) then
+  if(NCHUNKS > 1) then
 
 ! read messages to assemble between chunks with MPI
 
@@ -199,13 +199,17 @@
 
     do imsg = 1,NUMMSGS_FACES
       read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
+      
+      ! checks array values bounds
       if      (iprocfrom_faces(imsg) < 0 &
           .or. iprocto_faces(imsg) < 0 &
           .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
           .or. iprocto_faces(imsg) > NPROCTOT-1) &
         call exit_MPI(myrank,'incorrect chunk faces numbering')
+      ! checks types  
       if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
         call exit_MPI(myrank,'incorrect message type labeling')
+        
     enddo
     close(IIN)
 

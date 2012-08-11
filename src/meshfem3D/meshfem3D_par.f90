@@ -267,36 +267,35 @@
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer npointot
+  integer :: npointot
 
   ! proc numbers for MPI
-  integer myrank,sizeprocs
+  integer :: myrank,sizeprocs
 
   ! check area and volume of the final mesh
-  double precision volume_total
+  double precision :: volume_total
 
   ! for loop on all the slices
-  integer iregion_code
-  integer iproc_xi,iproc_eta,ichunk
+  integer :: iregion_code
+  integer :: iproc_xi,iproc_eta,ichunk
 
   ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
-
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
   ! for some statistics for the mesh
-  integer numelem_crust_mantle,numelem_outer_core,numelem_inner_core
-  integer numelem_total
+  integer :: numelem_crust_mantle,numelem_outer_core,numelem_inner_core
+  integer :: numelem_total
 
   ! timer MPI
-  double precision time_start,tCPU
+  double precision :: time_start,tCPU
 
   ! addressing for all the slices
   integer, dimension(:), allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
   integer, dimension(:,:,:), allocatable :: addressing
 
   ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+  integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
@@ -306,24 +305,25 @@
           NCHUNKS,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
 
-  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+  double precision :: DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
           MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
           RMOHO_FICTITIOUS_IN_MESHER
 
-  logical MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
+  logical :: MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+  character(len=150) :: OUTPUT_FILES
+  character(len=150) :: LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
   ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
+  integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
   ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
@@ -368,6 +368,16 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+
+  ! arrays with the mesh in double precision
+  double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
+  ! parameters needed to store the radii of the grid points
+  ! in the spherically symmetric Earth
+  integer, dimension(:), allocatable :: idoubling
+  integer, dimension(:,:,:,:), allocatable :: ibool
+
+  ! this for non blocking MPI
+  logical, dimension(:), allocatable :: is_on_a_slice_edge
 
   end module meshfem3D_par
 
@@ -444,6 +454,9 @@
   integer nglob_oceans
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
 
+  ! number of elements on the boundaries
+  integer :: nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
+
   ! boundary parameters locator
   integer, dimension(:), allocatable :: ibelm_xmin,ibelm_xmax, &
     ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top
@@ -464,9 +477,6 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
 
-  ! number of elements on the boundaries
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-
   ! attenuation
   double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
   double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
@@ -475,7 +485,7 @@
 
   logical :: USE_ONE_LAYER_SB
 
-  integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
+  integer :: NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
     first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
 
   double precision, dimension(:,:), allocatable :: stretch_tab
@@ -483,14 +493,14 @@
   integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   ! Boundary Mesh
-  integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
+  integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho,normal_400,normal_670
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_moho,jacobian2D_400,jacobian2D_670
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
+  integer :: ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
     ispec2D_670_top,ispec2D_670_bot
-  double precision r_moho,r_400,r_670
+  double precision :: r_moho,r_400,r_670
 
   ! flags for transverse isotropic elements
   logical, dimension(:), allocatable :: ispec_is_tiso
@@ -508,13 +518,13 @@
 
   use constants,only: &
     CUSTOM_REAL,NDIM,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 
   ! indirect addressing for each message for faces and corners of the chunks
   ! a given slice can belong to at most one corner and at most two faces
-  integer :: NGLOB2DMAX_XY
 
   ! number of faces between chunks
   integer :: NUMMSGS_FACES
@@ -534,6 +544,28 @@
   integer, dimension(:),allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
   ! communication pattern for corners between chunks
   integer, dimension(:),allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  ! indirect addressing for each corner of the chunks
+  integer, dimension(:,:),allocatable :: iboolcorner
+
+  ! chunk faces
+  integer, dimension(:,:),allocatable :: iboolfaces
+  integer, dimension(NUMFACES_SHARED) :: npoin2D_faces
+  integer :: NGLOB2DMAX_XY
+
+  ! 2-D addressing and buffers for summation between slices
+  integer, dimension(:),allocatable :: iboolleft_xi,iboolright_xi
+  integer, dimension(:),allocatable :: iboolleft_eta,iboolright_eta
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all,npoin2D_eta_all
+  integer :: npoin2D_xi,npoin2D_eta
+
+  ! 1-D addressing
+  integer :: NGLOB1D_RADIAL_MAX
+  integer,dimension(:),allocatable :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                                    ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
+
+  double precision,dimension(:,:),allocatable :: xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+                                    xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
 
   ! this for non blocking MPI
 

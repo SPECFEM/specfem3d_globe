@@ -27,8 +27,7 @@
 
   subroutine create_mass_matrices(myrank,nspec,idoubling,ibool, &
                           iregion_code,xstore,ystore,zstore, &
-                          NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+                          NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
 ! creates rmassx, rmassy, rmassz and rmass_ocean_load
 
@@ -38,7 +37,7 @@
     OCEANS,TOPOGRAPHY,ibathy_topo
 
   use meshfem3D_par,only: &
-    DT,NCHUNKS,ABSORBING_CONDITIONS,ichunk,RHO_OCEANS
+    NCHUNKS,ABSORBING_CONDITIONS,RHO_OCEANS
 
   use create_regions_mesh_par,only: &
     wxgll,wygll,wzgll
@@ -47,13 +46,7 @@
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore,rhostore,kappavstore, &
     rmassx,rmassy,rmassz,rmass_ocean_load, &
-    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-    normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
-    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-    jacobian2D_bottom,jacobian2D_top, &
-    rho_vp,rho_vs, &
-    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    prname
+    ibelm_top,jacobian2D_top
 
   implicit none
 
@@ -70,92 +63,23 @@
 
   ! Stacey conditions put back
   integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
-  integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
 
   ! local parameters
-  double precision :: xval,yval,zval,rval,thetaval,phival,weight
+  double precision :: xval,yval,zval,rval,theta,phi,weight
   double precision :: lat,lon
   double precision :: elevation,height_oceans
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  ! time scheme
-  real(kind=CUSTOM_REAL) :: deltat,deltatover2
-  ! absorbing boundaries
-  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nimin,nimax,nkmin_eta
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX) :: njmin,njmax,nkmin_xi
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-  real(kind=CUSTOM_REAL) :: tx,ty,tz,sn
-  real(kind=CUSTOM_REAL) :: nx,ny,nz,vn
 
-  integer :: ispec,i,j,k,iglob,ier
+  integer :: ispec,i,j,k,iglob
   integer :: ix_oceans,iy_oceans,iz_oceans,ispec_oceans,ispec2D_top_crust
-  integer :: ispec2D
 
   ! initializes matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-
   rmassx(:) = 0._CUSTOM_REAL
   rmassy(:) = 0._CUSTOM_REAL
   rmassz(:) = 0._CUSTOM_REAL
-
-  ! use the non-dimensional time step to make the mass matrix correction
-  if(CUSTOM_REAL == SIZE_REAL) then
-    deltat = sngl(DT*dsqrt(PI*GRAV*RHOAV))
-  else
-    deltat = DT*dsqrt(PI*GRAV*RHOAV)
-  endif
-
-  ! distinguish between single and double precision for reals
-  if(CUSTOM_REAL == SIZE_REAL) then
-     do i=1,NGLLX
-        do j=1,NGLLY
-           wgllwgll_xy(i,j) = sngl(wxgll(i)*wygll(j))
-        enddo
-     enddo
-
-     do i=1,NGLLX
-        do k=1,NGLLZ
-           wgllwgll_xz(i,k) = sngl(wxgll(i)*wzgll(k))
-        enddo
-     enddo
-
-     do j=1,NGLLY
-        do k=1,NGLLZ
-           wgllwgll_yz(j,k) = sngl(wygll(j)*wzgll(k))
-        enddo
-     enddo
-
-     deltatover2 = sngl(0.5d0*deltat)
-
-  else  ! double precision version
-     do i=1,NGLLX
-        do j=1,NGLLY
-           wgllwgll_xy(i,j) = wxgll(i)*wygll(j)
-        enddo
-     enddo
-
-     do i=1,NGLLX
-        do k=1,NGLLZ
-           wgllwgll_xz(i,k) = wxgll(i)*wzgll(k)
-        enddo
-     enddo
-
-     do j=1,NGLLY
-        do k=1,NGLLZ
-           wgllwgll_yz(j,k) = wygll(j)*wzgll(k)
-        enddo
-     enddo
-
-     deltatover2 = 0.5d0*deltat
-
-  endif
 
   do ispec=1,nspec
 
@@ -248,18 +172,21 @@
             zval = zstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
 
             ! map to latitude and longitude for bathymetry routine
-            call xyz_2_rthetaphi_dble(xval,yval,zval,rval,thetaval,phival)
-            call reduce(thetaval,phival)
+            ! slightly move points to avoid roundoff problem when exactly on the polar axis
+            call xyz_2_rthetaphi_dble(xval,yval,zval,rval,theta,phi)
+            theta = theta + 0.0000001d0
+            phi = phi + 0.0000001d0
+            call reduce(theta,phi)
 
             ! convert the geocentric colatitude to a geographic colatitude
             if( .not. ASSUME_PERFECT_SPHERE) then
-              thetaval = PI_OVER_TWO - &
-                datan(1.006760466d0*dcos(thetaval)/dmax1(TINYVAL,dsin(thetaval)))
+              theta = PI_OVER_TWO - &
+                datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
             endif
 
             ! get geographic latitude and longitude in degrees
-            lat = (PI_OVER_TWO-thetaval)*RADIANS_TO_DEGREES
-            lon = phival * RADIANS_TO_DEGREES
+            lat = (PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
+            lon = phi * RADIANS_TO_DEGREES
 
             ! compute elevation at current point
             call get_topo_bathy(lat,lon,elevation,ibathy_topo)
@@ -299,340 +226,10 @@
 
   endif
 
-  ! add C*deltat/2 contribution to the mass matrices on Stacey edges
+  ! adds C*deltat/2 contribution to the mass matrices on Stacey edges
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
-
-    ! read arrays for Stacey conditions
-    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening stacey.bin in create_mass_matrices')
-    read(27) nimin
-    read(27) nimax
-    read(27) njmin
-    read(27) njmax
-    read(27) nkmin_xi
-    read(27) nkmin_eta
-    close(27)
-
-    select case(iregion_code)
-    case(IREGION_CRUST_MANTLE)
-
-      rmassx(:) = rmassz(:)
-      rmassy(:) = rmassz(:)
-
-      !   xmin
-      ! if two chunks exclude this face for one of them
-      if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
-
-         do ispec2D=1,nspec2D_xmin
-
-            ispec=ibelm_xmin(ispec2D)
-
-            ! exclude elements that are not on absorbing edges
-            if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
-
-            i=1
-            do k=nkmin_xi(1,ispec2D),NGLLZ
-               do j=njmin(1,ispec2D),njmax(1,ispec2D)
-                  iglob=ibool(i,j,k,ispec)
-
-                  nx = normal_xmin(1,j,k,ispec2D)
-                  ny = normal_xmin(2,j,k,ispec2D)
-                  nz = normal_xmin(3,j,k,ispec2D)
-
-                  vn = deltatover2*(nx+ny+nz)
-
-                  tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
-                  ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
-                  tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
-
-                  weight = jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-                  if(CUSTOM_REAL == SIZE_REAL) then
-                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                  else
-                     rmassx(iglob) = rmassx(iglob) + tx*weight
-                     rmassy(iglob) = rmassy(iglob) + ty*weight
-                     rmassz(iglob) = rmassz(iglob) + tz*weight
-                  endif
-               enddo
-            enddo
-         enddo
-
-      endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AC
-
-      !   xmax
-      ! if two chunks exclude this face for one of them
-      if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
-
-         do ispec2D=1,nspec2D_xmax
-
-            ispec=ibelm_xmax(ispec2D)
-
-            ! exclude elements that are not on absorbing edges
-            if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
-
-            i=NGLLX
-            do k=nkmin_xi(2,ispec2D),NGLLZ
-               do j=njmin(2,ispec2D),njmax(2,ispec2D)
-                  iglob=ibool(i,j,k,ispec)
-
-                  nx = normal_xmax(1,j,k,ispec2D)
-                  ny = normal_xmax(2,j,k,ispec2D)
-                  nz = normal_xmax(3,j,k,ispec2D)
-
-                  vn = deltatover2*(nx+ny+nz)
-
-                  tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
-                  ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
-                  tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
-
-                  weight = jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-                  if(CUSTOM_REAL == SIZE_REAL) then
-                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                  else
-                     rmassx(iglob) = rmassx(iglob) + tx*weight
-                     rmassy(iglob) = rmassy(iglob) + ty*weight
-                     rmassz(iglob) = rmassz(iglob) + tz*weight
-                  endif
-               enddo
-            enddo
-         enddo
-
-      endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AB
-
-      !   ymin
-      do ispec2D=1,nspec2D_ymin
-
-         ispec=ibelm_ymin(ispec2D)
-
-         ! exclude elements that are not on absorbing edges
-         if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
-
-         j=1
-         do k=nkmin_eta(1,ispec2D),NGLLZ
-            do i=nimin(1,ispec2D),nimax(1,ispec2D)
-              iglob=ibool(i,j,k,ispec)
-
-               nx = normal_ymin(1,i,k,ispec2D)
-               ny = normal_ymin(2,i,k,ispec2D)
-               nz = normal_ymin(3,i,k,ispec2D)
-
-               vn = deltatover2*(nx+ny+nz)
-
-               tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
-               ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
-               tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
-
-               weight = jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-               if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                  rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                  rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-               else
-                  rmassx(iglob) = rmassx(iglob) + tx*weight
-                  rmassy(iglob) = rmassy(iglob) + ty*weight
-                  rmassz(iglob) = rmassz(iglob) + tz*weight
-               endif
-            enddo
-         enddo
-      enddo
-
-      !   ymax
-      do ispec2D=1,nspec2D_ymax
-
-         ispec=ibelm_ymax(ispec2D)
-
-         ! exclude elements that are not on absorbing edges
-         if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
-
-         j=NGLLY
-         do k=nkmin_eta(2,ispec2D),NGLLZ
-            do i=nimin(2,ispec2D),nimax(2,ispec2D)
-               iglob=ibool(i,j,k,ispec)
-
-               nx = normal_ymax(1,i,k,ispec2D)
-               ny = normal_ymax(2,i,k,ispec2D)
-               nz = normal_ymax(3,i,k,ispec2D)
-
-               vn = deltatover2*(nx+ny+nz)
-
-               tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
-               ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
-               tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
-
-               weight = jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-               if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                  rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                  rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-               else
-                  rmassx(iglob) = rmassx(iglob) + tx*weight
-                  rmassy(iglob) = rmassy(iglob) + ty*weight
-                  rmassz(iglob) = rmassz(iglob) + tz*weight
-               endif
-            enddo
-         enddo
-      enddo
-
-      ! check that mass matrix is positive
-      if(minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')
-      if(minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
-
-    case(IREGION_OUTER_CORE)
-
-      !   xmin
-      ! if two chunks exclude this face for one of them
-      if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
-
-         do ispec2D=1,nspec2D_xmin
-
-            ispec=ibelm_xmin(ispec2D)
-
-            ! exclude elements that are not on absorbing edges
-            if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
-
-            i=1
-            do k=nkmin_xi(1,ispec2D),NGLLZ
-               do j=njmin(1,ispec2D),njmax(1,ispec2D)
-                  iglob=ibool(i,j,k,ispec)
-
-                  sn = deltatover2/rho_vp(i,j,k,ispec)
-
-                  weight = jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-                  if(CUSTOM_REAL == SIZE_REAL) then
-                     rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-                  else
-                     rmassz(iglob) = rmassz(iglob) + weight*sn
-                  endif
-               enddo
-            enddo
-         enddo
-
-      endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AC
-
-      !   xmax
-      ! if two chunks exclude this face for one of them
-      if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
-
-         do ispec2D=1,nspec2D_xmax
-
-            ispec=ibelm_xmax(ispec2D)
-
-            ! exclude elements that are not on absorbing edges
-            if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
-
-            i=NGLLX
-            do k=nkmin_xi(2,ispec2D),NGLLZ
-               do j=njmin(2,ispec2D),njmax(2,ispec2D)
-                  iglob=ibool(i,j,k,ispec)
-
-                  sn = deltatover2/rho_vp(i,j,k,ispec)
-
-                  weight = jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-                  if(CUSTOM_REAL == SIZE_REAL) then
-                     rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-                  else
-                     rmassz(iglob) = rmassz(iglob) + weight*sn
-                  endif
-               enddo
-            enddo
-         enddo
-
-      endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AB
-
-      !   ymin
-      do ispec2D=1,nspec2D_ymin
-
-         ispec=ibelm_ymin(ispec2D)
-
-         ! exclude elements that are not on absorbing edges
-         if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
-
-         j=1
-         do k=nkmin_eta(1,ispec2D),NGLLZ
-            do i=nimin(1,ispec2D),nimax(1,ispec2D)
-               iglob=ibool(i,j,k,ispec)
-
-               sn = deltatover2/rho_vp(i,j,k,ispec)
-
-               weight = jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-               if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-               else
-                  rmassz(iglob) = rmassz(iglob) + weight*sn
-               endif
-            enddo
-         enddo
-      enddo
-
-      !   ymax
-      do ispec2D=1,nspec2D_ymax
-
-         ispec=ibelm_ymax(ispec2D)
-
-         ! exclude elements that are not on absorbing edges
-         if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
-
-         j=NGLLY
-         do k=nkmin_eta(2,ispec2D),NGLLZ
-            do i=nimin(2,ispec2D),nimax(2,ispec2D)
-               iglob=ibool(i,j,k,ispec)
-
-               sn = deltatover2/rho_vp(i,j,k,ispec)
-
-               weight = jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-               if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-               else
-                  rmassz(iglob) = rmassz(iglob) + weight*sn
-               endif
-            enddo
-         enddo
-      enddo
-
-      !   bottom (zmin)
-      do ispec2D=1,NSPEC2D_BOTTOM
-
-         ispec=ibelm_bottom(ispec2D)
-
-         k=1
-         do j=1,NGLLY
-            do i=1,NGLLX
-               iglob=ibool(i,j,k,ispec)
-
-               sn = deltatover2/rho_vp(i,j,k,ispec)
-
-               weight = jacobian2D_bottom(i,j,ispec2D)*wgllwgll_xy(i,j)
-
-               if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-               else
-                  rmassz(iglob) = rmassz(iglob) + weight*sn
-               endif
-            enddo
-         enddo
-      enddo
-
-    case( IREGION_INNER_CORE )
-      continue
-
-    case default
-      call exit_MPI(myrank,'wrong region code')
-
-    end select
-
+    call create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code, &
+                                    NSPEC2D_BOTTOM)
   endif
 
   ! check that mass matrix is positive
@@ -640,3 +237,421 @@
   if(minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
 
   end subroutine create_mass_matrices
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code, &
+                                        NSPEC2D_BOTTOM)
+
+! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+
+  use constants
+
+  use meshfem3D_par,only: &
+    DT,NCHUNKS,ichunk
+
+  use create_regions_mesh_par,only: &
+    wxgll,wygll,wzgll
+
+  use create_regions_mesh_par2,only: &
+    rmassx,rmassy,rmassz, &
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom, &
+    normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
+    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
+    jacobian2D_bottom, &
+    rho_vp,rho_vs, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
+
+  implicit none
+
+  integer :: myrank
+
+  integer :: nspec
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
+  integer :: iregion_code
+
+  ! Stacey conditions
+  integer :: NSPEC2D_BOTTOM
+
+  ! local parameters
+  double precision :: weight
+  double precision, dimension(NGLLX,NGLLY) :: wgllwgll_xy
+  double precision, dimension(NGLLX,NGLLZ) :: wgllwgll_xz
+  double precision, dimension(NGLLY,NGLLZ) :: wgllwgll_yz
+
+  real(kind=CUSTOM_REAL) :: deltat,deltatover2
+  real(kind=CUSTOM_REAL) :: tx,ty,tz,sn
+  real(kind=CUSTOM_REAL) :: nx,ny,nz,vn
+
+  integer :: ispec,i,j,k,iglob
+  integer :: ispec2D
+
+  ! checks if we have absorbing boundary arrays
+  if( .not. allocated(nimin) ) call exit_MPI(myrank,'error stacey array not allocated')
+
+  ! use the non-dimensional time step to make the mass matrix correction
+  if(CUSTOM_REAL == SIZE_REAL) then
+    deltat = sngl(DT*dsqrt(PI*GRAV*RHOAV))
+    deltatover2 = sngl(0.5d0*deltat)
+  else
+    deltat = DT*dsqrt(PI*GRAV*RHOAV)
+    deltatover2 = 0.5d0*deltat
+  endif
+
+  ! weights on surfaces
+  do i=1,NGLLX
+    do j=1,NGLLY
+       wgllwgll_xy(i,j) = wxgll(i)*wygll(j)
+    enddo
+  enddo
+  do i=1,NGLLX
+    do k=1,NGLLZ
+       wgllwgll_xz(i,k) = wxgll(i)*wzgll(k)
+    enddo
+  enddo
+  do j=1,NGLLY
+    do k=1,NGLLZ
+       wgllwgll_yz(j,k) = wygll(j)*wzgll(k)
+    enddo
+  enddo
+
+
+!    ! read arrays for Stacey conditions
+!    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+!        status='old',form='unformatted',action='read',iostat=ier)
+!    if( ier /= 0 ) call exit_mpi(myrank,'error opening stacey.bin in create_mass_matrices')
+!    read(27) nimin
+!    read(27) nimax
+!    read(27) njmin
+!    read(27) njmax
+!    read(27) nkmin_xi
+!    read(27) nkmin_eta
+!    close(27)
+
+  select case(iregion_code)
+  case(IREGION_CRUST_MANTLE)
+
+    rmassx(:) = rmassz(:)
+    rmassy(:) = rmassz(:)
+
+    !   xmin
+    ! if two chunks exclude this face for one of them
+    if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
+
+       do ispec2D=1,nspec2D_xmin
+
+          ispec=ibelm_xmin(ispec2D)
+
+          ! exclude elements that are not on absorbing edges
+          if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
+
+          i=1
+          do k=nkmin_xi(1,ispec2D),NGLLZ
+             do j=njmin(1,ispec2D),njmax(1,ispec2D)
+                iglob=ibool(i,j,k,ispec)
+
+                nx = normal_xmin(1,j,k,ispec2D)
+                ny = normal_xmin(2,j,k,ispec2D)
+                nz = normal_xmin(3,j,k,ispec2D)
+
+                vn = deltatover2*(nx+ny+nz)
+
+                tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
+                ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
+                tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
+
+                weight = jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+                if(CUSTOM_REAL == SIZE_REAL) then
+                   rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
+                   rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
+                   rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+                else
+                   rmassx(iglob) = rmassx(iglob) + tx*weight
+                   rmassy(iglob) = rmassy(iglob) + ty*weight
+                   rmassz(iglob) = rmassz(iglob) + tz*weight
+                endif
+             enddo
+          enddo
+       enddo
+
+    endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AC
+
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
+
+       do ispec2D=1,nspec2D_xmax
+
+          ispec=ibelm_xmax(ispec2D)
+
+          ! exclude elements that are not on absorbing edges
+          if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
+
+          i=NGLLX
+          do k=nkmin_xi(2,ispec2D),NGLLZ
+             do j=njmin(2,ispec2D),njmax(2,ispec2D)
+                iglob=ibool(i,j,k,ispec)
+
+                nx = normal_xmax(1,j,k,ispec2D)
+                ny = normal_xmax(2,j,k,ispec2D)
+                nz = normal_xmax(3,j,k,ispec2D)
+
+                vn = deltatover2*(nx+ny+nz)
+
+                tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
+                ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
+                tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
+
+                weight = jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+                if(CUSTOM_REAL == SIZE_REAL) then
+                   rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
+                   rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
+                   rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+                else
+                   rmassx(iglob) = rmassx(iglob) + tx*weight
+                   rmassy(iglob) = rmassy(iglob) + ty*weight
+                   rmassz(iglob) = rmassz(iglob) + tz*weight
+                endif
+             enddo
+          enddo
+       enddo
+
+    endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AB
+
+    !   ymin
+    do ispec2D=1,nspec2D_ymin
+
+       ispec=ibelm_ymin(ispec2D)
+
+       ! exclude elements that are not on absorbing edges
+       if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
+
+       j=1
+       do k=nkmin_eta(1,ispec2D),NGLLZ
+          do i=nimin(1,ispec2D),nimax(1,ispec2D)
+            iglob=ibool(i,j,k,ispec)
+
+             nx = normal_ymin(1,i,k,ispec2D)
+             ny = normal_ymin(2,i,k,ispec2D)
+             nz = normal_ymin(3,i,k,ispec2D)
+
+             vn = deltatover2*(nx+ny+nz)
+
+             tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
+             ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
+             tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
+
+             weight = jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+             if(CUSTOM_REAL == SIZE_REAL) then
+                rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
+                rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
+                rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+             else
+                rmassx(iglob) = rmassx(iglob) + tx*weight
+                rmassy(iglob) = rmassy(iglob) + ty*weight
+                rmassz(iglob) = rmassz(iglob) + tz*weight
+             endif
+          enddo
+       enddo
+    enddo
+
+    !   ymax
+    do ispec2D=1,nspec2D_ymax
+
+       ispec=ibelm_ymax(ispec2D)
+
+       ! exclude elements that are not on absorbing edges
+       if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
+
+       j=NGLLY
+       do k=nkmin_eta(2,ispec2D),NGLLZ
+          do i=nimin(2,ispec2D),nimax(2,ispec2D)
+             iglob=ibool(i,j,k,ispec)
+
+             nx = normal_ymax(1,i,k,ispec2D)
+             ny = normal_ymax(2,i,k,ispec2D)
+             nz = normal_ymax(3,i,k,ispec2D)
+
+             vn = deltatover2*(nx+ny+nz)
+
+             tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
+             ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
+             tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
+
+             weight = jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+             if(CUSTOM_REAL == SIZE_REAL) then
+                rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
+                rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
+                rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+             else
+                rmassx(iglob) = rmassx(iglob) + tx*weight
+                rmassy(iglob) = rmassy(iglob) + ty*weight
+                rmassz(iglob) = rmassz(iglob) + tz*weight
+             endif
+          enddo
+       enddo
+    enddo
+
+    ! check that mass matrix is positive
+    if(minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')
+    if(minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
+
+  case(IREGION_OUTER_CORE)
+
+    !   xmin
+    ! if two chunks exclude this face for one of them
+    if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
+
+       do ispec2D=1,nspec2D_xmin
+
+          ispec=ibelm_xmin(ispec2D)
+
+          ! exclude elements that are not on absorbing edges
+          if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
+
+          i=1
+          do k=nkmin_xi(1,ispec2D),NGLLZ
+             do j=njmin(1,ispec2D),njmax(1,ispec2D)
+                iglob=ibool(i,j,k,ispec)
+
+                sn = deltatover2/rho_vp(i,j,k,ispec)
+
+                weight = jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+                if(CUSTOM_REAL == SIZE_REAL) then
+                   rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
+                else
+                   rmassz(iglob) = rmassz(iglob) + weight*sn
+                endif
+             enddo
+          enddo
+       enddo
+
+    endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AC
+
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
+
+       do ispec2D=1,nspec2D_xmax
+
+          ispec=ibelm_xmax(ispec2D)
+
+          ! exclude elements that are not on absorbing edges
+          if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
+
+          i=NGLLX
+          do k=nkmin_xi(2,ispec2D),NGLLZ
+             do j=njmin(2,ispec2D),njmax(2,ispec2D)
+                iglob=ibool(i,j,k,ispec)
+
+                sn = deltatover2/rho_vp(i,j,k,ispec)
+
+                weight = jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+                if(CUSTOM_REAL == SIZE_REAL) then
+                   rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
+                else
+                   rmassz(iglob) = rmassz(iglob) + weight*sn
+                endif
+             enddo
+          enddo
+       enddo
+
+    endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AB
+
+    !   ymin
+    do ispec2D=1,nspec2D_ymin
+
+       ispec=ibelm_ymin(ispec2D)
+
+       ! exclude elements that are not on absorbing edges
+       if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
+
+       j=1
+       do k=nkmin_eta(1,ispec2D),NGLLZ
+          do i=nimin(1,ispec2D),nimax(1,ispec2D)
+             iglob=ibool(i,j,k,ispec)
+
+             sn = deltatover2/rho_vp(i,j,k,ispec)
+
+             weight = jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+             if(CUSTOM_REAL == SIZE_REAL) then
+                rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
+             else
+                rmassz(iglob) = rmassz(iglob) + weight*sn
+             endif
+          enddo
+       enddo
+    enddo
+
+    !   ymax
+    do ispec2D=1,nspec2D_ymax
+
+       ispec=ibelm_ymax(ispec2D)
+
+       ! exclude elements that are not on absorbing edges
+       if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
+
+       j=NGLLY
+       do k=nkmin_eta(2,ispec2D),NGLLZ
+          do i=nimin(2,ispec2D),nimax(2,ispec2D)
+             iglob=ibool(i,j,k,ispec)
+
+             sn = deltatover2/rho_vp(i,j,k,ispec)
+
+             weight = jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+             if(CUSTOM_REAL == SIZE_REAL) then
+                rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
+             else
+                rmassz(iglob) = rmassz(iglob) + weight*sn
+             endif
+          enddo
+       enddo
+    enddo
+
+    !   bottom (zmin)
+    do ispec2D=1,NSPEC2D_BOTTOM
+
+       ispec=ibelm_bottom(ispec2D)
+
+       k=1
+       do j=1,NGLLY
+          do i=1,NGLLX
+             iglob=ibool(i,j,k,ispec)
+
+             sn = deltatover2/rho_vp(i,j,k,ispec)
+
+             weight = jacobian2D_bottom(i,j,ispec2D)*wgllwgll_xy(i,j)
+
+             if(CUSTOM_REAL == SIZE_REAL) then
+                rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
+             else
+                rmassz(iglob) = rmassz(iglob) + weight*sn
+             endif
+          enddo
+       enddo
+    enddo
+
+  case( IREGION_INNER_CORE )
+    continue
+
+  case default
+    call exit_MPI(myrank,'wrong region code')
+
+  end select
+
+  end subroutine create_mass_matrices_Stacey
+
