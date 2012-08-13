@@ -47,16 +47,15 @@ __global__ void prepare_boundary_accel_on_device(realw* d_accel, realw* d_send_a
                                                  int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-  int iinterface=0;
+  int iglob;
 
-  for( iinterface=0; iinterface < num_interfaces; iinterface++) {
+  for( int iinterface=0; iinterface < num_interfaces; iinterface++) {
     if(id<d_nibool_interfaces[iinterface]) {
-      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)] =
-      d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)];
-      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+1] =
-      d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+1];
-      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+2] =
-      d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+2];
+      iglob = d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1;
+      // fills buffer
+      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)] = d_accel[3*iglob];
+      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+1] = d_accel[3*iglob + 1];
+      d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+2] = d_accel[3*iglob + 2];
     }
   }
 
@@ -171,16 +170,15 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
                                                   int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-  int iinterface=0;
+  int iglob;
 
-  for( iinterface=0; iinterface < num_interfaces; iinterface++) {
+  for( int iinterface=0; iinterface < num_interfaces; iinterface++) {
     if(id < d_nibool_interfaces[iinterface]) {
-      atomicAdd(&d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)],
-                d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)]);
-      atomicAdd(&d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+1],
-                d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+1]);
-      atomicAdd(&d_accel[3*(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)+2],
-                d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+2]);
+      iglob = d_ibool_interfaces[id + max_nibool_interfaces*iinterface]-1;
+      // assembles acceleration: adds contributions from buffer array
+      atomicAdd(&d_accel[3*iglob],d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)]);
+      atomicAdd(&d_accel[3*iglob + 1],d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+1]);
+      atomicAdd(&d_accel[3*iglob + 2],d_send_accel_buffer[3*(id + max_nibool_interfaces*iinterface)+2]);
     }
   }
 }
@@ -202,11 +200,10 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
   // crust/mantle region
   if( *IREGION == IREGION_CRUST_MANTLE ){
     if( mp->num_interfaces_crust_mantle > 0 ){
-
       // copies vector buffer values to GPU
-      cudaMemcpy(mp->d_send_accel_buffer_crust_mantle, buffer_recv_vector,
-                 3*(mp->max_nibool_interfaces_crust_mantle)*(mp->num_interfaces_crust_mantle)*sizeof(realw),
-                 cudaMemcpyHostToDevice);
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_crust_mantle, buffer_recv_vector,
+                                         NDIM*(mp->max_nibool_interfaces_crust_mantle)*(mp->num_interfaces_crust_mantle)*sizeof(realw),
+                                         cudaMemcpyHostToDevice),41000);
 
       // assembles values
       blocksize = BLOCKSIZE_TRANSFER;
@@ -221,7 +218,8 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(blocksize,1,1);
 
-      if(*FORWARD_OR_ADJOINT == 1) { //assemble forward accel
+      if(*FORWARD_OR_ADJOINT == 1) {
+        //assemble forward accel
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                             mp->d_send_accel_buffer_crust_mantle,
                                                             mp->num_interfaces_crust_mantle,
@@ -229,7 +227,8 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
                                                             mp->d_nibool_interfaces_crust_mantle,
                                                             mp->d_ibool_interfaces_crust_mantle);
       }
-      else if(*FORWARD_OR_ADJOINT == 3) { //assemble adjoint accel
+      else if(*FORWARD_OR_ADJOINT == 3) {
+        //assemble adjoint accel
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                             mp->d_send_accel_buffer_crust_mantle,
                                                             mp->num_interfaces_crust_mantle,
@@ -240,13 +239,17 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
     }
   }
 
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("transfer_asmbl_accel_to_device in crust_mantle");
+#endif
+
   // inner core region
   if( *IREGION == IREGION_INNER_CORE ){
     if( mp->num_interfaces_inner_core > 0 ){
       // copies buffer values to GPU
-      cudaMemcpy(mp->d_send_accel_buffer_inner_core, buffer_recv_vector,
-                 3*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw),
-                 cudaMemcpyHostToDevice);
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_inner_core, buffer_recv_vector,
+                                         NDIM*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw),
+                                         cudaMemcpyHostToDevice),41001);
 
       // assembles values
       blocksize = BLOCKSIZE_TRANSFER;
@@ -261,7 +264,8 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(blocksize,1,1);
 
-      if(*FORWARD_OR_ADJOINT == 1) { //assemble forward accel
+      if(*FORWARD_OR_ADJOINT == 1) {
+        //assemble forward accel
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_inner_core,
                                                             mp->d_send_accel_buffer_inner_core,
                                                             mp->num_interfaces_inner_core,
@@ -269,7 +273,8 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
                                                             mp->d_nibool_interfaces_inner_core,
                                                             mp->d_ibool_interfaces_inner_core);
       }
-      else if(*FORWARD_OR_ADJOINT == 3) { //assemble adjoint accel
+      else if(*FORWARD_OR_ADJOINT == 3) {
+        //assemble adjoint accel
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_inner_core,
                                                             mp->d_send_accel_buffer_inner_core,
                                                             mp->num_interfaces_inner_core,
@@ -280,8 +285,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
     }
   }
 
-
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("transfer_asmbl_accel_to_device");
+  exit_on_cuda_error("transfer_asmbl_accel_to_device in inner_core");
 #endif
 }

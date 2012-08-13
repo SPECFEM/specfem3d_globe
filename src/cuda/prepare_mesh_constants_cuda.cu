@@ -67,6 +67,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* NGLOB_CRUST_MANTLE_OCEANS,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
+                                        int* NSPEC_INNER_CORE_STRAIN_ONLY,
                                         int* SIMULATION_TYPE,
                                         int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
@@ -140,10 +141,13 @@ TRACE("prepare_constants_device");
   mp->NGLOB_CRUST_MANTLE = *NGLOB_CRUST_MANTLE;
   mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY = *NSPEC_CRUST_MANTLE_STRAIN_ONLY;
   mp->NGLOB_CRUST_MANTLE_OCEANS = *NGLOB_CRUST_MANTLE_OCEANS;
+
   mp->NSPEC_OUTER_CORE = *NSPEC_OUTER_CORE;
   mp->NGLOB_OUTER_CORE = *NGLOB_OUTER_CORE;
+
   mp->NSPEC_INNER_CORE = *NSPEC_INNER_CORE;
   mp->NGLOB_INNER_CORE = *NGLOB_INNER_CORE;
+  mp->NSPEC_INNER_CORE_STRAIN_ONLY = *NSPEC_INNER_CORE_STRAIN_ONLY;
 
   // simulation type
   mp->simulation_type = *SIMULATION_TYPE;
@@ -683,11 +687,12 @@ void FC_FUNC_(prepare_fields_strain_device,
   print_CUDA_error_if_any(cudaMemcpy(mp->d_epsilondev_yz_inner_core,epsilondev_yz_inner_core,
                                      R_size*sizeof(realw),cudaMemcpyHostToDevice),4433);
 
-
+  // strain
+  size_strain_only = NGLL3*(mp->NSPEC_INNER_CORE_STRAIN_ONLY);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_eps_trace_over_3_inner_core,
-                                     R_size*sizeof(realw)),4401);
+                                     size_strain_only*sizeof(realw)),4401);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_eps_trace_over_3_inner_core,eps_trace_over_3_inner_core,
-                                     R_size*sizeof(realw),cudaMemcpyHostToDevice),4402);
+                                     size_strain_only*sizeof(realw),cudaMemcpyHostToDevice),4402);
   // backward/reconstructed fields
   if( mp->simulation_type == 3 ){
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_b_epsilondev_xx_inner_core,
@@ -1255,37 +1260,39 @@ void FC_FUNC_(prepare_fields_noise_device,
 extern "C"
 void FC_FUNC_(prepare_crust_mantle_device,
              PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
-             realw* h_xix, realw* h_xiy, realw* h_xiz,
-             realw* h_etax, realw* h_etay, realw* h_etaz,
-             realw* h_gammax, realw* h_gammay, realw* h_gammaz,
-             realw* h_rho,
-             realw* h_kappav, realw* h_muv,
-             realw* h_kappah, realw* h_muh,
-             realw* h_eta_aniso,
-             realw* h_rmassx,
-             realw* h_rmassy,
-             realw* h_rmassz,
-             realw* h_normal_top_crust_mantle,
-             int* h_ibelm_top_crust_mantle,
-             int* h_ibelm_bottom_crust_mantle,
-             int* h_ibool,
-             realw* h_xstore, realw* h_ystore, realw* h_zstore,
-             int* h_ispec_is_tiso,
-             realw *c11store,realw *c12store,realw *c13store,
-             realw *c14store,realw *c15store,realw *c16store,
-             realw *c22store,realw *c23store,realw *c24store,
-             realw *c25store,realw *c26store,realw *c33store,
-             realw *c34store,realw *c35store,realw *c36store,
-             realw *c44store,realw *c45store,realw *c46store,
-             realw *c55store,realw *c56store,realw *c66store,
-             int* num_phase_ispec,
-             int* phase_ispec_inner,
-             int* nspec_outer,
-             int* nspec_inner,
-             int* NSPEC2D_TOP_CM,
-       int* NSPEC2D_BOTTOM_CM,
-       int* NCHUNKS_VAL
-             ) {
+                                          realw* h_xix, realw* h_xiy, realw* h_xiz,
+                                          realw* h_etax, realw* h_etay, realw* h_etaz,
+                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
+                                          realw* h_rho,
+                                          realw* h_kappav, realw* h_muv,
+                                          realw* h_kappah, realw* h_muh,
+                                          realw* h_eta_aniso,
+                                          realw* h_rmassx,
+                                          realw* h_rmassy,
+                                          realw* h_rmassz,
+                                          realw* h_normal_top_crust_mantle,
+                                          int* h_ibelm_top_crust_mantle,
+                                          int* h_ibelm_bottom_crust_mantle,
+                                          int* h_ibool,
+                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
+                                          int* h_ispec_is_tiso,
+                                          realw *c11store,realw *c12store,realw *c13store,
+                                          realw *c14store,realw *c15store,realw *c16store,
+                                          realw *c22store,realw *c23store,realw *c24store,
+                                          realw *c25store,realw *c26store,realw *c33store,
+                                          realw *c34store,realw *c35store,realw *c36store,
+                                          realw *c44store,realw *c45store,realw *c46store,
+                                          realw *c55store,realw *c56store,realw *c66store,
+                                          int* num_phase_ispec,
+                                          int* phase_ispec_inner,
+                                          int* nspec_outer,
+                                          int* nspec_inner,
+                                          int* NSPEC2D_TOP_CM,
+                                          int* NSPEC2D_BOTTOM_CM,
+                                          int* NCHUNKS_VAL,
+                                          int* num_colors_outer,
+                                          int* num_colors_inner,
+                                          int* num_elem_colors) {
 
   TRACE("prepare_crust_mantle_device");
 
@@ -1305,8 +1312,6 @@ void FC_FUNC_(prepare_crust_mantle_device,
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammax_crust_mantle, size_padded*sizeof(realw)),1007);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_crust_mantle, size_padded*sizeof(realw)),1008);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_crust_mantle, size_padded*sizeof(realw)),1009);
-  // muv needed in case for attenuation (only Q_mu shear attenuation)
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muvstore_crust_mantle, size_padded*sizeof(realw)),1011);
 
   // transfer constant element data with padding
   for(int i=0;i < mp->NSPEC_CRUST_MANTLE;i++) {
@@ -1328,9 +1333,6 @@ void FC_FUNC_(prepare_crust_mantle_device,
                                        NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_crust_mantle+i*NGLL3_PADDED,&h_gammaz[i*NGLL3],
                                        NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
-    // muvstore
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_crust_mantle+i*NGLL3_PADDED,   &h_muv[i*NGLL3],
-                                       NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1511);
   }
 
   // global indexing
@@ -1350,22 +1352,29 @@ void FC_FUNC_(prepare_crust_mantle_device,
 
     // kappavstore, kappahstore
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_kappavstore_crust_mantle, size_padded*sizeof(realw)),1010);
-    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_kappahstore_crust_mantle, size_padded*sizeof(realw)),1010);
-    // muhstore
-    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muhstore_crust_mantle, size_padded*sizeof(realw)),1010);
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_kappahstore_crust_mantle, size_padded*sizeof(realw)),1011);
+
+    // muvstore,muhstore
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muvstore_crust_mantle, size_padded*sizeof(realw)),1012);
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muhstore_crust_mantle, size_padded*sizeof(realw)),1013);
+
     // eta_anisostore
-    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_eta_anisostore_crust_mantle, size_padded*sizeof(realw)),1010);
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_eta_anisostore_crust_mantle, size_padded*sizeof(realw)),1014);
 
     // transfer with padding
     for(int i=0;i < mp->NSPEC_CRUST_MANTLE;i++) {
       print_CUDA_error_if_any(cudaMemcpy(mp->d_kappavstore_crust_mantle+i*NGLL3_PADDED,&h_kappav[i*NGLL3],
                                        NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
       print_CUDA_error_if_any(cudaMemcpy(mp->d_kappahstore_crust_mantle+i*NGLL3_PADDED,&h_kappah[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
+                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1511);
+
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_crust_mantle+i*NGLL3_PADDED,   &h_muv[i*NGLL3],
+                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1512);
       print_CUDA_error_if_any(cudaMemcpy(mp->d_muhstore_crust_mantle+i*NGLL3_PADDED,&h_muh[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
+                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1513);
+
       print_CUDA_error_if_any(cudaMemcpy(mp->d_eta_anisostore_crust_mantle+i*NGLL3_PADDED,&h_eta_aniso[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
+                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1514);
     }
   }else{
     // anisotropic 3D mantle
@@ -1525,16 +1534,14 @@ void FC_FUNC_(prepare_crust_mantle_device,
   #ifdef USE_TEXTURES_FIELDS
   {
     print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_cm_tex_ref_ptr, "d_displ_cm_tex"), 4001);
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_cm_tex_ref_ptr, mp->d_displ_crust_mantle,
-                                            &channelDesc, sizeof(realw)*size), 4001);
-  }
+                                            &channelDesc1, sizeof(realw)*size), 4001);
 
-  {
     print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_cm_tex_ref_ptr, "d_accel_cm_tex"), 4003);
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_cm_tex_ref_ptr, mp->d_accel_crust_mantle,
-                                            &channelDesc, sizeof(realw)*size), 4003);
+                                            &channelDesc2, sizeof(realw)*size), 4003);
   }
   #endif
 
@@ -1587,6 +1594,11 @@ void FC_FUNC_(prepare_crust_mantle_device,
     }
   }
 
+  // mesh coloring
+  mp->num_colors_outer_crust_mantle = *num_colors_outer;
+  mp->num_colors_inner_crust_mantle = *num_colors_inner;
+  mp->h_num_elem_colors_crust_mantle = (int*) num_elem_colors;
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_crust_mantle_device");
 #endif
@@ -1607,21 +1619,23 @@ void FC_FUNC_(prepare_outer_core_device,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav,
                                          realw* h_rmass,
-           realw* h_normal_top_outer_core,
-           realw* h_normal_bottom_outer_core,
-           realw* h_jacobian2D_top_outer_core,
-           realw* h_jacobian2D_bottom_outer_core,
-           int* h_ibelm_top_outer_core,
-           int* h_ibelm_bottom_outer_core,
+                                         realw* h_normal_top_outer_core,
+                                         realw* h_normal_bottom_outer_core,
+                                         realw* h_jacobian2D_top_outer_core,
+                                         realw* h_jacobian2D_bottom_outer_core,
+                                         int* h_ibelm_top_outer_core,
+                                         int* h_ibelm_bottom_outer_core,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          int* num_phase_ispec,
                                          int* phase_ispec_inner,
                                          int* nspec_outer,
                                          int* nspec_inner,
-           int* NSPEC2D_TOP_OC,
-           int* NSPEC2D_BOTTOM_OC
-                                         ) {
+                                         int* NSPEC2D_TOP_OC,
+                                         int* NSPEC2D_BOTTOM_OC,
+                                         int* num_colors_outer,
+                                         int* num_colors_inner,
+                                         int* num_elem_colors) {
 
   TRACE("prepare_outer_core_device");
 
@@ -1741,16 +1755,14 @@ void FC_FUNC_(prepare_outer_core_device,
   #ifdef USE_TEXTURES_FIELDS
   {
     print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 4001);
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
-                                            &channelDesc, sizeof(realw)*size), 4001);
-  }
+                                            &channelDesc1, sizeof(realw)*size), 4001);
 
-  {
     print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 4003);
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
-                                            &channelDesc, sizeof(realw)*size), 4003);
+                                            &channelDesc2, sizeof(realw)*size), 4003);
   }
   #endif
 
@@ -1776,6 +1788,11 @@ void FC_FUNC_(prepare_outer_core_device,
     print_CUDA_error_if_any(cudaMemset(mp->d_alpha_kl_outer_core,0,size*sizeof(realw)),5208);
   }
 
+  // mesh coloring
+  mp->num_colors_outer_outer_core = *num_colors_outer;
+  mp->num_colors_inner_outer_core = *num_colors_inner;
+  mp->h_num_elem_colors_outer_core = (int*) num_elem_colors;
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_outer_core_device");
 #endif
@@ -1791,22 +1808,25 @@ void FC_FUNC_(prepare_outer_core_device,
 extern "C"
 void FC_FUNC_(prepare_inner_core_device,
               PREPARE_INNER_CORE_DEVICE)(long* Mesh_pointer_f,
-           realw* h_xix, realw* h_xiy, realw* h_xiz,
-           realw* h_etax, realw* h_etay, realw* h_etaz,
-           realw* h_gammax, realw* h_gammay, realw* h_gammaz,
-           realw* h_rho, realw* h_kappav, realw* h_muv,
-           realw* h_rmass,
-           int* h_ibelm_top_inner_core,
-           int* h_ibool,
-           realw* h_xstore, realw* h_ystore, realw* h_zstore,
-           realw *c11store,realw *c12store,realw *c13store,
-           realw *c33store,realw *c44store,
-           int* h_idoubling_inner_core,
-           int* num_phase_ispec,
-           int* phase_ispec_inner,
-           int* nspec_outer,
-           int* nspec_inner,
-           int* NSPEC2D_TOP_IC) {
+                                         realw* h_xix, realw* h_xiy, realw* h_xiz,
+                                         realw* h_etax, realw* h_etay, realw* h_etaz,
+                                         realw* h_gammax, realw* h_gammay, realw* h_gammaz,
+                                         realw* h_rho, realw* h_kappav, realw* h_muv,
+                                         realw* h_rmass,
+                                         int* h_ibelm_top_inner_core,
+                                         int* h_ibool,
+                                         realw* h_xstore, realw* h_ystore, realw* h_zstore,
+                                         realw *c11store,realw *c12store,realw *c13store,
+                                         realw *c33store,realw *c44store,
+                                         int* h_idoubling_inner_core,
+                                         int* num_phase_ispec,
+                                         int* phase_ispec_inner,
+                                         int* nspec_outer,
+                                         int* nspec_inner,
+                                         int* NSPEC2D_TOP_IC,
+                                         int* num_colors_outer,
+                                         int* num_colors_inner,
+                                         int* num_elem_colors) {
 
   TRACE("prepare_inner_core_device");
 
@@ -1827,6 +1847,7 @@ void FC_FUNC_(prepare_inner_core_device,
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_inner_core, size_padded*sizeof(realw)),1008);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_inner_core, size_padded*sizeof(realw)),1009);
 
+  // muvstore needed for attenuatioin also for anisotropic inner core
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muvstore_inner_core, size_padded*sizeof(realw)),1011);
 
   // transfer constant element data with padding
@@ -1954,16 +1975,14 @@ void FC_FUNC_(prepare_inner_core_device,
   #ifdef USE_TEXTURES_FIELDS
   {
     print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_ic_tex_ref_ptr, "d_displ_ic_tex"), 4001);
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_ic_tex_ref_ptr, mp->d_displ_inner_core,
-                                            &channelDesc, sizeof(realw)*size), 4001);
-  }
+                                            &channelDesc1, sizeof(realw)*size), 4001);
 
-  {
     print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_ic_tex_ref_ptr, "d_accel_ic_tex"), 4003);
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_ic_tex_ref_ptr, mp->d_accel_inner_core,
-                                            &channelDesc, sizeof(realw)*size), 4003);
+                                            &channelDesc2, sizeof(realw)*size), 4003);
   }
   #endif
 
@@ -1992,6 +2011,10 @@ void FC_FUNC_(prepare_inner_core_device,
     print_CUDA_error_if_any(cudaMemset(mp->d_beta_kl_inner_core,0,size*sizeof(realw)),5208);
   }
 
+  // mesh coloring
+  mp->num_colors_outer_inner_core = *num_colors_outer;
+  mp->num_colors_inner_inner_core = *num_colors_inner;
+  mp->h_num_elem_colors_inner_core = (int*) num_elem_colors;
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_inner_core_device");

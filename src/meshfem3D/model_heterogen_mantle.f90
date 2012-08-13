@@ -31,9 +31,25 @@
 ! generic heterogeneous mantle model
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_heterogen_mntl_broadcast(myrank,HMM)
+  module model_heterogen_mantle_par
+
+  ! heterogen_mantle_model_constants
+  integer, parameter :: N_R = 256,N_THETA = 256,N_PHI = 256
+
+  ! model array
+  double precision,dimension(:),allocatable :: HMM_rho_in
+
+  end module model_heterogen_mantle_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_heterogen_mntl_broadcast(myrank)
 
 ! standard routine to setup model
+
+  use model_heterogen_mantle_par
 
   implicit none
 
@@ -41,31 +57,30 @@
   ! standard include of the MPI library
   include 'mpif.h'
 
-  ! model_heterogen_m_variables
-  type model_heterogen_m_variables
-    sequence
-    double precision rho_in(N_R*N_THETA*N_PHI)
-  end type model_heterogen_m_variables
-
-  type (model_heterogen_m_variables) HMM
-  ! model_heterogen_m_variables
-
   integer :: myrank
+
+  ! local parameters
   integer :: ier
 
+  ! allocates model array
+  allocate(HMM_rho_in(N_R*N_THETA*N_PHI), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating HMM array')
+
+  ! master process reads in model
   if(myrank == 0) then
      write(IMAIN,*) 'Reading in model_heterogen_mantle.'
-     call read_heterogen_mantle_model(HMM)
+     call read_heterogen_mantle_model()
      write(IMAIN,*) 'model_heterogen_mantle is read in.'
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(HMM%rho_in,N_R*N_THETA*N_PHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(HMM_rho_in,N_R*N_THETA*N_PHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   if(myrank == 0) then
      write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
-     write(IMAIN,*) 'First value in HMM:',HMM%rho_in(1)
-     write(IMAIN,*) 'Last value in HMM:',HMM%rho_in(N_R*N_THETA*N_PHI)
+     write(IMAIN,*) 'First value in HMM:',HMM_rho_in(1)
+     write(IMAIN,*) 'Last value in HMM:',HMM_rho_in(N_R*N_THETA*N_PHI)
   endif
 
   end subroutine model_heterogen_mntl_broadcast
@@ -79,68 +94,58 @@
 ! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R=N_THETA=N_PHI !!!!!
 !
 
-  subroutine read_heterogen_mantle_model(HMM)
+  subroutine read_heterogen_mantle_model()
+
+  use model_heterogen_mantle_par
 
   implicit none
 
   include "constants.h"
 
-  integer i,j
+  ! local parameters
+  integer :: i,j,ier
 
-! model_heterogen_m_variables
-  type model_heterogen_m_variables
-    sequence
-    double precision rho_in(N_R*N_THETA*N_PHI)
-  end type model_heterogen_m_variables
-
-  type (model_heterogen_m_variables) HMM
-! model_heterogen_m_variables
-
-
-! open heterogen.dat
+  ! open heterogen.dat
   open(unit=10,file='./DATA/heterogen/heterogen.dat',access='direct',&
-       form='formatted',recl=20,status='old',action='read')
+       form='formatted',recl=20,status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(0,'error opening model file heterogen.dat')
 
   j = N_R*N_THETA*N_PHI
 
   do i = 1,j
-    read(10,rec=i,fmt='(F20.15)') HMM%rho_in(i)
+    read(10,rec=i,fmt='(F20.15)') HMM_rho_in(i)
   end do
 
   close(10)
 
   end subroutine read_heterogen_mantle_model
 
-!====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-  subroutine model_heterogen_mantle(radius,theta,phi,dvs,dvp,drho,HMM)
+  subroutine model_heterogen_mantle(radius,theta,phi,dvs,dvp,drho)
+
+  use model_heterogen_mantle_par
 
   implicit none
 
   include "constants.h"
 
   ! variable declaration
-  double precision radius,theta,phi            ! input coordinates
-  double precision x,y,z                       ! input converted to cartesian
-  double precision drho,dvp,dvs                ! output anomaly values
-  double precision x_low,x_high                ! x values used to interpolate
-  double precision y_low,y_high                ! y values used to interpolate
-  double precision z_low,z_high                ! z values used to interpolate
-  double precision delta,delta2                ! weigts in record# and in interpolation
-  double precision rho1,rho2,rho3,rho4,rho5,rho6,rho7,rho8 ! rho values at the interpolation points
-  double precision r_inner,r_outer             ! lower and upper domain bounds for r
-  integer rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
-  double precision a,b,c                       ! substitutions in interpolation algorithm (weights)
+  double precision :: radius,theta,phi            ! input coordinates
+  double precision :: drho,dvp,dvs                ! output anomaly values
 
-
-! model_heterogen_m_variables
-  type model_heterogen_m_variables
-    sequence
-    double precision rho_in(N_R*N_THETA*N_PHI)
-  end type model_heterogen_m_variables
-
-  type (model_heterogen_m_variables) HMM
-! model_heterogen_m_variables
+  ! local parameters
+  double precision :: x,y,z                       ! input converted to cartesian
+  double precision :: x_low,x_high                ! x values used to interpolate
+  double precision :: y_low,y_high                ! y values used to interpolate
+  double precision :: z_low,z_high                ! z values used to interpolate
+  double precision :: delta,delta2                ! weigts in record# and in interpolation
+  double precision :: rho1,rho2,rho3,rho4,rho5,rho6,rho7,rho8 ! rho values at the interpolation points
+  double precision :: r_inner,r_outer             ! lower and upper domain bounds for r
+  integer :: rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
+  double precision :: a,b,c                       ! substitutions in interpolation algorithm (weights)
 
   radius = radius*R_EARTH
   r_inner = 3.500d6  !lower bound for heterogeneity zone
@@ -168,35 +173,35 @@
 
     ! rho1 at: x_low y_low z_low
     rec_read = 1+(x_low*N_R*N_R)+(y_low*N_R)+z_low
-    rho1 = HMM%rho_in(rec_read)
+    rho1 = HMM_rho_in(rec_read)
 
     ! rho2 at: x_low y_high z_low
     rec_read = 1+(x_low*N_R*N_R)+(y_high*N_R)+z_low
-    rho2 = HMM%rho_in(rec_read)
+    rho2 = HMM_rho_in(rec_read)
 
     ! rho3 at: x_high y_low z_low
     rec_read = 1+(x_high*N_R*N_R)+(y_low*N_R)+z_low
-    rho3 = HMM%rho_in(rec_read)
+    rho3 = HMM_rho_in(rec_read)
 
     ! rho4 at: x_high y_high z_low
     rec_read = 1+(x_high*N_R*N_R)+(y_high*N_R)+z_low
-    rho4 = HMM%rho_in(rec_read)
+    rho4 = HMM_rho_in(rec_read)
 
     ! rho5 at: x_low y_low z_high
     rec_read = 1+(x_low*N_R*N_R)+(y_low*N_R)+z_high
-    rho5 = HMM%rho_in(rec_read)
+    rho5 = HMM_rho_in(rec_read)
 
     ! rho6 at: x_low y_high z_high
     rec_read = 1+(x_low*N_R*N_R)+(y_high*N_R)+z_high
-    rho6 = HMM%rho_in(rec_read)
+    rho6 = HMM_rho_in(rec_read)
 
     ! rho7 at: x_high y_low z_high
     rec_read = 1+(x_high*N_R*N_R)+(y_low*N_R)+z_high
-    rho7 = HMM%rho_in(rec_read)
+    rho7 = HMM_rho_in(rec_read)
 
     ! rho8 at: x_high y_high z_high
     rec_read = 1+(x_high*N_R*N_R)+(y_high*N_R)+z_high
-    rho8 = HMM%rho_in(rec_read)
+    rho8 = HMM_rho_in(rec_read)
 
     ! perform linear interpolation between the 8 points
     a = (x-x_low*delta)/delta       ! weight for x

@@ -69,9 +69,6 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
   realw ux_rotation,uy_rotation;
   realw source_euler_A,source_euler_B;
 
-  // non-padded offset
-  int offset_nonpadded = tx + working_element*NGLL3;
-
   // store the source for the Euler scheme for A_rotation and B_rotation
   two_omega_deltat = deltat * two_omega_earth;
 
@@ -82,8 +79,8 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
   source_euler_A = two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl);
   source_euler_B = two_omega_deltat * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl);
 
-  A_rotation = d_A_array_rotation[offset_nonpadded];
-  B_rotation = d_B_array_rotation[offset_nonpadded];
+  A_rotation = d_A_array_rotation[tx + working_element*NGLL3]; // (non-padded offset)
+  B_rotation = d_B_array_rotation[tx + working_element*NGLL3];
 
   ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t;
   uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t;
@@ -91,9 +88,9 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
   *dpotentialdx_with_rot = dpotentialdxl + ux_rotation;
   *dpotentialdy_with_rot = dpotentialdyl + uy_rotation;
 
-  // updates rotation term with Euler scheme
-  d_A_array_rotation[offset_nonpadded] += source_euler_A;
-  d_B_array_rotation[offset_nonpadded] += source_euler_B;
+  // updates rotation term with Euler scheme (non-padded offset)
+  d_A_array_rotation[tx + working_element*NGLL3] += source_euler_A;
+  d_B_array_rotation[tx + working_element*NGLL3] += source_euler_B;
 
   return;
 }
@@ -242,23 +239,23 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     }
 #else
 
-    temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-            + s_dummy_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+            + s_dummy_loc[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-    temp2l = s_dummy_loc[K*NGLL2+I]*d_hprime_xx[J]
-            + s_dummy_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-            + s_dummy_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-            + s_dummy_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-            + s_dummy_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    temp2l = s_dummy_loc[K*NGLL2+I]*sh_hprime_xx[J]
+            + s_dummy_loc[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+            + s_dummy_loc[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+            + s_dummy_loc[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+            + s_dummy_loc[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-    temp3l = s_dummy_loc[J*NGLLX+I]*d_hprime_xx[K]
-            + s_dummy_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-            + s_dummy_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-            + s_dummy_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-            + s_dummy_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    temp3l = s_dummy_loc[J*NGLLX+I]*sh_hprime_xx[K]
+            + s_dummy_loc[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+            + s_dummy_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+            + s_dummy_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+            + s_dummy_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
 
 #endif
 

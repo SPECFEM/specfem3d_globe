@@ -72,7 +72,7 @@
   integer :: NSPEC,NGLOB,NSPEC_ATT
 
   ! time step
-  real(kind=CUSTOM_REAL) deltat
+  real(kind=CUSTOM_REAL) :: deltat
 
   ! displacement, velocity and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_crust_mantle
@@ -429,20 +429,24 @@
 
           else
 
-        ! do not use transverse isotropy except if element is between d220 and Moho
+          ! do not use transverse isotropy except if element is between d220 and Moho
 !            if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
+
             if( .not. ispec_is_tiso(ispec) ) then
-        ! layer with no transverse isotropy, use kappav and muv
+
+              ! isotropic element
+
+              ! layer with no transverse isotropy, use kappav and muv
               kappal = kappavstore(i,j,k,ispec)
               mul = muvstore(i,j,k,ispec)
 
-        ! use unrelaxed parameters if attenuation
+              ! use unrelaxed parameters if attenuation
               if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
               lambdal = lambdalplus2mul - 2.*mul
 
-        ! compute stress sigma
+              ! compute stress sigma
 
               sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
               sigma_yy = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
@@ -454,15 +458,17 @@
 
             else
 
-        ! use Kappa and mu from transversely isotropic model
+              ! transverse isotropic element
+
+              ! use Kappa and mu from transversely isotropic model
               kappavl = kappavstore(i,j,k,ispec)
               muvl = muvstore(i,j,k,ispec)
 
               kappahl = kappahstore(i,j,k,ispec)
               muhl = muhstore(i,j,k,ispec)
 
-        ! use unrelaxed parameters if attenuation
-        ! eta does not need to be shifted since it is a ratio
+              ! use unrelaxed parameters if attenuation
+              ! eta does not need to be shifted since it is a ratio
               if(ATTENUATION_VAL) then
                 muvl = muvl * one_minus_sum_beta_use
                 muhl = muhl * one_minus_sum_beta_use
@@ -476,8 +482,8 @@
 
               eta_aniso = eta_anisostore(i,j,k,ispec)  !!! that is  F / (A - 2 L)
 
-        ! use mesh coordinates to get theta and phi
-        ! ystore and zstore contain theta and phi
+              ! use mesh coordinates to get theta and phi
+              ! ystore and zstore contain theta and phi
 
               iglob = ibool(i,j,k,ispec)
               theta = ystore(iglob)
@@ -514,7 +520,7 @@
               etaminone = eta_aniso - 1.
               twoetaminone = 2. * eta_aniso - 1.
 
-        ! precompute some products to reduce the CPU time
+              ! precompute some products to reduce the CPU time
 
               two_eta_aniso = 2.*eta_aniso
               four_eta_aniso = 4.*eta_aniso
@@ -530,7 +536,7 @@
               four_rhovsvsq = 4.*rhovsvsq
               four_rhovshsq = 4.*rhovshsq
 
-        ! the 21 anisotropic coefficients computed using Mathematica
+              ! the 21 anisotropic coefficients computed using Mathematica
 
              c11 = rhovphsq*sinphifour + 2.*cosphisq*sinphisq* &
                (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
@@ -637,7 +643,7 @@
               rhovpvsq*cosphisq*sinphisq*sinthetafour - &
               (eta_aniso*(rhovphsq - two_rhovsvsq)*sintwophisq*sinthetafour)/2.
 
-        ! general expression of stress tensor for full Cijkl with 21 coefficients
+             ! general expression of stress tensor for full Cijkl with 21 coefficients
 
              sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
                        c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
@@ -661,7 +667,7 @@
 
           endif   ! end of test whether isotropic or anisotropic element
 
-        ! subtract memory variables if attenuation
+          ! subtract memory variables if attenuation
           if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
              do i_SLS = 1,N_SLS
                 R_xx_val = R_xx(i_SLS,i,j,k,ispec)
@@ -675,16 +681,16 @@
              enddo
           endif
 
-        ! define symmetric components of sigma for gravity
+          ! define symmetric components of sigma for gravity
           sigma_yx = sigma_xy
           sigma_zx = sigma_xz
           sigma_zy = sigma_yz
 
-        ! compute non-symmetric terms for gravity
+          ! compute non-symmetric terms for gravity
           if(GRAVITY_VAL) then
 
-        ! use mesh coordinates to get theta and phi
-        ! x y and z contain r theta and phi
+            ! use mesh coordinates to get theta and phi
+            ! x y and z contain r theta and phi
 
             iglob = ibool(i,j,k,ispec)
             radius = dble(xstore(iglob))
@@ -696,21 +702,21 @@
             cos_phi = dcos(dble(phi))
             sin_phi = dsin(dble(phi))
 
-        ! get g, rho and dg/dr=dg
-        ! spherical components of the gravitational acceleration
-        ! for efficiency replace with lookup table every 100 m in radial direction
+            ! get g, rho and dg/dr=dg
+            ! spherical components of the gravitational acceleration
+            ! for efficiency replace with lookup table every 100 m in radial direction
             int_radius = nint(radius * R_EARTH_KM * 10.d0)
             minus_g = minus_gravity_table(int_radius)
             minus_dg = minus_deriv_gravity_table(int_radius)
             rho = density_table(int_radius)
 
-        ! Cartesian components of the gravitational acceleration
+            ! Cartesian components of the gravitational acceleration
             gxl = minus_g*sin_theta*cos_phi
             gyl = minus_g*sin_theta*sin_phi
             gzl = minus_g*cos_theta
 
-        ! Cartesian components of gradient of gravitational acceleration
-        ! obtained from spherical components
+            ! Cartesian components of gradient of gravitational acceleration
+            ! obtained from spherical components
 
             minus_g_over_radius = minus_g / radius
             minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
@@ -729,15 +735,15 @@
 
             iglob = ibool(i,j,k,ispec)
 
-        ! distinguish between single and double precision for reals
+            ! distinguish between single and double precision for reals
             if(CUSTOM_REAL == SIZE_REAL) then
 
-        ! get displacement and multiply by density to compute G tensor
+              ! get displacement and multiply by density to compute G tensor
               sx_l = rho * dble(displ_crust_mantle(1,iglob))
               sy_l = rho * dble(displ_crust_mantle(2,iglob))
               sz_l = rho * dble(displ_crust_mantle(3,iglob))
 
-        ! compute G tensor from s . g and add to sigma (not symmetric)
+              ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
               sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
               sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
@@ -751,7 +757,7 @@
               sigma_yz = sigma_yz - sngl(sy_l * gzl)
               sigma_zy = sigma_zy - sngl(sz_l * gyl)
 
-        ! precompute vector
+              ! precompute vector
               factor = dble(jacobianl) * wgll_cube(i,j,k)
               rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
               rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
@@ -759,12 +765,12 @@
 
             else
 
-        ! get displacement and multiply by density to compute G tensor
+              ! get displacement and multiply by density to compute G tensor
               sx_l = rho * displ_crust_mantle(1,iglob)
               sy_l = rho * displ_crust_mantle(2,iglob)
               sz_l = rho * displ_crust_mantle(3,iglob)
 
-        ! compute G tensor from s . g and add to sigma (not symmetric)
+              ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
               sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
               sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
@@ -778,7 +784,7 @@
               sigma_yz = sigma_yz - sy_l * gzl
               sigma_zy = sigma_zy - sz_l * gyl
 
-        ! precompute vector
+              ! precompute vector
               factor = jacobianl * wgll_cube(i,j,k)
               rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
               rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
@@ -788,7 +794,7 @@
 
           endif  ! end of section with gravity terms
 
-        ! form dot product with test vector, non-symmetric form
+          ! form dot product with test vector, non-symmetric form
           tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl)
           tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl)
           tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl)
@@ -856,7 +862,7 @@
       enddo ! NGLLY
     enddo ! NGLLZ
 
-! sum contributions from each element to the global mesh and add gravity terms
+    ! sum contributions from each element to the global mesh and add gravity terms
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -931,7 +937,7 @@
       enddo
     endif
 
-! save deviatoric strain for Runge-Kutta scheme
+    ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) then
       !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
       do k=1,NGLLZ

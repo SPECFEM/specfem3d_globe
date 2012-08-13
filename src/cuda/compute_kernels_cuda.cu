@@ -367,9 +367,6 @@ __device__ void compute_gradient_kernel(int ijk,
   realw xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl;
   int l,offset,offset1,offset2,offset3;
 
-  //const int NGLLX = 5;
-  //const int NGLL3_ALIGN = NGLL3_PADDED;
-
   int K = (ijk/NGLL2);
   int J = ((ijk-K*NGLL2)/NGLLX);
   int I = (ijk-K*NGLL2-J*NGLLX);

@@ -495,8 +495,12 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
     xix_inner_core,xiy_inner_core,xiz_inner_core,&
     etax_inner_core,etay_inner_core,etaz_inner_core, &
-    gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-    rhostore_inner_core, kappavstore_inner_core,muvstore_inner_core
+    gammax_inner_core,gammay_inner_core,gammaz_inner_core
+
+  ! material parameters
+  ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+    rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: &
     xstore_inner_core,ystore_inner_core,zstore_inner_core

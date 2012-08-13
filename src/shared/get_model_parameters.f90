@@ -385,7 +385,7 @@
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ONE_CRUST = .true.
-    REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
     ! note: after call to this routines read_compute_parameters() we will set

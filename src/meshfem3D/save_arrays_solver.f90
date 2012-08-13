@@ -27,7 +27,6 @@
 
   subroutine save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
                     iregion_code,xstore,ystore,zstore, &
-                    is_on_a_slice_edge, &
                     NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
   use constants
@@ -70,9 +69,6 @@
   ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  ! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
   ! boundary parameters locator
   integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
 
@@ -110,7 +106,7 @@
   write(27) rhostore
   write(27) kappavstore
 
-  if(HETEROGEN_3D_MANTLE) then
+  if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
      open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
      if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
@@ -122,7 +118,10 @@
   ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
 
-    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) write(27) muvstore
+    ! note: muvstore needed for Q_mu shear attenuation in inner core
+    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
+      write(27) muvstore
+    endif
 
     !   save anisotropy in the mantle only
     if(TRANSVERSE_ISOTROPY) then
@@ -267,8 +266,9 @@
   write(27) rmassz
 
   write(27) ibool
+
   write(27) idoubling
-  write(27) is_on_a_slice_edge
+
   write(27) ispec_is_tiso
 
   close(27)
@@ -529,4 +529,66 @@
   close(IOUT)
 
   end subroutine save_MPI_arrays
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_arrays_solver_boundary()
+
+! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
+
+  use meshfem3d_par,only: &
+    myrank
+
+  use meshfem3D_models_par,only: &
+    SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
+
+  use create_regions_mesh_par2, only: &
+    NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
+    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
+    ibelm_670_top,ibelm_670_bot,normal_moho,normal_400,normal_670, &
+    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
+    ispec2D_670_top,ispec2D_670_bot, &
+    prname
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+
+  ! first check the number of surface elements are the same for Moho, 400, 670
+  if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
+    if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
+           call exit_mpi(myrank, 'Not the same number of Moho surface elements')
+  endif
+  if (ispec2D_400_top /= NSPEC2D_400 .or. ispec2D_400_bot /= NSPEC2D_400) &
+           call exit_mpi(myrank,'Not the same number of 400 surface elements')
+  if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
+           call exit_mpi(myrank,'Not the same number of 670 surface elements')
+
+  ! writing surface topology databases
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+       status='unknown',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+
+  write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
+
+  write(27) ibelm_moho_top
+  write(27) ibelm_moho_bot
+
+  write(27) ibelm_400_top
+  write(27) ibelm_400_bot
+
+  write(27) ibelm_670_top
+  write(27) ibelm_670_bot
+
+  write(27) normal_moho
+  write(27) normal_400
+  write(27) normal_670
+
+  close(27)
+
+  end subroutine save_arrays_solver_boundary
 

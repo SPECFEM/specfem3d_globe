@@ -471,6 +471,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_670 = ',NSPEC2D_670
   write(IOUT,*) 'integer, parameter :: NSPEC2D_CMB = ',NSPEC2D_CMB
   write(IOUT,*) 'integer, parameter :: NSPEC2D_ICB = ',NSPEC2D_ICB
+  write(IOUT,*)
 
   ! deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
   if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
@@ -505,6 +506,7 @@
   else
     write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
   endif
+  write(IOUT,*)
 
   if (MOVIE_VOLUME) then
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'

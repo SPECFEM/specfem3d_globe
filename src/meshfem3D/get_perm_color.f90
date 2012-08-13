@@ -72,7 +72,7 @@
                         color, nb_colors_outer_elements, nb_colors_inner_elements, &
                         nspec_outer,nspec_inner,nspec_domain)
 
-  !debug output
+  !user output
   if(myrank == 0) then
     write(IMAIN,*) '     colors:'
     write(IMAIN,*) '     number of colors for inner elements = ',nb_colors_inner_elements
@@ -163,15 +163,6 @@
     endif
   enddo
 
-  ! debug
-  !if(myrank == 0) then
-  !  print *
-  !  print *,'----------------------------------'
-  !  print *,'coloring the mesh'
-  !  print *,'----------------------------------'
-  !  print *
-  !endif
-
   ! Droux optimization
   try_Droux_coloring = USE_DROUX_OPTIMIZATION
 
@@ -211,11 +202,6 @@
 
     333 continue
     icolor = icolor + 1
-
-    ! debug: user output
-    !if(myrank == 0) then
-    !  print *,'  analyzing color ',icolor,' - outer elements'
-    !endif
 
     ! resets flags
     mask_ibool(:) = .false.
@@ -278,11 +264,6 @@
 
     334 continue
     icolor = icolor + 1
-
-    ! debug: user output
-    !if(myrank == 0) then
-    !  print *,'  analyzing color ',icolor,' - inner elements'
-    !endif
 
     ! resets flags
     mask_ibool(:) = .false.
@@ -515,7 +496,7 @@
   enddo
   maxval_count_ibool_inner = maxval(count_ibool)
 
-  ! debug outupt
+  ! user outupt
   if( myrank == 0 ) then
     write(IMAIN,*) '     maximum valence (i.e. minimum possible nb of colors) for outer = ',maxval_count_ibool_outer
     write(IMAIN,*) '     maximum valence (i.e. minimum possible nb of colors) for inner = ',maxval_count_ibool_inner
@@ -563,7 +544,7 @@
   integer :: nb_tries_of_Droux_1993,last_ispec_studied
   integer :: ier
 
-  ! debug outupt
+  ! user outupt
   if( myrank == 0 ) then
     write(IMAIN,*) '     balancing colors: Droux algorithm'
     write(IMAIN,*) '       initial number of outer element colors = ',nb_colors_outer_elements
@@ -587,7 +568,7 @@
   ! initial guess of number of colors needed
   ncolors = nb_colors_outer_elements + nb_colors_inner_elements
 
-  ! debug output
+  ! user output
   if( myrank == 0 ) then
     write(IMAIN,*) '     Droux optimization: try = ',nb_tries_of_Droux_1993,'colors = ',ncolors
   endif
@@ -699,7 +680,7 @@
     endif ! domain elements
   enddo
 
-  ! debug output
+  ! user output
   if(myrank == 0) then
     write(IMAIN,*) '     created a total of ',maxval(color),' colors in this domain' ! 'for all the domain elements of the mesh'
     if( nb_colors_outer_elements > 0 ) &
@@ -748,7 +729,7 @@
   integer :: target_nb_elems_per_color,icolor_target
   integer :: ier
 
-  ! debug outupt
+  ! user outupt
   if( myrank == 0 ) then
     write(IMAIN,*) '     balancing colors: simple algorithm'
     write(IMAIN,*) '       number of outer element colors = ',nb_colors_outer_elements
@@ -1109,7 +1090,7 @@
   real(kind=CUSTOM_REAL), intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     array_to_permute,temp_array
 
-  integer old_ispec,new_ispec
+  integer :: old_ispec,new_ispec
 
   ! copy the original array
   temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
@@ -1139,7 +1120,7 @@
   integer, intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     array_to_permute,temp_array
 
-  integer old_ispec,new_ispec
+  integer :: old_ispec,new_ispec
 
   ! copy the original array
   temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
@@ -1169,7 +1150,7 @@
   double precision, intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     array_to_permute,temp_array
 
-  integer old_ispec,new_ispec
+  integer :: old_ispec,new_ispec
 
   ! copy the original array
   temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
@@ -1198,7 +1179,7 @@
 
   logical, intent(inout), dimension(nspec) :: array_to_permute,temp_array
 
-  integer old_ispec,new_ispec
+  integer :: old_ispec,new_ispec
 
   ! copy the original array
   temp_array(:) = array_to_permute(:)
@@ -1209,3 +1190,125 @@
   enddo
 
   end subroutine permute_elements_logical1D
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! implement permutation of elements for arrays of integer type
+
+  subroutine permute_elements_integer1D(array_to_permute,temp_array,perm,nspec)
+
+  implicit none
+
+  include "constants.h"
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  integer, intent(inout), dimension(nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:) = array_to_permute(:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(new_ispec) = temp_array(old_ispec)
+  enddo
+
+  end subroutine permute_elements_integer1D
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_dble1(array_to_permute,temp_array,perm,nspec)
+
+  implicit none
+
+  include "constants.h"
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble1
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_dble_sls(array_to_permute,temp_array,perm,nspec)
+
+  implicit none
+
+  include "constants.h"
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble_sls
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_dble_sls1(array_to_permute,temp_array,perm,nspec)
+
+  implicit none
+
+  include "constants.h"
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(N_SLS,1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble_sls1
+
+

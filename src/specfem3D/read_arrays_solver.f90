@@ -59,14 +59,12 @@
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   ! material properties
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec_iso)
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_iso) :: &
+    rhostore,kappavstore,muvstore
 
   ! additional arrays for anisotropy stored only where needed to save memory
-  real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
-  real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
-  real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_tiso) :: &
+    kappahstore,muhstore,eta_anisostore
 
   ! additional arrays for full anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
@@ -85,14 +83,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
   ! flags to know if we should read Vs and anisotropy arrays
-  logical :: READ_KAPPA_MU,READ_TISO, &
-    ABSORBING_CONDITIONS
+  logical :: READ_KAPPA_MU,READ_TISO,ABSORBING_CONDITIONS
 
   character(len=150) :: LOCAL_PATH
 
   ! local parameters
   integer :: ier
-  logical,dimension(nspec) :: dummy_l
   ! processor identification
   character(len=150) :: prname
 
@@ -202,8 +198,6 @@
   read(IIN) ibool
 
   read(IIN) idoubling
-
-  read(IIN) dummy_l ! is_on_a_slice_edge
 
   read(IIN) ispec_is_tiso
 

@@ -73,12 +73,9 @@ __global__ void compute_add_sources_kernel(realw* accel,
 
       // note: for global version, sourcearrays has dimensions
       //            sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
-      atomicAdd(&accel[iglob*3],
-                sourcearrays[INDEX5(3,5,5,5, 0,i,j,k,isource)]*stf);
-      atomicAdd(&accel[iglob*3+1],
-                sourcearrays[INDEX5(3,5,5,5, 1,i,j,k,isource)]*stf);
-      atomicAdd(&accel[iglob*3+2],
-                sourcearrays[INDEX5(3,5,5,5, 2,i,j,k,isource)]*stf);
+      atomicAdd(&accel[3*iglob], sourcearrays[INDEX5(3,5,5,5, 0,i,j,k,isource)]*stf);
+      atomicAdd(&accel[3*iglob+1], sourcearrays[INDEX5(3,5,5,5, 1,i,j,k,isource)]*stf);
+      atomicAdd(&accel[3*iglob+2], sourcearrays[INDEX5(3,5,5,5, 2,i,j,k,isource)]*stf);
     }
   }
 }
@@ -207,13 +204,13 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
     iglob = ibool[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)]-1;
 
     // atomic operations are absolutely necessary for correctness!
-    atomicAdd(&accel[3*iglob],adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
+    atomicAdd(&accel[3*iglob], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
                                                       0,i,j,k,irec_local)]);
 
-    atomicAdd(&accel[1+3*iglob], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
+    atomicAdd(&accel[3*iglob+1], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
                                                       1,i,j,k,irec_local)]);
 
-    atomicAdd(&accel[2+3*iglob],adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
+    atomicAdd(&accel[3*iglob+2], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
                                                       2,i,j,k,irec_local)]);
   }
 }
