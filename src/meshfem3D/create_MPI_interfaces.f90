@@ -54,7 +54,7 @@
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC,NGLOB, &
-    NCHUNKS,myrank,NGLOB1D_RADIAL,NUMCORNERS_SHARED,NPROC_XI,NGLLX,NGLLY,NGLLZ
+    myrank,NGLOB1D_RADIAL,NUMCORNERS_SHARED,NGLLX,NGLLY,NGLLZ
 
   use create_MPI_interfaces_par
 
@@ -145,16 +145,9 @@
     ! crust mantle mesh
     allocate(xstore_crust_mantle(NGLOB_CRUST_MANTLE), &
             ystore_crust_mantle(NGLOB_CRUST_MANTLE), &
-            zstore_crust_mantle(NGLOB_CRUST_MANTLE))
-    allocate(idoubling_crust_mantle(NSPEC_CRUST_MANTLE))
-    allocate(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
-             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary crust mantle arrays')
-
-    ! allocates temporary arrays
-    allocate( is_on_a_slice_edge_crust_mantle(NSPEC_CRUST_MANTLE), &
+            zstore_crust_mantle(NGLOB_CRUST_MANTLE), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary is_on_a_slice_edge arrays')
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary crust mantle arrays')
 
   case( IREGION_OUTER_CORE )
     ! outer core
@@ -168,16 +161,9 @@
     ! outer core mesh
     allocate(xstore_outer_core(NGLOB_OUTER_CORE), &
             ystore_outer_core(NGLOB_OUTER_CORE), &
-            zstore_outer_core(NGLOB_OUTER_CORE))
-    allocate(idoubling_outer_core(NSPEC_OUTER_CORE))
-    allocate(ibool_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), &
-             stat=ier)
+            zstore_outer_core(NGLOB_OUTER_CORE), &
+            stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary outer core arrays')
-
-    ! allocates temporary arrays
-    allocate( is_on_a_slice_edge_outer_core(NSPEC_OUTER_CORE), &
-             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary is_on_a_slice_edge arrays')
 
   case( IREGION_INNER_CORE )
     ! inner core
@@ -199,16 +185,9 @@
     ! inner core mesh
     allocate(xstore_inner_core(NGLOB_INNER_CORE), &
             ystore_inner_core(NGLOB_INNER_CORE), &
-            zstore_inner_core(NGLOB_INNER_CORE))
-    allocate(idoubling_inner_core(NSPEC_INNER_CORE))
-    allocate(ibool_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
-             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary inner core arrays')
-
-    ! allocates temporary arrays
-    allocate(is_on_a_slice_edge_inner_core(NSPEC_INNER_CORE), &
+            zstore_inner_core(NGLOB_INNER_CORE), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary is_on_a_slice_edge arrays')
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary inner core arrays')
 
   end select
 
@@ -224,7 +203,10 @@
   subroutine cmi_get_addressing(iregion_code)
 
   use meshfem3D_par,only: &
-    myrank,LOCAL_PATH
+    myrank
+
+  use meshfem3D_par,only: &
+    ibool
 
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
@@ -238,40 +220,35 @@
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
-    ibool_crust_mantle(:,:,:,:) = -1
+!    ibool_crust_mantle(:,:,:,:) = -1
     call cmi_read_solver_data(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,&
-                             ibool_crust_mantle,idoubling_crust_mantle, &
-                             is_on_a_slice_edge_crust_mantle)
+                             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
 
     ! check that the number of points in this slice is correct
-    if(minval(ibool_crust_mantle(:,:,:,:)) /= 1 .or. &
-      maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
+    if(minval(ibool(:,:,:,:)) /= 1 .or. &
+      maxval(ibool(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
         call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
   case( IREGION_OUTER_CORE )
     ! outer core
-    ibool_outer_core(:,:,:,:) = -1
+!    ibool_outer_core(:,:,:,:) = -1
     call cmi_read_solver_data(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-                             xstore_outer_core,ystore_outer_core,zstore_outer_core,&
-                             ibool_outer_core,idoubling_outer_core, &
-                             is_on_a_slice_edge_outer_core)
+                             xstore_outer_core,ystore_outer_core,zstore_outer_core)
 
     ! check that the number of points in this slice is correct
-    if(minval(ibool_outer_core(:,:,:,:)) /= 1 .or. &
-       maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) &
+    if(minval(ibool(:,:,:,:)) /= 1 .or. &
+       maxval(ibool(:,:,:,:)) /= NGLOB_OUTER_CORE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
   case( IREGION_INNER_CORE )
     ! inner core
-    ibool_inner_core(:,:,:,:) = -1
+!    ibool_inner_core(:,:,:,:) = -1
     call cmi_read_solver_data(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                             xstore_inner_core,ystore_inner_core,zstore_inner_core,&
-                             ibool_inner_core,idoubling_inner_core, &
-                             is_on_a_slice_edge_inner_core)
+                             xstore_inner_core,ystore_inner_core,zstore_inner_core)
 
     ! check that the number of points in this slice is correct
-    if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
+    if(minval(ibool(:,:,:,:)) /= 1 .or. &
+      maxval(ibool(:,:,:,:)) /= NGLOB_INNER_CORE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
   end select
@@ -291,17 +268,15 @@
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-    NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS,OUTPUT_FILES,IIN,INCLUDE_CENTRAL_CUBE, &
+    NPROC_XI,NPROC_ETA,NCHUNKS,OUTPUT_FILES,IIN,INCLUDE_CENTRAL_CUBE, &
     iproc_xi,iproc_eta,ichunk,addressing
+
+  use meshfem3D_par,only: &
+    ibool,idoubling,is_on_a_slice_edge
 
   use create_regions_mesh_par2,only: &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
-    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-    jacobian2D_bottom,jacobian2D_top, &
-    rho_vp,rho_vs, &
-    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
 
   use create_MPI_interfaces_par
 
@@ -316,9 +291,9 @@
   ! local parameters
   integer :: ier
 
-  ! debug
-  logical,parameter :: DEBUG_FLAGS = .false.
+  ! debug file output
   character(len=150) :: filename
+  logical,parameter :: DEBUG = .false.
 
   ! gets 2-D addressing for summation between slices with MPI
 
@@ -346,18 +321,19 @@
     !          we will re-set these flags when setting up inner/outer elements, but will
     !          use these arrays for now as initial guess for the search for elements which share a global point
     !          between different MPI processes
-    call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
-           iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
-           npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,ibool_crust_mantle, &
-           NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
+    call fix_non_blocking_slices(is_on_a_slice_edge, &
+            iboolright_xi_crust_mantle,iboolleft_xi_crust_mantle, &
+            iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
+            npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            ibool, &
+            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
 
     ! debug: saves element flags
-    if( DEBUG_FLAGS ) then
+    if( DEBUG ) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                ibool_crust_mantle, &
-                                is_on_a_slice_edge_crust_mantle,filename)
+                                ibool,is_on_a_slice_edge,filename)
     endif
 
     ! added this to reduce the size of the buffers
@@ -390,18 +366,19 @@
     !          we will re-set these flags when setting up inner/outer elements, but will
     !          use these arrays for now as initial guess for the search for elements which share a global point
     !          between different MPI processes
-    call fix_non_blocking_slices(is_on_a_slice_edge_outer_core,iboolright_xi_outer_core, &
-           iboolleft_xi_outer_core,iboolright_eta_outer_core,iboolleft_eta_outer_core, &
-           npoin2D_xi_outer_core,npoin2D_eta_outer_core,ibool_outer_core, &
-           NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
+    call fix_non_blocking_slices(is_on_a_slice_edge, &
+            iboolright_xi_outer_core,iboolleft_xi_outer_core, &
+            iboolright_eta_outer_core,iboolleft_eta_outer_core, &
+            npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            ibool, &
+            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
 
     ! debug: saves element flags
-    if( DEBUG_FLAGS ) then
+    if( DEBUG ) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                 xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                                ibool_outer_core, &
-                                is_on_a_slice_edge_outer_core,filename)
+                                ibool,is_on_a_slice_edge,filename)
     endif
 
     ! added this to reduce the size of the buffers
@@ -474,7 +451,7 @@
                  NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                  NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
                  NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                 addressing,ibool_inner_core,idoubling_inner_core, &
+                 addressing,ibool,idoubling, &
                  xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                  nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
                  nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
@@ -506,27 +483,28 @@
     !          we will re-set these flags when setting up inner/outer elements, but will
     !          use these arrays for now as initial guess for the search for elements which share a global point
     !          between different MPI processes
-    call fix_non_blocking_slices(is_on_a_slice_edge_inner_core,iboolright_xi_inner_core, &
-           iboolleft_xi_inner_core,iboolright_eta_inner_core,iboolleft_eta_inner_core, &
-           npoin2D_xi_inner_core,npoin2D_eta_inner_core,ibool_inner_core, &
-           NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)
+    call fix_non_blocking_slices(is_on_a_slice_edge, &
+            iboolright_xi_inner_core,iboolleft_xi_inner_core, &
+            iboolright_eta_inner_core,iboolleft_eta_inner_core, &
+            npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            ibool, &
+            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)
 
     if(INCLUDE_CENTRAL_CUBE) then
       ! updates flags for elements on slice boundaries
-      call fix_non_blocking_central_cube(is_on_a_slice_edge_inner_core, &
-           ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
-           idoubling_inner_core,npoin2D_cube_from_slices, &
+      call fix_non_blocking_central_cube(is_on_a_slice_edge, &
+           ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
+           idoubling,npoin2D_cube_from_slices, &
            ibool_central_cube,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
            ichunk,NPROC_XI)
     endif
 
     ! debug: saves element flags
-    if( DEBUG_FLAGS ) then
+    if( DEBUG ) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                ibool_inner_core, &
-                                is_on_a_slice_edge_inner_core,filename)
+                                ibool,is_on_a_slice_edge,filename)
     endif
 
     ! added this to reduce the size of the buffers
@@ -544,14 +522,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmi_read_solver_data(nspec,nglob, &
-                                  xstore_s,ystore_s,zstore_s, &
-                                  ibool_s,idoubling_s,is_on_a_slice_edge_s)
+  subroutine cmi_read_solver_data(nspec,nglob,xstore_s,ystore_s,zstore_s)
 
 
   use meshfem3D_par,only: &
-    ibool,idoubling,is_on_a_slice_edge, &
-    xstore,ystore,zstore
+    xstore,ystore,zstore,ibool
 
   implicit none
 
@@ -562,18 +537,8 @@
   ! global mesh points
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_s,ystore_s,zstore_s
 
-  ! mesh indices
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool_s
-  integer, dimension(nspec) :: idoubling_s
-  logical, dimension(nspec) :: is_on_a_slice_edge_s
-
   ! local parameters
   integer :: i,j,k,ispec,iglob
-
-  ! copy arrays
-  ibool_s(:,:,:,:) = ibool(:,:,:,:)
-  idoubling_s(:) = idoubling(:)
-  is_on_a_slice_edge_s(:) = is_on_a_slice_edge(:)
 
   ! fill custom_real arrays
   do ispec = 1,nspec

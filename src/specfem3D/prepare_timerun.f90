@@ -717,31 +717,32 @@
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common inner_core array')
 
   ! CRUST_MANTLE ATTENUATION
-  call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-
   ! initializes
   omsb_crust_mantle_dble = 0.d0
   factor_common_crust_mantle_dble = 0.d0
   factor_scale_crust_mantle_dble = 0.d0
   tau_sigma_dble = 0.d0
 
+  ! reads in attenuation values
+  call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
   call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_crust_mantle_dble, &
            factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble, &
            ATT1,ATT2,ATT3,ATT4)
 
   ! INNER_CORE ATTENUATION
-  call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-
   ! initializes
   omsb_inner_core_dble = 0.d0
   factor_common_inner_core_dble = 0.d0
   factor_scale_inner_core_dble = 0.d0
   tau_sigma_dble = 0.d0
 
+  ! reads in attenuation values
+  call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
   call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_inner_core_dble, &
            factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble, &
            ATT1,ATT2,ATT3,ATT5)
 
+  ! converts to custom real arrays
   if(CUSTOM_REAL == SIZE_REAL) then
     factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
     one_minus_sum_beta_crust_mantle = sngl(omsb_crust_mantle_dble)
@@ -1155,6 +1156,7 @@
                                   NSPEC_CRUST_MANTLE_STRAIN_ONLY,NGLOB_CRUST_MANTLE_OCEANS, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                  NSPEC_INNER_CORE_STRAIN_ONLY, &
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                   SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                   OCEANS_VAL,GRAVITY_VAL,ROTATION_VAL, &
@@ -1165,7 +1167,6 @@
                                   SAVE_BOUNDARY_MESH, &
                                   USE_MESH_COLORING_GPU, &
                                   ANISOTROPIC_KL,APPROXIMATE_HESS_KL)
-  call sync_all()
 
   ! prepares rotation arrays
   if( ROTATION_VAL ) then
@@ -1178,7 +1179,6 @@
                                   b_A_array_rotation,b_B_array_rotation, &
                                   NSPEC_OUTER_CORE_ROTATION)
   endif
-  call sync_all()
 
   ! prepares arrays related to gravity
   ! note: GPU will use only single-precision (or double precision) for all calculations
@@ -1218,7 +1218,6 @@
             cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
             cr_density_table)
   deallocate(cr_wgll_cube)
-  call sync_all()
 
   ! prepares attenuation arrays
   if( ATTENUATION_VAL ) then
@@ -1236,7 +1235,6 @@
                                         alphaval,betaval,gammaval, &
                                         b_alphaval,b_betaval,b_gammaval)
   endif
-  call sync_all()
 
 
   ! prepares attenuation arrays
@@ -1257,7 +1255,6 @@
                                     eps_trace_over_3_inner_core, &
                                     b_eps_trace_over_3_inner_core)
   endif
-  call sync_all()
 
   ! prepares absorbing arrays
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
@@ -1293,7 +1290,6 @@
                                     vp_outer_core)
 
   endif
-  call sync_all()
 
   ! prepares MPI interfaces
   if(myrank == 0 ) write(IMAIN,*) "  loading mpi interfaces"
@@ -1329,78 +1325,81 @@
   if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
 
   call prepare_crust_mantle_device(Mesh_pointer, &
-       xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-       gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-       rhostore_crust_mantle, &
-       kappavstore_crust_mantle,muvstore_crust_mantle, &
-       kappahstore_crust_mantle,muhstore_crust_mantle, &
-       eta_anisostore_crust_mantle, &
-       rmassx_crust_mantle, &
-       rmassy_crust_mantle, &
-       rmassz_crust_mantle, &
-       normal_top_crust_mantle, &
-       ibelm_top_crust_mantle, &
-       ibelm_bottom_crust_mantle, &
-       ibool_crust_mantle, &
-       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-       ispec_is_tiso_crust_mantle, &
-       c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-       c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-       c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-       c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-       c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-       c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-       c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-       num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-       nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
-       NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-       NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
-       NCHUNKS_VAL)
-  call sync_all()
+                                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                 etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                 rhostore_crust_mantle, &
+                                 kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                 kappahstore_crust_mantle,muhstore_crust_mantle, &
+                                 eta_anisostore_crust_mantle, &
+                                 rmassx_crust_mantle, &
+                                 rmassy_crust_mantle, &
+                                 rmassz_crust_mantle, &
+                                 normal_top_crust_mantle, &
+                                 ibelm_top_crust_mantle, &
+                                 ibelm_bottom_crust_mantle, &
+                                 ibool_crust_mantle, &
+                                 xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                                 ispec_is_tiso_crust_mantle, &
+                                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+                                 c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+                                 c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+                                 c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+                                 c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+                                 c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                 num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                                 nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
+                                 NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                                 NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
+                                 NCHUNKS_VAL, &
+                                 num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
+                                 num_elem_colors_crust_mantle)
 
 
   ! outer core region
   if(myrank == 0 ) write(IMAIN,*) "  loading outer core region"
   call prepare_outer_core_device(Mesh_pointer, &
-                                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
-                                  etax_outer_core,etay_outer_core,etaz_outer_core, &
-                                  gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-                                  rhostore_outer_core,kappavstore_outer_core, &
-                                  rmass_outer_core, &
-                                  normal_top_outer_core, &
-                                  normal_bottom_outer_core, &
-                                  jacobian2D_top_outer_core, &
-                                  jacobian2D_bottom_outer_core, &
-                                  ibelm_top_outer_core, &
-                                  ibelm_bottom_outer_core, &
-                                  ibool_outer_core, &
-                                  xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                                  num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                                  nspec_outer_outer_core,nspec_inner_outer_core, &
-                                  NSPEC2D_TOP(IREGION_OUTER_CORE), &
-                                  NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
-  call sync_all()
+                                xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                                etax_outer_core,etay_outer_core,etaz_outer_core, &
+                                gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                                rhostore_outer_core,kappavstore_outer_core, &
+                                rmass_outer_core, &
+                                normal_top_outer_core, &
+                                normal_bottom_outer_core, &
+                                jacobian2D_top_outer_core, &
+                                jacobian2D_bottom_outer_core, &
+                                ibelm_top_outer_core, &
+                                ibelm_bottom_outer_core, &
+                                ibool_outer_core, &
+                                xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                                num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                                nspec_outer_outer_core,nspec_inner_outer_core, &
+                                NSPEC2D_TOP(IREGION_OUTER_CORE), &
+                                NSPEC2D_BOTTOM(IREGION_OUTER_CORE), &
+                                num_colors_outer_outer_core,num_colors_inner_outer_core, &
+                                num_elem_colors_outer_core)
 
 
   ! inner core region
   if(myrank == 0 ) write(IMAIN,*) "  loading inner core region"
   call prepare_inner_core_device(Mesh_pointer, &
-                                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                  etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                  gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                  rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                                  rmass_inner_core, &
-                                  ibelm_top_inner_core, &
-                                  ibool_inner_core, &
-                                  xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                  c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-                                  c33store_inner_core,c44store_inner_core, &
-                                  idoubling_inner_core, &
-                                  num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                                  nspec_outer_inner_core,nspec_inner_inner_core, &
-                                  NSPEC2D_TOP(IREGION_INNER_CORE))
-  call sync_all()
+                                xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                                rmass_inner_core, &
+                                ibelm_top_inner_core, &
+                                ibool_inner_core, &
+                                xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                                c33store_inner_core,c44store_inner_core, &
+                                idoubling_inner_core, &
+                                num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                                nspec_outer_inner_core,nspec_inner_inner_core, &
+                                NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                                num_elem_colors_inner_core)
 
   ! transfer forward and backward fields to device with initial values
   if(myrank == 0 ) write(IMAIN,*) "  transfering initial wavefield"

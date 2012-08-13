@@ -25,6 +25,8 @@
 !
 !=====================================================================
 
+! obsolete...
+
   subroutine read_arrays_buffers_mesher(iregion_code,myrank, &
                                iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
                                npoin2D_xi,npoin2D_eta, &

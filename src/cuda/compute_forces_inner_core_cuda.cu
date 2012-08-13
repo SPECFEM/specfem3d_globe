@@ -68,10 +68,10 @@ __device__ void compute_element_ic_att_stress(int tx,int working_element,
                                              realw* sigma_xz,
                                              realw* sigma_yz) {
 
-  int i_sls,offset;
+  int offset;
   realw R_xx_val,R_yy_val;
 
-  for(i_sls = 0; i_sls < N_SLS; i_sls++){
+  for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // index
     // note: index for R_xx,.. here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
     //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
@@ -106,7 +106,6 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
                                               int ATTENUATION_3D
                                               ){
 
-  int i_sls;
   int offset;
   realw mul;
   realw alphaval_loc,betaval_loc,gammaval_loc;
@@ -115,7 +114,7 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
   mul = d_muv[tx + NGLL3_PADDED * working_element];
 
   // use Runge-Kutta scheme to march in time
-  for(i_sls = 0; i_sls < N_SLS; i_sls++){
+  for(int i_sls = 0; i_sls < N_SLS; i_sls++){
 
     // indices
     // note: index for R_xx,... here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
@@ -340,21 +339,20 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          realw* d_minus_gravity_table,
                                          realw* d_minus_deriv_gravity_table,
                                          realw* d_density_table,
-                                         realw* wgll_cube){
+                                         realw* wgll_cube,
+                                         int NSPEC_INNER_CORE_STRAIN_ONLY){
 
   /* int bx = blockIdx.y*blockDim.x+blockIdx.x; //possible bug in original code*/
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
   /* int bx = blockIdx.x; */
   int tx = threadIdx.x;
 
-  const int IFLAG_IN_FICTITIOUS_CUBE = 11; // from constants.h
-
   int K = (tx/NGLL2);
   int J = ((tx-K*NGLL2)/NGLLX);
   int I = (tx-K*NGLL2-J*NGLLX);
 
   int active,offset;
-  int iglob = 0;
+  int iglob;
   int working_element;
 
   realw tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l;
@@ -363,13 +361,16 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
   realw duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
   realw duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl;
 
+  // attenuation
   realw tempx1l_att,tempx2l_att,tempx3l_att,tempy1l_att,tempy2l_att,tempy3l_att,tempz1l_att,tempz2l_att,tempz3l_att;
   realw duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att,duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att;
   realw duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att;
+  realw templ;
 
   realw fac1,fac2,fac3;
   realw lambdal,mul,lambdalplus2mul,kappal;
   realw mul_iso,mul_aniso;
+
   realw sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
   realw epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc;
   realw c11,c12,c13,c33,c44;
@@ -531,19 +532,19 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       tempz3l_att = 0.f;
 
       for (l=0;l<NGLLX;l++) {
-        fac1 = d_hprime_xx[l*NGLLX+I];
+        fac1 = sh_hprime_xx[l*NGLLX+I];
         offset = K*NGLL2+J*NGLLX+l;
         tempx1l_att += s_dummyx_loc_att[offset]*fac1;
         tempy1l_att += s_dummyy_loc_att[offset]*fac1;
         tempz1l_att += s_dummyz_loc_att[offset]*fac1;
 
-        fac2 = d_hprime_xx[l*NGLLX+J];
+        fac2 = sh_hprime_xx[l*NGLLX+J];
         offset = K*NGLL2+l*NGLLX+I;
         tempx2l_att += s_dummyx_loc_att[offset]*fac2;
         tempy2l_att += s_dummyy_loc_att[offset]*fac2;
         tempz2l_att += s_dummyz_loc_att[offset]*fac2;
 
-        fac3 = d_hprime_xx[l*NGLLX+K];
+        fac3 = sh_hprime_xx[l*NGLLX+K];
         offset = l*NGLL2+J*NGLLX+I;
         tempx3l_att += s_dummyx_loc_att[offset]*fac3;
         tempy3l_att += s_dummyy_loc_att[offset]*fac3;
@@ -552,115 +553,115 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
     }
 #else
 
-    tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-            + s_dummyx_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-            + s_dummyx_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-            + s_dummyx_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-            + s_dummyx_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+            + s_dummyx_loc[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-    tempy1l = s_dummyy_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-            + s_dummyy_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-            + s_dummyy_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-            + s_dummyy_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-            + s_dummyy_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    tempy1l = s_dummyy_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+            + s_dummyy_loc[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-    tempz1l = s_dummyz_loc[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-            + s_dummyz_loc[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-            + s_dummyz_loc[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-            + s_dummyz_loc[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-            + s_dummyz_loc[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+    tempz1l = s_dummyz_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+            + s_dummyz_loc[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-    tempx2l = s_dummyx_loc[K*NGLL2+I]*d_hprime_xx[J]
-            + s_dummyx_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-            + s_dummyx_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-            + s_dummyx_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-            + s_dummyx_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    tempx2l = s_dummyx_loc[K*NGLL2+I]*sh_hprime_xx[J]
+            + s_dummyx_loc[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+            + s_dummyx_loc[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+            + s_dummyx_loc[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+            + s_dummyx_loc[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-    tempy2l = s_dummyy_loc[K*NGLL2+I]*d_hprime_xx[J]
-            + s_dummyy_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-            + s_dummyy_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-            + s_dummyy_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-            + s_dummyy_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    tempy2l = s_dummyy_loc[K*NGLL2+I]*sh_hprime_xx[J]
+            + s_dummyy_loc[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+            + s_dummyy_loc[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+            + s_dummyy_loc[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+            + s_dummyy_loc[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-    tempz2l = s_dummyz_loc[K*NGLL2+I]*d_hprime_xx[J]
-            + s_dummyz_loc[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-            + s_dummyz_loc[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-            + s_dummyz_loc[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-            + s_dummyz_loc[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+    tempz2l = s_dummyz_loc[K*NGLL2+I]*sh_hprime_xx[J]
+            + s_dummyz_loc[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+            + s_dummyz_loc[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+            + s_dummyz_loc[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+            + s_dummyz_loc[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-    tempx3l = s_dummyx_loc[J*NGLLX+I]*d_hprime_xx[K]
-            + s_dummyx_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-            + s_dummyx_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-            + s_dummyx_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-            + s_dummyx_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    tempx3l = s_dummyx_loc[J*NGLLX+I]*sh_hprime_xx[K]
+            + s_dummyx_loc[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+            + s_dummyx_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+            + s_dummyx_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+            + s_dummyx_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
 
-    tempy3l = s_dummyy_loc[J*NGLLX+I]*d_hprime_xx[K]
-            + s_dummyy_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-            + s_dummyy_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-            + s_dummyy_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-            + s_dummyy_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    tempy3l = s_dummyy_loc[J*NGLLX+I]*sh_hprime_xx[K]
+            + s_dummyy_loc[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+            + s_dummyy_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+            + s_dummyy_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+            + s_dummyy_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
 
-    tempz3l = s_dummyz_loc[J*NGLLX+I]*d_hprime_xx[K]
-            + s_dummyz_loc[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-            + s_dummyz_loc[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-            + s_dummyz_loc[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-            + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+    tempz3l = s_dummyz_loc[J*NGLLX+I]*sh_hprime_xx[K]
+            + s_dummyz_loc[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+            + s_dummyz_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+            + s_dummyz_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+            + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
 
     if( ATTENUATION ){
       // temporary variables used for fixing attenuation in a consistent way
-      tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+      tempx1l_att = s_dummyx_loc_att[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+        + s_dummyx_loc_att[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-      tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+      tempy1l_att = s_dummyy_loc_att[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+        + s_dummyy_loc_att[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-      tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*d_hprime_xx[I]
-        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*d_hprime_xx[NGLLX+I]
-        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*d_hprime_xx[2*NGLLX+I]
-        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*d_hprime_xx[3*NGLLX+I]
-        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*d_hprime_xx[4*NGLLX+I];
+      tempz1l_att = s_dummyz_loc_att[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+3]*sh_hprime_xx[3*NGLLX+I]
+        + s_dummyz_loc_att[K*NGLL2+J*NGLLX+4]*sh_hprime_xx[4*NGLLX+I];
 
-      tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-        + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-        + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-        + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-        + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+      tempx2l_att = s_dummyx_loc_att[K*NGLL2+I]*sh_hprime_xx[J]
+        + s_dummyx_loc_att[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+        + s_dummyx_loc_att[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+        + s_dummyx_loc_att[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+        + s_dummyx_loc_att[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-      tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-        + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-        + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-        + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-        + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+      tempy2l_att = s_dummyy_loc_att[K*NGLL2+I]*sh_hprime_xx[J]
+        + s_dummyy_loc_att[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+        + s_dummyy_loc_att[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+        + s_dummyy_loc_att[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+        + s_dummyy_loc_att[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-      tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*d_hprime_xx[J]
-        + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*d_hprime_xx[NGLLX+J]
-        + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*d_hprime_xx[2*NGLLX+J]
-        + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*d_hprime_xx[3*NGLLX+J]
-        + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*d_hprime_xx[4*NGLLX+J];
+      tempz2l_att = s_dummyz_loc_att[K*NGLL2+I]*sh_hprime_xx[J]
+        + s_dummyz_loc_att[K*NGLL2+NGLLX+I]*sh_hprime_xx[NGLLX+J]
+        + s_dummyz_loc_att[K*NGLL2+2*NGLLX+I]*sh_hprime_xx[2*NGLLX+J]
+        + s_dummyz_loc_att[K*NGLL2+3*NGLLX+I]*sh_hprime_xx[3*NGLLX+J]
+        + s_dummyz_loc_att[K*NGLL2+4*NGLLX+I]*sh_hprime_xx[4*NGLLX+J];
 
-      tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-        + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-        + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-        + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-        + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+      tempx3l_att = s_dummyx_loc_att[J*NGLLX+I]*sh_hprime_xx[K]
+        + s_dummyx_loc_att[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+        + s_dummyx_loc_att[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+        + s_dummyx_loc_att[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+        + s_dummyx_loc_att[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
 
-      tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-        + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-        + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-        + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-        + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+      tempy3l_att = s_dummyy_loc_att[J*NGLLX+I]*sh_hprime_xx[K]
+        + s_dummyy_loc_att[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+        + s_dummyy_loc_att[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+        + s_dummyy_loc_att[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+        + s_dummyy_loc_att[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
 
-      tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*d_hprime_xx[K]
-        + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*d_hprime_xx[NGLLX+K]
-        + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*d_hprime_xx[2*NGLLX+K]
-        + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*d_hprime_xx[3*NGLLX+K]
-        + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*d_hprime_xx[4*NGLLX+K];
+      tempz3l_att = s_dummyz_loc_att[J*NGLLX+I]*sh_hprime_xx[K]
+        + s_dummyz_loc_att[NGLL2+J*NGLLX+I]*sh_hprime_xx[NGLLX+K]
+        + s_dummyz_loc_att[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
+        + s_dummyz_loc_att[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
+        + s_dummyz_loc_att[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
     }
 
 #endif
@@ -719,7 +720,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
 
       // computes deviatoric strain attenuation and/or for kernel calculations
       if(COMPUTE_AND_STORE_STRAIN) {
-        realw templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
+        templ = 0.33333333333333333333f * (duxdxl_att + duydyl_att + duzdzl_att); // 1./3. = 0.33333
 
         // local storage: stresses at this current time step
         epsilondev_xx_loc = duxdxl_att - templ;
@@ -728,14 +729,16 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
         epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl_att;
         epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl_att;
 
-        if(SIMULATION_TYPE == 3) {
+        if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) {
+          epsilon_trace_over_3[tx] = templ;
+        }else{
           epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
         }
       }
     }else{
       // computes deviatoric strain attenuation and/or for kernel calculations
       if(COMPUTE_AND_STORE_STRAIN) {
-        realw templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
+        templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
 
         // local storage: stresses at this current time step
         epsilondev_xx_loc = duxdxl - templ;
@@ -744,7 +747,9 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
         epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
         epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
 
-        if(SIMULATION_TYPE == 3) {
+        if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) {
+          epsilon_trace_over_3[tx] = templ;
+        }else{
           epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
         }
       }
@@ -1162,7 +1167,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                              mp->d_minus_gravity_table,
                                              mp->d_minus_deriv_gravity_table,
                                              mp->d_density_table,
-                                             mp->d_wgll_cube);
+                                             mp->d_wgll_cube,
+                                             mp->NSPEC_INNER_CORE_STRAIN_ONLY);
 
 
   if(mp->simulation_type == 3) {
@@ -1209,7 +1215,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->d_minus_gravity_table,
                                                 mp->d_minus_deriv_gravity_table,
                                                 mp->d_density_table,
-                                                mp->d_wgll_cube);
+                                                mp->d_wgll_cube,
+                                                mp->NSPEC_INNER_CORE_STRAIN_ONLY);
   }
 
   // cudaEventRecord( stop, 0 );
@@ -1262,7 +1269,9 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
 
     int nb_colors,nb_blocks_to_compute;
     int istart;
-    int color_offset,color_offset_nonpadded,color_offset_nonpadded_att2;
+    int color_offset,color_offset_nonpadded;
+    int color_offset_nonpadded_att2,color_offset_nonpadded_att3;
+    int color_offset_nonpadded_strain;
     int color_offset_ispec;
 
     // sets up color loop
@@ -1275,6 +1284,8 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       color_offset = 0;
       color_offset_nonpadded = 0;
       color_offset_nonpadded_att2 = 0;
+      color_offset_nonpadded_att3 = 0;
+      color_offset_nonpadded_strain = 0;
       color_offset_ispec = 0;
     }else{
       // inner elements (start after outer elements)
@@ -1284,12 +1295,20 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       // array offsets
       color_offset = (mp->nspec_outer_inner_core) * NGLL3_PADDED;
       color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
+      // for factor_common array
       if( mp->attenuation_3D ){
-        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3;
+        color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
       }else{
-        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * 1 * N_SLS;
+        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * 1;
+        color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * 1 * N_SLS;
       }
+      // for idoubling array
       color_offset_ispec = mp->nspec_outer_inner_core;
+      // for strain
+      if( ! mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1 ){
+        color_offset_nonpadded_strain = (mp->nspec_outer_inner_core) * NGLL3;
+      }
     }
 
     // loops over colors
@@ -1297,11 +1316,13 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
 
       nb_blocks_to_compute = mp->h_num_elem_colors_inner_core[icolor];
 
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
       // checks
-      //if( nb_blocks_to_compute <= 0 ){
-      //  printf("error number of elastic color blocks: %d -- color = %d \n",nb_blocks_to_compute,icolor);
-      //  exit(EXIT_FAILURE);
-      //}
+      if( nb_blocks_to_compute <= 0 ){
+        printf("error number of color blocks in inner_core: %d -- color = %d \n",nb_blocks_to_compute,icolor);
+        exit(EXIT_FAILURE);
+      }
+#endif
 
       Kernel_2_inner_core(nb_blocks_to_compute,mp,
                           *deltat,
@@ -1324,9 +1345,9 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                           mp->d_epsilondev_xy_inner_core + color_offset_nonpadded,
                           mp->d_epsilondev_xz_inner_core + color_offset_nonpadded,
                           mp->d_epsilondev_yz_inner_core + color_offset_nonpadded,
-                          mp->d_eps_trace_over_3_inner_core + color_offset_nonpadded,
-                          mp->d_one_minus_sum_beta_inner_core + color_offset_nonpadded,
-                          mp->d_factor_common_inner_core + color_offset_nonpadded_att2,
+                          mp->d_eps_trace_over_3_inner_core + color_offset_nonpadded_strain,
+                          mp->d_one_minus_sum_beta_inner_core + color_offset_nonpadded_att2,
+                          mp->d_factor_common_inner_core + color_offset_nonpadded_att3,
                           mp->d_R_xx_inner_core + color_offset_nonpadded,
                           mp->d_R_yy_inner_core + color_offset_nonpadded,
                           mp->d_R_xy_inner_core + color_offset_nonpadded,
@@ -1356,13 +1377,20 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
       // for factor_common array
       if( mp->attenuation_3D ){
-        color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3 * N_SLS;
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3;
+        color_offset_nonpadded_att3 += nb_blocks_to_compute * NGLL3 * N_SLS;
       }else{
-        color_offset_nonpadded_att2 += nb_blocks_to_compute * 1 * N_SLS;
+        color_offset_nonpadded_att2 += nb_blocks_to_compute * 1;
+        color_offset_nonpadded_att3 += nb_blocks_to_compute * 1 * N_SLS;
       }
       // for array(ispec)
       color_offset_ispec += nb_blocks_to_compute;
-    }
+      // for strain
+      if( ! mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1 ){
+        color_offset_nonpadded_strain += nb_blocks_to_compute * NGLL3;
+      }
+
+    } // icolor
 
   }else{
 

@@ -102,6 +102,8 @@
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES
 
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
   implicit none
@@ -117,9 +119,9 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
-  ! debug
+  ! debug file output
   character(len=150) :: filename
-  logical,parameter :: DEBUG_INTERFACES = .false.
+  logical,parameter :: DEBUG = .false.
 
   ! sets up MPI interfaces
   ! crust mantle region
@@ -157,8 +159,7 @@
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                             max_nibool,MAX_NEIGHBOURS, &
-                            ibool_crust_mantle,&
-                            is_on_a_slice_edge_crust_mantle, &
+                            ibool,is_on_a_slice_edge, &
                             IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
                             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,NPROCTOT)
 
@@ -193,7 +194,7 @@
   endif
 
   ! debug: outputs MPI interface
-  if( DEBUG_INTERFACES ) then
+  if( DEBUG ) then
     do i=1,num_interfaces_crust_mantle
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_crust_mantle_proc',myrank, &
                       '_',my_neighbours_crust_mantle(i)
@@ -210,15 +211,6 @@
                               num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                               my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
                               ibool_interfaces_crust_mantle)
-
-  ! allocates MPI buffers
-  ! crust mantle
-  allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-          request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
-          request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
 
   ! checks with assembly of test fields
   call test_MPI_cm()
@@ -238,6 +230,8 @@
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES
 
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+
   use create_MPI_interfaces_par
   use MPI_outer_core_par
   implicit none
@@ -253,9 +247,9 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
-  ! debug
+  ! debug file output
   character(len=150) :: filename
-  logical,parameter :: DEBUG_INTERFACES = .false.
+  logical,parameter :: DEBUG = .false.
 
   ! sets up MPI interfaces
   ! outer core region
@@ -295,8 +289,7 @@
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                             max_nibool,MAX_NEIGHBOURS, &
-                            ibool_outer_core,&
-                            is_on_a_slice_edge_outer_core, &
+                            ibool,is_on_a_slice_edge, &
                             IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
                             xstore_outer_core,ystore_outer_core,zstore_outer_core,NPROCTOT)
 
@@ -331,7 +324,7 @@
   endif
 
   ! debug: outputs MPI interface
-  if( DEBUG_INTERFACES ) then
+  if( DEBUG ) then
     do i=1,num_interfaces_outer_core
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_outer_core_proc',myrank, &
                       '_',my_neighbours_outer_core(i)
@@ -348,15 +341,6 @@
                               num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                               my_neighbours_outer_core,nibool_interfaces_outer_core, &
                               ibool_interfaces_outer_core)
-
-  ! allocates MPI buffers
-  ! outer core
-  allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-          buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-          request_send_scalar_outer_core(num_interfaces_outer_core), &
-          request_recv_scalar_outer_core(num_interfaces_outer_core), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
 
   ! checks with assembly of test fields
   call test_MPI_oc()
@@ -376,6 +360,8 @@
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,NSPEC2D_BOTTOM
 
+  use meshfem3D_par,only: ibool,idoubling,is_on_a_slice_edge
+
   use create_MPI_interfaces_par
   use MPI_inner_core_par
   implicit none
@@ -391,9 +377,9 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,k,ispec,iglob,ier
   integer :: ndim_assemble
-  ! debug
+  ! debug file output
   character(len=150) :: filename
-  logical,parameter :: DEBUG_INTERFACES = .false.
+  logical,parameter :: DEBUG = .false.
 
   ! sets up MPI interfaces
   ! inner core
@@ -407,12 +393,12 @@
   test_flag(:) = 0.0
   do ispec=1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
-    if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     ! sets flags
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          iglob = ibool_inner_core(i,j,k,ispec)
+          iglob = ibool(i,j,k,ispec)
           test_flag(iglob) = myrank + 1.0
         enddo
       enddo
@@ -435,12 +421,12 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
   ! debug: idoubling inner core
-  if( DEBUG_INTERFACES ) then
+  if( DEBUG ) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
     call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                            ibool_inner_core, &
-                            idoubling_inner_core,filename)
+                            ibool, &
+                            idoubling,filename)
     call sync_all()
   endif
 
@@ -456,8 +442,8 @@
     call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
                  npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
                  buffer_slices, buffer_slices2, ibool_central_cube, &
-                 receiver_cube_from_slices, ibool_inner_core, &
-                 idoubling_inner_core, NSPEC_INNER_CORE, &
+                 receiver_cube_from_slices, ibool, &
+                 idoubling, NSPEC_INNER_CORE, &
                  ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
                  NGLOB_INNER_CORE, &
                  test_flag,ndim_assemble, &
@@ -477,9 +463,8 @@
   !                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
   !                          num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
   !                          max_nibool,MAX_NEIGHBOURS, &
-  !                          ibool_inner_core,&
-  !                          is_on_a_slice_edge_inner_core, &
-  !                          IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE, &
+  !                          ibool,is_on_a_slice_edge, &
+  !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
   !                          xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
   !  endif
   !  call sync_all()
@@ -491,9 +476,8 @@
                         test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                         num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                         max_nibool,MAX_NEIGHBOURS, &
-                        ibool_inner_core,&
-                        is_on_a_slice_edge_inner_core, &
-                        IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE, &
+                        ibool,is_on_a_slice_edge, &
+                        IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
                         xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
 
   deallocate(test_flag)
@@ -526,7 +510,7 @@
   endif
 
   ! debug: saves MPI interfaces
-  if( DEBUG_INTERFACES ) then
+  if( DEBUG ) then
     do i=1,num_interfaces_inner_core
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
                       '_',my_neighbours_inner_core(i)
@@ -543,15 +527,6 @@
                               num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                               my_neighbours_inner_core,nibool_interfaces_inner_core, &
                               ibool_interfaces_inner_core)
-
-  ! allocates MPI buffers
-  ! inner core
-  allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
-          buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
-          request_send_vector_inner_core(num_interfaces_inner_core), &
-          request_recv_vector_inner_core(num_interfaces_inner_core), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_inner_core etc.')
 
   ! checks with assembly of test fields
   call test_MPI_ic()

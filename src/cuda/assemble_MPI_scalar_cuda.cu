@@ -48,12 +48,11 @@ __global__ void prepare_boundary_potential_on_device(realw* d_potential_dot_dot_
                                                      int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-  int iinterface=0;
 
-  for( iinterface=0; iinterface < num_interfaces; iinterface++) {
+  for( int iinterface=0; iinterface < num_interfaces; iinterface++) {
     if(id<d_nibool_interfaces[iinterface]) {
       d_send_potential_dot_dot_buffer[(id + max_nibool_interfaces*iinterface)] =
-      d_potential_dot_dot_acoustic[(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)];
+        d_potential_dot_dot_acoustic[(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)];
     }
   }
 
@@ -126,11 +125,9 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
                                                       int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-  int iinterface=0;
 
-  for( iinterface=0; iinterface < num_interfaces; iinterface++) {
+  for( int iinterface=0; iinterface < num_interfaces; iinterface++) {
     if(id<d_nibool_interfaces[iinterface]) {
-
       atomicAdd(&d_potential_dot_dot_acoustic[(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)],
                 d_send_potential_dot_dot_buffer[(id + max_nibool_interfaces*iinterface)]);
     }

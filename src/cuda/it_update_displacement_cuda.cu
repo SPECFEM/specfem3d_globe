@@ -62,7 +62,7 @@ __global__ void UpdateDispVeloc_kernel(realw* displ,
   if(id < size) {
     displ[id] = displ[id] + deltat*veloc[id] + deltatsqover2*accel[id];
     veloc[id] = veloc[id] + deltatover2*accel[id];
-    accel[id] = 0; // can do this using memset...not sure if faster
+    accel[id] = 0.0f; // can do this using memset...not sure if faster
   }
 }
 
@@ -219,7 +219,7 @@ __global__ void UpdatePotential_kernel(realw* potential_acoustic,
     potential_dot_acoustic[id] = potential_dot_acoustic[id]
                                 + deltatover2*potential_dot_dot_acoustic[id];
 
-    potential_dot_dot_acoustic[id] = 0;
+    potential_dot_dot_acoustic[id] = 0.0f;
   }
 }
 

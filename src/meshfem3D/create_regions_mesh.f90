@@ -26,7 +26,6 @@
 !=====================================================================
 
 
-
   subroutine create_regions_mesh(iregion_code, &
                           nspec,nglob_theor,npointot, &
                           NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -38,13 +37,10 @@
 ! creates the different regions of the mesh
 
   use meshfem3D_par,only: &
-    ibool,idoubling,is_on_a_slice_edge, &
-    xstore,ystore,zstore, &
-    IMAIN,volume_total,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
-    myrank,LOCAL_PATH, &
+    ibool,idoubling,xstore,ystore,zstore, &
+    IMAIN,volume_total,myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
-    NPROC,NPROCTOT,NPROC_XI,NPROC_ETA,NCHUNKS, &
-    SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
+    NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
     R_CENTRAL_CUBE,RICB,RCMB, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     NGLOB1D_RADIAL_CORNER, &
@@ -54,10 +50,23 @@
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     OCEANS
 
-  use create_MPI_interfaces_par
+  use create_MPI_interfaces_par, only: &
+    NGLOB1D_RADIAL_MAX,iboolcorner,iboolfaces, &
+    iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
+    ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+    ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+    xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+    xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
 
   use create_regions_mesh_par
   use create_regions_mesh_par2
+
+  use MPI_crust_mantle_par,only: &
+    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+  use MPI_outer_core_par,only: &
+    xstore_outer_core,ystore_outer_core,zstore_outer_core
+  use MPI_inner_core_par,only: &
+    xstore_inner_core,ystore_inner_core,zstore_inner_core
 
   implicit none
 
@@ -86,6 +95,7 @@
 
   ! user output
   if(myrank == 0 ) then
+    write(IMAIN,*)
     select case(ipass)
     case(1)
       write(IMAIN,*) 'first pass'
@@ -102,6 +112,7 @@
   ! initializes arrays
   call sync_all()
   if( myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) '  ...allocating arrays '
   endif
   call crm_allocate_arrays(iregion_code,nspec,ipass, &
@@ -112,6 +123,7 @@
   ! initialize number of layers
   call sync_all()
   if( myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) '  ...setting up layers '
   endif
   call crm_setup_layers(iregion_code,nspec,ipass,NEX_PER_PROC_ETA)
@@ -119,6 +131,7 @@
   !  creates mesh elements
   call sync_all()
   if( myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) '  ...creating mesh elements '
   endif
   call crm_create_elements(iregion_code,nspec,ipass, &
@@ -132,6 +145,7 @@
     ! creates ibool index array for projection from local to global points
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...creating global addressing'
     endif
     call crm_setup_indexing(nspec,nglob_theor,npointot)
@@ -140,6 +154,7 @@
     ! create MPI buffers
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...creating MPI buffers'
     endif
     call crm_setup_mpi_buffers(npointot,nspec,iregion_code)
@@ -156,6 +171,7 @@
     ! precomputes jacobian for 2d absorbing boundary surfaces
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...precomputing jacobian'
     endif
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
@@ -175,6 +191,7 @@
     ! create chunk buffers if more than one chunk
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...creating chunk buffers'
     endif
     call create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
@@ -191,6 +208,7 @@
     ! setup mpi communication interfaces
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...preparing MPI interfaces'
     endif
     ! creates MPI interface arrays
@@ -207,6 +225,7 @@
     ! sets up inner/outer element arrays
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...element inner/outer separation '
     endif
     call setup_inner_outer(iregion_code)
@@ -214,10 +233,20 @@
     ! sets up mesh coloring
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...element mesh coloring '
     endif
     call setup_color_perm(iregion_code)
 
+    ! frees allocated mesh memory
+    select case( iregion_code )
+    case( IREGION_CRUST_MANTLE )
+      deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+    case( IREGION_OUTER_CORE )
+      deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
+    case( IREGION_INNER_CORE )
+      deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
+    end select
 
     !uncomment: adds model smoothing for point profile models
     !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
@@ -235,6 +264,7 @@
     ! creates mass matrix
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...creating mass matrix'
     endif
 
@@ -287,33 +317,35 @@
     ! save the binary files
     call sync_all()
     if( myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '  ...saving binary files'
     endif
     ! saves mesh and model parameters
     call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
                            iregion_code,xstore,ystore,zstore, &
-                           is_on_a_slice_edge, &
                            NSPEC2D_TOP,NSPEC2D_BOTTOM)
-
-    ! saves MPI interface infos
-    call save_arrays_solver_MPI(iregion_code)
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
     deallocate(rmass_ocean_load)
     ! Stacey
     if( NCHUNKS /= 6 ) deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+
+    ! saves MPI interface infos
+    call save_arrays_solver_MPI(iregion_code)
+
     ! frees MPI arrays memory
     call crm_free_MPI_arrays(iregion_code)
 
-    ! boundary mesh
+    ! boundary mesh for MOHO, 400 and 670 discontinuities
     if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
       ! user output
       call sync_all()
       if( myrank == 0) then
+        write(IMAIN,*)
         write(IMAIN,*) '  ...saving boundary mesh files'
       endif
-      call crm_save_boundary_mesh()
+      call save_arrays_solver_boundary()
     endif
 
     ! compute volume, bottom and top area of that part of the slice
@@ -333,6 +365,7 @@
       ! user output
       call sync_all()
       if( myrank == 0) then
+        write(IMAIN,*)
         write(IMAIN,*) '  ...saving AVS mesh files'
       endif
       call crm_save_mesh_files(nspec,npointot,iregion_code)
@@ -375,9 +408,6 @@
   deallocate(ibelm_400_top,ibelm_400_bot)
   deallocate(ibelm_670_top,ibelm_670_bot)
   deallocate(normal_moho,normal_400,normal_670)
-
-  ! user output
-  if(myrank == 0 ) write(IMAIN,*)
 
   end subroutine create_regions_mesh
 
@@ -425,7 +455,7 @@
       ! attenuation arrays are fully 3D
       allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
               tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
-    else if (.not. ATTENUATION_3D) then
+    else
       ! save some memory in case of 1D attenuation models
       allocate(Qmu_store(1,1,1,nspec_att), &
               tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
@@ -433,8 +463,8 @@
   else
     ! allocates dummy size arrays
     nspec_att = 1
-    allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
-            tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+    allocate(Qmu_store(1,1,1,nspec_att), &
+            tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
   end if
   if(ier /= 0) stop 'error in allocate 1'
 
@@ -718,7 +748,7 @@
 ! creates the different regions of the mesh
 
   use meshfem3D_par,only: &
-    ibool,idoubling,is_on_a_slice_edge, &
+    idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
     IMAIN,myrank, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
@@ -1099,54 +1129,6 @@
 
   end subroutine crm_setup_mpi_buffers
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine crm_save_boundary_mesh()
-
-! creates global indexing array ibool
-
-  use meshfem3d_par,only: &
-    myrank
-
-  use meshfem3D_models_par,only: &
-    SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
-
-  use create_regions_mesh_par2
-  implicit none
-
-  ! local parameters
-  integer :: ier
-
-  ! first check the number of surface elements are the same for Moho, 400, 670
-  if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-    if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
-           call exit_mpi(myrank, 'Not the same number of Moho surface elements')
-  endif
-  if (ispec2D_400_top /= NSPEC2D_400 .or. ispec2D_400_bot /= NSPEC2D_400) &
-           call exit_mpi(myrank,'Not the same number of 400 surface elements')
-  if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
-           call exit_mpi(myrank,'Not the same number of 670 surface elements')
-
-  ! writing surface topology databases
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
-       status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
-
-  write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
-  write(27) ibelm_moho_top
-  write(27) ibelm_moho_bot
-  write(27) ibelm_400_top
-  write(27) ibelm_400_bot
-  write(27) ibelm_670_top
-  write(27) ibelm_670_bot
-  write(27) normal_moho
-  write(27) normal_400
-  write(27) normal_670
-  close(27)
-
-  end subroutine crm_save_boundary_mesh
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1223,9 +1205,11 @@
   subroutine crm_free_MPI_arrays(iregion_code)
 
   use create_MPI_interfaces_par
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
   implicit none
 
   integer,intent(in):: iregion_code
@@ -1249,11 +1233,6 @@
     deallocate(phase_ispec_inner_crust_mantle)
     deallocate(num_elem_colors_crust_mantle)
 
-    deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
-    deallocate(idoubling_crust_mantle,ibool_crust_mantle)
-
-    deallocate(is_on_a_slice_edge_crust_mantle)
-
   case( IREGION_OUTER_CORE )
     ! outer core
     deallocate(iboolcorner_outer_core)
@@ -1265,11 +1244,6 @@
 
     deallocate(phase_ispec_inner_outer_core)
     deallocate(num_elem_colors_outer_core)
-
-    deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
-    deallocate(idoubling_outer_core,ibool_outer_core)
-
-    deallocate(is_on_a_slice_edge_outer_core)
 
   case( IREGION_INNER_CORE )
     ! inner core
@@ -1287,13 +1261,8 @@
             iboolright_eta_inner_core)
     deallocate(iboolfaces_inner_core)
 
-    deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
-    deallocate(idoubling_inner_core,ibool_inner_core)
-
     deallocate(phase_ispec_inner_inner_core)
     deallocate(num_elem_colors_inner_core)
-
-    deallocate(is_on_a_slice_edge_inner_core)
 
   end select
 

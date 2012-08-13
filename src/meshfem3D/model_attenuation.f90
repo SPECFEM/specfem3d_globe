@@ -158,7 +158,19 @@
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
   subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670, &
-                    R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
+                    R220,R80,AM_V,AM_S,AS_V)
+
+  use model_1dref_par, only: &
+    NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
+
+  use model_ak135_par, only: &
+    NR_AK135,Mak135_V_radius_ak135,Mak135_V_Qmu_ak135
+
+  use model_1066a_par, only: &
+    NR_1066A,M1066a_V_radius_1066a,M1066a_V_Qmu_1066a
+
+  use model_sea1d_par, only: &
+    NR_SEA1D,SEA1DM_V_radius_sea1d,SEA1DM_V_Qmu_sea1d
 
   implicit none
 
@@ -186,65 +198,6 @@
 
   type (model_attenuation_variables) AM_V
 ! model_attenuation_variables
-
-! model_1066a_variables
-  type model_1066a_variables
-    sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
-
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
-
-! model_ak135_variables
-  type model_ak135_variables
-    sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
-  end type model_ak135_variables
-
- type (model_ak135_variables) Mak135_V
-! model_ak135_variables
-
-! model_1dref_variables
-  type model_1dref_variables
-    sequence
-    double precision, dimension(NR_REF) :: radius_ref
-    double precision, dimension(NR_REF) :: density_ref
-    double precision, dimension(NR_REF) :: vpv_ref
-    double precision, dimension(NR_REF) :: vph_ref
-    double precision, dimension(NR_REF) :: vsv_ref
-    double precision, dimension(NR_REF) :: vsh_ref
-    double precision, dimension(NR_REF) :: eta_ref
-    double precision, dimension(NR_REF) :: Qkappa_ref
-    double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_1dref_variables
-
- type (model_1dref_variables) Mref_V
-! model_1dref_variables
-
-! model_sea1d_variables
-  type model_sea1d_variables
-    sequence
-     double precision, dimension(NR_SEA1D) :: radius_sea1d
-     double precision, dimension(NR_SEA1D) :: density_sea1d
-     double precision, dimension(NR_SEA1D) :: vp_sea1d
-     double precision, dimension(NR_SEA1D) :: vs_sea1d
-     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
-     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type model_sea1d_variables
-
-  type (model_sea1d_variables) SEA1DM_V
-! model_sea1d_variables
 
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
@@ -298,18 +251,18 @@
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-     call define_model_ak135(.FALSE.,Mak135_V)
+     call define_model_ak135(.FALSE.)
      AM_V%Qn = NR_AK135
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-     call define_model_1066a(.FALSE.,M1066a_V)
+     call define_model_1066a(.FALSE.)
      AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-     call define_model_1dref(.FALSE.,Mref_V)
+     call define_model_1dref(.FALSE.)
      AM_V%Qn = NR_REF
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
      AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-     call define_model_sea1d(.FALSE.,SEA1DM_V)
+     call define_model_sea1d(.FALSE.)
      AM_V%Qn = NR_SEA1D
   else
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')
@@ -328,20 +281,20 @@
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-     AM_V%Qr(:)     = Mak135_V%radius_ak135(:)
-     AM_V%Qmu(:)    = Mak135_V%Qmu_ak135(:)
+     AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
+     AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-     AM_V%Qr(:)     = M1066a_V%radius_1066a(:)
-     AM_V%Qmu(:)    = M1066a_V%Qmu_1066a(:)
+     AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
+     AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-     AM_V%Qr(:)     = Mref_V%radius_ref(:)
-     AM_V%Qmu(:)    = Mref_V%Qmu_ref(:)
+     AM_V%Qr(:)     = Mref_V_radius_ref(:)
+     AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-     AM_V%Qr(:)     = SEA1DM_V%radius_sea1d(:)
-     AM_V%Qmu(:)    = SEA1DM_V%Qmu_sea1d(:)
+     AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
+     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
   end if
 
   do i = 1, AM_V%Qn

@@ -107,6 +107,8 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
   }
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
                                                   realw* accel_outer_core,
                                                   int* ibool_inner_core,

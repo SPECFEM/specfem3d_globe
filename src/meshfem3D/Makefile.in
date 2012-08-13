@@ -145,6 +145,7 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_1dref.o \
 	$O/model_1066a.o \
 	$O/model_ak135.o \
+	$O/model_sea1d.o \
 	$O/model_aniso_inner_core.o \
 	$O/model_aniso_mantle.mpi.o \
 	$O/model_atten3D_QRFSI12.mpi.o \
@@ -163,7 +164,6 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_s20rts.mpi.o \
 	$O/model_s40rts.mpi.o \
 	$O/model_s362ani.mpi.o \
-	$O/model_sea1d.o \
 	$O/model_sea99_s.mpi.o \
 	$O/moho_stretching.o \
 	$O/save_arrays_solver.o \

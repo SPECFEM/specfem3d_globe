@@ -33,6 +33,8 @@
     myrank,IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
@@ -62,9 +64,6 @@
     ! mesh coloring
     if( USE_MESH_COLORING_GPU ) then
 
-      !daniel: safety stop...
-      call exit_mpi(myrank,'MESH COLORING not fully implemented yet, please recompile...')
-
       ! user output
       if(myrank == 0) write(IMAIN,*) '  coloring crust mantle... '
 
@@ -78,8 +77,8 @@
       if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm crust mantle array')
       perm(:) = 0
 
-      call setup_color(myrank,nspec,nglob,ibool_crust_mantle,perm, &
-                      idomain,is_on_a_slice_edge_crust_mantle, &
+      call setup_color(myrank,nspec,nglob,ibool,perm, &
+                      idomain,is_on_a_slice_edge, &
                       num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
                       SAVE_MESH_FILES)
 
@@ -94,7 +93,7 @@
       if(myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
       endif
-      call setup_permutation(myrank,nspec,nglob,ibool_crust_mantle, &
+      call setup_permutation(myrank,nspec,nglob,ibool, &
                             idomain,perm, &
                             num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
                             num_elem_colors_crust_mantle, &
@@ -130,8 +129,8 @@
       if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm outer_core array')
       perm(:) = 0
 
-      call setup_color(myrank,nspec,nglob,ibool_outer_core,perm, &
-                      idomain,is_on_a_slice_edge_outer_core, &
+      call setup_color(myrank,nspec,nglob,ibool,perm, &
+                      idomain,is_on_a_slice_edge, &
                       num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
                       SAVE_MESH_FILES)
 
@@ -146,7 +145,7 @@
       if(myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
       endif
-      call setup_permutation(myrank,nspec,nglob,ibool_outer_core, &
+      call setup_permutation(myrank,nspec,nglob,ibool, &
                             idomain,perm, &
                             num_colors_outer_outer_core,num_colors_inner_outer_core, &
                             num_elem_colors_outer_core, &
@@ -182,8 +181,8 @@
       if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary perm inner_core array')
       perm(:) = 0
 
-      call setup_color(myrank,nspec,nglob,ibool_inner_core,perm, &
-                      idomain,is_on_a_slice_edge_inner_core, &
+      call setup_color(myrank,nspec,nglob,ibool,perm, &
+                      idomain,is_on_a_slice_edge, &
                       num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
                       SAVE_MESH_FILES)
 
@@ -201,7 +200,7 @@
       if(myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
       endif
-      call setup_permutation(myrank,nspec,nglob,ibool_inner_core, &
+      call setup_permutation(myrank,nspec,nglob,ibool, &
                             idomain,perm, &
                             num_colors_outer_inner_core,num_colors_inner_inner_core, &
                             num_elem_colors_inner_core, &
@@ -229,20 +228,23 @@
                             SAVE_MESH_FILES)
 
 ! sets up mesh coloring
+
   use meshfem3D_par,only: &
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
+  use meshfem3D_par,only: &
+    idoubling
+
   use MPI_crust_mantle_par,only: &
     num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle, &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
   use MPI_outer_core_par,only: &
     num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core
 
   use MPI_inner_core_par,only: &
-    num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core, &
-    idoubling_inner_core
+    num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core
 
   implicit none
 
@@ -278,9 +280,12 @@
 
   character(len=2),dimension(3) :: str_domain = (/ "cm", "oc", "ic" /)
   character(len=256) :: filename
-
-  logical, parameter :: DEBUG = .true.
   character(len=150) :: prname
+
+  ! debug file output
+  logical, parameter :: DEBUG = .false.
+  ! debug coloring : creates dummy mesh coloring, separating only inner/outer elements into colors
+  logical, parameter :: DEBUG_COLOR = .false.
 
   !!!! David Michea: detection of the edges, coloring and permutation separately
 
@@ -308,7 +313,7 @@
     ! initializes
     ispec_is_d(:) = .true.
     ! excludes ficticious elements from coloring
-    where(idoubling_inner_core == IFLAG_IN_FICTITIOUS_CUBE) ispec_is_d = .false.
+    where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) ispec_is_d = .false.
     ! checks
     if( count(ispec_is_d) == 0 ) then
       stop 'error no inner core elements'
@@ -327,11 +332,11 @@
                             myrank)
 
   ! debug: file output
-  if( SAVE_MESH_FILES .and. DEBUG .and. idomain == 1 ) then
+  if( SAVE_MESH_FILES .and. DEBUG .and. idomain == IREGION_CRUST_MANTLE ) then
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'color_'//str_domain(idomain)
     call write_VTK_data_elem_i(nspec,nglob, &
-                              xstore,ystore,zstore,ibool, &
+                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool, &
                               color,filename)
   endif
   deallocate(color)
@@ -377,7 +382,7 @@
 
 
   ! debug: no mesh coloring, only creates dummy coloring arrays
-  if( DEBUG ) then
+  if( DEBUG_COLOR ) then
     nb_colors_outer_elements = 0
     nb_colors_inner_elements = 0
     ispec_counter = 0
@@ -429,7 +434,7 @@
 
     if( nspec_outer > 0 ) num_of_elems_in_this_color(1) = nspec_outer
     if( nspec_inner > 0 ) num_of_elems_in_this_color(2) = nspec_inner
-  endif ! debug
+  endif ! debug_color
 
   ! debug: saves mesh coloring numbers into files
   if( DEBUG ) then
@@ -548,8 +553,8 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_'//str_domain(idomain)
     call write_VTK_data_elem_i(nspec,nglob, &
-                        xstore,ystore,zstore,ibool, &
-                        perm,filename)
+                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool, &
+                              perm,filename)
   endif
 
   deallocate(ispec_is_d)
@@ -568,19 +573,37 @@
                               num_phase_ispec_d,phase_ispec_inner_d, &
                               SAVE_MESH_FILES)
 
+  use meshfem3D_models_par,only: &
+    TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
+    ANISOTROPIC_INNER_CORE,ATTENUATION,ATTENUATION_3D,SAVE_BOUNDARY_MESH
+
   use meshfem3D_par,only: &
-    CUSTOM_REAL,LOCAL_PATH,NGLLX,NGLLY,NGLLZ,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+    ABSORBING_CONDITIONS, &
+    CUSTOM_REAL,LOCAL_PATH,NGLLX,NGLLY,NGLLZ,N_SLS,IMAIN, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+    xstore,ystore,zstore,idoubling
 
-  use MPI_crust_mantle_par,only: &
-    NSPEC_CRUST_MANTLE,ibool_crust_mantle,is_on_a_slice_edge_crust_mantle, &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+  use create_regions_mesh_par2,only: &
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+    gammaxstore,gammaystore,gammazstore, &
+    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+    rho_vp,rho_vs, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    ispec_is_tiso,tau_e_store,Qmu_store, &
+    NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
+    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
+    ibelm_670_top,ibelm_670_bot
 
-  use MPI_outer_core_par,only: &
-    NSPEC_OUTER_CORE,ibool_outer_core,is_on_a_slice_edge_outer_core
+  use MPI_crust_mantle_par,only: NSPEC_CRUST_MANTLE, &
+    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
-  use MPI_inner_core_par,only: &
-    NSPEC_INNER_CORE,ibool_inner_core,is_on_a_slice_edge_inner_core
+  use MPI_outer_core_par,only: NSPEC_OUTER_CORE
+  use MPI_inner_core_par,only: NSPEC_INNER_CORE
 
   implicit none
 
@@ -599,20 +622,23 @@
 
   ! local parameters
   ! added for sorting
+  double precision, dimension(:,:,:,:), allocatable :: temp_array_dble,temp_array_dble1
+  double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_sls,temp_array_dble_sls1
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
   integer, dimension(:,:,:,:), allocatable :: temp_array_int
-!  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
-  logical, dimension(:), allocatable :: temp_array_logical_1D
-
+  integer, dimension(:), allocatable :: temp_array_int_1D
   integer, dimension(:), allocatable :: temp_perm_global
+  logical, dimension(:), allocatable :: temp_array_logical_1D
   logical, dimension(:), allocatable :: mask_global
 
   integer :: icolor,icounter,ispec,ielem,ier,i
-  integer :: new_ispec
-!  integer :: iface,old_ispec
+  integer :: iface,old_ispec,new_ispec
+
   character(len=256) :: filename
   character(len=150) :: prname
 
-  logical,parameter :: DEBUG = .true.
+  ! debug file output
+  logical,parameter :: DEBUG = .false.
 
   ! sorts array according to permutation
   allocate(temp_perm_global(nspec),stat=ier)
@@ -654,23 +680,32 @@
     enddo
   enddo
 
-  ! checks
+  ! handles fictitious cube elements for inner core
+  ! which contains ficticious elements not counted for
+  if( idomain == IREGION_INNER_CORE ) then
+    ! fills up permutation with ficticious numbering
+    do ispec = 1,nspec
+      if( temp_perm_global(ispec) == 0 ) then
+        icounter = icounter + 1
+        temp_perm_global(ispec) = icounter
+      endif
+    enddo
+  endif
+
+  ! checks counter
   if( icounter /= nspec ) then
     print*,'error temp perm: ',icounter,nspec
     stop 'error temporary global permutation incomplete'
   endif
-
-  ! checks perm entries
-  if( idomain /= IREGION_INNER_CORE ) then
-    ! exclude inner core: contains ficticious elements not counted for
-    if(minval(temp_perm_global) /= 1) call exit_MPI(myrank, 'minval(temp_perm_global) should be 1')
-    if(maxval(temp_perm_global) /= nspec) call exit_MPI(myrank, 'maxval(temp_perm_global) should be nspec')
-  endif
+  ! checks values
+  if(minval(temp_perm_global) /= 1) call exit_MPI(myrank, 'minval(temp_perm_global) should be 1')
+  if(maxval(temp_perm_global) /= nspec) call exit_MPI(myrank, 'maxval(temp_perm_global) should be nspec')
 
   ! checks if every element was uniquely set
   allocate(mask_global(nspec),stat=ier)
   if( ier /= 0 ) stop 'error allocating temporary mask_global'
   mask_global(:) = .false.
+
   icounter = 0 ! counts permutations
   do ispec = 1, nspec
     new_ispec = temp_perm_global(ispec)
@@ -704,8 +739,8 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_global'
     call write_VTK_data_elem_i(nspec,nglob, &
-                        xstore,ystore,zstore,ibool, &
-                        temp_perm_global,filename)
+                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool, &
+                              temp_perm_global,filename)
   endif
 
   ! store as new permutation
@@ -713,60 +748,222 @@
   deallocate(temp_perm_global)
 
   ! permutes all required mesh arrays according to new ordering
+
+  ! permutation of ibool
+  allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
+  call permute_elements_integer(ibool,temp_array_int,perm,nspec)
+  deallocate(temp_array_int)
+
+  ! element idoubling flags
+  allocate(temp_array_int_1D(nspec))
+  call permute_elements_integer1D(idoubling,temp_array_int_1D,perm,nspec)
+  deallocate(temp_array_int_1D)
+
+  ! element domain flags
+  allocate(temp_array_logical_1D(nspec))
+  call permute_elements_logical1D(ispec_is_tiso,temp_array_logical_1D,perm,nspec)
+  deallocate(temp_array_logical_1D)
+
+  ! mesh arrays
+  ! double precision
+  allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
+  call permute_elements_dble(xstore,temp_array_dble,perm,nspec)
+  call permute_elements_dble(ystore,temp_array_dble,perm,nspec)
+  call permute_elements_dble(zstore,temp_array_dble,perm,nspec)
+  deallocate(temp_array_dble)
+  ! custom precision
+  allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
+  call permute_elements_real(xixstore,temp_array_real,perm,nspec)
+  call permute_elements_real(xiystore,temp_array_real,perm,nspec)
+  call permute_elements_real(xizstore,temp_array_real,perm,nspec)
+  call permute_elements_real(etaxstore,temp_array_real,perm,nspec)
+  call permute_elements_real(etaystore,temp_array_real,perm,nspec)
+  call permute_elements_real(etazstore,temp_array_real,perm,nspec)
+  call permute_elements_real(gammaxstore,temp_array_real,perm,nspec)
+  call permute_elements_real(gammaystore,temp_array_real,perm,nspec)
+  call permute_elements_real(gammazstore,temp_array_real,perm,nspec)
+  ! material parameters
+  call permute_elements_real(rhostore,temp_array_real,perm,nspec)
+  call permute_elements_real(kappavstore,temp_array_real,perm,nspec)
+  deallocate(temp_array_real)
+
+  ! attenuation arrays
+  if (ATTENUATION) then
+    if (ATTENUATION_3D) then
+      allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
+      allocate(temp_array_dble_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
+      call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
+      call permute_elements_dble_sls(tau_e_store,temp_array_dble_sls,perm,nspec)
+      deallocate(temp_array_dble,temp_array_dble_sls)
+    else
+      allocate(temp_array_dble1(1,1,1,nspec))
+      allocate(temp_array_dble_sls1(N_SLS,1,1,1,nspec))
+      call permute_elements_dble1(Qmu_store,temp_array_dble1,perm,nspec)
+      call permute_elements_dble_sls1(tau_e_store,temp_array_dble_sls1,perm,nspec)
+      deallocate(temp_array_dble1,temp_array_dble_sls1)
+    endif
+  endif
+
+  ! boundary surfaces
+  ! note: only arrays pointing to ispec will have to be permutated since value of ispec will be different
+  !
+  ! xmin
+  do iface = 1,nspec2D_xmin
+      old_ispec = ibelm_xmin(iface)
+      new_ispec = perm(old_ispec)
+      ibelm_xmin(iface) = new_ispec
+  enddo
+  ! xmax
+  do iface = 1,nspec2D_xmax
+      old_ispec = ibelm_xmax(iface)
+      new_ispec = perm(old_ispec)
+      ibelm_xmax(iface) = new_ispec
+  enddo
+  ! ymin
+  do iface = 1,nspec2D_ymin
+      old_ispec = ibelm_ymin(iface)
+      new_ispec = perm(old_ispec)
+      ibelm_ymin(iface) = new_ispec
+  enddo
+  ! ymax
+  do iface = 1,nspec2D_ymax
+      old_ispec = ibelm_ymax(iface)
+      new_ispec = perm(old_ispec)
+      ibelm_ymax(iface) = new_ispec
+  enddo
+  ! bottom
+  do iface = 1,NSPEC2D_BOTTOM(idomain)
+      old_ispec = ibelm_bottom(iface)
+      new_ispec = perm(old_ispec)
+      ibelm_bottom(iface) = new_ispec
+  enddo
+  ! top
+  do iface = 1,NSPEC2D_TOP(idomain)
+      old_ispec = ibelm_top(iface)
+      new_ispec = perm(old_ispec)
+      ibelm_top(iface) = new_ispec
+  enddo
+
+
   select case( idomain )
   case( IREGION_CRUST_MANTLE )
     ! region
     nspec = NSPEC_CRUST_MANTLE
 
-    ! permutation of ibool
-    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
-    call permute_elements_integer(ibool_crust_mantle,temp_array_int,perm,nspec)
-    deallocate(temp_array_int)
+    allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 
-    ! element domain flags
-    allocate(temp_array_logical_1D(nspec))
-    call permute_elements_logical1D(is_on_a_slice_edge_crust_mantle,temp_array_logical_1D,perm,nspec)
-    deallocate(temp_array_logical_1D)
+    if(ANISOTROPIC_3D_MANTLE) then
+      call permute_elements_real(c11store,temp_array_real,perm,nspec)
+      call permute_elements_real(c11store,temp_array_real,perm,nspec)
+      call permute_elements_real(c12store,temp_array_real,perm,nspec)
+      call permute_elements_real(c13store,temp_array_real,perm,nspec)
+      call permute_elements_real(c14store,temp_array_real,perm,nspec)
+      call permute_elements_real(c15store,temp_array_real,perm,nspec)
+      call permute_elements_real(c16store,temp_array_real,perm,nspec)
+      call permute_elements_real(c22store,temp_array_real,perm,nspec)
+      call permute_elements_real(c23store,temp_array_real,perm,nspec)
+      call permute_elements_real(c24store,temp_array_real,perm,nspec)
+      call permute_elements_real(c25store,temp_array_real,perm,nspec)
+      call permute_elements_real(c26store,temp_array_real,perm,nspec)
+      call permute_elements_real(c33store,temp_array_real,perm,nspec)
+      call permute_elements_real(c34store,temp_array_real,perm,nspec)
+      call permute_elements_real(c35store,temp_array_real,perm,nspec)
+      call permute_elements_real(c36store,temp_array_real,perm,nspec)
+      call permute_elements_real(c44store,temp_array_real,perm,nspec)
+      call permute_elements_real(c45store,temp_array_real,perm,nspec)
+      call permute_elements_real(c46store,temp_array_real,perm,nspec)
+      call permute_elements_real(c55store,temp_array_real,perm,nspec)
+      call permute_elements_real(c56store,temp_array_real,perm,nspec)
+      call permute_elements_real(c66store,temp_array_real,perm,nspec)
+    else
+      call permute_elements_real(muvstore,temp_array_real,perm,nspec)
 
-    ! mesh arrays
+      if(TRANSVERSE_ISOTROPY) then
+        call permute_elements_real(kappahstore,temp_array_real,perm,nspec)
+        call permute_elements_real(muhstore,temp_array_real,perm,nspec)
+        call permute_elements_real(eta_anisostore,temp_array_real,perm,nspec)
+      endif
+    endif
 
-    ! material parameters
-    ! crust/mantle arrays
-    ! outer core arrays
-    ! inner core arrays
+    if(HETEROGEN_3D_MANTLE) then
+      call permute_elements_real(dvpstore,temp_array_real,perm,nspec)
+    endif
 
-    ! boundary surface
-    ! free surface
-    ! coupling surface
-    ! moho surface
+    if(ABSORBING_CONDITIONS .and. NCHUNKS /= 6 ) then
+      call permute_elements_real(rho_vp,temp_array_real,perm,nspec)
+      call permute_elements_real(rho_vs,temp_array_real,perm,nspec)
+    endif
+
+    deallocate(temp_array_real)
+
+    ! discontinuities boundary surface
+    if( SAVE_BOUNDARY_MESH ) then
+      ! moho
+      do iface = 1,nspec2D_MOHO
+        ! top
+        old_ispec = ibelm_moho_top(iface)
+        new_ispec = perm(old_ispec)
+        ibelm_moho_top(iface) = new_ispec
+        ! bottom
+        old_ispec = ibelm_moho_bot(iface)
+        new_ispec = perm(old_ispec)
+        ibelm_moho_bot(iface) = new_ispec
+      enddo
+      ! 400
+      do iface = 1,nspec2D_400
+        ! top
+        old_ispec = ibelm_400_top(iface)
+        new_ispec = perm(old_ispec)
+        ibelm_400_top(iface) = new_ispec
+        ! bottom
+        old_ispec = ibelm_400_bot(iface)
+        new_ispec = perm(old_ispec)
+        ibelm_400_bot(iface) = new_ispec
+      enddo
+      ! 670
+      do iface = 1,nspec2D_670
+        ! top
+        old_ispec = ibelm_670_top(iface)
+        new_ispec = perm(old_ispec)
+        ibelm_670_top(iface) = new_ispec
+        ! bottom
+        old_ispec = ibelm_670_bot(iface)
+        new_ispec = perm(old_ispec)
+        ibelm_670_bot(iface) = new_ispec
+      enddo
+    endif
 
   case( IREGION_OUTER_CORE )
     ! region
     nspec = NSPEC_OUTER_CORE
 
-    ! permutation of ibool
-    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
-    call permute_elements_integer(ibool_outer_core,temp_array_int,perm,nspec)
-    deallocate(temp_array_int)
+    if(ABSORBING_CONDITIONS .and. NCHUNKS /= 6 ) then
+      allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 
-    ! element domain flags
-    allocate(temp_array_logical_1D(nspec))
-    call permute_elements_logical1D(is_on_a_slice_edge_outer_core,temp_array_logical_1D,perm,nspec)
-    deallocate(temp_array_logical_1D)
+      call permute_elements_real(rho_vp,temp_array_real,perm,nspec)
+
+      deallocate(temp_array_real)
+    endif
 
   case( IREGION_INNER_CORE )
     ! region
     nspec = NSPEC_INNER_CORE
 
-    ! permutation of ibool
-    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
-    call permute_elements_integer(ibool_inner_core,temp_array_int,perm,nspec)
-    deallocate(temp_array_int)
+    allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 
-    ! element domain flags
-    allocate(temp_array_logical_1D(nspec))
-    call permute_elements_logical1D(is_on_a_slice_edge_inner_core,temp_array_logical_1D,perm,nspec)
-    deallocate(temp_array_logical_1D)
+    ! note: muvstore needed for attenuation also for anisotropic inner core
+    call permute_elements_real(muvstore,temp_array_real,perm,nspec)
+
+    !  anisotropy in the inner core only
+    if(ANISOTROPIC_INNER_CORE) then
+      call permute_elements_real(c11store,temp_array_real,perm,nspec)
+      call permute_elements_real(c33store,temp_array_real,perm,nspec)
+      call permute_elements_real(c12store,temp_array_real,perm,nspec)
+      call permute_elements_real(c13store,temp_array_real,perm,nspec)
+      call permute_elements_real(c44store,temp_array_real,perm,nspec)
+    endif
+
+    deallocate(temp_array_real)
 
   case default
     stop 'error idomain in setup_permutation'

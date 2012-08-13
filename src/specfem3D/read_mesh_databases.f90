@@ -100,21 +100,22 @@
   integer :: ier
 
   ! crust and mantle
+
   if(ANISOTROPIC_3D_MANTLE_VAL) then
     READ_KAPPA_MU = .false.
     READ_TISO = .false.
-    nspec_iso = 1
-    nspec_tiso = 1
+    nspec_iso = NSPECMAX_ISO_MANTLE ! 1
+    nspec_tiso = NSPECMAX_TISO_MANTLE ! 1
     nspec_ani = NSPEC_CRUST_MANTLE
   else
+    READ_KAPPA_MU = .true.
     nspec_iso = NSPEC_CRUST_MANTLE
     if(TRANSVERSE_ISOTROPY_VAL) then
       nspec_tiso = NSPECMAX_TISO_MANTLE
     else
       nspec_tiso = 1
     endif
-    nspec_ani = 1
-    READ_KAPPA_MU = .true.
+    nspec_ani = NSPECMAX_ANISO_MANTLE ! 1
     READ_TISO = .true.
   endif
 
@@ -285,7 +286,7 @@
 
   ! inner core (no anisotropy)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
-  READ_KAPPA_MU = .true.
+  READ_KAPPA_MU = .true. ! (muvstore needed for attenuation)
   READ_TISO = .false.
   nspec_iso = NSPEC_INNER_CORE
   nspec_tiso = 1
@@ -557,62 +558,61 @@
   call MPI_BCAST(iproc_eta_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   ! output a topology map of slices - fix 20x by nproc
-  if (myrank == 0 .and. NCHUNKS_VAL == 6 .and. NPROCTOT_VAL < 1000 ) then
-    write(IMAIN,*) 'Spatial distribution of the slices'
-    do iproc_xi = NPROC_XI_VAL-1, 0, -1
-      write(IMAIN,'(20x)',advance='no')
-      do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-        ichunk = CHUNK_AB
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+  if (myrank == 0 ) then
+    if( NCHUNKS_VAL == 6 .and. NPROCTOT_VAL < 1000 ) then
+      write(IMAIN,*) 'Spatial distribution of the slices'
+      do iproc_xi = NPROC_XI_VAL-1, 0, -1
+        write(IMAIN,'(20x)',advance='no')
+        do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+          ichunk = CHUNK_AB
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
       enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-    do iproc_xi = NPROC_XI_VAL-1, 0, -1
-      write(IMAIN,'(1x)',advance='no')
-      do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-        ichunk = CHUNK_BC
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+      write(IMAIN, *) ' '
+      do iproc_xi = NPROC_XI_VAL-1, 0, -1
+        write(IMAIN,'(1x)',advance='no')
+        do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+          ichunk = CHUNK_BC
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(3x)',advance='no')
+        do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+          ichunk = CHUNK_AC
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(3x)',advance='no')
+        do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+          ichunk = CHUNK_BC_ANTIPODE
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
       enddo
-      write(IMAIN,'(3x)',advance='no')
-      do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-        ichunk = CHUNK_AC
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+      write(IMAIN, *) ' '
+      do iproc_xi = NPROC_XI_VAL-1, 0, -1
+        write(IMAIN,'(20x)',advance='no')
+        do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+          ichunk = CHUNK_AB_ANTIPODE
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
       enddo
-      write(IMAIN,'(3x)',advance='no')
-      do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-        ichunk = CHUNK_BC_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+      write(IMAIN, *) ' '
+      do iproc_xi = NPROC_XI_VAL-1, 0, -1
+        write(IMAIN,'(20x)',advance='no')
+        do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+          ichunk = CHUNK_AC_ANTIPODE
+          write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        enddo
+        write(IMAIN,'(1x)',advance='yes')
       enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-    do iproc_xi = NPROC_XI_VAL-1, 0, -1
-      write(IMAIN,'(20x)',advance='no')
-      do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-        ichunk = CHUNK_AB_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-    do iproc_xi = NPROC_XI_VAL-1, 0, -1
-      write(IMAIN,'(20x)',advance='no')
-      do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-        ichunk = CHUNK_AC_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
+      write(IMAIN, *) ' '
+    endif
   endif
 
   ! determine chunk number and local slice coordinates using addressing
   ! (needed for stacey conditions)
   ichunk = ichunk_slice(myrank)
-
-  !iproc_xi = iproc_xi_slice(myrank)
-  !iproc_eta = iproc_eta_slice(myrank)
 
   end subroutine read_mesh_databases_addressing
 
@@ -644,6 +644,7 @@
           request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
+
   if( SIMULATION_TYPE == 3 ) then
     allocate(b_buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
             b_buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
@@ -662,6 +663,7 @@
           request_recv_scalar_outer_core(num_interfaces_outer_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
+
   if( SIMULATION_TYPE == 3 ) then
     allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
             b_buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
@@ -680,6 +682,7 @@
           request_recv_vector_inner_core(num_interfaces_inner_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_inner_core etc.')
+
   if( SIMULATION_TYPE == 3 ) then
     allocate(b_buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
             b_buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
@@ -997,8 +1000,6 @@
   else
     nabs_xmin_cm = 1
   endif
-  !daniel: not sure why dimensions are (..,..,..,..,8)  ?
-  !allocate(absorb_xmin_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmin_cm,8),stat=ier)
   allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmin_cm),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
 
@@ -1008,8 +1009,6 @@
   else
     nabs_xmax_cm = 1
   endif
-  !daniel: not sure why dimensions are (..,..,..,..,8)
-  !allocate(absorb_xmax_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmax_cm,8),stat=ier)
   allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmax_cm),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
 
@@ -1019,8 +1018,6 @@
   else
     nabs_ymin_cm = 1
   endif
-  !daniel: not sure why dimensions are (..,..,..,..,8)
-  !allocate(absorb_ymin_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymin_cm,8),stat=ier)
   allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymin_cm),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
 
@@ -1030,8 +1027,6 @@
   else
     nabs_ymax_cm = 1
   endif
-  !daniel: not sure why dimensions are (..,..,..,..,8)
-  !allocate(absorb_ymax_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymax_cm,8),stat=ier)
   allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymax_cm),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
 

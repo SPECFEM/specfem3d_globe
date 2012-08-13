@@ -49,18 +49,6 @@
 
   implicit none
 
-
-! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-  type (model_aniso_mantle_variables) AMM_V
-! model_aniso_mantle_variables
-
 ! model_attenuation_variables
   type model_attenuation_variables
     sequence
@@ -93,97 +81,6 @@
   end type model_atten3D_QRFSI12_variables
   type (model_atten3D_QRFSI12_variables) QRFSI12_Q
 ! model_atten3D_QRFSI12_variables
-
-! model_1066a_variables
-  type model_1066a_variables
-    sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
-
-! model_ak135_variables
-  type model_ak135_variables
-    sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
-  end type model_ak135_variables
- type (model_ak135_variables) Mak135_V
-! model_ak135_variables
-
-! model_1dref_variables
-  type model_1dref_variables
-    sequence
-     double precision, dimension(NR_REF) :: radius_ref
-     double precision, dimension(NR_REF) :: density_ref
-     double precision, dimension(NR_REF) :: vpv_ref
-     double precision, dimension(NR_REF) :: vph_ref
-     double precision, dimension(NR_REF) :: vsv_ref
-     double precision, dimension(NR_REF) :: vsh_ref
-     double precision, dimension(NR_REF) :: eta_ref
-     double precision, dimension(NR_REF) :: Qkappa_ref
-     double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_1dref_variables
- type (model_1dref_variables) Mref_V
-! model_1dref_variables
-
-! model_sea1d_variables
-  type model_sea1d_variables
-    sequence
-     double precision, dimension(NR_SEA1D) :: radius_sea1d
-     double precision, dimension(NR_SEA1D) :: density_sea1d
-     double precision, dimension(NR_SEA1D) :: vp_sea1d
-     double precision, dimension(NR_SEA1D) :: vs_sea1d
-     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
-     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type model_sea1d_variables
-  type (model_sea1d_variables) SEA1DM_V
-! model_sea1d_variables
-
-! model_s20rts_variables
-  type model_s20rts_variables
-    sequence
-    double precision dvs_a(0:NK_20,0:NS_20,0:NS_20)   !a = positive m  (radial, theta, phi) --> (k,l,m) (maybe other way around??)
-    double precision dvs_b(0:NK_20,0:NS_20,0:NS_20)   !b = negative m  (radial, theta, phi) --> (k,l,-m)
-    double precision dvp_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision spknt(NK_20+1)
-    double precision qq0(NK_20+1,NK_20+1)
-    double precision qq(3,NK_20+1,NK_20+1)
-  end type model_s20rts_variables
-  type (model_s20rts_variables) S20RTS_V
-! model_s20rts_variables
-
-! model_s40rts_variables
-  type model_s40rts_variables
-    sequence
-    double precision dvs_a(0:NK_20,0:NS_40,0:NS_40)
-    double precision dvs_b(0:NK_20,0:NS_40,0:NS_40)
-    double precision dvp_a(0:NK_20,0:NS_40,0:NS_40)
-    double precision dvp_b(0:NK_20,0:NS_40,0:NS_40)
-    double precision spknt(NK_20+1)
-    double precision qq0(NK_20+1,NK_20+1)
-    double precision qq(3,NK_20+1,NK_20+1)
-  end type model_s40rts_variables
-  type (model_s40rts_variables) S40RTS_V
-! model_s40rts_variables
-
-! model_heterogen_m_variables
-  type model_heterogen_m_variables
-    sequence
-    double precision rho_in(N_R*N_THETA*N_PHI)
-  end type model_heterogen_m_variables
-  type (model_heterogen_m_variables) HMM
-! model_heterogen_m_variables
 
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
@@ -231,21 +128,21 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
 ! for ellipticity
-  double precision rspl(NR),espl(NR),espl2(NR)
-  integer nspl
+  double precision,dimension(NR) :: rspl,espl,espl2
+  integer :: nspl
 
 ! model parameter and flags
-  integer REFERENCE_1D_MODEL,THREE_D_MODEL
+  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
 
-  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS
+  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS
 
-  logical HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY
+  logical :: HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY
 
-  logical ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE
+  logical :: ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE
 
-  logical ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D
+  logical :: ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D
 
-  logical ANISOTROPIC_INNER_CORE
+  logical :: ANISOTROPIC_INNER_CORE
 
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
@@ -451,7 +348,7 @@
   integer :: nglob_xy
 
   ! mass matrix and bathymetry for ocean load
-  integer nglob_oceans
+  integer :: nglob_oceans
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
 
   ! number of elements on the boundaries
@@ -476,20 +373,19 @@
   integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
-
   ! attenuation
   double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
   double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
   double precision, dimension(N_SLS) :: tau_s
   double precision :: T_c_source
 
-  logical :: USE_ONE_LAYER_SB
-
+  ! element layers
   integer :: NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
     first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
+  logical :: USE_ONE_LAYER_SB
 
+  ! layer stretching
   double precision, dimension(:,:), allocatable :: stretch_tab
-
   integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   ! Boundary Mesh
@@ -604,13 +500,6 @@
   integer, dimension(:), allocatable :: my_neighbours_crust_mantle,nibool_interfaces_crust_mantle
   integer, dimension(:,:), allocatable :: ibool_interfaces_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
-
-  integer, dimension(:), allocatable :: request_send_vector_crust_mantle,request_recv_vector_crust_mantle
-
-  ! temporary arrays for elements on slices or edges
-  logical, dimension(:),allocatable :: is_on_a_slice_edge_crust_mantle
-
   !--------------------------------------
   ! crust mantle
   !--------------------------------------
@@ -627,8 +516,6 @@
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  integer, dimension(:),allocatable :: idoubling_crust_mantle
-  integer, dimension(:,:,:,:),allocatable :: ibool_crust_mantle
 
   ! assembly
   integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_crust_mantle
@@ -672,13 +559,6 @@
   integer, dimension(:), allocatable :: my_neighbours_inner_core,nibool_interfaces_inner_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
-
-  integer, dimension(:), allocatable :: request_send_vector_inner_core,request_recv_vector_inner_core
-
-  ! temporary arrays for elements on slices or edges
-  logical, dimension(:),allocatable :: is_on_a_slice_edge_inner_core
-
   !--------------------------------------
   ! inner core
   !--------------------------------------
@@ -695,16 +575,14 @@
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_inner_core,ystore_inner_core,zstore_inner_core
-  integer, dimension(:),allocatable :: idoubling_inner_core
-  integer, dimension(:,:,:,:),allocatable :: ibool_inner_core
-
 
   ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
   double precision, dimension(:,:), allocatable :: buffer_slices,buffer_slices2
   double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
-  integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,receiver_cube_from_slices
+  integer :: nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
+    npoin2D_cube_from_slices,receiver_cube_from_slices
 
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
             nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
@@ -755,13 +633,6 @@
   integer, dimension(:), allocatable :: my_neighbours_outer_core,nibool_interfaces_outer_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
-
-  integer, dimension(:), allocatable :: request_send_scalar_outer_core,request_recv_scalar_outer_core
-
-  ! temporary arrays for elements on slices or edges
-  logical, dimension(:),allocatable :: is_on_a_slice_edge_outer_core
-
   !--------------------------------------
   ! outer core
   !--------------------------------------
@@ -778,8 +649,6 @@
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core
-  integer, dimension(:),allocatable :: idoubling_outer_core
-  integer, dimension(:,:,:,:),allocatable :: ibool_outer_core
 
   ! assembly
   integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_outer_core

@@ -32,6 +32,8 @@
     myrank,OUTPUT_FILES,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
@@ -43,9 +45,9 @@
   ! local parameters
   real :: percentage_edge
   integer :: ier,ispec,iinner,iouter
-  ! debug
+  ! debug file output
   character(len=150) :: filename
-  logical,parameter :: DEBUG_INTERFACES = .false.
+  logical,parameter :: DEBUG = .false.
 
   ! stores inner / outer elements
   !
@@ -54,7 +56,7 @@
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! crust_mantle
-    nspec_outer_crust_mantle = count( is_on_a_slice_edge_crust_mantle )
+    nspec_outer_crust_mantle = count( is_on_a_slice_edge )
     nspec_inner_crust_mantle = NSPEC_CRUST_MANTLE - nspec_outer_crust_mantle
 
     num_phase_ispec_crust_mantle = max(nspec_inner_crust_mantle,nspec_outer_crust_mantle)
@@ -66,7 +68,7 @@
     iinner = 0
     iouter = 0
     do ispec=1,NSPEC_CRUST_MANTLE
-      if( is_on_a_slice_edge_crust_mantle(ispec) ) then
+      if( is_on_a_slice_edge(ispec) ) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_crust_mantle(iouter,1) = ispec
@@ -89,17 +91,17 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG_INTERFACES ) then
+    if( DEBUG ) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                ibool_crust_mantle, &
-                                is_on_a_slice_edge_crust_mantle,filename)
+                                ibool, &
+                                is_on_a_slice_edge,filename)
     endif
 
   case( IREGION_OUTER_CORE )
     ! outer_core
-    nspec_outer_outer_core = count( is_on_a_slice_edge_outer_core )
+    nspec_outer_outer_core = count( is_on_a_slice_edge )
     nspec_inner_outer_core = NSPEC_OUTER_CORE - nspec_outer_outer_core
 
     num_phase_ispec_outer_core = max(nspec_inner_outer_core,nspec_outer_outer_core)
@@ -111,7 +113,7 @@
     iinner = 0
     iouter = 0
     do ispec=1,NSPEC_OUTER_CORE
-      if( is_on_a_slice_edge_outer_core(ispec) ) then
+      if( is_on_a_slice_edge(ispec) ) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_outer_core(iouter,1) = ispec
@@ -131,17 +133,17 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG_INTERFACES ) then
+    if( DEBUG ) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                 xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                                ibool_outer_core, &
-                                is_on_a_slice_edge_outer_core,filename)
+                                ibool, &
+                                is_on_a_slice_edge,filename)
     endif
 
   case( IREGION_INNER_CORE )
     ! inner_core
-    nspec_outer_inner_core = count( is_on_a_slice_edge_inner_core )
+    nspec_outer_inner_core = count( is_on_a_slice_edge )
     nspec_inner_inner_core = NSPEC_INNER_CORE - nspec_outer_inner_core
 
     num_phase_ispec_inner_core = max(nspec_inner_inner_core,nspec_outer_inner_core)
@@ -153,7 +155,7 @@
     iinner = 0
     iouter = 0
     do ispec=1,NSPEC_INNER_CORE
-      if( is_on_a_slice_edge_inner_core(ispec) ) then
+      if( is_on_a_slice_edge(ispec) ) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_inner_core(iouter,1) = ispec
@@ -173,12 +175,12 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG_INTERFACES ) then
+    if( DEBUG ) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                ibool_inner_core, &
-                                is_on_a_slice_edge_inner_core,filename)
+                                ibool, &
+                                is_on_a_slice_edge,filename)
     endif
 
   end select

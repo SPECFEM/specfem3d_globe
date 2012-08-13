@@ -259,7 +259,7 @@
 
   ! local parameters
 
-  integer iinterface
+  integer :: iinterface
 
 ! here we have to assemble all the contributions between partitions using MPI
 

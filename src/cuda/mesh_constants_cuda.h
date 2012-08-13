@@ -70,9 +70,6 @@
 #define PRINT5(var,offset) // for(i=0;i<10;i++) printf("var(%d)=%f\n",i,var[offset+i]);
 #endif
 
-// error checking after cuda function calls
-#define ENABLE_VERY_SLOW_ERROR_CHECKING
-
 // maximum function
 #define MAX(x,y)                    (((x) < (y)) ? (y) : (x))
 
@@ -84,6 +81,8 @@ void pause_for_debugger(int pause);
 void exit_on_cuda_error(char* kernel_name);
 void exit_on_error(char* info);
 
+// error checking after cuda function calls
+#define ENABLE_VERY_SLOW_ERROR_CHECKING
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -112,6 +111,9 @@ void exit_on_error(char* info);
 #define IREGION_CRUST_MANTLE  1
 #define IREGION_INNER_CORE  3
 
+// inner core : fictitious elements id (from constants.h)
+#define IFLAG_IN_FICTITIOUS_CUBE  11
+
 // R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
 #define R_EARTH_KM 6371.0f
 // uncomment line below for PREM with oceans
@@ -131,6 +133,9 @@ typedef float realw;
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
 // leads up to ~ 5% performance increase
 //#define USE_MESH_COLORING_GPU
+#ifdef USE_MESH_COLORING_GPU
+#pragma message ("\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
+#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -385,6 +390,7 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   int NSPEC_INNER_CORE;
   int NGLOB_INNER_CORE;
+  int NSPEC_INNER_CORE_STRAIN_ONLY;
 
   // interpolators
   realw* d_xix_inner_core; realw* d_xiy_inner_core; realw* d_xiz_inner_core;

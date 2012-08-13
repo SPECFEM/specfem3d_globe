@@ -192,7 +192,7 @@
   iprocfrom_faces(:) = -1
   iprocto_faces(:) = -1
   imsg_type(:) = 0
-  
+
   iproc_master_corners(:) = -1
   iproc_worker1_corners(:) = -1
   iproc_worker2_corners(:) = -1

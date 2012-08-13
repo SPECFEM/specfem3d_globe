@@ -764,7 +764,7 @@ TRACE("check_norm_acoustic_from_device");
   realw max;
   realw *d_max;
 
-  max = 0.0;
+  max = 0.0f;
 
   /* way 1 : timing Elapsed time: 8.464813e-03
    realw* h_array;
@@ -946,7 +946,7 @@ void FC_FUNC_(check_norm_elastic_from_device,
   int blocksize = BLOCKSIZE_TRANSFER;
 
   // crust_mantle
-  max = 0.0;
+  max = 0.0f;
   size = mp->NGLOB_CRUST_MANTLE;
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
@@ -984,7 +984,7 @@ void FC_FUNC_(check_norm_elastic_from_device,
   free(h_max);
 
   // inner_core
-  max = 0.0;
+  max = 0.0f;
   size = mp->NGLOB_INNER_CORE;
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;

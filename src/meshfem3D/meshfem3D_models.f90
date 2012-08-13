@@ -52,18 +52,42 @@
 !
 !---
 
+  ! GLL model uses s29ea as reference 3D model
+  if( THREE_D_MODEL == THREE_D_MODEL_GLL ) then
+    ! sets to initial reference model from which iterations started
+    THREE_D_MODEL = GLL_REFERENCE_MODEL
+    ! sets flag to use GLL model
+    MGLL_V%MODEL_GLL = .true.
+  else
+    MGLL_V%MODEL_GLL = .false.
+  endif
+
   ! sets up spline coefficients for ellipticity
   if(ELLIPTICITY) &
     call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
-  ! GLL model uses s29ea as reference 3D model
-  if( THREE_D_MODEL == THREE_D_MODEL_GLL ) then
-    MGLL_V%MODEL_GLL = .true.
-    ! sets to initial reference model from which iterations started
-    THREE_D_MODEL = GLL_REFERENCE_MODEL
-  else
-    MGLL_V%MODEL_GLL = .false.
-  endif
+  ! read topography and bathymetry file
+  if(TOPOGRAPHY) &
+    call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
+
+  ! reads 1D reference models
+  ! re-defines/initializes models 1066a and ak135 and ref
+  ! ( with possible external crustal model: if CRUSTAL is set to true
+  !    it strips the 1-D crustal profile and replaces it with mantle properties)
+  select case( REFERENCE_1D_MODEL )
+    case(REFERENCE_MODEL_1066A)
+      call model_1066a_broadcast(myrank,CRUSTAL)
+
+    case( REFERENCE_MODEL_AK135)
+      call model_ak135_broadcast(myrank,CRUSTAL)
+
+    case(REFERENCE_MODEL_1DREF)
+      call model_1dref_broadcast(myrank,CRUSTAL)
+
+    case(REFERENCE_MODEL_SEA1D)
+      call model_sea1d_broadcast(myrank,CRUSTAL)
+  end select
+
 
   ! reads in 3D mantle models
   if(ISOTROPIC_3D_MANTLE) then
@@ -71,10 +95,10 @@
     select case( THREE_D_MODEL )
 
       case(THREE_D_MODEL_S20RTS)
-        call model_s20rts_broadcast(myrank,S20RTS_V)
+        call model_s20rts_broadcast(myrank)
 
       case(THREE_D_MODEL_S40RTS)
-        call model_s40rts_broadcast(myrank,S40RTS_V)
+        call model_s40rts_broadcast(myrank)
 
       case(THREE_D_MODEL_SEA99_JP3D)
         ! the variables read are declared and stored in structure model_sea99_s_par and model_jp3d_par
@@ -115,11 +139,11 @@
 
   ! arbitrary mantle models
   if(HETEROGEN_3D_MANTLE) &
-    call model_heterogen_mntl_broadcast(myrank,HMM)
+    call model_heterogen_mntl_broadcast(myrank)
 
   ! anisotropic mantle
   if(ANISOTROPIC_3D_MANTLE) &
-    call model_aniso_mantle_broadcast(myrank,AMM_V)
+    call model_aniso_mantle_broadcast(myrank)
 
   ! crustal model
   if(CRUSTAL) &
@@ -141,33 +165,11 @@
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
       call model_attenuation_setup(REFERENCE_1D_MODEL, RICB, RCMB, &
-              R670, R220, R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
+              R670, R220, R80,AM_V,AM_S,AS_V)
     endif
 
   endif
 
-  ! read topography and bathymetry file
-  if(TOPOGRAPHY) &
-    call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
-
-  ! re-defines/initializes models 1066a and ak135 and ref
-  ! ( with possible external crustal model: if CRUSTAL is set to true
-  !    it strips the 1-D crustal profile and replaces it with mantle properties)
-  select case( REFERENCE_1D_MODEL )
-
-    case(REFERENCE_MODEL_1066A)
-      call model_1066a_broadcast(CRUSTAL,M1066a_V)
-
-    case( REFERENCE_MODEL_AK135)
-      call model_ak135_broadcast(CRUSTAL,Mak135_V)
-
-    case(REFERENCE_MODEL_1DREF)
-      call model_1dref_broadcast(CRUSTAL,Mref_V)
-
-    case(REFERENCE_MODEL_SEA1D)
-      call model_sea1d_broadcast(CRUSTAL,SEA1DM_V)
-
-  end select
 
   end subroutine meshfem3D_models_broadcast
 
@@ -274,7 +276,7 @@
 
     case(REFERENCE_MODEL_1DREF)
       ! 1D-REF also known as STW105 (by Kustowski et al.) - used also as background for 3D models
-      call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL,Mref_V)
+      call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
       if(.not. TRANSVERSE_ISOTROPY) then
         if(.not. ISOTROPIC_3D_MANTLE) then
           ! this case here is only executed for 1D_ref_iso
@@ -288,11 +290,11 @@
 
     case(REFERENCE_MODEL_1066A)
       ! 1066A (by Gilbert & Dziewonski) - pure isotropic model, used in 1D model mode only
-      call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,M1066a_V)
+      call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
     case(REFERENCE_MODEL_AK135)
       ! AK135 (by Kennett et al. ) - pure isotropic model, used in 1D model mode only
-      call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,Mak135_V)
+      call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
     case(REFERENCE_MODEL_IASP91)
       ! IASP91 (by Kennett & Engdahl) - pure isotropic model, used in 1D model mode only
@@ -308,7 +310,7 @@
 
     case(REFERENCE_MODEL_SEA1D)
       ! SEA1D (by Lebedev & Nolet) - pure isotropic model, used also as background for 3D models
-      call model_sea1d(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,SEA1DM_V)
+      call model_sea1d(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
     case default
       stop 'unknown 1D reference Earth model in meshfem3D_models_get1D_val()'
@@ -355,7 +357,7 @@
   double precision xmesh,ymesh,zmesh,r
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! local parameters
@@ -417,7 +419,7 @@
 
       case(THREE_D_MODEL_S20RTS)
         ! s20rts
-        call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho,S20RTS_V)
+        call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
         vph=vph*(1.0d0+dvp)
         vsv=vsv*(1.0d0+dvs)
@@ -426,7 +428,7 @@
 
       case(THREE_D_MODEL_S40RTS)
         ! s40rts
-        call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho,S40RTS_V)
+        call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
         vph=vph*(1.0d0+dvp)
         vsv=vsv*(1.0d0+dvs)
@@ -536,7 +538,7 @@
   if( HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension ) then
     call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
     call reduce(theta,phi)
-    call model_heterogen_mantle(r_used,theta,phi,dvs,dvp,drho,HMM)
+    call model_heterogen_mantle(r_used,theta,phi,dvs,dvp,drho)
     vpv=vpv*(1.0d0+dvp)
     vph=vpv*(1.0d0+dvp)
     vsv=vsv*(1.0d0+dvs)
@@ -563,7 +565,7 @@
         endif
       endif
       call model_aniso_mantle(r_used,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
-                        c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM_V)
+                        c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
     else
       ! fills the rest of the mantle with the isotropic model

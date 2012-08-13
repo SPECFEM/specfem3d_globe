@@ -40,10 +40,24 @@
 !
 !--------------------------------------------------------------------------------------------------
 
+  module model_aniso_mantle_par
 
-  subroutine model_aniso_mantle_broadcast(myrank,AMM_V)
+  ! model_aniso_mantle_variables
+  double precision,dimension(:,:,:,:),allocatable :: AMM_V_beta
+  double precision,dimension(:),allocatable :: AMM_V_pro
+  integer :: AMM_V_npar1
+
+  end module model_aniso_mantle_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_aniso_mantle_broadcast(myrank)
 
 ! standard routine to setup model
+
+  use model_aniso_mantle_par
 
   implicit none
 
@@ -51,29 +65,24 @@
   ! standard include of the MPI library
   include 'mpif.h'
 
-  ! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-
-  type (model_aniso_mantle_variables) AMM_V
-  ! model_aniso_mantle_variables
-
   integer :: myrank
+
+  ! local parameters
   integer :: ier
 
+  ! allocates model arrays
+  allocate(AMM_V_beta(14,34,37,73), &
+          AMM_V_pro(47), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating AMM_V arrays')
+
   ! the variables read are declared and stored in structure AMM_V
-  if(myrank == 0) call read_aniso_mantle_model(AMM_V)
+  if(myrank == 0) call read_aniso_mantle_model()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
+  call MPI_BCAST(AMM_V_npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AMM_V_beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AMM_V_pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine model_aniso_mantle_broadcast
 
@@ -83,34 +92,24 @@
 
 
   subroutine model_aniso_mantle(r,theta,phi,rho, &
-    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,&
-    AMM_V)
+                              c11,c12,c13,c14,c15,c16, &
+                              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+  use model_aniso_mantle_par
 
   implicit none
 
   include "constants.h"
 
-! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-
-  type (model_aniso_mantle_variables) AMM_V
-! model_aniso_mantle_variables
-
-  double precision r,theta,phi
-  double precision rho
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+  double precision :: r,theta,phi
+  double precision :: rho
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  double precision d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+  ! local parameters
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                    d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
-
-  double precision colat,lon
+  double precision :: colat,lon
 
   lon = phi / DEGREES_TO_RADIANS
   colat = theta / DEGREES_TO_RADIANS
@@ -121,7 +120,7 @@
 ! assign the local (d_ij) or global (c_ij) anisotropic parameters.
 ! The c_ij are the coefficients in the global
 ! reference frame used in SPECFEM3D.
-  call build_cij(AMM_V%pro,AMM_V%npar1,rho,AMM_V%beta,r,colat,lon,&
+  call build_cij(AMM_V_pro,AMM_V_npar1,rho,AMM_V_beta,r,colat,lon,&
                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
                  d44,d45,d46,d55,d56,d66)
 
@@ -142,17 +141,24 @@
 
   include "constants.h"
 
-  integer npar1,ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
-          ict0,ict1,icp0,icp1,icz1
+  double precision :: pro(47)
+  integer :: npar1
 
-  double precision d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+  double precision :: rho
+  double precision :: beta(14,34,37,73)
+
+  double precision :: r,theta,phi
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                    d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
-  double precision r,theta,phi,rho,depth,tei,tet,ph,fi,x0,y0,pxy0
-  double precision d1,d2,d3,d4,sd,thickness,dprof1,dprof2,eps,pc1,pc2,pc3,pc4,&
+
+  ! local parameters
+  double precision :: depth,tei,tet,ph,fi,x0,y0,pxy0
+  double precision :: d1,d2,d3,d4,sd,thickness,dprof1,dprof2,eps,pc1,pc2,pc3,pc4,&
                    dpr1,dpr2,param,scale_GPa,scaleval
-  double precision A,C,F,AL,AN,BC,BS,GC,GS,HC,HS,EC,ES,C1p,C1sv,C1sh,C3,S1p,S1sv,S1sh,S3
-  double precision beta(14,34,37,73),pro(47)
-  double precision anispara(14,2,4),elpar(14)
+  double precision :: A,C,F,AL,AN,BC,BS,GC,GS,HC,HS,EC,ES,C1p,C1sv,C1sh,C3,S1p,S1sv,S1sh,S3
+  double precision :: anispara(14,2,4),elpar(14)
+  integer :: ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
+          ict0,ict1,icp0,icp1,icz1
 
   ndepth = npar1
   pxy0 = 5.
@@ -360,25 +366,17 @@
 
   end subroutine build_cij
 
-!--------------------------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-  subroutine read_aniso_mantle_model(AMM_V)
+  subroutine read_aniso_mantle_model()
+
+  use model_aniso_mantle_par
 
   implicit none
 
   include "constants.h"
-
-  ! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-
-  type (model_aniso_mantle_variables) AMM_V
-  ! model_aniso_mantle_variables
 
   ! local parameters
   integer :: nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
@@ -395,7 +393,7 @@
 
   np1 = 1
   np2 = 34
-  AMM_V%npar1 = (np2 - np1 + 1)
+  AMM_V_npar1 = (np2 - np1 + 1)
 
 !
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
@@ -418,12 +416,12 @@
   nfin = 14
   do nf = 1,nfi0
     ipa = ipa + 1
-    do idep = 1,AMM_V%npar1
+    do idep = 1,AMM_V_npar1
       il = idep + np1 - 1
       read(19,"(2f4.0,2i3,f4.0)",end = 88) xinf,yinf,nx,ny,pxy
 
       ppp = 1.
-      read(19,"(f5.0,f8.4)",end = 88) AMM_V%pro(idep),ppp
+      read(19,"(f5.0,f8.4)",end = 88) AMM_V_pro(idep),ppp
 
       if(nf == 1) pari(nf,il) = ppp
       if(nf == 2) pari(nf,il) = ppp
@@ -431,7 +429,7 @@
       if(nf == 4) ppp = pari(nf,il)
       if(nf == 5) ppp = pari(nf,il)
       do ilat = 1,nx
-        read(19,"(17f7.2)",end = 88) (AMM_V%beta(ipa,idep,ilat,ilon),ilon = 1,ny)
+        read(19,"(17f7.2)",end = 88) (AMM_V_beta(ipa,idep,ilat,ilon),ilon = 1,ny)
 !
 ! calculation of A,C,F,L,N
 !
@@ -442,10 +440,10 @@
 !
         do ilon = 1,ny
           if(nf <= 3 .or. nf >= 6)then
-            bet2(ipa,idep,ilat,ilon) = AMM_V%beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
+            bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
           else
-            if(nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V%beta(ipa,idep,ilat,ilon)*0.01 + 1.
-            if(nf == 5)bet2(ipa,idep,ilat,ilon) = - AMM_V%beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if(nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if(nf == 5)bet2(ipa,idep,ilat,ilon) = - AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
           endif
         enddo
 
@@ -469,10 +467,10 @@
   do nf = 7,nfin,2
     ipa = nf
     ipa1 = ipa + 1
-    do idep = 1,AMM_V%npar1
+    do idep = 1,AMM_V_npar1
       il = idep + np1 - 1
       read(15,"(2f4.0,2i3,f4.0)",end = 888) xinf,yinf,nx,ny,pxy
-      read(15,"(f5.0,f8.4)",end = 888) AMM_V%pro(idep),ppp
+      read(15,"(f5.0,f8.4)",end = 888) AMM_V_pro(idep),ppp
       if(nf == 7) ppp = pari(2,il)
       if(nf == 9) ppp = pari(3,il)
       af = pari(6,il)*(pari(2,il) - 2.*pari(3,il))
@@ -490,8 +488,8 @@
       do ilat = 1,nx
         do ilon = 1,ny
           angle = 2.*DEGREES_TO_RADIANS*ph(ilon,ilat)
-          AMM_V%beta(ipa,idep,ilat,ilon) = alph(ilon,ilat)*ppp*0.01d0
-          AMM_V%beta(ipa1,idep,ilat,ilon) = ph(ilon,ilat)
+          AMM_V_beta(ipa,idep,ilat,ilon) = alph(ilon,ilat)*ppp*0.01d0
+          AMM_V_beta(ipa1,idep,ilat,ilon) = ph(ilon,ilat)
           bet2(ipa,idep,ilat,ilon) = alph(ilon,ilat)*dcos(angle)*ppp*0.01d0
           bet2(ipa1,idep,ilat,ilon) = alph(ilon,ilat)*dsin(angle)*ppp*0.01d0
         enddo
@@ -502,34 +500,34 @@
 
 888 close(15)
 
-  do idep = 1,AMM_V%npar1
+  do idep = 1,AMM_V_npar1
     do ilat = 1,nx
       do ilon = 1,ny
 
 ! rho
-        AMM_V%beta(1,idep,ilat,ilon) = bet2(1,idep,ilat,ilon)
+        AMM_V_beta(1,idep,ilat,ilon) = bet2(1,idep,ilat,ilon)
 
 ! A
-        AMM_V%beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
+        AMM_V_beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
         A=bet2(2,idep,ilat,ilon)
 
 !  C
-        AMM_V%beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
+        AMM_V_beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
 
 !  F
         A2L = A - 2.*bet2(3,idep,ilat,ilon)
-        AMM_V%beta(4,idep,ilat,ilon) = bet2(6,idep,ilat,ilon)*A2L
+        AMM_V_beta(4,idep,ilat,ilon) = bet2(6,idep,ilat,ilon)*A2L
 
 !  L
-        AMM_V%beta(5,idep,ilat,ilon) = bet2(3,idep,ilat,ilon)
+        AMM_V_beta(5,idep,ilat,ilon) = bet2(3,idep,ilat,ilon)
         AL = bet2(3,idep,ilat,ilon)
 
 !  N
-        AMM_V%beta(6,idep,ilat,ilon) = bet2(4,idep,ilat,ilon)*AL
+        AMM_V_beta(6,idep,ilat,ilon) = bet2(4,idep,ilat,ilon)*AL
 
 !  azimuthal terms
         do ipar = 7,14
-          AMM_V%beta(ipar,idep,ilat,ilon) = bet2(ipar,idep,ilat,ilon)
+          AMM_V_beta(ipar,idep,ilat,ilon) = bet2(ipar,idep,ilat,ilon)
         enddo
 
       enddo
@@ -540,7 +538,9 @@
 
   end subroutine read_aniso_mantle_model
 
+!
 !--------------------------------------------------------------------
+!
 
   subroutine lecmod(nri,pari,ra)
 
