@@ -70,8 +70,7 @@
   double precision :: elevation,height_oceans
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
-  integer :: ispec,i,j,k,iglob
-  integer :: ix_oceans,iy_oceans,iz_oceans,ispec_oceans,ispec2D_top_crust
+  integer :: ispec,i,j,k,iglob,ispec2D
 
   ! initializes matrices
   !
@@ -89,10 +88,6 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-
-          weight = wxgll(i)*wygll(j)*wzgll(k)
-          iglob = ibool(i,j,k,ispec)
-
           ! compute the jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
@@ -108,9 +103,12 @@
                           - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                           + xizl*(etaxl*gammayl-etayl*gammaxl))
 
+
+          iglob = ibool(i,j,k,ispec)
+          weight = wxgll(i)*wygll(j)*wzgll(k)
+          
           ! definition depends if region is fluid or solid
           select case( iregion_code)
-
           case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
             ! distinguish between single and double precision for reals
             if(CUSTOM_REAL == SIZE_REAL) then
@@ -152,24 +150,25 @@
 
     ! add contribution of the oceans
     ! for surface elements exactly at the top of the crust (ocean bottom)
-    do ispec2D_top_crust = 1,NSPEC2D_TOP
+    do ispec2D = 1,NSPEC2D_TOP
 
-      ispec_oceans = ibelm_top(ispec2D_top_crust)
+      ! gets spectral element index
+      ispec = ibelm_top(ispec2D)
 
-      iz_oceans = NGLLZ
+      ! assumes elements are order such that k == NGLLZ is top surface
+      k = NGLLZ
 
-      do ix_oceans = 1,NGLLX
-        do iy_oceans = 1,NGLLY
-
-          iglob=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
-
+      ! loops over surface points
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          
           ! if 3D Earth with topography, compute local height of oceans
           if( TOPOGRAPHY ) then
 
             ! get coordinates of current point
-            xval = xstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
-            yval = ystore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
-            zval = zstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+            xval = xstore(i,j,k,ispec)
+            yval = ystore(i,j,k,ispec)
+            zval = zstore(i,j,k,ispec)
 
             ! map to latitude and longitude for bathymetry routine
             ! slightly move points to avoid roundoff problem when exactly on the polar axis
@@ -205,9 +204,12 @@
           endif
 
           ! take into account inertia of water column
-          weight = wxgll(ix_oceans) * wygll(iy_oceans) &
-                    * dble(jacobian2D_top(ix_oceans,iy_oceans,ispec2D_top_crust)) &
+          weight = wxgll(i) * wygll(j) &
+                    * dble(jacobian2D_top(i,j,ispec2D)) &
                     * dble(RHO_OCEANS) * height_oceans
+
+          ! gets global point index
+          iglob = ibool(i,j,k,ispec)
 
           ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
@@ -321,19 +323,7 @@
     enddo
   enddo
 
-
-!    ! read arrays for Stacey conditions
-!    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-!        status='old',form='unformatted',action='read',iostat=ier)
-!    if( ier /= 0 ) call exit_mpi(myrank,'error opening stacey.bin in create_mass_matrices')
-!    read(27) nimin
-!    read(27) nimax
-!    read(27) njmin
-!    read(27) njmax
-!    read(27) nkmin_xi
-!    read(27) nkmin_eta
-!    close(27)
-
+  ! adds contributions to mass matrix to stabilize stacey conditions
   select case(iregion_code)
   case(IREGION_CRUST_MANTLE)
 

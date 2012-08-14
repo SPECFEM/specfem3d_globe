@@ -29,15 +29,8 @@
 #include <stdio.h>
 #include <cuda.h>
 
-//#include <cublas.h>
-
 #include "config.h"
 #include "mesh_constants_cuda.h"
-
-
-//#define CUBLAS_ERROR(s,n)  if (s != CUBLAS_STATUS_SUCCESS) {  \
-//fprintf (stderr, "CUBLAS Memory Write Error @ %d\n",n); \
-//exit(EXIT_FAILURE); }
 
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -298,8 +291,8 @@ __global__ void kernel_3_cuda_device(realw* veloc,
                                      realw* accel, int size,
                                      realw deltatover2,
                                      realw* rmassx,
-             realw* rmassy,
-             realw* rmassz) {
+                                     realw* rmassy,
+                                     realw* rmassz) {
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   /* because of block and grid sizing problems, there is a small */
@@ -320,8 +313,8 @@ __global__ void kernel_3_cuda_device(realw* veloc,
 __global__ void kernel_3_accel_cuda_device(realw* accel,
                                            int size,
                                            realw* rmassx,
-             realw* rmassy,
-             realw* rmassz) {
+                                           realw* rmassy,
+                                           realw* rmassz) {
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   /* because of block and grid sizing problems, there is a small */
@@ -359,7 +352,7 @@ void FC_FUNC_(kernel_3_a_cuda,
                                int* SIMULATION_TYPE_f,
                                realw* b_deltatover2_F,
                                int* OCEANS,
-             int* NCHUNKS_VAL) {
+                               int* NCHUNKS_VAL) {
   TRACE("kernel_3_a_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
@@ -527,18 +520,18 @@ void FC_FUNC_(kernel_3_b_cuda,
                                            mp->d_accel_inner_core,
                                            mp->NGLOB_INNER_CORE,
                                            deltatover2,
-             mp->d_rmass_inner_core,
-             mp->d_rmass_inner_core,
-             mp->d_rmass_inner_core);
+                                           mp->d_rmass_inner_core,
+                                           mp->d_rmass_inner_core,
+                                           mp->d_rmass_inner_core);
 
   if(SIMULATION_TYPE == 3) {
     kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_inner_core,
                                              mp->d_b_accel_inner_core,
                                              mp->NGLOB_INNER_CORE,
                                              b_deltatover2,
-               mp->d_rmass_inner_core,
-               mp->d_rmass_inner_core,
-               mp->d_rmass_inner_core);
+                                             mp->d_rmass_inner_core,
+                                             mp->d_rmass_inner_core,
+                                             mp->d_rmass_inner_core);
   }
 
 

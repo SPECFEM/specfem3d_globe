@@ -68,16 +68,15 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_top_outer_core[iface] - 1;
+    ispec_selected = ibelm_bottom_crust_mantle[iface] - 1;
 
     // only for DOFs exactly on the CMB (top of these elements)
     k = NGLLX - 1;
-
     // get displacement on the solid side using pointwise matching
-    ispec_selected = ibelm_bottom_crust_mantle[iface] - 1;
+    k_corresp = 0;
 
     // get global point number
     // corresponding points are located at the bottom of the mantle
-    k_corresp = 0;
     iglob_cm = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
 
     // elastic displacement on global point
@@ -134,16 +133,15 @@ __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_bottom_outer_core[iface] - 1;
+    ispec_selected = ibelm_top_inner_core[iface] - 1;
 
     // only for DOFs exactly on the ICB (bottom of these elements)
     k = 0;
-
     // get displacement on the solid side using pointwise matching
-    ispec_selected = ibelm_top_inner_core[iface] - 1;
+    k_corresp = NGLLX - 1;
 
     // get global point number
     // corresponding points are located at the bottom of the mantle
-    k_corresp = NGLLX - 1;
     iglob_ic = ibool_inner_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
 
     // elastic displacement on global point
@@ -315,12 +313,12 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_bottom_crust_mantle[iface] - 1;
+    ispec_selected = ibelm_top_outer_core[iface] - 1;
 
     // only for DOFs exactly on the CMB (bottom of these elements)
     k = 0;
-
     // get velocity potential on the fluid side using pointwise matching
-    ispec_selected = ibelm_top_outer_core[iface] - 1;
+    k_corresp = NGLLX - 1;
 
     // get normal on the CMB
     nx = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
@@ -329,7 +327,6 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
 
     // get global point number
     // corresponding points are located at the top of the outer core
-    k_corresp = NGLLX - 1;
     iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
     iglob_cm = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
@@ -354,6 +351,8 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
     //  }
   }
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
                                                   realw* accel_inner_core,
@@ -384,12 +383,12 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_top_inner_core[iface] - 1;
+    ispec_selected = ibelm_bottom_outer_core[iface] - 1;
 
     // only for DOFs exactly on the ICB (top of these elements)
     k = NGLLX - 1;
-
     // get velocity potential on the fluid side using pointwise matching
-    ispec_selected = ibelm_bottom_outer_core[iface] - 1;
+    k_corresp = 0;
 
     // get normal on the ICB
     nx = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
@@ -398,7 +397,6 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
 
     // get global point number
     // corresponding points are located at the bottom of the outer core
-    k_corresp = 0;
     iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
     iglob_ic = ibool_inner_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
@@ -650,11 +648,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
   // initializes temporary array to zero
   print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-                                     sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88501);
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("before kernel compute_coupling_ocean_cuda");
-#endif
+                                     sizeof(int)*(mp->NGLOB_CRUST_MANTLE_OCEANS)),88501);
 
   if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
     compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
@@ -671,8 +665,8 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
     // for backward/reconstructed potentials
     if( mp->simulation_type == 3 ) {
       // re-initializes array
-      print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-                                         sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
+      print_CUDA_error_if_any(cudaMemset(mp->d_b_updated_dof_ocean_load,0,
+                                         sizeof(int)*(mp->NGLOB_CRUST_MANTLE_OCEANS)),88502);
 
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                            mp->d_rmassx_crust_mantle,
@@ -682,7 +676,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
                                                            mp->d_normal_top_crust_mantle,
                                                            mp->d_ibool_crust_mantle,
                                                            mp->d_ibelm_top_crust_mantle,
-                                                           mp->d_updated_dof_ocean_load,
+                                                           mp->d_b_updated_dof_ocean_load,
                                                            mp->nspec2D_top_crust_mantle);
     }
   }else{
@@ -700,8 +694,8 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
     // for backward/reconstructed potentials
     if( mp->simulation_type == 3 ) {
       // re-initializes array
-      print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-                                         sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
+      print_CUDA_error_if_any(cudaMemset(mp->d_b_updated_dof_ocean_load,0,
+                                         sizeof(int)*(mp->NGLOB_CRUST_MANTLE_OCEANS)),88502);
 
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                            mp->d_rmassz_crust_mantle,
@@ -711,7 +705,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
                                                            mp->d_normal_top_crust_mantle,
                                                            mp->d_ibool_crust_mantle,
                                                            mp->d_ibelm_top_crust_mantle,
-                                                           mp->d_updated_dof_ocean_load,
+                                                           mp->d_b_updated_dof_ocean_load,
                                                            mp->nspec2D_top_crust_mantle);
     }
   }

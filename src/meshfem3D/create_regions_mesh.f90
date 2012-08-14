@@ -104,6 +104,7 @@
     case default
       call exit_MPI(myrank,'error ipass value in create_regions_mesh')
     end select
+    call flush_IMAIN()    
   endif
 
   ! create the name for the database of the current slide and region
@@ -114,6 +115,7 @@
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...allocating arrays '
+    call flush_IMAIN()    
   endif
   call crm_allocate_arrays(iregion_code,nspec,ipass, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
@@ -125,6 +127,7 @@
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...setting up layers '
+    call flush_IMAIN()    
   endif
   call crm_setup_layers(iregion_code,nspec,ipass,NEX_PER_PROC_ETA)
 
@@ -133,6 +136,7 @@
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...creating mesh elements '
+    call flush_IMAIN()    
   endif
   call crm_create_elements(iregion_code,nspec,ipass, &
                           NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -147,6 +151,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating global addressing'
+      call flush_IMAIN()      
     endif
     call crm_setup_indexing(nspec,nglob_theor,npointot)
 
@@ -156,6 +161,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating MPI buffers'
+      call flush_IMAIN()      
     endif
     call crm_setup_mpi_buffers(npointot,nspec,iregion_code)
 
@@ -173,6 +179,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...precomputing jacobian'
+      call flush_IMAIN()      
     endif
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
               dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
@@ -193,6 +200,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating chunk buffers'
+      call flush_IMAIN()      
     endif
     call create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
                               xstore,ystore,zstore,nglob_theor, &
@@ -210,6 +218,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...preparing MPI interfaces'
+      call flush_IMAIN()      
     endif
     ! creates MPI interface arrays
     call create_MPI_interfaces(iregion_code)
@@ -227,6 +236,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...element inner/outer separation '
+      call flush_IMAIN()
     endif
     call setup_inner_outer(iregion_code)
 
@@ -235,6 +245,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...element mesh coloring '
+      call flush_IMAIN()      
     endif
     call setup_color_perm(iregion_code)
 
@@ -266,6 +277,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating mass matrix'
+      call flush_IMAIN()      
     endif
 
     ! allocates mass matrices in this slice (will be fully assembled in the solver)
@@ -319,6 +331,7 @@
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...saving binary files'
+      call flush_IMAIN()      
     endif
     ! saves mesh and model parameters
     call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
@@ -344,8 +357,11 @@
       if( myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...saving boundary mesh files'
+        call flush_IMAIN()        
       endif
+      ! saves boundary file
       call save_arrays_solver_boundary()
+      
     endif
 
     ! compute volume, bottom and top area of that part of the slice
@@ -367,6 +383,7 @@
       if( myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...saving AVS mesh files'
+        call flush_IMAIN()        
       endif
       call crm_save_mesh_files(nspec,npointot,iregion_code)
     endif
@@ -897,13 +914,20 @@
     if(myrank == 0 ) then
       ! time estimate
       tCPU = wtime() - time_start
-      ! remaining
+
+      ! outputs remaining time (poor estimation)
       tCPU = (1.0-(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)) &
                 /(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)*tCPU*10.0
+      
       write(IMAIN,*) "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0," %", &
                     " time remaining:", tCPU,"s"
+      
+      ! outputs current time on system
       call date_and_time(VALUES=tval)
       write(IMAIN,*) "    ",tval(5),"h",tval(6),"min",tval(7),".",tval(8),"sec"
+
+      ! flushes I/O buffer
+      call flush_IMAIN()
     endif
 
   enddo !ilayer_loop
@@ -1215,55 +1239,19 @@
   integer,intent(in):: iregion_code
 
   ! free memory
-  deallocate(iprocfrom_faces,iprocto_faces,imsg_type)
-  deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
-  deallocate(buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar)
-  deallocate(buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector)
-
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
-    deallocate(iboolcorner_crust_mantle)
-    deallocate(iboolleft_xi_crust_mantle, &
-            iboolright_xi_crust_mantle)
-    deallocate(iboolleft_eta_crust_mantle, &
-            iboolright_eta_crust_mantle)
-    deallocate(iboolfaces_crust_mantle)
-
     deallocate(phase_ispec_inner_crust_mantle)
     deallocate(num_elem_colors_crust_mantle)
-
   case( IREGION_OUTER_CORE )
     ! outer core
-    deallocate(iboolcorner_outer_core)
-    deallocate(iboolleft_xi_outer_core, &
-            iboolright_xi_outer_core)
-    deallocate(iboolleft_eta_outer_core, &
-            iboolright_eta_outer_core)
-    deallocate(iboolfaces_outer_core)
-
     deallocate(phase_ispec_inner_outer_core)
     deallocate(num_elem_colors_outer_core)
-
   case( IREGION_INNER_CORE )
     ! inner core
-    deallocate(ibelm_xmin_inner_core, &
-            ibelm_xmax_inner_core)
-    deallocate(ibelm_ymin_inner_core, &
-            ibelm_ymax_inner_core)
-    deallocate(ibelm_bottom_inner_core)
-    deallocate(ibelm_top_inner_core)
-
-    deallocate(iboolcorner_inner_core)
-    deallocate(iboolleft_xi_inner_core, &
-            iboolright_xi_inner_core)
-    deallocate(iboolleft_eta_inner_core, &
-            iboolright_eta_inner_core)
-    deallocate(iboolfaces_inner_core)
-
     deallocate(phase_ispec_inner_inner_core)
     deallocate(num_elem_colors_inner_core)
-
   end select
 
   end subroutine crm_free_MPI_arrays

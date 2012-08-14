@@ -88,18 +88,19 @@
   integer :: myrank
   integer :: ier
 
+  allocate(AM_V%Qtau_s(N_SLS))
+
+  ! master process determines period ranges
   if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
-  if(myrank /= 0) allocate(AM_V%Qtau_s(N_SLS))
+  ! broadcasts to all others
   call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(AM_V%Qtau_s,   N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 
 
-  end subroutine
+  end subroutine model_attenuation_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -134,12 +135,10 @@
   type (model_attenuation_variables) AM_V
 ! model_attenuation_variables
 
-  integer min_att_period, max_att_period
+  integer :: min_att_period, max_att_period
 
   AM_V%min_period = min_att_period * 1.0d0
   AM_V%max_period = max_att_period * 1.0d0
-
-  allocate(AM_V%Qtau_s(N_SLS))
 
   call attenuation_tau_sigma(AM_V%Qtau_s, N_SLS, AM_V%min_period, AM_V%max_period)
   call attenuation_source_frequency(AM_V%QT_c_source, AM_V%min_period, AM_V%max_period)
@@ -157,8 +156,8 @@
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
-  subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670, &
-                    R220,R80,AM_V,AM_S,AS_V)
+  subroutine model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
+                                    R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
   use model_1dref_par, only: &
     NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
@@ -228,51 +227,55 @@
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
-  integer myrank
-  integer REFERENCE_1D_MODEL
-  double precision RICB, RCMB, R670, R220, R80
-  double precision tau_e(N_SLS)
+  integer :: myrank,REFERENCE_1D_MODEL
+  double precision :: RICB, RCMB, R670, R220, R80
+  logical :: CRUSTAL
+  
+  ! local parameters
+  double precision :: tau_e(N_SLS)
+  double precision :: Qb
+  double precision :: R120
+  integer :: i,ier
 
-  integer i
-  double precision Qb
-  double precision R120
-
+  ! parameter definitions
   Qb = 57287.0d0
   R120 = 6251.d3 ! as defined by IASP91
-
-  call world_rank(myrank)
-  if(myrank > 0) return
-
 
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-     AM_V%Qn = 12
+    AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-     AM_V%Qn = 12
+    AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-     call define_model_ak135(.FALSE.)
-     AM_V%Qn = NR_AK135
+    ! redefines "pure" 1D model without crustal modification 
+    call define_model_ak135(.FALSE.)
+    AM_V%Qn = NR_AK135
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-     call define_model_1066a(.FALSE.)
-     AM_V%Qn = NR_1066A
+    ! redefines "pure" 1D model without crustal modification 
+    call define_model_1066a(.FALSE.)
+    AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-     call define_model_1dref(.FALSE.)
-     AM_V%Qn = NR_REF
+    ! redefines "pure" 1D model without crustal modification 
+    call define_model_1dref(.FALSE.)
+    AM_V%Qn = NR_REF
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-     AM_V%Qn = 12
+    AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-     call define_model_sea1d(.FALSE.)
-     AM_V%Qn = NR_SEA1D
+    ! redefines "pure" 1D model without crustal modification 
+    call define_model_sea1d(.FALSE.)
+    AM_V%Qn = NR_SEA1D
   else
-     call exit_MPI(myrank, 'Reference 1D Model Not recognized')
+    call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
-  allocate(AM_V%Qr(AM_V%Qn))
-  allocate(AM_V%Qmu(AM_V%Qn))
-  allocate(AM_V%interval_Q(AM_V%Qn))
-  allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
+  allocate(AM_V%Qr(AM_V%Qn), &
+          AM_V%Qmu(AM_V%Qn), &
+          AM_V%interval_Q(AM_V%Qn), &
+          AM_V%Qtau_e(N_SLS,AM_V%Qn), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating AM_V arrays')
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
@@ -298,10 +301,27 @@
   end if
 
   do i = 1, AM_V%Qn
-     call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
-     AM_V%Qtau_e(:,i) = tau_e(:)
+    call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
+    AM_V%Qtau_e(:,i) = tau_e(:)
   end do
 
+  ! re-defines 1D models with crustal modification if necessary
+  if( CRUSTAL ) then
+    if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+      ! redefines 1D model with crustal modification 
+      call define_model_ak135(CRUSTAL)
+    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+      ! redefines 1D model with crustal modification 
+      call define_model_1066a(CRUSTAL)
+    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+      ! redefines 1D model with crustal modification 
+      call define_model_1dref(CRUSTAL)
+    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+      ! redefines 1D model with crustal modification 
+      call define_model_sea1d(CRUSTAL)
+    endif
+  endif
+  
   end subroutine model_attenuation_setup
 
 !
@@ -368,10 +388,11 @@
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
-  double precision Qmu_in, T_c_source
+  double precision :: Qmu_in, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
 
-  integer rw
+  ! local parameters
+  integer :: rw
 
   ! READ
   rw = 1
@@ -408,12 +429,14 @@
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
 
-  integer myrank
-  double precision Qmu, Qmu_new
+  double precision :: Qmu
   double precision, dimension(N_SLS) :: tau_e
-  integer rw
+  integer :: rw
 
-  integer Qtmp
+  ! local parameters
+  double precision :: Qmu_new
+  integer :: myrank
+  integer :: Qtmp
   integer, save :: first_time_called = 1
 
   if(first_time_called == 1) then

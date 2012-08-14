@@ -65,18 +65,18 @@
 
   ! for surface elements exactly on the CMB
   do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
+  
     ispec = ibelm_top_outer_core(ispec2D)
+    ispec_selected = ibelm_bottom_crust_mantle(ispec2D)
 
     ! only for DOFs exactly on the CMB (top of these elements)
-    k = NGLLZ
+    k = NGLLZ    
+    ! get displacement on the solid side using pointwise matching
+    k_corresp = 1
+    
     do j = 1,NGLLY
       do i = 1,NGLLX
-
-        ! get displacement on the solid side using pointwise matching
-        ispec_selected = ibelm_bottom_crust_mantle(ispec2D)
-
         ! corresponding points are located at the bottom of the mantle
-        k_corresp = 1
         iglob_cm = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
 
         displ_x = displ_crust_mantle(1,iglob_cm)
@@ -164,18 +164,19 @@
 
   ! for surface elements exactly on the ICB
   do ispec2D = 1, nspec_bottom ! NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
     ispec = ibelm_bottom_outer_core(ispec2D)
+    ispec_selected = ibelm_top_inner_core(ispec2D)
 
     ! only for DOFs exactly on the ICB (bottom of these elements)
     k = 1
+    ! get displacement on the solid side using pointwise matching
+    k_corresp = NGLLZ
+
     do j = 1,NGLLY
       do i = 1,NGLLX
 
-        ! get displacement on the solid side using pointwise matching
-        ispec_selected = ibelm_top_inner_core(ispec2D)
-
         ! corresponding points are located at the bottom of the mantle
-        k_corresp = NGLLZ
         iglob_ic = ibool_inner_core(i,j,k_corresp,ispec_selected)
 
         displ_x = displ_inner_core(1,iglob_ic)
@@ -272,16 +273,15 @@
   do ispec2D = 1,nspec_bottom ! NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
     ispec = ibelm_bottom_crust_mantle(ispec2D)
+    ispec_selected = ibelm_top_outer_core(ispec2D)
 
     ! only for DOFs exactly on the CMB (bottom of these elements)
     k = 1
+    ! get velocity potential on the fluid side using pointwise matching
+    k_corresp = NGLLZ
+
     do j = 1,NGLLY
       do i = 1,NGLLX
-
-        ! get velocity potential on the fluid side using pointwise matching
-        ispec_selected = ibelm_top_outer_core(ispec2D)
-        k_corresp = NGLLZ
-
         ! get normal at the CMB
         nx = normal_top_outer_core(1,i,j,ispec2D)
         ny = normal_top_outer_core(2,i,j,ispec2D)
@@ -378,16 +378,15 @@
   do ispec2D = 1,nspec_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
 
     ispec = ibelm_top_inner_core(ispec2D)
+    ispec_selected = ibelm_bottom_outer_core(ispec2D)
 
     ! only for DOFs exactly on the ICB (top of these elements)
     k = NGLLZ
+    ! get velocity potential on the fluid side using pointwise matching
+    k_corresp = 1
+
     do j = 1,NGLLY
       do i = 1,NGLLX
-
-        ! get velocity potential on the fluid side using pointwise matching
-        ispec_selected = ibelm_bottom_outer_core(ispec2D)
-        k_corresp = 1
-
         ! get normal at the ICB
         nx = normal_bottom_outer_core(1,i,j,ispec2D)
         ny = normal_bottom_outer_core(2,i,j,ispec2D)

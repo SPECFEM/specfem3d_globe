@@ -47,7 +47,7 @@
   logical :: iboun(6,nspec)
 
   ! global element numbering
-  integer :: ispecg
+  integer :: ispec
 
   ! counters to keep track of the number of elements on each of the
   ! five absorbing boundaries
@@ -64,11 +64,11 @@
   ispecb4=0
   ispecb5=0
 
-  do ispecg=1,nspec
+  do ispec=1,nspec
 
     ! determine if the element falls on an absorbing boundary
 
-    if(iboun(1,ispecg)) then
+    if(iboun(1,ispec)) then
 
       !   on boundary 1: xmin
       ispecb1=ispecb1+1
@@ -79,10 +79,10 @@
 
       !   check for ovelap with other boundaries
       nkmin_xi(1,ispecb1)=1
-      if(iboun(5,ispecg)) nkmin_xi(1,ispecb1)=2
+      if(iboun(5,ispec)) nkmin_xi(1,ispecb1)=2
     endif
 
-    if(iboun(2,ispecg)) then
+    if(iboun(2,ispec)) then
 
       !   on boundary 2: xmax
       ispecb2=ispecb2+1
@@ -93,39 +93,39 @@
 
       !   check for ovelap with other boundaries
       nkmin_xi(2,ispecb2)=1
-      if(iboun(5,ispecg)) nkmin_xi(2,ispecb2)=2
+      if(iboun(5,ispec)) nkmin_xi(2,ispecb2)=2
     endif
 
-    if(iboun(3,ispecg)) then
+    if(iboun(3,ispec)) then
 
       !   on boundary 3: ymin
       ispecb3=ispecb3+1
 
       !   check for ovelap with other boundaries
       nimin(1,ispecb3)=1
-      if(iboun(1,ispecg)) nimin(1,ispecb3)=2
+      if(iboun(1,ispec)) nimin(1,ispecb3)=2
       nimax(1,ispecb3)=NGLLX
-      if(iboun(2,ispecg)) nimax(1,ispecb3)=NGLLX-1
+      if(iboun(2,ispec)) nimax(1,ispecb3)=NGLLX-1
       nkmin_eta(1,ispecb3)=1
-      if(iboun(5,ispecg)) nkmin_eta(1,ispecb3)=2
+      if(iboun(5,ispec)) nkmin_eta(1,ispecb3)=2
     endif
 
-    if(iboun(4,ispecg)) then
+    if(iboun(4,ispec)) then
 
       !   on boundary 4: ymax
       ispecb4=ispecb4+1
 
       !   check for ovelap with other boundaries
       nimin(2,ispecb4)=1
-      if(iboun(1,ispecg)) nimin(2,ispecb4)=2
+      if(iboun(1,ispec)) nimin(2,ispecb4)=2
       nimax(2,ispecb4)=NGLLX
-      if(iboun(2,ispecg)) nimax(2,ispecb4)=NGLLX-1
+      if(iboun(2,ispec)) nimax(2,ispecb4)=NGLLX-1
       nkmin_eta(2,ispecb4)=1
-      if(iboun(5,ispecg)) nkmin_eta(2,ispecb4)=2
+      if(iboun(5,ispec)) nkmin_eta(2,ispecb4)=2
     endif
 
     ! on boundary 5: bottom
-    if(iboun(5,ispecg)) ispecb5=ispecb5+1
+    if(iboun(5,ispec)) ispecb5=ispecb5+1
 
   enddo
 

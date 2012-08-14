@@ -1107,7 +1107,7 @@ void FC_FUNC_(prepare_mpi_buffers_device,
                                        cudaMemcpyHostToDevice),1204);
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_crust_mantle),
-                                       3*(mp->max_nibool_interfaces_crust_mantle)*(mp->num_interfaces_crust_mantle)*sizeof(realw)),4004);
+                                       NDIM*(mp->max_nibool_interfaces_crust_mantle)*(mp->num_interfaces_crust_mantle)*sizeof(realw)),4004);
   }
 
   // inner core mesh
@@ -1127,7 +1127,7 @@ void FC_FUNC_(prepare_mpi_buffers_device,
                                        cudaMemcpyHostToDevice),1204);
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_inner_core),
-                                       3*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw)),4004);
+                                       NDIM*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw)),4004);
   }
 
   // outer core mesh
@@ -1346,7 +1346,8 @@ void FC_FUNC_(prepare_crust_mantle_device,
     // no anisotropy
 
     // transverse isotropy flag
-    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ispec_is_tiso_crust_mantle, (mp->NSPEC_CRUST_MANTLE)*sizeof(int)),1025);
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ispec_is_tiso_crust_mantle, 
+                                       (mp->NSPEC_CRUST_MANTLE)*sizeof(int)),1025);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_ispec_is_tiso_crust_mantle, h_ispec_is_tiso,
                                        (mp->NSPEC_CRUST_MANTLE)*sizeof(int),cudaMemcpyHostToDevice),1025);
 
@@ -1510,13 +1511,19 @@ void FC_FUNC_(prepare_crust_mantle_device,
   mp->nspec2D_bottom_crust_mantle = *NSPEC2D_BOTTOM_CM;
   int size_tcm = NGLL2*(mp->nspec2D_top_crust_mantle);
 
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_normal_top_crust_mantle),sizeof(realw)*NDIM*size_tcm),40020);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_top_crust_mantle,h_normal_top_crust_mantle,sizeof(realw)*NDIM*size_tcm,cudaMemcpyHostToDevice),40030);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_normal_top_crust_mantle),
+                                     sizeof(realw)*NDIM*size_tcm),40020);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_top_crust_mantle,h_normal_top_crust_mantle,
+                                     sizeof(realw)*NDIM*size_tcm,cudaMemcpyHostToDevice),40030);
 
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_ibelm_top_crust_mantle),sizeof(int)*(mp->nspec2D_top_crust_mantle)),40021);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_ibelm_bottom_crust_mantle),sizeof(int)*(mp->nspec2D_bottom_crust_mantle)),40021);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_top_crust_mantle,h_ibelm_top_crust_mantle,sizeof(int)*(mp->nspec2D_top_crust_mantle),cudaMemcpyHostToDevice),40031);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_bottom_crust_mantle,h_ibelm_bottom_crust_mantle,sizeof(int)*(mp->nspec2D_bottom_crust_mantle),cudaMemcpyHostToDevice),40031);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_ibelm_top_crust_mantle),
+                                     sizeof(int)*(mp->nspec2D_top_crust_mantle)),40021);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_ibelm_bottom_crust_mantle),
+                                     sizeof(int)*(mp->nspec2D_bottom_crust_mantle)),40021);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_top_crust_mantle,h_ibelm_top_crust_mantle,
+                                     sizeof(int)*(mp->nspec2D_top_crust_mantle),cudaMemcpyHostToDevice),40031);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_bottom_crust_mantle,h_ibelm_bottom_crust_mantle,
+                                     sizeof(int)*(mp->nspec2D_bottom_crust_mantle),cudaMemcpyHostToDevice),40031);
 
   // wavefield
   int size = NDIM * mp->NGLOB_CRUST_MANTLE;
@@ -2030,7 +2037,7 @@ void FC_FUNC_(prepare_inner_core_device,
 extern "C"
 void FC_FUNC_(prepare_oceans_device,
               PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
-             realw* h_rmass_ocean_load) {
+                                     realw* h_rmass_ocean_load) {
 
   TRACE("prepare_oceans_device");
 
@@ -2044,8 +2051,11 @@ void FC_FUNC_(prepare_oceans_device,
 
   // temporary global array: used to synchronize updates on global accel array
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_updated_dof_ocean_load),
-                                     sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4502);
-
+                                     sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4503);
+  if( mp->simulation_type == 3 ){
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_updated_dof_ocean_load),
+                                       sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4504);
+  }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_oceans_device");
@@ -2464,6 +2474,9 @@ TRACE("prepare_cleanup_device");
   if( mp->oceans ){
     cudaFree(mp->d_rmass_ocean_load);
     cudaFree(mp->d_updated_dof_ocean_load);
+    if( mp->simulation_type == 3 ){
+      cudaFree(mp->d_b_updated_dof_ocean_load);    
+    }
   }
 
   if( mp->gravity ){
@@ -2508,23 +2521,6 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_beta_kl_inner_core);
   }
   cudaFree(mp->d_rmass_inner_core);
-
-/*
-
-    if( *OCEANS ){
-      if( mp->num_free_surface_faces > 0 ){
-        cudaFree(mp->d_rmass_ocean_load);
-        cudaFree(mp->d_free_surface_normal);
-        cudaFree(mp->d_updated_dof_ocean_load);
-        if( *NOISE_TOMOGRAPHY == 0){
-          cudaFree(mp->d_free_surface_ispec);
-          cudaFree(mp->d_free_surface_ijk);
-        }
-      }
-    }
-  } // ELASTIC_SIMULATION
-
-*/
 
   // releases previous contexts
   cudaThreadExit();

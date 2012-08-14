@@ -489,6 +489,7 @@ typedef struct mesh_ {
 
   // temporary global array: used to synchronize updates on global accel array
   int* d_updated_dof_ocean_load;
+  int* d_b_updated_dof_ocean_load;
 
   // ------------------------------------------------------------------ //
   // attenuation

@@ -607,10 +607,10 @@
 
   implicit none
 
-  integer :: myrank,nspec,nglob
+  integer,intent(in) :: myrank,nspec,nglob
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
 
-  integer :: idomain
+  integer,intent(in) :: idomain
   integer, dimension(nspec),intent(inout) :: perm
 
   integer :: num_colors_outer,num_colors_inner
@@ -782,27 +782,11 @@
   call permute_elements_real(gammaxstore,temp_array_real,perm,nspec)
   call permute_elements_real(gammaystore,temp_array_real,perm,nspec)
   call permute_elements_real(gammazstore,temp_array_real,perm,nspec)
+
   ! material parameters
   call permute_elements_real(rhostore,temp_array_real,perm,nspec)
   call permute_elements_real(kappavstore,temp_array_real,perm,nspec)
   deallocate(temp_array_real)
-
-  ! attenuation arrays
-  if (ATTENUATION) then
-    if (ATTENUATION_3D) then
-      allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
-      allocate(temp_array_dble_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
-      call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
-      call permute_elements_dble_sls(tau_e_store,temp_array_dble_sls,perm,nspec)
-      deallocate(temp_array_dble,temp_array_dble_sls)
-    else
-      allocate(temp_array_dble1(1,1,1,nspec))
-      allocate(temp_array_dble_sls1(N_SLS,1,1,1,nspec))
-      call permute_elements_dble1(Qmu_store,temp_array_dble1,perm,nspec)
-      call permute_elements_dble_sls1(tau_e_store,temp_array_dble_sls1,perm,nspec)
-      deallocate(temp_array_dble1,temp_array_dble_sls1)
-    endif
-  endif
 
   ! boundary surfaces
   ! note: only arrays pointing to ispec will have to be permutated since value of ispec will be different
@@ -844,11 +828,28 @@
       ibelm_top(iface) = new_ispec
   enddo
 
+  ! attenuation arrays
+  if (ATTENUATION) then
+    if (ATTENUATION_3D) then
+      allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
+      allocate(temp_array_dble_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
+      call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
+      call permute_elements_dble_sls(tau_e_store,temp_array_dble_sls,perm,nspec)
+      deallocate(temp_array_dble,temp_array_dble_sls)
+    else
+      allocate(temp_array_dble1(1,1,1,nspec))
+      allocate(temp_array_dble_sls1(N_SLS,1,1,1,nspec))
+      call permute_elements_dble1(Qmu_store,temp_array_dble1,perm,nspec)
+      call permute_elements_dble_sls1(tau_e_store,temp_array_dble_sls1,perm,nspec)
+      deallocate(temp_array_dble1,temp_array_dble_sls1)
+    endif
+  endif
 
   select case( idomain )
   case( IREGION_CRUST_MANTLE )
-    ! region
-    nspec = NSPEC_CRUST_MANTLE
+    ! checks number of elements
+    if( nspec /= NSPEC_CRUST_MANTLE ) &
+      call exit_MPI(myrank,'error in permutation nspec should be NSPEC_CRUST_MANTLE')
 
     allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 
@@ -934,8 +935,9 @@
     endif
 
   case( IREGION_OUTER_CORE )
-    ! region
-    nspec = NSPEC_OUTER_CORE
+    ! checks number of elements
+    if( nspec /= NSPEC_OUTER_CORE ) &
+      call exit_MPI(myrank,'error in permutation nspec should be NSPEC_OUTER_CORE')
 
     if(ABSORBING_CONDITIONS .and. NCHUNKS /= 6 ) then
       allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
@@ -946,8 +948,9 @@
     endif
 
   case( IREGION_INNER_CORE )
-    ! region
-    nspec = NSPEC_INNER_CORE
+    ! checks number of elements
+    if( nspec /= NSPEC_INNER_CORE ) &
+      call exit_MPI(myrank,'error in permutation nspec should be NSPEC_INNER_CORE')
 
     allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 

@@ -560,10 +560,6 @@
 !!
 !!-----------------------------------------------------------
 
-! QRFSI12 constants
-  integer,parameter :: NKQ=8,MAXL_Q=12
-  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
-
 ! The meaningful range of Zhao et al. (1994) model is as follows:
 !        latitude : 32 - 45 N
 !        longitude: 130-145 E

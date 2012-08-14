@@ -42,46 +42,45 @@
 
   include "constants.h"
 
-  integer nspec,myrank
-  integer NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+  integer :: nspec,myrank
+  integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
 
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-  integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
-  integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
-  integer ibelm_bottom(NSPEC2D_BOTTOM),ibelm_top(NSPEC2D_TOP)
+  integer :: nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
+  integer :: ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
+  integer :: ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
+  integer :: ibelm_bottom(NSPEC2D_BOTTOM)
+  integer :: ibelm_top(NSPEC2D_TOP)
 
-  logical iboun(6,nspec)
+  logical :: iboun(6,nspec)
 
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  real(kind=CUSTOM_REAL) jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM)
-  real(kind=CUSTOM_REAL) jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP)
+  real(kind=CUSTOM_REAL) :: jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) :: jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) :: jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) :: jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) :: jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM)
+  real(kind=CUSTOM_REAL) :: jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP)
 
-  real(kind=CUSTOM_REAL) normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-  real(kind=CUSTOM_REAL) normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-  real(kind=CUSTOM_REAL) normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
-  real(kind=CUSTOM_REAL) normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
+  real(kind=CUSTOM_REAL) :: normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) :: normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) :: normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) :: normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) :: normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
+  real(kind=CUSTOM_REAL) :: normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
 
-  double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ)
-  double precision dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
-  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
-  double precision dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision :: dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ)
+  double precision :: dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
+  double precision :: dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision :: dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
 ! global element numbering
-  integer ispec
+  integer :: ispec
 
 ! counters to keep track of number of elements on each of the boundaries
-  integer ispecb1,ispecb2,ispecb3,ispecb4,ispecb5,ispecb6
+  integer :: ispecb1,ispecb2,ispecb3,ispecb4,ispecb5,ispecb6
 
-  double precision xelm(NGNOD2D),yelm(NGNOD2D),zelm(NGNOD2D)
+  double precision :: xelm(NGNOD2D),yelm(NGNOD2D),zelm(NGNOD2D)
 
 ! Parameters used to calculate 2D Jacobian based upon 25 GLL points
   integer:: i,j,k
@@ -421,7 +420,7 @@
           zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
 
           call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
-                    jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
+                                  jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
       else
           ! get 25 GLL points for zmax
           do j = 1,NGLLY
@@ -433,8 +432,8 @@
           end do
           ! recalcuate jacobian according to 2D gll points
           call calc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D,&
-                  xigll,yigll,jacobian2D_top,normal_top,&
-                  NGLLX,NGLLY,NSPEC2D_TOP)
+                                  xigll,yigll,jacobian2D_top,normal_top,&
+                                  NGLLX,NGLLY,NSPEC2D_TOP)
 
       end if
 
@@ -461,7 +460,8 @@
 
 ! -------------------------------------------------------
 
-  subroutine compute_jacobian_2D(myrank,ispecb,xelm,yelm,zelm,dershape2D,jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
+  subroutine compute_jacobian_2D(myrank,ispecb,xelm,yelm,zelm,dershape2D, &
+                                jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
   implicit none
 
@@ -506,7 +506,7 @@
     unz=xxi*yeta-xeta*yxi
     jacobian=dsqrt(unx**2+uny**2+unz**2)
 
-    if(jacobian == ZERO) call exit_MPI(myrank,'2D Jacobian undefined')
+    if(jacobian <= ZERO) call exit_MPI(myrank,'2D Jacobian undefined')
 
     !   normalize normal vector and store surface jacobian
 
