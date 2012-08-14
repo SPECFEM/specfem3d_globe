@@ -225,6 +225,7 @@
   endif
 
   !   ymax
+  
   if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_outer_core > 0)  then
     call read_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,NSTEP-it+1)
   endif
@@ -271,6 +272,8 @@
     call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)
   endif
 
+  ! zmin
+  
   ! for surface elements exactly on the ICB
   if (SIMULATION_TYPE == 3 .and. nspec2D_zmin_outer_core > 0)  then
     call read_abs(8,absorb_zmin_outer_core,reclen_zmin,NSTEP-it+1)

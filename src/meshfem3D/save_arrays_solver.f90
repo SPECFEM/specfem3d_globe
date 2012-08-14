@@ -33,7 +33,7 @@
 
   use meshfem3D_models_par,only: &
     OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,ATTENUATION
+    ANISOTROPIC_INNER_CORE,ATTENUATION,ATTENUATION_3D
 
   use meshfem3D_par,only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES
@@ -73,19 +73,15 @@
   integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
 
   ! local parameters
-  integer i,j,k,ispec,iglob,nspec1,nglob1,ier
-  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2
+  integer :: i,j,k,ispec,iglob,ier
 
   ! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt', &
         status='unknown',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening array_dims file')
-
-  nspec1 = nspec
-  nglob1 = nglob
-
-  write(27,*) nspec1
-  write(27,*) nglob1
+  
+  write(27,*) nspec
+  write(27,*) nglob
   close(27)
 
   ! mesh parameters
@@ -105,15 +101,6 @@
 
   write(27) rhostore
   write(27) kappavstore
-
-  if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-     open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-     if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
-
-     write(29) dvpstore
-     close(29)
-  endif
 
   ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
@@ -309,36 +296,119 @@
   close(27)
 
   if(ATTENUATION) then
-     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
+    open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
-     if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
 
-     write(27) tau_s
-     write(27) tau_e_store
-     write(27) Qmu_store
-     write(27) T_c_source
-     close(27)
+    write(27) tau_s
+    write(27) tau_e_store
+    write(27) Qmu_store
+    write(27) T_c_source
+    close(27)
   endif
+
+  if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    open(unit=27,file=prname(1:len_trim(prname))//'dvp.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
+
+    write(27) dvpstore
+    close(27)
+  endif
+
 
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
-    scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
-    scaleval2 = sngl( RHOAV/1000.0d0 )
+    ! outputs model files in binary format
+    call save_arrays_solver_meshfiles(myrank,nspec)    
+  endif
 
-    ! isotropic model
-    ! vp
-    open(unit=27,file=prname(1:len_trim(prname))//'vp.bin', &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vp.bin file')
+  end subroutine save_arrays_solver
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_arrays_solver_meshfiles(myrank,nspec)
+
+! outputs model files in binary format
+
+  use constants
+
+  use meshfem3D_models_par,only: &
+    TRANSVERSE_ISOTROPY,ATTENUATION,ATTENUATION_3D
+
+  use create_regions_mesh_par2,only: &
+    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    Qmu_store, &    
+    prname
+
+  implicit none
+
+  integer :: myrank
+  integer :: nspec
+
+  ! local parameters
+  integer :: i,j,k,ispec,ier
+  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
+  
+  ! scaling factors to re-dimensionalize units
+  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
+  scaleval2 = sngl( RHOAV/1000.0d0 )
+
+  ! isotropic model
+  ! vp
+  open(unit=27,file=prname(1:len_trim(prname))//'vp.bin', &
+       status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening vp.bin file')
+
+  write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
+  close(27)
+  ! vs
+  open(unit=27,file=prname(1:len_trim(prname))//'vs.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening vs.bin file')
+
+  write(27) sqrt( muvstore/rhostore )*scaleval1
+  close(27)
+  ! rho
+  open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+
+  write(27) rhostore*scaleval2
+  close(27)
+
+  ! transverse isotropic model
+  if( TRANSVERSE_ISOTROPY ) then
+    ! vpv
+    open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening vpv.bin file')
 
     write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
     close(27)
-    ! vs
-    open(unit=27,file=prname(1:len_trim(prname))//'vs.bin', &
+    ! vph
+    open(unit=27,file=prname(1:len_trim(prname))//'vph.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vs.bin file')
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening vph.bin file')
+
+    write(27) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
+    close(27)
+    ! vsv
+    open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening vsv.bin file')
 
     write(27) sqrt( muvstore/rhostore )*scaleval1
+    close(27)
+    ! vsh
+    open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening vsh.bin file')
+
+    write(27) sqrt( muhstore/rhostore )*scaleval1
     close(27)
     ! rho
     open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
@@ -347,56 +417,58 @@
 
     write(27) rhostore*scaleval2
     close(27)
+    ! eta
+    open(unit=27,file=prname(1:len_trim(prname))//'eta.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening eta.bin file')
 
-    ! transverse isotropic model
-    if( TRANSVERSE_ISOTROPY ) then
-      ! vpv
-      open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening vpv.bin file')
-
-      write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
-      close(27)
-      ! vph
-      open(unit=27,file=prname(1:len_trim(prname))//'vph.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening vph.bin file')
-
-      write(27) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
-      close(27)
-      ! vsv
-      open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening vsv.bin file')
-
-      write(27) sqrt( muvstore/rhostore )*scaleval1
-      close(27)
-      ! vsh
-      open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening vsh.bin file')
-
-      write(27) sqrt( muhstore/rhostore )*scaleval1
-      close(27)
-      ! rho
-      open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
-
-      write(27) rhostore*scaleval2
-      close(27)
-      ! eta
-      open(unit=27,file=prname(1:len_trim(prname))//'eta.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening eta.bin file')
-
-      write(27) eta_anisostore
-      close(27)
+    write(27) eta_anisostore
+    close(27)
+  endif ! TRANSVERSE_ISOTROPY
+  
+  ! shear attenuation
+  if( ATTENUATION ) then
+    ! saves Qmu_store to full custom_real array
+    ! uses temporary array
+    allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))            
+    if (ATTENUATION_3D) then
+      ! attenuation arrays are fully 3D
+      if(CUSTOM_REAL == SIZE_REAL) then
+        temp_store(:,:,:,:) = sngl(Qmu_store(:,:,:,:))
+      else
+        temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
+      endif
+    else
+      ! attenuation array dimensions: Q_mustore(1,1,1,nspec)
+      do ispec = 1,nspec
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+              ! distinguish between single and double precision for reals
+              if(CUSTOM_REAL == SIZE_REAL) then
+                temp_store(i,j,k,ispec) = sngl(Qmu_store(1,1,1,ispec))
+              else
+                temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
+              endif
+            enddo
+          enddo
+        enddo
+      enddo        
     endif
-  endif ! SAVE_MESH_FILES
 
-  end subroutine save_arrays_solver
+    ! Qmu
+    open(unit=27,file=prname(1:len_trim(prname))//'qmu.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening qmu.bin file')
 
+    write(27) temp_store
+    close(27)
+
+    ! frees temporary memory
+    deallocate(temp_store)      
+  endif ! ATTENUATION    
+
+  end subroutine save_arrays_solver_meshfiles
 !
 !-------------------------------------------------------------------------------------------------
 !

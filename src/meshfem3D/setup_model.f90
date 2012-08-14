@@ -183,4 +183,7 @@
   write(IMAIN,*)
   write(IMAIN,*) 'Central cube is at a radius of ',R_CENTRAL_CUBE/1000.d0,' km'
 
+  ! flushes I/O buffer
+  call flush_IMAIN()
+  
   end subroutine sm_output_info

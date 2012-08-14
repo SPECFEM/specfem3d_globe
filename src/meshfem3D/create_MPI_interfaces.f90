@@ -167,14 +167,6 @@
 
   case( IREGION_INNER_CORE )
     ! inner core
-    allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
-            ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX_IC))
-    allocate(ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
-            ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX_IC))
-    allocate(ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC))
-    allocate(ibelm_top_inner_core(NSPEC2D_TOP_IC))
-
-
     allocate(iboolcorner_inner_core(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC), &
             iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC))
@@ -290,6 +282,12 @@
 
   ! local parameters
   integer :: ier
+  ! for central cube buffers
+  integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+            nspec2D_ymin_inner_core,nspec2D_ymax_inner_core  
+  integer, dimension(:),allocatable :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
+  integer, dimension(:),allocatable :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
+  integer, dimension(:),allocatable :: ibelm_top_inner_core
 
   ! debug file output
   character(len=150) :: filename
@@ -402,19 +400,6 @@
                             iboolfaces_inner_core,npoin2D_faces_inner_core, &
                             iboolcorner_inner_core)
 
-    ! gets coupling arrays for inner core
-    nspec2D_xmin_inner_core = nspec2D_xmin
-    nspec2D_xmax_inner_core = nspec2D_xmax
-    nspec2D_ymin_inner_core = nspec2D_ymin
-    nspec2D_ymax_inner_core = nspec2D_ymax
-
-    ibelm_xmin_inner_core(:) = ibelm_xmin(:)
-    ibelm_xmax_inner_core(:) = ibelm_xmax(:)
-    ibelm_ymin_inner_core(:) = ibelm_ymin(:)
-    ibelm_ymax_inner_core(:) = ibelm_ymax(:)
-    ibelm_bottom_inner_core(:) = ibelm_bottom(:)
-    ibelm_top_inner_core(:) = ibelm_top(:)
-
     ! central cube buffers
     if(INCLUDE_CENTRAL_CUBE) then
 
@@ -423,6 +408,29 @@
         write(IMAIN,*) 'including central cube'
       endif
       call sync_all()
+
+      ! allocates boundary indexing arrays for central cube
+      allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
+              ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
+              ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
+              ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
+              ibelm_top_inner_core(NSPEC2D_TOP_IC), &
+              ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC), &
+              stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating central cube index arrays')
+      
+      ! gets coupling arrays for inner core
+      nspec2D_xmin_inner_core = nspec2D_xmin
+      nspec2D_xmax_inner_core = nspec2D_xmax
+      nspec2D_ymin_inner_core = nspec2D_ymin
+      nspec2D_ymax_inner_core = nspec2D_ymax
+
+      ibelm_xmin_inner_core(:) = ibelm_xmin(:)
+      ibelm_xmax_inner_core(:) = ibelm_xmax(:)
+      ibelm_ymin_inner_core(:) = ibelm_ymin(:)
+      ibelm_ymax_inner_core(:) = ibelm_ymax(:)
+      ibelm_bottom_inner_core(:) = ibelm_bottom(:)
+      ibelm_top_inner_core(:) = ibelm_top(:)
 
       ! compute number of messages to expect in cube as well as their size
       call comp_central_cube_buffer_size(iproc_xi,iproc_eta,ichunk, &
@@ -462,6 +470,11 @@
                  buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
       if(myrank == 0) write(IMAIN,*) ''
+
+      ! frees memory
+      deallocate(ibelm_xmin_inner_core,ibelm_xmax_inner_core)
+      deallocate(ibelm_ymin_inner_core,ibelm_ymax_inner_core)
+      deallocate(ibelm_top_inner_core)
 
     else
 

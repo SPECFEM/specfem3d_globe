@@ -57,24 +57,21 @@
   real(kind=4),dimension(:,:),allocatable :: ylmcof
   real(kind=4),dimension(:),allocatable :: wk1,wk2,wk3
 
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-  integer itpspl(maxcoe,maxhpa)
+  integer, dimension(maxhpa) :: lmxhpa,itypehpa,numcoe,nconpt
+  
+  integer,dimension(:,:),allocatable :: itpspl,iconpt
+  integer,dimension(:),allocatable :: ihpakern,ivarkern
 
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
+  integer :: iver
+  integer :: numker
+  integer :: numhpa,numcof
+  integer :: ihpa,lmax,nylm
 
-  character(len=80) kerstr
-  character(len=80) refmdl
-  character(len=40) varstr(maxker)
-  character(len=80) hsplfl(maxhpa)
-  character(len=40) dskker(maxker)
+  character(len=80) :: kerstr
+  character(len=80) :: refmdl
+  character(len=40) :: varstr(maxker)
+  character(len=80) :: hsplfl(maxhpa)
+  character(len=40) :: dskker(maxker)
 
   end module model_s362ani_par
 
@@ -110,6 +107,10 @@
           wk1(maxl+1), &
           wk2(maxl+1), &
           wk3(maxl+1), &
+          itpspl(maxcoe,maxhpa), &
+          iconpt(maxver,maxhpa), &
+          ihpakern(maxker), &
+          ivarkern(maxker), &
           stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating s362ani arrays')
 

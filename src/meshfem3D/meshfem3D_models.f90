@@ -160,12 +160,12 @@
     ! 3D attenuation
     if( ATTENUATION_3D) then
       ! Colleen's model defined originally between 24.4km and 650km
-      call model_atten3D_QRFSI12_broadcast(myrank,QRFSI12_Q)
+      call model_atten3D_QRFSI12_broadcast(myrank)
     else
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(REFERENCE_1D_MODEL, RICB, RCMB, &
-              R670, R220, R80,AM_V,AM_S,AS_V)
+      call model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
+                                  R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
     endif
 
   endif
@@ -605,7 +605,7 @@
 !         ! Get the value of Qmu (Attenuation) dependedent on
 !         ! the radius (r_prem) and idoubling flag
 !         !call model_attenuation_1D_PREM(r_prem, Qmu, idoubling)
-!          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
+!          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,idoubling)
 !          ! Get tau_e from tau_s and Qmu
 !         call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
 !       endif
@@ -826,16 +826,16 @@
   double precision moho
 
   ! attenuation values
-  double precision Qkappa,Qmu
+  double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_s, tau_e
-  double precision  T_c_source
+  double precision  :: T_c_source
 
   logical elem_in_crust
 
   ! local parameters
   double precision r_dummy,theta,phi,theta_degrees,phi_degrees
-  double precision, parameter :: rmoho_prem = 6371.0-24.4
   double precision r_used
+  double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
 
   ! initializes
   tau_e(:)   = 0.0d0
@@ -872,7 +872,7 @@
     endif ! CRUSTAL
 
     ! gets value according to radius/theta/phi location and idoubling flag
-    call model_atten3D_QRFSI12(r_used,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
+    call model_atten3D_QRFSI12(r_used,theta_degrees,phi_degrees,Qmu,idoubling)
 
   else
 

@@ -71,17 +71,6 @@
   type (model_attenuation_variables) AM_V
 ! model_attenuation_variables
 
-! model_atten3D_QRFSI12_variables
-  type model_atten3D_QRFSI12_variables
-    sequence
-    double precision dqmu(NKQ,NSQ)
-    double precision spknt(NKQ)
-    double precision refdepth(NDEPTHS_REFQ)
-    double precision refqmu(NDEPTHS_REFQ)
-  end type model_atten3D_QRFSI12_variables
-  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
-! model_atten3D_QRFSI12_variables
-
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
     sequence
@@ -394,6 +383,7 @@
     ibelm_670_top,ibelm_670_bot
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho,normal_400,normal_670
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_moho,jacobian2D_400,jacobian2D_670
+
   integer :: ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
     ispec2D_670_top,ispec2D_670_bot
   double precision :: r_moho,r_400,r_670
@@ -584,13 +574,8 @@
   integer :: nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
     npoin2D_cube_from_slices,receiver_cube_from_slices
 
-  integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-            nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
-
-  integer, dimension(:),allocatable :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
-  integer, dimension(:),allocatable :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
+  ! bottom inner core / top central cube
   integer, dimension(:),allocatable :: ibelm_bottom_inner_core
-  integer, dimension(:),allocatable :: ibelm_top_inner_core
 
   integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_inner_core
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
