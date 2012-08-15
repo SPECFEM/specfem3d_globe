@@ -601,13 +601,9 @@ void FC_FUNC_(compute_kernels_strgth_noise_cu,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
-  // copies surface buffer to GPU
-  cudaMemcpy(mp->d_noise_surface_movie,h_noise_surface_movie,
-             NDIM*NGLL2*(mp->nspec_top)*sizeof(realw),cudaMemcpyHostToDevice);
-
-  int num_blocks_x = mp->nspec_top;
   realw deltat = *deltat_f;
 
+  int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -617,6 +613,12 @@ void FC_FUNC_(compute_kernels_strgth_noise_cu,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLL2,1,1);
 
+  // copies surface buffer to GPU
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_noise_surface_movie,h_noise_surface_movie,
+                                     NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),
+                                     cudaMemcpyHostToDevice),90900);
+
+  // calculates noise strength kernel
   compute_kernels_strength_noise_cuda_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
                                                                mp->d_ibelm_top_crust_mantle,
                                                                mp->d_ibool_crust_mantle,
@@ -626,7 +628,7 @@ void FC_FUNC_(compute_kernels_strgth_noise_cu,
                                                                mp->d_normal_z_noise,
                                                                mp->d_Sigma_kl,
                                                                deltat,
-                                                               mp->nspec_top);
+                                                               mp->nspec2D_top_crust_mantle);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_kernels_strength_noise_cuda_kernel");

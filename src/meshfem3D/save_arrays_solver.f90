@@ -79,7 +79,7 @@
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt', &
         status='unknown',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening array_dims file')
-  
+
   write(27,*) nspec
   write(27,*) nglob
   close(27)
@@ -320,7 +320,7 @@
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
     ! outputs model files in binary format
-    call save_arrays_solver_meshfiles(myrank,nspec)    
+    call save_arrays_solver_meshfiles(myrank,nspec)
   endif
 
   end subroutine save_arrays_solver
@@ -340,7 +340,7 @@
 
   use create_regions_mesh_par2,only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    Qmu_store, &    
+    Qmu_store, &
     prname
 
   implicit none
@@ -352,7 +352,7 @@
   integer :: i,j,k,ispec,ier
   real(kind=CUSTOM_REAL) :: scaleval1,scaleval2
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
-  
+
   ! scaling factors to re-dimensionalize units
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
@@ -425,12 +425,12 @@
     write(27) eta_anisostore
     close(27)
   endif ! TRANSVERSE_ISOTROPY
-  
+
   ! shear attenuation
   if( ATTENUATION ) then
     ! saves Qmu_store to full custom_real array
     ! uses temporary array
-    allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))            
+    allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
     if (ATTENUATION_3D) then
       ! attenuation arrays are fully 3D
       if(CUSTOM_REAL == SIZE_REAL) then
@@ -453,7 +453,7 @@
             enddo
           enddo
         enddo
-      enddo        
+      enddo
     endif
 
     ! Qmu
@@ -465,8 +465,8 @@
     close(27)
 
     ! frees temporary memory
-    deallocate(temp_store)      
-  endif ! ATTENUATION    
+    deallocate(temp_store)
+  endif ! ATTENUATION
 
   end subroutine save_arrays_solver_meshfiles
 !

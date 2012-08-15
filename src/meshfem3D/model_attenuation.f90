@@ -230,7 +230,7 @@
   integer :: myrank,REFERENCE_1D_MODEL
   double precision :: RICB, RCMB, R670, R220, R80
   logical :: CRUSTAL
-  
+
   ! local parameters
   double precision :: tau_e(N_SLS)
   double precision :: Qb
@@ -248,21 +248,21 @@
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
     AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-    ! redefines "pure" 1D model without crustal modification 
+    ! redefines "pure" 1D model without crustal modification
     call define_model_ak135(.FALSE.)
     AM_V%Qn = NR_AK135
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-    ! redefines "pure" 1D model without crustal modification 
+    ! redefines "pure" 1D model without crustal modification
     call define_model_1066a(.FALSE.)
     AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-    ! redefines "pure" 1D model without crustal modification 
+    ! redefines "pure" 1D model without crustal modification
     call define_model_1dref(.FALSE.)
     AM_V%Qn = NR_REF
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
     AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-    ! redefines "pure" 1D model without crustal modification 
+    ! redefines "pure" 1D model without crustal modification
     call define_model_sea1d(.FALSE.)
     AM_V%Qn = NR_SEA1D
   else
@@ -308,20 +308,20 @@
   ! re-defines 1D models with crustal modification if necessary
   if( CRUSTAL ) then
     if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-      ! redefines 1D model with crustal modification 
+      ! redefines 1D model with crustal modification
       call define_model_ak135(CRUSTAL)
     else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-      ! redefines 1D model with crustal modification 
+      ! redefines 1D model with crustal modification
       call define_model_1066a(CRUSTAL)
     else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-      ! redefines 1D model with crustal modification 
+      ! redefines 1D model with crustal modification
       call define_model_1dref(CRUSTAL)
     else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-      ! redefines 1D model with crustal modification 
+      ! redefines 1D model with crustal modification
       call define_model_sea1d(CRUSTAL)
     endif
   endif
-  
+
   end subroutine model_attenuation_setup
 
 !

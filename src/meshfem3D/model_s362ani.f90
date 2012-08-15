@@ -58,7 +58,7 @@
   real(kind=4),dimension(:),allocatable :: wk1,wk2,wk3
 
   integer, dimension(maxhpa) :: lmxhpa,itypehpa,numcoe,nconpt
-  
+
   integer,dimension(:,:),allocatable :: itpspl,iconpt
   integer,dimension(:),allocatable :: ihpakern,ivarkern
 

@@ -154,7 +154,7 @@ TRACE("noise_transfer_surface_to_host");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
 
-  int num_blocks_x = mp->nspec_top;
+  int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -164,14 +164,14 @@ TRACE("noise_transfer_surface_to_host");
   dim3 threads(NGLL2,1,1);
 
   noise_transfer_surface_to_host_kernel<<<grid,threads>>>(mp->d_ibelm_top_crust_mantle,
-                                                          mp->nspec_top,
+                                                          mp->nspec2D_top_crust_mantle,
                                                           mp->d_ibool_crust_mantle,
                                                           mp->d_displ_crust_mantle,
                                                           mp->d_noise_surface_movie);
 
   // copies noise array to CPU
   cudaMemcpy(h_noise_surface_movie,mp->d_noise_surface_movie,
-             NDIM*NGLL2*(mp->nspec_top)*sizeof(realw),cudaMemcpyDeviceToHost);
+             NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),cudaMemcpyDeviceToHost);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("noise_transfer_surface_to_host");
@@ -304,7 +304,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
-  int num_blocks_x = mp->nspec_top;
+  int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -315,7 +315,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
 
   // copies surface movie to GPU
   cudaMemcpy(mp->d_noise_surface_movie,h_noise_surface_movie,
-             NDIM*NGLL2*(mp->nspec_top)*sizeof(realw),cudaMemcpyHostToDevice);
+             NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice);
 
   switch(mp->noise_tomography) {
   case 2:
@@ -323,7 +323,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
     noise_add_surface_movie_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                           mp->d_ibool_crust_mantle,
                                                           mp->d_ibelm_top_crust_mantle,
-                                                          mp->nspec_top,
+                                                          mp->nspec2D_top_crust_mantle,
                                                           mp->d_noise_surface_movie,
                                                           mp->d_normal_x_noise,
                                                           mp->d_normal_y_noise,
@@ -338,7 +338,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
     noise_add_surface_movie_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                           mp->d_ibool_crust_mantle,
                                                           mp->d_ibelm_top_crust_mantle,
-                                                          mp->nspec_top,
+                                                          mp->nspec2D_top_crust_mantle,
                                                           mp->d_noise_surface_movie,
                                                           mp->d_normal_x_noise,
                                                           mp->d_normal_y_noise,

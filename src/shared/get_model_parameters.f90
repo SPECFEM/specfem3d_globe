@@ -158,19 +158,35 @@
 !
 !---
 
+  ! default values
 
   ! uses PREM as the 1D reference model by default
-  ! uses no mantle heterogeneities by default
-  ! uses no 3D model by default
+  REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+
+  ! uses no anisotropic 3D model by default
   ANISOTROPIC_3D_MANTLE = .false.
-  ATTENUATION_3D = .false.
+
+  ! attenuation
+  ! note: to save memory, one can set ATTENUATION_3D to .false. which
+  !          will create attenuation arrays storing only 1 point per element
+  !          (otherwise, 3D attenuation arrays will be defined for all GLL points)
+  if( USE_3D_ATTENUATION ) then
+    ATTENUATION_3D = .true.
+  else
+    ATTENUATION_3D = .false.
+  endif
+
+  ! no crustal mesh stretching and 3D crust models by default
   CASE_3D = .false.
   CRUSTAL = .false.
-  HETEROGEN_3D_MANTLE = .false.
-  HONOR_1D_SPHERICAL_MOHO = .false.
-  ISOTROPIC_3D_MANTLE = .false.
   ONE_CRUST = .false.
-  REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+
+  ! uses no 3D heterogeneity mantle by default
+  HETEROGEN_3D_MANTLE = .false.
+  ISOTROPIC_3D_MANTLE = .false.
+  HONOR_1D_SPHERICAL_MOHO = .false.
+
+  ! no 3D model by default
   THREE_D_MODEL = 0
   TRANSVERSE_ISOTROPY = .false.
 

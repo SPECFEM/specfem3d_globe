@@ -340,7 +340,8 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          realw* d_minus_deriv_gravity_table,
                                          realw* d_density_table,
                                          realw* wgll_cube,
-                                         int NSPEC_INNER_CORE_STRAIN_ONLY){
+                                         int NSPEC_INNER_CORE_STRAIN_ONLY,
+                                         int NSPEC_INNER_CORE){
 
   /* int bx = blockIdx.y*blockDim.x+blockIdx.x; //possible bug in original code*/
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -1010,16 +1011,24 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
     //mesh coloring
     if( use_mesh_coloring_gpu ){
 
-     // no atomic operation needed, colors don't share global points between elements
+      if( NSPEC_INNER_CORE > COLORING_MIN_NSPEC_INNER_CORE ){
+        // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
-      d_accel[iglob*3]     = tex1Dfetch(d_accel_ic_tex, iglob*3) + sum_terms1;
-      d_accel[iglob*3 + 1] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 1) + sum_terms2;
-      d_accel[iglob*3 + 2] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 2) + sum_terms3;
+        d_accel[iglob*3]     = tex1Dfetch(d_accel_ic_tex, iglob*3) + sum_terms1;
+        d_accel[iglob*3 + 1] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 1) + sum_terms2;
+        d_accel[iglob*3 + 2] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 2) + sum_terms3;
 #else
-      d_accel[iglob*3]     += sum_terms1;
-      d_accel[iglob*3 + 1] += sum_terms2;
-      d_accel[iglob*3 + 2] += sum_terms3;
+        d_accel[iglob*3]     += sum_terms1;
+        d_accel[iglob*3 + 1] += sum_terms2;
+        d_accel[iglob*3 + 2] += sum_terms3;
 #endif // USE_TEXTURES_FIELDS
+      }else{
+        // poor element count, only use 1 color per inner/outer run
+        // forces atomic operations
+        atomicAdd(&d_accel[iglob*3], sum_terms1);
+        atomicAdd(&d_accel[iglob*3+1], sum_terms2);
+        atomicAdd(&d_accel[iglob*3+2], sum_terms3);
+      }
 
     }else{
 
@@ -1095,8 +1104,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                          realw* d_b_R_xz,
                          realw* d_b_R_yz,
                          realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                         realw* d_c33store,realw* d_c44store
-                         ){
+                         realw* d_c33store,realw* d_c44store){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before kernel Kernel_2_inner_core");
@@ -1168,7 +1176,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                              mp->d_minus_deriv_gravity_table,
                                              mp->d_density_table,
                                              mp->d_wgll_cube,
-                                             mp->NSPEC_INNER_CORE_STRAIN_ONLY);
+                                             mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                             mp->NSPEC_INNER_CORE);
 
 
   if(mp->simulation_type == 3) {
@@ -1216,7 +1225,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->d_minus_deriv_gravity_table,
                                                 mp->d_density_table,
                                                 mp->d_wgll_cube,
-                                                mp->NSPEC_INNER_CORE_STRAIN_ONLY);
+                                                mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                                mp->NSPEC_INNER_CORE);
   }
 
   // cudaEventRecord( stop, 0 );
@@ -1270,51 +1280,102 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
     int nb_colors,nb_blocks_to_compute;
     int istart;
     int color_offset,color_offset_nonpadded;
-    int color_offset_nonpadded_att2,color_offset_nonpadded_att3;
+    int color_offset_nonpadded_att1,color_offset_nonpadded_att2,color_offset_nonpadded_att3;
     int color_offset_nonpadded_strain;
     int color_offset_ispec;
 
     // sets up color loop
-    if( *iphase == 1 ){
-      // outer elements
-      nb_colors = mp->num_colors_outer_inner_core;
-      istart = 0;
+    if( mp->NSPEC_INNER_CORE > COLORING_MIN_NSPEC_INNER_CORE ){
+      if( *iphase == 1 ){
+        // outer elements
+        nb_colors = mp->num_colors_outer_inner_core;
+        istart = 0;
 
-      // array offsets
-      color_offset = 0;
-      color_offset_nonpadded = 0;
-      color_offset_nonpadded_att2 = 0;
-      color_offset_nonpadded_att3 = 0;
-      color_offset_nonpadded_strain = 0;
-      color_offset_ispec = 0;
-    }else{
-      // inner elements (start after outer elements)
-      nb_colors = mp->num_colors_outer_inner_core + mp->num_colors_inner_inner_core;
-      istart = mp->num_colors_outer_inner_core;
-
-      // array offsets
-      color_offset = (mp->nspec_outer_inner_core) * NGLL3_PADDED;
-      color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
-      // for factor_common array
-      if( mp->attenuation_3D ){
-        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3;
-        color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+        // array offsets
+        color_offset = 0;
+        color_offset_nonpadded = 0;
+        color_offset_nonpadded_att1 = 0;
+        color_offset_nonpadded_att2 = 0;
+        color_offset_nonpadded_att3 = 0;
+        color_offset_nonpadded_strain = 0;
+        color_offset_ispec = 0;
       }else{
-        color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * 1;
-        color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * 1 * N_SLS;
+        // inner elements (start after outer elements)
+        nb_colors = mp->num_colors_outer_inner_core + mp->num_colors_inner_inner_core;
+        istart = mp->num_colors_outer_inner_core;
+
+        // array offsets
+        color_offset = (mp->nspec_outer_inner_core) * NGLL3_PADDED;
+        color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
+        color_offset_nonpadded_att1 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+        // for factor_common array
+        if( mp->attenuation_3D ){
+          color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3;
+          color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+        }else{
+          color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * 1;
+          color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * 1 * N_SLS;
+        }
+        // for idoubling array
+        color_offset_ispec = mp->nspec_outer_inner_core;
+        // for strain
+        if( ! mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1 ){
+          color_offset_nonpadded_strain = (mp->nspec_outer_inner_core) * NGLL3;
+        }
       }
-      // for idoubling array
-      color_offset_ispec = mp->nspec_outer_inner_core;
-      // for strain
-      if( ! mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1 ){
-        color_offset_nonpadded_strain = (mp->nspec_outer_inner_core) * NGLL3;
+    }else{
+
+      // poor element count, only use 1 color per inner/outer run
+
+      if( *iphase == 1 ){
+        // outer elements
+        nb_colors = 1;
+        istart = 0;
+
+        // array offsets
+        color_offset = 0;
+        color_offset_nonpadded = 0;
+        color_offset_nonpadded_att1 = 0;
+        color_offset_nonpadded_att2 = 0;
+        color_offset_nonpadded_att3 = 0;
+        color_offset_nonpadded_strain = 0;
+        color_offset_ispec = 0;
+      }else{
+        // inner element colors (start after outer elements)
+        nb_colors = 1;
+        istart = 0;
+
+        // array offsets
+        color_offset = (mp->nspec_outer_inner_core) * NGLL3_PADDED;
+        color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
+        color_offset_nonpadded_att1 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+        // for factor_common array
+        if( mp->attenuation_3D ){
+          color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3;
+          color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
+        }else{
+          color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * 1;
+          color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * 1 * N_SLS;
+        }
+        // for idoubling array
+        color_offset_ispec = mp->nspec_outer_inner_core;
+        // for strain
+        if( ! mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1 ){
+          color_offset_nonpadded_strain = (mp->nspec_outer_inner_core) * NGLL3;
+        }
       }
     }
+
 
     // loops over colors
     for(int icolor = istart; icolor < nb_colors; icolor++){
 
-      nb_blocks_to_compute = mp->h_num_elem_colors_inner_core[icolor];
+      // gets number of elements for this color
+      if( mp->NSPEC_INNER_CORE > COLORING_MIN_NSPEC_INNER_CORE ){
+        nb_blocks_to_compute = mp->h_num_elem_colors_inner_core[icolor];
+      }else{
+        nb_blocks_to_compute = num_elements;
+      }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
       // checks
@@ -1348,22 +1409,22 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                           mp->d_eps_trace_over_3_inner_core + color_offset_nonpadded_strain,
                           mp->d_one_minus_sum_beta_inner_core + color_offset_nonpadded_att2,
                           mp->d_factor_common_inner_core + color_offset_nonpadded_att3,
-                          mp->d_R_xx_inner_core + color_offset_nonpadded,
-                          mp->d_R_yy_inner_core + color_offset_nonpadded,
-                          mp->d_R_xy_inner_core + color_offset_nonpadded,
-                          mp->d_R_xz_inner_core + color_offset_nonpadded,
-                          mp->d_R_yz_inner_core + color_offset_nonpadded,
+                          mp->d_R_xx_inner_core + color_offset_nonpadded_att1,
+                          mp->d_R_yy_inner_core + color_offset_nonpadded_att1,
+                          mp->d_R_xy_inner_core + color_offset_nonpadded_att1,
+                          mp->d_R_xz_inner_core + color_offset_nonpadded_att1,
+                          mp->d_R_yz_inner_core + color_offset_nonpadded_att1,
                           mp->d_b_epsilondev_xx_inner_core + color_offset_nonpadded,
                           mp->d_b_epsilondev_yy_inner_core + color_offset_nonpadded,
                           mp->d_b_epsilondev_xy_inner_core + color_offset_nonpadded,
                           mp->d_b_epsilondev_xz_inner_core + color_offset_nonpadded,
                           mp->d_b_epsilondev_yz_inner_core + color_offset_nonpadded,
                           mp->d_b_eps_trace_over_3_inner_core + color_offset_nonpadded,
-                          mp->d_b_R_xx_inner_core + color_offset_nonpadded,
-                          mp->d_b_R_yy_inner_core + color_offset_nonpadded,
-                          mp->d_b_R_xy_inner_core + color_offset_nonpadded,
-                          mp->d_b_R_xz_inner_core + color_offset_nonpadded,
-                          mp->d_b_R_yz_inner_core + color_offset_nonpadded,
+                          mp->d_b_R_xx_inner_core + color_offset_nonpadded_att1,
+                          mp->d_b_R_yy_inner_core + color_offset_nonpadded_att1,
+                          mp->d_b_R_xy_inner_core + color_offset_nonpadded_att1,
+                          mp->d_b_R_xz_inner_core + color_offset_nonpadded_att1,
+                          mp->d_b_R_yz_inner_core + color_offset_nonpadded_att1,
                           mp->d_c11store_inner_core + color_offset,
                           mp->d_c12store_inner_core + color_offset,
                           mp->d_c13store_inner_core + color_offset,
@@ -1375,6 +1436,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       color_offset += nb_blocks_to_compute * NGLL3_PADDED;
       // for no-aligned arrays
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
+      color_offset_nonpadded_att1 += nb_blocks_to_compute * NGLL3 * N_SLS;
       // for factor_common array
       if( mp->attenuation_3D ){
         color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3;

@@ -52,12 +52,12 @@
   ! QRFSI12 constants
   integer,parameter :: NKQ=8,MAXL_Q=12
   integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
-  
+
   ! model_atten3D_QRFSI12_variables
   double precision,dimension(:,:),allocatable :: QRFSI12_Q_dqmu
   double precision,dimension(:),allocatable :: QRFSI12_Q_spknt
   double precision,dimension(:),allocatable :: QRFSI12_Q_refdepth,QRFSI12_Q_refqmu
-  
+
   end module model_atten3D_QRFSI12_par
 
 !
@@ -69,7 +69,7 @@
 ! standard routine to setup model
 
   use model_atten3D_QRFSI12_par
-  
+
   implicit none
 
   include "constants.h"
@@ -77,7 +77,7 @@
   include 'mpif.h'
 
   integer :: myrank
-  
+
   ! local parameters
   integer :: ier
 
@@ -129,7 +129,7 @@
 ! get the dq model coefficients
   open(unit=10,file=QRFSI12,status='old',action='read',iostat=ier)
   if( ier /= 0 ) call exit_MPI(0,'error opening model file QRFSI12.dat')
-  
+
   do k=1,NKQ
     read(10,*)index
     j=0
@@ -164,7 +164,7 @@
 ! get the depths and 1/Q values of the reference model
   open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
   if( ier /= 0 ) call exit_MPI(0,'error opening model file ref_QRFSI12')
-  
+
   do j=1,NDEPTHS_REFQ
     read(11,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
   enddo
@@ -201,14 +201,14 @@
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem
- 
+
   ! debug
   !  print *,'entering QRFSI12 subroutine'
 
   ylat=90.0d0-theta
   xlon=phi
 
-  ! only checks radius for crust, idoubling is missleading for oceanic crust 
+  ! only checks radius for crust, idoubling is missleading for oceanic crust
   ! when we want to expand mantle up to surface...
 
 !  !if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
@@ -222,27 +222,27 @@
 
     !debug
     !   print *,'QRFSI12: we are in the inner core'
-    
+
     Qmu = 84.6d0
-    
+
   else if(idoubling == IFLAG_OUTER_CORE_NORMAL) then
-  
+
     ! we are in the outer core
-    
+
     !debug
     !   print *,'QRFSI12: we are in the outer core'
-    
+
     Qmu = 0.0d0
-    
-  else 
-    
+
+  else
+
     ! we are in the mantle
-    
+
     depth = 6371.-radius
-    
+
     !debug
     !   print *,'QRFSI12: we are in the mantle at depth',depth
-    
+
     ifnd=0
     do i=2,NDEPTHS_REFQ
       if(depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i))then
@@ -282,7 +282,7 @@
 
     Qmu = 1/smallq
 
-    ! if Qmu is larger than MAX_ATTENUATION_VALUE, set it to ATTENUATION_COMP_MAXIMUM.  
+    ! if Qmu is larger than MAX_ATTENUATION_VALUE, set it to ATTENUATION_COMP_MAXIMUM.
     ! This assumes that this value is high enough that at this point there is almost no attenuation at all.
     if(Qmu >= ATTENUATION_COMP_MAXIMUM) Qmu = 0.99d0*ATTENUATION_COMP_MAXIMUM
 

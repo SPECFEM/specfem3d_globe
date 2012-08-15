@@ -26,8 +26,8 @@
  !=====================================================================
  */
 
-#ifndef CUDA_HEADER_H
-#define CUDA_HEADER_H
+#ifndef CUDA_PREPARE_H
+#define CUDA_PREPARE_H
 
 typedef float realw;  // type of "working" variables
 
@@ -260,4 +260,4 @@ void setConst_wgll_cube(realw* array,Mesh* mp)
 }
 
 
-#endif //CUDA_HEADER_H
+#endif //CUDA_PREPARE_H

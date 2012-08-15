@@ -116,19 +116,19 @@
   implicit none
 
   include "constants.h"
-  
+
   ! only master process writes out to main output file
   ! file I/O in fortran is buffered by default
   !
-  ! note: Fortran2003 includes a FLUSH statement 
+  ! note: Fortran2003 includes a FLUSH statement
   !          which is implemented by most compilers by now
   !
   ! otherwise:
-  !   a) comment out the line below 
+  !   a) comment out the line below
   !   b) try to use instead: call flush(IMAIN)
-    
+
   flush(IMAIN)
-      
+
   end subroutine flush_IMAIN
 
 !-------------------------------------------------------------------------------------------------

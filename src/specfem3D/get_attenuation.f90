@@ -26,9 +26,11 @@
 !=====================================================================
 
 
-  subroutine get_attenuation_model_3D_or_1D(myrank, prname, one_minus_sum_beta, &
-                                factor_common, scale_factor, tau_s, &
-                                vx, vy, vz, vnspec)
+  subroutine get_attenuation_model_3D_or_1D(myrank, prname, &
+                                           one_minus_sum_beta, &
+                                           factor_common, &
+                                           scale_factor, tau_s, &
+                                           vx, vy, vz, vnspec)
 
   use specfem_par,only: ATTENUATION_VAL, ATTENUATION_3D_VAL
 
@@ -36,11 +38,14 @@
 
   include 'constants.h'
 
-  integer :: myrank,vx,vy,vz,vnspec
-  character(len=150) :: prname
+  integer :: myrank
+
+  integer :: vx,vy,vz,vnspec
   double precision, dimension(vx,vy,vz,vnspec)       :: one_minus_sum_beta, scale_factor
   double precision, dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
   double precision, dimension(N_SLS)                 :: tau_s
+
+  character(len=150) :: prname
 
   ! local parameters
   integer :: i,j,k,ispec,ier
@@ -57,8 +62,8 @@
   if( ier /= 0 ) call exit_MPI(myrank,'error opening file attenuation.bin')
 
   read(27) tau_s
-  read(27) factor_common
-  read(27) scale_factor
+  read(27) factor_common ! tau_e_store
+  read(27) scale_factor  ! Qmu_store
   read(27) T_c_source
   close(27)
 
@@ -118,10 +123,11 @@
 
   include 'constants.h'
 
-  double precision, dimension(N_SLS) :: tau_s, tau_e, beta, factor_common
-  double precision  one_minus_sum_beta
+  double precision, dimension(N_SLS),intent(in) :: tau_s, tau_e
+  double precision, dimension(N_SLS),intent(out) :: factor_common
+  double precision,intent(out) ::  one_minus_sum_beta
 
-  double precision, dimension(N_SLS) :: tauinv
+  double precision, dimension(N_SLS) :: tauinv,beta
   integer i
 
   tauinv(:) = -1.0d0 / tau_s(:)
@@ -215,8 +221,9 @@
 
   include 'constants.h'
 
-  double precision, dimension(N_SLS) :: tau_s, alphaval, betaval,gammaval
-  real(kind=CUSTOM_REAL) deltat
+  double precision, dimension(N_SLS), intent(in) :: tau_s
+  double precision, dimension(N_SLS), intent(out) :: alphaval, betaval,gammaval
+  real(kind=CUSTOM_REAL), intent(in) :: deltat
 
   double precision, dimension(N_SLS) :: tauinv
 

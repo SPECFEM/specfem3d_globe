@@ -51,7 +51,7 @@
 
   ! user output
   if(myrank == 0) then
-    write(IMAIN,*) 'mesh coloring: ',USE_MESH_COLORING_GPU
+    write(IMAIN,*) '  mesh coloring: ',USE_MESH_COLORING_GPU
   endif
 
   select case( iregion_code )
@@ -272,7 +272,11 @@
 
   integer :: nspec_outer,nspec_inner,nspec_domain
   integer :: nspec_outer_min_global,nspec_outer_max_global
-  integer :: nb_colors,nb_colors_min,nb_colors_max
+  integer :: nspec_inner_min_global,nspec_inner_max_global
+  integer :: min_elem_global,max_elem_global
+
+  integer :: nb_colors
+  integer :: nb_colors_min,nb_colors_max
 
   integer :: icolor,ispec,ispec_counter
   integer :: ispec_inner,ispec_outer
@@ -379,8 +383,6 @@
     call exit_MPI(myrank, 'incorrect total number of elements in all the colors of the mesh for outer elements')
   endif
 
-
-
   ! debug: no mesh coloring, only creates dummy coloring arrays
   if( DEBUG_COLOR ) then
     nb_colors_outer_elements = 0
@@ -454,6 +456,20 @@
     enddo
     close(99)
   endif
+
+  ! checks non-zero elements in colors
+  do icolor = 1,nb_colors_outer_elements + nb_colors_inner_elements
+    ! checks
+    if( num_of_elems_in_this_color(icolor) == 0 ) then
+      print *,'rank: ',myrank,'domain:',idomain,' nspec = ',nspec_domain
+      print *,'error zero elements in this color:',icolor
+      print *,'total number of elements in all the colors of the mesh = ', &
+        sum(num_of_elems_in_this_color)
+      call exit_MPI(myrank, 'zero elements in a color of the mesh')
+    endif
+  enddo
+
+
 
   ! sets up domain coloring arrays
   select case(idomain)
@@ -536,16 +552,23 @@
   call min_all_i(nb_colors,nb_colors_min)
   call max_all_i(nb_colors,nb_colors_max)
 
+  ! min/max of elements per color
+  call min_all_i(minval(num_of_elems_in_this_color(:)),min_elem_global)
+  call max_all_i(maxval(num_of_elems_in_this_color(:)),max_elem_global)
+
+  ! min/max of inner/outer elements
+  call min_all_i(nspec_inner,nspec_inner_min_global)
+  call max_all_i(nspec_inner,nspec_inner_max_global)
+  call min_all_i(nspec_outer,nspec_outer_min_global)
+  call max_all_i(nspec_outer,nspec_outer_max_global)
+
   ! user output
-  call min_all_i(nspec_outer,nspec_outer_min_global)
-  call max_all_i(nspec_outer,nspec_outer_max_global)
-  call min_all_i(nspec_outer,nspec_outer_min_global)
-  call max_all_i(nspec_outer,nspec_outer_max_global)
   if(myrank == 0) then
-    write(IMAIN,*) '       colors min = ',nb_colors_min
-    write(IMAIN,*) '       colors max = ',nb_colors_max
-    write(IMAIN,*) '       outer elements: min = ',nspec_outer_min_global
-    write(IMAIN,*) '       outer elements: max = ',nspec_outer_max_global
+    write(IMAIN,*) '     total colors:'
+    write(IMAIN,*) '       total colors min/max = ',nb_colors_min,nb_colors_max
+    write(IMAIN,*) '       elements per color min/max = ',min_elem_global,max_elem_global
+    write(IMAIN,*) '       inner elements min/max = ',nspec_inner_min_global,nspec_inner_max_global
+    write(IMAIN,*) '       outer elements min/max = ',nspec_outer_min_global,nspec_outer_max_global
   endif
 
   ! debug: outputs permutation array as vtk file
