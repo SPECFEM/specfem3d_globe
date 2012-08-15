@@ -32,11 +32,11 @@
     INCLUDE_CENTRAL_CUBE,myrank,NUMFACES_SHARED
 
   use create_MPI_interfaces_par
-  
+
   use MPI_crust_mantle_par
   use MPI_outer_core_par
-  use MPI_inner_core_par    
-    
+  use MPI_inner_core_par
+
   implicit none
 
   integer,intent(in):: iregion_code
@@ -89,7 +89,7 @@
 
   ! frees arrays not needed any further
   deallocate(iprocfrom_faces,iprocto_faces,imsg_type)
-  deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)  
+  deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
   deallocate(buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar)
   deallocate(buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector)
   select case( iregion_code )
@@ -112,7 +112,7 @@
     deallocate(iboolleft_eta_inner_core,iboolright_eta_inner_core)
     deallocate(iboolfaces_inner_core)
   end select
-  
+
   ! synchronizes MPI processes
   call sync_all()
 
@@ -393,7 +393,7 @@
 
   use create_MPI_interfaces_par
   use MPI_inner_core_par
-  
+
   implicit none
 
   integer :: MAX_NEIGHBOURS,max_nibool
@@ -478,7 +478,7 @@
                  NGLOB_INNER_CORE, &
                  test_flag,ndim_assemble, &
                  iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
-    
+
     ! frees array not needed anymore
     deallocate(ibelm_bottom_inner_core)
 

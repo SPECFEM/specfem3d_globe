@@ -266,441 +266,8 @@ void FC_FUNC_(get_free_device_memory,
 
 
 /* ----------------------------------------------------------------------------------------------- */
-//daniel: helper function
-/*
- __global__ void check_phase_ispec_kernel(int num_phase_ispec,
- int* phase_ispec,
- int NSPEC_AB,
- int* ier) {
 
- int i,ispec,iphase,count0,count1;
- *ier = 0;
-
- for(iphase=0; iphase < 2; iphase++){
- count0 = 0;
- count1 = 0;
-
- for(i=0; i < num_phase_ispec; i++){
- ispec = phase_ispec[iphase*num_phase_ispec + i] - 1;
- if( ispec < -1 || ispec >= NSPEC_AB ){
- printf("Error in d_phase_ispec_inner_elastic %d %d\n",i,ispec);
- *ier = 1;
- return;
- }
- if( ispec >= 0 ){ count0++;}
- if( ispec < 0 ){ count1++;}
- }
-
- printf("check_phase_ispec done: phase %d, count = %d %d \n",iphase,count0,count1);
-
- }
- }
-
- void check_phase_ispec(long* Mesh_pointer_f,int type){
-
- Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
- printf("check phase_ispec for type=%d\n",type);
-
- dim3 grid(1,1);
- dim3 threads(1,1,1);
-
- int* h_debug = (int*) calloc(1,sizeof(int));
- int* d_debug;
- cudaMalloc((void**)&d_debug,sizeof(int));
-
- if( type == 1 ){
- check_phase_ispec_kernel<<<grid,threads>>>(mp->num_phase_ispec_elastic,
- mp->d_phase_ispec_inner_elastic,
- mp->NSPEC_AB,
- d_debug);
- }else if( type == 2 ){
- check_phase_ispec_kernel<<<grid,threads>>>(mp->num_phase_ispec_acoustic,
- mp->d_phase_ispec_inner_acoustic,
- mp->NSPEC_AB,
- d_debug);
- }
-
- cudaMemcpy(h_debug,d_debug,1*sizeof(int),cudaMemcpyDeviceToHost);
- cudaFree(d_debug);
- if( *h_debug != 0 ){printf("error for type=%d\n",type); exit(1);}
- free(h_debug);
- fflush(stdout);
-
- #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("check_phase_ispec");
- #endif
-
- }
- */
-
-/* ----------------------------------------------------------------------------------------------- */
-//daniel: helper function
-/*
- __global__ void check_ispec_is_kernel(int NSPEC_AB,
- int* ispec_is,
- int* ier) {
-
- int ispec,count0,count1;
-
- *ier = 0;
- count0 = 0;
- count1 = 0;
- for(ispec=0; ispec < NSPEC_AB; ispec++){
- if( ispec_is[ispec] < -1 || ispec_is[ispec] > 1 ){
- printf("Error in ispec_is %d %d\n",ispec,ispec_is[ispec]);
- *ier = 1;
- return;
- //exit(1);
- }
- if( ispec_is[ispec] == 0 ){count0++;}
- if( ispec_is[ispec] != 0 ){count1++;}
- }
- printf("check_ispec_is done: count = %d %d\n",count0,count1);
- }
-
- void check_ispec_is(long* Mesh_pointer_f,int type){
-
- Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
- printf("check ispec_is for type=%d\n",type);
-
- dim3 grid(1,1);
- dim3 threads(1,1,1);
-
- int* h_debug = (int*) calloc(1,sizeof(int));
- int* d_debug;
- cudaMalloc((void**)&d_debug,sizeof(int));
-
- if( type == 0 ){
- check_ispec_is_kernel<<<grid,threads>>>(mp->NSPEC_AB,
- mp->d_ispec_is_inner,
- d_debug);
- }else if( type == 1 ){
- check_ispec_is_kernel<<<grid,threads>>>(mp->NSPEC_AB,
- mp->d_ispec_is_elastic,
- d_debug);
- }else if( type == 2 ){
- check_ispec_is_kernel<<<grid,threads>>>(mp->NSPEC_AB,
- mp->d_ispec_is_acoustic,
- d_debug);
- }
-
- cudaMemcpy(h_debug,d_debug,1*sizeof(int),cudaMemcpyDeviceToHost);
- cudaFree(d_debug);
- if( *h_debug != 0 ){printf("error for type=%d\n",type); exit(1);}
- free(h_debug);
- fflush(stdout);
-
- #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("check_ispec_is");
- #endif
- }
- */
-/* ----------------------------------------------------------------------------------------------- */
-//daniel: helper function
-/*
- __global__ void check_array_ispec_kernel(int num_array_ispec,
- int* array_ispec,
- int NSPEC_AB,
- int* ier) {
-
- int i,ispec,count0,count1;
-
- *ier = 0;
- count0 = 0;
- count1 = 0;
-
- for(i=0; i < num_array_ispec; i++){
- ispec = array_ispec[i] - 1;
- if( ispec < -1 || ispec >= NSPEC_AB ){
- printf("Error in d_array_ispec %d %d\n",i,ispec);
- *ier = 1;
- return;
- }
- if( ispec >= 0 ){ count0++;}
- if( ispec < 0 ){ count1++;}
- }
-
- printf("check_array_ispec done: count = %d %d \n",count0,count1);
- }
-
- void check_array_ispec(long* Mesh_pointer_f,int type){
-
- Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
- printf("check array_ispec for type=%d\n",type);
-
- dim3 grid(1,1);
- dim3 threads(1,1,1);
-
- int* h_debug = (int*) calloc(1,sizeof(int));
- int* d_debug;
- cudaMalloc((void**)&d_debug,sizeof(int));
-
- if( type == 1 ){
- check_array_ispec_kernel<<<grid,threads>>>(mp->d_num_abs_boundary_faces,
- mp->d_abs_boundary_ispec,
- mp->NSPEC_AB,
- d_debug);
- }
-
- cudaMemcpy(h_debug,d_debug,1*sizeof(int),cudaMemcpyDeviceToHost);
- cudaFree(d_debug);
- if( *h_debug != 0 ){printf("error for type=%d\n",type); exit(1);}
- free(h_debug);
- fflush(stdout);
-
- #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("check_array_ispec");
- #endif
-
- }
- */
-
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// Check functions
-
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_displ_gpu,
-              CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ,long* Mesh_pointer_f,int* announceID) {
-
-TRACE("check_max_norm_displ_gpu");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
-  cudaMemcpy(displ, mp->d_displ,*size*sizeof(realw),cudaMemcpyDeviceToHost);
-  realw maxnorm=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(displ[i]));
-  }
-  printf("%d: maxnorm of forward displ = %e\n",*announceID,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_vector,
-              CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {
-
-TRACE("check_max_norm_vector");
-
-  int procid;
-#ifdef WITH_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD,&procid);
-#else
-  procid = 0;
-#endif
-  realw maxnorm=0;
-  int maxloc;
-  for(int i=0;i<*size;i++) {
-    if(maxnorm<fabsf(vector1[i])) {
-      maxnorm = vector1[i];
-      maxloc = i;
-    }
-  }
-  printf("%d:maxnorm of vector %d [%d] = %e\n",procid,*announceID,maxloc,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_displ,
-              CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {
-
-TRACE("check_max_norm_displ");
-
-  realw maxnorm=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(displ[i]));
-  }
-  printf("%d: maxnorm of forward displ = %e\n",*announceID,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_b_displ_gpu,
-              CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ,long* Mesh_pointer_f,int* announceID) {
-
-TRACE("check_max_norm_b_displ_gpu");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
-  realw* b_accel = (realw*)malloc(*size*sizeof(realw));
-
-  cudaMemcpy(b_displ, mp->d_b_displ,*size*sizeof(realw),cudaMemcpyDeviceToHost);
-  cudaMemcpy(b_accel, mp->d_b_accel,*size*sizeof(realw),cudaMemcpyDeviceToHost);
-
-  realw maxnorm=0;
-  realw maxnorm_accel=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(b_displ[i]));
-    maxnorm_accel = MAX(maxnorm,fabsf(b_accel[i]));
-  }
-  free(b_accel);
-  printf("%d: maxnorm of backward displ = %e\n",*announceID,maxnorm);
-  printf("%d: maxnorm of backward accel = %e\n",*announceID,maxnorm_accel);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_b_accel_gpu,
-              CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel,long* Mesh_pointer_f,int* announceID) {
-
-TRACE("check_max_norm_b_accel_gpu");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
-  cudaMemcpy(b_accel, mp->d_b_accel,*size*sizeof(realw),cudaMemcpyDeviceToHost);
-
-  realw maxnorm=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(b_accel[i]));
-  }
-  printf("%d: maxnorm of backward accel = %e\n",*announceID,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_b_veloc_gpu,
-              CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc,long* Mesh_pointer_f,int* announceID) {
-
-TRACE("check_max_norm_b_veloc_gpu");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
-  cudaMemcpy(b_veloc, mp->d_b_veloc,*size*sizeof(realw),cudaMemcpyDeviceToHost);
-
-  realw maxnorm=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(b_veloc[i]));
-  }
-  printf("%d: maxnorm of backward veloc = %e\n",*announceID,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_b_displ,
-              CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ,int* announceID) {
-
-TRACE("check_max_norm_b_displ");
-
-  realw maxnorm=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(b_displ[i]));
-  }
-  printf("%d:maxnorm of backward displ = %e\n",*announceID,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_max_norm_b_accel,
-              CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel,int* announceID) {
-
-TRACE("check_max_norm_b_accel");
-
-  realw maxnorm=0;
-
-  for(int i=0;i<*size;i++) {
-    maxnorm = MAX(maxnorm,fabsf(b_accel[i]));
-  }
-  printf("%d:maxnorm of backward accel = %e\n",*announceID,maxnorm);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(check_error_vectors,
-              CHECK_ERROR_VECTORS)(int* sizef, realw* vector1,realw* vector2) {
-
-TRACE("check_error_vectors");
-
-  int size = *sizef;
-
-  double diff2 = 0;
-  double sum = 0;
-  double temp;
-  double maxerr=0;
-  int maxerrorloc;
-
-  for(int i=0;i<size;++i) {
-    temp = vector1[i]-vector2[i];
-    diff2 += temp*temp;
-    sum += vector1[i]*vector1[i];
-    if(maxerr < fabsf(temp)) {
-      maxerr = abs(temp);
-      maxerrorloc = i;
-    }
-  }
-
-  printf("rel error = %f, maxerr = %e @ %d\n",diff2/sum,maxerr,maxerrorloc);
-  int myrank;
-#ifdef WITH_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-#else
-  myrank = 0;
-#endif
-  if(myrank == 0) {
-    for(int i=maxerrorloc;i>maxerrorloc-5;i--) {
-      printf("[%d]: %e vs. %e\n",i,vector1[i],vector2[i]);
-    }
-  }
-
-}
-*/
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// Auxiliary functions
-
-/* ----------------------------------------------------------------------------------------------- */
-
-
-/* ----------------------------------------------------------------------------------------------- */
-/*
-extern "C"
-void FC_FUNC_(get_max_accel,
-              GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {
-
-TRACE("get_max_accel");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer);
-  int procid;
-#ifdef WITH_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD,&procid);
-#else
-  procid = 0;
-#endif
-  int size = *sizef;
-  int it = *itf;
-  realw* accel_cpy = (realw*)malloc(size*sizeof(realw));
-  cudaMemcpy(accel_cpy,mp->d_accel,size*sizeof(realw),cudaMemcpyDeviceToHost);
-  realw maxval=0;
-  for(int i=0;i<size;++i) {
-    maxval = MAX(maxval,accel_cpy[i]);
-  }
-  printf("%d/%d: max=%e\n",it,procid,maxval);
-  free(accel_cpy);
-}
-*/
-/* ----------------------------------------------------------------------------------------------- */
-
-// ACOUSTIC simulations
+// scalar arrays (acoustic/fluid outer core)
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -728,7 +295,7 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
   unsigned int i = tid + bx*blockDim.x;
 
   // loads absolute values into shared memory
-  sdata[tid] = (i < size) ? fabs(array[i]) : 0.0 ;
+  sdata[tid] = (i < size) ? fabs(array[i]) : 0.0f ;
 
   __syncthreads();
 
@@ -884,7 +451,7 @@ TRACE("check_norm_acoustic_from_device");
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// ELASTIC simulations
+// vector arrays (elastic solid part)
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -901,7 +468,7 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
   // loads values into shared memory: assume array is a vector array
   sdata[tid] = (i < size) ? sqrt(array[i*3]*array[i*3]
                                  + array[i*3+1]*array[i*3+1]
-                                 + array[i*3+2]*array[i*3+2]) : 0.0 ;
+                                 + array[i*3+2]*array[i*3+2]) : 0.0f ;
 
   __syncthreads();
 
@@ -1180,4 +747,441 @@ void FC_FUNC_(check_norm_strain_from_device,
 #endif
 }
 
+
+// unused....
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// Auxiliary functions
+
+/* ----------------------------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------------------------- */
+//daniel: helper function
+/*
+ __global__ void check_phase_ispec_kernel(int num_phase_ispec,
+ int* phase_ispec,
+ int NSPEC_AB,
+ int* ier) {
+
+ int i,ispec,iphase,count0,count1;
+ *ier = 0;
+
+ for(iphase=0; iphase < 2; iphase++){
+ count0 = 0;
+ count1 = 0;
+
+ for(i=0; i < num_phase_ispec; i++){
+ ispec = phase_ispec[iphase*num_phase_ispec + i] - 1;
+ if( ispec < -1 || ispec >= NSPEC_AB ){
+ printf("Error in d_phase_ispec_inner_elastic %d %d\n",i,ispec);
+ *ier = 1;
+ return;
+ }
+ if( ispec >= 0 ){ count0++;}
+ if( ispec < 0 ){ count1++;}
+ }
+
+ printf("check_phase_ispec done: phase %d, count = %d %d \n",iphase,count0,count1);
+
+ }
+ }
+
+ void check_phase_ispec(long* Mesh_pointer_f,int type){
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ printf("check phase_ispec for type=%d\n",type);
+
+ dim3 grid(1,1);
+ dim3 threads(1,1,1);
+
+ int* h_debug = (int*) calloc(1,sizeof(int));
+ int* d_debug;
+ cudaMalloc((void**)&d_debug,sizeof(int));
+
+ if( type == 1 ){
+ check_phase_ispec_kernel<<<grid,threads>>>(mp->num_phase_ispec_elastic,
+ mp->d_phase_ispec_inner_elastic,
+ mp->NSPEC_AB,
+ d_debug);
+ }else if( type == 2 ){
+ check_phase_ispec_kernel<<<grid,threads>>>(mp->num_phase_ispec_acoustic,
+ mp->d_phase_ispec_inner_acoustic,
+ mp->NSPEC_AB,
+ d_debug);
+ }
+
+ cudaMemcpy(h_debug,d_debug,1*sizeof(int),cudaMemcpyDeviceToHost);
+ cudaFree(d_debug);
+ if( *h_debug != 0 ){printf("error for type=%d\n",type); exit(1);}
+ free(h_debug);
+ fflush(stdout);
+
+ #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+ exit_on_cuda_error("check_phase_ispec");
+ #endif
+
+ }
+ */
+
+/* ----------------------------------------------------------------------------------------------- */
+//daniel: helper function
+/*
+ __global__ void check_ispec_is_kernel(int NSPEC_AB,
+ int* ispec_is,
+ int* ier) {
+
+ int ispec,count0,count1;
+
+ *ier = 0;
+ count0 = 0;
+ count1 = 0;
+ for(ispec=0; ispec < NSPEC_AB; ispec++){
+ if( ispec_is[ispec] < -1 || ispec_is[ispec] > 1 ){
+ printf("Error in ispec_is %d %d\n",ispec,ispec_is[ispec]);
+ *ier = 1;
+ return;
+ //exit(1);
+ }
+ if( ispec_is[ispec] == 0 ){count0++;}
+ if( ispec_is[ispec] != 0 ){count1++;}
+ }
+ printf("check_ispec_is done: count = %d %d\n",count0,count1);
+ }
+
+ void check_ispec_is(long* Mesh_pointer_f,int type){
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ printf("check ispec_is for type=%d\n",type);
+
+ dim3 grid(1,1);
+ dim3 threads(1,1,1);
+
+ int* h_debug = (int*) calloc(1,sizeof(int));
+ int* d_debug;
+ cudaMalloc((void**)&d_debug,sizeof(int));
+
+ if( type == 0 ){
+ check_ispec_is_kernel<<<grid,threads>>>(mp->NSPEC_AB,
+ mp->d_ispec_is_inner,
+ d_debug);
+ }else if( type == 1 ){
+ check_ispec_is_kernel<<<grid,threads>>>(mp->NSPEC_AB,
+ mp->d_ispec_is_elastic,
+ d_debug);
+ }else if( type == 2 ){
+ check_ispec_is_kernel<<<grid,threads>>>(mp->NSPEC_AB,
+ mp->d_ispec_is_acoustic,
+ d_debug);
+ }
+
+ cudaMemcpy(h_debug,d_debug,1*sizeof(int),cudaMemcpyDeviceToHost);
+ cudaFree(d_debug);
+ if( *h_debug != 0 ){printf("error for type=%d\n",type); exit(1);}
+ free(h_debug);
+ fflush(stdout);
+
+ #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+ exit_on_cuda_error("check_ispec_is");
+ #endif
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+//daniel: helper function
+/*
+ __global__ void check_array_ispec_kernel(int num_array_ispec,
+ int* array_ispec,
+ int NSPEC_AB,
+ int* ier) {
+
+ int i,ispec,count0,count1;
+
+ *ier = 0;
+ count0 = 0;
+ count1 = 0;
+
+ for(i=0; i < num_array_ispec; i++){
+ ispec = array_ispec[i] - 1;
+ if( ispec < -1 || ispec >= NSPEC_AB ){
+ printf("Error in d_array_ispec %d %d\n",i,ispec);
+ *ier = 1;
+ return;
+ }
+ if( ispec >= 0 ){ count0++;}
+ if( ispec < 0 ){ count1++;}
+ }
+
+ printf("check_array_ispec done: count = %d %d \n",count0,count1);
+ }
+
+ void check_array_ispec(long* Mesh_pointer_f,int type){
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ printf("check array_ispec for type=%d\n",type);
+
+ dim3 grid(1,1);
+ dim3 threads(1,1,1);
+
+ int* h_debug = (int*) calloc(1,sizeof(int));
+ int* d_debug;
+ cudaMalloc((void**)&d_debug,sizeof(int));
+
+ if( type == 1 ){
+ check_array_ispec_kernel<<<grid,threads>>>(mp->d_num_abs_boundary_faces,
+ mp->d_abs_boundary_ispec,
+ mp->NSPEC_AB,
+ d_debug);
+ }
+
+ cudaMemcpy(h_debug,d_debug,1*sizeof(int),cudaMemcpyDeviceToHost);
+ cudaFree(d_debug);
+ if( *h_debug != 0 ){printf("error for type=%d\n",type); exit(1);}
+ free(h_debug);
+ fflush(stdout);
+
+ #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+ exit_on_cuda_error("check_array_ispec");
+ #endif
+
+ }
+ */
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// Check functions
+
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_displ_gpu,
+ CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ,long* Mesh_pointer_f,int* announceID) {
+
+ TRACE("check_max_norm_displ_gpu");
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ cudaMemcpy(displ, mp->d_displ,*size*sizeof(realw),cudaMemcpyDeviceToHost);
+ realw maxnorm=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(displ[i]));
+ }
+ printf("%d: maxnorm of forward displ = %e\n",*announceID,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_vector,
+ CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {
+
+ TRACE("check_max_norm_vector");
+
+ int procid;
+ #ifdef WITH_MPI
+ MPI_Comm_rank(MPI_COMM_WORLD,&procid);
+ #else
+ procid = 0;
+ #endif
+ realw maxnorm=0;
+ int maxloc;
+ for(int i=0;i<*size;i++) {
+ if(maxnorm<fabsf(vector1[i])) {
+ maxnorm = vector1[i];
+ maxloc = i;
+ }
+ }
+ printf("%d:maxnorm of vector %d [%d] = %e\n",procid,*announceID,maxloc,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_displ,
+ CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {
+
+ TRACE("check_max_norm_displ");
+
+ realw maxnorm=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(displ[i]));
+ }
+ printf("%d: maxnorm of forward displ = %e\n",*announceID,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_b_displ_gpu,
+ CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ,long* Mesh_pointer_f,int* announceID) {
+
+ TRACE("check_max_norm_b_displ_gpu");
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ realw* b_accel = (realw*)malloc(*size*sizeof(realw));
+
+ cudaMemcpy(b_displ, mp->d_b_displ,*size*sizeof(realw),cudaMemcpyDeviceToHost);
+ cudaMemcpy(b_accel, mp->d_b_accel,*size*sizeof(realw),cudaMemcpyDeviceToHost);
+
+ realw maxnorm=0;
+ realw maxnorm_accel=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(b_displ[i]));
+ maxnorm_accel = MAX(maxnorm,fabsf(b_accel[i]));
+ }
+ free(b_accel);
+ printf("%d: maxnorm of backward displ = %e\n",*announceID,maxnorm);
+ printf("%d: maxnorm of backward accel = %e\n",*announceID,maxnorm_accel);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_b_accel_gpu,
+ CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel,long* Mesh_pointer_f,int* announceID) {
+
+ TRACE("check_max_norm_b_accel_gpu");
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ cudaMemcpy(b_accel, mp->d_b_accel,*size*sizeof(realw),cudaMemcpyDeviceToHost);
+
+ realw maxnorm=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(b_accel[i]));
+ }
+ printf("%d: maxnorm of backward accel = %e\n",*announceID,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_b_veloc_gpu,
+ CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc,long* Mesh_pointer_f,int* announceID) {
+
+ TRACE("check_max_norm_b_veloc_gpu");
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+ cudaMemcpy(b_veloc, mp->d_b_veloc,*size*sizeof(realw),cudaMemcpyDeviceToHost);
+
+ realw maxnorm=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(b_veloc[i]));
+ }
+ printf("%d: maxnorm of backward veloc = %e\n",*announceID,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_b_displ,
+ CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ,int* announceID) {
+
+ TRACE("check_max_norm_b_displ");
+
+ realw maxnorm=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(b_displ[i]));
+ }
+ printf("%d:maxnorm of backward displ = %e\n",*announceID,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_max_norm_b_accel,
+ CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel,int* announceID) {
+
+ TRACE("check_max_norm_b_accel");
+
+ realw maxnorm=0;
+
+ for(int i=0;i<*size;i++) {
+ maxnorm = MAX(maxnorm,fabsf(b_accel[i]));
+ }
+ printf("%d:maxnorm of backward accel = %e\n",*announceID,maxnorm);
+ }
+ */
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(check_error_vectors,
+ CHECK_ERROR_VECTORS)(int* sizef, realw* vector1,realw* vector2) {
+
+ TRACE("check_error_vectors");
+
+ int size = *sizef;
+
+ double diff2 = 0;
+ double sum = 0;
+ double temp;
+ double maxerr=0;
+ int maxerrorloc;
+
+ for(int i=0;i<size;++i) {
+ temp = vector1[i]-vector2[i];
+ diff2 += temp*temp;
+ sum += vector1[i]*vector1[i];
+ if(maxerr < fabsf(temp)) {
+ maxerr = abs(temp);
+ maxerrorloc = i;
+ }
+ }
+
+ printf("rel error = %f, maxerr = %e @ %d\n",diff2/sum,maxerr,maxerrorloc);
+ int myrank;
+ #ifdef WITH_MPI
+ MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+ #else
+ myrank = 0;
+ #endif
+ if(myrank == 0) {
+ for(int i=maxerrorloc;i>maxerrorloc-5;i--) {
+ printf("[%d]: %e vs. %e\n",i,vector1[i],vector2[i]);
+ }
+ }
+
+ }
+ */
+
+
+/* ----------------------------------------------------------------------------------------------- */
+/*
+ extern "C"
+ void FC_FUNC_(get_max_accel,
+ GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {
+
+ TRACE("get_max_accel");
+
+ Mesh* mp = (Mesh*)(*Mesh_pointer);
+ int procid;
+ #ifdef WITH_MPI
+ MPI_Comm_rank(MPI_COMM_WORLD,&procid);
+ #else
+ procid = 0;
+ #endif
+ int size = *sizef;
+ int it = *itf;
+ realw* accel_cpy = (realw*)malloc(size*sizeof(realw));
+ cudaMemcpy(accel_cpy,mp->d_accel,size*sizeof(realw),cudaMemcpyDeviceToHost);
+ realw maxval=0;
+ for(int i=0;i<size;++i) {
+ maxval = MAX(maxval,accel_cpy[i]);
+ }
+ printf("%d/%d: max=%e\n",it,procid,maxval);
+ free(accel_cpy);
+ }
+ */
 

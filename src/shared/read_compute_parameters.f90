@@ -396,9 +396,6 @@
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 3) &
     stop 'absorbing conditions not supported for three chunks yet'
 
-  if(ATTENUATION_3D .and. .not. ATTENUATION) &
-    stop 'need ATTENUATION to use ATTENUATION_3D'
-
   if(ATTENUATION_NEW .and. .not. ATTENUATION) &
     stop 'need ATTENUATION to use ATTENUATION_NEW'
 

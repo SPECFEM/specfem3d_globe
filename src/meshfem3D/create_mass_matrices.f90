@@ -106,7 +106,7 @@
 
           iglob = ibool(i,j,k,ispec)
           weight = wxgll(i)*wygll(j)*wzgll(k)
-          
+
           ! definition depends if region is fluid or solid
           select case( iregion_code)
           case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
@@ -161,7 +161,7 @@
       ! loops over surface points
       do j = 1,NGLLY
         do i = 1,NGLLX
-          
+
           ! if 3D Earth with topography, compute local height of oceans
           if( TOPOGRAPHY ) then
 

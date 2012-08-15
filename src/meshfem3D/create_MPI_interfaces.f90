@@ -284,7 +284,7 @@
   integer :: ier
   ! for central cube buffers
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-            nspec2D_ymin_inner_core,nspec2D_ymax_inner_core  
+            nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
   integer, dimension(:),allocatable :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(:),allocatable :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
   integer, dimension(:),allocatable :: ibelm_top_inner_core
@@ -418,7 +418,7 @@
               ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC), &
               stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating central cube index arrays')
-      
+
       ! gets coupling arrays for inner core
       nspec2D_xmin_inner_core = nspec2D_xmin
       nspec2D_xmax_inner_core = nspec2D_xmax

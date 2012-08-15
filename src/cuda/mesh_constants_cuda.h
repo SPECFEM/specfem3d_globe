@@ -40,8 +40,8 @@
 
 */
 
-#ifndef GPU_MESH_
-#define GPU_MESH_
+#ifndef CUDA_MESH_H
+#define CUDA_MESH_H
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -136,6 +136,18 @@ typedef float realw;
 #ifdef USE_MESH_COLORING_GPU
 #pragma message ("\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
 #endif
+
+// note: mesh coloring has a tradeoff between extra costs for looping over colors
+//          and slowliness of atomic updates;
+//          in general, the more elements per color the more efficient
+//
+// thresholds for coloring :
+//   we assume that the crust/mantle region has enough elements for coloring
+//
+// minimum number of elements required in inner core before mesh coloring becomes attractive
+#define COLORING_MIN_NSPEC_INNER_CORE 1000
+// minimum number of elements required in outer core before mesh coloring becomes attractive
+#define COLORING_MIN_NSPEC_OUTER_CORE 1000
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -311,18 +323,13 @@ typedef struct mesh_ {
 
   int nspec_outer_crust_mantle;
   int nspec_inner_crust_mantle;
-  int nspec2D_top_crust_mantle;
   int nspec2D_bottom_crust_mantle;
 
   int num_colors_inner_crust_mantle;
   int num_colors_outer_crust_mantle;
   int* h_num_elem_colors_crust_mantle;
 
-  int* d_ibelm_top_crust_mantle;
   int* d_ibelm_bottom_crust_mantle;
-
-  // normal definition for coupling regions
-  realw* d_normal_top_crust_mantle;
 
   // ------------------------------------------------------------------ //
   // outer_core
@@ -482,14 +489,12 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   // oceans
   // ------------------------------------------------------------------ //
-  int NGLOB_CRUST_MANTLE_OCEANS;
+  int npoin_oceans;
 
   // model parameter
   realw* d_rmass_ocean_load;
-
-  // temporary global array: used to synchronize updates on global accel array
-  int* d_updated_dof_ocean_load;
-  int* d_b_updated_dof_ocean_load;
+  int* d_iglob_ocean_load;
+  realw* d_normal_ocean_load;
 
   // ------------------------------------------------------------------ //
   // attenuation
@@ -668,8 +673,6 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   int noise_tomography;
 
-  int nspec_top;
-
   realw* d_noise_surface_movie;
   realw* d_noise_sourcearray;
 
@@ -677,6 +680,10 @@ typedef struct mesh_ {
   realw* d_normal_y_noise;
   realw* d_normal_z_noise;
   realw* d_mask_noise;
+
+  // free surface
+  int nspec2D_top_crust_mantle;
+  int* d_ibelm_top_crust_mantle;
   realw* d_jacobian2D_top_crust_mantle;
 
   // noise sensitivity kernel
@@ -685,4 +692,4 @@ typedef struct mesh_ {
 } Mesh;
 
 
-#endif
+#endif // CUDA_MESH_H

@@ -75,13 +75,13 @@
   !user output
   if(myrank == 0) then
     write(IMAIN,*) '     colors:'
-    write(IMAIN,*) '     number of colors for inner elements = ',nb_colors_inner_elements
-    write(IMAIN,*) '     number of colors for outer elements = ',nb_colors_outer_elements
-    write(IMAIN,*) '     total number of colors (sum of both) = ', nb_colors_inner_elements + nb_colors_outer_elements
+    write(IMAIN,*) '       number of colors for inner elements = ',nb_colors_inner_elements
+    write(IMAIN,*) '       number of colors for outer elements = ',nb_colors_outer_elements
+    write(IMAIN,*) '       total number of colors (sum of both) = ', nb_colors_inner_elements + nb_colors_outer_elements
     write(IMAIN,*) '     elements:'
-    write(IMAIN,*) '     number of elements for outer elements  = ',nspec_outer
-    write(IMAIN,*) '     number of elements for inner elements  = ',nspec_inner
-    write(IMAIN,*) '     total number of elements for domain elements  = ',nspec_domain
+    write(IMAIN,*) '       number of elements for outer elements  = ',nspec_outer
+    write(IMAIN,*) '       number of elements for inner elements  = ',nspec_inner
+    write(IMAIN,*) '       total number of elements for domain elements  = ',nspec_domain
   endif
 
   ! total number of colors used

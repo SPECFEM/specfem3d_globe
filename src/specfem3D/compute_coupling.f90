@@ -30,7 +30,7 @@
                             accel_outer_core,b_accel_outer_core, &
                             normal_top_outer_core,jacobian2D_top_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                            SIMULATION_TYPE,nspec_top)
+                            SIMULATION_TYPE,nspec2D_top)
 
   implicit none
 
@@ -56,7 +56,7 @@
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
   integer SIMULATION_TYPE
-  integer nspec_top
+  integer nspec2D_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
@@ -64,16 +64,16 @@
 
 
   ! for surface elements exactly on the CMB
-  do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
-  
+  do ispec2D = 1,nspec2D_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
+
     ispec = ibelm_top_outer_core(ispec2D)
     ispec_selected = ibelm_bottom_crust_mantle(ispec2D)
 
     ! only for DOFs exactly on the CMB (top of these elements)
-    k = NGLLZ    
+    k = NGLLZ
     ! get displacement on the solid side using pointwise matching
     k_corresp = 1
-    
+
     do j = 1,NGLLY
       do i = 1,NGLLX
         ! corresponding points are located at the bottom of the mantle
@@ -339,7 +339,7 @@
                             normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                             RHO_BOTTOM_OC,minus_g_icb, &
-                            SIMULATION_TYPE,nspec_top)
+                            SIMULATION_TYPE,nspec2D_top)
 
   implicit none
 
@@ -368,14 +368,14 @@
   real(kind=CUSTOM_REAL) minus_g_icb
 
   integer SIMULATION_TYPE
-  integer nspec_top
+  integer nspec2D_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_inner_core,ispec_selected
 
   ! for surface elements exactly on the ICB
-  do ispec2D = 1,nspec_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
+  do ispec2D = 1,nspec2D_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
 
     ispec = ibelm_top_inner_core(ispec2D)
     ispec_selected = ibelm_bottom_outer_core(ispec2D)

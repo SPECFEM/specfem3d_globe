@@ -81,36 +81,6 @@ void FC_FUNC_(output_free_device_memory,
 void FC_FUNC_(get_free_device_memory,
               get_FREE_DEVICE_MEMORY)(realw* free, realw* used, realw* total ) {} 
 
-void FC_FUNC_(check_max_norm_displ_gpu,
-              CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ,long* Mesh_pointer_f,int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_vector,
-              CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_displ,
-              CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_b_displ_gpu,
-              CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ,long* Mesh_pointer_f,int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_b_accel_gpu,
-              CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel,long* Mesh_pointer_f,int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_b_veloc_gpu,
-              CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc,long* Mesh_pointer_f,int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_b_displ,
-              CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ,int* announceID) {} 
-
-void FC_FUNC_(check_max_norm_b_accel,
-              CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel,int* announceID) {} 
-
-void FC_FUNC_(check_error_vectors,
-              CHECK_ERROR_VECTORS)(int* sizef, realw* vector1,realw* vector2) {} 
-
-void FC_FUNC_(get_max_accel,
-              GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {} 
-
 void FC_FUNC_(check_norm_acoustic_from_device,
               CHECK_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
                                                   long* Mesh_pointer_f,
@@ -125,6 +95,36 @@ void FC_FUNC_(check_norm_strain_from_device,
               CHECK_NORM_STRAIN_FROM_DEVICE)(realw* strain_norm,
                                              realw* strain_norm2,
                                              long* Mesh_pointer_f) {} 
+
+ void FC_FUNC_(check_max_norm_displ_gpu,
+ CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ,long* Mesh_pointer_f,int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_vector,
+ CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_displ,
+ CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_b_displ_gpu,
+ CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ,long* Mesh_pointer_f,int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_b_accel_gpu,
+ CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel,long* Mesh_pointer_f,int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_b_veloc_gpu,
+ CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc,long* Mesh_pointer_f,int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_b_displ,
+ CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ,int* announceID) {} 
+
+ void FC_FUNC_(check_max_norm_b_accel,
+ CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel,int* announceID) {} 
+
+ void FC_FUNC_(check_error_vectors,
+ CHECK_ERROR_VECTORS)(int* sizef, realw* vector1,realw* vector2) {} 
+
+ void FC_FUNC_(get_max_accel,
+ GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {} 
 
 
 //
@@ -299,7 +299,7 @@ void FC_FUNC_(kernel_3_a_cuda,
                                int* SIMULATION_TYPE_f,
                                realw* b_deltatover2_F,
                                int* OCEANS,
-             int* NCHUNKS_VAL) {} 
+                               int* NCHUNKS_VAL) {} 
 
 void FC_FUNC_(kernel_3_b_cuda,
               KERNEL_3_B_CUDA)(long* Mesh_pointer,
@@ -363,7 +363,6 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
                                         int* NSPEC_CRUST_MANTLE_STRAIN_ONLY,
-                                        int* NGLOB_CRUST_MANTLE_OCEANS,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* NSPEC_INNER_CORE_STRAIN_ONLY,
@@ -396,8 +395,7 @@ void FC_FUNC_(prepare_fields_rotation_device,
                                               realw* b_deltat,
                                               realw* b_A_array_rotation,
                                               realw* b_B_array_rotation,
-                                              int* NSPEC_OUTER_CORE_ROTATION
-                                              ) {} 
+                                              int* NSPEC_OUTER_CORE_ROTATION) {} 
 
 void FC_FUNC_(prepare_fields_gravity_device,
               PREPARE_FIELDS_gravity_DEVICE)(long* Mesh_pointer_f,
@@ -407,8 +405,7 @@ void FC_FUNC_(prepare_fields_gravity_device,
                                              realw* minus_deriv_gravity_table,
                                              realw* density_table,
                                              realw* h_wgll_cube,
-                                             int* NRAD_GRAVITY
-                                             ) {} 
+                                             int* NRAD_GRAVITY) {} 
 
 void FC_FUNC_(prepare_fields_attenuat_device,
               PREPARE_FIELDS_ATTENUAT_DEVICE)(long* Mesh_pointer_f,
@@ -427,8 +424,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                                  realw* factor_common_inner_core,
                                                  realw* one_minus_sum_beta_inner_core,
                                                  realw* alphaval,realw* betaval,realw* gammaval,
-                                                 realw* b_alphaval,realw* b_betaval,realw* b_gammaval
-                                                 ) {} 
+                                                 realw* b_alphaval,realw* b_betaval,realw* b_gammaval) {} 
 
 void FC_FUNC_(prepare_fields_strain_device,
               PREPARE_FIELDS_STRAIN_DEVICE)(long* Mesh_pointer_f,
@@ -455,8 +451,7 @@ void FC_FUNC_(prepare_fields_strain_device,
                                             realw* b_epsilondev_xz_inner_core,
                                             realw* b_epsilondev_yz_inner_core,
                                             realw* eps_trace_over_3_inner_core,
-                                            realw* b_eps_trace_over_3_inner_core
-                                            ) {} 
+                                            realw* b_eps_trace_over_3_inner_core) {} 
 
 void FC_FUNC_(prepare_fields_absorb_device,
               PREPARE_FIELDS_ABSORB_DEVICE)(long* Mesh_pointer_f,
@@ -487,8 +482,7 @@ void FC_FUNC_(prepare_fields_absorb_device,
                                             realw* jacobian2D_xmin_outer_core, realw* jacobian2D_xmax_outer_core,
                                             realw* jacobian2D_ymin_outer_core, realw* jacobian2D_ymax_outer_core,
                                             realw* jacobian2D_bottom_outer_core,
-                                            realw* vp_outer_core
-                                            ) {} 
+                                            realw* vp_outer_core) {} 
 
 void FC_FUNC_(prepare_mpi_buffers_device,
               PREPARE_MPI_BUFFERS_DEVICE)(long* Mesh_pointer_f,
@@ -503,20 +497,26 @@ void FC_FUNC_(prepare_mpi_buffers_device,
                                           int* num_interfaces_outer_core,
                                           int* max_nibool_interfaces_outer_core,
                                           int* nibool_interfaces_outer_core,
-                                          int* ibool_interfaces_outer_core
-                                          ){} 
+                                          int* ibool_interfaces_outer_core){} 
 
 void FC_FUNC_(prepare_fields_noise_device,
               PREPARE_FIELDS_NOISE_DEVICE)(long* Mesh_pointer_f,
-                                           int* nspec_top,
-                                           int* ibelm_top_crust_mantle,
+                                           int* NSPEC_TOP,
                                            int* NSTEP,
+                                           int* h_ibelm_top_crust_mantle,
                                            realw* noise_sourcearray,
                                            realw* normal_x_noise,
                                            realw* normal_y_noise,
                                            realw* normal_z_noise,
                                            realw* mask_noise,
                                            realw* jacobian2D_top_crust_mantle) {} 
+
+void FC_FUNC_(prepare_oceans_device,
+              PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
+                                     int* npoin_oceans,
+                                     realw* h_rmass_ocean_load_selected,
+                                     int* h_iglob_ocean_load,
+                                     realw* h_normal_ocean_load) {} 
 
 void FC_FUNC_(prepare_crust_mantle_device,
              PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
@@ -530,9 +530,6 @@ void FC_FUNC_(prepare_crust_mantle_device,
                                           realw* h_rmassx,
                                           realw* h_rmassy,
                                           realw* h_rmassz,
-                                          realw* h_normal_top_crust_mantle,
-                                          int* h_ibelm_top_crust_mantle,
-                                          int* h_ibelm_bottom_crust_mantle,
                                           int* h_ibool,
                                           realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                           int* h_ispec_is_tiso,
@@ -547,8 +544,8 @@ void FC_FUNC_(prepare_crust_mantle_device,
                                           int* phase_ispec_inner,
                                           int* nspec_outer,
                                           int* nspec_inner,
-                                          int* NSPEC2D_TOP_CM,
                                           int* NSPEC2D_BOTTOM_CM,
+                                          int* h_ibelm_bottom_crust_mantle,
                                           int* NCHUNKS_VAL,
                                           int* num_colors_outer,
                                           int* num_colors_inner,
@@ -561,12 +558,6 @@ void FC_FUNC_(prepare_outer_core_device,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav,
                                          realw* h_rmass,
-                                         realw* h_normal_top_outer_core,
-                                         realw* h_normal_bottom_outer_core,
-                                         realw* h_jacobian2D_top_outer_core,
-                                         realw* h_jacobian2D_bottom_outer_core,
-                                         int* h_ibelm_top_outer_core,
-                                         int* h_ibelm_bottom_outer_core,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          int* num_phase_ispec,
@@ -575,6 +566,12 @@ void FC_FUNC_(prepare_outer_core_device,
                                          int* nspec_inner,
                                          int* NSPEC2D_TOP_OC,
                                          int* NSPEC2D_BOTTOM_OC,
+                                         realw* h_normal_top_outer_core,
+                                         realw* h_normal_bottom_outer_core,
+                                         realw* h_jacobian2D_top_outer_core,
+                                         realw* h_jacobian2D_bottom_outer_core,
+                                         int* h_ibelm_top_outer_core,
+                                         int* h_ibelm_bottom_outer_core,
                                          int* num_colors_outer,
                                          int* num_colors_inner,
                                          int* num_elem_colors) {} 
@@ -586,7 +583,6 @@ void FC_FUNC_(prepare_inner_core_device,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav, realw* h_muv,
                                          realw* h_rmass,
-                                         int* h_ibelm_top_inner_core,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          realw *c11store,realw *c12store,realw *c13store,
@@ -597,13 +593,10 @@ void FC_FUNC_(prepare_inner_core_device,
                                          int* nspec_outer,
                                          int* nspec_inner,
                                          int* NSPEC2D_TOP_IC,
+                                         int* h_ibelm_top_inner_core,
                                          int* num_colors_outer,
                                          int* num_colors_inner,
                                          int* num_elem_colors) {} 
-
-void FC_FUNC_(prepare_oceans_device,
-              PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
-             realw* h_rmass_ocean_load) {} 
 
 void FC_FUNC_(prepare_cleanup_device,
               PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f,

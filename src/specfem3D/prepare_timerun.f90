@@ -705,14 +705,12 @@
   allocate(omsb_crust_mantle_dble(ATT1,ATT2,ATT3,ATT4), &
           factor_scale_crust_mantle_dble(ATT1,ATT2,ATT3,ATT4),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb crust_mantle arrays')
+  allocate(factor_common_crust_mantle_dble(N_SLS,ATT1,ATT2,ATT3,ATT4),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common crust_mantle array')
 
   allocate(omsb_inner_core_dble(ATT1,ATT2,ATT3,ATT5), &
           factor_scale_inner_core_dble(ATT1,ATT2,ATT3,ATT5),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb inner_core arrays')
-
-  allocate(factor_common_crust_mantle_dble(N_SLS,ATT1,ATT2,ATT3,ATT4),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common crust_mantle array')
-
   allocate(factor_common_inner_core_dble(N_SLS,ATT1,ATT2,ATT3,ATT5),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common inner_core array')
 
@@ -725,9 +723,11 @@
 
   ! reads in attenuation values
   call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_crust_mantle_dble, &
-           factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble, &
-           ATT1,ATT2,ATT3,ATT4)
+  call get_attenuation_model_3D_or_1D(myrank, prnamel, &
+                                     omsb_crust_mantle_dble, &
+                                     factor_common_crust_mantle_dble, &
+                                     factor_scale_crust_mantle_dble,tau_sigma_dble, &
+                                     ATT1,ATT2,ATT3,ATT4)
 
   ! INNER_CORE ATTENUATION
   ! initializes
@@ -738,19 +738,21 @@
 
   ! reads in attenuation values
   call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-  call get_attenuation_model_3D_or_1D(myrank, prnamel, omsb_inner_core_dble, &
-           factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble, &
-           ATT1,ATT2,ATT3,ATT5)
+  call get_attenuation_model_3D_or_1D(myrank, prnamel, &
+                                     omsb_inner_core_dble, &
+                                     factor_common_inner_core_dble, &
+                                     factor_scale_inner_core_dble,tau_sigma_dble, &
+                                     ATT1,ATT2,ATT3,ATT5)
 
   ! converts to custom real arrays
   if(CUSTOM_REAL == SIZE_REAL) then
-    factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
+    factor_scale_crust_mantle = sngl(factor_scale_crust_mantle_dble)
     one_minus_sum_beta_crust_mantle = sngl(omsb_crust_mantle_dble)
-    factor_common_crust_mantle      = sngl(factor_common_crust_mantle_dble)
+    factor_common_crust_mantle = sngl(factor_common_crust_mantle_dble)
 
-    factor_scale_inner_core         = sngl(factor_scale_inner_core_dble)
-    one_minus_sum_beta_inner_core   = sngl(omsb_inner_core_dble)
-    factor_common_inner_core        = sngl(factor_common_inner_core_dble)
+    factor_scale_inner_core = sngl(factor_scale_inner_core_dble)
+    one_minus_sum_beta_inner_core = sngl(omsb_inner_core_dble)
+    factor_common_inner_core = sngl(factor_common_inner_core_dble)
   else
     factor_scale_crust_mantle       = factor_scale_crust_mantle_dble
     one_minus_sum_beta_crust_mantle = omsb_crust_mantle_dble
@@ -788,6 +790,7 @@
 
           if(ANISOTROPIC_3D_MANTLE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0
+
             mul = c44store_crust_mantle(i,j,k,ispec)
             c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
                     + FOUR_THIRDS * scale_factor_minus_one * mul
@@ -812,6 +815,7 @@
               ! store the original value of \mu to comput \mu*\eps
               muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
             endif
+
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
 
             ! scales transverse isotropic values for mu_h
@@ -830,12 +834,14 @@
       do j=1,NGLLY
         do i=1,NGLLX
           if( ATTENUATION_3D_VAL ) then
-            scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.d0
+            scale_factor = factor_scale_inner_core(i,j,k,ispec)
           else
-            scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.d0
+            scale_factor = factor_scale_inner_core(1,1,1,ispec)
           endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
+            scale_factor_minus_one = scale_factor - 1.d0
+
             mul = muvstore_inner_core(i,j,k,ispec)
             c11store_inner_core(i,j,k,ispec) = c11store_inner_core(i,j,k,ispec) &
                     + FOUR_THIRDS * scale_factor_minus_one * mul
@@ -849,11 +855,8 @@
                     + scale_factor_minus_one * mul
           endif
 
-          if( ATTENUATION_3D_VAL ) then
-            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
-          else
-            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
-          endif
+          muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * scale_factor
+
         enddo
       enddo
     enddo
@@ -1129,6 +1132,7 @@
 
   ! local parameters
   integer :: ier
+  integer :: i,j,k,ispec,ispec2D,ipoin,iglob
   real :: free_mb,used_mb,total_mb
   ! dummy custom_real variables to convert from double precision
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable:: cr_wgll_cube
@@ -1153,7 +1157,7 @@
                                   number_receiver_global,islice_selected_rec,ispec_selected_rec, &
                                   nrec, nrec_local, nadj_rec_local, &
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                                  NSPEC_CRUST_MANTLE_STRAIN_ONLY,NGLOB_CRUST_MANTLE_OCEANS, &
+                                  NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                   NSPEC_INNER_CORE_STRAIN_ONLY, &
@@ -1306,8 +1310,10 @@
   if ( NOISE_TOMOGRAPHY > 0 ) then
     if(myrank == 0 ) write(IMAIN,*) "  loading noise arrays"
 
-    call prepare_fields_noise_device(Mesh_pointer,nspec_top,ibelm_top_crust_mantle, &
-                                    NSTEP,noise_sourcearray, &
+    call prepare_fields_noise_device(Mesh_pointer,NSPEC_TOP, &
+                                    NSTEP, &
+                                    ibelm_top_crust_mantle, &
+                                    noise_sourcearray, &
                                     normal_x_noise,normal_y_noise,normal_z_noise, &
                                     mask_noise,jacobian2D_top_crust_mantle)
 
@@ -1315,9 +1321,70 @@
 
   ! prepares oceans arrays
   if ( OCEANS_VAL ) then
-     if(myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
+    if(myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
 
-     call prepare_oceans_device(Mesh_pointer,rmass_ocean_load)
+    ! prepares gpu arrays for coupling with oceans
+    !
+    ! note: handling of coupling on gpu is slightly different than in CPU routine to avoid using a mutex
+    !          to update acceleration; tests so far have shown, that with a simple mutex implementation
+    !          the results differ between successive runs (probably still due to some race conditions?)
+    !          here we now totally avoid mutex usage and still update each global point only once
+
+    ! counts global points on surface to oceans
+    updated_dof_ocean_load(:) = .false.
+    ipoin = 0
+    do ispec2D = 1,nspec_top
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      k = NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ! get global point number
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          if(.not. updated_dof_ocean_load(iglob)) then
+            ipoin = ipoin + 1
+            updated_dof_ocean_load(iglob) = .true.
+          endif
+        enddo
+      enddo
+    enddo
+
+    ! allocates arrays with all global points on ocean surface
+    npoin_oceans = ipoin
+    allocate(iglob_ocean_load(npoin_oceans), &
+            normal_ocean_load(NDIM,npoin_oceans), &
+            rmass_ocean_load_selected(npoin_oceans), &
+            stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating oceans arrays')
+
+    ! fills arrays for coupling surface at oceans
+    updated_dof_ocean_load(:) = .false.
+    ipoin = 0
+    do ispec2D = 1,nspec_top
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      k = NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ! get global point number
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          if(.not. updated_dof_ocean_load(iglob)) then
+            ipoin = ipoin + 1
+            ! fills arrays
+            iglob_ocean_load(ipoin) = iglob
+            rmass_ocean_load_selected(ipoin) = rmass_ocean_load(iglob)
+            normal_ocean_load(:,ipoin) = normal_top_crust_mantle(:,i,j,ispec2D)
+            ! masks this global point
+            updated_dof_ocean_load(iglob) = .true.
+          endif
+        enddo
+      enddo
+    enddo
+
+    ! prepares arrays on GPU
+    call prepare_oceans_device(Mesh_pointer,npoin_oceans, &
+                              rmass_ocean_load_selected,iglob_ocean_load,normal_ocean_load)
+
+    ! frees memory
+    deallocate(iglob_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
 
   endif
 
@@ -1335,9 +1402,6 @@
                                  rmassx_crust_mantle, &
                                  rmassy_crust_mantle, &
                                  rmassz_crust_mantle, &
-                                 normal_top_crust_mantle, &
-                                 ibelm_top_crust_mantle, &
-                                 ibelm_bottom_crust_mantle, &
                                  ibool_crust_mantle, &
                                  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                  ispec_is_tiso_crust_mantle, &
@@ -1350,8 +1414,8 @@
                                  c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                                  num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
                                  nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
-                                 NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
                                  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
+                                 ibelm_bottom_crust_mantle, &
                                  NCHUNKS_VAL, &
                                  num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
                                  num_elem_colors_crust_mantle)
@@ -1365,18 +1429,18 @@
                                 gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
                                 rhostore_outer_core,kappavstore_outer_core, &
                                 rmass_outer_core, &
-                                normal_top_outer_core, &
-                                normal_bottom_outer_core, &
-                                jacobian2D_top_outer_core, &
-                                jacobian2D_bottom_outer_core, &
-                                ibelm_top_outer_core, &
-                                ibelm_bottom_outer_core, &
                                 ibool_outer_core, &
                                 xstore_outer_core,ystore_outer_core,zstore_outer_core, &
                                 num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
                                 nspec_outer_outer_core,nspec_inner_outer_core, &
                                 NSPEC2D_TOP(IREGION_OUTER_CORE), &
                                 NSPEC2D_BOTTOM(IREGION_OUTER_CORE), &
+                                normal_top_outer_core, &
+                                normal_bottom_outer_core, &
+                                jacobian2D_top_outer_core, &
+                                jacobian2D_bottom_outer_core, &
+                                ibelm_top_outer_core, &
+                                ibelm_bottom_outer_core, &
                                 num_colors_outer_outer_core,num_colors_inner_outer_core, &
                                 num_elem_colors_outer_core)
 
@@ -1389,7 +1453,6 @@
                                 gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
                                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
                                 rmass_inner_core, &
-                                ibelm_top_inner_core, &
                                 ibool_inner_core, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
@@ -1398,6 +1461,7 @@
                                 num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
                                 nspec_outer_inner_core,nspec_inner_inner_core, &
                                 NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                ibelm_top_inner_core, &
                                 num_colors_outer_inner_core,num_colors_inner_inner_core, &
                                 num_elem_colors_inner_core)
 

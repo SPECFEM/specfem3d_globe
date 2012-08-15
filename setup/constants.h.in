@@ -231,17 +231,18 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
+! mesh coloring:
 ! add mesh coloring for the GPU + MPI implementation
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
   integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
 
 ! enhanced coloring:
-!
 ! using Droux algorithm
 ! try several times with one more color before giving up
   logical, parameter :: USE_DROUX_OPTIMIZATION = .false.
   integer, parameter :: MAX_NB_TRIES_OF_DROUX_1993 = 15
-!
+
+! using balancing algorithm
 ! postprocess the colors to balance them if Droux (1993) algorithm is not used
   logical, parameter :: BALANCE_COLORS_SIMPLE_ALGO = .false.
 
@@ -269,6 +270,12 @@
 ! forces transverse isotropy for all mantle elements
 ! (default is to use transverse isotropy only between MOHO and 220 )
   logical, parameter :: USE_FULL_TISO_MANTLE = .false.
+
+! forces attenuation arrays to be fully 3D and defined on all GLL points
+! (useful for more accurate attenuation profiles and adjoint inversions)
+! (if set to .false., 3D attenuation is only used for models with 3D attenuation distributions)
+  logical, parameter :: USE_3D_ATTENUATION = .true.
+
 
 !!-----------------------------------------------------------
 !!

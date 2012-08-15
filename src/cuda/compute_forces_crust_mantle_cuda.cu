@@ -305,7 +305,7 @@ __device__ void compute_element_cm_aniso(int offset,
                                          realw* d_c44store,realw* d_c45store,realw* d_c46store,
                                          realw* d_c55store,realw* d_c56store,realw* d_c66store,
                                          int ATTENUATION,
-                                         realw minus_sum_beta,
+                                         realw one_minus_sum_beta_use,
                                          realw duxdxl,realw duxdyl,realw duxdzl,
                                          realw duydxl,realw duydyl,realw duydzl,
                                          realw duzdxl,realw duzdyl,realw duzdzl,
@@ -315,7 +315,7 @@ __device__ void compute_element_cm_aniso(int offset,
                                          ){
 
   realw c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
-  realw mul;
+  realw mul,minus_sum_beta;
 
   c11 = d_c11store[offset];
   c12 = d_c12store[offset];
@@ -341,7 +341,9 @@ __device__ void compute_element_cm_aniso(int offset,
 
   // use unrelaxed parameters if attenuation
   if( ATTENUATION){
+    minus_sum_beta = one_minus_sum_beta_use - 1.0f;
     mul = c44;
+
     c11 = c11 + 1.33333333333333333333f * minus_sum_beta * mul;
     c12 = c12 - 0.66666666666666666666f * minus_sum_beta * mul;
     c13 = c13 - 0.66666666666666666666f * minus_sum_beta * mul;
@@ -760,7 +762,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
   realw templ;
 
   realw fac1,fac2,fac3;
-  realw minus_sum_beta,one_minus_sum_beta_use;
+  realw one_minus_sum_beta_use;
 
   realw sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
   realw epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc;
@@ -785,9 +787,11 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
   __shared__ realw s_tempx1[NGLL3];
   __shared__ realw s_tempx2[NGLL3];
   __shared__ realw s_tempx3[NGLL3];
+
   __shared__ realw s_tempy1[NGLL3];
   __shared__ realw s_tempy2[NGLL3];
   __shared__ realw s_tempy3[NGLL3];
+
   __shared__ realw s_tempz1[NGLL3];
   __shared__ realw s_tempz2[NGLL3];
   __shared__ realw s_tempz3[NGLL3];
@@ -842,8 +846,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
         s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
         s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
 #endif
-      }
-      else{
+      }else{
         // takes old routines
         s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
         s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
@@ -1141,7 +1144,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       }else{
         one_minus_sum_beta_use = one_minus_sum_beta[working_element]; // (1,1,1,ispec)
       }
-      minus_sum_beta = one_minus_sum_beta_use - 1.0f;
     }
 
     // computes stresses
@@ -1152,7 +1154,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                             d_c23store,d_c24store,d_c25store,d_c26store,d_c33store,d_c34store,d_c35store,
                             d_c36store,d_c44store,d_c45store,d_c46store,d_c55store,d_c56store,d_c66store,
                             ATTENUATION,
-                            minus_sum_beta,
+                            one_minus_sum_beta_use,
                             duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl,
                             duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
                             &sigma_xx,&sigma_yy,&sigma_zz,
@@ -1202,8 +1204,8 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 
     // jacobian
     jacobianl = 1.0f / (xixl*(etayl*gammazl-etazl*gammayl)
-                        -xiyl*(etaxl*gammazl-etazl*gammaxl)
-                        +xizl*(etaxl*gammayl-etayl*gammaxl));
+                     - xiyl*(etaxl*gammazl-etazl*gammaxl)
+                     + xizl*(etaxl*gammayl-etayl*gammaxl));
 
     if( GRAVITY ){
       //  computes non-symmetric terms for gravity
@@ -1390,13 +1392,16 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 
     // update memory variables based upon the Runge-Kutta scheme
     if( ATTENUATION && ( ! USE_ATTENUATION_MIMIC ) ){
+
       compute_element_cm_att_memory(tx,working_element,
-                                d_muvstore,
-                                factor_common,alphaval,betaval,gammaval,
-                                R_xx,R_yy,R_xy,R_xz,R_yz,
-                                epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,
-                                epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc,
-                                d_c44store,ANISOTROPY,ATTENUATION_3D);
+                                    d_muvstore,
+                                    factor_common,alphaval,betaval,gammaval,
+                                    R_xx,R_yy,R_xy,R_xz,R_yz,
+                                    epsilondev_xx,epsilondev_yy,epsilondev_xy,
+                                    epsilondev_xz,epsilondev_yz,
+                                    epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,
+                                    epsilondev_xz_loc,epsilondev_yz_loc,
+                                    d_c44store,ANISOTROPY,ATTENUATION_3D);
     }
 
     // save deviatoric strain for Runge-Kutta scheme
@@ -1635,7 +1640,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
     int nb_colors,nb_blocks_to_compute;
     int istart;
     int color_offset,color_offset_nonpadded;
-    int color_offset_nonpadded_att2,color_offset_nonpadded_att3;
+    int color_offset_nonpadded_att1,color_offset_nonpadded_att2,color_offset_nonpadded_att3;
     int color_offset_nonpadded_strain;
     int color_offset_ispec;
 
@@ -1648,6 +1653,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       // array offsets
       color_offset = 0;
       color_offset_nonpadded = 0;
+      color_offset_nonpadded_att1 = 0;
       color_offset_nonpadded_att2 = 0;
       color_offset_nonpadded_att3 = 0;
       color_offset_nonpadded_strain = 0;
@@ -1660,6 +1666,8 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       // array offsets
       color_offset = (mp->nspec_outer_crust_mantle) * NGLL3_PADDED;
       color_offset_nonpadded = (mp->nspec_outer_crust_mantle) * NGLL3;
+      color_offset_nonpadded_att1 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
+
       // for factor_common array
       if( mp->attenuation_3D ){
         color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * NGLL3;
@@ -1673,7 +1681,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
         color_offset_ispec = mp->nspec_outer_crust_mantle;
       }
       // for strain
-      if( ! mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1 ){
+      if( ! ( mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1 ) ){
         color_offset_nonpadded_strain = (mp->nspec_outer_crust_mantle) * NGLL3;
       }
     }
@@ -1719,22 +1727,22 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                             mp->d_eps_trace_over_3_crust_mantle + color_offset_nonpadded_strain,
                             mp->d_one_minus_sum_beta_crust_mantle + color_offset_nonpadded_att2,
                             mp->d_factor_common_crust_mantle + color_offset_nonpadded_att3,
-                            mp->d_R_xx_crust_mantle + color_offset_nonpadded,
-                            mp->d_R_yy_crust_mantle + color_offset_nonpadded,
-                            mp->d_R_xy_crust_mantle + color_offset_nonpadded,
-                            mp->d_R_xz_crust_mantle + color_offset_nonpadded,
-                            mp->d_R_yz_crust_mantle + color_offset_nonpadded,
+                            mp->d_R_xx_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_R_yy_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_R_xy_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_R_xz_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_R_yz_crust_mantle + color_offset_nonpadded_att1,
                             mp->d_b_epsilondev_xx_crust_mantle + color_offset_nonpadded,
                             mp->d_b_epsilondev_yy_crust_mantle + color_offset_nonpadded,
                             mp->d_b_epsilondev_xy_crust_mantle + color_offset_nonpadded,
                             mp->d_b_epsilondev_xz_crust_mantle + color_offset_nonpadded,
                             mp->d_b_epsilondev_yz_crust_mantle + color_offset_nonpadded,
                             mp->d_b_eps_trace_over_3_crust_mantle + color_offset_nonpadded,
-                            mp->d_b_R_xx_crust_mantle + color_offset_nonpadded,
-                            mp->d_b_R_yy_crust_mantle + color_offset_nonpadded,
-                            mp->d_b_R_xy_crust_mantle + color_offset_nonpadded,
-                            mp->d_b_R_xz_crust_mantle + color_offset_nonpadded,
-                            mp->d_b_R_yz_crust_mantle + color_offset_nonpadded,
+                            mp->d_b_R_xx_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_b_R_yy_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_b_R_xy_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_b_R_xz_crust_mantle + color_offset_nonpadded_att1,
+                            mp->d_b_R_yz_crust_mantle + color_offset_nonpadded_att1,
                             mp->d_c11store_crust_mantle + color_offset,
                             mp->d_c12store_crust_mantle + color_offset,
                             mp->d_c13store_crust_mantle + color_offset,
@@ -1755,13 +1763,13 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                             mp->d_c46store_crust_mantle + color_offset,
                             mp->d_c55store_crust_mantle + color_offset,
                             mp->d_c56store_crust_mantle + color_offset,
-                            mp->d_c66store_crust_mantle + color_offset
-                            );
+                            mp->d_c66store_crust_mantle + color_offset);
 
       // for padded and aligned arrays
       color_offset += nb_blocks_to_compute * NGLL3_PADDED;
       // for no-aligned arrays
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
+      color_offset_nonpadded_att1 += nb_blocks_to_compute * NGLL3 * N_SLS;
       // for factor_common array
       if( mp->attenuation_3D ){
         color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3;
@@ -1775,7 +1783,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
         color_offset_ispec += nb_blocks_to_compute;
       }
       // for strain
-      if( ! mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1 ){
+      if( ! ( mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1 ) ){
         color_offset_nonpadded_strain += nb_blocks_to_compute * NGLL3;
       }
 
@@ -1826,8 +1834,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                           mp->d_c25store_crust_mantle,mp->d_c26store_crust_mantle,mp->d_c33store_crust_mantle,
                           mp->d_c34store_crust_mantle,mp->d_c35store_crust_mantle,mp->d_c36store_crust_mantle,
                           mp->d_c44store_crust_mantle,mp->d_c45store_crust_mantle,mp->d_c46store_crust_mantle,
-                          mp->d_c55store_crust_mantle,mp->d_c56store_crust_mantle,mp->d_c66store_crust_mantle
-                          );
+                          mp->d_c55store_crust_mantle,mp->d_c56store_crust_mantle,mp->d_c66store_crust_mantle);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

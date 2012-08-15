@@ -294,10 +294,10 @@
     endif
 
     write(IMAIN,*)
-    
+
     ! flushes file buffer for main output file (IMAIN)
     call flush_IMAIN()
-    
+
     ! write time stamp file to give information about progression of simulation
     write(outputname,"('/timestamp',i6.6)") it
 

@@ -126,7 +126,8 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
                                        realw time,
                                        realw two_omega_earth,
                                        realw deltat,
-                                       realw* d_A_array_rotation,realw* d_B_array_rotation){
+                                       realw* d_A_array_rotation,realw* d_B_array_rotation,
+                                       int NSPEC_OUTER_CORE){
 
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
   int tx = threadIdx.x;
@@ -440,12 +441,19 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     //mesh coloring
     if( use_mesh_coloring_gpu ){
 
-      // no atomic operation needed, colors don't share global points between elements
+      if( NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE ){
+        // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
-      d_potential_dot_dot[iglob] = tex1Dfetch(d_accel_oc_tex, iglob) + sum_terms;
+        d_potential_dot_dot[iglob] = tex1Dfetch(d_accel_oc_tex, iglob) + sum_terms;
 #else
-      d_potential_dot_dot[iglob] += sum_terms;
+        d_potential_dot_dot[iglob] += sum_terms;
 #endif // USE_TEXTURES_FIELDS
+      }else{
+        // poor element count, only use 1 color per inner/outer run
+        // forces atomic operations
+        atomicAdd(&d_potential_dot_dot[iglob],sum_terms);
+      }
+
 
     }else{
 
@@ -466,8 +474,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                          realw* d_gammax,realw* d_gammay,realw* d_gammaz,
                          realw time, realw b_time,
                          realw* d_A_array_rotation,realw* d_B_array_rotation,
-                         realw* d_b_A_array_rotation,realw* d_b_B_array_rotation
-                         ){
+                         realw* d_b_A_array_rotation,realw* d_b_B_array_rotation){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before outer_core kernel Kernel_2");
@@ -518,7 +525,8 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                           time,
                                                           mp->d_two_omega_earth,
                                                           mp->d_deltat,
-                                                          d_A_array_rotation,d_B_array_rotation);
+                                                          d_A_array_rotation,d_B_array_rotation,
+                                                          mp->NSPEC_OUTER_CORE);
 
   if(mp->simulation_type == 3) {
     Kernel_2_outer_core_impl<<< grid_2, threads_2, 0, 0 >>>(nb_blocks_to_compute,
@@ -545,7 +553,8 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                             b_time,
                                                             mp->d_b_two_omega_earth,
                                                             mp->d_b_deltat,
-                                                            d_b_A_array_rotation,d_b_B_array_rotation);
+                                                            d_b_A_array_rotation,d_b_B_array_rotation,
+                                                            mp->NSPEC_OUTER_CORE);
   }
 
   // cudaEventRecord( stop, 0 );
@@ -596,7 +605,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
   if( num_elements == 0 ) return;
 
   // mesh coloring
-  if( mp->use_mesh_coloring_gpu ){
+  if( mp->use_mesh_coloring_gpu){
 
     // note: array offsets require sorted arrays, such that e.g. ibool starts with elastic elements
     //         and followed by acoustic ones.
@@ -607,28 +616,56 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
     int color_offset,color_offset_nonpadded;
 
     // sets up color loop
-    if( *iphase == 1 ){
-      // outer elements
-      nb_colors = mp->num_colors_outer_outer_core;
-      istart = 0;
+    if( mp->NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE ){
+      if( *iphase == 1 ){
+        // outer elements
+        nb_colors = mp->num_colors_outer_outer_core;
+        istart = 0;
 
-      // array offsets
-      color_offset = 0;
-      color_offset_nonpadded = 0;
+        // array offsets
+        color_offset = 0;
+        color_offset_nonpadded = 0;
+      }else{
+        // inner element colors (start after outer elements)
+        nb_colors = mp->num_colors_outer_outer_core + mp->num_colors_inner_outer_core;
+        istart = mp->num_colors_outer_outer_core;
+
+        // array offsets (inner elements start after outer ones)
+        color_offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
+        color_offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
+      }
     }else{
-      // inner element colors (start after outer elements)
-      nb_colors = mp->num_colors_outer_outer_core + mp->num_colors_inner_outer_core;
-      istart = mp->num_colors_outer_outer_core;
 
-      // array offsets (inner elements start after outer ones)
-      color_offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
-      color_offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
+      // poor element count, only use 1 color per inner/outer run
+
+      if( *iphase == 1 ){
+        // outer elements
+        nb_colors = 1;
+        istart = 0;
+
+        // array offsets
+        color_offset = 0;
+        color_offset_nonpadded = 0;
+      }else{
+        // inner element colors (start after outer elements)
+        nb_colors = 1;
+        istart = 0;
+
+        // array offsets (inner elements start after outer ones)
+        color_offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
+        color_offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
+      }
     }
 
     // loops over colors
     for(int icolor = istart; icolor < nb_colors; icolor++){
 
-      nb_blocks_to_compute = mp->h_num_elem_colors_outer_core[icolor];
+      // gets number of elements for this color
+      if( mp->NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE ){
+        nb_blocks_to_compute = mp->h_num_elem_colors_outer_core[icolor];
+      }else{
+        nb_blocks_to_compute = num_elements;
+      }
 
       Kernel_2_outer_core(nb_blocks_to_compute,mp,
                           *iphase,

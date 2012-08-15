@@ -185,5 +185,5 @@
 
   ! flushes I/O buffer
   call flush_IMAIN()
-  
+
   end subroutine sm_output_info
