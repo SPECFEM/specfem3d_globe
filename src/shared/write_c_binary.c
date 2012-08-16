@@ -280,7 +280,10 @@ void write_abs_fbin(int *fid, char *buffer, int *length, int *index){
 
   FILE *ft;
   int itemlen,remlen,donelen,ret;
-  void *buf;
+// DK DK fixed the warning we got when compiling with Intel icc
+// DK DK solution found at http://osdir.com/ml/network.quagga.devel/2004-09/msg00090.html
+// DK DK  void *buf;
+  char *buf = NULL;
 
   // file pointer
   ft = fp_abs[*fid];
@@ -317,7 +320,10 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index){
   FILE *ft;
   int ret,itemlen,remlen,donelen;
   long long pos;
-  void *buf;
+// DK DK fixed the warning we got when compiling with Intel icc
+// DK DK solution found at http://osdir.com/ml/network.quagga.devel/2004-09/msg00090.html
+// DK DK  void *buf;
+  char *buf = NULL;
 
   // file pointer
   ft = fp_abs[*fid];
