@@ -117,7 +117,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
                                          realw* d_etax, realw* d_etay, realw* d_etaz,
                                          realw* d_gammax, realw* d_gammay, realw* d_gammaz,
                                          realw* d_hprime_xx,
-                                         realw* hprimewgll_xx, realw* hprimewgll_yy, realw* hprimewgll_zz,
+                                         realw* d_hprimewgll_xx,
                                          realw* wgllwgll_xy,realw* wgllwgll_xz,realw* wgllwgll_yz,
                                          int GRAVITY,
                                          realw* d_xstore, realw* d_ystore, realw* d_zstore,
@@ -156,7 +156,6 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   realw dpotentialdxl,dpotentialdyl,dpotentialdzl;
   realw dpotentialdx_with_rot,dpotentialdy_with_rot;
 
-  realw fac1,fac2,fac3;
   realw sum_terms;
   realw gravity_term;
   realw gxl,gyl,gzl;
@@ -167,15 +166,15 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   int int_radius;
 #ifndef MANUALLY_UNROLLED_LOOPS
   int l;
-  int offset1,offset2,offset3;
 #endif
 
   __shared__ realw s_dummy_loc[NGLL3];
   __shared__ realw s_temp1[NGLL3];
   __shared__ realw s_temp2[NGLL3];
-  __shared__ realw s_temp3[NGLL3];
+  __shared__ realw s_temp3[NGLL3];  
   __shared__ realw sh_hprime_xx[NGLL2];
-
+  __shared__ realw sh_hprimewgll_xx[NGLL2];
+  
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
 // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
   active = (tx < NGLL3 && bx < nb_blocks_to_compute) ? 1:0;
@@ -208,11 +207,14 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   }
 
   if (tx < NGLL2) {
+    // hprime
 #ifdef USE_TEXTURES_CONSTANTS
     sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_oc_tex,tx);
 #else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
 #endif
+    // weighted hprime
+    sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
   }
 
 // synchronize all the threads (one thread for each of the NGLL grid points of the
@@ -223,27 +225,16 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   if (active) {
 
 #ifndef MANUALLY_UNROLLED_LOOPS
-
     temp1l = 0.f;
     temp2l = 0.f;
     temp3l = 0.f;
-
     for (l=0;l<NGLLX;l++) {
-      fac1 = sh_hprime_xx[l*NGLLX+I];
-      offset1 = K*NGLL2+J*NGLLX+l;
-      temp1l += s_dummy_loc[offset1]*fac1;
-
+      temp1l += s_dummy_loc[K*NGLL2+J*NGLLX+l]*sh_hprime_xx[l*NGLLX+I];
       //assumes that hprime_xx = hprime_yy = hprime_zz
-      fac2 = sh_hprime_xx[l*NGLLX+J];
-      offset2 = K*NGLL2+l*NGLLX+I;
-      temp2l += s_dummy_loc[offset2]*fac2;
-
-      fac3 = sh_hprime_xx[l*NGLLX+K];
-      offset3 = l*NGLL2+J*NGLLX+I;
-      temp3l += s_dummy_loc[offset3]*fac3;
+      temp2l += s_dummy_loc[K*NGLL2+l*NGLLX+I]*sh_hprime_xx[l*NGLLX+J];
+      temp3l += s_dummy_loc[l*NGLL2+J*NGLLX+I]*sh_hprime_xx[l*NGLLX+K];
     }
 #else
-
     temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
             + s_dummy_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
             + s_dummy_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
@@ -261,7 +252,6 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
             + s_dummy_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
             + s_dummy_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
             + s_dummy_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
-
 #endif
 
     // compute derivatives of ux, uy and uz with respect to x, y and z
@@ -360,7 +350,6 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
 
       // uses potential definition: s = grad(chi)
       // gravity term: - rho * g * 1/kappa grad(chi)
-
       gravity_term = d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] *
                     ( dpotentialdx_with_rot * gxl + dpotentialdy_with_rot * gyl + dpotentialdzl * gzl);
 
@@ -372,7 +361,6 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
       //  div_displfluid(i,j,k,ispec) =  d_minus_rho_g_over_kappa_fluid[int_radius] *
       //        (dpotentialdx_with_rot * gxl + dpotentialdy_with_rot * gyl + dpotentialdzl * gzl);
       //}
-
     }
 
     // form the dot product with the test vector
@@ -392,55 +380,38 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   if (active) {
 
 #ifndef MANUALLY_UNROLLED_LOOPS
-
     temp1l = 0.f;
     temp2l = 0.f;
     temp3l = 0.f;
-
     for (l=0;l<NGLLX;l++) {
-        fac1 = hprimewgll_xx[I*NGLLX+l];
-        offset1 = K*NGLL2+J*NGLLX+l;
-        temp1l += s_temp1[offset1]*fac1;
-
-        //no more assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
-        fac2 = hprimewgll_yy[J*NGLLX+l];
-        offset2 = K*NGLL2+l*NGLLX+I;
-        temp2l += s_temp2[offset2]*fac2;
-
-        fac3 = hprimewgll_zz[K*NGLLX+l];
-        offset3 = l*NGLL2+J*NGLLX+I;
-        temp3l += s_temp3[offset3]*fac3;
-    }
+        temp1l += s_temp1[K*NGLL2+J*NGLLX+l]*sh_hprimewgll_xx[I*NGLLX+l];
+        //assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
+        temp2l += s_temp2[K*NGLL2+l*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+l];
+        temp3l += s_temp3[l*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+l];
+    }    
 #else
+    temp1l = s_temp1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
+            + s_temp1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
+            + s_temp1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
+            + s_temp1[K*NGLL2+J*NGLLX+3]*sh_hprimewgll_xx[I*NGLLX+3]
+            + s_temp1[K*NGLL2+J*NGLLX+4]*sh_hprimewgll_xx[I*NGLLX+4];
 
-    temp1l = s_temp1[K*NGLL2+J*NGLLX]*hprimewgll_xx[I*NGLLX]
-            + s_temp1[K*NGLL2+J*NGLLX+1]*hprimewgll_xx[I*NGLLX+1]
-            + s_temp1[K*NGLL2+J*NGLLX+2]*hprimewgll_xx[I*NGLLX+2]
-            + s_temp1[K*NGLL2+J*NGLLX+3]*hprimewgll_xx[I*NGLLX+3]
-            + s_temp1[K*NGLL2+J*NGLLX+4]*hprimewgll_xx[I*NGLLX+4];
+    temp2l = s_temp2[K*NGLL2+I]*sh_hprimewgll_xx[J*NGLLX]
+            + s_temp2[K*NGLL2+NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+1]
+            + s_temp2[K*NGLL2+2*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+2]
+            + s_temp2[K*NGLL2+3*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+3]
+            + s_temp2[K*NGLL2+4*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+4];
 
-
-    temp2l = s_temp2[K*NGLL2+I]*hprimewgll_yy[J*NGLLX]
-            + s_temp2[K*NGLL2+NGLLX+I]*hprimewgll_yy[J*NGLLX+1]
-            + s_temp2[K*NGLL2+2*NGLLX+I]*hprimewgll_yy[J*NGLLX+2]
-            + s_temp2[K*NGLL2+3*NGLLX+I]*hprimewgll_yy[J*NGLLX+3]
-            + s_temp2[K*NGLL2+4*NGLLX+I]*hprimewgll_yy[J*NGLLX+4];
-
-
-    temp3l = s_temp3[J*NGLLX+I]*hprimewgll_zz[K*NGLLX]
-            + s_temp3[NGLL2+J*NGLLX+I]*hprimewgll_zz[K*NGLLX+1]
-            + s_temp3[2*NGLL2+J*NGLLX+I]*hprimewgll_zz[K*NGLLX+2]
-            + s_temp3[3*NGLL2+J*NGLLX+I]*hprimewgll_zz[K*NGLLX+3]
-            + s_temp3[4*NGLL2+J*NGLLX+I]*hprimewgll_zz[K*NGLLX+4];
-
-
+    temp3l = s_temp3[J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX]
+            + s_temp3[NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+1]
+            + s_temp3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
+            + s_temp3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
+            + s_temp3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
 #endif
 
-    fac1 = wgllwgll_yz[K*NGLLX+J];
-    fac2 = wgllwgll_xz[K*NGLLX+I];
-    fac3 = wgllwgll_xy[J*NGLLX+I];
-
-    sum_terms = -(fac1*temp1l + fac2*temp2l + fac3*temp3l);
+    sum_terms = - ( wgllwgll_yz[K*NGLLX+J]*temp1l 
+                  + wgllwgll_xz[K*NGLLX+I]*temp2l 
+                  + wgllwgll_xy[J*NGLLX+I]*temp3l);
 
     if( GRAVITY ) sum_terms += gravity_term;
 
@@ -539,7 +510,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                           d_etax, d_etay, d_etaz,
                                                           d_gammax, d_gammay, d_gammaz,
                                                           mp->d_hprime_xx,
-                                                          mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                          mp->d_hprimewgll_xx,
                                                           mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
                                                           mp->gravity,
                                                           mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
@@ -568,7 +539,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                             d_etax, d_etay, d_etaz,
                                                             d_gammax, d_gammay, d_gammaz,
                                                             mp->d_hprime_xx,
-                                                            mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                            mp->d_hprimewgll_xx,
                                                             mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
                                                             mp->gravity,
                                                             mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,

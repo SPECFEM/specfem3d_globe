@@ -72,14 +72,15 @@ __device__ realw d_hprime_xx[NGLL2];
 //__device__ realw d_hprime_zz[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
 
 __device__ realw d_hprimewgll_xx[NGLL2];
-__device__ realw d_hprimewgll_yy[NGLL2];
-__device__ realw d_hprimewgll_zz[NGLL2];
+//__device__ realw d_hprimewgll_yy[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
+//__device__ realw d_hprimewgll_zz[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
 
 __device__ realw d_wgllwgll_xy[NGLL2];
 __device__ realw d_wgllwgll_xz[NGLL2];
 __device__ realw d_wgllwgll_yz[NGLL2];
 
-__device__ realw d_wgll_cube[NGLL3]; // needed only for gravity case
+// wgll_cube: needed only for gravity case
+__device__ realw d_wgll_cube[NGLL3]; 
 
 
 // setup functions
@@ -159,6 +160,8 @@ void setConst_hprimewgll_xx(realw* array,Mesh* mp)
   }
 }
 
+/*
+// only needed if NGLLX != NGLLY != NGLLZ
 void setConst_hprimewgll_yy(realw* array,Mesh* mp)
 {
   cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_yy, array, NGLL2*sizeof(realw));
@@ -174,7 +177,10 @@ void setConst_hprimewgll_yy(realw* array,Mesh* mp)
     exit(1);
   }
 }
+*/
 
+/*
+// only needed if NGLLX != NGLLY != NGLLZ
 void setConst_hprimewgll_zz(realw* array,Mesh* mp)
 {
   cudaError_t err = cudaMemcpyToSymbol(d_hprimewgll_zz, array, NGLL2*sizeof(realw));
@@ -190,6 +196,7 @@ void setConst_hprimewgll_zz(realw* array,Mesh* mp)
     exit(1);
   }
 }
+*/
 
 void setConst_wgllwgll_xy(realw* array,Mesh* mp)
 {
