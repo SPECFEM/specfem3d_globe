@@ -162,8 +162,14 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
 
-          ! if 3D Earth with topography, compute local height of oceans
+          ! note: old version (5.1.4)
+          ! only for models where 3D crustal stretching was used (even without topography?)
+          !if( CASE_3D ) then
+
+          ! note: new version:
+          ! for 3D Earth with topography, compute local height of oceans
           if( TOPOGRAPHY ) then
+
 
             ! get coordinates of current point
             xval = xstore(i,j,k,ispec)

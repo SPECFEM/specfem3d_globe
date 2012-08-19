@@ -228,8 +228,8 @@ TRACE("compute_stacey_acoustic_cuda");
     case 8:
       // zmin
       num_abs_boundary_faces = mp->nspec2D_zmin_outer_core;
-      d_abs_boundary_ispec = mp->d_ibelm_zmin_outer_core;
-      d_abs_boundary_jacobian2D = mp->d_jacobian2D_zmin_outer_core;
+      d_abs_boundary_ispec = mp->d_ibelm_bottom_outer_core;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_bottom_outer_core;
       d_b_absorb_potential = mp->d_absorb_zmin_outer_core;
       d_wgllwgll = mp->d_wgllwgll_xy;
       break;
@@ -252,7 +252,7 @@ TRACE("compute_stacey_acoustic_cuda");
 
   int num_blocks_x = num_abs_boundary_faces;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -263,7 +263,8 @@ TRACE("compute_stacey_acoustic_cuda");
   if (mp->simulation_type == 3 && num_abs_boundary_faces > 0 ){
     // copies array to GPU
     print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_potential,absorb_potential,
-                            NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
+                            NGLL2*num_abs_boundary_faces*sizeof(realw),
+                            cudaMemcpyHostToDevice),7700);
   }
 
   compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_veloc_outer_core,
@@ -290,7 +291,8 @@ TRACE("compute_stacey_acoustic_cuda");
   if (mp->simulation_type == 1 && mp->save_forward && num_abs_boundary_faces > 0 ){
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(absorb_potential,d_b_absorb_potential,
-                            NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
+                                       NGLL2*num_abs_boundary_faces*sizeof(realw),
+                                       cudaMemcpyDeviceToHost),7701);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

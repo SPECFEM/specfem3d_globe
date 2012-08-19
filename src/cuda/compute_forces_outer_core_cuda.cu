@@ -60,39 +60,40 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
                                             realw deltat,
                                             realw* d_A_array_rotation,
                                             realw* d_B_array_rotation,
-                                            realw dpotentialdxl, realw dpotentialdyl,
+                                            realw dpotentialdxl,
+                                            realw dpotentialdyl,
                                             realw* dpotentialdx_with_rot,
                                             realw* dpotentialdy_with_rot) {
 
   realw two_omega_deltat,cos_two_omega_t,sin_two_omega_t;
   realw A_rotation,B_rotation;
-  realw ux_rotation,uy_rotation;
   realw source_euler_A,source_euler_B;
 
   // store the source for the Euler scheme for A_rotation and B_rotation
-  two_omega_deltat = deltat * two_omega_earth;
-
-  cos_two_omega_t = cos(two_omega_earth*time);
-  sin_two_omega_t = sin(two_omega_earth*time);
+  if( sizeof( sin_two_omega_t ) == sizeof( float ) ){
+    // float operations
+    // sincos function return sinus and cosine for given value
+    sincosf(two_omega_earth*time, &sin_two_omega_t, &cos_two_omega_t);
+  }else{
+    cos_two_omega_t = cos(two_omega_earth*time);
+    sin_two_omega_t = sin(two_omega_earth*time);
+  }
 
   // time step deltat of Euler scheme is included in the source
+  two_omega_deltat = deltat * two_omega_earth;
+
   source_euler_A = two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl);
   source_euler_B = two_omega_deltat * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl);
 
   A_rotation = d_A_array_rotation[tx + working_element*NGLL3]; // (non-padded offset)
   B_rotation = d_B_array_rotation[tx + working_element*NGLL3];
 
-  ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t;
-  uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t;
-
-  *dpotentialdx_with_rot = dpotentialdxl + ux_rotation;
-  *dpotentialdy_with_rot = dpotentialdyl + uy_rotation;
+  *dpotentialdx_with_rot = dpotentialdxl + (  A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t);
+  *dpotentialdy_with_rot = dpotentialdyl + (- A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t);
 
   // updates rotation term with Euler scheme (non-padded offset)
   d_A_array_rotation[tx + working_element*NGLL3] += source_euler_A;
   d_B_array_rotation[tx + working_element*NGLL3] += source_euler_B;
-
-  return;
 }
 
 
@@ -105,31 +106,35 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
 
 
 __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
-                                       int NGLOB, int* d_ibool,
-                                       int* d_phase_ispec_inner,
-                                       int num_phase_ispec,
-                                       int d_iphase,
-                                       int use_mesh_coloring_gpu,
-                                       realw* d_potential, realw* d_potential_dot_dot,
-                                       realw* d_xix, realw* d_xiy, realw* d_xiz,
-                                       realw* d_etax, realw* d_etay, realw* d_etaz,
-                                       realw* d_gammax, realw* d_gammay, realw* d_gammaz,
-                                       realw* d_hprime_xx,
-                                       realw* hprimewgll_xx, realw* hprimewgll_yy, realw* hprimewgll_zz,
-                                       realw* wgllwgll_xy,realw* wgllwgll_xz,realw* wgllwgll_yz,
-                                       int GRAVITY,
-                                       realw* d_xstore, realw* d_ystore, realw* d_zstore,
-                                       realw* d_d_ln_density_dr_table,
-                                       realw* d_minus_rho_g_over_kappa_fluid,
-                                       realw* wgll_cube,
-                                       int ROTATION,
-                                       realw time,
-                                       realw two_omega_earth,
-                                       realw deltat,
-                                       realw* d_A_array_rotation,realw* d_B_array_rotation,
-                                       int NSPEC_OUTER_CORE){
+                                         int NGLOB,
+                                         int* d_ibool,
+                                         int* d_phase_ispec_inner,
+                                         int num_phase_ispec,
+                                         int d_iphase,
+                                         int use_mesh_coloring_gpu,
+                                         realw* d_potential, realw* d_potential_dot_dot,
+                                         realw* d_xix, realw* d_xiy, realw* d_xiz,
+                                         realw* d_etax, realw* d_etay, realw* d_etaz,
+                                         realw* d_gammax, realw* d_gammay, realw* d_gammaz,
+                                         realw* d_hprime_xx,
+                                         realw* hprimewgll_xx, realw* hprimewgll_yy, realw* hprimewgll_zz,
+                                         realw* wgllwgll_xy,realw* wgllwgll_xz,realw* wgllwgll_yz,
+                                         int GRAVITY,
+                                         realw* d_xstore, realw* d_ystore, realw* d_zstore,
+                                         realw* d_d_ln_density_dr_table,
+                                         realw* d_minus_rho_g_over_kappa_fluid,
+                                         realw* wgll_cube,
+                                         int ROTATION,
+                                         realw time,
+                                         realw two_omega_earth,
+                                         realw deltat,
+                                         realw* d_A_array_rotation,
+                                         realw* d_B_array_rotation,
+                                         int NSPEC_OUTER_CORE){
 
+  // block id == spectral-element id
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
+  // thread id == GLL point id
   int tx = threadIdx.x;
 
   // R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
@@ -142,34 +147,33 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   int I = (tx-K*NGLL2-J*NGLLX);
 
   int active,offset;
-  int iglob = 0;
+  int iglob;
   int working_element;
 
   realw temp1l,temp2l,temp3l;
   realw xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
+
   realw dpotentialdxl,dpotentialdyl,dpotentialdzl;
   realw dpotentialdx_with_rot,dpotentialdy_with_rot;
+
   realw fac1,fac2,fac3;
   realw sum_terms;
   realw gravity_term;
   realw gxl,gyl,gzl;
+
   realw radius,theta,phi;
   realw cos_theta,sin_theta,cos_phi,sin_phi;
   realw grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho;
   int int_radius;
-
-
 #ifndef MANUALLY_UNROLLED_LOOPS
   int l;
   int offset1,offset2,offset3;
 #endif
 
   __shared__ realw s_dummy_loc[NGLL3];
-
   __shared__ realw s_temp1[NGLL3];
   __shared__ realw s_temp2[NGLL3];
   __shared__ realw s_temp3[NGLL3];
-
   __shared__ realw sh_hprime_xx[NGLL2];
 
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
@@ -275,8 +279,8 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
 
     //  compute the jacobian
     jacobianl = 1.f / (xixl*(etayl*gammazl-etazl*gammayl)
-                      -xiyl*(etaxl*gammazl-etazl*gammaxl)
-                      +xizl*(etaxl*gammayl-etayl*gammaxl));
+                    - xiyl*(etaxl*gammazl-etazl*gammaxl)
+                    + xizl*(etaxl*gammayl-etayl*gammaxl));
 
     // derivatives of potential
     dpotentialdxl = xixl*temp1l + etaxl*temp2l + gammaxl*temp3l;
@@ -285,12 +289,12 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
 
     // compute contribution of rotation and add to gradient of potential
     // this term has no Z component
-    if(ROTATION){
-      compute_element_oc_rotation(tx,working_element,time,two_omega_earth,deltat,
+    if( ROTATION ){
+      compute_element_oc_rotation(tx,working_element,
+                                  time,two_omega_earth,deltat,
                                   d_A_array_rotation,d_B_array_rotation,
                                   dpotentialdxl,dpotentialdyl,
                                   &dpotentialdx_with_rot,&dpotentialdy_with_rot);
-
     }else{
       dpotentialdx_with_rot = dpotentialdxl;
       dpotentialdy_with_rot = dpotentialdyl;
@@ -304,15 +308,27 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     theta = d_ystore[iglob];
     phi = d_zstore[iglob];
 
-    cos_theta = cos(theta);
-    sin_theta = sin(theta);
-    cos_phi = cos(phi);
-    sin_phi = sin(phi);
+    if( sizeof( theta ) == sizeof( float ) ){
+      // float operations
+      // sincos function return sinus and cosine for given value
+      sincosf(theta, &sin_theta, &cos_theta);
+      sincosf(phi, &sin_phi, &cos_phi);
+    }else{
+      cos_theta = cos(theta);
+      sin_theta = sin(theta);
+      cos_phi = cos(phi);
+      sin_phi = sin(phi);
+    }
 
     // for efficiency replace with lookup table every 100 m in radial direction
     // note: radius in outer core should never be zero,
     //          and arrays in C start from 0, thus we need to subtract -1
     int_radius = rint(radius * R_EARTH_KM * 10.0f ) - 1;
+
+    //debug: checks bounds NRAD_GRAVITY == 70000
+    //if( int_radius < 0 || int_radius >= 70000 ){
+    //  printf("gravity: in_radius out of bounds %d radius=%e\n",int_radius,radius);
+    //}
 
     // depending on gravity or not, different potential definitions are used
     if( ! GRAVITY ){
@@ -324,9 +340,9 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
       grad_z_ln_rho = cos_theta * d_d_ln_density_dr_table[int_radius];
 
       // adding (chi/rho)grad(rho)
-      dpotentialdx_with_rot = dpotentialdx_with_rot + s_dummy_loc[tx] * grad_x_ln_rho;
-      dpotentialdy_with_rot = dpotentialdy_with_rot + s_dummy_loc[tx] * grad_y_ln_rho;
-      dpotentialdzl = dpotentialdzl + s_dummy_loc[tx] * grad_z_ln_rho;
+      dpotentialdx_with_rot += s_dummy_loc[tx] * grad_x_ln_rho;
+      dpotentialdy_with_rot += s_dummy_loc[tx] * grad_y_ln_rho;
+      dpotentialdzl += s_dummy_loc[tx] * grad_z_ln_rho;
 
     }else{
 
@@ -360,9 +376,12 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     }
 
     // form the dot product with the test vector
-    s_temp1[tx] = jacobianl*(xixl*dpotentialdx_with_rot + xiyl*dpotentialdy_with_rot + xizl*dpotentialdzl);
-    s_temp2[tx] = jacobianl*(etaxl*dpotentialdx_with_rot + etayl*dpotentialdy_with_rot + etazl*dpotentialdzl);
-    s_temp3[tx] = jacobianl*(gammaxl*dpotentialdx_with_rot + gammayl*dpotentialdy_with_rot + gammazl*dpotentialdzl);
+    s_temp1[tx] = jacobianl*(xixl*dpotentialdx_with_rot
+                             + xiyl*dpotentialdy_with_rot + xizl*dpotentialdzl);
+    s_temp2[tx] = jacobianl*(etaxl*dpotentialdx_with_rot
+                             + etayl*dpotentialdy_with_rot + etazl*dpotentialdzl);
+    s_temp3[tx] = jacobianl*(gammaxl*dpotentialdx_with_rot
+                             + gammayl*dpotentialdy_with_rot + gammazl*dpotentialdzl);
   }
 
 // synchronize all the threads (one thread for each of the NGLL grid points of the
@@ -454,7 +473,6 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
         atomicAdd(&d_potential_dot_dot[iglob],sum_terms);
       }
 
-
     }else{
 
       atomicAdd(&d_potential_dot_dot[iglob],sum_terms);
@@ -473,8 +491,10 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                          realw* d_etax,realw* d_etay,realw* d_etaz,
                          realw* d_gammax,realw* d_gammay,realw* d_gammaz,
                          realw time, realw b_time,
-                         realw* d_A_array_rotation,realw* d_B_array_rotation,
-                         realw* d_b_A_array_rotation,realw* d_b_B_array_rotation){
+                         realw* d_A_array_rotation,
+                         realw* d_B_array_rotation,
+                         realw* d_b_A_array_rotation,
+                         realw* d_b_B_array_rotation){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before outer_core kernel Kernel_2");
@@ -486,13 +506,18 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
 
   int num_blocks_x = nb_blocks_to_compute;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
 
-  int threads_2 = NGLL3_PADDED;//BLOCK_SIZE_K2;
-  dim3 grid_2(num_blocks_x,num_blocks_y);
+  int blocksize = NGLL3_PADDED;
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(blocksize,1,1);
+
+  // 2d grid
+  //int threads_2 = NGLL3_PADDED;//BLOCK_SIZE_K2;
+  //dim3 grid_2(num_blocks_x,num_blocks_y);
 
   // Cuda timing
   // cudaEvent_t start, stop;
@@ -501,7 +526,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   // cudaEventCreate(&stop);
   // cudaEventRecord( start, 0 );
 
-  Kernel_2_outer_core_impl<<< grid_2, threads_2, 0, 0 >>>(nb_blocks_to_compute,
+  Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
                                                           mp->NGLOB_OUTER_CORE,
                                                           d_ibool,
                                                           mp->d_phase_ispec_inner_outer_core,
@@ -523,13 +548,14 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                           mp->d_wgll_cube,
                                                           mp->rotation,
                                                           time,
-                                                          mp->d_two_omega_earth,
-                                                          mp->d_deltat,
-                                                          d_A_array_rotation,d_B_array_rotation,
+                                                          mp->two_omega_earth,
+                                                          mp->deltat,
+                                                          d_A_array_rotation,
+                                                          d_B_array_rotation,
                                                           mp->NSPEC_OUTER_CORE);
 
   if(mp->simulation_type == 3) {
-    Kernel_2_outer_core_impl<<< grid_2, threads_2, 0, 0 >>>(nb_blocks_to_compute,
+    Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
                                                             mp->NGLOB_OUTER_CORE,
                                                             d_ibool,
                                                             mp->d_phase_ispec_inner_outer_core,
@@ -551,9 +577,10 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                             mp->d_wgll_cube,
                                                             mp->rotation,
                                                             b_time,
-                                                            mp->d_b_two_omega_earth,
-                                                            mp->d_b_deltat,
-                                                            d_b_A_array_rotation,d_b_B_array_rotation,
+                                                            mp->b_two_omega_earth,
+                                                            mp->b_deltat,
+                                                            d_b_A_array_rotation,
+                                                            d_b_B_array_rotation,
                                                             mp->NSPEC_OUTER_CORE);
   }
 
@@ -563,7 +590,6 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   // cudaEventDestroy( start );
   // cudaEventDestroy( stop );
   // printf("Kernel2 Execution Time: %f ms\n",time);
-
   /* cudaThreadSynchronize(); */
   /* TRACE("Kernel 2 finished"); */
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -581,9 +607,9 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
 extern "C"
 void FC_FUNC_(compute_forces_outer_core_cuda,
               COMPUTE_FORCES_OUTER_CORE_CUDA)(long* Mesh_pointer_f,
-                                            int* iphase,
-                                            realw* time_f,
-                                            realw* b_time_f) {
+                                              int* iphase,
+                                              realw* time_f,
+                                              realw* b_time_f) {
 
   TRACE("compute_forces_outer_core_cuda");
 
@@ -592,10 +618,10 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
-
-  int num_elements;
   realw time = *time_f;
   realw b_time = *b_time_f;
+
+  int num_elements;
 
   if( *iphase == 1 )
     num_elements = mp->nspec_outer_outer_core;
@@ -683,8 +709,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
                           mp->d_A_array_rotation + color_offset_nonpadded,
                           mp->d_B_array_rotation + color_offset_nonpadded,
                           mp->d_b_A_array_rotation + color_offset_nonpadded,
-                          mp->d_b_B_array_rotation + color_offset_nonpadded
-                         );
+                          mp->d_b_B_array_rotation + color_offset_nonpadded);
 
       // for padded and aligned arrays
       color_offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -702,9 +727,10 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
                         mp->d_etax_outer_core,mp->d_etay_outer_core,mp->d_etaz_outer_core,
                         mp->d_gammax_outer_core,mp->d_gammay_outer_core,mp->d_gammaz_outer_core,
                         time,b_time,
-                        mp->d_A_array_rotation,mp->d_B_array_rotation,
-                        mp->d_b_A_array_rotation,mp->d_b_B_array_rotation
-                        );
+                        mp->d_A_array_rotation,
+                        mp->d_B_array_rotation,
+                        mp->d_b_A_array_rotation,
+                        mp->d_b_B_array_rotation);
 
   }
 

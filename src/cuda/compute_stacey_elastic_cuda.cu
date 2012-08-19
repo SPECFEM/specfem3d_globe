@@ -261,7 +261,7 @@ TRACE("compute_stacey_elastic_cuda");
 
   int num_blocks_x = num_abs_boundary_faces;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }

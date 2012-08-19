@@ -87,7 +87,6 @@ __device__ void compute_element_ic_att_stress(int tx,int working_element,
     *sigma_xz = *sigma_xz - R_xz[offset];
     *sigma_yz = *sigma_yz - R_yz[offset];
   }
-  return;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -157,7 +156,6 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
     Snp1   = factor_loc * epsilondev_yz_loc;
     R_yz[offset] = alphaval_loc * R_yz[offset] + betaval_loc * Sn + gammaval_loc * Snp1;
   }
-  return;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -220,10 +218,17 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  cos_theta = cos(theta);
-  sin_theta = sin(theta);
-  cos_phi = cos(phi);
-  sin_phi = sin(phi);
+  if( sizeof( theta ) == sizeof( float ) ){
+    // float operations
+    // sincos function return sinus and cosine for given value
+    sincosf(theta, &sin_theta, &cos_theta);
+    sincosf(phi, &sin_phi, &cos_phi);
+  }else{
+    cos_theta = cos(theta);
+    sin_theta = sin(theta);
+    cos_phi = cos(phi);
+    sin_phi = sin(phi);
+  }
 
   // for efficiency replace with lookup table every 100 m in radial direction
   // note: radius in crust mantle should never be zero,
@@ -286,8 +291,6 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
   *rho_s_H1 = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl);
   *rho_s_H2 = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl);
   *rho_s_H3 = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl);
-
-  return;
 }
 
 
@@ -306,7 +309,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          int* d_phase_ispec_inner,
                                          int num_phase_ispec,
                                          int d_iphase,
-                                         realw d_deltat,
+                                         realw deltat,
                                          int use_mesh_coloring_gpu,
                                          realw* d_displ,
                                          realw* d_veloc,
@@ -343,9 +346,9 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          int NSPEC_INNER_CORE_STRAIN_ONLY,
                                          int NSPEC_INNER_CORE){
 
-  /* int bx = blockIdx.y*blockDim.x+blockIdx.x; //possible bug in original code*/
+  // block id
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
-  /* int bx = blockIdx.x; */
+  // thread id
   int tx = threadIdx.x;
 
   int K = (tx/NGLL2);
@@ -449,13 +452,13 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
           // use first order Taylor expansion of displacement for local storage of stresses
           // at this current time step, to fix attenuation in a consistent way
 #ifdef USE_TEXTURES_FIELDS
-          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(d_displ_ic_tex, iglob*3);
-          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(d_displ_ic_tex, iglob*3 + 1);
-          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(d_displ_ic_tex, iglob*3 + 2);
+          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + deltat * tex1Dfetch(d_displ_ic_tex, iglob*3);
+          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + deltat * tex1Dfetch(d_displ_ic_tex, iglob*3 + 1);
+          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + deltat * tex1Dfetch(d_displ_ic_tex, iglob*3 + 2);
 #else
-          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + deltat * d_veloc[iglob*3];
+          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + deltat * d_veloc[iglob*3 + 1];
+          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + deltat * d_veloc[iglob*3 + 2];
 #endif
         }
         else{
@@ -1070,7 +1073,6 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
 /* ----------------------------------------------------------------------------------------------- */
 
 void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
-                         realw d_deltat,
                          int d_iphase,
                          int* d_ibool,
                          int* d_idoubling,
@@ -1116,7 +1118,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
 
   int num_blocks_x = nb_blocks_to_compute;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -1139,7 +1141,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                              mp->d_phase_ispec_inner_inner_core,
                                              mp->num_phase_ispec_inner_core,
                                              d_iphase,
-                                             d_deltat,
+                                             mp->deltat,
                                              mp->use_mesh_coloring_gpu,
                                              mp->d_displ_inner_core,
                                              mp->d_veloc_inner_core,
@@ -1188,7 +1190,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->d_phase_ispec_inner_inner_core,
                                                 mp->num_phase_ispec_inner_core,
                                                 d_iphase,
-                                                d_deltat,
+                                                mp->b_deltat,
                                                 mp->use_mesh_coloring_gpu,
                                                 mp->d_b_displ_inner_core,
                                                 mp->d_b_veloc_inner_core,
@@ -1249,7 +1251,6 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
 extern "C"
 void FC_FUNC_(compute_forces_inner_core_cuda,
               COMPUTE_FORCES_INNER_CORE_CUDA)(long* Mesh_pointer_f,
-                                              realw* deltat,
                                               int* iphase) {
 
   TRACE("compute_forces_inner_core_cuda");
@@ -1386,7 +1387,6 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
 #endif
 
       Kernel_2_inner_core(nb_blocks_to_compute,mp,
-                          *deltat,
                           *iphase,
                           mp->d_ibool_inner_core + color_offset_nonpadded,
                           mp->d_idoubling_inner_core + color_offset_ispec,
@@ -1429,8 +1429,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                           mp->d_c12store_inner_core + color_offset,
                           mp->d_c13store_inner_core + color_offset,
                           mp->d_c33store_inner_core + color_offset,
-                          mp->d_c44store_inner_core + color_offset
-                          );
+                          mp->d_c44store_inner_core + color_offset);
 
       // for padded and aligned arrays
       color_offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -1459,7 +1458,6 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
     // no mesh coloring: uses atomic updates
 
     Kernel_2_inner_core(num_elements,mp,
-                        *deltat,
                         *iphase,
                         mp->d_ibool_inner_core,
                         mp->d_idoubling_inner_core,
@@ -1493,8 +1491,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                         mp->d_b_R_xz_inner_core,
                         mp->d_b_R_yz_inner_core,
                         mp->d_c11store_inner_core,mp->d_c12store_inner_core,mp->d_c13store_inner_core,
-                        mp->d_c33store_inner_core,mp->d_c44store_inner_core
-                        );
+                        mp->d_c33store_inner_core,mp->d_c44store_inner_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

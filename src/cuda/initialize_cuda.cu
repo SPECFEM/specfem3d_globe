@@ -51,6 +51,9 @@ void FC_FUNC_(initialize_cuda_device,
               INITIALIZE_CUDA_DEVICE)(int* myrank_f,int* ncuda_devices) {
   TRACE("initialize_cuda_device");
 
+  int device;
+  int device_count;
+
   // Gets rank number of MPI process
   int myrank = *myrank_f;
 
@@ -87,7 +90,7 @@ void FC_FUNC_(initialize_cuda_device,
   // note: from here on we use the runtime API  ...
 
   // Gets number of GPU devices
-  int device_count = 0;
+  device_count = 0;
   cudaGetDeviceCount(&device_count);
   exit_on_cuda_error("CUDA runtime error: cudaGetDeviceCount failed\ncheck if driver and runtime libraries work together\nexiting...\n");
 
@@ -107,12 +110,20 @@ void FC_FUNC_(initialize_cuda_device,
     //MPI_Barrier(MPI_COMM_WORLD);
 
     // sets active device
-    cudaSetDevice( myrank % device_count );
-    exit_on_cuda_error("cudaSetDevice");
+    device = myrank % device_count;
+    cudaSetDevice( device );
+    exit_on_cuda_error("cudaSetDevice has invalid device");
+
+    // double check that device was  properly selected
+    cudaGetDevice(&device);
+    if( device != (myrank % device_count) ){
+       printf("error rank: %d devices: %d \n",myrank,device_count);
+       printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",myrank%device_count,device);
+       exit_on_error("CUDA set/get device error: device id conflict \n");
+    }
   }
 
   // returns a handle to the active device
-  int device;
   cudaGetDevice(&device);
 
   // get device properties

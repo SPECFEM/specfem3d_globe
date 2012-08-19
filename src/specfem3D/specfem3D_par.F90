@@ -92,7 +92,7 @@ module specfem_par
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
 
   integer :: npoin_oceans
-  integer, dimension(:),allocatable :: iglob_ocean_load
+  integer, dimension(:),allocatable :: ibool_ocean_load
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: normal_ocean_load
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: rmass_ocean_load_selected
 

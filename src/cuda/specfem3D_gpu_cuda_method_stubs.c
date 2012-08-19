@@ -161,16 +161,10 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
               COMPUTE_COUPLING_FLUID_ICB_CUDA)(long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
-              COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f,
-                                               double RHO_TOP_OC,
-                                               realw minus_g_cmb,
-                                               int GRAVITY_VAL) {} 
+              COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(compute_coupling_icb_fluid_cuda,
-              COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f,
-                                               double RHO_BOTTOM_OC,
-                                               realw minus_g_icb,
-                                               int GRAVITY_VAL) {} 
+              COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(compute_coupling_ocean_cuda,
               COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f,
@@ -183,7 +177,6 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
 void FC_FUNC_(compute_forces_crust_mantle_cuda,
               COMPUTE_FORCES_CRUST_MANTLE_CUDA)(long* Mesh_pointer_f,
-                                                realw* deltat,
                                                 int* iphase) {} 
 
 
@@ -193,7 +186,6 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
 
 void FC_FUNC_(compute_forces_inner_core_cuda,
               COMPUTE_FORCES_INNER_CORE_CUDA)(long* Mesh_pointer_f,
-                                              realw* deltat,
                                               int* iphase) {} 
 
 
@@ -203,9 +195,9 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
 
 void FC_FUNC_(compute_forces_outer_core_cuda,
               COMPUTE_FORCES_OUTER_CORE_CUDA)(long* Mesh_pointer_f,
-                                            int* iphase,
-                                            realw* time_f,
-                                            realw* b_time_f) {} 
+                                              int* iphase,
+                                              realw* time_f,
+                                              realw* b_time_f) {} 
 
 
 //
@@ -298,15 +290,13 @@ void FC_FUNC_(kernel_3_a_cuda,
                                realw* deltatover2_F,
                                int* SIMULATION_TYPE_f,
                                realw* b_deltatover2_F,
-                               int* OCEANS,
                                int* NCHUNKS_VAL) {} 
 
 void FC_FUNC_(kernel_3_b_cuda,
               KERNEL_3_B_CUDA)(long* Mesh_pointer,
                                realw* deltatover2_F,
                                int* SIMULATION_TYPE_f,
-                               realw* b_deltatover2_F,
-                               int* OCEANS) {} 
+                               realw* b_deltatover2_F) {} 
 
 void FC_FUNC_(kernel_3_outer_core_cuda,
               KERNEL_3_OUTER_CORE_CUDA)(long* Mesh_pointer,
@@ -352,7 +342,7 @@ void FC_FUNC_(prepare_constants_device,
               PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
                                         int* myrank_f,
                                         int* h_NGLLX,
-                                        realw* h_hprime_xx,realw* h_hprime_yy,realw* h_hprime_zz,
+                                        realw* h_hprime_xx,
                                         realw* h_hprimewgll_xx,realw* h_hprimewgll_yy,realw* h_hprimewgll_zz,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
@@ -383,16 +373,16 @@ void FC_FUNC_(prepare_constants_device,
                                         int* SAVE_BOUNDARY_MESH_f,
                                         int* USE_MESH_COLORING_GPU_f,
                                         int* ANISOTROPIC_KL_f,
-                                        int* APPROXIMATE_HESS_KL_f) {} 
+                                        int* APPROXIMATE_HESS_KL_f,
+                                        realw* deltat_f,
+                                        realw* b_deltat_f) {} 
 
 void FC_FUNC_(prepare_fields_rotation_device,
               PREPARE_FIELDS_ROTATION_DEVICE)(long* Mesh_pointer_f,
-                                              realw* two_omega_earth,
-                                              realw* deltat,
+                                              realw* two_omega_earth_f,
                                               realw* A_array_rotation,
                                               realw* B_array_rotation,
-                                              realw* b_two_omega_earth,
-                                              realw* b_deltat,
+                                              realw* b_two_omega_earth_f,
                                               realw* b_A_array_rotation,
                                               realw* b_B_array_rotation,
                                               int* NSPEC_OUTER_CORE_ROTATION) {} 
@@ -405,7 +395,11 @@ void FC_FUNC_(prepare_fields_gravity_device,
                                              realw* minus_deriv_gravity_table,
                                              realw* density_table,
                                              realw* h_wgll_cube,
-                                             int* NRAD_GRAVITY) {} 
+                                             int* NRAD_GRAVITY,
+                                             realw* minus_g_icb,
+                                             realw* minus_g_cmb,
+                                             double* RHO_BOTTOM_OC,
+                                             double* RHO_TOP_OC) {} 
 
 void FC_FUNC_(prepare_fields_attenuat_device,
               PREPARE_FIELDS_ATTENUAT_DEVICE)(long* Mesh_pointer_f,
@@ -478,10 +472,8 @@ void FC_FUNC_(prepare_fields_absorb_device,
                                             int* nkmin_xi_outer_core,int* nkmin_eta_outer_core,
                                             int* ibelm_xmin_outer_core,int* ibelm_xmax_outer_core,
                                             int* ibelm_ymin_outer_core,int* ibelm_ymax_outer_core,
-                                            int* ibelm_bottom_outer_core,
                                             realw* jacobian2D_xmin_outer_core, realw* jacobian2D_xmax_outer_core,
                                             realw* jacobian2D_ymin_outer_core, realw* jacobian2D_ymax_outer_core,
-                                            realw* jacobian2D_bottom_outer_core,
                                             realw* vp_outer_core) {} 
 
 void FC_FUNC_(prepare_mpi_buffers_device,
@@ -514,8 +506,8 @@ void FC_FUNC_(prepare_fields_noise_device,
 void FC_FUNC_(prepare_oceans_device,
               PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
                                      int* npoin_oceans,
-                                     realw* h_rmass_ocean_load_selected,
                                      int* h_iglob_ocean_load,
+                                     realw* h_rmass_ocean_load_selected,
                                      realw* h_normal_ocean_load) {} 
 
 void FC_FUNC_(prepare_crust_mantle_device,
@@ -766,7 +758,8 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
 //
 
 void FC_FUNC_(write_seismograms_transfer_cuda,
-              WRITE_SEISMOGRAMS_TRANSFER_CUDA)(realw* displ,
+              WRITE_SEISMOGRAMS_TRANSFER_CUDA)(long* Mesh_pointer_f,
+                                               realw* displ,
                                                realw* b_displ,
                                                realw* eps_trace_over_3,
                                                realw* epsilondev_xx,
@@ -774,24 +767,8 @@ void FC_FUNC_(write_seismograms_transfer_cuda,
                                                realw* epsilondev_xy,
                                                realw* epsilondev_xz,
                                                realw* epsilondev_yz,
-                                               long* Mesh_pointer_f,
                                                int* number_receiver_global,
                                                int* ispec_selected_rec,
                                                int* ispec_selected_source,
                                                int* ibool) {} 
-
-void FC_FUNC_(transfer_station_ac_from_device,
-              TRANSFER_STATION_AC_FROM_DEVICE)(
-                                                realw* potential_acoustic,
-                                                realw* potential_dot_acoustic,
-                                                realw* potential_dot_dot_acoustic,
-                                                realw* b_potential_acoustic,
-                                                realw* b_potential_dot_acoustic,
-                                                realw* b_potential_dot_dot_acoustic,
-                                                long* Mesh_pointer_f,
-                                                int* number_receiver_global,
-                                                int* ispec_selected_rec,
-                                                int* ispec_selected_source,
-                                                int* ibool,
-                                                int* SIMULATION_TYPEf) {} 
 
