@@ -147,8 +147,8 @@ void FC_FUNC_(prepare_constants_device,
   //setConst_hprime_zz(h_hprime_zz,mp); // only needed if NGLLX != NGLLY != NGLLZ
 
   setConst_hprimewgll_xx(h_hprimewgll_xx,mp);
-  setConst_hprimewgll_yy(h_hprimewgll_yy,mp);
-  setConst_hprimewgll_zz(h_hprimewgll_zz,mp);
+  //setConst_hprimewgll_yy(h_hprimewgll_yy,mp); // only needed if NGLLX != NGLLY != NGLLZ
+  //setConst_hprimewgll_zz(h_hprimewgll_zz,mp); // only needed if NGLLX != NGLLY != NGLLZ
 
   setConst_wgllwgll_xy(h_wgllwgll_xy,mp);
   setConst_wgllwgll_xz(h_wgllwgll_xz,mp);

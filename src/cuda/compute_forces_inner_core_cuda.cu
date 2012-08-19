@@ -318,7 +318,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          realw* d_etax, realw* d_etay, realw* d_etaz,
                                          realw* d_gammax, realw* d_gammay, realw* d_gammaz,
                                          realw* d_hprime_xx,
-                                         realw* d_hprimewgll_xx, realw* d_hprimewgll_yy, realw* d_hprimewgll_zz,
+                                         realw* d_hprimewgll_xx,
                                          realw* d_wgllwgll_xy,realw* d_wgllwgll_xz,realw* d_wgllwgll_yz,
                                          realw* d_kappav,
                                          realw* d_muv,
@@ -407,6 +407,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
   __shared__ realw s_tempz3[NGLL3];
 
   __shared__ realw sh_hprime_xx[NGLL2];
+  __shared__ realw sh_hprimewgll_xx[NGLL2];
 
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
 // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
@@ -451,15 +452,9 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
           // takes new routines
           // use first order Taylor expansion of displacement for local storage of stresses
           // at this current time step, to fix attenuation in a consistent way
-#ifdef USE_TEXTURES_FIELDS
-          s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + deltat * tex1Dfetch(d_displ_ic_tex, iglob*3);
-          s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + deltat * tex1Dfetch(d_displ_ic_tex, iglob*3 + 1);
-          s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + deltat * tex1Dfetch(d_displ_ic_tex, iglob*3 + 2);
-#else
           s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + deltat * d_veloc[iglob*3];
           s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + deltat * d_veloc[iglob*3 + 1];
           s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + deltat * d_veloc[iglob*3 + 2];
-#endif
         }
         else{
           // takes old routines
@@ -472,11 +467,14 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
   }
 
   if (tx < NGLL2) {
+    // hprime
 #ifdef USE_TEXTURES_CONSTANTS
     sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_ic_tex,tx);
 #else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
 #endif
+    // weighted hprime
+    sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
   }
 
 // synchronize all the threads (one thread for each of the NGLL grid points of the
@@ -487,7 +485,6 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
   if (active) {
 
 #ifndef MANUALLY_UNROLLED_LOOPS
-
     tempx1l = 0.f;
     tempx2l = 0.f;
     tempx3l = 0.f;
@@ -518,7 +515,6 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
         tempx3l += s_dummyx_loc[offset]*fac3;
         tempy3l += s_dummyy_loc[offset]*fac3;
         tempz3l += s_dummyz_loc[offset]*fac3;
-
     }
 
     if( ATTENUATION ){
@@ -903,19 +899,20 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
 
     for (l=0;l<NGLLX;l++) {
 
-      fac1 = d_hprimewgll_xx[I*NGLLX+l];
+      fac1 = sh_hprimewgll_xx[I*NGLLX+l];
       offset = K*NGLL2+J*NGLLX+l;
       tempx1l += s_tempx1[offset]*fac1;
       tempy1l += s_tempy1[offset]*fac1;
       tempz1l += s_tempz1[offset]*fac1;
 
-      fac2 = d_hprimewgll_yy[J*NGLLX+l];
+      // assumes hprimewgll_xx == hprimewgll_yy == hprimewgll_zz
+      fac2 = sh_hprimewgll_xx[J*NGLLX+l];
       offset = K*NGLL2+l*NGLLX+I;
       tempx2l += s_tempx2[offset]*fac2;
       tempy2l += s_tempy2[offset]*fac2;
       tempz2l += s_tempz2[offset]*fac2;
 
-      fac3 = d_hprimewgll_zz[K*NGLLX+l];
+      fac3 = sh_hprimewgll_xx[K*NGLLX+l];
       offset = l*NGLL2+J*NGLLX+I;
       tempx3l += s_tempx3[offset]*fac3;
       tempy3l += s_tempy3[offset]*fac3;
@@ -924,59 +921,59 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
     }
 #else
 
-    tempx1l = s_tempx1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
-            + s_tempx1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
-            + s_tempx1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
-            + s_tempx1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
-            + s_tempx1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
+    tempx1l = s_tempx1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
+            + s_tempx1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
+            + s_tempx1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
+            + s_tempx1[K*NGLL2+J*NGLLX+3]*sh_hprimewgll_xx[I*NGLLX+3]
+            + s_tempx1[K*NGLL2+J*NGLLX+4]*sh_hprimewgll_xx[I*NGLLX+4];
 
-    tempy1l = s_tempy1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
-            + s_tempy1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
-            + s_tempy1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
-            + s_tempy1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
-            + s_tempy1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
+    tempy1l = s_tempy1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
+            + s_tempy1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
+            + s_tempy1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
+            + s_tempy1[K*NGLL2+J*NGLLX+3]*sh_hprimewgll_xx[I*NGLLX+3]
+            + s_tempy1[K*NGLL2+J*NGLLX+4]*sh_hprimewgll_xx[I*NGLLX+4];
 
-    tempz1l = s_tempz1[K*NGLL2+J*NGLLX]*d_hprimewgll_xx[I*NGLLX]
-            + s_tempz1[K*NGLL2+J*NGLLX+1]*d_hprimewgll_xx[I*NGLLX+1]
-            + s_tempz1[K*NGLL2+J*NGLLX+2]*d_hprimewgll_xx[I*NGLLX+2]
-            + s_tempz1[K*NGLL2+J*NGLLX+3]*d_hprimewgll_xx[I*NGLLX+3]
-            + s_tempz1[K*NGLL2+J*NGLLX+4]*d_hprimewgll_xx[I*NGLLX+4];
+    tempz1l = s_tempz1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
+            + s_tempz1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
+            + s_tempz1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
+            + s_tempz1[K*NGLL2+J*NGLLX+3]*sh_hprimewgll_xx[I*NGLLX+3]
+            + s_tempz1[K*NGLL2+J*NGLLX+4]*sh_hprimewgll_xx[I*NGLLX+4];
 
-    tempx2l = s_tempx2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
-            + s_tempx2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
-            + s_tempx2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
-            + s_tempx2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
-            + s_tempx2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
+    tempx2l = s_tempx2[K*NGLL2+I]*sh_hprimewgll_xx[J*NGLLX]
+            + s_tempx2[K*NGLL2+NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+1]
+            + s_tempx2[K*NGLL2+2*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+2]
+            + s_tempx2[K*NGLL2+3*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+3]
+            + s_tempx2[K*NGLL2+4*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+4];
 
-    tempy2l = s_tempy2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
-            + s_tempy2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
-            + s_tempy2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
-            + s_tempy2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
-            + s_tempy2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
+    tempy2l = s_tempy2[K*NGLL2+I]*sh_hprimewgll_xx[J*NGLLX]
+            + s_tempy2[K*NGLL2+NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+1]
+            + s_tempy2[K*NGLL2+2*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+2]
+            + s_tempy2[K*NGLL2+3*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+3]
+            + s_tempy2[K*NGLL2+4*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+4];
 
-    tempz2l = s_tempz2[K*NGLL2+I]*d_hprimewgll_yy[J*NGLLX]
-            + s_tempz2[K*NGLL2+NGLLX+I]*d_hprimewgll_yy[J*NGLLX+1]
-            + s_tempz2[K*NGLL2+2*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+2]
-            + s_tempz2[K*NGLL2+3*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+3]
-            + s_tempz2[K*NGLL2+4*NGLLX+I]*d_hprimewgll_yy[J*NGLLX+4];
+    tempz2l = s_tempz2[K*NGLL2+I]*sh_hprimewgll_xx[J*NGLLX]
+            + s_tempz2[K*NGLL2+NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+1]
+            + s_tempz2[K*NGLL2+2*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+2]
+            + s_tempz2[K*NGLL2+3*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+3]
+            + s_tempz2[K*NGLL2+4*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+4];
 
-    tempx3l = s_tempx3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
-            + s_tempx3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
-            + s_tempx3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
-            + s_tempx3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
-            + s_tempx3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
+    tempx3l = s_tempx3[J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX]
+            + s_tempx3[NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+1]
+            + s_tempx3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
+            + s_tempx3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
+            + s_tempx3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
 
-    tempy3l = s_tempy3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
-            + s_tempy3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
-            + s_tempy3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
-            + s_tempy3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
-            + s_tempy3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
+    tempy3l = s_tempy3[J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX]
+            + s_tempy3[NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+1]
+            + s_tempy3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
+            + s_tempy3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
+            + s_tempy3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
 
-    tempz3l = s_tempz3[J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX]
-            + s_tempz3[NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+1]
-            + s_tempz3[2*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+2]
-            + s_tempz3[3*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+3]
-            + s_tempz3[4*NGLL2+J*NGLLX+I]*d_hprimewgll_zz[K*NGLLX+4];
+    tempz3l = s_tempz3[J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX]
+            + s_tempz3[NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+1]
+            + s_tempz3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
+            + s_tempz3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
+            + s_tempz3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
 
 #endif
 
@@ -1150,7 +1147,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                              d_etax, d_etay, d_etaz,
                                              d_gammax, d_gammay, d_gammaz,
                                              mp->d_hprime_xx,
-                                             mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                             mp->d_hprimewgll_xx,
                                              mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
                                              d_kappav, d_muv,
                                              mp->compute_and_store_strain,
@@ -1199,7 +1196,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 d_etax, d_etay, d_etaz,
                                                 d_gammax, d_gammay, d_gammaz,
                                                 mp->d_hprime_xx,
-                                                mp->d_hprimewgll_xx, mp->d_hprimewgll_yy, mp->d_hprimewgll_zz,
+                                                mp->d_hprimewgll_xx,
                                                 mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
                                                 d_kappav, d_muv,
                                                 mp->compute_and_store_strain,
