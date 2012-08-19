@@ -94,7 +94,7 @@ void FC_FUNC_(prepare_constants_device,
               PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
                                         int* myrank_f,
                                         int* h_NGLLX,
-                                        realw* h_hprime_xx,realw* h_hprime_yy,realw* h_hprime_zz,
+                                        realw* h_hprime_xx,
                                         realw* h_hprimewgll_xx,realw* h_hprimewgll_yy,realw* h_hprimewgll_zz,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
@@ -125,7 +125,9 @@ void FC_FUNC_(prepare_constants_device,
                                         int* SAVE_BOUNDARY_MESH_f,
                                         int* USE_MESH_COLORING_GPU_f,
                                         int* ANISOTROPIC_KL_f,
-                                        int* APPROXIMATE_HESS_KL_f) {
+                                        int* APPROXIMATE_HESS_KL_f,
+                                        realw* deltat_f,
+                                        realw* b_deltat_f) {
 
   TRACE("prepare_constants_device");
 
@@ -294,6 +296,15 @@ void FC_FUNC_(prepare_constants_device,
 
   }
 
+  // for rotation and new attenuation
+  mp->deltat = *deltat_f;
+  if( mp->simulation_type == 3 ){
+    mp->b_deltat = *b_deltat_f;
+  }
+  // initializes for rotational effects
+  mp->two_omega_earth = 0.f;
+  mp->b_two_omega_earth = 0.f;
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_constants_device");
 #endif
@@ -308,12 +319,10 @@ void FC_FUNC_(prepare_constants_device,
 extern "C"
 void FC_FUNC_(prepare_fields_rotation_device,
               PREPARE_FIELDS_ROTATION_DEVICE)(long* Mesh_pointer_f,
-                                              realw* two_omega_earth,
-                                              realw* deltat,
+                                              realw* two_omega_earth_f,
                                               realw* A_array_rotation,
                                               realw* B_array_rotation,
-                                              realw* b_two_omega_earth,
-                                              realw* b_deltat,
+                                              realw* b_two_omega_earth_f,
                                               realw* b_A_array_rotation,
                                               realw* b_B_array_rotation,
                                               int* NSPEC_OUTER_CORE_ROTATION) {
@@ -323,22 +332,26 @@ void FC_FUNC_(prepare_fields_rotation_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer_f);
 
   // arrays only needed when rotation is required
-  if( ! mp->rotation ){ exit_on_cuda_error("prepare_fields_rotation_device rotation not properly initialized"); }
+  if( ! mp->rotation ){
+    exit_on_cuda_error("prepare_fields_rotation_device: rotation flag not properly initialized");
+  }
+  // checks array size
+  if( *NSPEC_OUTER_CORE_ROTATION != mp->NSPEC_OUTER_CORE){
+    printf("error prepare_fields_rotation_device: rotation array has wrong size: %d instead of %d\n",
+           *NSPEC_OUTER_CORE_ROTATION,mp->NSPEC_OUTER_CORE);
+    exit_on_cuda_error("prepare_fields_rotation_device: rotation array has wrong size");
+  }
 
   // rotation arrays (needed only for outer core region)
-  mp->d_two_omega_earth = *two_omega_earth;
-  mp->d_deltat = *deltat;
-
-  copy_todevice_realw((void**)&mp->d_A_array_rotation,A_array_rotation,NGLL3*(*NSPEC_OUTER_CORE_ROTATION));
-  copy_todevice_realw((void**)&mp->d_B_array_rotation,B_array_rotation,NGLL3*(*NSPEC_OUTER_CORE_ROTATION));
+  mp->two_omega_earth = *two_omega_earth_f;
+  copy_todevice_realw((void**)&mp->d_A_array_rotation,A_array_rotation,NGLL3*mp->NSPEC_OUTER_CORE);
+  copy_todevice_realw((void**)&mp->d_B_array_rotation,B_array_rotation,NGLL3*mp->NSPEC_OUTER_CORE);
 
   // backward/reconstructed fields
   if( mp->simulation_type == 3 ){
-    mp->d_b_two_omega_earth = *b_two_omega_earth;
-    mp->d_b_deltat = *b_deltat;
-
-    copy_todevice_realw((void**)&mp->d_b_A_array_rotation,b_A_array_rotation,NGLL3*(*NSPEC_OUTER_CORE_ROTATION));
-    copy_todevice_realw((void**)&mp->d_b_B_array_rotation,b_B_array_rotation,NGLL3*(*NSPEC_OUTER_CORE_ROTATION));
+    mp->b_two_omega_earth = *b_two_omega_earth_f;
+    copy_todevice_realw((void**)&mp->d_b_A_array_rotation,b_A_array_rotation,NGLL3*mp->NSPEC_OUTER_CORE);
+    copy_todevice_realw((void**)&mp->d_b_B_array_rotation,b_B_array_rotation,NGLL3*mp->NSPEC_OUTER_CORE);
   }
 }
 
@@ -358,7 +371,11 @@ void FC_FUNC_(prepare_fields_gravity_device,
                                              realw* minus_deriv_gravity_table,
                                              realw* density_table,
                                              realw* h_wgll_cube,
-                                             int* NRAD_GRAVITY) {
+                                             int* NRAD_GRAVITY,
+                                             realw* minus_g_icb,
+                                             realw* minus_g_cmb,
+                                             double* RHO_BOTTOM_OC,
+                                             double* RHO_TOP_OC) {
 
   TRACE("prepare_fields_gravity_device");
 
@@ -372,6 +389,8 @@ void FC_FUNC_(prepare_fields_gravity_device,
 
   }else{
     // gravity case
+    mp->minus_g_icb = *minus_g_icb;
+    mp->minus_g_cmb = *minus_g_cmb;
 
     // sets up gll weights cubed
     setConst_wgll_cube(h_wgll_cube,mp);
@@ -382,6 +401,11 @@ void FC_FUNC_(prepare_fields_gravity_device,
     copy_todevice_realw((void**)&mp->d_minus_deriv_gravity_table,minus_deriv_gravity_table,(*NRAD_GRAVITY));
     copy_todevice_realw((void**)&mp->d_density_table,density_table,(*NRAD_GRAVITY));
   }
+
+  // constants
+  mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
+  mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
+
 }
 
 
@@ -600,10 +624,8 @@ void FC_FUNC_(prepare_fields_absorb_device,
                                             int* nkmin_xi_outer_core,int* nkmin_eta_outer_core,
                                             int* ibelm_xmin_outer_core,int* ibelm_xmax_outer_core,
                                             int* ibelm_ymin_outer_core,int* ibelm_ymax_outer_core,
-                                            int* ibelm_bottom_outer_core,
                                             realw* jacobian2D_xmin_outer_core, realw* jacobian2D_xmax_outer_core,
                                             realw* jacobian2D_ymin_outer_core, realw* jacobian2D_ymax_outer_core,
-                                            realw* jacobian2D_bottom_outer_core,
                                             realw* vp_outer_core) {
 
   TRACE("prepare_fields_absorb_device");
@@ -759,9 +781,8 @@ void FC_FUNC_(prepare_fields_absorb_device,
 
   // zmin
   if( mp->nspec2D_zmin_outer_core > 0 ){
-    copy_todevice_int((void**)&mp->d_ibelm_zmin_outer_core,ibelm_bottom_outer_core,mp->nspec2D_zmin_outer_core);
-    copy_todevice_realw((void**)&mp->d_jacobian2D_zmin_outer_core,jacobian2D_bottom_outer_core,
-                        NGLL2*(mp->nspec2D_zmin_outer_core));
+    // note: ibelm_bottom_outer_core and jacobian2D_bottom_outer_core will be allocated
+    //          when preparing the outer core
     // boundary buffer
     if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){
       print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_zmin_outer_core,
@@ -908,7 +929,6 @@ void FC_FUNC_(prepare_fields_noise_device,
     // initializes kernel values to zero
     print_CUDA_error_if_any(cudaMemset(mp->d_Sigma_kl,0,
                                        NGLL3*mp->NSPEC_CRUST_MANTLE*sizeof(realw)),7403);
-
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -927,8 +947,8 @@ extern "C"
 void FC_FUNC_(prepare_oceans_device,
               PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
                                      int* npoin_oceans,
-                                     realw* h_rmass_ocean_load_selected,
                                      int* h_iglob_ocean_load,
+                                     realw* h_rmass_ocean_load_selected,
                                      realw* h_normal_ocean_load) {
 
   TRACE("prepare_oceans_device");
@@ -941,11 +961,11 @@ void FC_FUNC_(prepare_oceans_device,
   // checks for global partitions, each slice must have a top surface with points on it
   if( mp->npoin_oceans == 0 ){ exit_on_cuda_error("prepare_oceans_device has zero npoin_oceans"); }
 
+  // global point indices
+  copy_todevice_int((void**)&mp->d_ibool_ocean_load,h_iglob_ocean_load,mp->npoin_oceans);
+
   // mass matrix
   copy_todevice_realw((void**)&mp->d_rmass_ocean_load,h_rmass_ocean_load_selected,mp->npoin_oceans);
-
-  // global point indices
-  copy_todevice_int((void**)&mp->d_iglob_ocean_load,h_iglob_ocean_load,mp->npoin_oceans);
 
   // normals
   copy_todevice_realw((void**)&mp->d_normal_ocean_load,h_normal_ocean_load,NDIM*mp->npoin_oceans);
@@ -1396,17 +1416,16 @@ void FC_FUNC_(prepare_outer_core_device,
   // CMB/ICB coupling
   mp->nspec2D_top_outer_core = *NSPEC2D_TOP_OC;
   mp->nspec2D_bottom_outer_core = *NSPEC2D_BOTTOM_OC;
+
   int size_toc = NGLL2*(mp->nspec2D_top_outer_core);
-  int size_boc = NGLL2*(mp->nspec2D_bottom_outer_core);
-
-  copy_todevice_realw((void**)&mp->d_normal_top_outer_core,h_normal_top_outer_core,NDIM*size_toc);
-  copy_todevice_realw((void**)&mp->d_normal_bottom_outer_core,h_normal_bottom_outer_core,NDIM*size_boc);
-
-  copy_todevice_realw((void**)&mp->d_jacobian2D_top_outer_core,h_jacobian2D_top_outer_core,size_toc);
-  copy_todevice_realw((void**)&mp->d_jacobian2D_bottom_outer_core,h_jacobian2D_bottom_outer_core,size_boc);
-
   copy_todevice_int((void**)&mp->d_ibelm_top_outer_core,h_ibelm_top_outer_core,mp->nspec2D_top_outer_core);
+  copy_todevice_realw((void**)&mp->d_jacobian2D_top_outer_core,h_jacobian2D_top_outer_core,size_toc);
+  copy_todevice_realw((void**)&mp->d_normal_top_outer_core,h_normal_top_outer_core,NDIM*size_toc);
+
+  int size_boc = NGLL2*(mp->nspec2D_bottom_outer_core);
   copy_todevice_int((void**)&mp->d_ibelm_bottom_outer_core,h_ibelm_bottom_outer_core,mp->nspec2D_bottom_outer_core);
+  copy_todevice_realw((void**)&mp->d_jacobian2D_bottom_outer_core,h_jacobian2D_bottom_outer_core,size_boc);
+  copy_todevice_realw((void**)&mp->d_normal_bottom_outer_core,h_normal_bottom_outer_core,NDIM*size_boc);
 
   // wavefield
   int size = mp->NGLOB_OUTER_CORE;
@@ -1887,8 +1906,6 @@ TRACE("prepare_cleanup_device");
       }
     }
     if( mp->nspec2D_zmin_outer_core > 0 ){
-      cudaFree(mp->d_ibelm_zmin_outer_core);
-      cudaFree(mp->d_jacobian2D_zmin_outer_core);
       if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){
         cudaFree(mp->d_absorb_zmin_outer_core);
       }
@@ -2007,6 +2024,7 @@ TRACE("prepare_cleanup_device");
     }
     if(mp->approximate_hess_kl){ cudaFree(mp->d_hess_kl_crust_mantle);}
   }
+  // mass matrix
   if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
     cudaFree(mp->d_rmassx_crust_mantle);
     cudaFree(mp->d_rmassy_crust_mantle);
@@ -2039,12 +2057,11 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_phase_ispec_inner_outer_core);
 
   cudaFree(mp->d_ibelm_top_outer_core);
-  cudaFree(mp->d_ibelm_bottom_outer_core);
-
-  cudaFree(mp->d_normal_top_outer_core);
-  cudaFree(mp->d_normal_bottom_outer_core);
-
   cudaFree(mp->d_jacobian2D_top_outer_core);
+  cudaFree(mp->d_normal_top_outer_core);
+
+  cudaFree(mp->d_ibelm_bottom_outer_core);
+  cudaFree(mp->d_normal_bottom_outer_core);
   cudaFree(mp->d_jacobian2D_bottom_outer_core);
 
   cudaFree(mp->d_displ_outer_core);
@@ -2057,6 +2074,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_rho_kl_outer_core);
     cudaFree(mp->d_alpha_kl_outer_core);
   }
+  // mass matrix
   cudaFree(mp->d_rmass_outer_core);
 
   //------------------------------------------
@@ -2075,6 +2093,7 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_muvstore_inner_core);
   cudaFree(mp->d_ibool_inner_core);
 
+  // gravity
   if( mp->gravity ){
     cudaFree(mp->d_xstore_inner_core);
     cudaFree(mp->d_ystore_inner_core);
@@ -2116,11 +2135,13 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_alpha_kl_inner_core);
     cudaFree(mp->d_beta_kl_inner_core);
   }
+  // mass matrix
   cudaFree(mp->d_rmass_inner_core);
 
+  // oceans
   if( mp->oceans ){
     cudaFree(mp->d_rmass_ocean_load);
-    cudaFree(mp->d_iglob_ocean_load);
+    cudaFree(mp->d_ibool_ocean_load);
     cudaFree(mp->d_normal_ocean_load);
   }
 

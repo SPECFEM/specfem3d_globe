@@ -79,7 +79,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
   int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_outer_core))/((double)blocksize)))*blocksize;
   int num_blocks_x = size_padded/blocksize;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -161,7 +161,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
   int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_outer_core)/((double)blocksize)))*blocksize;
   int num_blocks_x = size_padded/blocksize;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }

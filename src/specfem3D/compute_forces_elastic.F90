@@ -144,7 +144,7 @@
              ! crust/mantle region
              call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
                   NSPEC_CRUST_MANTLE_STR_AND_ATT, &
-                  deltat, &
+                  b_deltat, &
                   b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                   phase_is_inner, &
                   b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
@@ -159,7 +159,7 @@
              ! inner core region
              call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                   NSPEC_INNER_CORE_STR_AND_ATT, &
-                  deltat, &
+                  b_deltat, &
                   b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                   phase_is_inner, &
                   b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
@@ -177,7 +177,7 @@
              ! crust/mantle region
              call compute_forces_crust_mantle( NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
                   NSPEC_CRUST_MANTLE_STR_AND_ATT, &
-                  deltat, &
+                  b_deltat, &
                   b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                   phase_is_inner, &
                   b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
@@ -193,7 +193,7 @@
              ! inner core region
              call compute_forces_inner_core( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                   NSPEC_INNER_CORE_STR_AND_ATT, &
-                  deltat, &
+                  b_deltat, &
                   b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                   phase_is_inner, &
                   b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
@@ -212,9 +212,9 @@
        ! on GPU
        ! contains both forward SIM_TYPE==1 and backward SIM_TYPE==3 simulations
        ! for crust/mantle
-       call compute_forces_crust_mantle_cuda(Mesh_pointer,deltat,iphase)
+       call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase)
        ! for inner core
-       call compute_forces_inner_core_cuda(Mesh_pointer,deltat,iphase)
+       call compute_forces_inner_core_cuda(Mesh_pointer,iphase)
     endif ! GPU_MODE
 
 
@@ -280,27 +280,27 @@
           !--- couple with outer core at the bottom of the mantle
           !---
           if(ACTUALLY_COUPLE_FLUID_CMB) &
-               call compute_coupling_CMB_fluid(displ_crust_mantle,b_displ_crust_mantle, &
-               accel_crust_mantle,b_accel_crust_mantle, &
-               ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-               accel_outer_core,b_accel_outer_core, &
-               normal_top_outer_core,jacobian2D_top_outer_core, &
-               wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-               RHO_TOP_OC,minus_g_cmb, &
-               SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
+            call compute_coupling_CMB_fluid(displ_crust_mantle,b_displ_crust_mantle, &
+                                           accel_crust_mantle,b_accel_crust_mantle, &
+                                           ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                           accel_outer_core,b_accel_outer_core, &
+                                           normal_top_outer_core,jacobian2D_top_outer_core, &
+                                           wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                           RHO_TOP_OC,minus_g_cmb, &
+                                           SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
 
           !---
           !--- couple with outer core at the top of the inner core
           !---
           if(ACTUALLY_COUPLE_FLUID_ICB) &
-               call compute_coupling_ICB_fluid(displ_inner_core,b_displ_inner_core, &
-               accel_inner_core,b_accel_inner_core, &
-               ibool_inner_core,ibelm_top_inner_core,  &
-               accel_outer_core,b_accel_outer_core, &
-               normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-               wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-               RHO_BOTTOM_OC,minus_g_icb, &
-               SIMULATION_TYPE,NSPEC2D_TOP(IREGION_INNER_CORE))
+            call compute_coupling_ICB_fluid(displ_inner_core,b_displ_inner_core, &
+                                           accel_inner_core,b_accel_inner_core, &
+                                           ibool_inner_core,ibelm_top_inner_core,  &
+                                           accel_outer_core,b_accel_outer_core, &
+                                           normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+                                           wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+                                           RHO_BOTTOM_OC,minus_g_icb, &
+                                           SIMULATION_TYPE,NSPEC2D_TOP(IREGION_INNER_CORE))
 
        else
           ! on GPU
@@ -308,14 +308,12 @@
           !--- couple with outer core at the bottom of the mantle
           !---
           if( ACTUALLY_COUPLE_FLUID_CMB ) &
-               call compute_coupling_cmb_fluid_cuda(Mesh_pointer, &
-               RHO_TOP_OC,minus_g_cmb,GRAVITY_VAL)
+               call compute_coupling_cmb_fluid_cuda(Mesh_pointer)
           !---
           !--- couple with outer core at the top of the inner core
           !---
           if( ACTUALLY_COUPLE_FLUID_ICB ) &
-               call compute_coupling_icb_fluid_cuda(Mesh_pointer, &
-               RHO_BOTTOM_OC,minus_g_icb,GRAVITY_VAL)
+               call compute_coupling_icb_fluid_cuda(Mesh_pointer)
 
        endif
     endif ! iphase == 1
@@ -491,7 +489,7 @@
 
   enddo ! iphase
 
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+  if( NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS ) then
      NGLOB_XY = NGLOB_CRUST_MANTLE
   else
      NGLOB_XY = 1
@@ -500,25 +498,25 @@
   ! updates (only) acceleration w/ rotation in the crust/mantle region (touches oceans)
   if(.NOT. GPU_MODE) then
      ! on CPU
-     call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle,two_omega_earth, &
+     call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle, &
+                                        two_omega_earth, &
                                         rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                         NCHUNKS_VAL,ABSORBING_CONDITIONS)
-
      ! adjoint / kernel runs
      if (SIMULATION_TYPE == 3) &
           call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_XY,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                             b_two_omega_earth,rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                             b_two_omega_earth, &
+                                             rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                              NCHUNKS_VAL,ABSORBING_CONDITIONS)
-
   else
      ! on GPU
      call kernel_3_a_cuda(Mesh_pointer, &
-                         deltatover2,SIMULATION_TYPE,b_deltatover2,OCEANS_VAL,NCHUNKS_VAL)
+                         deltatover2,SIMULATION_TYPE,b_deltatover2,NCHUNKS_VAL)
   endif
 
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
-  if(OCEANS_VAL) then
+  if( OCEANS_VAL ) then
     if(.NOT. GPU_MODE) then
       ! on CPU
       call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
@@ -551,7 +549,7 @@
   else
     ! on GPU
     call kernel_3_b_cuda(Mesh_pointer, &
-                        deltatover2,SIMULATION_TYPE,b_deltatover2,OCEANS_VAL)
+                        deltatover2,SIMULATION_TYPE,b_deltatover2)
   endif
 
   end subroutine compute_forces_elastic
@@ -559,7 +557,8 @@
 
 !=====================================================================
 
-  subroutine compute_forces_el_update_accel(NGLOB,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle,two_omega_earth, &
+  subroutine compute_forces_el_update_accel(NGLOB,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle, &
+                                           two_omega_earth, &
                                            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                            NCHUNKS_VAL,ABSORBING_CONDITIONS)
 

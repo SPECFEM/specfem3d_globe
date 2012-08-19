@@ -1149,12 +1149,14 @@
 
   ! prepares general fields on GPU
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
-                                  hprime_xx, hprime_yy, hprime_zz, &
+                                  hprime_xx, &
                                   hprimewgll_xx, hprimewgll_yy, hprimewgll_zz, &
                                   wgllwgll_xy, wgllwgll_xz, wgllwgll_yz, &
                                   NSOURCES, nsources_local, &
-                                  sourcearrays,islice_selected_source,ispec_selected_source, &
-                                  number_receiver_global,islice_selected_rec,ispec_selected_rec, &
+                                  sourcearrays, &
+                                  islice_selected_source,ispec_selected_source, &
+                                  number_receiver_global, &
+                                  islice_selected_rec,ispec_selected_rec, &
                                   nrec, nrec_local, nadj_rec_local, &
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                   NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
@@ -1163,25 +1165,28 @@
                                   NSPEC_INNER_CORE_STRAIN_ONLY, &
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                   SAVE_FORWARD,ABSORBING_CONDITIONS, &
-                                  OCEANS_VAL,GRAVITY_VAL,ROTATION_VAL, &
+                                  OCEANS_VAL, &
+                                  GRAVITY_VAL, &
+                                  ROTATION_VAL, &
                                   ATTENUATION_VAL,ATTENUATION_NEW_VAL, &
                                   USE_ATTENUATION_MIMIC,ATTENUATION_3D_VAL, &
                                   COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &
                                   USE_MESH_COLORING_GPU, &
-                                  ANISOTROPIC_KL,APPROXIMATE_HESS_KL)
+                                  ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
+                                  deltat,b_deltat)
 
   ! prepares rotation arrays
   if( ROTATION_VAL ) then
     if(myrank == 0 ) write(IMAIN,*) "  loading rotation arrays"
 
     call prepare_fields_rotation_device(Mesh_pointer, &
-                                  two_omega_earth,deltat, &
-                                  A_array_rotation,B_array_rotation, &
-                                  b_two_omega_earth,b_deltat, &
-                                  b_A_array_rotation,b_B_array_rotation, &
-                                  NSPEC_OUTER_CORE_ROTATION)
+                                       two_omega_earth, &
+                                       A_array_rotation,B_array_rotation, &
+                                       b_two_omega_earth, &
+                                       b_A_array_rotation,b_B_array_rotation, &
+                                       NSPEC_OUTER_CORE_ROTATION)
   endif
 
   ! prepares arrays related to gravity
@@ -1197,17 +1202,29 @@
           cr_density_table(NRAD_GRAVITY), &
           stat=ier)
   if( ier /= 0 ) stop 'error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
-  ! d_ln_density_dr_table needed for no gravity case
-  cr_d_ln_density_dr_table(:) = d_ln_density_dr_table(:)
-  ! these are needed for gravity cases only
-  cr_minus_rho_g_over_kappa_fluid(:) = minus_rho_g_over_kappa_fluid(:)
-  cr_minus_gravity_table(:) = minus_gravity_table(:)
-  cr_minus_deriv_gravity_table(:) = minus_deriv_gravity_table(:)
-  cr_density_table(:) = density_table(:)
 
   allocate(cr_wgll_cube(NGLLX,NGLLY,NGLLZ),stat=ier)
   if( ier /= 0 ) stop 'error allocating cr_wgll_cube'
-  cr_wgll_cube(:,:,:) = wgll_cube(:,:,:)
+
+  if(CUSTOM_REAL == SIZE_REAL) then
+    ! d_ln_density_dr_table needed for no gravity case
+    cr_d_ln_density_dr_table(:) = sngl(d_ln_density_dr_table(:))
+    ! these are needed for gravity cases only
+    cr_minus_rho_g_over_kappa_fluid(:) = sngl(minus_rho_g_over_kappa_fluid(:))
+    cr_minus_gravity_table(:) = sngl(minus_gravity_table(:))
+    cr_minus_deriv_gravity_table(:) = sngl(minus_deriv_gravity_table(:))
+    cr_density_table(:) = sngl(density_table(:))
+    cr_wgll_cube(:,:,:) = sngl(wgll_cube(:,:,:))
+  else
+    ! d_ln_density_dr_table needed for no gravity case
+    cr_d_ln_density_dr_table(:) = d_ln_density_dr_table(:)
+    ! these are needed for gravity cases only
+    cr_minus_rho_g_over_kappa_fluid(:) = minus_rho_g_over_kappa_fluid(:)
+    cr_minus_gravity_table(:) = minus_gravity_table(:)
+    cr_minus_deriv_gravity_table(:) = minus_deriv_gravity_table(:)
+    cr_density_table(:) = density_table(:)
+    cr_wgll_cube(:,:,:) = wgll_cube(:,:,:)
+  endif
 
   ! prepares on GPU
   call prepare_fields_gravity_device(Mesh_pointer, &
@@ -1217,7 +1234,10 @@
                                     cr_minus_deriv_gravity_table, &
                                     cr_density_table, &
                                     cr_wgll_cube, &
-                                    NRAD_GRAVITY)
+                                    NRAD_GRAVITY, &
+                                    minus_g_icb,minus_g_cmb, &
+                                    RHO_BOTTOM_OC,RHO_TOP_OC)
+
   deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
             cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
             cr_density_table)
@@ -1287,10 +1307,8 @@
                                     nkmin_xi_outer_core,nkmin_eta_outer_core, &
                                     ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
                                     ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
-                                    ibelm_bottom_outer_core, &
                                     jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
                                     jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
-                                    jacobian2D_bottom_outer_core, &
                                     vp_outer_core)
 
   endif
@@ -1350,7 +1368,7 @@
 
     ! allocates arrays with all global points on ocean surface
     npoin_oceans = ipoin
-    allocate(iglob_ocean_load(npoin_oceans), &
+    allocate(ibool_ocean_load(npoin_oceans), &
             normal_ocean_load(NDIM,npoin_oceans), &
             rmass_ocean_load_selected(npoin_oceans), &
             stat=ier)
@@ -1369,7 +1387,7 @@
           if(.not. updated_dof_ocean_load(iglob)) then
             ipoin = ipoin + 1
             ! fills arrays
-            iglob_ocean_load(ipoin) = iglob
+            ibool_ocean_load(ipoin) = iglob
             rmass_ocean_load_selected(ipoin) = rmass_ocean_load(iglob)
             normal_ocean_load(:,ipoin) = normal_top_crust_mantle(:,i,j,ispec2D)
             ! masks this global point
@@ -1381,10 +1399,12 @@
 
     ! prepares arrays on GPU
     call prepare_oceans_device(Mesh_pointer,npoin_oceans, &
-                              rmass_ocean_load_selected,iglob_ocean_load,normal_ocean_load)
+                              ibool_ocean_load, &
+                              rmass_ocean_load_selected, &
+                              normal_ocean_load)
 
     ! frees memory
-    deallocate(iglob_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
+    deallocate(ibool_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
 
   endif
 

@@ -73,20 +73,21 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
   ! for gravity
-  integer int_radius
-  double precision radius,theta,phi,gxl,gyl,gzl
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
+  integer :: int_radius
+  double precision :: radius,theta,phi,gxl,gyl,gzl
+  double precision :: cos_theta,sin_theta,cos_phi,sin_phi
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
   ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
+  real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
        ux_rotation,uy_rotation,dpotentialdx_with_rot,dpotentialdy_with_rot
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
-  integer ispec,iglob
-  integer i,j,k
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  real(kind=CUSTOM_REAL) dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) sum_terms
+  integer :: ispec,iglob
+  integer :: i,j,k
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
+  real(kind=CUSTOM_REAL) :: sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
@@ -252,9 +253,6 @@
                   * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
             source_euler_B(i,j,k) = two_omega_deltat &
                   * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
-
-            A_rotation = A_array_rotation(i,j,k,ispec)
-            B_rotation = B_array_rotation(i,j,k,ispec)
 
             ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t
             uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t

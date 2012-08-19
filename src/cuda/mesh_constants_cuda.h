@@ -154,13 +154,17 @@ typedef float realw;
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
 // Use textures for d_displ and d_accel -- 10% performance boost
-#define USE_TEXTURES_FIELDS
+
+//daniel: todo benchmark fields
+//#define USE_TEXTURES_FIELDS
 
 // Using texture memory for the hprime-style constants is slower on
 // Fermi generation hardware, but *may* be faster on Kepler
 // generation.
 // Use textures for hprime_xx
-#define USE_TEXTURES_CONSTANTS
+
+//daniel: todo benchmark constants
+//#define USE_TEXTURES_CONSTANTS
 
 // CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
 #if CUDA_VERSION < 4000
@@ -186,6 +190,9 @@ typedef float realw;
 #define BLOCKSIZE_KERNEL1 128
 #define BLOCKSIZE_KERNEL3 128
 #define BLOCKSIZE_TRANSFER 256
+
+// maximum grid dimension in one direction of GPU
+#define MAXIMUM_GRID_DIM 65535
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -492,8 +499,8 @@ typedef struct mesh_ {
   int npoin_oceans;
 
   // model parameter
+  int* d_ibool_ocean_load;
   realw* d_rmass_ocean_load;
-  int* d_iglob_ocean_load;
   realw* d_normal_ocean_load;
 
   // ------------------------------------------------------------------ //
@@ -551,6 +558,9 @@ typedef struct mesh_ {
   int anisotropic_kl;
   int approximate_hess_kl;
 
+  realw deltat;
+  realw b_deltat;
+
   // ------------------------------------------------------------------ //
   // gravity
   // ------------------------------------------------------------------ //
@@ -560,16 +570,20 @@ typedef struct mesh_ {
   realw* d_minus_deriv_gravity_table;
   realw* d_density_table;
 
+  realw minus_g_icb;
+  realw minus_g_cmb;
+
+  realw RHO_BOTTOM_OC;
+  realw RHO_TOP_OC;
+
   // ------------------------------------------------------------------ //
   // rotation
   // ------------------------------------------------------------------ //
-  realw d_two_omega_earth;
-  realw d_deltat;
+  realw two_omega_earth;
   realw* d_A_array_rotation; realw* d_B_array_rotation;
 
   // needed for backward/reconstructed fields (kernel runs)
-  realw d_b_two_omega_earth;
-  realw d_b_deltat;
+  realw b_two_omega_earth;
   realw* d_b_A_array_rotation; realw* d_b_B_array_rotation;
 
   // ------------------------------------------------------------------ //
@@ -656,11 +670,9 @@ typedef struct mesh_ {
 
   int* d_ibelm_xmin_outer_core, *d_ibelm_xmax_outer_core;
   int* d_ibelm_ymin_outer_core, *d_ibelm_ymax_outer_core;
-  int* d_ibelm_zmin_outer_core;
 
   realw* d_jacobian2D_xmin_outer_core, *d_jacobian2D_xmax_outer_core;
   realw* d_jacobian2D_ymin_outer_core, *d_jacobian2D_ymax_outer_core;
-  realw* d_jacobian2D_zmin_outer_core;
 
   realw* d_absorb_xmin_outer_core, *d_absorb_xmax_outer_core;
   realw* d_absorb_ymin_outer_core, *d_absorb_ymax_outer_core;

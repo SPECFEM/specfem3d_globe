@@ -156,7 +156,7 @@ TRACE("noise_transfer_surface_to_host");
 
   int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -254,7 +254,7 @@ __global__ void noise_add_surface_movie_cuda_kernel(realw* accel,
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y; // surface element id
 
-  // when nspec_top > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
+  // when nspec_top > MAXIMUM_GRID_DIM, but mod(nspec_top,2) > 0, we end up with an extra block.
   if(iface < nspec_top) {
 
     int ispec = ibelm_top[iface]-1;
@@ -306,7 +306,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
 
   int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }

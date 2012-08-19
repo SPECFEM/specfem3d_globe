@@ -85,7 +85,6 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
     *sigma_xz = *sigma_xz - R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)];
     *sigma_yz = *sigma_yz - R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)];
   }
-  return;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -167,7 +166,6 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
       alphaval_loc * R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
   }
-  return;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -224,10 +222,17 @@ __device__ void compute_element_cm_gravity(int tx,int working_element,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  cos_theta = cos(theta);
-  sin_theta = sin(theta);
-  cos_phi = cos(phi);
-  sin_phi = sin(phi);
+  if( sizeof( theta ) == sizeof( float ) ){
+    // float operations
+    // sincos function return sinus and cosine for given value
+    sincosf(theta, &sin_theta, &cos_theta);
+    sincosf(phi, &sin_phi, &cos_phi);
+  }else{
+    cos_theta = cos(theta);
+    sin_theta = sin(theta);
+    cos_phi = cos(phi);
+    sin_phi = sin(phi);
+  }
 
   // for efficiency replace with lookup table every 100 m in radial direction
   // note: radius in crust mantle should never be zero,
@@ -288,8 +293,6 @@ __device__ void compute_element_cm_gravity(int tx,int working_element,
   *rho_s_H1 = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl);
   *rho_s_H2 = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl);
   *rho_s_H3 = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl);
-
-  return;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -367,7 +370,6 @@ __device__ void compute_element_cm_aniso(int offset,
              c55*duzdxl_plus_duxdzl + c45*duzdyl_plus_duydzl + c35*duzdzl;
   *sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl +
              c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl;
-  return;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -674,8 +676,6 @@ __device__ void compute_element_cm_tiso(int offset,
 
   *sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl +
               c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl;
-
-  return;
 }
 
 
@@ -695,7 +695,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           int* d_phase_ispec_inner,
                                           int num_phase_ispec,
                                           int d_iphase,
-                                          realw d_deltat,
+                                          realw deltat,
                                           int use_mesh_coloring_gpu,
                                           realw* d_displ,
                                           realw* d_veloc,
@@ -737,9 +737,9 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           realw* wgll_cube,
                                           int NSPEC_CRUST_MANTLE_STRAIN_ONLY){
 
-  /* int bx = blockIdx.y*blockDim.x+blockIdx.x; //possible bug in original code*/
+  // block id == spectral-element id
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
-  /* int bx = blockIdx.x; */
+  // thread id == GLL point id
   int tx = threadIdx.x;
 
   int K = (tx/NGLL2);
@@ -838,13 +838,13 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
         // use first order Taylor expansion of displacement for local storage of stresses
         // at this current time step, to fix attenuation in a consistent way
 #ifdef USE_TEXTURES_FIELDS
-        s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(d_displ_cm_tex, iglob*3);
-        s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(d_displ_cm_tex, iglob*3 + 1);
-        s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(d_displ_cm_tex, iglob*3 + 2);
+        s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + deltat * tex1Dfetch(d_displ_cm_tex, iglob*3);
+        s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + deltat * tex1Dfetch(d_displ_cm_tex, iglob*3 + 1);
+        s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + deltat * tex1Dfetch(d_displ_cm_tex, iglob*3 + 2);
 #else
-        s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-        s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-        s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+        s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + deltat * d_veloc[iglob*3];
+        s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + deltat * d_veloc[iglob*3 + 1];
+        s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + deltat * d_veloc[iglob*3 + 2];
 #endif
       }else{
         // takes old routines
@@ -1419,7 +1419,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 /* ----------------------------------------------------------------------------------------------- */
 
 void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
-                          realw d_deltat,
                           int d_iphase,
                           int* d_ibool,
                           int* d_ispec_is_tiso,
@@ -1459,8 +1458,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                           realw* d_c25store,realw* d_c26store,realw* d_c33store,
                           realw* d_c34store,realw* d_c35store,realw* d_c36store,
                           realw* d_c44store,realw* d_c45store,realw* d_c46store,
-                          realw* d_c55store,realw* d_c56store,realw* d_c66store
-                          ){
+                          realw* d_c55store,realw* d_c56store,realw* d_c66store){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before kernel Kernel_2_crust_mantle");
@@ -1472,7 +1470,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
 
   int num_blocks_x = nb_blocks_to_compute;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -1495,7 +1493,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->d_phase_ispec_inner_crust_mantle,
                                                 mp->num_phase_ispec_crust_mantle,
                                                 d_iphase,
-                                                d_deltat,
+                                                mp->deltat,
                                                 mp->use_mesh_coloring_gpu,
                                                 mp->d_displ_crust_mantle,
                                                 mp->d_veloc_crust_mantle,
@@ -1546,7 +1544,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                    mp->d_phase_ispec_inner_crust_mantle,
                                                    mp->num_phase_ispec_crust_mantle,
                                                    d_iphase,
-                                                   d_deltat,
+                                                   mp->b_deltat,
                                                    mp->use_mesh_coloring_gpu,
                                                    mp->d_b_displ_crust_mantle,
                                                    mp->d_b_veloc_crust_mantle,
@@ -1609,7 +1607,6 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
 extern "C"
 void FC_FUNC_(compute_forces_crust_mantle_cuda,
               COMPUTE_FORCES_CRUST_MANTLE_CUDA)(long* Mesh_pointer_f,
-                                                realw* deltat,
                                                 int* iphase) {
 
   TRACE("compute_forces_crust_mantle_cuda");
@@ -1701,7 +1698,6 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
 #endif
 
       Kernel_2_crust_mantle(nb_blocks_to_compute,mp,
-                            *deltat,
                             *iphase,
                             mp->d_ibool_crust_mantle + color_offset_nonpadded,
                             mp->d_ispec_is_tiso_crust_mantle + color_offset_ispec,
@@ -1794,7 +1790,6 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
     // no mesh coloring: uses atomic updates
 
     Kernel_2_crust_mantle(num_elements,mp,
-                          *deltat,
                           *iphase,
                           mp->d_ibool_crust_mantle,
                           mp->d_ispec_is_tiso_crust_mantle,

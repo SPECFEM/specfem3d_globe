@@ -85,18 +85,12 @@
     do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
-           nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
-           itag, &
-           request_send_scalar(iinterface) &
-           )
+                   nibool_interfaces(iinterface),my_neighbours(iinterface), &
+                   itag,request_send_scalar(iinterface) )
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
-           nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
-           itag, &
-           request_recv_scalar(iinterface) &
-           )
+                   nibool_interfaces(iinterface),my_neighbours(iinterface), &
+                   itag,request_recv_scalar(iinterface) )
     enddo
 
     ! wait for communications completion (recv)
@@ -177,18 +171,12 @@
     do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
-           nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
-           itag, &
-           request_send_scalar(iinterface) &
-           )
+                   nibool_interfaces(iinterface),my_neighbours(iinterface), &
+                   itag,request_send_scalar(iinterface))
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
-           nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
-           itag, &
-           request_recv_scalar(iinterface) &
-           )
+                   nibool_interfaces(iinterface),my_neighbours(iinterface), &
+                   itag,request_recv_scalar(iinterface))
 
     enddo
 
@@ -303,18 +291,12 @@
     do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
-           nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
-           itag, &
-           request_send_scalar(iinterface) &
-           )
+                   nibool_interfaces(iinterface),my_neighbours(iinterface), &
+                   itag,request_send_scalar(iinterface))
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
-           nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
-           itag, &
-           request_recv_scalar(iinterface) &
-           )
+                   nibool_interfaces(iinterface),my_neighbours(iinterface), &
+                   itag,request_recv_scalar(iinterface) )
 
     enddo
 

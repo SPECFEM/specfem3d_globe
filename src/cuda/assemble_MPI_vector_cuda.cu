@@ -84,7 +84,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
       size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_crust_mantle)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
-      while(num_blocks_x > 65535) {
+      while(num_blocks_x > MAXIMUM_GRID_DIM) {
         num_blocks_x = (int) ceil(num_blocks_x*0.5f);
         num_blocks_y = num_blocks_y*2;
       }
@@ -124,7 +124,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
       size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_inner_core)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
-      while(num_blocks_x > 65535) {
+      while(num_blocks_x > MAXIMUM_GRID_DIM) {
         num_blocks_x = (int) ceil(num_blocks_x*0.5f);
         num_blocks_y = num_blocks_y*2;
       }
@@ -210,7 +210,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_crust_mantle)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
-      while(num_blocks_x > 65535) {
+      while(num_blocks_x > MAXIMUM_GRID_DIM) {
         num_blocks_x = (int) ceil(num_blocks_x*0.5f);
         num_blocks_y = num_blocks_y*2;
       }
@@ -256,7 +256,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_inner_core)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
-      while(num_blocks_x > 65535) {
+      while(num_blocks_x > MAXIMUM_GRID_DIM) {
         num_blocks_x = (int) ceil(num_blocks_x*0.5f);
         num_blocks_y = num_blocks_y*2;
       }

@@ -59,23 +59,25 @@ __global__ void compute_add_sources_kernel(realw* accel,
   int i = threadIdx.x;
   int j = threadIdx.y;
   int k = threadIdx.z;
-
   int isource  = blockIdx.x + gridDim.x*blockIdx.y; // bx
 
-  if(isource < NSOURCES) { // when NSOURCES > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
-
+  // when NSOURCES > MAXIMUM_GRID_DIM, but mod(nspec_top,2) > 0, we end up with an extra block.
+  if(isource < NSOURCES) {
     if(myrank == islice_selected_source[isource]) {
 
       ispec = ispec_selected_source[isource]-1;
 
       stf = (realw) stf_pre_compute[isource];
-      iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)]-1;
+      iglob = ibool[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)]-1;
 
       // note: for global version, sourcearrays has dimensions
       //            sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
-      atomicAdd(&accel[3*iglob], sourcearrays[INDEX5(3,5,5,5, 0,i,j,k,isource)]*stf);
-      atomicAdd(&accel[3*iglob+1], sourcearrays[INDEX5(3,5,5,5, 1,i,j,k,isource)]*stf);
-      atomicAdd(&accel[3*iglob+2], sourcearrays[INDEX5(3,5,5,5, 2,i,j,k,isource)]*stf);
+      atomicAdd(&accel[3*iglob], sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
+                                                     0,i,j,k,isource)]*stf);
+      atomicAdd(&accel[3*iglob+1], sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
+                                                       1,i,j,k,isource)]*stf);
+      atomicAdd(&accel[3*iglob+2], sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
+                                                       2,i,j,k,isource)]*stf);
     }
   }
 }
@@ -100,12 +102,12 @@ void FC_FUNC_(compute_add_sources_el_cuda,
 
   int num_blocks_x = NSOURCES;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(5,5,5);
+  dim3 threads(NGLLX,NGLLX,NGLLX);
 
   // copies source time function buffer values to GPU
   print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute,h_stf_pre_compute,
@@ -148,12 +150,12 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
 
   int num_blocks_x = NSOURCES;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(5,5,5);
+  dim3 threads(NGLLX,NGLLX,NGLLX);
 
   // copies source time function buffer values to GPU
   print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute,h_stf_pre_compute,
@@ -193,8 +195,8 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 
   int irec_local = blockIdx.x + gridDim.x*blockIdx.y;
 
-  if(irec_local < nadj_rec_local) { // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
-
+  // when nrec > MAXIMUM_GRID_DIM, but mod(nspec_top,2) > 0, we end up with an extra block.
+  if(irec_local < nadj_rec_local) {
     irec = pre_computed_irec[irec_local];
     ispec = ispec_selected_rec[irec]-1;
 
@@ -205,13 +207,13 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 
     // atomic operations are absolutely necessary for correctness!
     atomicAdd(&accel[3*iglob], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
-                                                      0,i,j,k,irec_local)]);
+                                                       0,i,j,k,irec_local)]);
 
     atomicAdd(&accel[3*iglob+1], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
-                                                      1,i,j,k,irec_local)]);
+                                                         1,i,j,k,irec_local)]);
 
     atomicAdd(&accel[3*iglob+2], adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
-                                                      2,i,j,k,irec_local)]);
+                                                         2,i,j,k,irec_local)]);
   }
 }
 
@@ -233,15 +235,15 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   // check if anything to do
   if( mp->nadj_rec_local == 0 ) return;
 
-  // make sure grid dimension is less than 65535 in x dimension
+  // make sure grid dimension is less than MAXIMUM_GRID_DIM in x dimension
   int num_blocks_x = mp->nadj_rec_local;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
   dim3 grid(num_blocks_x,num_blocks_y,1);
-  dim3 threads(5,5,5);
+  dim3 threads(NGLLX,NGLLX,NGLLX);
 
   // build slice of adj_sourcearrays because full array is *very* large.
   // note: this extracts array values for local adjoint sources at given time step "time_index"
@@ -260,17 +262,17 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
             // note: global version uses dimensions
             //          h_adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
             mp->h_adj_sourcearrays_slice[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
-                                            0,i,j,k,irec_local-1)]
+                                                0,i,j,k,irec_local-1)]
                     = h_adj_sourcearrays[INDEX6(NDIM,NGLLX,NGLLX,NGLLX,mp->nadj_rec_local,
                                                 0,i,j,k,irec_local-1,*time_index-1)];
 
             mp->h_adj_sourcearrays_slice[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
-                                            1,i,j,k,irec_local-1)]
+                                                1,i,j,k,irec_local-1)]
                     = h_adj_sourcearrays[INDEX6(NDIM,NGLLX,NGLLX,NGLLX,mp->nadj_rec_local,
                                                 1,i,j,k,irec_local-1,*time_index-1)];
 
             mp->h_adj_sourcearrays_slice[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,
-                                            2,i,j,k,irec_local-1)]
+                                                2,i,j,k,irec_local-1)]
                     = h_adj_sourcearrays[INDEX6(NDIM,NGLLX,NGLLX,NGLLX,mp->nadj_rec_local,
                                                 2,i,j,k,irec_local-1,*time_index-1)];
           }
@@ -283,7 +285,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
 
   // copies extracted array values onto GPU
   cudaMemcpy(mp->d_adj_sourcearrays, mp->h_adj_sourcearrays_slice,
-             (mp->nadj_rec_local)*3*NGLL3*sizeof(realw),cudaMemcpyHostToDevice);
+             (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw),cudaMemcpyHostToDevice);
 
 
   // the irec_local variable needs to be precomputed (as

@@ -26,11 +26,11 @@
 !=====================================================================
 
   subroutine compute_coupling_fluid_CMB(displ_crust_mantle,b_displ_crust_mantle, &
-                            ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                            accel_outer_core,b_accel_outer_core, &
-                            normal_top_outer_core,jacobian2D_top_outer_core, &
-                            wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                            SIMULATION_TYPE,nspec2D_top)
+                                       ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                       accel_outer_core,b_accel_outer_core, &
+                                       normal_top_outer_core,jacobian2D_top_outer_core, &
+                                       wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                       SIMULATION_TYPE,nspec2D_top)
 
   implicit none
 
@@ -289,14 +289,15 @@
 
         ! get global point number
         ! corresponding points are located at the top of the outer core
-        iglob_oc = ibool_outer_core(i,j,NGLLZ,ispec_selected)
+        iglob_oc = ibool_outer_core(i,j,k_corresp,ispec_selected)
         iglob_mantle = ibool_crust_mantle(i,j,k,ispec)
 
         ! compute pressure, taking gravity into account
         if(GRAVITY_VAL) then
           pressure = RHO_TOP_OC * (- accel_outer_core(iglob_oc) &
              + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
-             + displ_crust_mantle(2,iglob_mantle)*ny + displ_crust_mantle(3,iglob_mantle)*nz))
+                            + displ_crust_mantle(2,iglob_mantle)*ny &
+                            + displ_crust_mantle(3,iglob_mantle)*nz))
         else
           pressure = - RHO_TOP_OC * accel_outer_core(iglob_oc)
         endif
@@ -401,7 +402,7 @@
         if(GRAVITY_VAL) then
           pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
-             + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
+                           + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
         else
           pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
         endif

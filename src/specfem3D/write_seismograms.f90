@@ -44,13 +44,14 @@
     ! gets resulting array values onto CPU
     if( GPU_MODE ) then
       ! this transfers fields only in elements with stations for efficiency
-      call write_seismograms_transfer_cuda(displ_crust_mantle,b_displ_crust_mantle, &
-                            eps_trace_over_3_crust_mantle, &
-                            epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                            epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                            Mesh_pointer,number_receiver_global, &
-                            ispec_selected_rec,ispec_selected_source, &
-                            ibool_crust_mantle)
+      call write_seismograms_transfer_cuda(Mesh_pointer, &
+                                displ_crust_mantle,b_displ_crust_mantle, &
+                                eps_trace_over_3_crust_mantle, &
+                                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                number_receiver_global, &
+                                ispec_selected_rec,ispec_selected_source, &
+                                ibool_crust_mantle)
     endif
 
     ! computes traces at interpolated receiver locations

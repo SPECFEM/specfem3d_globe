@@ -226,7 +226,7 @@ TRACE("compute_kernels_cm_cuda");
 
   int num_blocks_x = mp->NSPEC_CRUST_MANTLE;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -299,7 +299,7 @@ void FC_FUNC_(compute_kernels_ic_cuda,
 
   int num_blocks_x = mp->NSPEC_INNER_CORE;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -513,7 +513,7 @@ TRACE("compute_kernels_oc_cuda");
 
   int num_blocks_x = mp->NSPEC_OUTER_CORE;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -605,7 +605,7 @@ void FC_FUNC_(compute_kernels_strgth_noise_cu,
 
   int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
@@ -683,7 +683,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
 
   int num_blocks_x = mp->NSPEC_CRUST_MANTLE;
   int num_blocks_y = 1;
-  while(num_blocks_x > 65535) {
+  while(num_blocks_x > MAXIMUM_GRID_DIM) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
