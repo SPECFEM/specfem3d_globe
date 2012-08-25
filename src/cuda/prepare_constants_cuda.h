@@ -80,7 +80,7 @@ __device__ realw d_wgllwgll_xz[NGLL2];
 __device__ realw d_wgllwgll_yz[NGLL2];
 
 // wgll_cube: needed only for gravity case
-__device__ realw d_wgll_cube[NGLL3]; 
+__device__ realw d_wgll_cube[NGLL3];
 
 
 // setup functions
@@ -91,7 +91,8 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
   if (err != cudaSuccess)
   {
     fprintf(stderr, "Error in setConst_hprime_xx: %s\n", cudaGetErrorString(err));
-    fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
+    fprintf(stderr, "The problem is maybe the target architecture: -arch sm_** in src/specfem3D/Makefile\n");
+    fprintf(stderr, "Please double-check with your GPU card\n");
     exit(1);
   }
 
@@ -111,7 +112,6 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
  if (err != cudaSuccess)
  {
  fprintf(stderr, "Error in setConst_hprime_yy: %s\n", cudaGetErrorString(err));
- fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
  exit(1);
  }
 
@@ -132,7 +132,6 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
  if (err != cudaSuccess)
  {
  fprintf(stderr, "Error in setConst_hprime_zz: %s\n", cudaGetErrorString(err));
- fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
  exit(1);
  }
 

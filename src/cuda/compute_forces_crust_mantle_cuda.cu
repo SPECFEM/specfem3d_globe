@@ -798,7 +798,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 
   __shared__ realw sh_hprime_xx[NGLL2];
   __shared__ realw sh_hprimewgll_xx[NGLL2];
-  
+
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
 // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
   active = (tx < NGLL3 && bx < nb_blocks_to_compute) ? 1:0;
@@ -850,8 +850,8 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
     }
   } // active
 
-  // gets constant arrays into shared memory 
-  // (only ghost threads which would be idle anyway)    
+  // gets constant arrays into shared memory
+  // (only ghost threads which would be idle anyway)
   if (tx == NGLL3_PADDED-1) {
     for(int m=0; m < NGLL2; m++){
       // hprime
@@ -863,9 +863,9 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       // weighted hprime
       sh_hprimewgll_xx[m] = d_hprimewgll_xx[m];
     }
-  }    
-  
-/*  
+  }
+
+/*
   if (tx < NGLL2) {
     // hprime
 #ifdef USE_TEXTURES_CONSTANTS
@@ -1274,7 +1274,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       tempx1l += s_tempx1[K*NGLL2+J*NGLLX+l]*fac1;
       tempy1l += s_tempy1[K*NGLL2+J*NGLLX+l]*fac1;
       tempz1l += s_tempz1[K*NGLL2+J*NGLLX+l]*fac1;
-      
+
       // assume hprimewgll_xx == hprimewgll_yy == hprimewgll_zz
       fac2 = sh_hprimewgll_xx[J*NGLLX+l];
       tempx2l += s_tempx2[K*NGLL2+l*NGLLX+I]*fac2;
@@ -1426,7 +1426,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       epsilondev_xz[tx + working_element*NGLL3] = epsilondev_xz_loc;
       epsilondev_yz[tx + working_element*NGLL3] = epsilondev_yz_loc;
     }
-  } // active  
+  } // active
 }
 
 /* ----------------------------------------------------------------------------------------------- */

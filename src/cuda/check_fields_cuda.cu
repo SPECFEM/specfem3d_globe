@@ -118,6 +118,13 @@ void exit_on_cuda_error(char* kernel_name) {
       fclose(fp);
     }
 
+    // releases previous contexts
+#if CUDA_VERSION < 4000
+    cudaThreadExit();
+#else
+    cudaDeviceReset();
+#endif
+
     // stops program
     //free(kernel_name);
 #ifdef WITH_MPI
@@ -182,6 +189,13 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
       fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
       fclose(fp);
     }
+
+    // releases previous contexts
+#if CUDA_VERSION < 4000
+    cudaThreadExit();
+#else
+    cudaDeviceReset();
+#endif
 
     // stops program
 #ifdef WITH_MPI

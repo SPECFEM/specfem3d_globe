@@ -48,28 +48,24 @@
 !--- input or output arguments of the subroutine below
 
   integer, intent(in) :: myrank
+  integer, intent(in) :: NSOURCES ! must be given
 
   integer, intent(out) :: yr,jda,ho,mi
+  double precision, intent(out) :: sec
   real, intent(out) :: mb
-  double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,sec
-
-  !character(len=12), intent(out) :: ename
-
-  integer, intent(in) :: NSOURCES ! must be given
+  double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
   double precision, intent(out) :: t_shift
+
   character(len=20), intent(out) :: event_name
 
+  ! local parameters
+  integer :: ier
 
-
-!--- local variables below
-
-  integer ier
-
-  !integer, parameter :: LENGTH_REGION_NAME = 150
-  !character(len=LENGTH_REGION_NAME) region
-
-! get event information for SAC header on the master
+  ! get event information for SAC header on the master
   if(myrank == 0) then
+
+    ! note: mb as (body wave) moment magnitude is not used any further,
+    !       see comment in write_output_SAC() routine
 
     call get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift, &
                         elat,elon,depth,mb, &
@@ -85,14 +81,13 @@
 
   endif
 
-! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the master to the nodes
   call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(tshift_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(t_shift,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -108,8 +103,7 @@
   call MPI_BCAST(cmt_depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  !call MPI_BCAST(ename,12,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(event_name,20,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(event_name,20,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
   end subroutine get_event_info_parallel
 
@@ -133,40 +127,32 @@
 
 !--- arguments of the subroutine below
 
+  integer, intent(in) :: NSOURCES
+
   integer, intent(out) :: yr,jda,ho,mi
-
+  double precision, intent(out) :: sec
+  double precision, intent(out) :: tshift_cmt,t_shift
+  double precision, intent(out) :: elat_pde,elon_pde,depth_pde
   real, intent(out) :: mb
-
-  double precision, intent(out) :: sec,tshift_cmt,t_shift
-  double precision, intent(out) :: elat_pde,elon_pde,depth_pde,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
-
-  !integer, intent(in) :: LENGTH_REGION_NAME
-  !character(len=LENGTH_REGION_NAME), intent(out) :: region ! event name for SAC header
+  double precision, intent(out) :: cmt_lat,cmt_lon,cmt_depth,cmt_hdur
 
   character(len=20), intent(out) :: event_name ! event name for SAC header
 
-  integer, intent(in) :: NSOURCES
-
-!--- local variables here
-
-  integer ios,mo,da,julian_day
-  integer isource
-
+  ! local parameters
+  integer :: ios,mo,da,julian_day
+  integer :: isource
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
-
-  real ms
-
-  character(len=5) datasource
-  character(len=150) string,CMTSOLUTION
-
+  real :: ms
+  character(len=5) :: datasource
+  character(len=150) :: string,CMTSOLUTION
 
 !
 !---- read hypocenter info
 !
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
 
-  open(unit=821,file=CMTSOLUTION,iostat=ios,status='old',action='read')
+  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
   if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info_serial)'
 
   ! example header line of CMTSOLUTION file
@@ -177,41 +163,42 @@
   do isource=1,NSOURCES
 
     ! read header with event information
-    read(821,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+    read(IIN,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
     jda=julian_day(yr,mo,da)
 
     ! ignore line with event name
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) e_n(isource)
 
     ! read time shift
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) t_s(isource)
 
     ! read half duration
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(15:len_trim(string)),*) hdur(isource)
 
     ! read latitude
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(10:len_trim(string)),*) lat(isource)
 
     ! read longitude
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(11:len_trim(string)),*) lon(isource)
 
     ! read depth
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(7:len_trim(string)),*) depth(isource)
 
     ! ignore the last 6 lines with moment tensor info
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
   enddo
+
   ! sets tshift_cmt to zero
   tshift_cmt = 0.
 
@@ -234,50 +221,7 @@
     t_shift = minval(t_s(1:NSOURCES))
   endif
 
-  close(821)
-
-
-
-!  ! read header with event information
-!  read(821,*) datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
-!
-!  jda=julian_day(yr,mo,da)
-!
-!  ! ignore line with event name
-!  read(821,"(a)") string
-!
-!  ! read time shift
-!  read(821,"(a)") string
-!  read(string(12:len_trim(string)),*) tshift_cmt
-!
-!  if (NSOURCES == 1) then
-!
-!  ! read half duration
-!    read(821,"(a)") string
-!    read(string(15:len_trim(string)),*) cmt_hdur
-!
-!  ! read latitude
-!    read(821,"(a)") string
-!    read(string(10:len_trim(string)),*) cmt_lat
-!
-!  ! read longitude
-!    read(821,"(a)") string
-!    read(string(11:len_trim(string)),*) cmt_lon
-!
-!  ! read depth
-!    read(821,"(a)") string
-!    read(string(7:len_trim(string)),*) cmt_depth
-!
-!  else
-!
-!    cmt_hdur=-1e8
-!    cmt_lat=-1e8
-!    cmt_lon=-1e8
-!    cmt_depth=-1e8
-!
-!  endif
-!
-!  close(821)
+  close(IIN)
 
   end subroutine get_event_info_serial
 

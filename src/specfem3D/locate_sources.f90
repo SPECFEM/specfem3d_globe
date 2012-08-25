@@ -740,6 +740,7 @@
   ! main process broadcasts the results to all the slices
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
   call MPI_BCAST(xi_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -868,9 +869,8 @@
 
   integer :: NSOURCES,isource
 
-  double precision :: moment_tensor(6,NSOURCES)
-  double precision :: tshift_cmt(NSOURCES)
-  double precision :: hdur(NSOURCES)
+  double precision,dimension(6,NSOURCES) :: moment_tensor
+  double precision,dimension(NSOURCES) :: tshift_cmt,hdur
 
   double precision :: min_tshift_cmt_original
   integer :: NSTEP

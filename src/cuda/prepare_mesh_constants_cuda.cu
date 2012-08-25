@@ -95,7 +95,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* myrank_f,
                                         int* h_NGLLX,
                                         realw* h_hprime_xx,
-                                        realw* h_hprimewgll_xx,realw* h_hprimewgll_yy,realw* h_hprimewgll_zz,
+                                        realw* h_hprimewgll_xx,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
                                         realw* h_sourcearrays,
@@ -1235,22 +1235,22 @@ void FC_FUNC_(prepare_crust_mantle_device,
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_crust_mantle),sizeof(realw)*size),4003);
   // backward/reconstructed wavefield
   if( mp->simulation_type == 3 ){
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_crust_mantle),sizeof(realw)*size),4001);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_crust_mantle),sizeof(realw)*size),4002);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_crust_mantle),sizeof(realw)*size),4003);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_crust_mantle),sizeof(realw)*size),4011);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_crust_mantle),sizeof(realw)*size),4012);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_crust_mantle),sizeof(realw)*size),4013);
   }
 
   #ifdef USE_TEXTURES_FIELDS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_cm_tex_ref_ptr, "d_displ_cm_tex"), 4001);
+    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_cm_tex_ref_ptr, "d_displ_cm_tex"), 4021);
     cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_cm_tex_ref_ptr, mp->d_displ_crust_mantle,
-                                            &channelDesc1, sizeof(realw)*size), 4001);
+                                            &channelDesc1, sizeof(realw)*size), 4021);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_cm_tex_ref_ptr, "d_accel_cm_tex"), 4003);
+    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_cm_tex_ref_ptr, "d_accel_cm_tex"), 4023);
     cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_cm_tex_ref_ptr, mp->d_accel_crust_mantle,
-                                            &channelDesc2, sizeof(realw)*size), 4003);
+                                            &channelDesc2, sizeof(realw)*size), 4023);
   }
   #endif
 
@@ -1347,17 +1347,17 @@ void FC_FUNC_(prepare_outer_core_device,
   int size_glob = mp->NGLOB_OUTER_CORE;
 
   // mesh
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xix_outer_core, size_padded*sizeof(realw)),1001);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiy_outer_core, size_padded*sizeof(realw)),1002);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiz_outer_core, size_padded*sizeof(realw)),1003);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etax_outer_core, size_padded*sizeof(realw)),1004);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etay_outer_core, size_padded*sizeof(realw)),1005);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etaz_outer_core, size_padded*sizeof(realw)),1006);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammax_outer_core, size_padded*sizeof(realw)),1007);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_outer_core, size_padded*sizeof(realw)),1008);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_outer_core, size_padded*sizeof(realw)),1009);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xix_outer_core, size_padded*sizeof(realw)),1101);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiy_outer_core, size_padded*sizeof(realw)),1102);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiz_outer_core, size_padded*sizeof(realw)),1103);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etax_outer_core, size_padded*sizeof(realw)),1104);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etay_outer_core, size_padded*sizeof(realw)),1105);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etaz_outer_core, size_padded*sizeof(realw)),1106);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammax_outer_core, size_padded*sizeof(realw)),1107);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_outer_core, size_padded*sizeof(realw)),1108);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_outer_core, size_padded*sizeof(realw)),1109);
 
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_kappavstore_outer_core, size_padded*sizeof(realw)),1010);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_kappavstore_outer_core, size_padded*sizeof(realw)),1110);
 
   // transfer constant element data with padding
   for(int i=0;i < mp->NSPEC_OUTER_CORE;i++) {
@@ -1429,27 +1429,27 @@ void FC_FUNC_(prepare_outer_core_device,
 
   // wavefield
   int size = mp->NGLOB_OUTER_CORE;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_outer_core),sizeof(realw)*size),4001);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc_outer_core),sizeof(realw)*size),4002);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_outer_core),sizeof(realw)*size),4003);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_outer_core),sizeof(realw)*size),5001);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc_outer_core),sizeof(realw)*size),5002);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_outer_core),sizeof(realw)*size),5003);
   // backward/reconstructed wavefield
   if( mp->simulation_type == 3 ){
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_outer_core),sizeof(realw)*size),4001);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_outer_core),sizeof(realw)*size),4002);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_outer_core),sizeof(realw)*size),4003);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_outer_core),sizeof(realw)*size),5011);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_outer_core),sizeof(realw)*size),5022);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_outer_core),sizeof(realw)*size),5033);
   }
 
   #ifdef USE_TEXTURES_FIELDS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 4001);
+    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
     cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
-                                            &channelDesc1, sizeof(realw)*size), 4001);
+                                            &channelDesc1, sizeof(realw)*size), 5021);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 4003);
+    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
     cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
-                                            &channelDesc2, sizeof(realw)*size), 4003);
+                                            &channelDesc2, sizeof(realw)*size), 5023);
   }
   #endif
 
@@ -1520,18 +1520,18 @@ void FC_FUNC_(prepare_inner_core_device,
   int size_glob = mp->NGLOB_INNER_CORE;
 
   // mesh
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xix_inner_core, size_padded*sizeof(realw)),1001);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiy_inner_core, size_padded*sizeof(realw)),1002);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiz_inner_core, size_padded*sizeof(realw)),1003);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etax_inner_core, size_padded*sizeof(realw)),1004);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etay_inner_core, size_padded*sizeof(realw)),1005);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etaz_inner_core, size_padded*sizeof(realw)),1006);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammax_inner_core, size_padded*sizeof(realw)),1007);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_inner_core, size_padded*sizeof(realw)),1008);
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_inner_core, size_padded*sizeof(realw)),1009);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xix_inner_core, size_padded*sizeof(realw)),1201);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiy_inner_core, size_padded*sizeof(realw)),1202);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiz_inner_core, size_padded*sizeof(realw)),1203);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etax_inner_core, size_padded*sizeof(realw)),1204);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etay_inner_core, size_padded*sizeof(realw)),1205);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etaz_inner_core, size_padded*sizeof(realw)),1206);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammax_inner_core, size_padded*sizeof(realw)),1207);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_inner_core, size_padded*sizeof(realw)),1208);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_inner_core, size_padded*sizeof(realw)),1209);
 
   // muvstore needed for attenuatioin also for anisotropic inner core
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muvstore_inner_core, size_padded*sizeof(realw)),1011);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_muvstore_inner_core, size_padded*sizeof(realw)),1211);
 
   // transfer constant element data with padding
   for(int i=0;i < mp->NSPEC_INNER_CORE;i++) {
@@ -1633,27 +1633,27 @@ void FC_FUNC_(prepare_inner_core_device,
 
   // wavefield
   int size = NDIM * mp->NGLOB_INNER_CORE;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_inner_core),sizeof(realw)*size),4001);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc_inner_core),sizeof(realw)*size),4002);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_inner_core),sizeof(realw)*size),4003);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_inner_core),sizeof(realw)*size),6001);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc_inner_core),sizeof(realw)*size),6002);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_inner_core),sizeof(realw)*size),6003);
   // backward/reconstructed wavefield
   if( mp->simulation_type == 3 ){
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_inner_core),sizeof(realw)*size),4001);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_inner_core),sizeof(realw)*size),4002);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_inner_core),sizeof(realw)*size),4003);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_inner_core),sizeof(realw)*size),6011);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_inner_core),sizeof(realw)*size),6012);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_inner_core),sizeof(realw)*size),6013);
   }
 
   #ifdef USE_TEXTURES_FIELDS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_ic_tex_ref_ptr, "d_displ_ic_tex"), 4001);
+    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_ic_tex_ref_ptr, "d_displ_ic_tex"), 6021);
     cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_ic_tex_ref_ptr, mp->d_displ_inner_core,
-                                            &channelDesc1, sizeof(realw)*size), 4001);
+                                            &channelDesc1, sizeof(realw)*size), 6021);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_ic_tex_ref_ptr, "d_accel_ic_tex"), 4003);
+    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_ic_tex_ref_ptr, "d_accel_ic_tex"), 6023);
     cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
     print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_ic_tex_ref_ptr, mp->d_accel_inner_core,
-                                            &channelDesc2, sizeof(realw)*size), 4003);
+                                            &channelDesc2, sizeof(realw)*size), 6023);
   }
   #endif
 
@@ -2146,7 +2146,13 @@ TRACE("prepare_cleanup_device");
   }
 
   // releases previous contexts
+#if CUDA_VERSION < 4000
+  cudaThreadSynchronize();
   cudaThreadExit();
+#else
+  cudaDeviceSynchronize();
+  cudaDeviceReset();
+#endif
 
   // mesh pointer - not needed anymore
   free(mp);

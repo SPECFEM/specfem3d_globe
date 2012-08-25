@@ -187,9 +187,11 @@ module specfem_par
 
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,ho_SAC,mi_SAC
+  double precision :: sec_SAC
   real :: mb_SAC
-  double precision :: t_cmt_SAC,t_shift_SAC,elat_SAC,elon_SAC,depth_SAC, &
-    cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,sec_SAC
+  double precision :: t_cmt_SAC,t_shift_SAC
+  double precision :: elat_SAC,elon_SAC,depth_SAC, &
+    cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
   character(len=20) :: event_name_SAC
 
   !-----------------------------------------------------------------
