@@ -54,6 +54,14 @@
   endif
   call sync_all()
 
+  ! frees arrays
+  deallocate(theta_source,phi_source)
+
+  ! topography array no more needed
+  if( TOPOGRAPHY ) then
+    if(allocated(ibathy_topo) ) deallocate(ibathy_topo)
+  endif
+
   end subroutine setup_sources_receivers
 
 !
@@ -78,27 +86,27 @@
 
   ! allocate arrays for source
   allocate(islice_selected_source(NSOURCES), &
-          ispec_selected_source(NSOURCES), &
-          Mxx(NSOURCES), &
-          Myy(NSOURCES), &
-          Mzz(NSOURCES), &
-          Mxy(NSOURCES), &
-          Mxz(NSOURCES), &
-          Myz(NSOURCES),stat=ier)
+           ispec_selected_source(NSOURCES), &
+           Mxx(NSOURCES), &
+           Myy(NSOURCES), &
+           Mzz(NSOURCES), &
+           Mxy(NSOURCES), &
+           Mxz(NSOURCES), &
+           Myz(NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
   allocate(xi_source(NSOURCES), &
-          eta_source(NSOURCES), &
-          gamma_source(NSOURCES),stat=ier)
+           eta_source(NSOURCES), &
+           gamma_source(NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
   allocate(tshift_cmt(NSOURCES), &
-          hdur(NSOURCES), &
-          hdur_gaussian(NSOURCES),stat=ier)
+           hdur(NSOURCES), &
+           hdur_gaussian(NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
   allocate(theta_source(NSOURCES), &
-          phi_source(NSOURCES),stat=ier)
+           phi_source(NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
@@ -389,14 +397,6 @@
       call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
 
-  ! frees arrays
-  deallocate(theta_source,phi_source)
-
-  ! topography array no more needed
-  if( TOPOGRAPHY ) then
-    if(allocated(ibathy_topo) ) deallocate(ibathy_topo)
-  endif
-
   end subroutine setup_receivers
 
 
@@ -512,8 +512,9 @@
   implicit none
 
   ! local parameters
-  integer :: isource,iglob,ispec,i,j,k
+  integer :: isource,iglob,i,j,k,ispec
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
+  double precision :: xi,eta,gamma
 
   do isource = 1,NSOURCES
 
@@ -522,27 +523,37 @@
 
     !   check that the source slice number is okay
     if(islice_selected_source(isource) < 0 .or. islice_selected_source(isource) > NPROCTOT_VAL-1) &
-      call exit_MPI(myrank,'something is wrong with the source slice number')
+      call exit_MPI(myrank,'error: source slice number invalid')
 
     !   compute source arrays in source slice
     if(myrank == islice_selected_source(isource)) then
-      call compute_arrays_source(ispec_selected_source(isource), &
-             xi_source(isource),eta_source(isource),gamma_source(isource),sourcearray, &
-             Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-             xigll,yigll,zigll,NSPEC_CRUST_MANTLE)
+
+      ! element id which holds source
+      ispec = ispec_selected_source(isource)
+
+      ! checks bounds
+      if( ispec < 1 .or. ispec > NSPEC_CRUST_MANTLE ) &
+        call exit_MPI(myrank,'error: source ispec number invalid')
+
+      ! gets source location
+      xi = xi_source(isource)
+      eta = eta_source(isource)
+      gamma = gamma_source(isource)
+
+      ! pre-computes source contribution on GLL points
+      call compute_arrays_source(sourcearray,xi,eta,gamma, &
+                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
+                          xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
+                          etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
+                          gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec), &
+                          xigll,yigll,zigll)
 
       ! point forces, initializes sourcearray, used for simplified CUDA routines
       if(USE_FORCE_POINT_SOURCE) then
         ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-        iglob = ibool_crust_mantle(nint(xi_source(isource)), &
-                                   nint(eta_source(isource)), &
-                                   nint(gamma_source(isource)), &
-                                   ispec_selected_source(isource))
+        iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
+
         ! sets sourcearrays
-        ispec = ispec_selected_source(isource)
         do k=1,NGLLZ
           do j=1,NGLLY
             do i=1,NGLLX

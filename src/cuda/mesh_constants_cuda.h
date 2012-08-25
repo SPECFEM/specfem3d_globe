@@ -524,10 +524,10 @@ typedef struct mesh_ {
   realw* d_hprime_xx_tex;
 #endif
 
-  realw* d_hprimewgll_xx; 
+  realw* d_hprimewgll_xx;
   //realw* d_hprimewgll_yy; // only needed if NGLLX != NGLLY != NGLLZ
   //realw* d_hprimewgll_zz; // only needed if NGLLX != NGLLY != NGLLZ
-  
+
   realw* d_wgllwgll_xy; realw* d_wgllwgll_xz; realw* d_wgllwgll_yz;
   realw* d_wgll_cube;
 

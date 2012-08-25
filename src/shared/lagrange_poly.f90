@@ -32,13 +32,14 @@
 
   implicit none
 
-  double precision :: xi
+  double precision,intent(in) :: xi
 
-  integer :: NGLL
-  double precision,dimension(NGLL):: xigll,h,hprime
+  integer,intent(in) :: NGLL
+  double precision,dimension(NGLL),intent(in) :: xigll
+  double precision,dimension(NGLL),intent(out) :: h,hprime
 
-  integer dgr,i,j
-  double precision prod1,prod2
+  integer :: dgr,i,j
+  double precision :: prod1,prod2
 
   do dgr=1,NGLL
 
@@ -52,10 +53,10 @@
     enddo
     h(dgr)=prod1/prod2
 
-    hprime(dgr)=0.0d0
+    hprime(dgr) = 0.0d0
     do i=1,NGLL
       if(i /= dgr) then
-        prod1=1.0d0
+        prod1 = 1.0d0
         do j=1,NGLL
           if(j /= dgr .and. j /= i) prod1 = prod1*(xi-xigll(j))
         enddo

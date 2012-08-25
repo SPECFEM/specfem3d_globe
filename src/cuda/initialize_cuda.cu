@@ -103,8 +103,13 @@ void FC_FUNC_(initialize_cuda_device,
     // generalized for more GPUs per node
     // note: without previous context release, cudaSetDevice will complain with the cuda error
     //         "setting the device when a process is active is not allowed"
+
     // releases previous contexts
+#if CUDA_VERSION < 4000
     cudaThreadExit();
+#else
+    cudaDeviceReset();
+#endif
 
     //printf("rank %d: cuda device count = %d sets device = %d \n",myrank,device_count,myrank % device_count);
     //MPI_Barrier(MPI_COMM_WORLD);

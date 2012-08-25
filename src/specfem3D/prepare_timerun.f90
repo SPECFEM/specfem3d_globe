@@ -1150,7 +1150,7 @@
   ! prepares general fields on GPU
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
                                   hprime_xx, &
-                                  hprimewgll_xx, hprimewgll_yy, hprimewgll_zz, &
+                                  hprimewgll_xx, &
                                   wgllwgll_xy, wgllwgll_xz, wgllwgll_yz, &
                                   NSOURCES, nsources_local, &
                                   sourcearrays, &

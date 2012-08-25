@@ -171,10 +171,10 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
   __shared__ realw s_dummy_loc[NGLL3];
   __shared__ realw s_temp1[NGLL3];
   __shared__ realw s_temp2[NGLL3];
-  __shared__ realw s_temp3[NGLL3];  
+  __shared__ realw s_temp3[NGLL3];
   __shared__ realw sh_hprime_xx[NGLL2];
   __shared__ realw sh_hprimewgll_xx[NGLL2];
-  
+
 // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
 // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
   active = (tx < NGLL3 && bx < nb_blocks_to_compute) ? 1:0;
@@ -388,7 +388,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
         //assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
         temp2l += s_temp2[K*NGLL2+l*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+l];
         temp3l += s_temp3[l*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+l];
-    }    
+    }
 #else
     temp1l = s_temp1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
             + s_temp1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
@@ -409,8 +409,8 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
             + s_temp3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
 #endif
 
-    sum_terms = - ( wgllwgll_yz[K*NGLLX+J]*temp1l 
-                  + wgllwgll_xz[K*NGLLX+I]*temp2l 
+    sum_terms = - ( wgllwgll_yz[K*NGLLX+J]*temp1l
+                  + wgllwgll_xz[K*NGLLX+I]*temp2l
                   + wgllwgll_xy[J*NGLLX+I]*temp3l);
 
     if( GRAVITY ) sum_terms += gravity_term;

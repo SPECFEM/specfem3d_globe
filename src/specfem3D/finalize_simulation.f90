@@ -141,7 +141,6 @@
   ! frees dynamically allocated memory
 
   ! mass matrices
-
   deallocate(rmassx_crust_mantle)
   deallocate(rmassy_crust_mantle)
   deallocate(rmassz_crust_mantle)
@@ -186,12 +185,13 @@
 
   ! sources
   deallocate(islice_selected_source, &
-            ispec_selected_source, &
-            Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+             ispec_selected_source, &
+             Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+  deallocate(xi_source,eta_source,gamma_source)
   deallocate(tshift_cmt,hdur,hdur_gaussian)
   deallocate(nu_source)
 
-  if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
     if(nadj_rec_local > 0) then
