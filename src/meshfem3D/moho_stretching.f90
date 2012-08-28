@@ -33,6 +33,9 @@
 ! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
 ! Dec, 30, 2009
 
+  use meshfem3D_models_par,only: &
+    TOPOGRAPHY
+
   implicit none
 
   include "constants.h"
@@ -92,61 +95,69 @@
     ! note: we will honor the moho only, if the moho depth is below R_moho (~35km)
     !          or above R_middlecrust (~15km). otherwise, the moho will be "interpolated"
     !          within the element
-    if (moho < R_moho ) then
-      ! actual moho below fictitious moho
-      ! elements in second layer will stretch down to honor moho topography
 
-      elevation = moho - R_moho
+    if( TOPOGRAPHY ) then
+      ! globe surface honors topography, elements stretched for moho
+      !
+      ! note:  if no topography is honored, stretching may lead to distorted elements and invalid jacobian
 
-      if ( r >= R_moho ) then
-        ! point above fictitious moho
-        ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
-        gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
-      else
-        ! point below fictitious moho
-        ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
-        gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
+      if (moho < R_moho ) then
+        ! actual moho below fictitious moho
+        ! elements in second layer will stretch down to honor moho topography
 
-        ! since not all GLL points are exactlly at R220, use a small
-        ! tolerance for R220 detection, fix R220
-        if (abs(gamma) < SMALLVAL) then
-          gamma = 0.0d0
+        elevation = moho - R_moho
+
+        if ( r >= R_moho ) then
+          ! point above fictitious moho
+          ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
+          gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
+        else
+          ! point below fictitious moho
+          ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
+          gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
+
+          ! since not all GLL points are exactlly at R220, use a small
+          ! tolerance for R220 detection, fix R220
+          if (abs(gamma) < SMALLVAL) then
+            gamma = 0.0d0
+          end if
         end if
+
+        if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+          call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+
+        call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
+      else  if ( moho > R_middlecrust ) then
+        ! moho above middle crust
+        ! elements in first layer will squeeze into crust above moho
+
+        elevation = moho - R_middlecrust
+
+        if ( r > R_middlecrust ) then
+          ! point above middle crust
+          ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
+          gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
+        else
+          ! point below middle crust
+          ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
+          gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
+
+          ! since not all GLL points are exactlly at R220, use a small
+          ! tolerance for R220 detection, fix R220
+          if (abs(gamma) < SMALLVAL) then
+            gamma = 0.0d0
+          end if
+        end if
+
+        if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+          call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+
+        call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
       end if
 
-      if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-        call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
-
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-
-    else  if ( moho > R_middlecrust ) then
-      ! moho above middle crust
-      ! elements in first layer will squeeze into crust above moho
-
-      elevation = moho - R_middlecrust
-
-      if ( r > R_middlecrust ) then
-        ! point above middle crust
-        ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
-        gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
-      else
-        ! point below middle crust
-        ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
-        gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
-
-        ! since not all GLL points are exactlly at R220, use a small
-        ! tolerance for R220 detection, fix R220
-        if (abs(gamma) < SMALLVAL) then
-          gamma = 0.0d0
-        end if
-      end if
-
-      if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-        call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
-
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-
-    end if
+    endif ! TOPOGRAPHY
 
     ! counts corners in above moho
     ! note: uses a small tolerance

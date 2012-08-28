@@ -273,7 +273,10 @@
           iglob=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
 
           ! if 3D Earth, compute local height of oceans
-          if(CASE_3D) then
+          !
+          ! note: only for models where 3D crustal model and stretching was used 
+          !       (even without topography flag set)
+          if( CASE_3D ) then
 
             ! get coordinates of current point
             xval = xstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
