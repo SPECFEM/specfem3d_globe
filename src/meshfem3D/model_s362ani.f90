@@ -1255,10 +1255,6 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
-!daniel
-!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-!              xlospl(1,ihpa),radspl(1,ihpa), &
-!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
         call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
@@ -1415,11 +1411,6 @@
       call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
     else if(itypehpa(ihpa) == 2) then
       numcof=numcoe(ihpa)
-
-!daniel
-!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-!              xlospl(1,ihpa),radspl(1,ihpa), &
-!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &

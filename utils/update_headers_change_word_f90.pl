@@ -36,8 +36,8 @@
       $line =~ s/\s*$//;
 
 # change the version number and copyright information
-      $line =~ s#!             and University of Pau / CNRS / INRIA, France#!             and CNRS / INRIA / University of Pau, France#og;
-      $line =~ s#! \(c\) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA#! \(c\) Princeton University and CNRS / INRIA / University of Pau#og;
+#      $line =~ s#!             and University of Pau / CNRS / INRIA, France#!             and CNRS / INRIA / University of Pau, France#og;
+#      $line =~ s#! \(c\) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA#! \(c\) Princeton University and CNRS / INRIA / University of Pau#og;
 #     $line =~ s#rmass_sigma#rmass_time_integral_of_sigma#og;
 
 # write the modified line to the output file

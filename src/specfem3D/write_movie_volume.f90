@@ -125,7 +125,7 @@
   integer :: npoints_3dmovie
   integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
   character(len=150) :: prname
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
   logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
@@ -269,7 +269,7 @@
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
   logical :: MOVIE_COARSE
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie

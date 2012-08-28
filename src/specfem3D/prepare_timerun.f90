@@ -45,7 +45,7 @@
                       buffer_send_faces_scalar,buffer_received_faces_scalar, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY,ABSORBING_CONDITIONS, &
-                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,npoin2D_max_all_CM_IC)
+                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC)
 
   implicit none
 
@@ -111,7 +111,6 @@
   integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
 
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-  integer NGLOB2DMAX_XY
 
   ! local parameters
   integer :: ier
@@ -135,7 +134,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
   endif
 
   ! crust and mantle
@@ -151,7 +151,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
 
      call assemble_MPI_scalar_block(myrank,rmassy_crust_mantle,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -164,7 +165,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
   endif
 
   call assemble_MPI_scalar_block(myrank,rmassz_crust_mantle,NGLOB_CRUST_MANTLE, &
@@ -178,7 +180,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
 
   ! outer core
   call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
@@ -192,7 +195,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL)
 
   ! inner core
   call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
@@ -206,7 +210,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
 
   if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
 
@@ -580,7 +585,7 @@
   integer SIMULATION_TYPE
   logical MOVIE_VOLUME
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
         c11store_inner_core,c33store_inner_core,c12store_inner_core, &

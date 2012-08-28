@@ -40,7 +40,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
-            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
+            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+            NGLOB2DMAX_XY,NCHUNKS)
 
 ! this version of the routine is based on blocking MPI calls
 

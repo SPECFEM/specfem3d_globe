@@ -30,7 +30,8 @@
      npoin2D_xi,npoin2D_eta, &
      iprocfrom_faces,iprocto_faces,imsg_type, &
      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-     iboolfaces,npoin2D_faces,iboolcorner, &
+     iboolfaces,npoin2D_faces, &
+     iboolcorner, &
      NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA, &
      LOCAL_PATH,NCHUNKS)
@@ -45,6 +46,7 @@
   integer iregion_code,myrank,NCHUNKS
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
+
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL
   integer NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA
 
@@ -376,11 +378,18 @@
         call exit_MPI(myrank,'incorrect nb of points in face buffer')
       do ipoin2D = 1,npoin2D_faces(icount_faces)
         read(IIN,*) iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
+
+        ! checks read value
+        if( iboolfaces(ipoin2D,icount_faces) < 1) then
+          print*,'error rank',myrank,': iboolfaces index =',iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
+          print*,'  message:',imsg,NUMMSGS_FACES,ipoin2D,icount_faces,'region',iregion_code
+          call exit_MPI(myrank,'error reading in iboolfaces index')
+        endif
+
       enddo
       close(IIN)
     endif
   enddo
-
 
 !---- read indirect addressing for each message for corners of the chunks
 !---- a given slice can belong to at most one corner

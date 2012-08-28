@@ -91,14 +91,13 @@
 
   endif
 
-! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the master to the nodes
   call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(tshift_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(t_shift,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -114,8 +113,7 @@
   call MPI_BCAST(cmt_depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  !call MPI_BCAST(ename,12,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(event_name,20,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(event_name,20,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
   end subroutine get_event_info_parallel
 

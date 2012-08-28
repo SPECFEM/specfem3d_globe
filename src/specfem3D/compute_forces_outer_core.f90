@@ -171,7 +171,8 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
-            NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,iphase)
+            NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC, &
+            NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,iphase)
 
     do k=1,NGLLZ
       do j=1,NGLLY
