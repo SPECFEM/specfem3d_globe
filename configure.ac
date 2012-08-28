@@ -8,7 +8,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D Globe], [5.1.4], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D Globe], [5.1.5], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
