@@ -67,7 +67,7 @@ program combine_vol_data_vtk
   ! note:
   !  if one wants to remove the topography and ellipticity distortion, you would run the mesher again
   !  but turning the flags: TOPOGRAPHY and ELLIPTICITY to .false.
-  !  then, use those as topo files: proc***_array_dims.txt and proc***_solver_data_2.bin
+  !  then, use those as topo files: proc***_solver_data.bin
   !  of course, this would also work by just turning ELLIPTICITY to .false. so that the CORRECT_ELLIPTICITY below
   !  becomes unneccessary
   !
@@ -186,16 +186,15 @@ program combine_vol_data_vtk
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
 
-      dimension_file = trim(prname_topo) //'array_dims.txt'
-      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
+      dimension_file = trim(prname_topo) //'solver_data.bin'
+      open(unit = 28,file = trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
-
-      read(27,*) nspec(it)
-      read(27,*) nglob(it)
+      read(27) nspec(it)
+      read(27) nglob(it)
       close(27)
 
       ! check
@@ -286,7 +285,7 @@ program combine_vol_data_vtk
       print *
 
       ! topology file
-      topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
+      topo_file = trim(prname_topo) // 'solver_data.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
@@ -297,6 +296,8 @@ program combine_vol_data_vtk
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
+      read(28) nspec(it)
+      read(28) nglob(it)
       read(28) xstore(1:nglob(it))
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))

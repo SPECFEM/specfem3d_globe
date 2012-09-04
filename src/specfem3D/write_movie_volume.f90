@@ -292,6 +292,8 @@
                                         mask_3dmovie,nu_3dmovie)
 
 
+! outputs strains: MOVIE_VOLUME_TYPE == 1 / 2 / 3
+
   implicit none
 
   include "constants.h"
@@ -440,6 +442,9 @@
   subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
                                       MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
                                       scalingval,mask_3dmovie,nu_3dmovie)
+
+! outputs displacement/velocity: MOVIE_VOLUME_TYPE == 5 / 6
+
   implicit none
 
   include "constants.h"
@@ -555,6 +560,8 @@
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                                       LOCAL_TMP_PATH)
+
+! outputs divergence and curl: MOVIE_VOLUME_TYPE == 4
 
   implicit none
   include "constants.h"
@@ -738,6 +745,8 @@
                                       displ_crust_mantle,displ_inner_core,displ_outer_core, &
                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
+! outputs norm of displacement: MOVIE_VOLUME_TYPE == 7
+
   implicit none
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
@@ -852,6 +861,8 @@
                                       veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
+! outputs norm of velocity: MOVIE_VOLUME_TYPE == 8
+
   implicit none
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
@@ -965,6 +976,8 @@
  subroutine write_movie_volume_accelnorm(myrank,it,LOCAL_TMP_PATH, &
                                       accel_crust_mantle,accel_inner_core,accel_outer_core, &
                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+
+! outputs norm of acceleration: MOVIE_VOLUME_TYPE == 1
 
   implicit none
   include "constants.h"

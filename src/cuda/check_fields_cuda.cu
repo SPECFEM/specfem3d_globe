@@ -119,11 +119,13 @@ void exit_on_cuda_error(char* kernel_name) {
     }
 
     // releases previous contexts
+/* crashes device
 #if CUDA_VERSION < 4000
     cudaThreadExit();
 #else
     cudaDeviceReset();
 #endif
+*/
 
     // stops program
     //free(kernel_name);
@@ -191,11 +193,13 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
     }
 
     // releases previous contexts
+/* crashes device
 #if CUDA_VERSION < 4000
     cudaThreadExit();
 #else
     cudaDeviceReset();
 #endif
+*/
 
     // stops program
 #ifdef WITH_MPI

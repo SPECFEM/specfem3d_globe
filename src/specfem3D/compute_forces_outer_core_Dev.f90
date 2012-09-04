@@ -254,6 +254,9 @@
             source_euler_B(i,j,k) = two_omega_deltat &
                   * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
 
+            A_rotation = A_array_rotation(i,j,k,ispec)
+            B_rotation = B_array_rotation(i,j,k,ispec)
+
             ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t
             uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t
 

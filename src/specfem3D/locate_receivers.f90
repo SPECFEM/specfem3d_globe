@@ -521,12 +521,16 @@
       ! gamma does not change since we know the receiver is exactly on the surface
       dxi  = xix*dx + xiy*dy + xiz*dz
       deta = etax*dx + etay*dy + etaz*dz
-      if(RECEIVERS_CAN_BE_BURIED) dgamma = gammax*dx + gammay*dy + gammaz*dz
 
       ! update values
       xi = xi + dxi
       eta = eta + deta
-      if(RECEIVERS_CAN_BE_BURIED) gamma = gamma + dgamma
+
+      ! buried receivers vary in z depth
+      if(RECEIVERS_CAN_BE_BURIED) then
+        dgamma = gammax*dx + gammay*dy + gammaz*dz
+        gamma = gamma + dgamma
+      endif
 
       ! impose that we stay in that element
       ! (useful if user gives a receiver outside the mesh for instance)
