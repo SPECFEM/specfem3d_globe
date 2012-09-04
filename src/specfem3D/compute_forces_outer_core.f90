@@ -160,8 +160,10 @@
             sin_two_omega_t = sin(two_omega_earth*time)
 
             ! time step deltat of Euler scheme is included in the source
-            source_euler_A(i,j,k) = two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
-            source_euler_B(i,j,k) = two_omega_deltat * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
+            source_euler_A(i,j,k) = two_omega_deltat &
+                  * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
+            source_euler_B(i,j,k) = two_omega_deltat &
+                  * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
 
             A_rotation = A_array_rotation(i,j,k,ispec)
             B_rotation = B_array_rotation(i,j,k,ispec)

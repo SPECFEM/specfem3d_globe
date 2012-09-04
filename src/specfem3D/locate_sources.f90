@@ -37,9 +37,9 @@
   use specfem_par,only: &
     NSOURCES,myrank, &
     tshift_cmt,theta_source,phi_source, &
-    NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+    DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
     rspl,espl,espl2,nspl,ibathy_topo, &
-    PRINT_SOURCE_TIME_FUNCTION,LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
+    LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     xigll,yigll,zigll, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source
@@ -65,7 +65,6 @@
   integer iprocloop
   integer i,j,k,ispec,iglob
   integer ier
-
 
   double precision ell
   double precision elevation
@@ -95,9 +94,6 @@
   double precision x_target_source,y_target_source,z_target_source
   double precision r_target_source
 
-  ! timer MPI
-  double precision time_start,tCPU
-
   integer isources_already_done,isource_in_this_subset
   integer, dimension(:), allocatable :: ispec_selected_source_subset
 
@@ -110,8 +106,6 @@
   double precision, dimension(NSOURCES) :: lat,long,depth
   double precision moment_tensor(6,NSOURCES)
   double precision radius
-
-  character(len=150) OUTPUT_FILES
 
   double precision, dimension(:), allocatable :: x_found_source,y_found_source,z_found_source
   double precision r_found_source
@@ -141,8 +135,11 @@
   integer,parameter :: MIDY = (NGLLY+1)/2
   integer,parameter :: MIDZ = (NGLLZ+1)/2
 
-  ! timing
+  ! timer MPI
+  double precision time_start,tCPU
   double precision, external :: wtime
+
+  character(len=150) :: OUTPUT_FILES
 
   ! get MPI starting time for all sources
   time_start = wtime()
@@ -150,9 +147,6 @@
   ! make sure we clean the future final array
   ispec_selected_source(:) = 0
   final_distance_source(:) = HUGEVAL
-
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   ! read all the sources
   if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
@@ -186,6 +180,9 @@
 
   ! appends receiver locations to sr.vtk file
   if( myrank == 0 ) then
+    ! get the base pathname for output files
+    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
     open(IOVTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
@@ -707,10 +704,6 @@
           write(IMAIN,*) '*****************************************************'
         endif
 
-        ! print source time function and spectrum
-        if(PRINT_SOURCE_TIME_FUNCTION) call print_stf(NSOURCES,isource,moment_tensor,tshift_cmt,hdur, &
-                                                    min_tshift_cmt_original,NSTEP,DT,OUTPUT_FILES)
-
       enddo ! end of loop on all the sources within current source subset
 
     endif ! end of section executed by main process only
@@ -858,8 +851,8 @@
 !
 
 
-  subroutine print_stf(NSOURCES,isource,moment_tensor,tshift_cmt,hdur, &
-                      min_tshift_cmt_original,NSTEP,DT,OUTPUT_FILES)
+  subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                      tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)
 
 ! prints source time function
 
@@ -869,17 +862,16 @@
 
   integer :: NSOURCES,isource
 
-  double precision,dimension(6,NSOURCES) :: moment_tensor
+  double precision,dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision,dimension(NSOURCES) :: tshift_cmt,hdur
 
   double precision :: min_tshift_cmt_original
   integer :: NSTEP
   double precision :: DT
 
-  character(len=150) OUTPUT_FILES
 
   ! local parameters
-  integer :: i,it,iom,ier
+  integer :: it,iom,ier
   double precision :: scalar_moment
   double precision :: t0, hdur_gaussian(NSOURCES)
   double precision :: t_cmt_used(NSOURCES)
@@ -889,7 +881,8 @@
   double precision, external :: comp_source_time_function,comp_source_spectrum
   double precision, external :: comp_source_time_function_rickr
 
-  character(len=150) plot_file
+  character(len=150) :: OUTPUT_FILES
+  character(len=150) :: plot_file
 
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
@@ -897,6 +890,9 @@
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
+
+  ! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   ! print the source-time function
   if(NSOURCES == 1) then
@@ -911,14 +907,13 @@
     endif
   endif
 
+  ! output file
   open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_time_function file')
 
-  scalar_moment = 0.
-  do i = 1,6
-    scalar_moment = scalar_moment + moment_tensor(i,isource)**2
-  enddo
+  scalar_moment = Mxx(isource)**2 + Myy(isource)**2 + Mzz(isource)**2 &
+                + Mxy(isource)**2 + Mxz(isource)**2 + Myz(isource)**2
   scalar_moment = dsqrt(scalar_moment/2.0d0)
 
   ! define t0 as the earliest start time

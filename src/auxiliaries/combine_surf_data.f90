@@ -134,8 +134,6 @@ program combine_surf_data
     FILE_ARRAY_IS_3D = .true.
   endif
 
-  dimen_name = trim(reg_name)//'array_dims.txt'
-
   ! figure out the total number of points/elements and allocate arrays
   write(prname,'(a,i6.6,a)') trim(indir)//'/proc',node_list(1),'_'
   nspec2D_file = trim(prname) // trim(belm_name)
@@ -169,14 +167,15 @@ program combine_surf_data
   print *, 'total number of elements = ', nelement_total
 
   ! ========= write points and elements files ===================
+  dimen_name = trim(reg_name)//'solver_data.bin'
   allocate(ibelm_surf(nspec_surf))
   do it = 1, num_node
     write(prname,'(a,i6.6,a)') trim(indir)//'/proc',node_list(it),'_'
     dimension_file = trim(prname) // trim(dimen_name)
-    open(unit=27,file=trim(dimension_file),status='old',action='read', iostat = ios)
+    open(unit=27,file=trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
     if (ios /= 0) stop 'Error opening file'
-    read(27,*) nspec(it)
-    read(27,*) nglob(it)
+    read(27) nspec(it)
+    read(27) nglob(it)
     close(27)
   enddo
 
@@ -255,12 +254,14 @@ program combine_surf_data
     close(27)
 
     ! ibool file
-    ibool_file = trim(prname2) // 'solver_data_2' // '.bin'
+    ibool_file = trim(prname2) // 'solver_data.bin'
     print *, trim(ibool_file)
     open(unit = 28,file = trim(ibool_file),status='old', iostat = ios, form='unformatted')
     if (ios /= 0) then
       print *,'Error opening ',trim(ibool_file); stop
     endif
+    read(28) nspec(it)
+    read(28) nglob(it)
     read(28) xstore(1:nglob(it))
     read(28) ystore(1:nglob(it))
     read(28) zstore(1:nglob(it))

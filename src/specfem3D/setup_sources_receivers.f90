@@ -229,6 +229,18 @@
     call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
   endif
 
+  ! determines number of times steps for simulation
+  call setup_timesteps()
+
+  ! prints source time functions to output files
+  if(PRINT_SOURCE_TIME_FUNCTION .and. myrank == 0) then
+    do isource = 1,NSOURCES
+        ! print source time function and spectrum
+         call print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                        tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)
+    enddo
+  endif
+
   ! get information about event name and location
   ! (e.g. needed for SAC seismograms)
 
@@ -242,6 +254,39 @@
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
 
   end subroutine setup_sources
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_timesteps()
+
+  use specfem_par
+  implicit none
+
+  ! from intial guess in read_compute_parameters:
+  !    compute total number of time steps, rounded to next multiple of 100
+  !    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
+  !
+  ! adds initial t0 time to update number of time steps and reach full record length
+  NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+
+  ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
+  if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
+
+  ! noise tomography:
+  ! time steps needs to be doubled, due to +/- branches
+  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
+
+  ! subsets used to save seismograms must not be larger than the whole time series,
+  ! otherwise we waste memory
+  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+
+  ! re-checks output steps?
+  !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
+  !  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
+
+  end subroutine setup_timesteps
 
 !
 !-------------------------------------------------------------------------------------------------

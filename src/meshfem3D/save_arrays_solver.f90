@@ -74,21 +74,90 @@
 
   ! local parameters
   integer :: i,j,k,ispec,iglob,ier
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array
+
+  ! mesh databases
+  open(unit=27,file=prname(1:len_trim(prname))//'solver_data.bin', &
+       status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data.bin file')
 
   ! save nspec and nglob, to be used in combine_paraview_data
-  open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt', &
-        status='unknown',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening array_dims file')
+  write(27) nspec
+  write(27) nglob
 
-  write(27,*) nspec
-  write(27,*) nglob
-  close(27)
+  ! mesh topology
 
-  ! mesh parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
-       status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin file')
+  ! mesh arrays used in the solver to locate source and receivers
+  ! and for anisotropy and gravity, save in single precision
+  ! use tmp_array for temporary storage to perform conversion
+  allocate(tmp_array(nglob),stat=ier)
+  if( ier /=0 ) call exit_MPI(myrank,'error allocating temporary array for mesh topology')
 
+  !--- x coordinate
+  tmp_array(:) = 0._CUSTOM_REAL
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            tmp_array(iglob) = sngl(xstore(i,j,k,ispec))
+          else
+            tmp_array(iglob) = xstore(i,j,k,ispec)
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
+  write(27) tmp_array
+
+  !--- y coordinate
+  tmp_array(:) = 0._CUSTOM_REAL
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            tmp_array(iglob) = sngl(ystore(i,j,k,ispec))
+          else
+            tmp_array(iglob) = ystore(i,j,k,ispec)
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
+  write(27) tmp_array
+
+  !--- z coordinate
+  tmp_array(:) = 0._CUSTOM_REAL
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            tmp_array(iglob) = sngl(zstore(i,j,k,ispec))
+          else
+            tmp_array(iglob) = zstore(i,j,k,ispec)
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
+  write(27) tmp_array
+
+  deallocate(tmp_array)
+
+  ! local to global indexing
+  write(27) ibool
+  write(27) idoubling
+  write(27) ispec_is_tiso
+
+  ! local GLL points
   write(27) xixstore
   write(27) xiystore
   write(27) xizstore
@@ -184,81 +253,8 @@
   ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
 
-  close(27)
+  close(27) ! solver_data.bin
 
-  ! mesh topology
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_2.bin file')
-
-! mesh arrays used in the solver to locate source and receivers
-! and for anisotropy and gravity, save in single precision
-! use rmassz for temporary storage to perform conversion, since already saved
-
-  !--- x coordinate
-  rmassz(:) = 0._CUSTOM_REAL
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            rmassz(iglob) = sngl(xstore(i,j,k,ispec))
-          else
-            rmassz(iglob) = xstore(i,j,k,ispec)
-          endif
-        enddo
-      enddo
-    enddo
-  enddo
-  write(27) rmassz
-
-  !--- y coordinate
-  rmassz(:) = 0._CUSTOM_REAL
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            rmassz(iglob) = sngl(ystore(i,j,k,ispec))
-          else
-            rmassz(iglob) = ystore(i,j,k,ispec)
-          endif
-        enddo
-      enddo
-    enddo
-  enddo
-  write(27) rmassz
-
-  !--- z coordinate
-  rmassz(:) = 0._CUSTOM_REAL
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            rmassz(iglob) = sngl(zstore(i,j,k,ispec))
-          else
-            rmassz(iglob) = zstore(i,j,k,ispec)
-          endif
-        enddo
-      enddo
-    enddo
-  enddo
-  write(27) rmassz
-
-  write(27) ibool
-
-  write(27) idoubling
-
-  write(27) ispec_is_tiso
-
-  close(27)
 
   ! absorbing boundary parameters
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &

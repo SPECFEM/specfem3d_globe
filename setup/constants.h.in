@@ -244,7 +244,7 @@
 
 ! using balancing algorithm
 ! postprocess the colors to balance them if Droux (1993) algorithm is not used
-  logical, parameter :: BALANCE_COLORS_SIMPLE_ALGO = .false.
+  logical, parameter :: BALANCE_COLORS_SIMPLE_ALGO = .true.
 
 !!-----------------------------------------------------------
 !!

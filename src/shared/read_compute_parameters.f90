@@ -226,19 +226,8 @@
                           ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
                           ANISOTROPIC_INNER_CORE)
 
-  ! compute total number of time steps, rounded to next multiple of 100
+  ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
-
-! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
-  if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
-
-  ! noise tomography:
-  ! time steps needs to be doubled, due to +/- branches
-  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
-
-  ! subsets used to save seismograms must not be larger than the whole time series,
-  ! otherwise we waste memory
-  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
@@ -251,7 +240,7 @@
   call rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
                         NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-                        ATTENUATION_3D,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
+                        ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
                         INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM)
 
   ! check that mesh can be coarsened in depth three or four times
@@ -362,7 +351,7 @@
   subroutine rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
                         NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-                        ATTENUATION_3D,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
+                        ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
                         INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM)
 
   implicit none
@@ -373,7 +362,7 @@
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
-  logical ATTENUATION_3D,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,&
+  logical ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,&
         INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM
 
 

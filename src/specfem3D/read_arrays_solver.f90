@@ -88,17 +88,46 @@
   character(len=150) :: LOCAL_PATH
 
   ! local parameters
-  integer :: ier
+  integer :: ier,lnspec,lnglob
   ! processor identification
   character(len=150) :: prname
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
+  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data.bin', &
         status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin')
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data.bin')
 
+  ! read coordinates of the mesh
+
+  read(IIN) lnspec
+  read(IIN) lnglob
+
+  ! checks dimensions
+  if( lnspec /= nspec ) then
+    close(IIN)
+    print*,'error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
+    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    call exit_mpi(myrank,'error dimensions in solver_data.bin')
+  endif
+  if( lnglob /= nglob ) then
+    close(IIN)
+    print*,'error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
+    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    call exit_mpi(myrank,'error dimensions in solver_data.bin')
+  endif
+
+  ! mesh coordinates
+  read(IIN) xstore
+  read(IIN) ystore
+  read(IIN) zstore
+
+  read(IIN) ibool
+  read(IIN) idoubling
+  read(IIN) ispec_is_tiso
+
+  ! local GLL points
   read(IIN) xix
   read(IIN) xiy
   read(IIN) xiz
@@ -184,24 +213,8 @@
   ! read additional ocean load mass matrix
   if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
-  close(IIN)
+  close(IIN) ! solver_data.bin
 
-  ! read coordinates of the mesh
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
-       status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file solver_data_2.bin')
-
-  read(IIN) xstore
-  read(IIN) ystore
-  read(IIN) zstore
-
-  read(IIN) ibool
-
-  read(IIN) idoubling
-
-  read(IIN) ispec_is_tiso
-
-  close(IIN)
 
   end subroutine read_arrays_solver
 
