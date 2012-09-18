@@ -12,10 +12,18 @@ program create_adjsrc_traveltime
   integer :: i, is, ie, nstep, j, itime ,ifile,ios, i1, i2, nstep_old
   character(len=256) :: arg(100), file(100)
   character(len=256) :: filename
-  integer,parameter :: NMAX = 30000
+
   real*8, parameter :: EPS = 1.0d-17
   real*8, parameter :: PI = 3.1415926d0
-  real*8 :: ts, te, data(5,NMAX), out(NMAX), adj(NMAX), tw(NMAX), norm
+  real*8 :: ts, te, norm
+
+  ! seismogram arrays
+  integer,parameter :: NMAX = 90000
+  real*8 :: data(5,NMAX)
+  real*8 :: out(NMAX)
+  real*8 :: adj(NMAX)
+  real*8 :: tw(NMAX)
+
   real*8 :: dt, t0, t0_old, dt_old, costh, sinth, th, baz
   logical :: lrot
 

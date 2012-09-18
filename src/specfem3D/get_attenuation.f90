@@ -32,7 +32,7 @@
                                            scale_factor, tau_s, &
                                            vx, vy, vz, vnspec)
 
-  use specfem_par,only: ATTENUATION_VAL, ATTENUATION_3D_VAL
+  use specfem_par,only: ATTENUATION_VAL
 
   implicit none
 
@@ -74,7 +74,7 @@
   T_c_source               = 1000.0d0 / T_c_source
   T_c_source               = T_c_source / scale_t
 
-  if( ATTENUATION_3D_VAL ) then
+  if( USE_3D_ATTENUATION_ARRAYS ) then
     do ispec = 1, vnspec
       do k = 1, NGLLZ
         do j = 1, NGLLY

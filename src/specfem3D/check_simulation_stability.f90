@@ -67,8 +67,6 @@
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
   real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
-  ! names of the data files for all the processors in MPI
-  character(len=150) outputname
   ! timer MPI
   double precision :: tCPU,t_remain,t_total
   integer :: ihours,iminutes,iseconds,int_tCPU, &
@@ -299,73 +297,14 @@
     call flush_IMAIN()
 
     ! write time stamp file to give information about progression of simulation
-    write(outputname,"('/timestamp',i6.6)") it
-
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
-
-    write(IOUT,*) 'Time step # ',it
-    write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
-    write(IOUT,*)
-    write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
-    write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-    write(IOUT,*)
-
-    if (SIMULATION_TYPE == 3) then
-      write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
-      write(IOUT,*)
-    endif
-
-    write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-    write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
-    write(IOUT,*)
-
-    write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
-    write(IOUT,*) 'Time steps remaining = ',NSTEP - it
-    write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-    write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_remain,iminutes_remain,iseconds_remain
-    write(IOUT,*)
-
-    write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-    write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_total,iminutes_total,iseconds_total
-    write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
-    write(IOUT,*)
-
-    if(it < NSTEP) then
-
-      write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-          weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
-
-      ! print date and time estimate of end of run in another country.
-      ! For instance: the code runs at Caltech in California but the person
-      ! running the code is connected remotely from France, which has 9 hours more
-      if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
-        if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
-          write(IOUT,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
-        else
-          write(IOUT,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
-        endif
-        write(IOUT,*) 'and ',abs(MINUTES_TIME_DIFFERENCE),' minutes to get estimate at a remote location'
-        write(IOUT, &
-            "(' The run will finish approximately on (in remote time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-            weekday_name(day_of_week_remote),month_name(mon_remote), &
-            day_remote,year_remote,hr_remote,minutes_remote
-      endif
-
-      if(it < 100) then
-        write(IOUT,*)
-        write(IOUT,*) '************************************************************'
-        write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
-        write(IOUT,*) '**** because fewer than 100 iterations have been performed'
-        write(IOUT,*) '************************************************************'
-      endif
-
-    endif
-
-    close(IOUT)
+    call write_timestamp_file(it,NSTEP,DT,t0,SIMULATION_TYPE, &
+                              Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
+                              tCPU,ihours,iminutes,iseconds, &
+                              t_remain,ihours_remain,iminutes_remain,iseconds_remain, &
+                              t_total,ihours_total,iminutes_total,iseconds_total, &
+                              day_of_week,mon,day,year,hr,minutes, &
+                              day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote, &
+                              OUTPUT_FILES)
 
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
@@ -385,3 +324,123 @@
   endif
 
   end subroutine check_simulation_stability
+
+!
+!------------------------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_timestamp_file(it,NSTEP,DT,t0,SIMULATION_TYPE, &
+                              Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
+                              tCPU,ihours,iminutes,iseconds, &
+                              t_remain,ihours_remain,iminutes_remain,iseconds_remain, &
+                              t_total,ihours_total,iminutes_total,iseconds_total, &
+                              day_of_week,mon,day,year,hr,minutes, &
+                              day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote, &
+                              OUTPUT_FILES)
+
+  use constants_solver
+
+  implicit none
+
+  ! time step
+  integer :: it,NSTEP
+  integer :: SIMULATION_TYPE
+
+  double precision :: DT,t0
+
+  ! maximum of the norm of the displacement and of the potential in the fluid
+  real(kind=CUSTOM_REAL) Usolidnorm_all,Ufluidnorm_all
+  real(kind=CUSTOM_REAL) b_Usolidnorm_all,b_Ufluidnorm_all
+
+  ! timer MPI
+  double precision :: tCPU,t_remain,t_total
+  integer :: ihours,iminutes,iseconds, &
+             ihours_remain,iminutes_remain,iseconds_remain, &
+             ihours_total,iminutes_total,iseconds_total
+
+  integer :: year,mon,day,hr,minutes,day_of_week, &
+             year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
+
+  character(len=150) :: OUTPUT_FILES
+
+  ! local parameters
+  ! names of the data files for all the processors in MPI
+  character(len=150) :: outputname
+
+  ! to determine date and time at which the run will finish
+  character(len=3), dimension(12) :: month_name
+  character(len=3), dimension(0:6) :: weekday_name
+  data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
+  data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
+
+
+  ! write time stamp file to give information about progression of simulation
+  write(outputname,"('/timestamp',i6.6)") it
+
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
+
+  write(IOUT,*) 'Time step # ',it
+  write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
+  write(IOUT,*)
+  write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
+  write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+  write(IOUT,*)
+
+  if (SIMULATION_TYPE == 3) then
+    write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
+    write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+    write(IOUT,*)
+  endif
+
+  write(IOUT,*) 'Elapsed time in seconds = ',tCPU
+  write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+  write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+  write(IOUT,*)
+
+  write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
+  write(IOUT,*) 'Time steps remaining = ',NSTEP - it
+  write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
+  write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+           ihours_remain,iminutes_remain,iseconds_remain
+  write(IOUT,*)
+
+  write(IOUT,*) 'Estimated total run time in seconds = ',t_total
+  write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+           ihours_total,iminutes_total,iseconds_total
+  write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+  write(IOUT,*)
+
+  if(it < NSTEP) then
+
+    write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+        weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
+
+    ! print date and time estimate of end of run in another country.
+    ! For instance: the code runs at Caltech in California but the person
+    ! running the code is connected remotely from France, which has 9 hours more
+    if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
+      if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
+        write(IOUT,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
+      else
+        write(IOUT,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
+      endif
+      write(IOUT,*) 'and ',abs(MINUTES_TIME_DIFFERENCE),' minutes to get estimate at a remote location'
+      write(IOUT, &
+          "(' The run will finish approximately on (in remote time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+          weekday_name(day_of_week_remote),month_name(mon_remote), &
+          day_remote,year_remote,hr_remote,minutes_remote
+    endif
+
+    if(it < 100) then
+      write(IOUT,*)
+      write(IOUT,*) '************************************************************'
+      write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
+      write(IOUT,*) '**** because fewer than 100 iterations have been performed'
+      write(IOUT,*) '************************************************************'
+    endif
+
+  endif
+
+  close(IOUT)
+
+  end subroutine write_timestamp_file

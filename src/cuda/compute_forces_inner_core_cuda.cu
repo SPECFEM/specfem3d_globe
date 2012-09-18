@@ -102,7 +102,7 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
                                               realw* epsilondev_xz,realw* epsilondev_yz,
                                               realw epsilondev_xx_loc,realw epsilondev_yy_loc,realw epsilondev_xy_loc,
                                               realw epsilondev_xz_loc,realw epsilondev_yz_loc,
-                                              int ATTENUATION_3D
+                                              int USE_3D_ATTENUATION_ARRAYS
                                               ){
 
   int offset;
@@ -121,7 +121,7 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
     // index for (i_sls,i,j,k,ispec)
     offset = i_sls + N_SLS*(tx + NGLL3*working_element);
 
-    if( ATTENUATION_3D ){
+    if( USE_3D_ATTENUATION_ARRAYS ){
       factor_loc = mul * factor_common[offset]; //mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
     }else{
       factor_loc = mul * factor_common[i_sls + N_SLS*working_element]; //mustore(i,j,k,ispec) * factor_common(i_sls,1,1,1,ispec)
@@ -330,7 +330,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          int ATTENUATION,
                                          int ATTENUATION_NEW,
                                          int USE_ATTENUATION_MIMIC,
-                                         int ATTENUATION_3D,
+                                         int USE_3D_ATTENUATION_ARRAYS,
                                          realw* one_minus_sum_beta,realw* factor_common,
                                          realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
                                          realw* alphaval,realw* betaval,realw* gammaval,
@@ -762,7 +762,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
     // attenuation
     if(ATTENUATION){
       // use unrelaxed parameters if attenuation
-      if( ATTENUATION_3D ){
+      if( USE_3D_ATTENUATION_ARRAYS ){
         mul_iso  = mul * one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
         mul_aniso = mul *( one_minus_sum_beta[tx+working_element*NGLL3] - 1.0f );
       }else{
@@ -1052,7 +1052,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                 R_xx,R_yy,R_xy,R_xz,R_yz,
                                 epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,
                                 epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,epsilondev_xz_loc,epsilondev_yz_loc,
-                                ATTENUATION_3D);
+                                USE_3D_ATTENUATION_ARRAYS);
     }
 
     // save deviatoric strain for Runge-Kutta scheme
@@ -1161,7 +1161,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                              mp->attenuation,
                                              mp->attenuation_new,
                                              mp->use_attenuation_mimic,
-                                             mp->attenuation_3D,
+                                             mp->use_3d_attenuation_arrays,
                                              d_one_minus_sum_beta,
                                              d_factor_common,
                                              d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
@@ -1210,7 +1210,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->attenuation,
                                                 mp->attenuation_new,
                                                 mp->use_attenuation_mimic,
-                                                mp->attenuation_3D,
+                                                mp->use_3d_attenuation_arrays,
                                                 d_one_minus_sum_beta,
                                                 d_factor_common,
                                                 d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
@@ -1307,7 +1307,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
         color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
         color_offset_nonpadded_att1 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
         // for factor_common array
-        if( mp->attenuation_3D ){
+        if( mp->use_3d_attenuation_arrays ){
           color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3;
           color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
         }else{
@@ -1348,7 +1348,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
         color_offset_nonpadded = (mp->nspec_outer_inner_core) * NGLL3;
         color_offset_nonpadded_att1 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
         // for factor_common array
-        if( mp->attenuation_3D ){
+        if( mp->use_3d_attenuation_arrays ){
           color_offset_nonpadded_att2 = (mp->nspec_outer_inner_core) * NGLL3;
           color_offset_nonpadded_att3 = (mp->nspec_outer_inner_core) * NGLL3 * N_SLS;
         }else{
@@ -1434,7 +1434,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
       color_offset_nonpadded_att1 += nb_blocks_to_compute * NGLL3 * N_SLS;
       // for factor_common array
-      if( mp->attenuation_3D ){
+      if( mp->use_3d_attenuation_arrays ){
         color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3;
         color_offset_nonpadded_att3 += nb_blocks_to_compute * NGLL3 * N_SLS;
       }else{

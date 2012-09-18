@@ -158,6 +158,9 @@
     tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
+    write(IMAIN,"(' Elapsed time for mesh generation and buffer creation in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+              int(tCPU/3600),int( (tCPU - int(tCPU/3600)*3600)/60 ),int(tCPU - int(tCPU/60) * 60)
+    write(IMAIN,*)
     write(IMAIN,*) 'End of mesh generation'
     write(IMAIN,*)
     ! close main output file

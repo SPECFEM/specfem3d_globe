@@ -136,7 +136,7 @@
   endif
   if(ATTENUATION) then
     write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
-    if(ATTENUATION_3D) write(IMAIN,*)'  using 3D attenuation'
+    if(ATTENUATION_3D) write(IMAIN,*)'  using 3D attenuation model'
   else
     write(IMAIN,*) '  no attenuation'
   endif

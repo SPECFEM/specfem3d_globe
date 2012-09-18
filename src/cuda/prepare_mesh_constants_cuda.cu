@@ -118,7 +118,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* ATTENUATION_f,
                                         int* ATTENUATION_NEW_f,
                                         int* USE_ATTENUATION_MIMIC_f,
-                                        int* ATTENUATION_3D_VAL_f,
+                                        int* USE_3D_ATTENUATION_ARRAYS_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
                                         int* ANISOTROPIC_3D_MANTLE_f,
                                         int* ANISOTROPIC_INNER_CORE_f,
@@ -204,7 +204,7 @@ void FC_FUNC_(prepare_constants_device,
   mp->attenuation = *ATTENUATION_f;
   mp->attenuation_new = *ATTENUATION_NEW_f;
   mp->use_attenuation_mimic = *USE_ATTENUATION_MIMIC_f;
-  mp->attenuation_3D = *ATTENUATION_3D_VAL_f;
+  mp->use_3d_attenuation_arrays = *USE_3D_ATTENUATION_ARRAYS_f;
 
   mp->compute_and_store_strain = *COMPUTE_AND_STORE_STRAIN_f;
   mp->anisotropic_3D_mantle = *ANISOTROPIC_3D_MANTLE_f;
@@ -446,7 +446,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
 
   // crust_mantle
   R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
-  if( mp->attenuation_3D ){
+  if( mp->use_3d_attenuation_arrays ){
     R_size2 = NGLL3*mp->NSPEC_CRUST_MANTLE;
     R_size3 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
   }else{
@@ -469,7 +469,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
 
   // inner_core
   R_size1 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
-  if( mp->attenuation_3D ){
+  if( mp->use_3d_attenuation_arrays ){
     R_size2 = NGLL3*mp->NSPEC_INNER_CORE;
     R_size3 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
   }else{

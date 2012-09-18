@@ -360,13 +360,13 @@
 
           ! precompute terms for attenuation if needed
           if( ATTENUATION_VAL ) then
-            if( ATTENUATION_3D_VAL ) then
+            if( USE_3D_ATTENUATION_ARRAYS ) then
               one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
             else
               one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
             endif
+            minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
           endif
-          minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
 
           !
           ! compute either isotropic or anisotropic elements
@@ -897,7 +897,7 @@
 ! IMPROVE we should probably use an average value instead
 
         ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-        if(ATTENUATION_3D_VAL) then
+        if(USE_3D_ATTENUATION_ARRAYS) then
           if(ANISOTROPIC_3D_MANTLE_VAL) then
             factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
           else

@@ -921,7 +921,8 @@
   !          (see setup_sources_receivers.f90)
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
   if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
-  t_cmt_used(:) = t_cmt_used(:)
+
+  t_cmt_used(:) = tshift_cmt(:)
   if( USER_T0 > 0.d0 ) then
     if( t0 <= USER_T0 + min_tshift_cmt_original ) then
       t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original

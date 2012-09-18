@@ -614,7 +614,7 @@
             endif
 
             if( ATTENUATION_VAL ) then
-              if( ATTENUATION_3D_VAL ) then
+              if( USE_3D_ATTENUATION_ARRAYS ) then
                 minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
               else
                 minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
@@ -669,7 +669,7 @@
 
               ! use unrelaxed parameters if attenuation
               if( ATTENUATION_VAL ) then
-                if( ATTENUATION_3D_VAL ) then
+                if( USE_3D_ATTENUATION_ARRAYS ) then
                   mul = mul * one_minus_sum_beta(i,j,k,ispec)
                 else
                   mul = mul * one_minus_sum_beta(1,1,1,ispec)

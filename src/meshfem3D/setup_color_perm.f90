@@ -596,14 +596,15 @@
                               num_phase_ispec_d,phase_ispec_inner_d, &
                               SAVE_MESH_FILES)
 
+  use constants
+
   use meshfem3D_models_par,only: &
     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,ATTENUATION,ATTENUATION_3D,SAVE_BOUNDARY_MESH
+    ANISOTROPIC_INNER_CORE,ATTENUATION,SAVE_BOUNDARY_MESH
 
   use meshfem3D_par,only: &
     ABSORBING_CONDITIONS, &
-    CUSTOM_REAL,LOCAL_PATH,NGLLX,NGLLY,NGLLZ,N_SLS,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    LOCAL_PATH, &
     NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
     xstore,ystore,zstore,idoubling
 
@@ -853,7 +854,7 @@
 
   ! attenuation arrays
   if (ATTENUATION) then
-    if (ATTENUATION_3D) then
+    if (USE_3D_ATTENUATION_ARRAYS) then
       allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
       allocate(temp_array_dble_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
       call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)

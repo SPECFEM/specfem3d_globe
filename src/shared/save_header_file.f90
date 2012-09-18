@@ -409,7 +409,7 @@
   write(IOUT,*)
 
   if(ATTENUATION) then
-     if(ATTENUATION_3D) then
+     if(USE_3D_ATTENUATION_ARRAYS) then
         att1 = NGLLX
         att2 = NGLLY
         att3 = NGLLZ

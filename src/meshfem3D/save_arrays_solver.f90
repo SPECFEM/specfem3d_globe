@@ -110,7 +110,7 @@
       enddo
     enddo
   enddo
-  write(27) tmp_array
+  write(27) tmp_array ! xstore
 
   !--- y coordinate
   tmp_array(:) = 0._CUSTOM_REAL
@@ -129,7 +129,7 @@
       enddo
     enddo
   enddo
-  write(27) tmp_array
+  write(27) tmp_array ! ystore
 
   !--- z coordinate
   tmp_array(:) = 0._CUSTOM_REAL
@@ -148,7 +148,7 @@
       enddo
     enddo
   enddo
-  write(27) tmp_array
+  write(27) tmp_array ! zstore
 
   deallocate(tmp_array)
 
@@ -332,7 +332,7 @@
   use constants
 
   use meshfem3D_models_par,only: &
-    TRANSVERSE_ISOTROPY,ATTENUATION,ATTENUATION_3D
+    TRANSVERSE_ISOTROPY,ATTENUATION
 
   use create_regions_mesh_par2,only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -427,7 +427,7 @@
     ! saves Qmu_store to full custom_real array
     ! uses temporary array
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
-    if (ATTENUATION_3D) then
+    if (USE_3D_ATTENUATION_ARRAYS) then
       ! attenuation arrays are fully 3D
       if(CUSTOM_REAL == SIZE_REAL) then
         temp_store(:,:,:,:) = sngl(Qmu_store(:,:,:,:))

@@ -58,12 +58,15 @@
 
   integer NEX_MAX
   double precision DT, WIDTH
+
+  ! local parameters
   double precision RADIAL_LEN_RATIO_CENTRAL_CUBE
   double precision RADIUS_INNER_CORE
   double precision DOUBLING_INNER_CORE
   double precision P_VELOCITY_MAX     ! Located Near the inner Core Boundary
   double precision MAXIMUM_STABILITY_CONDITION
   double precision MIN_GLL_POINT_SPACING_5
+  double precision elem_size,min_grid_dx
 
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
   MAXIMUM_STABILITY_CONDITION     =     0.40d0
@@ -72,9 +75,19 @@
   P_VELOCITY_MAX                  = 11.02827d0
   MIN_GLL_POINT_SPACING_5         =   0.1730d0
 
-  DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
-       ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
-       MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
+  ! element at inner core
+  elem_size = RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
+                ( dble(NEX_MAX) / DOUBLING_INNER_CORE )
+
+  ! minimum grid point spacing
+  min_grid_dx = elem_size * MIN_GLL_POINT_SPACING_5
+
+  ! estimated time step
+  DT = min_grid_dx / P_VELOCITY_MAX * MAXIMUM_STABILITY_CONDITION
+
+  !DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
+  !     ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
+  !     MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
 
   end subroutine auto_time_stepping
 

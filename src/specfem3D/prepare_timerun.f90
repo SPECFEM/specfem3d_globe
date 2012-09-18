@@ -101,6 +101,22 @@
     write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
     write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
     write(IMAIN,*)
+
+    ! daniel: total time estimation
+    !  average time per element per time step:
+    !     isotropic models              ~ dt = 3.1857107305545455e-05
+    !     transverse isotropic models   ~ dt = 3.7492335549202518e-05
+    !
+    !     regional transverse isotropic models ~ dt = 7.6099242919530619e-05 (intel xeon @ 2.27GHz)
+    !
+    !  total time per time step:
+    !     T_total = dt * total_number_of_elements
+    !
+    !     (total_number_of_elements are listed in values_from_mesher.h)
+    !
+    !  total time using nproc processes (slices) for NSTEP time steps:
+    !     T_simulation = T_total * NSTEP / nproc
+
   endif
 
   end subroutine prepare_timerun
@@ -159,9 +175,7 @@
     write(IMAIN,*)
     if(ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-
-      if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation'
-
+      if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation model'
       if(USE_ATTENUATION_MIMIC ) write(IMAIN,*) 'mimicking effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
@@ -785,7 +799,7 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          if( ATTENUATION_3D_VAL ) then
+          if( USE_3D_ATTENUATION_ARRAYS ) then
             scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
           else
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
@@ -836,7 +850,7 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          if( ATTENUATION_3D_VAL ) then
+          if( USE_3D_ATTENUATION_ARRAYS ) then
             scale_factor = factor_scale_inner_core(i,j,k,ispec)
           else
             scale_factor = factor_scale_inner_core(1,1,1,ispec)
@@ -1456,7 +1470,7 @@
                                   GRAVITY_VAL, &
                                   ROTATION_VAL, &
                                   ATTENUATION_VAL,ATTENUATION_NEW_VAL, &
-                                  USE_ATTENUATION_MIMIC,ATTENUATION_3D_VAL, &
+                                  USE_ATTENUATION_MIMIC,USE_3D_ATTENUATION_ARRAYS, &
                                   COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &

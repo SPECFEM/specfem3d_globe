@@ -328,17 +328,17 @@
      ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
      NEX_MAX > 1248) then
 
-   call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+    call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
                 NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
                 NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
                 NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
                 R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
                 HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-   call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+    call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
                         MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-   call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
+    call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
 
     !! DK DK suppressed because this routine should not write anything to the screen
     !    write(*,*)'##############################################################'
