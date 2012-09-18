@@ -311,7 +311,7 @@
         endif !CUSTOM_REAL
 
         if( ATTENUATION ) then
-          if( ATTENUATION_3D ) then
+          if( USE_3D_ATTENUATION_ARRAYS ) then
             tau_e_store(:,i,j,k,ispec) = tau_e(:)
             Qmu_store(i,j,k,ispec)     = Qmu
           else
@@ -326,11 +326,6 @@
       enddo
     enddo
   enddo
-
-  !if (ATTENUATION .and. .not. ATTENUATION_3D) then
-  !   tau_e_store(:,1,1,1,ispec) = tau_e(:)
-  !   Qmu_store(1,1,1,ispec)     = Qmu
-  !endif
 
   end subroutine get_model
 

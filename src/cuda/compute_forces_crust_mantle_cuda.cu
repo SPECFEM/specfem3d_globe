@@ -102,7 +102,7 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
                                               realw epsilondev_xz_loc,realw epsilondev_yz_loc,
                                               realw* d_c44store,
                                               int ANISOTROPY,
-                                              int ATTENUATION_3D) {
+                                              int USE_3D_ATTENUATION_ARRAYS) {
 
   realw fac;
   realw alphaval_loc,betaval_loc,gammaval_loc;
@@ -123,7 +123,7 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     //
     // either mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
-    if( ATTENUATION_3D ){
+    if( USE_3D_ATTENUATION_ARRAYS ){
       // array dimension: factor_common(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC)
       factor_loc = fac * factor_common[i_sls + N_SLS*(tx + NGLL3*working_element)];
     }else{
@@ -717,7 +717,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           int ATTENUATION,
                                           int ATTENUATION_NEW,
                                           int USE_ATTENUATION_MIMIC,
-                                          int ATTENUATION_3D,
+                                          int USE_3D_ATTENUATION_ARRAYS,
                                           realw* one_minus_sum_beta,realw* factor_common,
                                           realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
                                           realw* alphaval,realw* betaval,realw* gammaval,
@@ -1154,7 +1154,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
     // attenuation
     if(ATTENUATION){
       // use unrelaxed parameters if attenuation
-      if( ATTENUATION_3D ){
+      if( USE_3D_ATTENUATION_ARRAYS ){
         one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
       }else{
         one_minus_sum_beta_use = one_minus_sum_beta[working_element]; // (1,1,1,ispec)
@@ -1414,7 +1414,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                     epsilondev_xz,epsilondev_yz,
                                     epsilondev_xx_loc,epsilondev_yy_loc,epsilondev_xy_loc,
                                     epsilondev_xz_loc,epsilondev_yz_loc,
-                                    d_c44store,ANISOTROPY,ATTENUATION_3D);
+                                    d_c44store,ANISOTROPY,USE_3D_ATTENUATION_ARRAYS);
     }
 
     // save deviatoric strain for Runge-Kutta scheme
@@ -1528,7 +1528,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->attenuation,
                                                 mp->attenuation_new,
                                                 mp->use_attenuation_mimic,
-                                                mp->attenuation_3D,
+                                                mp->use_3d_attenuation_arrays,
                                                 d_one_minus_sum_beta,d_factor_common,
                                                 d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
                                                 mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
@@ -1579,7 +1579,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                    mp->attenuation,
                                                    mp->attenuation_new,
                                                    mp->use_attenuation_mimic,
-                                                   mp->attenuation_3D,
+                                                   mp->use_3d_attenuation_arrays,
                                                    d_one_minus_sum_beta,d_factor_common,
                                                    d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
                                                    mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
@@ -1679,7 +1679,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       color_offset_nonpadded_att1 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
 
       // for factor_common array
-      if( mp->attenuation_3D ){
+      if( mp->use_3d_attenuation_arrays ){
         color_offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * NGLL3;
         color_offset_nonpadded_att3 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
       }else{
@@ -1780,7 +1780,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
       color_offset_nonpadded_att1 += nb_blocks_to_compute * NGLL3 * N_SLS;
       // for factor_common array
-      if( mp->attenuation_3D ){
+      if( mp->use_3d_attenuation_arrays ){
         color_offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3;
         color_offset_nonpadded_att3 += nb_blocks_to_compute * NGLL3 * N_SLS;
       }else{

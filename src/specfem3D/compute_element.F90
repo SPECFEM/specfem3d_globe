@@ -234,7 +234,7 @@
 
        ! precompute terms for attenuation if needed
         if( ATTENUATION_VAL ) then
-          if( ATTENUATION_3D_VAL ) then
+          if( USE_3D_ATTENUATION_ARRAYS ) then
             one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
           else
             one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -635,7 +635,7 @@
 
         ! precompute terms for attenuation if needed
         if( ATTENUATION_VAL ) then
-          if( ATTENUATION_3D_VAL ) then
+          if( USE_3D_ATTENUATION_ARRAYS ) then
             one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
           else
             one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -1216,7 +1216,7 @@
 
         ! precompute terms for attenuation if needed
         if( ATTENUATION_VAL ) then
-          if( ATTENUATION_3D_VAL ) then
+          if( USE_3D_ATTENUATION_ARRAYS ) then
             one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
             minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
           else
@@ -1615,7 +1615,7 @@
     gammal = gammaval(i_SLS)
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL ) then
+    if( USE_3D_ATTENUATION_ARRAYS ) then
       if(ANISOTROPIC_3D_MANTLE_VAL) then
         factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
       else
@@ -1660,7 +1660,7 @@
 ! way 1:
   do i_SLS = 1,N_SLS
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL ) then
+    if( USE_3D_ATTENUATION_ARRAYS ) then
       if(ANISOTROPIC_3D_MANTLE_VAL) then
         factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
       else
@@ -1782,7 +1782,7 @@
     gammal = gammaval(i_SLS)
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL ) then
+    if( USE_3D_ATTENUATION_ARRAYS ) then
       factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
     else
       factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
@@ -1817,7 +1817,7 @@
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL ) then
+    if( USE_3D_ATTENUATION_ARRAYS ) then
       factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
     else
       factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)

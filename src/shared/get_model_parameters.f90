@@ -166,15 +166,8 @@
   ! uses no anisotropic 3D model by default
   ANISOTROPIC_3D_MANTLE = .false.
 
-  ! attenuation
-  ! note: to save memory, one can set ATTENUATION_3D to .false. which
-  !          will create attenuation arrays storing only 1 point per element
-  !          (otherwise, 3D attenuation arrays will be defined for all GLL points)
-  if( USE_3D_ATTENUATION ) then
-    ATTENUATION_3D = .true.
-  else
-    ATTENUATION_3D = .false.
-  endif
+  ! uses 1D attenuation model by default
+  ATTENUATION_3D = .false.
 
   ! no crustal mesh stretching and 3D crust models by default
   CASE_3D = .false.
@@ -459,6 +452,10 @@
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
+  ! checks that 3D attenuation models use 3D arrays
+  if( ATTENUATION_3D .and. ( .not. USE_3D_ATTENUATION_ARRAYS )) then
+    stop '3D attenuation models need 3D attenuation arrays'
+  endif
 
   end subroutine get_model_parameters_flags
 

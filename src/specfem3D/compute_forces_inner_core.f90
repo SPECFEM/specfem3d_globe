@@ -344,7 +344,7 @@
 
           ! precompute terms for attenuation if needed
           if( ATTENUATION_VAL ) then
-            if( ATTENUATION_3D_VAL ) then
+            if( USE_3D_ATTENUATION_ARRAYS ) then
               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
             else
               minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
@@ -401,7 +401,7 @@
 
             ! use unrelaxed parameters if attenuation
             if( ATTENUATION_VAL ) then
-              if( ATTENUATION_3D_VAL ) then
+              if( USE_3D_ATTENUATION_ARRAYS ) then
                 mul = mul * one_minus_sum_beta(i,j,k,ispec)
               else
                 mul = mul * one_minus_sum_beta(1,1,1,ispec)
@@ -654,7 +654,7 @@
       do i_SLS = 1,N_SLS
 
         ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-        if (ATTENUATION_3D_VAL) then
+        if (USE_3D_ATTENUATION_ARRAYS) then
           factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
         else
           factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)

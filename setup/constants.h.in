@@ -274,7 +274,7 @@
 ! forces attenuation arrays to be fully 3D and defined on all GLL points
 ! (useful for more accurate attenuation profiles and adjoint inversions)
 ! (if set to .false., 3D attenuation is only used for models with 3D attenuation distributions)
-  logical, parameter :: USE_3D_ATTENUATION = .true.
+  logical, parameter :: USE_3D_ATTENUATION_ARRAYS = .true.
 
 
 !!-----------------------------------------------------------

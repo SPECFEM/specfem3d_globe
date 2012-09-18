@@ -187,7 +187,7 @@ program combine_vol_data_vtk
 
 
       dimension_file = trim(prname_topo) //'solver_data.bin'
-      open(unit = 28,file = trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
+      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
        print*,'file:',trim(dimension_file)

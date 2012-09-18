@@ -98,7 +98,13 @@
   call MPI_BCAST(QRFSI12_Q_refdepth, NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(QRFSI12_Q_refqmu,   NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 
-  if(myrank == 0) write(IMAIN,*) 'read 3D attenuation model'
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'read 3D attenuation model'
+    write(IMAIN,*) '  model: QRFSI12'
+    write(IMAIN,*)
+  endif
 
   end subroutine
 

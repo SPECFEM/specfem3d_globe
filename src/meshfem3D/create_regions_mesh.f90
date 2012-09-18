@@ -436,15 +436,15 @@
                                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                                 NSPEC2D_BOTTOM,NSPEC2D_TOP)
 
+  use constants
+
   use meshfem3D_par,only: &
-    NGLLX,NGLLY,NGLLZ,NDIM, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     NCHUNKS,NUMCORNERS_SHARED,NUMFACES_SHARED, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NGLOB1D_RADIAL_CORNER
 
   use meshfem3D_models_par,only: &
-    ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
+    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
     SAVE_BOUNDARY_MESH,AM_V
 
   use create_regions_mesh_par2
@@ -468,7 +468,10 @@
     tau_s(:)   = AM_V%Qtau_s(:)
     nspec_att = nspec
 
-    if (ATTENUATION_3D) then
+    ! note: to save memory, one can set USE_3D_ATTENUATION_ARRAYS to .false. which
+    !          will create attenuation arrays storing only 1 point per element
+    !          (otherwise, 3D attenuation arrays will be defined for all GLL points)
+    if( USE_3D_ATTENUATION_ARRAYS ) then
       ! attenuation arrays are fully 3D
       allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
               tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
