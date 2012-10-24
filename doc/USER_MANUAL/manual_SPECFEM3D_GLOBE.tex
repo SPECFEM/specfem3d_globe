@@ -412,16 +412,10 @@ Before running \texttt{configure}, select the XL Fortran compiler by typing \tex
 or \texttt{module load bgq-xl} (another, less efficient option is to load the GNU compilers using \texttt{module load bgq-gnu/4.4.6} or similar).\\
 
 \noindent
-Then, to configure the code, for the SPECFEM3D\_GLOBE version type this:\\
+Then, to configure the code, type this:\\
 
 \noindent
 \texttt{./configure FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r LOCAL\_PATH\_IS\_ALSO\_GLOBAL=true}\\
-
-\noindent
-and for SPECFEM3D\_Cartesian type this:\\
-
-\noindent
-\texttt{./configure FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r LOCAL\_PATH\_IS\_ALSO\_GLOBAL=true}.\\
 
 \noindent
 \underline{Older installation instruction for IBM BlueGene, from 2011:}\\
@@ -472,7 +466,7 @@ architecture. In such a case, typing \texttt{``make all''} on the frontend will 
 \noindent
 2/ after running the \texttt{``configure''} script, create two copies of the Makefiles:
 \\
-\red{TODO: this has not been tested out yet, any feedback is welcomed}
+\red{TODO: this has not been tested out yet, any feedback is welcome}
 \\
 
 \noindent
