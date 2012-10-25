@@ -102,12 +102,14 @@ Version 5.1}
 \maketitle
 
 \section*{Authors}
-The SPECFEM3D\_GLOBE package was first developed by Dimitri Komatitsch and Jeroen Tromp at Harvard University and Caltech, USA, starting in 1998, based on earlier work by Dimitri Komatitsch and Jean-Pierre Vilotte at Institut de Physique du Globe (IPGP) in Paris, France from 1995 to 1997.\\
+The SPECFEM3D\_GLOBE package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at Institut de Physique du Globe (IPGP) in Paris, France
+from 1995 to 1997 and then by Dimitri Komatitsch and Jeroen Tromp at Harvard University and Caltech, USA, starting in 1998.
 
 Since then it has been developed and maintained by a development team: in alphabetical order,
 Ebru Bozda\u{g},
 Joseph Charles,
 Min Chen,
+Dominik G\"oddeke,
 Vala Hj\"orleifsd\'ottir,
 Sue Kientz,
 Dimitri Komatitsch,
@@ -120,20 +122,20 @@ Alessia Maggi,
 Roland Martin,
 Dennis McRitchie,
 Matthias Meschede,
-% Peter Messmer,  % uncomment for future version 6.0 with GPU support, and put on the cover and Web icon as well
+Peter Messmer,
 David Mich\'ea,
 Tarje Nissen-Meyer,
 Daniel Peter,
-% Max Rietmann,  % uncomment for future version 6.0 with GPU support, and put on the cover and Web icon as well
+Max Rietmann,
 Brian Savage,
 Bernhard Schuberth,
 Anne Sieminski,
 Leif Strand,
 Carl Tape,
 Jeroen Tromp,
+Jean-Pierre Vilotte,
 Zhinan Xie,
 Hejun Zhu.\\
-% \toall{add full list of developers here and update the AUTHORS file accordingly}
 
 The cover graphic of the manual was created
 by Santiago Lombeyda from Caltech's Center for Advanced Computing Research (CACR) \urlwithparentheses{http://www.cacr.caltech.edu}.\\
@@ -396,7 +398,7 @@ Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK} and \textt
 \noindent
 \texttt{-g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w}\\
 \noindent
-\texttt{-qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Wl,-relax -Q -Q+rank,swap\_all}.\\
+\texttt{-qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Q -Q+rank,swap\_all -Wl,-relax}\\
 
 \noindent
 The most relevant are the -qarch and -qtune flags, otherwise if these flags are set to ``auto'' then they are wrongly assigned to
@@ -3314,7 +3316,7 @@ to Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu} or to the CIG Compu
 
 \chapter*{\label{cha:Copyright}Copyright}
 
-Main authors: Dimitri Komatitsch and Jeroen Tromp
+Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 
 Princeton University, USA, and CNRS / INRIA / University of Pau, France
 
