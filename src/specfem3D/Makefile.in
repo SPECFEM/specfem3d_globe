@@ -103,6 +103,7 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/intgrl.o \
 	$O/lagrange_poly.o \
 	$O/locate_receivers.o \
+	$O/locate_regular_points.o \
 	$O/locate_sources.o \
 	$O/make_ellipticity.o \
 	$O/make_gravity.o \
@@ -119,6 +120,7 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/recompute_jacobian.o \
 	$O/reduce.o \
 	$O/rthetaphi_xyz.o \
+	$O/save_regular_kernels.o \
 	$O/write_c_binary.o \
 	$O/write_seismograms.o \
 	$O/write_output_ASCII.o \
@@ -379,6 +381,9 @@ $O/save_forward_arrays.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S
 $O/save_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/save_kernels.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/save_kernels.o ${FCFLAGS_f90} $S/save_kernels.f90
 
+$O/save_regular_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/save_regular_kernels.f90
+	${FCCOMPILE_NO_CHECK} -c -o $O/save_regular_kernels.o ${FCFLAGS_f90} $S/save_regular_kernels.f90
+
 ###
 ### specfem3D - regular compilation options here
 ###
@@ -484,6 +489,9 @@ $O/get_event_info.o: ${SETUP}/constants.h $S/get_event_info.f90
 
 $O/locate_receivers.o: ${SETUP}/constants.h $S/locate_receivers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/locate_receivers.o ${FCFLAGS_f90} $S/locate_receivers.f90
+
+$O/locate_regular_points.o: ${SETUP}/constants.h $S/locate_regular_points.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/locate_regular_points.o ${FCFLAGS_f90} $S/locate_regular_points.f90
 
 $O/locate_sources.o: ${SETUP}/constants.h $S/locate_sources.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/locate_sources.o ${FCFLAGS_f90} $S/locate_sources.f90
