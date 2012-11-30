@@ -153,7 +153,7 @@ end subroutine find_regular_grid_slice_number
 !==============================================================
 
 ! how about using single precision for the iterations?
-subroutine locate_reg_points(myrank,npoints_slice,points_slice,GRID, &
+subroutine locate_reg_points(npoints_slice,points_slice,GRID, &
                              NEX_XI,nspec,xstore,ystore,zstore,ibool, &
                              xigll,yigll,zigll,ispec_reg, &
                              hxir_reg,hetar_reg,hgammar_reg)
@@ -162,7 +162,7 @@ subroutine locate_reg_points(myrank,npoints_slice,points_slice,GRID, &
   include 'constants.h'
 
   ! declarations of regular grid model
-  integer, intent(in) :: myrank, npoints_slice
+  integer, intent(in) :: npoints_slice
   integer, dimension(NM_KL_REG_PTS), intent(in) :: points_slice
 
   type kl_reg_grid_variables

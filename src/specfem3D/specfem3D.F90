@@ -1383,7 +1383,7 @@
     ! this is the core part that takes up most of the computation time,
     ! and presumably the more processors involved the faster.
     if (npoints_slice > 0) then
-      call locate_reg_points(myrank, npoints_slice, points_slice, KL_REG_GRID, &
+      call locate_reg_points(npoints_slice, points_slice, KL_REG_GRID, &
                              NEX_XI, NSPEC_CRUST_MANTLE, &
                              xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
                              ibool_crust_mantle, &
@@ -4756,7 +4756,7 @@
     ! crust mantle
     if (SAVE_REGULAR_KL) then
     call save_regular_kernels_crust_mantle(myrank, &
-                  KL_REG_GRID, npoints_slice, hxir_reg, hetar_reg, hgammar_reg, &
+                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, &
                   scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &

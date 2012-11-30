@@ -26,8 +26,7 @@
 !=====================================================================
 
   subroutine save_regular_kernels_crust_mantle(myrank, &
-                  GRID, npoints_slice, &
-                  hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
+                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
                   scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
@@ -45,20 +44,6 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-
-  type kl_reg_grid_variables
-    sequence
-    real dlat
-    real dlon
-    integer nlayer
-    real rlayer(NM_KL_REG_LAYER)
-    integer ndoubling(NM_KL_REG_LAYER)
-    integer nlat(NM_KL_REG_LAYER)
-    integer nlon(NM_KL_REG_LAYER)
-    integer npts_total
-    integer npts_before_layer(NM_KL_REG_LAYER+1)
-  end type kl_reg_grid_variables
-  type (kl_reg_grid_variables), intent(in) :: GRID
 
   integer, intent(in) :: npoints_slice
   real, dimension(NGLLX, NM_KL_REG_PTS), intent(in) :: hxir_reg
