@@ -668,8 +668,13 @@ version of PREM.
 \item [{\texttt{1D\_1066a}}] Spherically symmetric earth model 1066A \citep{gilbertdziewonski1975}.
 When \texttt{\small ATTENTUATION} is on, it uses an unpublished 1D
 attenuation model from Scripps.
-\item [{\texttt{1D\_ak135}}] Spherically symmetric isotropic AK135 model
-\citep{KeEnBu95}.
+\item [{\texttt{1D\_ak135f\_no\_mud}}] Spherically symmetric isotropic AK135 model
+\citep{KeEnBu95} modified to use the density and Q attenuation models of \cite{MoKe95}.
+That modified model is traditionally called AK135-F,
+see \url{http://rses.anu.edu.au/seismology/ak135/ak135f.html} for more details.
+As we do not want to use the 300~m-thick mud layer from that model nor the ocean layer,
+above the d120 discontinuity we switch back to the classical AK135 model of \cite{KeEnBu95},
+i.e., we use AK135-F below and AK135 above.
 \item [{\texttt{1}D\_ref}] A recent 1D Earth model developed by \citet{KuDzEk06}.
 This model is the 1D background model for the 3D models s362ani, s362wmani,
 s362ani\_prem, and s29ea.
@@ -686,7 +691,7 @@ crust. These `one-crust' models are:
 
 \texttt{1D\_iasp91\_onecrust}, \texttt{1D\_1066a\_onecrust}
 
-\texttt{1D\_ak135\_onecrust}
+\texttt{1D\_ak135f\_no\_mud\_onecrust}
 
 \begin{description}
 \item [{\textmd{Fully~3D~models:}}]~
@@ -2769,7 +2774,7 @@ the mesh by the subroutine \texttt{model\_crust}~\\
 \texttt{.f90}. To accomplish this, the flag \texttt{CRUSTAL}, set
 in the subroutine \texttt{get\_model\_parameters.f90}, is used
 to indicate a 3D crustal model. When this flag is set to \texttt{.true.},
-the crust on top of the 1D reference model (PREM, IASP91, or AK135)
+the crust on top of the 1D reference model (PREM, IASP91, or AK135F\_NO\_MUD)
 is removed and replaced by extending the mantle. The 3D crustal model
 is subsequently overprinted onto the crust-less 1D reference model.
 The call to the 3D crustal routine is of the form
@@ -3349,7 +3354,7 @@ by the Free Software Foundation (see Appendix \ref{cha:License}).\\
 
  v. 3.6 Many people, many affiliations, September 2006:
       adjoint and kernel calculations, fixed IASP91 model,
-      added AK135 and 1066a, fixed topography/bathymetry routine,
+      added AK135F\_NO\_MUD and 1066a, fixed topography/bathymetry routine,
       new attenuation routines, faster and better I/Os on very large
       systems, many small improvements and bug fixes, new `configure'
       script, new Pyre version, new user's manual etc..\\

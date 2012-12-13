@@ -215,12 +215,12 @@
 ! model_ak135_variables
   type model_ak135_variables
     sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
   end type model_ak135_variables
 
  type (model_ak135_variables) Mak135_V
@@ -308,9 +308,9 @@
      AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      AM_V%Qn = 12
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
      call define_model_ak135(.FALSE.,Mak135_V)
-     AM_V%Qn = NR_AK135
+     AM_V%Qn = NR_AK135F_NO_MUD
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
      call define_model_1066a(.FALSE.,M1066a_V)
      AM_V%Qn = NR_1066A
@@ -338,7 +338,7 @@
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
      AM_V%Qr(:)     = Mak135_V%radius_ak135(:)
      AM_V%Qmu(:)    = Mak135_V%Qmu_ak135(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then

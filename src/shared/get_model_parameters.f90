@@ -183,15 +183,15 @@
     TRANSVERSE_ISOTROPY = .true.
 
   else if(MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
-          MODEL_ROOT == '1D_ak135' .or. MODEL_ROOT == '1D_jp3d' .or. &
+          MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
           MODEL_ROOT == '1D_sea99') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     if(MODEL_ROOT == '1D_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
     else if(MODEL_ROOT == '1D_1066a') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if(MODEL_ROOT == '1D_ak135') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+    else if(MODEL_ROOT == '1D_ak135f_no_mud') then
+      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     else if(MODEL_ROOT == '1D_jp3d') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
     else if(MODEL_ROOT == '1D_sea99') then
@@ -219,15 +219,15 @@
     ONE_CRUST = .true.
 
   else if(MODEL_ROOT == '1D_iasp91_onecrust' .or. MODEL_ROOT == '1D_1066a_onecrust' &
-        .or. MODEL_ROOT == '1D_ak135_onecrust') then
+        .or. MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     ONE_CRUST = .true.
     if(MODEL_ROOT == '1D_iasp91_onecrust') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
     else if(MODEL_ROOT == '1D_1066a_onecrust') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if(MODEL_ROOT == '1D_ak135_onecrust') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+    else if(MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
+      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     else
       stop 'reference 1D Earth model unknown'
     endif
@@ -353,7 +353,7 @@
     TRANSVERSE_ISOTROPY = .true. ! to use transverse isotropic PREM 1D ref model
     ! CRUSTAL = .true. ! with 3D crust: depends on 3D mantle reference model
     ! THREE_D_MODEL = 0 ! for default crustal model
-    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
 
   else if(MODEL_ROOT == 'heterogen') then
@@ -435,7 +435,7 @@
 
   ! checks that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
   if((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135 .or. &
+      REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
@@ -539,16 +539,14 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-    ! our implementation of AK135 has not been checked carefully yet
-    ! therefore let us doublecheck it carefully one day
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
 
-    ! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
-    ! AK135 without the 300 meters of mud layer
+!! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
+
     ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6361000.d0
-    RMOHO  = 6353000.d0
-    R80    = 6291000.d0
+    RMIDDLE_CRUST = 6351000.d0
+    RMOHO  = 6336000.d0
+    R80    = 6293500.d0
     R220   = 6161000.d0
     R400   = 5961000.d0
     R670   = 5711000.d0
@@ -556,9 +554,9 @@
     RCMB   = 3479500.d0
     RICB   = 1217500.d0
 
-    ! values for AK135 that are not discontinuities
+    ! values for AK135F that are not discontinuities
     R600 = 5771000.d0
-    R771 = 5611000.d0
+    R771 = 5600000.d0
 
     RHO_TOP_OC = 9914.5000 / RHOAV
     RHO_BOTTOM_OC = 12139.1000 / RHOAV
