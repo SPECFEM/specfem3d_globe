@@ -41,7 +41,8 @@
                                 SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
                                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-                                SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
+                                SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
+                                SAVE_REGULAR_KL)
 
   implicit none
 
@@ -66,7 +67,7 @@
          ABSORBING_CONDITIONS,SAVE_FORWARD, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -186,6 +187,8 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: RECEIVERS_CAN_BE_BURIED'
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: PRINT_SOURCE_TIME_FUNCTION'
+  call read_value_logical(SAVE_REGULAR_KL, 'solver.SAVE_REGULAR_KL')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: SAVE_REGULAR_KL'
 
   ! closes parameter file
   call close_parameter_file()
