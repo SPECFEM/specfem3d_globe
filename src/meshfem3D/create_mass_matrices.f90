@@ -274,7 +274,7 @@
 
           ! if 3D Earth, compute local height of oceans
           !
-          ! note: only for models where 3D crustal model and stretching was used 
+          ! note: only for models where 3D crustal model and stretching was used
           !       (even without topography flag set)
           if( CASE_3D ) then
 

@@ -109,7 +109,7 @@
       vs0 = 3.62980
       rho0 = 13.429030
 
-    case(REFERENCE_MODEL_AK135)
+    case(REFERENCE_MODEL_AK135F_NO_MUD)
       ! values at center
       vp0 = 11.26220
       vs0 = 3.667800

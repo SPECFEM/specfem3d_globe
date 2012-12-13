@@ -26,16 +26,29 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! AK135
 !
-! Spherically symmetric isotropic AK135 model [Kennett et al., 1995].
+! Modified AK135 model:
 !
+! Spherically symmetric isotropic AK135 model (Kennett et al., 1995).
+! modified to use the density and Q attenuation models of Montagner and Kennett (1995).
+! That modified model is traditionally called AK135-F,
+! see http://rses.anu.edu.au/seismology/ak135/ak135f.html for more details.
+! As we do not want to use the 300 m-thick mud layer from that model nor the ocean layer,
+! above the d120 discontinuity we switch back to the classical AK135 model of Kennett et al. (1995),
+! i.e., we use AK135-F below and AK135 above.
+
 ! B. L. N. Kennett, E. R. Engdahl and R. Buland,
 ! Constraints on seismic velocities in the Earth from traveltimes,
-! Geophysical Journal International, Volume 122, Issue 1, Pages 1-351 (1995),
+! Geophysical Journal International, volume 122, issue 1, pages 108-124 (1995),
 ! DOI: 10.1111/j.1365-246X.1995.tb03540.x
-!--------------------------------------------------------------------------------------------------
 
+! J. P. Montagner and B. L. N. Kennett,
+! How to reconcile body-wave and normal-mode reference Earth models?,
+! Geophysical Journal International, volume 122, issue 1, pages 229-248 (1995)
+
+!! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
+
+!--------------------------------------------------------------------------------------------------
 
   subroutine model_ak135_broadcast(CRUSTAL,Mak135_V)
 
@@ -48,12 +61,12 @@
   ! model_ak135_variables
   type model_ak135_variables
     sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
   end type model_ak135_variables
 
   type (model_ak135_variables) Mak135_V
@@ -79,12 +92,12 @@
 ! model_ak135_variables
   type model_ak135_variables
     sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
   end type model_ak135_variables
 
  type (model_ak135_variables) Mak135_V
@@ -110,7 +123,7 @@
   r = x * R_EARTH
 
   i = 1
-  do while(r >= Mak135_V%radius_ak135(i) .and. i /= NR_AK135)
+  do while(r >= Mak135_V%radius_ak135(i) .and. i /= NR_AK135F_NO_MUD)
     i = i + 1
   enddo
 
@@ -171,12 +184,12 @@
 ! model_ak135_variables
   type model_ak135_variables
     sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
   end type model_ak135_variables
 
  type (model_ak135_variables) Mak135_V

@@ -452,10 +452,10 @@
   integer, parameter :: REFERENCE_MODEL_PREM   = 1
   integer, parameter :: REFERENCE_MODEL_IASP91 = 2
   integer, parameter :: REFERENCE_MODEL_1066A  = 3
-  integer, parameter :: REFERENCE_MODEL_AK135  = 4
-  integer, parameter :: REFERENCE_MODEL_1DREF  = 5
+  integer, parameter :: REFERENCE_MODEL_AK135F_NO_MUD = 4
+  integer, parameter :: REFERENCE_MODEL_1DREF = 5
   integer, parameter :: REFERENCE_MODEL_JP1D  = 6
-  integer, parameter :: REFERENCE_MODEL_SEA1D  = 7
+  integer, parameter :: REFERENCE_MODEL_SEA1D = 7
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS   = 1
@@ -567,8 +567,8 @@
 ! number of layers in DATA/1066a/1066a.dat
   integer, parameter :: NR_1066A = 160
 
-! number of layers in DATA/ak135/ak135.dat
-  integer, parameter :: NR_AK135 = 136
+! number of layers in ak135-F
+  integer, parameter :: NR_AK135F_NO_MUD = 136
 
 ! number of layers in DATA/s362ani/REF
   integer, parameter :: NR_REF = 750

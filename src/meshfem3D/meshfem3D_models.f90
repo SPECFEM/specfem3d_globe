@@ -98,12 +98,12 @@
 ! model_ak135_variables
   type model_ak135_variables
     sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
+    double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
   end type model_ak135_variables
  type (model_ak135_variables) Mak135_V
 ! model_ak135_variables
@@ -573,7 +573,7 @@
     case(REFERENCE_MODEL_1066A)
       call model_1066a_broadcast(CRUSTAL,M1066a_V)
 
-    case( REFERENCE_MODEL_AK135)
+    case( REFERENCE_MODEL_AK135F_NO_MUD)
       call model_ak135_broadcast(CRUSTAL,Mak135_V)
 
     case(REFERENCE_MODEL_1DREF)
@@ -708,7 +708,7 @@
       ! 1066A (by Gilbert & Dziewonski) - pure isotropic model, used in 1D model mode only
       call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,M1066a_V)
 
-    case(REFERENCE_MODEL_AK135)
+    case(REFERENCE_MODEL_AK135F_NO_MUD)
       ! AK135 (by Kennett et al. ) - pure isotropic model, used in 1D model mode only
       call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,Mak135_V)
 
