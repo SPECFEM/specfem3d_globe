@@ -423,12 +423,6 @@ $O/model_sea1d.o: ${SETUP}/constants.h $S/model_sea1d.f90
 $O/moho_stretching.o: ${SETUP}/constants.h $S/moho_stretching.f90
 	${FCCOMPILE_CHECK} -c -o $O/moho_stretching.o ${FCFLAGS_f90} $S/moho_stretching.f90
 
-$O/netlib_specfun_erf.o: $S/netlib_specfun_erf.f90
-	${FCCOMPILE_CHECK} -c -o $O/netlib_specfun_erf.o ${FCFLAGS_f90} $S/netlib_specfun_erf.f90
-
-$O/recompute_jacobian.o: ${SETUP}/constants.h $S/recompute_jacobian.f90
-	${FCCOMPILE_CHECK} -c -o $O/recompute_jacobian.o ${FCFLAGS_f90} $S/recompute_jacobian.f90
-
 $O/save_arrays_solver.o: ${SETUP}/constants.h $S/save_arrays_solver.f90
 	${FCCOMPILE_CHECK} -c -o $O/save_arrays_solver.o ${FCFLAGS_f90} $S/save_arrays_solver.f90
 
