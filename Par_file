@@ -118,3 +118,7 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 # print source time function
 PRINT_SOURCE_TIME_FUNCTION      = .false.
 
+# output kernels on a regular grid instead of on the mesh points
+SAVE_REGULAR_KL                 = .false.
+
+
