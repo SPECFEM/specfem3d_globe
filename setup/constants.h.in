@@ -279,9 +279,6 @@
 ! (default is to use transverse isotropy only between MOHO and 220 )
   logical, parameter :: USE_FULL_TISO_MANTLE = .false.
 
-! output kernels on a regular grid instead of on the mesh points
-  logical, parameter :: SAVE_REGULAR_KL = .false.
-
 ! regular kernel parameters
   character(len=*), parameter :: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt'
   integer, parameter :: NM_KL_REG_LAYER = 100
