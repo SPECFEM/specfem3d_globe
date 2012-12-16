@@ -429,14 +429,14 @@ $O/recompute_jacobian.o: ${SETUP}/constants.h $S/recompute_jacobian.f90
 $O/assemble_MPI_central_cube.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/assemble_MPI_central_cube.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.f90
 
-$O/assemble_MPI_central_cube_block.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/assemble_MPI_central_cube_block.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube_block.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube_block.f90
+$O/assemble_MPI_vector.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/assemble_MPI_vector.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector.o ${FCFLAGS_f90} $S/assemble_MPI_vector.f90
+
+$O/assemble_MPI_vector_block.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/assemble_MPI_vector_block.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector_block.o ${FCFLAGS_f90} $S/assemble_MPI_vector_block.f90
 
 $O/check_simulation_stability.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/check_simulation_stability.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/check_simulation_stability.o ${FCFLAGS_f90} $S/check_simulation_stability.f90
-
-$O/fix_non_blocking_flags.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/fix_non_blocking_flags.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/fix_non_blocking_flags.o ${FCFLAGS_f90} $S/fix_non_blocking_flags.f90
 
 $O/initialize_simulation.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/initialize_simulation.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/initialize_simulation.o ${FCFLAGS_f90} $S/initialize_simulation.f90
@@ -466,17 +466,17 @@ $O/write_movie_volume.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/
 ##
 ## specfem3D - non-dependent on values from mesher here
 ##
+$O/assemble_MPI_central_cube_block.o: ${SETUP}/constants.h $S/assemble_MPI_central_cube_block.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube_block.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube_block.f90
+
 $O/assemble_MPI_scalar.o: ${SETUP}/constants.h $S/assemble_MPI_scalar.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar.o ${FCFLAGS_f90} $S/assemble_MPI_scalar.f90
 
 $O/assemble_MPI_scalar_block.o: ${SETUP}/constants.h $S/assemble_MPI_scalar_block.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar_block.o ${FCFLAGS_f90} $S/assemble_MPI_scalar_block.f90
 
-$O/assemble_MPI_vector.o: ${SETUP}/constants.h $S/assemble_MPI_vector.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector.o ${FCFLAGS_f90} $S/assemble_MPI_vector.f90
-
-$O/assemble_MPI_vector_block.o: ${SETUP}/constants.h $S/assemble_MPI_vector_block.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector_block.o ${FCFLAGS_f90} $S/assemble_MPI_vector_block.f90
+$O/fix_non_blocking_flags.o: ${SETUP}/constants.h $S/fix_non_blocking_flags.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/fix_non_blocking_flags.o ${FCFLAGS_f90} $S/fix_non_blocking_flags.f90
 
 ###
 ### specfem3D - regular MPI compilation options here
