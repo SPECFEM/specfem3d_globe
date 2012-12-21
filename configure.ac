@@ -62,7 +62,6 @@ AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
 
 AC_PROG_CC
-AC_PROG_RANLIB
 
 AC_LANG_PUSH(C)
 AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
@@ -75,8 +74,6 @@ AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
 AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
-AC_ARG_VAR(AR, [The ar archiver])
-AC_ARG_VAR(ARFLAGS, [Flags to the ar archiver])
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
@@ -98,16 +95,21 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 
 # Checks for typedefs, structures, and compiler characteristics.
 
+dnl Fix this when cit_fortran.m4 is updated.
+FC_MODEXT=mod
+dnl CIT_FC_MODULE_EXTENSION
+dnl CIT_FC_MODULE_FLAG
+dnl CIT_FC_MODULE_OUTPUT_FLAG
+dnl 
+dnl FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+AC_SUBST([FC_MODEXT])
+
 
 # Checks for library functions.
 
 
 AC_CONFIG_FILES([
     Makefile
-    src/auxiliaries/Makefile
-    src/meshfem3D/Makefile
-    src/specfem3D/Makefile
-    src/create_header_file/Makefile
     setup/constants.h
     setup/precision.h
 ])
@@ -134,6 +136,9 @@ AC_CONFIG_LINKS([
     DATA/topo_bathy:DATA/topo_bathy
     DATA/Zhao_JP_model:DATA/Zhao_JP_model
 ])
+AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
+AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
+AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
 
 AC_OUTPUT
 
