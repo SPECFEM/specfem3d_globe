@@ -25,78 +25,15 @@
 #
 #=====================================================================
 
-# @configure_input@
-
-FC = @FC@
-FCFLAGS = #@FCFLAGS@
-MPIFC = @MPIFC@
-MPILIBS = @MPILIBS@
-FLAGS_CHECK = @FLAGS_CHECK@
-FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
-FCFLAGS_f90 = @FCFLAGS_f90@ -I${SETUP}
-
-FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
-FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
-MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
-MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK)
-
-CC = @CC@
-CFLAGS = @CFLAGS@
-CPPFLAGS = -I${SETUP} @CPPFLAGS@
-
-#AR = ar
-#ARFLAGS = cru
-#RANLIB = ranlib
-AR = @AR@
-ARFLAGS = @ARFLAGS@
-RANLIB = @RANLIB@
-
-## compilation directories
-# B : build directory
-B = @top_builddir@
-# E : executables directory
-E = ${B}/bin
-# O : objects directory
-O = ${B}/obj
-# S : source file directory
-S = @srcdir@
-# S_TOP : source file root directory
-S_TOP = @top_srcdir@
-# SHARED : shared directory
-SHARED = ${S_TOP}/src/shared
-## setup file directory
-SETUP = ${B}/setup
-## output file directory
-OUTPUT = ${B}/OUTPUT_FILES
-
 #######################################
 
-libspecfem_a_OBJECTS_COMMON = \
-	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
-	$O/calendar.o \
-	$O/count_number_of_sources.o \
-	$O/create_name_database.o \
-	$O/force_ftz.o \
-	$O/get_model_parameters.o \
-	$O/get_value_parameters.o \
-	$O/gll_library.o \
-	$O/hex_nodes.o \
-	$O/intgrl.o \
-	$O/lagrange_poly.o \
-	$O/make_ellipticity.o \
-	$O/make_gravity.o \
-	$O/param_reader.o \
-	$O/read_compute_parameters.o \
-	$O/read_parameter_file.o \
-	$O/read_value_parameters.o \
-	$O/reduce.o \
-	$O/rthetaphi_xyz.o \
-	$O/spline_routines.o \
+meshfem3D_TARGETS = \
+	$E/xmeshfem3D \
 	$(EMPTY_MACRO)
 
-
-libspecfem_a_OBJECTS_MESHER = \
+meshfem3D_OBJECTS = \
+	$O/meshfem3D.o \
+	$O/meshfem3D_models.o \
 	$O/add_missing_nodes.o \
 	$O/add_topography.o \
 	$O/add_topography_410_650.o \
@@ -113,7 +50,6 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/get_perm_color.o \
 	$O/create_regular_elements.o \
 	$O/define_superbrick.o \
-	$O/euler_angles.o \
 	$O/get_absorb.o \
 	$O/get_ellipticity.o \
 	$O/get_global.o \
@@ -126,7 +62,6 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
 	$O/lgndr.o \
-	$O/memory_eval.o \
 	$O/model_sea99_s.o \
 	$O/model_1066a.o \
 	$O/model_ak135.o \
@@ -145,16 +80,13 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_jp3d.o \
 	$O/model_ppm.o \
 	$O/model_gapp2.o \
-	$O/model_prem.o \
 	$O/model_1dref.o \
 	$O/model_s20rts.o \
 	$O/model_s40rts.o \
 	$O/model_s362ani.o \
 	$O/model_sea1d.o \
-	$O/model_topo_bathy.o \
 	$O/moho_stretching.o \
 	$O/save_arrays_solver.o \
-	$O/save_header_file.o \
 	$O/sort_array_coordinates.o \
 	$O/stretching_function.o \
 	$O/write_AVS_DX_global_chunks_data.o \
@@ -163,29 +95,43 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/write_AVS_DX_surface_data.o \
 	$(EMPTY_MACRO)
 
-
-LIBSPECFEM_MESHER = $O/libspecfem_mesher.a
-
-#######################################
-
-####
-#### targets
-####
-
-# default targets
-DEFAULT = \
-	xmeshfem3D \
+# FIXME: When cit_fortran.m4 is patched, these files will go in $O:
+meshfem3D_MODULES = \
+	$B/gapp2_mantle_model_constants.$(FC_MODEXT) \
+	$B/meshfem3d_models_par.$(FC_MODEXT) \
+	$B/module_ppm.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
-default: $(DEFAULT)
-
-all: clean default
-
-backup:
-	mkdir -p bak
-	cp *f90 *h Makefile bak
-
-bak: backup
+# These files come from the shared directory
+meshfem3D_SHARED_OBJECTS = \
+	$O/auto_ner.o \
+	$O/broadcast_compute_parameters.o \
+	$O/calendar.o \
+	$O/count_number_of_sources.o \
+	$O/create_name_database.o \
+	$O/euler_angles.o \
+	$O/exit_mpi.o \
+	$O/force_ftz.o \
+	$O/get_model_parameters.o \
+	$O/get_value_parameters.o \
+	$O/gll_library.o \
+	$O/hex_nodes.o \
+	$O/intgrl.o \
+	$O/lagrange_poly.o \
+	$O/make_ellipticity.o \
+	$O/make_gravity.o \
+	$O/memory_eval.o \
+	$O/model_prem.o \
+	$O/model_topo_bathy.o \
+	$O/param_reader.o \
+	$O/read_compute_parameters.o \
+	$O/read_parameter_file.o \
+	$O/read_value_parameters.o \
+	$O/reduce.o \
+	$O/rthetaphi_xyz.o \
+	$O/save_header_file.o \
+	$O/spline_routines.o \
+	$(EMPTY_MACRO)
 
 #######################################
 
@@ -193,126 +139,19 @@ bak: backup
 #### rules for executables
 ####
 
-# rules for the main programs
-XMESHFEM_OBJECTS = $O/meshfem3D_models.o $O/meshfem3D.o $O/exit_mpi.o $(LIBSPECFEM_MESHER)
-
-xmeshfem3D: $(XMESHFEM_OBJECTS)
+${E}/xmeshfem3D: $(meshfem3D_OBJECTS) $(meshfem3D_SHARED_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
-
-
-clean:
-	rm -f $O/* *.o work.pc* *.mod ${E}/xmeshfem3D  \
-      PI*
+	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(meshfem3D_OBJECTS) $(meshfem3D_SHARED_OBJECTS) $(MPILIBS)
 
 #######################################
 
-###
-### rule for the archive library
-###
-
-$O/libspecfem_mesher.a: $(libspecfem_a_OBJECTS_MESHER) $(libspecfem_a_OBJECTS_COMMON)
-	-rm -f $O/libspecfem_mesher.a
-	$(AR) $(ARFLAGS) $O/libspecfem_mesher.a $(libspecfem_a_OBJECTS_MESHER) $(libspecfem_a_OBJECTS_COMMON)
-	$(RANLIB) $O/libspecfem_mesher.a
-
-
-#######################################
+## compilation directories
+S := ${S_TOP}/src/meshfem3D
+$(meshfem3D_OBJECTS): S = ${S_TOP}/src/meshfem3D
 
 ####
 #### rule for each .o file below
 ####
-
-##
-## shared
-##
-$O/auto_ner.o: ${SETUP}/constants.h ${SHARED}/auto_ner.f90
-	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} ${SHARED}/auto_ner.f90
-
-$O/broadcast_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/broadcast_compute_parameters.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/broadcast_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/broadcast_compute_parameters.f90
-
-$O/calendar.o: ${SHARED}/calendar.f90
-	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} ${SHARED}/calendar.f90
-
-$O/count_number_of_sources.o: ${SETUP}/constants.h ${SHARED}/count_number_of_sources.f90
-	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} ${SHARED}/count_number_of_sources.f90
-
-$O/create_name_database.o: ${SETUP}/constants.h ${SHARED}/create_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} ${SHARED}/create_name_database.f90
-
-$O/create_serial_name_database.o: ${SETUP}/constants.h ${SHARED}/create_serial_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_serial_name_database.o ${FCFLAGS_f90} ${SHARED}/create_serial_name_database.f90
-
-$O/euler_angles.o: ${SETUP}/constants.h ${SHARED}/euler_angles.f90
-	${FCCOMPILE_CHECK} -c -o $O/euler_angles.o ${FCFLAGS_f90} ${SHARED}/euler_angles.f90
-
-$O/exit_mpi.o: ${SETUP}/constants.h ${SHARED}/exit_mpi.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/exit_mpi.o ${FCFLAGS_f90} ${SHARED}/exit_mpi.f90
-
-$O/get_model_parameters.o: ${SETUP}/constants.h ${SHARED}/get_model_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_model_parameters.o ${FCFLAGS_f90} ${SHARED}/get_model_parameters.f90
-
-$O/get_value_parameters.o: ${SETUP}/constants.h ${SHARED}/get_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_value_parameters.o ${FCFLAGS_f90} ${SHARED}/get_value_parameters.f90
-
-$O/gll_library.o: ${SETUP}/constants.h ${SHARED}/gll_library.f90
-	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} ${SHARED}/gll_library.f90
-
-$O/hex_nodes.o: ${SETUP}/constants.h ${SHARED}/hex_nodes.f90
-	${FCCOMPILE_CHECK} -c -o $O/hex_nodes.o ${FCFLAGS_f90} ${SHARED}/hex_nodes.f90
-
-$O/intgrl.o: ${SETUP}/constants.h ${SHARED}/intgrl.f90
-	${FCCOMPILE_CHECK} -c -o $O/intgrl.o ${FCFLAGS_f90} ${SHARED}/intgrl.f90
-
-$O/lagrange_poly.o: ${SETUP}/constants.h ${SHARED}/lagrange_poly.f90
-	${FCCOMPILE_CHECK} -c -o $O/lagrange_poly.o ${FCFLAGS_f90} ${SHARED}/lagrange_poly.f90
-
-$O/make_ellipticity.o: ${SETUP}/constants.h ${SHARED}/make_ellipticity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_ellipticity.o ${FCFLAGS_f90} ${SHARED}/make_ellipticity.f90
-
-$O/make_gravity.o: ${SETUP}/constants.h ${SHARED}/make_gravity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_gravity.o ${FCFLAGS_f90} ${SHARED}/make_gravity.f90
-
-$O/memory_eval.o: ${SETUP}/constants.h ${SHARED}/memory_eval.f90
-	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} ${SHARED}/memory_eval.f90
-
-$O/model_prem.o: ${SETUP}/constants.h ${SHARED}/model_prem.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_prem.o ${FCFLAGS_f90} ${SHARED}/model_prem.f90
-
-$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
-
-$O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
-
-$O/read_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/read_compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/read_compute_parameters.f90
-
-$O/read_parameter_file.o: ${SETUP}/constants.h ${SHARED}/read_parameter_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} ${SHARED}/read_parameter_file.f90
-
-$O/read_value_parameters.o: ${SETUP}/constants.h ${SHARED}/read_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_value_parameters.o ${FCFLAGS_f90} ${SHARED}/read_value_parameters.f90
-
-$O/reduce.o: ${SETUP}/constants.h ${SHARED}/reduce.f90
-	${FCCOMPILE_CHECK} -c -o $O/reduce.o ${FCFLAGS_f90} ${SHARED}/reduce.f90
-
-$O/rthetaphi_xyz.o: ${SETUP}/constants.h ${SHARED}/rthetaphi_xyz.f90
-	${FCCOMPILE_CHECK} -c -o $O/rthetaphi_xyz.o ${FCFLAGS_f90} ${SHARED}/rthetaphi_xyz.f90
-
-$O/save_header_file.o: ${SETUP}/constants.h ${SHARED}/save_header_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} ${SHARED}/save_header_file.f90
-
-$O/spline_routines.o: ${SETUP}/constants.h ${SHARED}/spline_routines.f90
-	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} ${SHARED}/spline_routines.f90
-
-
-##
-## shared objects with mpi compilation
-##
-$O/model_topo_bathy.o: ${SETUP}/constants.h ${SHARED}/model_topo_bathy.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_topo_bathy.o ${FCFLAGS_f90} ${SHARED}/model_topo_bathy.f90
 
 ###
 ### meshfem3D objects
@@ -339,25 +178,25 @@ $O/calc_jacobian.o: ${SETUP}/constants.h $S/calc_jacobian.f90
 $O/compute_coordinates_grid.o: ${SETUP}/constants.h $S/compute_coordinates_grid.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_coordinates_grid.o ${FCFLAGS_f90} $S/compute_coordinates_grid.f90
 
-$O/compute_element_properties.o: ${SETUP}/constants.h $S/compute_element_properties.f90
+$O/compute_element_properties.o: ${SETUP}/constants.h $S/compute_element_properties.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/compute_element_properties.o ${FCFLAGS_f90} $S/compute_element_properties.f90
 
-$O/create_central_cube.o: ${SETUP}/constants.h $S/create_central_cube.f90
+$O/create_central_cube.o: ${SETUP}/constants.h $S/create_central_cube.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/create_central_cube.o ${FCFLAGS_f90} $S/create_central_cube.f90
 
-$O/create_doubling_elements.o: ${SETUP}/constants.h $S/create_doubling_elements.f90
+$O/create_doubling_elements.o: ${SETUP}/constants.h $S/create_doubling_elements.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/create_doubling_elements.o ${FCFLAGS_f90} $S/create_doubling_elements.f90
 
-$O/create_mass_matrices.o: ${SETUP}/constants.h $S/create_mass_matrices.f90
+$O/create_mass_matrices.o: ${SETUP}/constants.h $S/create_mass_matrices.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/create_mass_matrices.o ${FCFLAGS_f90} $S/create_mass_matrices.f90
 
-$O/create_regions_mesh.o: ${SETUP}/constants.h $S/create_regions_mesh.F90
+$O/create_regions_mesh.o: ${SETUP}/constants.h $S/create_regions_mesh.F90 $O/meshfem3D_models.o
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.F90
 
 $O/get_perm_color.o: ${SETUP}/constants.h $S/get_perm_color.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_perm_color.o ${FCFLAGS_f90} $S/get_perm_color.f90
 
-$O/create_regular_elements.o: ${SETUP}/constants.h $S/create_regular_elements.f90
+$O/create_regular_elements.o: ${SETUP}/constants.h $S/create_regular_elements.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/create_regular_elements.o ${FCFLAGS_f90} $S/create_regular_elements.f90
 
 $O/define_superbrick.o: ${SETUP}/constants.h $S/define_superbrick.f90
@@ -378,7 +217,7 @@ $O/get_jacobian_boundaries.o: ${SETUP}/constants.h $S/get_jacobian_boundaries.f9
 $O/get_jacobian_discontinuities.o: ${SETUP}/constants.h $S/get_jacobian_discontinuities.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_discontinuities.o ${FCFLAGS_f90} $S/get_jacobian_discontinuities.f90
 
-$O/get_model.o: ${SETUP}/constants.h $S/get_model.f90
+$O/get_model.o: ${SETUP}/constants.h $S/get_model.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/get_model.o ${FCFLAGS_f90} $S/get_model.f90
 
 $O/get_MPI_1D_buffers.o: ${SETUP}/constants.h $S/get_MPI_1D_buffers.f90
@@ -420,7 +259,7 @@ $O/model_jp1d.o: ${SETUP}/constants.h $S/model_jp1d.f90
 $O/model_sea1d.o: ${SETUP}/constants.h $S/model_sea1d.f90
 	${FCCOMPILE_CHECK} -c -o $O/model_sea1d.o ${FCFLAGS_f90} $S/model_sea1d.f90
 
-$O/moho_stretching.o: ${SETUP}/constants.h $S/moho_stretching.f90
+$O/moho_stretching.o: ${SETUP}/constants.h $S/moho_stretching.f90 $O/meshfem3D_models.o
 	${FCCOMPILE_CHECK} -c -o $O/moho_stretching.o ${FCFLAGS_f90} $S/moho_stretching.f90
 
 $O/save_arrays_solver.o: ${SETUP}/constants.h $S/save_arrays_solver.f90
@@ -450,7 +289,7 @@ $O/write_AVS_DX_global_data.o: ${SETUP}/constants.h $S/write_AVS_DX_global_data.
 $O/create_chunk_buffers.o: ${SETUP}/constants.h $S/create_chunk_buffers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_chunk_buffers.o ${FCFLAGS_f90} $S/create_chunk_buffers.f90
 
-$O/meshfem3D.o: ${SETUP}/constants.h $S/meshfem3D.f90
+$O/meshfem3D.o: ${SETUP}/constants.h $S/meshfem3D.f90 $O/meshfem3D_models.o
 	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D.o ${FCFLAGS_f90} $S/meshfem3D.f90
 
 $O/meshfem3D_models.o: ${SETUP}/constants.h $S/meshfem3D_models.f90
@@ -477,7 +316,7 @@ $O/model_epcrust.o: ${SETUP}/constants.h $S/model_epcrust.f90
 $O/model_crustmaps.o: ${SETUP}/constants.h $S/model_crustmaps.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_crustmaps.o ${FCFLAGS_f90} $S/model_crustmaps.f90
 
-$O/model_gll.o: ${SETUP}/constants.h $S/model_gll.f90
+$O/model_gll.o: ${SETUP}/constants.h $S/model_gll.f90 $O/meshfem3D_models.o
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_gll.o ${FCFLAGS_f90} $S/model_gll.f90
 
 $O/model_heterogen_mantle.o: ${SETUP}/constants.h $S/model_heterogen_mantle.f90
@@ -503,5 +342,4 @@ $O/model_s362ani.o: ${SETUP}/constants.h $S/model_s362ani.f90
 
 $O/model_sea99_s.o: ${SETUP}/constants.h $S/model_sea99_s.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_sea99_s.o ${FCFLAGS_f90} $S/model_sea99_s.f90
-
 

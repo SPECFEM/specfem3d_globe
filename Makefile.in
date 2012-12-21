@@ -27,14 +27,56 @@
 
 # @configure_input@
 
+#######################################
+
+FC = @FC@
+FCFLAGS = #@FCFLAGS@
+MPIFC = @MPIFC@
+MPILIBS = @MPILIBS@
+FLAGS_CHECK = @FLAGS_CHECK@
+FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
+FCFLAGS_f90 = @FCFLAGS_f90@ -I@top_builddir@ -I${SETUP}
+FC_MODEXT = @FC_MODEXT@
+ 
+FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
+FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
+MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
+MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK)
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+CPPFLAGS = -I${SETUP} @CPPFLAGS@
+
+## compilation directories
+# B : build directory
+B = @top_builddir@
+# E : executables directory
+E = $B/bin
+# O : objects directory
+O = $B/obj
+# S_TOP : source file root directory
+S_TOP = @top_srcdir@
+# setup file directory
+SETUP = $B/setup
+# output file directory
+OUTPUT = $B/OUTPUT_FILES
+
 ####
 #### targets
 ####
 
+# code subdirectories
+SUBDIRS = \
+	shared \
+	create_header_file \
+	meshfem3D \
+	specfem3D \
+	auxiliaries
+
 # default targets
 DEFAULT = \
-	xmeshfem3D \
 	xcreate_header_file \
+	xmeshfem3D \
 	xspecfem3D \
 	xcheck_buffers_1D \
 	xcheck_buffers_2D \
@@ -46,80 +88,20 @@ DEFAULT = \
 	xcreate_movie_GMT_global \
 	$(EMPTY_MACRO)
 
-default: $(DEFAULT)
-
 all: default
 
-required: bin obj
+default: $(DEFAULT)
 
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
 
-bak: backup
-
-mesh : meshfem3D
-spec : specfem3D
-
-specfem3D: xspecfem3D
-meshfem3D: xmeshfem3D
-
-create_header_file: xcreate_header_file
-combine_vol_data: xcombine_vol_data
-combine_surf_data: xcombine_surf_data
-convolve_source_timefunction: xconvolve_source_timefunction
-create_movie_AVS_DX: xcreate_movie_AVS_DX
-create_movie_GMT_global: xcreate_movie_GMT_global
-
-bin:
-	mkdir -p bin
-
-obj:
-	mkdir -p obj
-
-
-xmeshfem3D:  required
-	     (cd src/meshfem3D; make)
-
-xspecfem3D:  required
-	     (cd src/specfem3D; make)
-
-xcreate_header_file:  required
-	     (cd src/create_header_file; make)
-
-xcheck_buffers_1D: required
-	(cd src/auxiliaries ; make xcheck_buffers_1D)
-
-xcheck_buffers_2D: required
-	(cd src/auxiliaries ; make xcheck_buffers_2D)
-
-xcheck_buffers_corners_chunks: required
-	(cd src/auxiliaries ; make xcheck_buffers_corners_chunks)
-
-xcheck_buffers_faces_chunks: required
-	(cd src/auxiliaries ; make xcheck_buffers_faces_chunks)
-
-xcombine_AVS_DX: required
-	(cd src/auxiliaries ; make xcombine_AVS_DX)
-
-xcombine_vol_data: required
-	(cd src/auxiliaries ; make xcombine_vol_data)
-
-xcombine_surf_data: required
-	(cd src/auxiliaries ; make xcombine_surf_data)
-
-xconvolve_source_timefunction: required
-	(cd src/auxiliaries ; make xconvolve_source_timefunction)
-
-xcreate_movie_AVS_DX: required
-	(cd src/auxiliaries ; make xcreate_movie_AVS_DX)
-
-xcreate_movie_GMT_global: required
-	(cd src/auxiliaries ; make xcreate_movie_GMT_global)
-
-
-clean: required
-	(rm -rf bin lib obj src/meshfem3D/*.mod src/specfem3D/*.mod)
-
+ifdef CLEAN
+clean:
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
+else
+clean:
+	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
+endif
 
 help:
 	@echo "usage: make [executable]"
@@ -138,4 +120,36 @@ help:
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
 	@echo ""
+
+.PHONY: all default backup clean help
+
+# Get dependencies and rules for building stuff
+include $(patsubst %, ${S_TOP}/src/%/rules.mk, $(SUBDIRS))
+
+##
+## Shortcuts
+##
+
+# Shortcut for: <prog>/<xprog> -> bin/<xprog>
+define target_shortcut
+$(patsubst $E/%, %, $(1)): $(1)
+.PHONY: $(patsubst $E/%, %, $(1))
+$(patsubst $E/x%, %, $(1)): $(1)
+.PHONY: $(patsubst $E/x%, %, $(1))
+endef
+
+# Shortcut for: dir -> src/dir/<targets in here>
+define shortcut
+$(1): $($(1)_TARGETS)
+.PHONY: $(1)
+$$(foreach target, $$(filter $E/%,$$($(1)_TARGETS)), $$(eval $$(call target_shortcut,$$(target))))
+endef
+
+$(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
+
+# Other old shortcuts
+bak: backup
+mesh: $E/xmeshfem3D
+spec: $E/xspecfem3D
+.PHONY: bak mesh spec
 

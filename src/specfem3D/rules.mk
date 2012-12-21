@@ -25,103 +25,38 @@
 #
 #=====================================================================
 
-# @configure_input@
-
-FC = @FC@
-FCFLAGS = #@FCFLAGS@
-MPIFC = @MPIFC@
-MPILIBS = @MPILIBS@
-FLAGS_CHECK = @FLAGS_CHECK@
-FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
-FCFLAGS_f90 = @FCFLAGS_f90@ -I${SETUP} -I${B}
-
-FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
-FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
-MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
-MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK)
-
-CC = @CC@
-CFLAGS = @CFLAGS@
-CPPFLAGS = -I${SETUP} @CPPFLAGS@
-
-#AR = ar
-#ARFLAGS = cru
-#RANLIB = ranlib
-AR = @AR@
-ARFLAGS = @ARFLAGS@
-RANLIB = @RANLIB@
-
-## compilation directories
-# B : build directory
-B = @top_builddir@
-# E : executables directory
-E = ${B}/bin
-# O : objects directory
-O = ${B}/obj
-# S : source file directory
-S = @srcdir@
-# S_TOP : source file root directory
-S_TOP = @top_srcdir@
-# SHARED : shared directory
-SHARED = ${S_TOP}/src/shared
-## setup file directory
-SETUP = ${B}/setup
-## output file directory
-OUTPUT = ${B}/OUTPUT_FILES
-
 #######################################
 
-libspecfem_a_OBJECTS_SOLVER = \
+specfem3D_TARGETS = \
+	$E/xspecfem3D \
+	$(EMPTY_MACRO)
+
+specfem3D_OBJECTS = \
 	$O/assemble_MPI_central_cube.o \
 	$O/assemble_MPI_scalar.o \
 	$O/assemble_MPI_vector.o \
 	$O/assemble_MPI_central_cube_block.o \
 	$O/assemble_MPI_scalar_block.o \
 	$O/assemble_MPI_vector_block.o \
-	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
-	$O/calendar.o \
 	$O/comp_source_spectrum.o \
 	$O/comp_source_time_function.o \
 	$O/compute_adj_source_frechet.o \
 	$O/compute_arrays_source.o \
 	$O/convert_time.o \
 	$O/create_central_cube_buffers.o \
-	$O/create_name_database.o \
-	$O/count_number_of_sources.o \
 	$O/define_derivation_matrices.o \
-	$O/euler_angles.o \
-	$O/force_ftz.o \
 	$O/get_attenuation.o \
 	$O/get_backazimuth.o \
 	$O/get_cmt.o \
 	$O/get_event_info.o \
-	$O/get_model_parameters.o \
-	$O/get_value_parameters.o \
-	$O/gll_library.o \
-	$O/hex_nodes.o \
-	$O/intgrl.o \
-	$O/lagrange_poly.o \
 	$O/locate_receivers.o \
 	$O/locate_regular_points.o \
 	$O/locate_sources.o \
-	$O/make_ellipticity.o \
-	$O/make_gravity.o \
-	$O/model_prem.o \
-	$O/model_topo_bathy.o \
 	$O/multiply_arrays_source.o \
-	$O/param_reader.o \
-	$O/spline_routines.o \
 	$O/netlib_specfun_erf.o \
 	$O/read_arrays_buffers_solver.o \
-	$O/read_compute_parameters.o \
-	$O/read_parameter_file.o \
-	$O/read_value_parameters.o \
 	$O/recompute_jacobian.o \
-	$O/reduce.o \
-	$O/rthetaphi_xyz.o \
 	$O/save_regular_kernels.o \
-	$O/write_c_binary.o \
 	$O/write_seismograms.o \
 	$O/write_output_ASCII.o \
 	$O/write_output_SAC.o \
@@ -129,8 +64,7 @@ libspecfem_a_OBJECTS_SOLVER = \
 
 # solver objects with statically allocated arrays; dependent upon
 # values_from_mesher.h
-
-SOLVER_ARRAY_OBJECTS = \
+specfem3D_OBJECTS += \
 	$O/check_simulation_stability.o \
 	$O/compute_add_sources.o \
 	$O/compute_boundary_kernel.o \
@@ -148,6 +82,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_stacey_outer_core.o \
 	$O/fix_non_blocking_flags.o \
 	$O/initialize_simulation.o \
+	$O/noise_tomography.o \
 	$O/prepare_timerun.o \
 	$O/read_arrays_solver.o \
 	$O/read_forward_arrays.o \
@@ -158,32 +93,38 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/specfem3D.o \
 	$O/write_movie_volume.o \
 	$O/write_movie_surface.o \
-	$O/noise_tomography.o \
 	$(EMPTY_MACRO)
 
-
-LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
-
-#######################################
-
-####
-#### targets
-####
-
-# default targets
-DEFAULT = \
-	xspecfem3D \
+# These files come from the shared directory
+specfem3D_SHARED_OBJECTS = \
+	$O/auto_ner.o \
+	$O/broadcast_compute_parameters.o \
+	$O/calendar.o \
+	$O/count_number_of_sources.o \
+	$O/create_name_database.o \
+	$O/euler_angles.o \
+	$O/exit_mpi.o \
+	$O/force_ftz.o \
+	$O/get_model_parameters.o \
+	$O/get_value_parameters.o \
+	$O/gll_library.o \
+	$O/hex_nodes.o \
+	$O/intgrl.o \
+	$O/lagrange_poly.o \
+	$O/make_ellipticity.o \
+	$O/make_gravity.o \
+	$O/model_prem.o \
+	$O/model_topo_bathy.o \
+	$O/param_reader.o \
+	$O/read_compute_parameters.o \
+	$O/read_parameter_file.o \
+	$O/read_value_parameters.o \
+	$O/reduce.o \
+	$O/rthetaphi_xyz.o \
+	$O/spline_routines.o \
+	$O/write_c_binary.o \
 	$(EMPTY_MACRO)
 
-default: $(DEFAULT)
-
-all: clean default
-
-backup:
-	mkdir -p bak
-	cp *f90 *h Makefile bak
-
-bak: backup
 
 #######################################
 
@@ -191,136 +132,21 @@ bak: backup
 #### rules for executables
 ####
 
-# solver also depends on values from mesher
-XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM_SOLVER)
-
-xspecfem3D: $(XSPECFEM_OBJECTS)
+${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
-#	${MPIFCCOMPILE_NO_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
-	${MPIFCCOMPILE_NO_CHECK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
-
-reqheader:
-	(cd ../create_header_file; make)
-
-
-clean:
-	rm -f $O/* *.o work.pc* *.mod ${E}/xspecfem3D  \
-      PI*
+#	${MPIFCCOMPILE_NO_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(MPILIBS)
+	${MPIFCCOMPILE_NO_CHECK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(MPILIBS)
 
 #######################################
 
-###
-### rule for the archive library
-###
-
-$O/libspecfem_solver.a: $(libspecfem_a_OBJECTS_SOLVER)
-	-rm -f $O/libspecfem_solver.a
-	$(AR) $(ARFLAGS) $O/libspecfem_solver.a $(libspecfem_a_OBJECTS_SOLVER)
-	$(RANLIB) $O/libspecfem_solver.a
-
-
-#######################################
+## compilation directories
+S := ${S_TOP}/src/specfem3D
+$(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 
 ####
 #### rule for each .o file below
 ####
-
-##
-## shared
-##
-$O/auto_ner.o: ${SETUP}/constants.h ${SHARED}/auto_ner.f90
-	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} ${SHARED}/auto_ner.f90
-
-$O/broadcast_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/broadcast_compute_parameters.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/broadcast_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/broadcast_compute_parameters.f90
-
-$O/calendar.o: ${SHARED}/calendar.f90
-	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} ${SHARED}/calendar.f90
-
-$O/count_number_of_sources.o: ${SETUP}/constants.h ${SHARED}/count_number_of_sources.f90
-	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} ${SHARED}/count_number_of_sources.f90
-
-$O/create_name_database.o: ${SETUP}/constants.h ${SHARED}/create_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} ${SHARED}/create_name_database.f90
-
-$O/create_serial_name_database.o: ${SETUP}/constants.h ${SHARED}/create_serial_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_serial_name_database.o ${FCFLAGS_f90} ${SHARED}/create_serial_name_database.f90
-
-$O/euler_angles.o: ${SETUP}/constants.h ${SHARED}/euler_angles.f90
-	${FCCOMPILE_CHECK} -c -o $O/euler_angles.o ${FCFLAGS_f90} ${SHARED}/euler_angles.f90
-
-$O/get_model_parameters.o: ${SETUP}/constants.h ${SHARED}/get_model_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_model_parameters.o ${FCFLAGS_f90} ${SHARED}/get_model_parameters.f90
-
-$O/get_value_parameters.o: ${SETUP}/constants.h ${SHARED}/get_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_value_parameters.o ${FCFLAGS_f90} ${SHARED}/get_value_parameters.f90
-
-$O/gll_library.o: ${SETUP}/constants.h ${SHARED}/gll_library.f90
-	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} ${SHARED}/gll_library.f90
-
-$O/hex_nodes.o: ${SETUP}/constants.h ${SHARED}/hex_nodes.f90
-	${FCCOMPILE_CHECK} -c -o $O/hex_nodes.o ${FCFLAGS_f90} ${SHARED}/hex_nodes.f90
-
-$O/intgrl.o: ${SETUP}/constants.h ${SHARED}/intgrl.f90
-	${FCCOMPILE_CHECK} -c -o $O/intgrl.o ${FCFLAGS_f90} ${SHARED}/intgrl.f90
-
-$O/lagrange_poly.o: ${SETUP}/constants.h ${SHARED}/lagrange_poly.f90
-	${FCCOMPILE_CHECK} -c -o $O/lagrange_poly.o ${FCFLAGS_f90} ${SHARED}/lagrange_poly.f90
-
-$O/make_ellipticity.o: ${SETUP}/constants.h ${SHARED}/make_ellipticity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_ellipticity.o ${FCFLAGS_f90} ${SHARED}/make_ellipticity.f90
-
-$O/make_gravity.o: ${SETUP}/constants.h ${SHARED}/make_gravity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_gravity.o ${FCFLAGS_f90} ${SHARED}/make_gravity.f90
-
-$O/memory_eval.o: ${SETUP}/constants.h ${SHARED}/memory_eval.f90
-	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} ${SHARED}/memory_eval.f90
-
-$O/model_prem.o: ${SETUP}/constants.h ${SHARED}/model_prem.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_prem.o ${FCFLAGS_f90} ${SHARED}/model_prem.f90
-
-### C compilation
-$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
-
-$O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
-
-$O/read_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/read_compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/read_compute_parameters.f90
-
-$O/read_parameter_file.o: ${SETUP}/constants.h ${SHARED}/read_parameter_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} ${SHARED}/read_parameter_file.f90
-
-$O/read_value_parameters.o: ${SETUP}/constants.h ${SHARED}/read_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_value_parameters.o ${FCFLAGS_f90} ${SHARED}/read_value_parameters.f90
-
-$O/reduce.o: ${SETUP}/constants.h ${SHARED}/reduce.f90
-	${FCCOMPILE_CHECK} -c -o $O/reduce.o ${FCFLAGS_f90} ${SHARED}/reduce.f90
-
-$O/rthetaphi_xyz.o: ${SETUP}/constants.h ${SHARED}/rthetaphi_xyz.f90
-	${FCCOMPILE_CHECK} -c -o $O/rthetaphi_xyz.o ${FCFLAGS_f90} ${SHARED}/rthetaphi_xyz.f90
-
-$O/save_header_file.o: ${SETUP}/constants.h ${SHARED}/save_header_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} ${SHARED}/save_header_file.f90
-
-$O/spline_routines.o: ${SETUP}/constants.h ${SHARED}/spline_routines.f90
-	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} ${SHARED}/spline_routines.f90
-
-### C compilation
-$O/write_c_binary.o: ${SHARED}/write_c_binary.c ${SETUP}/config.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $O/write_c_binary.o ${SHARED}/write_c_binary.c
-
-##
-## shared objects with mpi compilation
-##
-$O/exit_mpi.o: ${SETUP}/constants.h ${SHARED}/exit_mpi.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/exit_mpi.o ${FCFLAGS_f90} ${SHARED}/exit_mpi.f90
-
-$O/model_topo_bathy.o: ${SETUP}/constants.h ${SHARED}/model_topo_bathy.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_topo_bathy.o ${FCFLAGS_f90} ${SHARED}/model_topo_bathy.f90
-
 
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here
@@ -462,7 +288,6 @@ $O/write_movie_surface.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S
 $O/write_movie_volume.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/write_movie_volume.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/write_movie_volume.o ${FCFLAGS_f90} $S/write_movie_volume.f90
 
-
 ##
 ## specfem3D - non-dependent on values from mesher here
 ##
@@ -507,14 +332,4 @@ $O/write_output_ASCII.o: ${SETUP}/constants.h $S/write_output_ASCII.f90
 
 $O/write_output_SAC.o: ${SETUP}/constants.h $S/write_output_SAC.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/write_output_SAC.o ${FCFLAGS_f90} $S/write_output_SAC.f90
-
-
-#######################################
-
-
-###
-### rule for the header file
-###
-${OUTPUT}/values_from_mesher.h: reqheader
-	(mkdir -p ${OUTPUT}; cd ${B}/; ./bin/xcreate_header_file)
 
