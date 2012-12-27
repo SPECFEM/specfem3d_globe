@@ -103,14 +103,13 @@
 
   ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-
-  ! for bottom elements in contact with central cube from the slices side
+    ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
 
       ispec = ibelm_bottom_inner_core(ispec2D)
 
-  ! only for DOFs exactly on surface of central cube (bottom of these elements)
+      ! only for DOFs exactly on surface of central cube (bottom of these elements)
       k = 1
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -120,12 +119,12 @@
       enddo
     enddo
 
-  ! send buffer to central cube
+    ! send buffer to central cube
     receiver = receiver_cube_from_slices
     call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
                  MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
 
-    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
       call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
@@ -133,7 +132,6 @@
                    addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
                    itag,MPI_COMM_WORLD,ier)
     endif
-
 
   endif  ! end sending info to central cube
 
@@ -268,14 +266,13 @@
 
   ! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-
-  ! receive buffers from slices
+    ! receive buffers from slices
     sender = receiver_cube_from_slices
     call MPI_RECV(buffer_slices, &
                 ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
                 itag,MPI_COMM_WORLD,msg_status,ier)
 
-    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
       call MPI_RECV(buffer_slices2, &
@@ -286,20 +283,19 @@
       buffer_slices = buffer_slices + buffer_slices2
     endif
 
-
-  ! for bottom elements in contact with central cube from the slices side
+    ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
 
       ispec = ibelm_bottom_inner_core(ispec2D)
 
-  ! only for DOFs exactly on surface of central cube (bottom of these elements)
+      ! only for DOFs exactly on surface of central cube (bottom of these elements)
       k = 1
       do j = 1,NGLLY
         do i = 1,NGLLX
           ipoin = ipoin + 1
 
-  ! distinguish between single and double precision for reals
+          ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,1:ndim_assemble))
           else

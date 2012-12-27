@@ -450,8 +450,6 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer :: NGLOB_XY
-
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
@@ -465,6 +463,7 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  integer :: NGLOB_XY
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle

@@ -154,7 +154,7 @@ typedef float realw;
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
 // Use textures for d_displ and d_accel -- 10% performance boost
-#define USE_TEXTURES_FIELDS
+//#define USE_TEXTURES_FIELDS
 
 // Using texture memory for the hprime-style constants is slower on
 // Fermi generation hardware, but *may* be faster on Kepler
@@ -168,6 +168,7 @@ typedef float realw;
 #undef USE_TEXTURES_CONSTANTS
 #endif
 
+// compiling infos
 #ifdef USE_TEXTURES_FIELDS
 #pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
 #endif
@@ -276,11 +277,11 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_crust_mantle; realw* d_b_veloc_crust_mantle; realw* d_b_accel_crust_mantle;
 
-#ifdef USE_TEXTURES_FIELDS
-  // Texture references for fast non-coalesced scattered access
-  const textureReference* d_displ_cm_tex_ref_ptr;
-  const textureReference* d_accel_cm_tex_ref_ptr;
-#endif
+//#ifdef USE_TEXTURES_FIELDS
+//  // Texture references for fast non-coalesced scattered access
+//  const textureReference* d_displ_cm_tex_ref_ptr;
+//  const textureReference* d_accel_cm_tex_ref_ptr;
+//#endif
 
   // attenuation
   realw* d_R_xx_crust_mantle;
@@ -361,11 +362,11 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_outer_core; realw* d_b_veloc_outer_core; realw* d_b_accel_outer_core;
 
-#ifdef USE_TEXTURES_FIELDS
-  // Texture references for fast non-coalesced scattered access
-  const textureReference* d_displ_oc_tex_ref_ptr;
-  const textureReference* d_accel_oc_tex_ref_ptr;
-#endif
+//#ifdef USE_TEXTURES_FIELDS
+//  // Texture references for fast non-coalesced scattered access
+//  const textureReference* d_displ_oc_tex_ref_ptr;
+//  const textureReference* d_accel_oc_tex_ref_ptr;
+//#endif
 
   // kernels
   realw* d_rho_kl_outer_core;
@@ -432,11 +433,11 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_inner_core; realw* d_b_veloc_inner_core; realw* d_b_accel_inner_core;
 
-#ifdef USE_TEXTURES_FIELDS
-  // Texture references for fast non-coalesced scattered access
-  const textureReference* d_displ_ic_tex_ref_ptr;
-  const textureReference* d_accel_ic_tex_ref_ptr;
-#endif
+//#ifdef USE_TEXTURES_FIELDS
+//  // Texture references for fast non-coalesced scattered access
+//  const textureReference* d_displ_ic_tex_ref_ptr;
+//  const textureReference* d_accel_ic_tex_ref_ptr;
+//#endif
 
   // attenuation
   realw* d_R_xx_inner_core;
@@ -519,10 +520,10 @@ typedef struct mesh_ {
   //realw* d_hprime_yy; // only needed if NGLLX != NGLLY != NGLLZ
   //realw* d_hprime_zz; // only needed if NGLLX != NGLLY != NGLLZ
 
-#ifdef USE_TEXTURES_CONSTANTS
-  const textureReference* d_hprime_xx_tex_ptr;
-  realw* d_hprime_xx_tex;
-#endif
+//#ifdef USE_TEXTURES_CONSTANTS
+//  const textureReference* d_hprime_xx_tex_ptr;
+//  realw* d_hprime_xx_tex;
+//#endif
 
   realw* d_hprimewgll_xx;
   //realw* d_hprimewgll_yy; // only needed if NGLLX != NGLLY != NGLLZ
@@ -616,19 +617,19 @@ typedef struct mesh_ {
   int myrank;
 
   int num_interfaces_crust_mantle;
-  int max_nibool_interfaces_crust_mantle;
+  int max_nibool_interfaces_cm;
   int* d_nibool_interfaces_crust_mantle;
   int* d_ibool_interfaces_crust_mantle;
   realw* d_send_accel_buffer_crust_mantle;
 
   int num_interfaces_inner_core;
-  int max_nibool_interfaces_inner_core;
+  int max_nibool_interfaces_ic;
   int* d_nibool_interfaces_inner_core;
   int* d_ibool_interfaces_inner_core;
   realw* d_send_accel_buffer_inner_core;
 
   int num_interfaces_outer_core;
-  int max_nibool_interfaces_outer_core;
+  int max_nibool_interfaces_oc;
   int* d_nibool_interfaces_outer_core;
   int* d_ibool_interfaces_outer_core;
   realw* d_send_accel_buffer_outer_core;

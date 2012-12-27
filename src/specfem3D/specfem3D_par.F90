@@ -78,6 +78,9 @@ module specfem_par
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
 
+  ! attenuation: predictor
+  double precision, dimension(N_SLS) :: tau_sigma_dble
+
   !-----------------------------------------------------------------
   ! topography/bathymetry & oceans
   !-----------------------------------------------------------------
@@ -258,39 +261,39 @@ module specfem_par
   ! collected MPI interfaces
   ! MPI crust/mantle mesh
   integer :: num_interfaces_crust_mantle
-  integer :: max_nibool_interfaces_crust_mantle
+  integer :: max_nibool_interfaces_cm
   integer, dimension(:), allocatable :: my_neighbours_crust_mantle,nibool_interfaces_crust_mantle
   integer, dimension(:,:), allocatable :: ibool_interfaces_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_crust_mantle,b_buffer_recv_vector_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_cm,b_buffer_recv_vector_cm
 
-  integer, dimension(:), allocatable :: request_send_vector_crust_mantle,request_recv_vector_crust_mantle
-  integer, dimension(:), allocatable :: b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle
+  integer, dimension(:), allocatable :: request_send_vector_cm,request_recv_vector_cm
+  integer, dimension(:), allocatable :: b_request_send_vector_cm,b_request_recv_vector_cm
 
   ! MPI inner core mesh
   integer :: num_interfaces_inner_core
-  integer :: max_nibool_interfaces_inner_core
+  integer :: max_nibool_interfaces_ic
   integer, dimension(:), allocatable :: my_neighbours_inner_core,nibool_interfaces_inner_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core
 
-  integer, dimension(:), allocatable :: request_send_vector_inner_core,request_recv_vector_inner_core
-  integer, dimension(:), allocatable :: b_request_send_vector_inner_core,b_request_recv_vector_inner_core
+  integer, dimension(:), allocatable :: request_send_vector_ic,request_recv_vector_ic
+  integer, dimension(:), allocatable :: b_request_send_vector_ic,b_request_recv_vector_ic
 
   ! MPI outer core mesh
   integer :: num_interfaces_outer_core
-  integer :: max_nibool_interfaces_outer_core
+  integer :: max_nibool_interfaces_oc
   integer, dimension(:), allocatable :: my_neighbours_outer_core,nibool_interfaces_outer_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core
 
-  integer, dimension(:), allocatable :: request_send_scalar_outer_core,request_recv_scalar_outer_core
-  integer, dimension(:), allocatable :: b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core
+  integer, dimension(:), allocatable :: request_send_scalar_oc,request_recv_scalar_oc
+  integer, dimension(:), allocatable :: b_request_send_scalar_oc,b_request_recv_scalar_oc
 
   !-----------------------------------------------------------------
   ! gpu
@@ -373,6 +376,7 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassz_crust_mantle
+  integer :: NGLOB_XY_CM
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -722,5 +726,21 @@ module specfem_par_movie
 
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
   logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
+
+  ! vtk run-time visualization
+#ifdef WITH_VTK
+  ! vtk window
+  logical, parameter :: VTK_MODE = .true.
+#else
+  logical, parameter :: VTK_MODE = .false.
+#endif
+  real,dimension(:),allocatable :: vtkdata
+  logical,dimension(:),allocatable :: vtkmask
+  ! multi-mpi processes, gather data arrays on master
+  real,dimension(:),allocatable :: vtkdata_all
+  integer,dimension(:),allocatable :: vtkdata_points_all
+  integer,dimension(:),allocatable :: vtkdata_offset_all
+  integer :: vtkdata_numpoints_all
+  real :: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
 end module specfem_par_movie

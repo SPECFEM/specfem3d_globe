@@ -256,18 +256,13 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-extern "C"
-void FC_FUNC_(transfer_accel_cm_to_device,
-              TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {
+// single wavefield transfers
 
-TRACE("transfer_accel_cm_to_device");
+/* ----------------------------------------------------------------------------------------------- */
 
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+/* ----------------------------------------------------------------------------------------------- */
 
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40016);
-
-}
-
+// displacements
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -347,17 +342,67 @@ void FC_FUNC_(transfer_b_displ_oc_from_device,
   print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_b_displ_outer_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
 }
 
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// velocities
+
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
 void FC_FUNC_(transfer_veloc_cm_from_device,
-              TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {
+              TRANSFER_VELOC_CM_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {
 
   TRACE("transfer_veloc_cm_from_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_veloc_ic_from_device,
+              TRANSFER_VELOC_IC_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {
+
+  TRACE("transfer_veloc_ic_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_inner_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_veloc_oc_from_device,
+              TRANSFER_VELOC_OC_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {
+
+  TRACE("transfer_veloc_oc_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_outer_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// accelerations
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_accel_cm_to_device,
+              TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {
+
+TRACE("transfer_accel_cm_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40016);
+
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -540,6 +585,69 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("after transfer_b_strain_ic_to_device");
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// R memory variables
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// crust/mantle
+
+extern "C"
+void FC_FUNC_(transfer_b_rmemory_cm_to_device,
+              TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* b_R_xx,
+                                              realw* b_R_yy,
+                                              realw* b_R_xy,
+                                              realw* b_R_xz,
+                                              realw* b_R_yz) {
+  TRACE("transfer_b_Rmemory_cm_to_device");
+  //get mesh pointer out of fortran integer container
+  Mesh* mp = (Mesh*)(*Mesh_pointer);
+
+  int size = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
+
+  cudaMemcpy(mp->d_b_R_xx_crust_mantle,b_R_xx,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_yy_crust_mantle,b_R_yy,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_xy_crust_mantle,b_R_xy,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_xz_crust_mantle,b_R_xz,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_yz_crust_mantle,b_R_yz,size*sizeof(realw),cudaMemcpyHostToDevice);
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("after transfer_b_Rmemory_cm_to_device");
+#endif
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// inner core
+
+extern "C"
+void FC_FUNC_(transfer_b_rmemory_ic_to_device,
+              TRANSFER_B_RMEMORY_IC_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* b_R_xx,
+                                              realw* b_R_yy,
+                                              realw* b_R_xy,
+                                              realw* b_R_xz,
+                                              realw* b_R_yz) {
+  TRACE("transfer_b_Rmemory_ic_to_device");
+  //get mesh pointer out of fortran integer container
+  Mesh* mp = (Mesh*)(*Mesh_pointer);
+
+  int size = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
+
+  cudaMemcpy(mp->d_b_R_xx_inner_core,b_R_xx,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_yy_inner_core,b_R_yy,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_xy_inner_core,b_R_xy,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_xz_inner_core,b_R_xz,size*sizeof(realw),cudaMemcpyHostToDevice);
+  cudaMemcpy(mp->d_b_R_yz_inner_core,b_R_yz,size*sizeof(realw),cudaMemcpyHostToDevice);
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("after transfer_b_Rmemory_ic_to_device");
 #endif
 }
 

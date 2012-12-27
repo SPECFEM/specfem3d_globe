@@ -490,7 +490,7 @@
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
     call save_MPI_arrays(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
-                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                              my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
                              ibool_interfaces_crust_mantle, &
                              nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
@@ -502,7 +502,7 @@
   case( IREGION_OUTER_CORE )
     ! outer core
     call save_MPI_arrays(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
-                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                              my_neighbours_outer_core,nibool_interfaces_outer_core, &
                              ibool_interfaces_outer_core, &
                              nspec_inner_outer_core,nspec_outer_outer_core, &
@@ -513,7 +513,7 @@
   case( IREGION_INNER_CORE )
     ! inner core
     call save_MPI_arrays(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
-                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
                              my_neighbours_inner_core,nibool_interfaces_inner_core, &
                              ibool_interfaces_inner_core, &
                              nspec_inner_inner_core,nspec_outer_inner_core, &

@@ -45,7 +45,7 @@
                                             epsilondev_xz,epsilondev_yz, &
                                             epsilon_trace_over_3,&
                                             alphaval,betaval,gammaval,factor_common, &
-                                            vx,vy,vz,vnspec)
+                                            vx,vy,vz,vnspec,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -99,6 +99,8 @@
 
   ! inner/outer element run flag
   logical :: phase_is_inner
+
+  logical :: is_backward_field
 
   ! local parameters
 
@@ -695,11 +697,11 @@
 
               ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
               call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
-                                             R_yy(1,i,j,k,ispec), &
-                                             R_xy(1,i,j,k,ispec), &
-                                             R_xz(1,i,j,k,ispec), &
-                                             R_yz(1,i,j,k,ispec), &
-                                             sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+                                              R_yy(1,i,j,k,ispec), &
+                                              R_xy(1,i,j,k,ispec), &
+                                              R_xz(1,i,j,k,ispec), &
+                                              R_yz(1,i,j,k,ispec), &
+                                              sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
             endif
 
@@ -970,7 +972,7 @@
                                       muvstore, &
                                       epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                       epsilondev_xz,epsilondev_yz, &
-                                      epsilondev_loc)
+                                      epsilondev_loc,is_backward_field)
 
       endif
 

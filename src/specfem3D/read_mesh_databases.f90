@@ -93,7 +93,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
+  integer :: nspec_iso,nspec_tiso,nspec_ani
   logical :: READ_KAPPA_MU,READ_TISO
   ! dummy array that does not need to be actually read
   integer, dimension(:),allocatable :: dummy_idoubling
@@ -131,9 +131,9 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     NGLOB_XY = NGLOB_CRUST_MANTLE
+     NGLOB_XY_CM = NGLOB_CRUST_MANTLE
   else
-     NGLOB_XY = 1
+     NGLOB_XY_CM = 1
   endif
 
   ! allocates dummy array
@@ -141,15 +141,15 @@
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy idoubling in crust_mantle')
 
   ! allocates mass matrices
-  allocate(rmassx_crust_mantle(NGLOB_XY), &
-          rmassy_crust_mantle(NGLOB_XY),stat=ier)
+  allocate(rmassx_crust_mantle(NGLOB_XY_CM), &
+          rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if(ier /= 0) stop 'error allocating dummy rmassx, rmassy in crust_mantle'
   allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
 
   ! reads databases file
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
-            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY, &
+            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
             nspec_iso,nspec_tiso,nspec_ani, &
             rho_vp_crust_mantle,rho_vs_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -192,7 +192,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
+  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
   logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
@@ -212,9 +212,9 @@
   nspec_ani = 1
 
   ! dummy allocation
-  NGLOB_XY = 1
+  NGLOB_XY_dummy = 1
 
-  allocate(dummy_rmass(NGLOB_XY), &
+  allocate(dummy_rmass(NGLOB_XY_dummy), &
           dummy_ispec_is_tiso(NSPEC_OUTER_CORE), &
           dummy_idoubling_outer_core(NSPEC_OUTER_CORE), &
           stat=ier)
@@ -232,7 +232,7 @@
   if(ier /= 0) stop 'error allocating rmass in outer core'
 
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY, &
+            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
             nspec_iso,nspec_tiso,nspec_ani, &
             vp_outer_core,dummy_array, &
             xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -275,7 +275,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY
+  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
   logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
@@ -297,9 +297,9 @@
   endif
 
   ! dummy allocation
-  NGLOB_XY = 1
+  NGLOB_XY_dummy = 1
 
-  allocate(dummy_rmass(NGLOB_XY), &
+  allocate(dummy_rmass(NGLOB_XY_dummy), &
           dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
           stat=ier)
   if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec in inner core'
@@ -316,7 +316,7 @@
   if(ier /= 0) stop 'error allocating rmass in inner core'
 
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY, &
+            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
             nspec_iso,nspec_tiso,nspec_ani, &
             dummy_array,dummy_array, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -638,37 +638,37 @@
   ! crust mantle
   call read_mesh_databases_MPI_CM()
 
-  allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-          request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
-          request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
+  allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+          request_send_vector_cm(num_interfaces_crust_mantle), &
+          request_recv_vector_cm(num_interfaces_crust_mantle), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
 
   if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-            b_buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-            b_request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
-            b_request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
+    allocate(b_buffer_send_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+            b_buffer_recv_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+            b_request_send_vector_cm(num_interfaces_crust_mantle), &
+            b_request_recv_vector_cm(num_interfaces_crust_mantle), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_crust_mantle etc.')
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_cm etc.')
   endif
 
   ! outer core
   call read_mesh_databases_MPI_OC()
 
-  allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-          buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-          request_send_scalar_outer_core(num_interfaces_outer_core), &
-          request_recv_scalar_outer_core(num_interfaces_outer_core), &
+  allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
+          buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
+          request_send_scalar_oc(num_interfaces_outer_core), &
+          request_recv_scalar_oc(num_interfaces_outer_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
 
   if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-            b_buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-            b_request_send_scalar_outer_core(num_interfaces_outer_core), &
-            b_request_recv_scalar_outer_core(num_interfaces_outer_core), &
+    allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
+            b_buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
+            b_request_send_scalar_oc(num_interfaces_outer_core), &
+            b_request_recv_scalar_oc(num_interfaces_outer_core), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_outer_core etc.')
   endif
@@ -676,18 +676,18 @@
   ! inner core
   call read_mesh_databases_MPI_IC()
 
-  allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
-          buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
-          request_send_vector_inner_core(num_interfaces_inner_core), &
-          request_recv_vector_inner_core(num_interfaces_inner_core), &
+  allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
+          buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
+          request_send_vector_ic(num_interfaces_inner_core), &
+          request_recv_vector_ic(num_interfaces_inner_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_inner_core etc.')
 
   if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
-            b_buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
-            b_request_send_vector_inner_core(num_interfaces_inner_core), &
-            b_request_recv_vector_inner_core(num_interfaces_inner_core), &
+    allocate(b_buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
+            b_buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
+            b_request_send_vector_ic(num_interfaces_inner_core), &
+            b_request_recv_vector_ic(num_interfaces_inner_core), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_inner_core etc.')
   endif
@@ -749,8 +749,8 @@
     call exit_mpi(myrank,'error allocating array my_neighbours_crust_mantle etc.')
 
   if( num_interfaces_crust_mantle > 0 ) then
-    read(IIN) max_nibool_interfaces_crust_mantle
-    allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
+    read(IIN) max_nibool_interfaces_cm
+    allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_crust_mantle')
 
@@ -759,7 +759,7 @@
     read(IIN) ibool_interfaces_crust_mantle
   else
     ! dummy array
-    max_nibool_interfaces_crust_mantle = 0
+    max_nibool_interfaces_cm = 0
     allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_crust_mantle')
   endif
@@ -834,8 +834,8 @@
     call exit_mpi(myrank,'error allocating array my_neighbours_outer_core etc.')
 
   if( num_interfaces_outer_core > 0 ) then
-    read(IIN) max_nibool_interfaces_outer_core
-    allocate(ibool_interfaces_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
+    read(IIN) max_nibool_interfaces_oc
+    allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_outer_core')
 
@@ -844,7 +844,7 @@
     read(IIN) ibool_interfaces_outer_core
   else
     ! dummy array
-    max_nibool_interfaces_outer_core = 0
+    max_nibool_interfaces_oc = 0
     allocate(ibool_interfaces_outer_core(0,0),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_outer_core')
   endif
@@ -918,8 +918,8 @@
     call exit_mpi(myrank,'error allocating array my_neighbours_inner_core etc.')
 
   if( num_interfaces_inner_core > 0 ) then
-    read(IIN) max_nibool_interfaces_inner_core
-    allocate(ibool_interfaces_inner_core(max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
+    read(IIN) max_nibool_interfaces_ic
+    allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_inner_core')
 
@@ -928,7 +928,7 @@
     read(IIN) ibool_interfaces_inner_core
   else
     ! dummy array
-    max_nibool_interfaces_inner_core = 0
+    max_nibool_interfaces_ic = 0
     allocate(ibool_interfaces_inner_core(0,0),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_inner_core')
   endif

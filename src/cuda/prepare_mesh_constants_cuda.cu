@@ -41,6 +41,26 @@
 #include "mesh_constants_cuda.h"
 #include "prepare_constants_cuda.h"
 
+#ifdef USE_OLDER_CUDA4_GPU
+#else
+  #ifdef USE_TEXTURES_FIELDS
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_cm_tex;
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_cm_tex;
+
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_oc_tex;
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_oc_tex;
+
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_ic_tex;
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_ic_tex;
+  #endif
+
+  #ifdef USE_TEXTURES_CONSTANTS
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_cm_tex;
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_oc_tex;
+extern texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_ic_tex;
+  #endif
+#endif
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // helper functions
@@ -160,20 +180,37 @@ void FC_FUNC_(prepare_constants_device,
   // in the code with #USE_TEXTURES_FIELDS not-defined.
   #ifdef USE_TEXTURES_CONSTANTS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&(mp->d_hprime_xx_tex_ptr), "d_hprime_xx_cm_tex"), 1101);
-    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_hprime_xx_tex_ptr, mp->d_hprime_xx,
-                                            &channelDesc1, sizeof(realw)*(NGLL2)), 1102);
+    #ifdef USE_OLDER_CUDA4_GPU
+      const textureReference* d_hprime_xx_cm_tex_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_cm_tex_ptr, "d_hprime_xx_cm_tex"), 1101);
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_cm_tex_ptr, mp->d_hprime_xx,
+                                              &channelDesc1, sizeof(realw)*(NGLL2)), 1102);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&(mp->d_hprime_xx_tex_ptr), "d_hprime_xx_oc_tex"), 1103);
-    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_hprime_xx_tex_ptr, mp->d_hprime_xx,
-                                            &channelDesc2, sizeof(realw)*(NGLL2)), 1104);
+      const textureReference* d_hprime_xx_oc_tex_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_oc_tex_ptr, "d_hprime_xx_oc_tex"), 1103);
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_oc_tex_ptr, mp->d_hprime_xx,
+                                              &channelDesc2, sizeof(realw)*(NGLL2)), 1104);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&(mp->d_hprime_xx_tex_ptr), "d_hprime_xx_ic_tex"), 1105);
-    cudaChannelFormatDesc channelDesc3 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_hprime_xx_tex_ptr, mp->d_hprime_xx,
-                                            &channelDesc3, sizeof(realw)*(NGLL2)), 1106);
+      const textureReference* d_hprime_xx_ic_tex_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_ic_tex_ptr, "d_hprime_xx_ic_tex"), 1105);
+      cudaChannelFormatDesc channelDesc3 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_ic_tex_ptr, mp->d_hprime_xx,
+                                              &channelDesc3, sizeof(realw)*(NGLL2)), 1106);
+    #else
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_cm_tex, mp->d_hprime_xx,
+                                              &channelDesc1, sizeof(realw)*(NGLL2)), 1102);
+
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_oc_tex, mp->d_hprime_xx,
+                                              &channelDesc2, sizeof(realw)*(NGLL2)), 1104);
+
+      cudaChannelFormatDesc channelDesc3 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_ic_tex, mp->d_hprime_xx,
+                                              &channelDesc3, sizeof(realw)*(NGLL2)), 1106);
+    #endif
   }
   #endif
 
@@ -424,6 +461,11 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                                  realw* R_xy_crust_mantle,
                                                  realw* R_xz_crust_mantle,
                                                  realw* R_yz_crust_mantle,
+                                                 realw* b_R_xx_crust_mantle,
+                                                 realw* b_R_yy_crust_mantle,
+                                                 realw* b_R_xy_crust_mantle,
+                                                 realw* b_R_xz_crust_mantle,
+                                                 realw* b_R_yz_crust_mantle,
                                                  realw* factor_common_crust_mantle,
                                                  realw* one_minus_sum_beta_crust_mantle,
                                                  realw* R_xx_inner_core,
@@ -431,6 +473,11 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                                  realw* R_xy_inner_core,
                                                  realw* R_xz_inner_core,
                                                  realw* R_yz_inner_core,
+                                                 realw* b_R_xx_inner_core,
+                                                 realw* b_R_yy_inner_core,
+                                                 realw* b_R_xy_inner_core,
+                                                 realw* b_R_xz_inner_core,
+                                                 realw* b_R_yz_inner_core,
                                                  realw* factor_common_inner_core,
                                                  realw* one_minus_sum_beta_inner_core,
                                                  realw* alphaval,realw* betaval,realw* gammaval,
@@ -467,6 +514,17 @@ void FC_FUNC_(prepare_fields_attenuat_device,
     copy_todevice_realw((void**)&mp->d_R_yz_crust_mantle,R_yz_crust_mantle,R_size1);
   }
 
+  if(mp->simulation_type == 3 ){
+    if( ! mp->use_attenuation_mimic ){
+      // memory variables
+      copy_todevice_realw((void**)&mp->d_b_R_xx_crust_mantle,b_R_xx_crust_mantle,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_yy_crust_mantle,b_R_yy_crust_mantle,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_xy_crust_mantle,b_R_xy_crust_mantle,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_xz_crust_mantle,b_R_xz_crust_mantle,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_yz_crust_mantle,b_R_yz_crust_mantle,R_size1);
+    }
+  }
+
   // inner_core
   R_size1 = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
   if( mp->use_3d_attenuation_arrays ){
@@ -488,6 +546,17 @@ void FC_FUNC_(prepare_fields_attenuat_device,
     copy_todevice_realw((void**)&mp->d_R_xy_inner_core,R_xy_inner_core,R_size1);
     copy_todevice_realw((void**)&mp->d_R_xz_inner_core,R_xz_inner_core,R_size1);
     copy_todevice_realw((void**)&mp->d_R_yz_inner_core,R_yz_inner_core,R_size1);
+  }
+
+  if(mp->simulation_type == 3 ){
+    if( ! mp->use_attenuation_mimic ){
+      // memory variables
+      copy_todevice_realw((void**)&mp->d_b_R_xx_inner_core,b_R_xx_inner_core,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_yy_inner_core,b_R_yy_inner_core,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_xy_inner_core,b_R_xy_inner_core,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_xz_inner_core,b_R_xz_inner_core,R_size1);
+      copy_todevice_realw((void**)&mp->d_b_R_yz_inner_core,b_R_yz_inner_core,R_size1);
+    }
   }
 
   // alpha,beta,gamma factors
@@ -802,15 +871,15 @@ extern "C"
 void FC_FUNC_(prepare_mpi_buffers_device,
               PREPARE_MPI_BUFFERS_DEVICE)(long* Mesh_pointer_f,
                                           int* num_interfaces_crust_mantle,
-                                          int* max_nibool_interfaces_crust_mantle,
+                                          int* max_nibool_interfaces_cm,
                                           int* nibool_interfaces_crust_mantle,
                                           int* ibool_interfaces_crust_mantle,
                                           int* num_interfaces_inner_core,
-                                          int* max_nibool_interfaces_inner_core,
+                                          int* max_nibool_interfaces_ic,
                                           int* nibool_interfaces_inner_core,
                                           int* ibool_interfaces_inner_core,
                                           int* num_interfaces_outer_core,
-                                          int* max_nibool_interfaces_outer_core,
+                                          int* max_nibool_interfaces_oc,
                                           int* nibool_interfaces_outer_core,
                                           int* ibool_interfaces_outer_core){
 
@@ -822,48 +891,48 @@ void FC_FUNC_(prepare_mpi_buffers_device,
 
   // crust/mantle mesh
   mp->num_interfaces_crust_mantle = *num_interfaces_crust_mantle;
-  mp->max_nibool_interfaces_crust_mantle = *max_nibool_interfaces_crust_mantle;
+  mp->max_nibool_interfaces_cm = *max_nibool_interfaces_cm;
   if( mp->num_interfaces_crust_mantle > 0 ){
     // number of ibool entries array
     copy_todevice_int((void**)&mp->d_nibool_interfaces_crust_mantle,nibool_interfaces_crust_mantle,
                       mp->num_interfaces_crust_mantle);
     // ibool entries (iglob indices) values on interface
     copy_todevice_int((void**)&mp->d_ibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,
-                      (mp->num_interfaces_crust_mantle)*(mp->max_nibool_interfaces_crust_mantle));
+                      (mp->num_interfaces_crust_mantle)*(mp->max_nibool_interfaces_cm));
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_crust_mantle),
-                                       NDIM*(mp->max_nibool_interfaces_crust_mantle)*(mp->num_interfaces_crust_mantle)*sizeof(realw)),4004);
+                                       NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle)*sizeof(realw)),4004);
   }
 
   // inner core mesh
   mp->num_interfaces_inner_core = *num_interfaces_inner_core;
-  mp->max_nibool_interfaces_inner_core = *max_nibool_interfaces_inner_core;
+  mp->max_nibool_interfaces_ic = *max_nibool_interfaces_ic;
   if( mp->num_interfaces_inner_core > 0 ){
     // number of ibool entries array
     copy_todevice_int((void**)&mp->d_nibool_interfaces_inner_core,nibool_interfaces_inner_core,
                       mp->num_interfaces_inner_core);
     // ibool entries (iglob indices) values on interface
     copy_todevice_int((void**)&mp->d_ibool_interfaces_inner_core,ibool_interfaces_inner_core,
-                      (mp->num_interfaces_inner_core)*(mp->max_nibool_interfaces_inner_core));
+                      (mp->num_interfaces_inner_core)*(mp->max_nibool_interfaces_ic));
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_inner_core),
-                                       NDIM*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw)),4004);
+                                       NDIM*(mp->max_nibool_interfaces_ic)*(mp->num_interfaces_inner_core)*sizeof(realw)),4004);
   }
 
   // outer core mesh
   // note: uses only scalar wavefield arrays
   mp->num_interfaces_outer_core = *num_interfaces_outer_core;
-  mp->max_nibool_interfaces_outer_core = *max_nibool_interfaces_outer_core;
+  mp->max_nibool_interfaces_oc = *max_nibool_interfaces_oc;
   if( mp->num_interfaces_outer_core > 0 ){
     // number of ibool entries array
     copy_todevice_int((void**)&mp->d_nibool_interfaces_outer_core,nibool_interfaces_outer_core,
                       mp->num_interfaces_outer_core);
     // ibool entries (iglob indices) values on interface
     copy_todevice_int((void**)&mp->d_ibool_interfaces_outer_core,ibool_interfaces_outer_core,
-                      (mp->num_interfaces_outer_core)*(mp->max_nibool_interfaces_outer_core));
+                      (mp->num_interfaces_outer_core)*(mp->max_nibool_interfaces_oc));
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core),
-                                       (mp->max_nibool_interfaces_outer_core)*(mp->num_interfaces_outer_core)*sizeof(realw)),4004);
+                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw)),4004);
   }
 }
 
@@ -1031,9 +1100,11 @@ void FC_FUNC_(prepare_crust_mantle_device,
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xix_crust_mantle, size_padded*sizeof(realw)),1001);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiy_crust_mantle, size_padded*sizeof(realw)),1002);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_xiz_crust_mantle, size_padded*sizeof(realw)),1003);
+
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etax_crust_mantle, size_padded*sizeof(realw)),1004);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etay_crust_mantle, size_padded*sizeof(realw)),1005);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_etaz_crust_mantle, size_padded*sizeof(realw)),1006);
+
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammax_crust_mantle, size_padded*sizeof(realw)),1007);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammay_crust_mantle, size_padded*sizeof(realw)),1008);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_gammaz_crust_mantle, size_padded*sizeof(realw)),1009);
@@ -1242,15 +1313,27 @@ void FC_FUNC_(prepare_crust_mantle_device,
 
   #ifdef USE_TEXTURES_FIELDS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_cm_tex_ref_ptr, "d_displ_cm_tex"), 4021);
-    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_cm_tex_ref_ptr, mp->d_displ_crust_mantle,
-                                            &channelDesc1, sizeof(realw)*size), 4021);
+    #ifdef USE_OLDER_CUDA4_GPU
+      const textureReference* d_displ_cm_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_cm_tex_ref_ptr, "d_displ_cm_tex"), 4021);
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_cm_tex_ref_ptr, mp->d_displ_crust_mantle,
+                                              &channelDesc1, sizeof(realw)*size), 4021);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_cm_tex_ref_ptr, "d_accel_cm_tex"), 4023);
-    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_cm_tex_ref_ptr, mp->d_accel_crust_mantle,
-                                            &channelDesc2, sizeof(realw)*size), 4023);
+      const textureReference* d_accel_cm_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_cm_tex_ref_ptr, "d_accel_cm_tex"), 4023);
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, d_accel_cm_tex_ref_ptr, mp->d_accel_crust_mantle,
+                                              &channelDesc2, sizeof(realw)*size), 4023);
+    #else
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_cm_tex, mp->d_displ_crust_mantle,
+                                              &channelDesc1, sizeof(realw)*size), 4021);
+
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_cm_tex, mp->d_accel_crust_mantle,
+                                              &channelDesc2, sizeof(realw)*size), 4023);
+    #endif
   }
   #endif
 
@@ -1441,15 +1524,27 @@ void FC_FUNC_(prepare_outer_core_device,
 
   #ifdef USE_TEXTURES_FIELDS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
-    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
-                                            &channelDesc1, sizeof(realw)*size), 5021);
+    #ifdef USE_OLDER_CUDA4_GPU
+      const textureReference* d_displ_oc_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
+                                              &channelDesc1, sizeof(realw)*size), 5021);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
-    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
-                                            &channelDesc2, sizeof(realw)*size), 5023);
+      const textureReference* d_accel_oc_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
+                                              &channelDesc2, sizeof(realw)*size), 5023);
+    #else
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_oc_tex, mp->d_displ_outer_core,
+                                              &channelDesc1, sizeof(realw)*size), 5021);
+
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_oc_tex, mp->d_accel_outer_core,
+                                              &channelDesc2, sizeof(realw)*size), 5023);
+    #endif
   }
   #endif
 
@@ -1645,15 +1740,29 @@ void FC_FUNC_(prepare_inner_core_device,
 
   #ifdef USE_TEXTURES_FIELDS
   {
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_ic_tex_ref_ptr, "d_displ_ic_tex"), 6021);
-    cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_ic_tex_ref_ptr, mp->d_displ_inner_core,
-                                            &channelDesc1, sizeof(realw)*size), 6021);
+    #ifdef USE_OLDER_CUDA4_GPU
+      const textureReference* d_displ_ic_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_ic_tex_ref_ptr, "d_displ_ic_tex"), 6021);
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_ic_tex_ref_ptr, mp->d_displ_inner_core,
+                                              &channelDesc1, sizeof(realw)*size), 6021);
 
-    print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_accel_ic_tex_ref_ptr, "d_accel_ic_tex"), 6023);
-    cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
-    print_CUDA_error_if_any(cudaBindTexture(0, mp->d_accel_ic_tex_ref_ptr, mp->d_accel_inner_core,
-                                            &channelDesc2, sizeof(realw)*size), 6023);
+      const textureReference* d_accel_ic_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_ic_tex_ref_ptr, "d_accel_ic_tex"), 6023);
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
+      print_CUDA_error_if_any(cudaBindTexture(0, d_accel_ic_tex_ref_ptr, mp->d_accel_inner_core,
+                                              &channelDesc2, sizeof(realw)*size), 6023);
+    #else
+      cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_ic_tex, mp->d_displ_inner_core,
+                                              &channelDesc1, sizeof(realw)*size), 6021);
+
+      cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float>();
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_ic_tex, mp->d_accel_inner_core,
+                                              &channelDesc2, sizeof(realw)*size), 6023);
+    #endif
+
+
   }
   #endif
 

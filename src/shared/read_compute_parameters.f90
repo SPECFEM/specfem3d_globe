@@ -422,12 +422,12 @@
     stop 'need six chunks to include central cube'
 
   ! check that sphere can be cut into slices without getting negative Jacobian
-  if(NCHUNKS == 6 ) then
-    if(NEX_XI < 48) &
-      stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
-    if(NEX_ETA < 48) &
-      stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
-  endif
+!  if(NCHUNKS == 6 ) then
+!    if(NEX_XI < 48) &
+!      stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
+!    if(NEX_ETA < 48) &
+!      stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
+!  endif
 
   ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) &
@@ -436,11 +436,7 @@
   if(NCHUNKS > 2 .and. NPROC_XI /= NPROC_ETA) &
     stop 'must have NPROC_XI = NPROC_ETA for more than two chunks'
 
-  ! support for only one slice per chunk has been discontinued when there is more than one chunk
-  ! because it induces topological problems, and we are not interested in using small meshes
-!daniel: debug topological problems?
-  !if(NCHUNKS > 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1)) stop 'support for only one slice per chunk has been discontinued'
-
+  ! small meshes useful for testing, also for GPU version
   if(NCHUNKS > 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1) ) then
     if( NUMFACES_SHARED < 4 ) &
       stop 'NPROC_XI,NPROC_ETA==1: please set in constants.h NUMFACES_SHARED and NUMCORNERS_SHARED equal to 4 and recompile'

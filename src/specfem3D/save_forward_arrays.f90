@@ -90,9 +90,11 @@
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
     write(55) accel_crust_mantle
+
     write(55) displ_inner_core
     write(55) veloc_inner_core
     write(55) accel_inner_core
+
     write(55) displ_outer_core
     write(55) veloc_outer_core
     write(55) accel_outer_core
@@ -113,6 +115,7 @@
       write(55) A_array_rotation
       write(55) B_array_rotation
     endif
+
     if (ATTENUATION_VAL) then
        write(55) R_xx_crust_mantle
        write(55) R_yy_crust_mantle
@@ -125,8 +128,8 @@
        write(55) R_xy_inner_core
        write(55) R_xz_inner_core
        write(55) R_yz_inner_core
-
     endif
+
     close(55)
   endif
 

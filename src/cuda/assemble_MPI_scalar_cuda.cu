@@ -76,7 +76,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
   if( mp->num_interfaces_outer_core == 0 ) return;
 
   int blocksize = BLOCKSIZE_TRANSFER;
-  int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_outer_core))/((double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_oc))/((double)blocksize)))*blocksize;
   int num_blocks_x = size_padded/blocksize;
   int num_blocks_y = 1;
   while(num_blocks_x > MAXIMUM_GRID_DIM) {
@@ -91,7 +91,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     prepare_boundary_potential_on_device<<<grid,threads>>>(mp->d_accel_outer_core,
                                                            mp->d_send_accel_buffer_outer_core,
                                                            mp->num_interfaces_outer_core,
-                                                           mp->max_nibool_interfaces_outer_core,
+                                                           mp->max_nibool_interfaces_oc,
                                                            mp->d_nibool_interfaces_outer_core,
                                                            mp->d_ibool_interfaces_outer_core);
   }
@@ -99,13 +99,13 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     prepare_boundary_potential_on_device<<<grid,threads>>>(mp->d_b_accel_outer_core,
                                                            mp->d_send_accel_buffer_outer_core,
                                                            mp->num_interfaces_outer_core,
-                                                           mp->max_nibool_interfaces_outer_core,
+                                                           mp->max_nibool_interfaces_oc,
                                                            mp->d_nibool_interfaces_outer_core,
                                                            mp->d_ibool_interfaces_outer_core);
   }
 
   print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_send_accel_buffer_outer_core,
-                                     (mp->max_nibool_interfaces_outer_core)*(mp->num_interfaces_outer_core)*sizeof(realw),
+                                     (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
                                      cudaMemcpyDeviceToHost),98000);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -153,12 +153,12 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
 
   // copies scalar buffer onto GPU
   cudaMemcpy(mp->d_send_accel_buffer_outer_core, buffer_recv_scalar,
-             (mp->max_nibool_interfaces_outer_core)*(mp->num_interfaces_outer_core)*sizeof(realw),
+             (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
              cudaMemcpyHostToDevice);
 
   // assembles on GPU
   int blocksize = BLOCKSIZE_TRANSFER;
-  int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_outer_core)/((double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_oc)/((double)blocksize)))*blocksize;
   int num_blocks_x = size_padded/blocksize;
   int num_blocks_y = 1;
   while(num_blocks_x > MAXIMUM_GRID_DIM) {
@@ -174,7 +174,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
     assemble_boundary_potential_on_device<<<grid,threads>>>(mp->d_accel_outer_core,
                                                             mp->d_send_accel_buffer_outer_core,
                                                             mp->num_interfaces_outer_core,
-                                                            mp->max_nibool_interfaces_outer_core,
+                                                            mp->max_nibool_interfaces_oc,
                                                             mp->d_nibool_interfaces_outer_core,
                                                             mp->d_ibool_interfaces_outer_core);
   }
@@ -183,7 +183,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
     assemble_boundary_potential_on_device<<<grid,threads>>>(mp->d_b_accel_outer_core,
                                                             mp->d_send_accel_buffer_outer_core,
                                                             mp->num_interfaces_outer_core,
-                                                            mp->max_nibool_interfaces_outer_core,
+                                                            mp->max_nibool_interfaces_oc,
                                                             mp->d_nibool_interfaces_outer_core,
                                                             mp->d_ibool_interfaces_outer_core);
   }

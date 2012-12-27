@@ -1624,7 +1624,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
 
   TRACE("compute_forces_crust_mantle_cuda");
 
-//daniel: debug time
+//debug time
 //  printf("Running compute_forces\n");
 //  double start_time = get_time();
 

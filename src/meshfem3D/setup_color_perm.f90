@@ -1002,7 +1002,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! daniel: deprecated ...
+! deprecated ...
 !
 !  subroutine setup_color_perm(myrank,iregion_code,nspec,nglob, &
 !                              ibool,is_on_a_slice_edge,prname, &
