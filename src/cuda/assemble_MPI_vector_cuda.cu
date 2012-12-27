@@ -81,7 +81,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
     if( mp->num_interfaces_crust_mantle > 0 ){
 
       blocksize = BLOCKSIZE_TRANSFER;
-      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_crust_mantle)/((double)blocksize)))*blocksize;
+      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_cm)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
       while(num_blocks_x > MAXIMUM_GRID_DIM) {
@@ -95,7 +95,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                            mp->d_send_accel_buffer_crust_mantle,
                                                            mp->num_interfaces_crust_mantle,
-                                                           mp->max_nibool_interfaces_crust_mantle,
+                                                           mp->max_nibool_interfaces_cm,
                                                            mp->d_nibool_interfaces_crust_mantle,
                                                            mp->d_ibool_interfaces_crust_mantle);
       }
@@ -103,14 +103,14 @@ void FC_FUNC_(transfer_boun_accel_from_device,
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                            mp->d_send_accel_buffer_crust_mantle,
                                                            mp->num_interfaces_crust_mantle,
-                                                           mp->max_nibool_interfaces_crust_mantle,
+                                                           mp->max_nibool_interfaces_cm,
                                                            mp->d_nibool_interfaces_crust_mantle,
                                                            mp->d_ibool_interfaces_crust_mantle);
       }
 
       // copies buffer to CPU
       cudaMemcpy(send_accel_buffer,mp->d_send_accel_buffer_crust_mantle,
-                 3*mp->max_nibool_interfaces_crust_mantle*mp->num_interfaces_crust_mantle*sizeof(realw),
+                 3*mp->max_nibool_interfaces_cm*mp->num_interfaces_crust_mantle*sizeof(realw),
                  cudaMemcpyDeviceToHost);
 
     }
@@ -121,7 +121,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
     if( mp->num_interfaces_inner_core > 0 ){
 
       blocksize = BLOCKSIZE_TRANSFER;
-      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_inner_core)/((double)blocksize)))*blocksize;
+      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ic)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
       while(num_blocks_x > MAXIMUM_GRID_DIM) {
@@ -135,7 +135,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_inner_core,
                                                            mp->d_send_accel_buffer_inner_core,
                                                            mp->num_interfaces_inner_core,
-                                                           mp->max_nibool_interfaces_inner_core,
+                                                           mp->max_nibool_interfaces_ic,
                                                            mp->d_nibool_interfaces_inner_core,
                                                            mp->d_ibool_interfaces_inner_core);
       }
@@ -143,14 +143,14 @@ void FC_FUNC_(transfer_boun_accel_from_device,
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_inner_core,
                                                            mp->d_send_accel_buffer_inner_core,
                                                            mp->num_interfaces_inner_core,
-                                                           mp->max_nibool_interfaces_inner_core,
+                                                           mp->max_nibool_interfaces_ic,
                                                            mp->d_nibool_interfaces_inner_core,
                                                            mp->d_ibool_interfaces_inner_core);
       }
 
       // copies buffer to CPU
       cudaMemcpy(send_accel_buffer,mp->d_send_accel_buffer_inner_core,
-                 3*mp->max_nibool_interfaces_inner_core*mp->num_interfaces_inner_core*sizeof(realw),
+                 3*mp->max_nibool_interfaces_ic*mp->num_interfaces_inner_core*sizeof(realw),
                  cudaMemcpyDeviceToHost);
 
     }
@@ -202,12 +202,12 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
     if( mp->num_interfaces_crust_mantle > 0 ){
       // copies vector buffer values to GPU
       print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_crust_mantle, buffer_recv_vector,
-                                         NDIM*(mp->max_nibool_interfaces_crust_mantle)*(mp->num_interfaces_crust_mantle)*sizeof(realw),
+                                         NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle)*sizeof(realw),
                                          cudaMemcpyHostToDevice),41000);
 
       // assembles values
       blocksize = BLOCKSIZE_TRANSFER;
-      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_crust_mantle)/((double)blocksize)))*blocksize;
+      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_cm)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
       while(num_blocks_x > MAXIMUM_GRID_DIM) {
@@ -223,7 +223,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                             mp->d_send_accel_buffer_crust_mantle,
                                                             mp->num_interfaces_crust_mantle,
-                                                            mp->max_nibool_interfaces_crust_mantle,
+                                                            mp->max_nibool_interfaces_cm,
                                                             mp->d_nibool_interfaces_crust_mantle,
                                                             mp->d_ibool_interfaces_crust_mantle);
       }
@@ -232,7 +232,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                             mp->d_send_accel_buffer_crust_mantle,
                                                             mp->num_interfaces_crust_mantle,
-                                                            mp->max_nibool_interfaces_crust_mantle,
+                                                            mp->max_nibool_interfaces_cm,
                                                             mp->d_nibool_interfaces_crust_mantle,
                                                             mp->d_ibool_interfaces_crust_mantle);
       }
@@ -248,12 +248,12 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
     if( mp->num_interfaces_inner_core > 0 ){
       // copies buffer values to GPU
       print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_inner_core, buffer_recv_vector,
-                                         NDIM*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw),
+                                         NDIM*(mp->max_nibool_interfaces_ic)*(mp->num_interfaces_inner_core)*sizeof(realw),
                                          cudaMemcpyHostToDevice),41001);
 
       // assembles values
       blocksize = BLOCKSIZE_TRANSFER;
-      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_inner_core)/((double)blocksize)))*blocksize;
+      size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ic)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
       num_blocks_y = 1;
       while(num_blocks_x > MAXIMUM_GRID_DIM) {
@@ -269,7 +269,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_inner_core,
                                                             mp->d_send_accel_buffer_inner_core,
                                                             mp->num_interfaces_inner_core,
-                                                            mp->max_nibool_interfaces_inner_core,
+                                                            mp->max_nibool_interfaces_ic,
                                                             mp->d_nibool_interfaces_inner_core,
                                                             mp->d_ibool_interfaces_inner_core);
       }
@@ -278,7 +278,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
         assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_inner_core,
                                                             mp->d_send_accel_buffer_inner_core,
                                                             mp->num_interfaces_inner_core,
-                                                            mp->max_nibool_interfaces_inner_core,
+                                                            mp->max_nibool_interfaces_ic,
                                                             mp->d_nibool_interfaces_inner_core,
                                                             mp->d_ibool_interfaces_inner_core);
       }

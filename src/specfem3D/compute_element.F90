@@ -49,7 +49,7 @@
                     tempx1_att,tempx2_att,tempx3_att, &
                     tempy1_att,tempy2_att,tempy3_att, &
                     tempz1_att,tempz2_att,tempz3_att, &
-                    epsilondev_loc,rho_s_H)
+                    epsilondev_loc,rho_s_H,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -107,6 +107,8 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
+  logical :: is_backward_field
+
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
@@ -155,9 +157,9 @@
         gammazl = gammaz(i,j,k,ispec)
 
         ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+        jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                                     + xizl*(etaxl*gammayl-etayl*gammaxl))
 
         duxdxl = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
         duxdyl = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
@@ -208,9 +210,9 @@
            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
            epsilondev_loc(1,i,j,k) = duxdxl_att - templ
            epsilondev_loc(2,i,j,k) = duydyl_att - templ
-           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
-           epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
-           epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
+           epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl_att
+           epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl_att
+           epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
            if (COMPUTE_AND_STORE_STRAIN) then
@@ -226,19 +228,10 @@
               endif
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
            endif
-        endif
-
-       ! precompute terms for attenuation if needed
-        if( ATTENUATION_VAL ) then
-          if( USE_3D_ATTENUATION_ARRAYS ) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-          endif
         endif
 
         !
@@ -250,10 +243,18 @@
         mul = muvstore(i,j,k,ispec)
 
         ! use unrelaxed parameters if attenuation
-        if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
+        if(ATTENUATION_VAL) then
+          ! precompute terms for attenuation if needed
+          if( USE_3D_ATTENUATION_ARRAYS ) then
+            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          else
+            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          endif
+          mul = mul * one_minus_sum_beta_use
+        endif
 
         lambdalplus2mul = kappal + FOUR_THIRDS * mul
-        lambdal = lambdalplus2mul - 2.0*mul
+        lambdal = lambdalplus2mul - 2.0_CUSTOM_REAL*mul
 
         ! compute stress sigma
         sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
@@ -267,13 +268,25 @@
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 
+!daniel: att - debug update
+!          call compute_element_att_mem_up_cm(ispec,i,j,k, &
+!                                          R_xx(1,i,j,k,ispec), &
+!                                          R_yy(1,i,j,k,ispec), &
+!                                          R_xy(1,i,j,k,ispec), &
+!                                          R_xz(1,i,j,k,ispec), &
+!                                          R_yz(1,i,j,k,ispec), &
+!                                          epsilondev_loc(:,i,j,k),muvstore(i,j,k,ispec),is_backward_field)
+! dummy to avoid compiler warning
+          if( is_backward_field ) then
+          endif
+
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
-                                         R_yy(1,i,j,k,ispec), &
-                                         R_xy(1,i,j,k,ispec), &
-                                         R_xz(1,i,j,k,ispec), &
-                                         R_yz(1,i,j,k,ispec), &
-                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+                                          R_yy(1,i,j,k,ispec), &
+                                          R_xy(1,i,j,k,ispec), &
+                                          R_xz(1,i,j,k,ispec), &
+                                          R_yz(1,i,j,k,ispec), &
+                                          sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -431,12 +444,11 @@
                     tempx1_att,tempx2_att,tempx3_att, &
                     tempy1_att,tempy2_att,tempy3_att, &
                     tempz1_att,tempz2_att,tempz3_att, &
-                    epsilondev_loc,rho_s_H)
+                    epsilondev_loc,rho_s_H,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
   implicit none
-
 
   include "constants.h"
 
@@ -494,6 +506,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
+  logical :: is_backward_field
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -556,7 +569,7 @@
         gammazl = gammaz(i,j,k,ispec)
 
         ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+        jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                       - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                       + xizl*(etaxl*gammayl-etayl*gammaxl))
 
@@ -609,9 +622,9 @@
            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
            epsilondev_loc(1,i,j,k) = duxdxl_att - templ
            epsilondev_loc(2,i,j,k) = duydyl_att - templ
-           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
-           epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
-           epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
+           epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl_att
+           epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl_att
+           epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
            if (COMPUTE_AND_STORE_STRAIN) then
@@ -627,21 +640,11 @@
               endif
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
            endif
         endif
-
-        ! precompute terms for attenuation if needed
-        if( ATTENUATION_VAL ) then
-          if( USE_3D_ATTENUATION_ARRAYS ) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-          endif
-        endif
-
 
         !
         ! compute either isotropic or anisotropic elements
@@ -667,6 +670,12 @@
         ! use unrelaxed parameters if attenuation
         ! eta does not need to be shifted since it is a ratio
         if(ATTENUATION_VAL) then
+          ! precompute terms for attenuation if needed
+          if( USE_3D_ATTENUATION_ARRAYS ) then
+            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          else
+            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          endif
           muvl = muvl * one_minus_sum_beta_use
           muhl = muhl * one_minus_sum_beta_use
         endif
@@ -703,31 +712,31 @@
         cosphifour = cosphisq * cosphisq
         sinphifour = sinphisq * sinphisq
 
-        costwotheta = cos(2.0*theta)
-        sintwotheta = sin(2.0*theta)
-        costwophi = cos(2.0*phi)
-        sintwophi = sin(2.0*phi)
+        costwotheta = cos(2.0_CUSTOM_REAL*theta)
+        sintwotheta = sin(2.0_CUSTOM_REAL*theta)
+        costwophi = cos(2.0_CUSTOM_REAL*phi)
+        sintwophi = sin(2.0_CUSTOM_REAL*phi)
 
-        cosfourtheta = cos(4.0*theta)
-        cosfourphi = cos(4.0*phi)
+        cosfourtheta = cos(4.0_CUSTOM_REAL*theta)
+        cosfourphi = cos(4.0_CUSTOM_REAL*phi)
 
         costwothetasq = costwotheta * costwotheta
 
         costwophisq = costwophi * costwophi
         sintwophisq = sintwophi * sintwophi
 
-        etaminone = eta_aniso - 1.0
-        twoetaminone = 2.0 * eta_aniso - 1.0
+        etaminone = eta_aniso - 1.0_CUSTOM_REAL
+        twoetaminone = 2.0_CUSTOM_REAL * eta_aniso - 1.0_CUSTOM_REAL
 
         ! precompute some products to reduce the CPU time
-        two_eta_aniso = 2.0*eta_aniso
-        four_eta_aniso = 4.0*eta_aniso
-        six_eta_aniso = 6.0*eta_aniso
+        two_eta_aniso = 2.0_CUSTOM_REAL*eta_aniso
+        four_eta_aniso = 4.0_CUSTOM_REAL*eta_aniso
+        six_eta_aniso = 6.0_CUSTOM_REAL*eta_aniso
 
-        two_rhovsvsq = 2.0*rhovsvsq
-        two_rhovshsq = 2.0*rhovshsq
-        four_rhovsvsq = 4.0*rhovsvsq
-        four_rhovshsq = 4.0*rhovshsq
+        two_rhovsvsq = 2.0_CUSTOM_REAL*rhovsvsq
+        two_rhovshsq = 2.0_CUSTOM_REAL*rhovshsq
+        four_rhovsvsq = 4.0_CUSTOM_REAL*rhovsvsq
+        four_rhovshsq = 4.0_CUSTOM_REAL*rhovshsq
 
 
         ! way 2: pre-compute temporary values
@@ -741,87 +750,87 @@
 
         ! way 2: reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
         c11 = rhovphsq*sinphifour &
-              + 2.0*cosphisq*sinphisq* &
+              + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
               ( rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) ) &
               + cosphifour*(rhovphsq*costhetafour &
-                + 2.0*costhetasq*sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) &
+                + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) &
                 + rhovpvsq*sinthetafour)
 
-        c12 = 0.25*costhetasq*(rhovphsq - two_rhovshsq)*(3.0 + cosfourphi) &
+        c12 = 0.25_CUSTOM_REAL*costhetasq*(rhovphsq - two_rhovshsq)*(3.0_CUSTOM_REAL + cosfourphi) &
               - four_rhovshsq*cosphisq*costhetasq*sinphisq &
-              + 0.03125*rhovphsq*sintwophisq*(11.0 + cosfourtheta + 4.0*costwotheta) &
+              + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + cosfourtheta + 4.0*costwotheta) &
               + eta_aniso*sinthetasq*(rhovphsq - two_rhovsvsq) &
-                         *(cosphifour + sinphifour + 2.0*cosphisq*costhetasq*sinphisq) &
+                         *(cosphifour + sinphifour + 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq) &
               + rhovpvsq*cosphisq*sinphisq*sinthetafour &
               - rhovsvsq*sintwophisq*sinthetafour
 
-        c13 = 0.125*cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq &
-                    - 12.0*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
+        c13 = 0.125_CUSTOM_REAL*cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq &
+                    - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
               + sinphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
 
         ! uses temporary templ1 from c13
         c15 = cosphi*costheta*sintheta* &
-              ( 0.5*cosphisq* (rhovpvsq - rhovphsq + costwotheta*templ1) &
+              ( 0.5_CUSTOM_REAL*cosphisq* (rhovpvsq - rhovphsq + costwotheta*templ1) &
                 + etaminone*sinphisq*(rhovphsq - two_rhovsvsq))
 
         c14 = costheta*sinphi*sintheta* &
-              ( 0.5*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
-                + sinphisq*(etaminone*rhovphsq + 2.0*(rhovshsq - eta_aniso*rhovsvsq)) )
+              ( 0.5_CUSTOM_REAL*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
+                + sinphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) )
 
         ! uses temporary templ2_cos from c14
-        c16 = 0.5*cosphi*sinphi*sinthetasq* &
+        c16 = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
               ( cosphisq*templ2_cos &
-                + 2.0*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
+                + 2.0_CUSTOM_REAL*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
 
-        c22 = rhovphsq*cosphifour + 2.0*cosphisq*sinphisq* &
+        c22 = rhovphsq*cosphifour + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
               (rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)) &
               + sinphifour* &
-              (rhovphsq*costhetafour + 2.0*costhetasq*sinthetasq*(eta_aniso*rhovphsq  &
+              (rhovphsq*costhetafour + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq  &
                     + two_rhovsvsq - two_eta_aniso*rhovsvsq) + rhovpvsq*sinthetafour)
 
         ! uses temporary templ1 from c13
-        c23 = 0.125*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
-                + rhovpvsq - four_rhovsvsq - 12.0*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
+        c23 = 0.125_CUSTOM_REAL*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
+                + rhovpvsq - four_rhovsvsq - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
               + cosphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
 
         ! uses temporary templ1 from c13
         c24 = costheta*sinphi*sintheta* &
               ( etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                + 0.5*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
+                + 0.5_CUSTOM_REAL*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
 
         ! uses temporary templ2_cos from c14
         c25 = cosphi*costheta*sintheta* &
-              ( cosphisq*(etaminone*rhovphsq + 2.0*(rhovshsq - eta_aniso*rhovsvsq)) &
-                + 0.5*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
+              ( cosphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) &
+                + 0.5_CUSTOM_REAL*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
 
         ! uses temporary templ2_cos from c14
-        c26 = 0.5*cosphi*sinphi*sinthetasq* &
-              ( 2.0*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
+        c26 = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
+              ( 2.0_CUSTOM_REAL*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
                 + sinphisq*templ2_cos )
 
         c33 = rhovpvsq*costhetafour &
-              + 2.0*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
+              + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
               + rhovphsq*sinthetafour
 
         ! uses temporary templ1_cos from c13
-        c34 = - 0.25*sinphi*sintwotheta*templ1_cos
+        c34 = - 0.25_CUSTOM_REAL*sinphi*sintwotheta*templ1_cos
 
         ! uses temporary templ1_cos from c34
-        c35 = - 0.25*cosphi*sintwotheta*templ1_cos
+        c35 = - 0.25_CUSTOM_REAL*cosphi*sintwotheta*templ1_cos
 
         ! uses temporary templ1_cos from c34
-        c36 = - 0.25*sintwophi*sinthetasq*(templ1_cos - four_rhovshsq + four_rhovsvsq)
+        c36 = - 0.25_CUSTOM_REAL*sintwophi*sinthetasq*(templ1_cos - four_rhovshsq + four_rhovsvsq)
 
         c44 = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
               + sinphisq*(rhovsvsq*costwothetasq + costhetasq*sinthetasq*templ3)
 
         ! uses temporary templ3 from c44
         c46 = - cosphi*costheta*sintheta* &
-                ( cosphisq*(rhovshsq - rhovsvsq) - 0.5*sinphisq*templ3_cos  )
+                ( cosphisq*(rhovshsq - rhovsvsq) - 0.5_CUSTOM_REAL*sinphisq*templ3_cos  )
 
         ! uses templ3 from c46
-        c45 = 0.25*sintwophi*sinthetasq* &
-              (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0*etaminone*rhovsvsq))
+        c45 = 0.25_CUSTOM_REAL*sintwophi*sinthetasq* &
+              (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0_CUSTOM_REAL*etaminone*rhovsvsq))
 
         c55 = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
               + cosphisq*(rhovsvsq*costwothetasq &
@@ -829,15 +838,17 @@
 
         ! uses temporary templ3_cos from c46
         c56 = costheta*sinphi*sintheta* &
-              ( 0.5*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
+              ( 0.5_CUSTOM_REAL*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
 
         c66 = rhovshsq*costwophisq*costhetasq &
-              - 2.0*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
-              + 0.03125*rhovphsq*sintwophisq*(11.0 + 4.0*costwotheta + cosfourtheta) &
-              - 0.125*rhovsvsq*sinthetasq*( -6.0 - 2.0*costwotheta - 2.0*cosfourphi &
-                        + cos(4.0*phi - 2.0*theta) + cos(2.0*(2.0*phi + theta)) ) &
+              - 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
+              + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + 4.0_CUSTOM_REAL*costwotheta + cosfourtheta) &
+              - 0.125_CUSTOM_REAL*rhovsvsq*sinthetasq* &
+              ( -6.0_CUSTOM_REAL - 2.0_CUSTOM_REAL*costwotheta - 2.0_CUSTOM_REAL*cosfourphi &
+                        + cos(4.0_CUSTOM_REAL*phi - 2.0_CUSTOM_REAL*theta) &
+                        + cos(2.0_CUSTOM_REAL*(2.0_CUSTOM_REAL*phi + theta)) ) &
               + rhovpvsq*cosphisq*sinphisq*sinthetafour &
-              - 0.5*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
+              - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
 
 
         ! general expression of stress tensor for full Cijkl with 21 coefficients
@@ -862,13 +873,25 @@
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 
+!daniel: att - debug update
+!          call compute_element_att_mem_up_cm(ispec,i,j,k, &
+!                                          R_xx(:,i,j,k,ispec), &
+!                                          R_yy(:,i,j,k,ispec), &
+!                                          R_xy(:,i,j,k,ispec), &
+!                                          R_xz(:,i,j,k,ispec), &
+!                                          R_yz(:,i,j,k,ispec), &
+!                                          epsilondev_loc(:,i,j,k),muvstore(i,j,k,ispec),is_backward_field)
+! dummy to avoid compiler warning
+          if( is_backward_field ) then
+          endif
+
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
-                                         R_yy(1,i,j,k,ispec), &
-                                         R_xy(1,i,j,k,ispec), &
-                                         R_xz(1,i,j,k,ispec), &
-                                         R_yz(1,i,j,k,ispec), &
-                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+                                          R_yy(1,i,j,k,ispec), &
+                                          R_xy(1,i,j,k,ispec), &
+                                          R_xz(1,i,j,k,ispec), &
+                                          R_yz(1,i,j,k,ispec), &
+                                          sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -1025,7 +1048,7 @@
                     tempx1_att,tempx2_att,tempx3_att, &
                     tempy1_att,tempy2_att,tempy3_att, &
                     tempz1_att,tempz2_att,tempz3_att, &
-                    epsilondev_loc,rho_s_H)
+                    epsilondev_loc,rho_s_H,is_backward_field)
 
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
@@ -1087,8 +1110,10 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
+  logical :: is_backward_field
+
 ! local parameters
-  real(kind=CUSTOM_REAL) one_minus_sum_beta_use
+  !real(kind=CUSTOM_REAL) one_minus_sum_beta_use
   real(kind=CUSTOM_REAL) minus_sum_beta,mul
   ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
@@ -1137,7 +1162,7 @@
         gammazl = gammaz(i,j,k,ispec)
 
         ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+        jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                       - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                       + xizl*(etaxl*gammayl-etayl*gammaxl))
 
@@ -1190,9 +1215,9 @@
            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
            epsilondev_loc(1,i,j,k) = duxdxl_att - templ
            epsilondev_loc(2,i,j,k) = duydyl_att - templ
-           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
-           epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
-           epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
+           epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl_att
+           epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl_att
+           epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
            if (COMPUTE_AND_STORE_STRAIN) then
@@ -1208,21 +1233,10 @@
               endif
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
            endif
-        endif
-
-        ! precompute terms for attenuation if needed
-        if( ATTENUATION_VAL ) then
-          if( USE_3D_ATTENUATION_ARRAYS ) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-            minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-            minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
-          endif
         endif
 
         !
@@ -1252,6 +1266,12 @@
         c66 = c66store(i,j,k,ispec)
 
         if(ATTENUATION_VAL) then
+          ! precompute terms for attenuation if needed
+          if( USE_3D_ATTENUATION_ARRAYS ) then
+            minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+          else
+            minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+          endif
           !mul = c44
           mul = c44 * minus_sum_beta
           c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
@@ -1286,13 +1306,26 @@
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 
+!daniel: att - debug update
+!          call compute_element_att_mem_up_cm(ispec,i,j,k, &
+!                                          R_xx(:,i,j,k,ispec), &
+!                                          R_yy(:,i,j,k,ispec), &
+!                                          R_xy(:,i,j,k,ispec), &
+!                                          R_xz(:,i,j,k,ispec), &
+!                                          R_yz(:,i,j,k,ispec), &
+!                                          epsilondev_loc(:,i,j,k),c44store(i,j,k,ispec),is_backward_field)
+! dummy to avoid compiler warning
+          if( is_backward_field ) then
+          endif
+
+
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
-                                         R_yy(1,i,j,k,ispec), &
-                                         R_xy(1,i,j,k,ispec), &
-                                         R_xz(1,i,j,k,ispec), &
-                                         R_yz(1,i,j,k,ispec), &
-                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+                                          R_yy(1,i,j,k,ispec), &
+                                          R_xy(1,i,j,k,ispec), &
+                                          R_xz(1,i,j,k,ispec), &
+                                          R_yz(1,i,j,k,ispec), &
+                                          sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -1499,8 +1532,8 @@
         sigma_xx = sigma_xx - R_xx_val1 - R_xx_val2 - R_xx_val3
         sigma_yy = sigma_yy - R_yy_val1 - R_yy_val2 - R_yy_val3
         sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1 &
-             + R_xx_val2 + R_yy_val2 &
-             + R_xx_val3 + R_yy_val3
+                            + R_xx_val2 + R_yy_val2 &
+                            + R_xx_val3 + R_yy_val3
 
         sigma_xy = sigma_xy - R_xy_loc(i_SLS)
         sigma_xz = sigma_xz - R_xz_loc(i_SLS)
@@ -1517,6 +1550,7 @@
   endif
 #else
 ! way 1:
+
   do i_SLS = 1,N_SLS
      R_xx_val1 = R_xx_loc(i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
      R_yy_val1 = R_yy_loc(i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
@@ -1527,6 +1561,7 @@
      sigma_xz = sigma_xz - R_xz_loc(i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
      sigma_yz = sigma_yz - R_yz_loc(i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
   enddo
+
 #endif
 
   end subroutine compute_element_att_stress
@@ -1536,13 +1571,13 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_att_memory_cr(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+  subroutine compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
-                                        epsilondev_loc)
+                                        epsilondev_loc,is_backward_field)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1559,6 +1594,9 @@
 ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
+
+!daniel: att - debug predictor
+!  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
 
   implicit none
 
@@ -1591,9 +1629,13 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
+  logical :: is_backward_field
+
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
+
+!  double precision :: kappa
 
 #ifdef _HANDOPT_ATT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
@@ -1605,6 +1647,7 @@
   ! get coefficients for that standard linear solid
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
+
 
 #ifdef _HANDOPT_ATT
 ! way 2:
@@ -1658,6 +1701,8 @@
   enddo ! i_SLS
 #else
 ! way 1:
+
+!daniel: att - debug original
   do i_SLS = 1,N_SLS
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( USE_3D_ATTENUATION_ARRAYS ) then
@@ -1673,12 +1718,6 @@
         factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
       endif
     endif
-
-    !    do i_memory = 1,5
-    !      R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-    !                + factor_common_c44_muv(:,:,:) &
-    !                * (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-    !    enddo
 
     R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
           (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
@@ -1696,10 +1735,240 @@
           (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
 
   enddo ! i_SLS
+
+!daniel: att - debug
+!  if( .not. is_backward_field ) then
+!
+!  do i_SLS = 1,N_SLS
+!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+!    if( USE_3D_ATTENUATION_ARRAYS ) then
+!      if(ANISOTROPIC_3D_MANTLE_VAL) then
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
+!      else
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+!      endif
+!    else
+!      if(ANISOTROPIC_3D_MANTLE_VAL) then
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
+!      else
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+!      endif
+!    endif
+!
+!!daniel: att - debug original
+!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+!
+!!daniel: att - debug runge-kutta
+!    if( .false. ) then
+!    ! classical RK4:  R'(t) = - 1/tau * R(t)
+!    kappa = - dble(deltat)/tau_sigma_dble(i_SLS)
+!
+!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    endif
+!    if( .false. ) then
+! Butcher RK5:
+! 0     |
+! 1/4   | 1/4
+! 1/4   | 1/8   1/8
+! 1/2   | 0     -1/2    1
+! 3/4   | 3/16  0       0     9/16
+! 1     | -3/7  2/7     12/7  -12/7   8/7
+! -----------------------------------------------------------------------------
+!          7/90  0     32/90   12/90  32/90   7/90
+!
+!    k1 = dt * ( -1.0/tau * R_n )
+!    k2 = dt * ( -1.0/tau * (R_n + 1./4.*k1) )
+!    k3 = dt * ( -1.0/tau * (R_n + 1./8.*k1  + 1./8.*k2) )
+!    k4 = dt * ( -1.0/tau * (R_n + 0.*k1     - 1./2.*k2   + 1.* k3) )
+!    k5 = dt * ( -1.0/tau * (R_n + 3./16.*k1 + 0.*k2      + 0.*k3     + 9./16.*k4) )
+!    k6 = dt * ( -1.0/tau * (R_n - 3./7.*k1  + 2./7.*k2   + 12./7.*k3 - 12./7.*k4 + 8./7.*k5) )
+!
+!    R_nplus1 = R_n + 7./90.*k1 + 0.*k2 + 32./90.*k3 + 12./90.*k4 + 32./90.*k5 + 7./90.*k6
+!
+!    or:
+!    k = - dt/tau
+!    R_nplus1 = R_n*(1.0 + k*(1.0 + 0.5*k*(1.0 + 1./6.*k*(1.0 + 1./24.*k*(1.0 + 1./120.*k*(1.0 + 1./640.*k))))))
+!
+!    kappa = - dble(deltat)/tau_sigma_dble(i_SLS)
+!
+!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    endif
+!
+!  enddo ! i_SLS
+!
+!  else
+!
+!  ! backward/reconstruction, re-constructs previous memory variables, note strain arrays are now switched
+!
+!  do i_SLS = 1,N_SLS
+!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+!    if( USE_3D_ATTENUATION_ARRAYS ) then
+!      if(ANISOTROPIC_3D_MANTLE_VAL) then
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
+!      else
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+!      endif
+!    else
+!      if(ANISOTROPIC_3D_MANTLE_VAL) then
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
+!      else
+!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+!      endif
+!    endif
+!
+!!daniel: att - debug original
+!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
+!          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+!
+!!daniel: att - debug runge-kutta
+!    if( .false. ) then
+! classical RK 4:       R'(t) =  - 1/tau * R(t)
+!
+! Butcher RK5:
+! 0     |
+! 1/2   | 1/2
+! 1/2   | 0    1/2
+! 1     | 0          1
+! -----------------------------------------------------------------------------
+!         1/6  1/3   1/3   1/6
+!
+!    kappa = - dble(b_deltat)/tau_sigma_dble(i_SLS)
+!
+!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!
+!    endif
+!
+!!daniel: att - debug
+!    if( .false. ) then
+! Butcher RK5:
+! 0     |
+! 1/4   | 1/4
+! 1/4   | 1/8   1/8
+! 1/2   | 0     -1/2    1
+! 3/4   | 3/16  0       0     9/16
+! 1     | -3/7  2/7     12/7  -12/7   8/7
+! -----------------------------------------------------------------------------
+!          7/90  0     32/90   12/90  32/90   7/90
+!
+!    k1 = dt * ( -1.0/tau * R_n )
+!    k2 = dt * ( -1.0/tau * (R_n + 1./4.*k1) )
+!    k3 = dt * ( -1.0/tau * (R_n + 1./8.*k1  + 1./8.*k2) )
+!    k4 = dt * ( -1.0/tau * (R_n + 0.*k1     - 1./2.*k2   + 1.* k3) )
+!    k5 = dt * ( -1.0/tau * (R_n + 3./16.*k1 + 0.*k2      + 0.*k3     + 9./16.*k4) )
+!    k6 = dt * ( -1.0/tau * (R_n - 3./7.*k1  + 2./7.*k2   + 12./7.*k3 - 12./7.*k4 + 8./7.*k5) )
+!
+!    R_nplus1 = R_n + 7./90.*k1 + 0.*k2 + 32./90.*k3 + 12./90.*k4 + 32./90.*k5 + 7./90.*k6
+!
+!    or:
+!    k = - dt/tau
+!    R_nplus1 = R_n*(1.0 + k*(1.0 + 0.5*k*(1.0 + 1./6.*k*(1.0 + 1./24.*k*(1.0 + 1./120.*k*(1.0 + 1./640.*k))))))
+!    kappa = - dble(b_deltat)/tau_sigma_dble(i_SLS)
+!
+!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
+!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
+!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
+!
+!    endif
+!
+!  enddo ! i_SLS
+!
+!  endif ! is_backward_field
+! dummy to avoid compiler warning
+  if( is_backward_field ) then
+  endif
+
+
 #endif
 
 
-  end subroutine compute_element_att_memory_cr
+  end subroutine compute_element_att_memory_cm
 
 !
 !--------------------------------------------------------------------------------------------
@@ -1711,7 +1980,7 @@
                                         muvstore, &
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
-                                        epsilondev_loc)
+                                        epsilondev_loc,is_backward_field)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1756,6 +2025,8 @@
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+
+  logical :: is_backward_field
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
@@ -1814,6 +2085,7 @@
   enddo ! i_SLS
 #else
 ! way 1:
+
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
@@ -1845,8 +2117,212 @@
          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
 
   enddo
+
+!daniel: att - debug
+!  if( .not. is_backward_field ) then
+!  do i_SLS = 1,N_SLS
+!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+!    if( USE_3D_ATTENUATION_ARRAYS ) then
+!      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+!    else
+!      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+!    endif
+!
+!    do i_memory = 1,5
+!       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+!            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+!            (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+!    enddo
+!
+!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+!
+!  enddo
+!
+!  else
+!
+!  ! backward/reconstruction, strain arrays are not switched
+!  do i_SLS = 1,N_SLS
+!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+!    if( USE_3D_ATTENUATION_ARRAYS ) then
+!      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+!    else
+!      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+!    endif
+!
+!daniel: att - debug original
+!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
+!         (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+!
+!daniel: att - debug switched
+!    if( .false.) then
+!    R_xx(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
+!         (gammaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(1,:,:,:))
+!
+!    R_yy(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
+!         (gammaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(2,:,:,:))
+!
+!    R_xy(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
+!         (gammaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(3,:,:,:))
+!
+!    R_xz(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
+!         (gammaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(4,:,:,:))
+!
+!    R_yz(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
+!         (gammaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(5,:,:,:))
+!    endif
+!
+!  enddo
+!
+!  endif ! is_backward_field
+! dummy to avoid compiler warning
+  if( is_backward_field ) then
+  endif
+
 #endif
+
+
+!daniel: att - debug no att
+!  R_xx = 0.0
+!  R_yy = 0.0
+!  R_xy = 0.0
+!  R_xz = 0.0
+!  R_yz = 0.0
 
   end subroutine compute_element_att_memory_ic
 
 
+!
+!--------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_element_att_mem_up_cm(ispec,i,j,k, &
+                                              R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
+                                              epsilondev_loc,c44_muv,is_backward_field)
+! crust mantle
+! update memory variables based upon the Runge-Kutta scheme
+
+
+!daniel: att - debug update
+  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
+
+  use specfem_par_crustmantle,only: factor_common=>factor_common_crust_mantle
+
+
+  implicit none
+
+  include "constants.h"
+
+  ! include values created by the mesher
+  ! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  ! element id
+  integer :: ispec,i,j,k
+
+  ! attenuation
+  ! memory variables for attenuation
+  ! memory variables R_ij are stored at the local rather than global level
+  ! to allow for optimization of cache access by compiler
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xx_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yy_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xy_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xz_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yz_loc
+
+  real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
+  real(kind=CUSTOM_REAL) :: c44_muv
+
+  logical :: is_backward_field
+  double precision :: dt,kappa
+
+! local parameters
+  real(kind=CUSTOM_REAL) :: factor_common_c44_muv
+  integer :: i_SLS
+
+  ! R'(t) = - 1/tau * R(t) + 1/tau * dc:grad(s)
+  !
+  ! here we add integral contribution for: 1/tau * dc:grad(s)
+  !
+  ! R_n+1 = R_n+1  + dt * ( 1/tau * dc:grad(s_n+1)
+  !
+  ! note: s at this point is known at: s(t+dt)
+
+  if( .not. is_backward_field ) then
+    dt = dble(deltat)
+  else
+    ! backward/reconstruction: reverse time
+    dt = dble(b_deltat)
+  endif
+
+  do i_SLS = 1,N_SLS
+
+    ! runge-kutta scheme to update memory variables R(t)
+    if( .false. ) then
+! classical RK 4:       R'(t) =  - 1/tau * R(t)
+!
+! Butcher RK4:
+! 0     |
+! 1/2   | 1/2
+! 1/2   | 0    1/2
+! 1     | 0          1
+! -----------------------------------------------------------------------------
+!         1/6  1/3   1/3   1/6
+    kappa = - dt/tau_sigma_dble(i_SLS)
+
+    R_xx_loc(i_SLS) = R_xx_loc(i_SLS) * &
+      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+    R_yy_loc(i_SLS) = R_yy_loc(i_SLS) * &
+      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+    R_xy_loc(i_SLS) = R_xy_loc(i_SLS) * &
+      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+    R_xz_loc(i_SLS) = R_xz_loc(i_SLS) * &
+      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+    R_yz_loc(i_SLS) = R_yz_loc(i_SLS) * &
+      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+    endif
+
+
+    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+    if( USE_3D_ATTENUATION_ARRAYS ) then
+      factor_common_c44_muv = factor_common(i_SLS,i,j,k,ispec) * c44_muv
+    else
+      factor_common_c44_muv = factor_common(i_SLS,1,1,1,ispec) * c44_muv
+    endif
+
+    ! adds contributions from current strain
+    R_xx_loc(i_SLS) = R_xx_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(1))
+    R_yy_loc(i_SLS) = R_yy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(2))
+    R_xy_loc(i_SLS) = R_xy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(3))
+    R_xz_loc(i_SLS) = R_xz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(4))
+    R_yz_loc(i_SLS) = R_yz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(5))
+
+
+  enddo ! i_SLS
+
+  end subroutine compute_element_att_mem_up_cm

@@ -183,19 +183,19 @@
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 accel_outer_core, &
                                 buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
                                 my_neighbours_outer_core, &
-                                request_send_scalar_outer_core,request_recv_scalar_outer_core)
+                                request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
         ! outer core
         call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                 buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,&
                                 my_neighbours_outer_core, &
-                                request_send_scalar_outer_core,request_recv_scalar_outer_core, &
+                                request_send_scalar_oc,request_recv_scalar_oc, &
                                 1) ! <-- 1 == fwd accel
       endif
 
@@ -206,19 +206,19 @@
           call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 b_accel_outer_core, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
                                 my_neighbours_outer_core, &
-                                b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core)
+                                b_request_send_scalar_oc,b_request_recv_scalar_oc)
         else
           ! on GPU
           ! outer core
           call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,&
                                 my_neighbours_outer_core, &
-                                b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core, &
+                                b_request_send_scalar_oc,b_request_recv_scalar_oc, &
                                 3) ! <-- 3 == adjoint b_accel
         endif ! GPU
       endif ! SIMULATION_TYPE == 3
@@ -231,15 +231,15 @@
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 accel_outer_core, &
                                 buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
-                                max_nibool_interfaces_outer_core, &
+                                max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                request_send_scalar_outer_core,request_recv_scalar_outer_core)
+                                request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
         call assemble_MPI_scalar_write_cuda(NPROCTOT_VAL, &
                                 buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
-                                request_send_scalar_outer_core,request_recv_scalar_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                request_send_scalar_oc,request_recv_scalar_oc, &
                                 1) ! <-- 1 == fwd accel
       endif
 
@@ -250,15 +250,15 @@
           call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 b_accel_outer_core, &
                                 b_buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
-                                max_nibool_interfaces_outer_core, &
+                                max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core)
+                                b_request_send_scalar_oc,b_request_recv_scalar_oc)
         else
           ! on GPU
           call assemble_MPI_scalar_write_cuda(NPROCTOT_VAL, &
                                 b_buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
-                                b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                b_request_send_scalar_oc,b_request_recv_scalar_oc, &
                                 3) ! <-- 3 == adjoint b_accel
         endif
       endif ! SIMULATION_TYPE == 3

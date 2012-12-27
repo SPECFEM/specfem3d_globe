@@ -38,7 +38,12 @@
   ! debugging
   character(len=256) :: filename
   integer,dimension(:),allocatable :: dummy_i
+
   logical, parameter :: DEBUG_SNAPSHOT = .false.
+
+  logical, parameter :: RUN_EXTERNAL_SCRIPT = .true.
+  character(len=256) :: script_name = "tar_databases_file.sh"
+  character(len=256) :: system_command
 
   ! save movie on surface
   if( MOVIE_SURFACE ) then
@@ -157,9 +162,9 @@
 
         scalingval = scale_displ
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
-                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
-                    MOVIE_COARSE,ibool_crust_mantle,displ_crust_mantle, &
-                    scalingval,mask_3dmovie,nu_3dmovie)
+                                       LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE,ibool_crust_mantle, &
+                                       displ_crust_mantle, &
+                                       scalingval,mask_3dmovie,nu_3dmovie)
 
       case( 6 )
         !output velocity
@@ -169,22 +174,19 @@
 
         scalingval = scale_veloc
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
-                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
-                    MOVIE_COARSE,ibool_crust_mantle,veloc_crust_mantle, &
-                    scalingval,mask_3dmovie,nu_3dmovie)
+                                       LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE,ibool_crust_mantle, &
+                                       veloc_crust_mantle, &
+                                       scalingval,mask_3dmovie,nu_3dmovie)
 
       case( 7 )
         ! output norm of displacement
 
         ! gets resulting array values onto CPU
         if( GPU_MODE ) then
-          ! wavefields
-          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
-          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
-          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+          ! displacement wavefields
+          call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+          call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
+          call transfer_displ_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core,Mesh_pointer)
         endif
 
         call write_movie_volume_displnorm(myrank,it,LOCAL_TMP_PATH, &
@@ -196,13 +198,10 @@
 
         ! gets resulting array values onto CPU
         if( GPU_MODE ) then
-          ! wavefields
-          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
-          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
-          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+          ! velocity wavefields
+          call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+          call transfer_veloc_ic_from_device(NDIM*NGLOB_INNER_CORE,veloc_inner_core,Mesh_pointer)
+          call transfer_veloc_oc_from_device(NGLOB_OUTER_CORE,veloc_outer_core,Mesh_pointer)
         endif
 
         call write_movie_volume_velnorm(myrank,it,LOCAL_TMP_PATH, &
@@ -214,13 +213,10 @@
 
         ! gets resulting array values onto CPU
         if( GPU_MODE ) then
-          ! wavefields
-          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
-          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
-          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+          ! acceleration wavefields
+          call transfer_accel_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
+          call transfer_accel_ic_from_device(NDIM*NGLOB_INNER_CORE,accel_inner_core,Mesh_pointer)
+          call transfer_accel_oc_from_device(NGLOB_OUTER_CORE,accel_outer_core,Mesh_pointer)
         endif
 
         call write_movie_volume_accelnorm(myrank,it,LOCAL_TMP_PATH, &
@@ -232,6 +228,15 @@
 
       end select ! MOVIE_VOLUME_TYPE
 
+      ! executes an external script on the node
+      if( RUN_EXTERNAL_SCRIPT ) then
+        call sync_all()
+        if( myrank == 0 ) then
+          write(system_command,"('./',a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(script_name),it,it
+          !print*,trim(system_command)
+          call system(system_command)
+        endif
+      endif
     endif
   endif ! MOVIE_VOLUME
 

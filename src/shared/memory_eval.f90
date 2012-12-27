@@ -271,13 +271,24 @@
   static_memory_size = static_memory_size + &
     3.d0*dble(NDIM)*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-  ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  static_memory_size = static_memory_size +  &
-    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+  ! attenuation arrays
+  if( USE_3D_ATTENUATION_ARRAYS ) then
+    ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+    static_memory_size = static_memory_size +  &
+      2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
 
-  ! factor_common_crust_mantle
-  static_memory_size = static_memory_size +  &
-    dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+    ! factor_common_crust_mantle
+    static_memory_size = static_memory_size +  &
+      dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+  else
+    ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+    static_memory_size = static_memory_size +  &
+      2.d0*dble(1)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+
+    ! factor_common_crust_mantle
+    static_memory_size = static_memory_size +  &
+      dble(N_SLS)*dble(1)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+  endif
 
   ! R_memory_crust_mantle (R_xx, R_yy, ..)
   static_memory_size = static_memory_size +  &
@@ -334,13 +345,24 @@
   static_memory_size = static_memory_size + &
     3.d0*dble(NDIM)*nglob(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
-  ! one_minus_sum_beta_inner_core, factor_scale_inner_core
-  static_memory_size = static_memory_size +  &
-    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  ! attenuation arrays
+  if( USE_3D_ATTENUATION_ARRAYS ) then
+    ! one_minus_sum_beta_inner_core, factor_scale_inner_core
+    static_memory_size = static_memory_size +  &
+      2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
 
-  ! factor_common_inner_core
-  static_memory_size = static_memory_size +  &
-    dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+    ! factor_common_inner_core
+    static_memory_size = static_memory_size +  &
+      dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  else
+    ! one_minus_sum_beta_inner_core, factor_scale_inner_core
+    static_memory_size = static_memory_size +  &
+      2.d0*dble(1)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+
+    ! factor_common_inner_core
+    static_memory_size = static_memory_size +  &
+      dble(N_SLS)*dble(1)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  endif
 
   ! R_memory_inner_core
   static_memory_size = static_memory_size +  &

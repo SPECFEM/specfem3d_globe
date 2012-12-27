@@ -2,15 +2,13 @@ dnl                                               -*- Autoconf -*-
 dnl
 dnl Process this file with autoconf to produce the 'configure' script:
 dnl
-dnl ACLOCAL="aclocal -I m4" autoreconf
+dnl autoreconf -I m4
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
-# $Id: configure.ac,v 1.1 2005/08/24 22:45:51 leif Exp $
-
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D Globe], [5.1.2], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -38,8 +36,16 @@ AC_ARG_WITH([cuda],
         [build cuda GPU enabled version @<:@default=no@:>@])],
     [want_cuda="$withval"],
     [want_cuda=no])
-AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" = yes])
+#AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" = yes])
+AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
+AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
 
+AC_ARG_WITH([vtk],
+    [AC_HELP_STRING([--with-vtk],
+        [build VTK enabled version @<:@default=no@:>@])],
+    [want_vtk="$withval"],
+    [want_vtk=no])
+AM_CONDITIONAL([COND_VTK], [test "$want_vtk" != no])
 
 # Checks for programs.
 
@@ -108,12 +114,14 @@ fi
 
 CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 
+if test "$want_cuda" = yes; then
+    CIT_CUDA_COMPILER
+fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 
 
 # Checks for library functions.
-
 
 AC_CONFIG_FILES([
   Makefile 

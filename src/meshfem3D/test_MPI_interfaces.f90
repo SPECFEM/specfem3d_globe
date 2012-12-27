@@ -52,7 +52,7 @@
   logical :: is_okay
   logical,dimension(:),allocatable :: mask
 
-  ! daniel: debug output
+  ! debug output
   !do iproc=0,NPROCTOT-1
   !  if( myrank == iproc ) then
   !    print*, 'mpi rank',myrank,'interfaces : ',num_interfaces,'region',iregion_code
@@ -304,7 +304,7 @@
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_vector(NPROCTOT,NGLOB_CRUST_MANTLE, &
                       test_flag_vector, &
-                      num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                      num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                       my_neighbours_crust_mantle)
 
@@ -415,7 +415,7 @@
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_scalar(NPROCTOT,NGLOB_OUTER_CORE, &
                                 test_flag, &
-                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
                                 my_neighbours_outer_core)
 
@@ -525,7 +525,7 @@
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_vector(NPROCTOT,NGLOB_INNER_CORE, &
                       test_flag_vector, &
-                      num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                      num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                       my_neighbours_inner_core)
 

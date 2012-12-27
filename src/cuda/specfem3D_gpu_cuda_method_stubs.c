@@ -408,6 +408,11 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                                  realw* R_xy_crust_mantle,
                                                  realw* R_xz_crust_mantle,
                                                  realw* R_yz_crust_mantle,
+                                                 realw* b_R_xx_crust_mantle,
+                                                 realw* b_R_yy_crust_mantle,
+                                                 realw* b_R_xy_crust_mantle,
+                                                 realw* b_R_xz_crust_mantle,
+                                                 realw* b_R_yz_crust_mantle,
                                                  realw* factor_common_crust_mantle,
                                                  realw* one_minus_sum_beta_crust_mantle,
                                                  realw* R_xx_inner_core,
@@ -415,6 +420,11 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                                  realw* R_xy_inner_core,
                                                  realw* R_xz_inner_core,
                                                  realw* R_yz_inner_core,
+                                                 realw* b_R_xx_inner_core,
+                                                 realw* b_R_yy_inner_core,
+                                                 realw* b_R_xy_inner_core,
+                                                 realw* b_R_xz_inner_core,
+                                                 realw* b_R_yz_inner_core,
                                                  realw* factor_common_inner_core,
                                                  realw* one_minus_sum_beta_inner_core,
                                                  realw* alphaval,realw* betaval,realw* gammaval,
@@ -479,15 +489,15 @@ void FC_FUNC_(prepare_fields_absorb_device,
 void FC_FUNC_(prepare_mpi_buffers_device,
               PREPARE_MPI_BUFFERS_DEVICE)(long* Mesh_pointer_f,
                                           int* num_interfaces_crust_mantle,
-                                          int* max_nibool_interfaces_crust_mantle,
+                                          int* max_nibool_interfaces_cm,
                                           int* nibool_interfaces_crust_mantle,
                                           int* ibool_interfaces_crust_mantle,
                                           int* num_interfaces_inner_core,
-                                          int* max_nibool_interfaces_inner_core,
+                                          int* max_nibool_interfaces_ic,
                                           int* nibool_interfaces_inner_core,
                                           int* ibool_interfaces_inner_core,
                                           int* num_interfaces_outer_core,
-                                          int* max_nibool_interfaces_outer_core,
+                                          int* max_nibool_interfaces_oc,
                                           int* nibool_interfaces_outer_core,
                                           int* ibool_interfaces_outer_core){} 
 
@@ -641,9 +651,6 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
               TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {} 
 
-void FC_FUNC_(transfer_accel_cm_to_device,
-              TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
-
 void FC_FUNC_(transfer_displ_cm_from_device,
               TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
 
@@ -663,7 +670,16 @@ void FC_FUNC_(transfer_b_displ_oc_from_device,
               TRANSFER_B_DISPL_OC_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_veloc_cm_from_device,
-              TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {} 
+              TRANSFER_VELOC_CM_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_veloc_ic_from_device,
+              TRANSFER_VELOC_IC_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_veloc_oc_from_device,
+              TRANSFER_VELOC_OC_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_accel_cm_to_device,
+              TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_accel_cm_from_device,
               TRANSFER_ACCEL_CM_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
@@ -710,6 +726,22 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
                                               realw* epsilondev_xy,
                                               realw* epsilondev_xz,
                                               realw* epsilondev_yz) {} 
+
+void FC_FUNC_(transfer_b_rmemory_cm_to_device,
+              TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* b_R_xx,
+                                              realw* b_R_yy,
+                                              realw* b_R_xy,
+                                              realw* b_R_xz,
+                                              realw* b_R_yz) {} 
+
+void FC_FUNC_(transfer_b_rmemory_ic_to_device,
+              TRANSFER_B_RMEMORY_IC_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* b_R_xx,
+                                              realw* b_R_yy,
+                                              realw* b_R_xy,
+                                              realw* b_R_xz,
+                                              realw* b_R_yz) {} 
 
 void FC_FUNC_(transfer_rotation_from_device,
               TRANSFER_ROTATION_FROM_DEVICE)(long* Mesh_pointer,

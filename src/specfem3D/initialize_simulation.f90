@@ -29,6 +29,7 @@
   subroutine initialize_simulation()
 
   use specfem_par
+  use specfem_par_movie
 
   implicit none
 
@@ -309,6 +310,11 @@
   ! initializes GPU cards
   if( GPU_MODE ) call initialize_GPU()
 
+  ! initializes VTK window
+  if( VTK_MODE ) then
+    if(myrank == 0 ) call initialize_vtkwindow(GPU_MODE)
+  endif
+
   end subroutine initialize_simulation
 
 !
@@ -425,11 +431,16 @@
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have USE_ATTENUATION_MIMIC set by xcreate_header_file
+
+!daniel: att - debug todo check attenuation mimick
       if( USE_ATTENUATION_MIMIC .eqv. .false. ) &
         call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
 
       ! user output
-      if( myrank == 0 ) write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
+      if( myrank == 0 ) then
+        write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
+        write(IMAIN,*)
+      endif
     endif
 
     ! checks adjoint array dimensions

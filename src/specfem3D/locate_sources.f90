@@ -44,6 +44,8 @@
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source
 
+  use specfem_par_movie,only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
+
   implicit none
 
   ! standard include of the MPI library
@@ -166,10 +168,10 @@
   call hex_nodes(iaddx,iaddy,iaddr)
 
   ! compute typical size of elements at the surface
-  typical_size = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI_VAL)
+  typical_size = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI_VAL)
 
   ! use 10 times the distance as a criterion for source detection
-  typical_size = 10. * typical_size
+  typical_size = 10.0 * typical_size
 
   ! initializes source mask
   if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
@@ -328,8 +330,9 @@
       y_target_source = r_target_source*dsin(theta)*dsin(phi)
       z_target_source = r_target_source*dcos(theta)
 
+      ! debug
       ! would only output desired target locations
-      !if(myrank == 0) write(IOVTK,*) sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
+      !if(myrank == 0) print*,sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
 
       ! set distance to huge initial value
       distmin = HUGEVAL
@@ -393,6 +396,7 @@
                 iy_initial_guess_source = j
                 iz_initial_guess_source = k
                 located_target = .true.
+                !debug
                 !print*,myrank,'dist:',distmin*R_EARTH/1000.d0,i,j,k,ispec
               endif
 
@@ -702,6 +706,13 @@
           write(IMAIN,*) '***** WARNING: source location estimate is poor *****'
           write(IMAIN,*) '*****************************************************'
           write(IMAIN,*) '*****************************************************'
+        endif
+
+        ! stores location for vtk visualization
+        if(isource == 1 ) then
+          vtkdata_source_x = sngl(x_found_source(isource_in_this_subset))
+          vtkdata_source_y = sngl(y_found_source(isource_in_this_subset))
+          vtkdata_source_z = sngl(z_found_source(isource_in_this_subset))
         endif
 
       enddo ! end of loop on all the sources within current source subset

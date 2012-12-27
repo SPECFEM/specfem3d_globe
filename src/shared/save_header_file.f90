@@ -487,6 +487,8 @@
     ! attenuation mimic:
     ! mimicking effect of attenuation on apparent velocities, not amplitudes. that is,
     ! phase shifts should be correctly accounted for, but amplitudes will differ in adjoint simulations
+
+!daniel: att - debug - check if mimic is still needed
     if( ATTENUATION ) then
       write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .true.'
     else

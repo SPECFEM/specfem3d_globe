@@ -147,11 +147,10 @@
 
 ! only for slices in central cube
   if(ichunk == CHUNK_AB) then
-
-! initialize index of sender
+    ! initialize index of sender
     imsg = 0
 
-! define sender for xi = xi_min edge
+    ! define sender for xi = xi_min edge
     if(iproc_xi == 0) then
       do iproc_xi_loop = nproc_xi_half_floor,NPROC_XI-1
         imsg = imsg + 1
@@ -159,7 +158,7 @@
       enddo
     endif
 
-! define sender for xi = xi_max edge
+    ! define sender for xi = xi_max edge
     if(iproc_xi == NPROC_XI-1) then
       do iproc_xi_loop = 0, floor((NPROC_XI-1)/2.d0)
         imsg = imsg + 1
@@ -167,7 +166,7 @@
       enddo
     endif
 
-! define sender for eta = eta_min edge
+    ! define sender for eta = eta_min edge
     if(iproc_eta == 0) then
       do iproc_xi_loop = nproc_xi_half_floor,NPROC_XI-1
         imsg = imsg + 1
@@ -175,7 +174,7 @@
       enddo
     endif
 
-! define sender for eta = eta_max edge
+    ! define sender for eta = eta_max edge
     if(iproc_eta == NPROC_ETA-1) then
       do iproc_xi_loop = nproc_xi_half_floor,NPROC_XI-1
         imsg = imsg + 1
@@ -183,23 +182,22 @@
       enddo
     endif
 
-! define sender for bottom edge
-! bottom of cube, direct correspondence but with inverted xi axis
+    ! define sender for bottom edge
+    ! bottom of cube, direct correspondence but with inverted xi axis
     imsg = imsg + 1
     sender_from_slices_to_cube(imsg) = addressing(CHUNK_AB_ANTIPODE,NPROC_XI-1-iproc_xi,iproc_eta)
 
-! check that total number of faces found is correct
+    ! check that total number of faces found is correct
     if(imsg /= nb_msgs_theor_in_cube) then
       print*,'error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
       call exit_MPI(myrank,'wrong number of faces found for central cube')
     endif
 
   else if(ichunk == CHUNK_AB_ANTIPODE) then
-
-! initialize index of sender
+    ! initialize index of sender
     imsg = 0
 
-! define sender for xi = xi_min edge
+    ! define sender for xi = xi_min edge
     if(iproc_xi == 0) then
       do iproc_xi_loop = nproc_xi_half_ceil,NPROC_XI-1
         imsg = imsg + 1
@@ -207,7 +205,7 @@
       enddo
     endif
 
-! define sender for xi = xi_max edge
+    ! define sender for xi = xi_max edge
     if(iproc_xi == NPROC_XI-1) then
       do iproc_xi_loop = 0, floor((NPROC_XI/2.d0)-1.d0)
         imsg = imsg + 1
@@ -215,7 +213,7 @@
       enddo
     endif
 
-! define sender for eta = eta_min edge
+    ! define sender for eta = eta_min edge
     if(iproc_eta == 0) then
       do iproc_xi_loop = 0, floor((NPROC_XI/2.d0)-1.d0)
         imsg = imsg + 1
@@ -223,7 +221,7 @@
       enddo
     endif
 
-! define sender for eta = eta_max edge
+    ! define sender for eta = eta_max edge
     if(iproc_eta == NPROC_ETA-1) then
       do iproc_xi_loop = 0, floor((NPROC_XI/2.d0)-1.d0)
         imsg = imsg + 1
@@ -231,7 +229,7 @@
       enddo
     endif
 
-    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
       ! define sender for xi = xi_min edge
@@ -259,12 +257,12 @@
       endif
     endif
 
-! define sender for bottom edge
-! bottom of cube, direct correspondence but with inverted xi axis
+    ! define sender for bottom edge
+    ! bottom of cube, direct correspondence but with inverted xi axis
     imsg = imsg + 1
     sender_from_slices_to_cube(imsg) = addressing(CHUNK_AB,NPROC_XI-1-iproc_xi,iproc_eta)
 
-! check that total number of faces found is correct
+    ! check that total number of faces found is correct
     if(imsg /= nb_msgs_theor_in_cube) then
       print*,'error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
       call exit_MPI(myrank,'wrong number of faces found for central cube')
@@ -272,7 +270,7 @@
 
   else
 
-! dummy value in slices
+    ! dummy value in slices
     sender_from_slices_to_cube(1) = -1
 
   endif
@@ -296,7 +294,6 @@
 
   ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE ) then
-
     ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
@@ -321,7 +318,7 @@
     call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
 
-    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
       call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &

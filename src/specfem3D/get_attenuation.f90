@@ -96,6 +96,7 @@
       enddo
     enddo
   else
+    ! uses 1-D arrays for attenuation
     do ispec = 1, vnspec
       tau_e(:) = factor_common(:,1,1,1,ispec)
       Q_mu     = scale_factor(1,1,1,ispec)

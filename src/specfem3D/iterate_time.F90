@@ -115,8 +115,13 @@
 
     ! first step of noise tomography, i.e., save a surface movie at every time step
     ! modified from the subroutine 'write_movie_surface'
-    if ( NOISE_TOMOGRAPHY == 1 ) then
+    if( NOISE_TOMOGRAPHY == 1 ) then
       call noise_save_surface_movie()
+    endif
+
+    ! updates vtk window
+    if( VTK_MODE ) then
+      call it_update_vtkwindow()
     endif
 
   enddo   ! end of main time loop
@@ -478,7 +483,7 @@
                         SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                         myrank)
 
-  ! daniel: debugging
+  ! debug output
   !if( maxval(displ_crust_mantle(1,:)**2 + &
   !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4 ) then
   !  print*,'slice',myrank
@@ -578,3 +583,73 @@
   call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 
   end subroutine it_transfer_from_GPU
+
+!=====================================================================
+
+
+  subroutine it_update_vtkwindow()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
+
+  implicit none
+
+  real :: currenttime
+  integer :: iglob,inum
+  real(kind=CUSTOM_REAL),dimension(1):: dummy
+
+  ! vtk rendering at frame interval
+  if( mod(it,NTSTEP_BETWEEN_FRAMES) == 0 ) then
+
+    ! user output
+    !if( myrank == 0 ) print*,"  vtk rendering..."
+
+    ! updates time
+    currenttime = sngl((it-1)*DT-t0)
+
+    ! transfers fields from GPU to host
+    if( GPU_MODE ) then
+      !if( myrank == 0 ) print*,"  vtk: transfering velocity from gpu"
+      call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+    endif
+
+    ! updates wavefield
+    !if( myrank == 0 ) print*,"  vtk: it = ",it," out of ",it_end," - norm of velocity field"
+    inum = 0
+    vtkdata(:) = 0.0
+    do iglob = 1,NGLOB_CRUST_MANTLE
+      if( vtkmask(iglob) .eqv. .true. ) then
+        inum = inum + 1
+        ! stores norm of velocity vector
+        vtkdata(inum) = sqrt(veloc_crust_mantle(1,iglob)**2 &
+                           + veloc_crust_mantle(2,iglob)**2 &
+                           + veloc_crust_mantle(3,iglob)**2)
+      endif
+    enddo
+
+    ! updates for multiple mpi process
+    if( NPROCTOT_VAL > 1 ) then
+      if( myrank == 0 ) then
+        ! gather data
+        call gatherv_all_cr(vtkdata,size(vtkdata),&
+                            vtkdata_all,vtkdata_points_all,vtkdata_offset_all, &
+                            vtkdata_numpoints_all,NPROCTOT_VAL)
+        ! updates vtk window
+        call visualize_vtkdata(it,currenttime,vtkdata_all)
+      else
+        ! all other process just send data
+        call gatherv_all_cr(vtkdata,size(vtkdata),&
+                            dummy,vtkdata_points_all,vtkdata_offset_all, &
+                            1,NPROCTOT_VAL)
+      endif
+    else
+      ! serial run
+      ! updates vtk window
+      call visualize_vtkdata(it,currenttime,vtkdata)
+    endif
+
+  endif
+
+  end subroutine it_update_vtkwindow
+

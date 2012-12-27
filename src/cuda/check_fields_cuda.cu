@@ -776,7 +776,7 @@ void FC_FUNC_(check_norm_strain_from_device,
 /* ----------------------------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------------------------------- */
-//daniel: helper function
+// helper function
 /*
  __global__ void check_phase_ispec_kernel(int num_phase_ispec,
  int* phase_ispec,
@@ -845,7 +845,7 @@ void FC_FUNC_(check_norm_strain_from_device,
  */
 
 /* ----------------------------------------------------------------------------------------------- */
-//daniel: helper function
+// helper function
 /*
  __global__ void check_ispec_is_kernel(int NSPEC_AB,
  int* ispec_is,
@@ -908,7 +908,7 @@ void FC_FUNC_(check_norm_strain_from_device,
  }
  */
 /* ----------------------------------------------------------------------------------------------- */
-//daniel: helper function
+// helper function
 /*
  __global__ void check_array_ispec_kernel(int num_array_ispec,
  int* array_ispec,

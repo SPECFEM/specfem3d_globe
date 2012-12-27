@@ -584,7 +584,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
 
   TRACE("compute_forces_outer_core_cuda");
 
-//daniel: debug
+  // debug timing
   //printf("Running compute_forces_outer_core_cuda\n");
   //double start_time = get_time();
 

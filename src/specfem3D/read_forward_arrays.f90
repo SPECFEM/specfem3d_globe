@@ -43,7 +43,9 @@
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
   if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
-  if(NUMBER_OF_RUNS == 3) then
+  ! set start/end steps for time iteration loop
+  select case( NUMBER_OF_RUNS )
+  case( 3 )
     if(NUMBER_OF_THIS_RUN == 1) then
       it_begin = 1
       it_end = NSTEP/3
@@ -54,8 +56,7 @@
       it_begin = 2*(NSTEP/3) + 1
       it_end = NSTEP
     endif
-
-  else if(NUMBER_OF_RUNS == 2) then
+  case( 2 )
     if(NUMBER_OF_THIS_RUN == 1) then
       it_begin = 1
       it_end = NSTEP/2
@@ -63,11 +64,10 @@
       it_begin = NSTEP/2 + 1
       it_end = NSTEP
     endif
-
-  else
+  case default
     it_begin = 1
     it_end = NSTEP
-  endif
+  end select
 
   ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
@@ -114,14 +114,17 @@
     close(55)
   endif
 
+  ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then
-    ! initializes
+    ! initializes wavefields
     b_displ_crust_mantle = 0._CUSTOM_REAL
     b_veloc_crust_mantle = 0._CUSTOM_REAL
     b_accel_crust_mantle = 0._CUSTOM_REAL
+
     b_displ_inner_core = 0._CUSTOM_REAL
     b_veloc_inner_core = 0._CUSTOM_REAL
     b_accel_inner_core = 0._CUSTOM_REAL
+
     b_displ_outer_core = 0._CUSTOM_REAL
     b_veloc_outer_core = 0._CUSTOM_REAL
     b_accel_outer_core = 0._CUSTOM_REAL
@@ -142,6 +145,7 @@
       b_A_array_rotation = 0._CUSTOM_REAL
       b_B_array_rotation = 0._CUSTOM_REAL
     endif
+
     if (ATTENUATION_VAL) then
       b_R_xx_crust_mantle = 0._CUSTOM_REAL
       b_R_yy_crust_mantle = 0._CUSTOM_REAL
@@ -154,7 +158,6 @@
       b_R_xy_inner_core = 0._CUSTOM_REAL
       b_R_xz_inner_core = 0._CUSTOM_REAL
       b_R_yz_inner_core = 0._CUSTOM_REAL
-
     endif
   endif
 
@@ -190,9 +193,11 @@
   read(55) b_displ_crust_mantle
   read(55) b_veloc_crust_mantle
   read(55) b_accel_crust_mantle
+
   read(55) b_displ_inner_core
   read(55) b_veloc_inner_core
   read(55) b_accel_inner_core
+
   read(55) b_displ_outer_core
   read(55) b_veloc_outer_core
   read(55) b_accel_outer_core
@@ -257,14 +262,21 @@
      read(55) b_R_xz_inner_core
      read(55) b_R_yz_inner_core
 
-     ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is
+     ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is by default
      !          only mimicking effects on phase shifts, but not on amplitudes.
      !          flag USE_ATTENUATION_MIMIC will have to be set to true in this case.
      !
-     ! arrays b_R_xx, ... are not used when USE_ATTENUATION_MIMIC is set,
-     ! therefore no need to transfer arrays onto GPU
-     !if(GPU_MODE) then
-     !endif
+     ! arrays b_R_xx, ... are not used when USE_ATTENUATION_MIMIC is set
+     if(GPU_MODE) then
+      call transfer_b_rmemory_cm_to_device(Mesh_pointer, &
+                                    b_R_xx_crust_mantle,b_R_yy_crust_mantle, &
+                                    b_R_xy_crust_mantle,b_R_xz_crust_mantle, &
+                                    b_R_yz_crust_mantle)
+      call transfer_b_rmemory_ic_to_device(Mesh_pointer, &
+                                    b_R_xx_inner_core,b_R_yy_inner_core, &
+                                    b_R_xy_inner_core,b_R_xz_inner_core, &
+                                    b_R_yz_inner_core)
+     endif
 
   endif
   close(55)
