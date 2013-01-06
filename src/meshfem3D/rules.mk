@@ -95,11 +95,10 @@ meshfem3D_OBJECTS = \
 	$O/write_AVS_DX_surface_data.o \
 	$(EMPTY_MACRO)
 
-# FIXME: When cit_fortran.m4 is patched, these files will go in $O:
 meshfem3D_MODULES = \
-	$B/gapp2_mantle_model_constants.$(FC_MODEXT) \
-	$B/meshfem3d_models_par.$(FC_MODEXT) \
-	$B/module_ppm.$(FC_MODEXT) \
+	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/module_ppm.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory

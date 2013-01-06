@@ -95,15 +95,16 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 
 # Checks for typedefs, structures, and compiler characteristics.
 
-dnl Fix this when cit_fortran.m4 is updated.
-FC_MODEXT=mod
-dnl CIT_FC_MODULE_EXTENSION
-dnl CIT_FC_MODULE_FLAG
-dnl CIT_FC_MODULE_OUTPUT_FLAG
-dnl 
-dnl FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+CIT_FC_MODULE_EXTENSION
 AC_SUBST([FC_MODEXT])
-
+CIT_FC_MODULE_FLAG([], [])
+CIT_FC_MODULE_OUTPUT_FLAG([
+	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+	FC_MODDIR=./obj
+], [
+	FC_MODDIR=.
+])
+AC_SUBST([FC_MODDIR])
 
 # Checks for library functions.
 
