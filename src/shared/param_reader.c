@@ -104,6 +104,7 @@ FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
     return;
   }
   free(fncopy);
+  *ierr = 0;
 }
 
 void

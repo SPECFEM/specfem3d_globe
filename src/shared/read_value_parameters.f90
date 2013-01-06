@@ -27,7 +27,7 @@
 
 ! read values from parameter file, ignoring white lines and comments
 
-  subroutine read_value_integer(value_to_read, name)
+  subroutine read_value_integer(value_to_read, name, ierr)
 
   implicit none
 
@@ -35,9 +35,8 @@
   character(len=*) name
   character(len=100) string_read
   integer ierr
-  common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr .ne. 0) return
   read(string_read,*,iostat=ierr) value_to_read
 
@@ -45,7 +44,7 @@
 
 !--------------------
 
-  subroutine read_value_double_precision(value_to_read, name)
+  subroutine read_value_double_precision(value_to_read, name, ierr)
 
   implicit none
 
@@ -53,9 +52,8 @@
   character(len=*) name
   character(len=100) string_read
   integer ierr
-  common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr .ne. 0) return
   read(string_read,*,iostat=ierr) value_to_read
 
@@ -63,7 +61,7 @@
 
 !--------------------
 
-  subroutine read_value_logical(value_to_read, name)
+  subroutine read_value_logical(value_to_read, name, ierr)
 
   implicit none
 
@@ -71,9 +69,8 @@
   character(len=*) name
   character(len=100) string_read
   integer ierr
-  common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr .ne. 0) return
   read(string_read,*,iostat=ierr) value_to_read
 
@@ -81,7 +78,7 @@
 
 !--------------------
 
-  subroutine read_value_string(value_to_read, name)
+  subroutine read_value_string(value_to_read, name, ierr)
 
   implicit none
 
@@ -89,9 +86,8 @@
   character(len=*) name
   character(len=150) string_read
   integer ierr
-  common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr .ne. 0) return
   value_to_read = string_read
 
@@ -99,14 +95,13 @@
 
 !--------------------
 
-  subroutine open_parameter_file
+  subroutine open_parameter_file(ierr)
 
   integer ierr
-  common /param_err_common/ ierr
   character(len=50) filename
   filename = 'DATA/Par_file'
 
-  call param_open(filename, len(filename), ierr);
+  call param_open(filename, len(filename), ierr)
   if (ierr .ne. 0) return
 
   end subroutine open_parameter_file
@@ -115,20 +110,9 @@
 
   subroutine close_parameter_file
 
-  call param_close();
+  call param_close()
 
   end subroutine close_parameter_file
-
-!--------------------
-
-  integer function err_occurred()
-
-  integer ierr
-  common /param_err_common/ ierr
-
-  err_occurred = ierr
-
-  end function err_occurred
 
 !--------------------
 

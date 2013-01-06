@@ -149,7 +149,6 @@
     ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
     HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
   character(len=150) :: MODEL,dummystring
-  integer, external :: err_occurred
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
   ! as usual in MPI, process 0 is in charge of coordinating everything
@@ -192,10 +191,6 @@
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
          USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL)
-
-    if(err_occurred() /= 0) then
-      call exit_MPI(myrank,'an error occurred while reading the parameter file')
-    endif
 
   endif
 

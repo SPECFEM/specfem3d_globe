@@ -374,8 +374,6 @@
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
-  integer, external :: err_occurred
-
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
@@ -545,10 +543,6 @@
           DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
           WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
           USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL)
-
-    if(err_occurred() /= 0) &
-      call exit_MPI(myrank,'an error occurred while reading the parameter file')
-
   endif
 
   ! distributes parameters from master to all processes
