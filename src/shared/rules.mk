@@ -27,6 +27,10 @@
 
 #######################################
 
+shared_TARGETS = \
+	$(shared_OBJECTS) \
+	$(EMPTY_MACRO)
+
 shared_OBJECTS = \
 	$O/auto_ner.o \
 	$O/broadcast_compute_parameters.o \

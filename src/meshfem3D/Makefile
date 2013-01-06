@@ -35,16 +35,16 @@ DIR = meshfem3D
 ####
 
 default:
-	$(MAKE) -C @top_builddir@ $(DIR)
+	$(MAKE) -C ../.. $(DIR)
 
 all:
-	$(MAKE) -C @top_builddir@ all
+	$(MAKE) -C ../.. all
 
 clean:
-	$(MAKE) -C @top_builddir@ CLEAN=$(DIR) clean
+	$(MAKE) -C ../.. CLEAN=$(DIR) clean
 
 cleanall:
-	$(MAKE) -C @top_builddir@ clean
+	$(MAKE) -C ../.. clean
 
 backup:
 	mkdir -p bak
