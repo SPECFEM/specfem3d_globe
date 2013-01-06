@@ -39,7 +39,7 @@
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
   if (ierr .ne. 0) return
-  read(string_read,*) value_to_read
+  read(string_read,*,iostat=ierr) value_to_read
 
   end subroutine read_value_integer
 
@@ -57,7 +57,7 @@
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
   if (ierr .ne. 0) return
-  read(string_read,*) value_to_read
+  read(string_read,*,iostat=ierr) value_to_read
 
   end subroutine read_value_double_precision
 
@@ -75,7 +75,7 @@
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
   if (ierr .ne. 0) return
-  read(string_read,*) value_to_read
+  read(string_read,*,iostat=ierr) value_to_read
 
   end subroutine read_value_logical
 
