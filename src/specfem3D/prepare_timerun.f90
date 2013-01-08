@@ -626,7 +626,11 @@
   ! anelasticity: implications for seismology and mantle composition,
   ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
   ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
-  ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
+  ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170.
+  ! Beware that in the book of Aki and Richards eq. (5.81) is given for velocities
+  ! while we need an equation for "mu" and thus we have an additional factor of 2
+  ! in the scaling factor below and in equation (49) of Komatitsch and Tromp, Geophys. J. Int. (2002) 149, 390-412,
+  ! because "mu" is related to the square of velocity.
 
   ! rescale in crust and mantle
 
