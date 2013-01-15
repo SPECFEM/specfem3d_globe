@@ -6629,4 +6629,27 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+sed 'h;s/./-/g;s/^.../## /;s/...$/ ##/;p;x;p;x' <<_ASBOX
+## $PACKAGE_NAME $PACKAGE_VERSION ##
+_ASBOX
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $0 has completed and set up a default configuration to build." >&5
+$as_echo "$0 has completed and set up a default configuration to build." >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: You may wish to modify the following files before building:" >&5
+$as_echo "You may wish to modify the following files before building:" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   DATA/Par_file           Set parameters affecting the build and simulation
+                          before running make and compiling." >&5
+$as_echo "  DATA/Par_file           Set parameters affecting the build and simulation
+                          before running make and compiling." >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   DATA/CMTSOLUTION        Set the source parameters before running the solver." >&5
+$as_echo "  DATA/CMTSOLUTION        Set the source parameters before running the solver." >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   DATA/STATIONS           Set the receiver stations before running the solver." >&5
+$as_echo "  DATA/STATIONS           Set the receiver stations before running the solver." >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
 
