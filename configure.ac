@@ -143,5 +143,20 @@ AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
 
 AC_OUTPUT
 
+dnl FYI, this is not a "result", but AS_ECHO is not available in 2.61, and it
+dnl basically works like a portable echo.
+AC_MSG_RESULT([])
+AS_BOX([$PACKAGE_NAME $PACKAGE_VERSION])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([$0 has completed and set up a default configuration to build.])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([You may wish to modify the following files before building:])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/Par_file],
+                              [Set parameters affecting the build and simulation before running make and compiling.])])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/CMTSOLUTION],
+                              [Set the source parameters before running the solver.])])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/STATIONS],
+                              [Set the receiver stations before running the solver.])])
+AC_MSG_RESULT([])
 
 dnl end of configure.ac
