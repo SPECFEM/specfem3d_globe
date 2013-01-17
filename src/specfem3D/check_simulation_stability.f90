@@ -29,7 +29,7 @@
                           b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          myrank) !COMPUTE_AND_STORE_STRAIN,myrank)
+                          it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
 
   implicit none
 
@@ -39,7 +39,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! time step
-  integer it,NSTEP,myrank
+  integer it,it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,NSTEP,myrank
 
   ! displacement
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
@@ -60,8 +60,6 @@
 
   double precision :: time_start,DT,t0
 
-!  logical COMPUTE_AND_STORE_STRAIN
-
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
@@ -70,10 +68,13 @@
   ! names of the data files for all the processors in MPI
   character(len=150) outputname
   ! timer MPI
-  double precision :: tCPU,t_remain,t_total
+  double precision :: tCPU,t_remain,t_total,t_remain_run,t_total_run
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
+  integer :: it_run,nstep_run, &
+             ihours_remain_run,iminutes_remain_run,iseconds_remain_run,int_t_remain_run, &
+             ihours_total_run,iminutes_total_run,iseconds_total_run,int_t_total_run
   ! to determine date and time at which the run will finish
   character(len=8) datein
   character(len=10) timein
@@ -90,6 +91,7 @@
 
   double precision,parameter :: scale_displ = R_EARTH
 
+  logical :: SHOW_SEPARATE_RUN_INFORMATION
 
   ! compute maximum of norm of displacement in each slice
   Usolidnorm = max( &
@@ -152,6 +154,11 @@
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif
 
+    ! information about the current run only
+    SHOW_SEPARATE_RUN_INFORMATION = NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS
+    it_run = it - it_begin + 1
+    nstep_run = it_end - it_begin + 1
+
     ! elapsed time since beginning of the simulation
     tCPU = MPI_WTIME() - time_start
     int_tCPU = int(tCPU)
@@ -160,19 +167,14 @@
     iseconds = int_tCPU - 3600*ihours - 60*iminutes
     write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
     write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+    write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it_run)
 
     ! compute estimated remaining simulation time
-    t_remain = (NSTEP - it) * (tCPU/dble(it))
+    t_remain = (NSTEP - it) * (tCPU/dble(it_run))
     int_t_remain = int(t_remain)
     ihours_remain = int_t_remain / 3600
     iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
     iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
-    write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
-    write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
-    write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
-    write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_remain,iminutes_remain,iseconds_remain
 
     ! compute estimated total simulation time
     t_total = t_remain + tCPU
@@ -180,12 +182,57 @@
     ihours_total = int_t_total / 3600
     iminutes_total = (int_t_total - 3600*ihours_total) / 60
     iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
-    write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
-    write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_total,iminutes_total,iseconds_total
-    write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
-    if(it < NSTEP) then
+    ! calculate times for the *current* run
+    if (SHOW_SEPARATE_RUN_INFORMATION) then
+      ! compute estimated remaining simulation time
+      t_remain_run = (it_end - it) * (tCPU/dble(it_run))
+      int_t_remain_run = int(t_remain_run)
+      ihours_remain_run = int_t_remain_run / 3600
+      iminutes_remain_run = (int_t_remain_run - 3600*ihours_remain_run) / 60
+      iseconds_remain_run = int_t_remain_run - 3600*ihours_remain_run - 60*iminutes_remain_run
+
+      ! compute estimated total simulation time
+      t_total_run = t_remain_run + tCPU
+      int_t_total_run = int(t_total_run)
+      ihours_total_run = int_t_total_run / 3600
+      iminutes_total_run = (int_t_total_run - 3600*ihours_total_run) / 60
+      iseconds_total_run = int_t_total_run - 3600*ihours_total_run - 60*iminutes_total_run
+    endif
+
+    ! print time information
+    if (SHOW_SEPARATE_RUN_INFORMATION) then
+      write(IMAIN,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
+      write(IMAIN,*) 'Time steps done in total = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining for this run = ',it_end - it
+      write(IMAIN,*) 'Time steps remaining for all runs = ',NSTEP - it
+      write(IMAIN,*) 'Estimated remaining time for this run in seconds = ',t_remain_run
+      write(IMAIN,"(' Estimated remaining time for this run in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain_run,iminutes_remain_run,iseconds_remain_run
+      write(IMAIN,*) 'Estimated remaining time for all runs in seconds = ',t_remain
+      write(IMAIN,"(' Estimated remaining time for all runs in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain,iminutes_remain,iseconds_remain
+      write(IMAIN,*) 'Estimated total run time for this run in seconds = ',t_total_run
+      write(IMAIN,"(' Estimated total run time for this run in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total_run,iminutes_total_run,iseconds_total_run
+      write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it_run)/dble(nstep_run)),'% of this run'
+      write(IMAIN,*) 'Estimated total run time for all runs in seconds = ',t_total
+      write(IMAIN,"(' Estimated total run time for all runs in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total,iminutes_total,iseconds_total
+      write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of the total'
+    else
+      write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+      write(IMAIN,*) 'Estimated total remaining time in seconds = ',t_remain
+      write(IMAIN,"(' Estimated total remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain,iminutes_remain,iseconds_remain
+      write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
+      write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total,iminutes_total,iseconds_total
+      write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+    endif
+
+    if (it < it_end) then
 
       ! get current date
       call date_and_time(datein,timein,zone,time_values)
@@ -208,7 +255,11 @@
       call convtime(timestamp,year,mon,day,hr,minutes)
 
       ! add remaining minutes
-      timestamp = timestamp + nint(t_remain / 60.d0)
+      if (SHOW_SEPARATE_RUN_INFORMATION) then
+        timestamp = timestamp + nint(t_remain_run / 60.d0)
+      else
+        timestamp = timestamp + nint(t_remain / 60.d0)
+      endif
 
       ! get date and time of that future timestamp in minutes
       call invtime(timestamp,year,mon,day,hr,minutes)
@@ -246,7 +297,7 @@
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
-      if(it < 100) then
+      if (it_run < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
         write(IMAIN,*) '**** because fewer than 100 iterations have been performed'
@@ -277,23 +328,51 @@
 
     write(IOUT,*) 'Elapsed time in seconds = ',tCPU
     write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+    write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it_run)
     write(IOUT,*)
 
-    write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
-    write(IOUT,*) 'Time steps remaining = ',NSTEP - it
-    write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-    write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_remain,iminutes_remain,iseconds_remain
-    write(IOUT,*)
+    if (SHOW_SEPARATE_RUN_INFORMATION) then
 
-    write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-    write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_total,iminutes_total,iseconds_total
-    write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
-    write(IOUT,*)
+      write(IOUT,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
+      write(IOUT,*) 'Time steps done in total = ',it,' out of ',NSTEP
+      write(IOUT,*) 'Time steps remaining for this run = ',it_end - it
+      write(IOUT,*) 'Time steps remaining for all runs = ',NSTEP - it
+      write(IOUT,*) 'Estimated remaining time for this run in seconds = ',t_remain_run
+      write(IOUT,"(' Estimated remaining time for this run in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain_run,iminutes_remain_run,iseconds_remain_run
+      write(IOUT,*) 'Estimated remaining time for all runs in seconds = ',t_remain
+      write(IOUT,"(' Estimated remaining time for all runs in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain,iminutes_remain,iseconds_remain
+      write(IOUT,*)
 
-    if(it < NSTEP) then
+      write(IOUT,*) 'Estimated total run time for this run in seconds = ',t_total_run
+      write(IOUT,"(' Estimated total run time for this run in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total_run,iminutes_total_run,iseconds_total_run
+      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it_run)/dble(nstep_run)),'% of this run'
+      write(IOUT,*) 'Estimated total run time for all runs in seconds = ',t_total
+      write(IOUT,"(' Estimated total run time for all runs in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total,iminutes_total,iseconds_total
+      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of the total'
+      write(IOUT,*)
+
+    else
+
+      write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
+      write(IOUT,*) 'Time steps remaining = ',NSTEP - it
+      write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
+      write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain,iminutes_remain,iseconds_remain
+      write(IOUT,*)
+
+      write(IOUT,*) 'Estimated total run time in seconds = ',t_total
+      write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total,iminutes_total,iseconds_total
+      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+      write(IOUT,*)
+
+    endif
+
+    if (it < it_end) then
 
       write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
           weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
@@ -314,7 +393,7 @@
             day_remote,year_remote,hr_remote,minutes_remote
       endif
 
-      if(it < 100) then
+      if (it_run < 100) then
         write(IOUT,*)
         write(IOUT,*) '************************************************************'
         write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
