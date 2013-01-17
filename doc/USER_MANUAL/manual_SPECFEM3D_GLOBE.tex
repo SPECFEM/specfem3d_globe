@@ -310,9 +310,7 @@ MPI compiler command for your system:
 ./configure~FC=mpif90~MPIFC=mpif90
 \end{lyxcode}
 \begin{description}
-\item [{\texttt{FLAGS\_CHECK}}] Compiler flags for non-critical subroutines.
-\item [{\texttt{FLAGS\_NO\_CHECK}}] Compiler flags for creating fast, production-run
-code for critical subroutines.
+\item [{\texttt{FLAGS\_CHECK}}] Compiler flags.
 \item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}]
 If you want the parallel mesher to write a parallel (i.e., split) database for the solver on the
 local disks of each of the compute nodes, set this flag to \texttt{.false.}.
@@ -393,7 +391,7 @@ script discussed below automatically takes care of creating the \texttt{OUTPUT\_
 \underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
 
 \noindent
-Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK} and \texttt{FLAGS\_NO\_CHECK}:\\
+Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:\\
 
 \noindent
 \texttt{-g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w}\\
@@ -426,7 +424,7 @@ Then, to configure the code, type this:\\
 To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
 
 \noindent
-\texttt{   FLAGS\_NO\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
+\texttt{   FLAGS\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
 \texttt{   -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap\_all -Wl,-relax"}
 
 \noindent
@@ -476,7 +474,6 @@ In \texttt{src/create\_header\_file/Makefile} put this instead of the current va
 
 \begin{verbatim}
 FLAGS_CHECK = -O0
-FLAGS_NO_CHECK = -O0
 \end{verbatim}
 
 \noindent
