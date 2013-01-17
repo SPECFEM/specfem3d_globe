@@ -2411,12 +2411,12 @@
     ! compute the maximum of the norm of the displacement
     ! in all the slices using an MPI reduction
     ! and output timestamp file to check that simulation is running fine
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) &
+    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) &
       call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
                           b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          myrank)
+                          it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
 
 
     ! ****************************************************
