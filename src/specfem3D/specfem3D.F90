@@ -1079,7 +1079,7 @@
                 hprime_xx,hprime_yy,hprime_zz,hprime_xxT, &
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY)
+                rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL)
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
