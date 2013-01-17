@@ -37,7 +37,7 @@ rm -rf OUTPUT_FILES/*
 # using default configuration
 cd ../../
 # configures package with ifort compiler
-./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" FLAGS_NO_CHECK="-O3 -assume byterecl" > tmp.log
+./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" > tmp.log
 
 # compiles for an adjoint simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
