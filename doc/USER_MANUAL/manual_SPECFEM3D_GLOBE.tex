@@ -184,9 +184,9 @@ perfectly diagonal mass matrix, include \cite{CoJoTo93}, \cite{Kom97},
 whereas applications involving Chebyshev basis functions and a nondiagonal mass matrix
 include \cite{SePr94}, \cite{PrCaSe94} and \cite{SePrPr95}.\\
 
-All SPECFEM3D\_GLOBE software is written in Fortran90 with full portability
-in mind, and conforms strictly to the Fortran95 standard. It uses
-no obsolete or obsolescent features of Fortran77. The package uses
+All SPECFEM2D software is written in Fortran2003 with full portability
+in mind, and conforms strictly to the Fortran2003 standard. It uses
+no obsolete or obsolescent features of Fortran. The package uses
 parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.\\
 
@@ -249,7 +249,7 @@ We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.ba
 Then, to configure the software for your system, run the \texttt{configure}
 shell script. This script will attempt to guess the appropriate configuration
 values for your system. However, at a minimum, it is recommended that
-you explicitly specify the appropriate command names for your Fortran90
+you explicitly specify the appropriate command names for your Fortran
 compiler and MPI package:
 
 \begin{lyxcode}
@@ -296,10 +296,10 @@ on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \textt
 A summary of the most important configuration variables follows.
 
 \begin{description}
-\item [{\texttt{FC}}] Fortran90 compiler command name. By default, \texttt{configure}
+\item [{\texttt{FC}}] Fortran compiler command name. By default, \texttt{configure}
 will execute the command names of various well-known Fortran compilers
 in succession, picking the first one it finds that works.
-\item [{\texttt{MPIFC}}] MPI Fortran90 command name. The default is \texttt{mpif90}.
+\item [{\texttt{MPIFC}}] MPI Fortran command name. The default is \texttt{mpif90}.
 This must correspond to the same underlying compiler specified by
 \texttt{FC}; otherwise, you will encounter compilation or link errors
 when you attempt to build the code. If you are unsure about this,
@@ -3625,7 +3625,7 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 \end{lyxcode}
   make sure you're pointing to the right 'mpif90' wrapper command.
 
-  Normally, this message will appear when you're mixing two different Fortran
+  Normally, this message will appear when you are mixing two different Fortran
   compilers. That is, using e.g. gfortran to compile non-MPI files
   and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.
 
