@@ -99,33 +99,16 @@
   character(len=150) outputname
 
   ! define correct time steps if restart files
-  if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
+  if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
+    stop 'number of restart runs can not be less than 1 or greater than NSTEP'
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
   if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
-  if(NUMBER_OF_RUNS == 3) then
-    if(NUMBER_OF_THIS_RUN == 1) then
-      it_begin = 1
-      it_end = NSTEP/3
-    else if(NUMBER_OF_THIS_RUN == 2) then
-      it_begin = NSTEP/3 + 1
-      it_end = 2*(NSTEP/3)
-    else
-      it_begin = 2*(NSTEP/3) + 1
-      it_end = NSTEP
-    endif
-
-  else if(NUMBER_OF_RUNS == 2) then
-    if(NUMBER_OF_THIS_RUN == 1) then
-      it_begin = 1
-      it_end = NSTEP/2
-    else
-      it_begin = NSTEP/2 + 1
-      it_end = NSTEP
-    endif
-
+  it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1
+  if (NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    it_end = NUMBER_OF_THIS_RUN * (NSTEP / NUMBER_OF_RUNS)
   else
-    it_begin = 1
+    ! Last run may be a bit larger
     it_end = NSTEP
   endif
 
