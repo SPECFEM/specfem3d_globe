@@ -539,7 +539,7 @@
             endif
 
             ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
+            if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. ) ) then
 
               ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
               call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
@@ -805,7 +805,7 @@
       ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
-      if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
+      if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. ) ) then
 
         ! updates R_memory
         call compute_element_att_memory_ic(ispec,R_memory, &

@@ -219,7 +219,7 @@
         sigma_yz = mul*duzdyl_plus_duydzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
@@ -756,7 +756,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
@@ -1123,7 +1123,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
