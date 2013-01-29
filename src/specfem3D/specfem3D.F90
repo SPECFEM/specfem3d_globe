@@ -1639,7 +1639,7 @@
 
       if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation'
 
-      if(USE_ATTENUATION_MIMIC ) write(IMAIN,*) 'mimicking effects on velocity only'
+      if(USE_PHYSICAL_DISPERSION_ONLY) write(IMAIN,*) 'mimicking physical dispersion effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
     endif
