@@ -70,11 +70,11 @@ specfem3D_OBJECTS += \
 	$O/compute_boundary_kernel.o \
 	$O/compute_coupling.o \
 	$O/compute_element.o \
-	$O/compute_forces_crust_mantle.o \
+	$O/compute_forces_crust_mantle_noDev.o \
 	$O/compute_forces_crust_mantle_Dev.o \
-	$O/compute_forces_inner_core.o \
+	$O/compute_forces_inner_core_noDev.o \
 	$O/compute_forces_inner_core_Dev.o \
-	$O/compute_forces_outer_core.o \
+	$O/compute_forces_outer_core_noDev.o \
 	$O/compute_forces_outer_core_Dev.o \
 	$O/compute_kernels.o \
 	$O/compute_seismograms.o \
@@ -163,22 +163,22 @@ $O/compute_coupling.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/co
 $O/compute_element.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_element.F90
 	${FCCOMPILE_CHECK} -c -o $O/compute_element.o ${FCFLAGS_f90} $S/compute_element.F90
 
-$O/compute_forces_crust_mantle.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
+$O/compute_forces_crust_mantle_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle_noDev.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_forces_crust_mantle_noDev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_noDev.f90
 
 $O/compute_forces_crust_mantle_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle_Dev.F90
 ## DK DK add OpenMP compiler flag here if needed
 #	${FCCOMPILE_CHECK} -c -qsmp=omp -o $O/compute_forces_crust_mantle_Dev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_Dev.F90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_crust_mantle_Dev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_Dev.F90
 
-$O/compute_forces_outer_core.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core.o ${FCFLAGS_f90} $S/compute_forces_outer_core.f90
+$O/compute_forces_outer_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_noDev.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_noDev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_noDev.f90
 
 $O/compute_forces_outer_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_Dev.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_Dev.f90
 
-$O/compute_forces_inner_core.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core.o ${FCFLAGS_f90} $S/compute_forces_inner_core.f90
+$O/compute_forces_inner_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_noDev.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core_noDev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_noDev.f90
 
 $O/compute_forces_inner_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_Dev.F90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_Dev.F90
