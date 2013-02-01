@@ -1367,7 +1367,7 @@ void FC_FUNC_(prepare_crust_mantle_device,
       // anisotropic kernels
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_cijkl_kl_crust_mantle),
                                          21*size*sizeof(realw)),5206);
-      print_CUDA_error_if_any(cudaMemset(mp->d_cijkl_kl_crust_mantle,0,size*sizeof(realw)),5209);
+      print_CUDA_error_if_any(cudaMemset(mp->d_cijkl_kl_crust_mantle,0,21*size*sizeof(realw)),5209);
     }
 
     // preconditioner
