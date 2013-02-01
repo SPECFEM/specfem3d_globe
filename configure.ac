@@ -89,9 +89,11 @@ AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
 AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
+
 AC_ARG_VAR(CUDA_LIB,[Location of CUDA library libcudart])
 AC_ARG_VAR(CUDA_INC,[Location of CUDA include files])
 AC_ARG_VAR(MPI_INC,[Location of MPI include mpi.h, which is needed by nvcc when compiling cuda files])
+
 AC_ARG_VAR(AR, [ar library creation])
 AC_ARG_VAR(ARFLAGS, [ar flag library creation])
 AC_ARG_VAR(RANLIB, [ranlib library creation])

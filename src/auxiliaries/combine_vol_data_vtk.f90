@@ -236,17 +236,6 @@ program combine_vol_data_vtk
     if( ier /= 0 ) stop 'error allocating total_dat_con array'
     total_dat_con(:,:) = 0
 
-    ! VTK
-    ! opens unstructured grid file
-    write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
-    open(IOVTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ios)
-    if( ios /= 0 ) stop 'error opening vtk output file'
-    write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-    write(IOVTK,'(a)') 'material model VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-
-
     np = 0
     ne = 0
 
@@ -261,8 +250,6 @@ program combine_vol_data_vtk
       print *, 'Reading slice ', iproc
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
-
-
 
       ! filename.bin
       data_file = trim(prname_file) // trim(filename) // '.bin'
@@ -528,6 +515,15 @@ program combine_vol_data_vtk
     print *
 
     ! VTK
+    ! opens unstructured grid file
+    write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
+    open(IOVTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ios)
+    if( ios /= 0 ) stop 'error opening vtk output file'
+    write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
+    write(IOVTK,'(a)') 'material model VTK file'
+    write(IOVTK,'(a)') 'ASCII'
+    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+
     ! points
     write(IOVTK, '(a,i16,a)') 'POINTS ', np, ' float'
     do i = 1,np

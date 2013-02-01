@@ -672,12 +672,10 @@ void FC_FUNC_(transfer_rotation_from_device,
 
   int size = NGLL3*mp->NSPEC_OUTER_CORE;
 
-  cudaMemcpy(A_array_rotation,mp->d_A_array_rotation,size*sizeof(realw),cudaMemcpyDeviceToHost);
-  cudaMemcpy(B_array_rotation,mp->d_B_array_rotation,size*sizeof(realw),cudaMemcpyDeviceToHost);
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_rotation_from_device");
-#endif
+  print_CUDA_error_if_any(cudaMemcpy(A_array_rotation,mp->d_A_array_rotation,
+                                     size*sizeof(realw),cudaMemcpyDeviceToHost),380001);
+  print_CUDA_error_if_any(cudaMemcpy(B_array_rotation,mp->d_B_array_rotation,
+                                     size*sizeof(realw),cudaMemcpyDeviceToHost),380002);
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -695,12 +693,10 @@ void FC_FUNC_(transfer_b_rotation_to_device,
 
   int size = NGLL3*mp->NSPEC_OUTER_CORE;
 
-  cudaMemcpy(mp->d_b_A_array_rotation,A_array_rotation,size*sizeof(realw),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_B_array_rotation,B_array_rotation,size*sizeof(realw),cudaMemcpyHostToDevice);
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_b_rotation_to_device");
-#endif
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_A_array_rotation,A_array_rotation,
+                                     size*sizeof(realw),cudaMemcpyHostToDevice),390001);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_B_array_rotation,B_array_rotation,
+                                     size*sizeof(realw),cudaMemcpyHostToDevice),390002);
 }
 
 
@@ -727,15 +723,18 @@ void FC_FUNC_(transfer_kernels_cm_to_host,
 
   int size = (*NSPEC)*NGLL3;
 
+  // density kernel
   print_CUDA_error_if_any(cudaMemcpy(h_rho_kl,mp->d_rho_kl_crust_mantle,
                                      size*sizeof(realw),cudaMemcpyDeviceToHost),40101);
 
   if( ! mp->anisotropic_kl){
+    // isotropic kernels
     print_CUDA_error_if_any(cudaMemcpy(h_alpha_kl,mp->d_alpha_kl_crust_mantle,
                                        size*sizeof(realw),cudaMemcpyDeviceToHost),40102);
     print_CUDA_error_if_any(cudaMemcpy(h_beta_kl,mp->d_beta_kl_crust_mantle,
-                                     size*sizeof(realw),cudaMemcpyDeviceToHost),40103);
+                                       size*sizeof(realw),cudaMemcpyDeviceToHost),40103);
   }else{
+    // anisotropic kernels
     print_CUDA_error_if_any(cudaMemcpy(h_cijkl_kl,mp->d_cijkl_kl_crust_mantle,
                                        21*size*sizeof(realw),cudaMemcpyDeviceToHost),40102);
   }
@@ -748,10 +747,10 @@ void FC_FUNC_(transfer_kernels_cm_to_host,
 extern "C"
 void FC_FUNC_(transfer_kernels_ic_to_host,
               TRANSFER_KERNELS_IC_TO_HOST)(long* Mesh_pointer,
-                                                    realw* h_rho_kl,
-                                                    realw* h_alpha_kl,
-                                                    realw* h_beta_kl,
-                                                    int* NSPEC) {
+                                           realw* h_rho_kl,
+                                           realw* h_alpha_kl,
+                                           realw* h_beta_kl,
+                                           int* NSPEC) {
 TRACE("transfer_kernels_ic_to_host");
 
   //get mesh pointer out of fortran integer container

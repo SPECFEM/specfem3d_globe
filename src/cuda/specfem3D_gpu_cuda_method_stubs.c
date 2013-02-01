@@ -763,10 +763,10 @@ void FC_FUNC_(transfer_kernels_cm_to_host,
 
 void FC_FUNC_(transfer_kernels_ic_to_host,
               TRANSFER_KERNELS_IC_TO_HOST)(long* Mesh_pointer,
-                                                    realw* h_rho_kl,
-                                                    realw* h_alpha_kl,
-                                                    realw* h_beta_kl,
-                                                    int* NSPEC) {} 
+                                           realw* h_rho_kl,
+                                           realw* h_alpha_kl,
+                                           realw* h_beta_kl,
+                                           int* NSPEC) {} 
 
 void FC_FUNC_(transfer_kernels_oc_to_host,
               TRANSFER_KERNELS_OC_TO_HOST)(long* Mesh_pointer,

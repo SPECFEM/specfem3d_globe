@@ -1057,12 +1057,12 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   double bounds[2];
   double min,max;
   
-  static int DEBUG = 0;
+  static int VERBOSE = 1;
   
   int it = *it_h;
   float time = *time_h;
   
-  if( DEBUG ) printf("     visual: it = %d time = %f \n",it,time);
+  if( VERBOSE) printf("     visual: it = %d time = %f \n",it,time);
 
   // time for calculating new wavefield
   fs.timer->StopTimer();
@@ -1113,7 +1113,7 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   double time_renderer = fs.timer->GetElapsedTime();
   fs.timer->StartTimer();
 
-  if( DEBUG ){
+  if( VERBOSE ){
     printf("     visual: %s \n",inputString);
     printf("     timer : time for rendering = %f (s) \n", time_renderer);
     printf("     data  : min = %e max = %e \n\n",min,max);
