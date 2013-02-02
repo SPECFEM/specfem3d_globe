@@ -420,7 +420,7 @@
           endif
 
 ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. ) ) then
+          if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
             do i_SLS = 1,N_SLS
               R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
               R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -644,7 +644,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. )) then
+    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
 
       do i_SLS = 1,N_SLS
         factor_common_use = factor_common(i_SLS,:,:,:,ispec)

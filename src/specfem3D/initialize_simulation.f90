@@ -391,8 +391,8 @@
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
-      ! attenuation for adjoint simulations must have USE_PHYSICAL_DISPERSION_ONLY set by xcreate_header_file
-      if( USE_PHYSICAL_DISPERSION_ONLY .eqv. .false. ) &
+      ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
+      if( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) &
         call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
 
       ! user output
