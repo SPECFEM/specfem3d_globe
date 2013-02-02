@@ -539,15 +539,15 @@
     ! mimicking effect of attenuation on apparent velocities, not amplitudes. that is,
     ! phase shifts should be correctly accounted for, but amplitudes will differ in adjoint simulations
     if( ATTENUATION ) then
-      write(IOUT,*) 'logical, parameter :: USE_PHYSICAL_DISPERSION_ONLY = .true.'
+      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .true.'
     else
-      write(IOUT,*) 'logical, parameter :: USE_PHYSICAL_DISPERSION_ONLY = .false.'
+      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
     endif
 
   else
 
     ! calculates full attenuation (phase & amplitude effects) if used
-    write(IOUT,*) 'logical, parameter :: USE_PHYSICAL_DISPERSION_ONLY = .false.'
+    write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
   endif
 
   ! attenuation and/or adjoint simulations
