@@ -536,8 +536,8 @@
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
 
     ! attenuation mimic:
-    ! mimicking effect of attenuation on apparent velocities, not amplitudes. that is,
-    ! phase shifts should be correctly accounted for, but amplitudes will differ in adjoint simulations
+    ! mimicking average (not full) effect of attenuation on apparent velocities, not amplitudes. that is,
+    ! phase shifts will be partially accounted for, but amplitudes will differ in adjoint simulations
     if( ATTENUATION ) then
       write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .true.'
     else
