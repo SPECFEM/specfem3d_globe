@@ -36,7 +36,7 @@ NPROC_ETA                       = 5
 #
 # 3D models with 1D crust: append "_1Dcrust" the the 3D model name
 #                          to take the 1D crustal model from the
-#                          associated reference model rather than the default 3D crustal model 
+#                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
 MODEL                           = s362ani
 
@@ -55,7 +55,7 @@ ABSORBING_CONDITIONS            = .false.
 RECORD_LENGTH_IN_MINUTES        = 15.0d0
 
 # save AVS or OpenDX movies
-#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME) 
+#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
 #MOVIE_COARSE does not work with create_movie_AVS_DX
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
@@ -120,5 +120,4 @@ PRINT_SOURCE_TIME_FUNCTION      = .false.
 
 # output kernels on a regular grid instead of on the mesh points
 SAVE_REGULAR_KL                 = .false.
-
 
