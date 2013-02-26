@@ -59,6 +59,7 @@ void usage(char *progname)
          "\n"
          "    -i input-file (Binary file)\n"
          "    -o output-file (XML Unstructured Grid File)\n"
+         "    -s Perform byte swapping on input file\n"
          "\n"
          "    Input Binary files have this structure:\n"
          "      number_of_points          integer (4 bytes)\n"
@@ -72,19 +73,23 @@ void usage(char *progname)
          "\n", progname);
 }
 
-bool parse_args(int argc, char **argv, char **input, char **output)
+bool parse_args(int argc, char **argv, char **input, char **output, bool *swap)
 {
   int c;
 
   *input = *output = NULL;
+  *swap = false;
 
-  while ( (c = getopt(argc, argv, "i:o:")) != -1) {
+  while ( (c = getopt(argc, argv, "i:o:s")) != -1) {
     switch (c) {
     case 'i':
       *input = optarg;
       break;
     case 'o':
       *output = optarg;
+      break;
+    case 's':
+      *swap = true;
       break;
     case '?':
       usage(argv[0]);
@@ -110,17 +115,56 @@ bool parse_args(int argc, char **argv, char **input, char **output)
   return true;
 }
 
+bool read_int32_normal(int fd, int *val)
+{
+  return read(fd, val, sizeof(*val)) == sizeof(*val);
+}
+
+bool read_int32_swap(int fd, int *val)
+{
+  if (!read_int32_normal(fd, val))
+    return false;
+  *val = (*val<<24) | (*val<<8 & 0xff0000) | (*val>>8 & 0xff00) | (*val>>24);
+  return true;
+}
+
+bool read_float32_normal(int fd, float *val)
+{
+  return read(fd, val, sizeof(*val)) == sizeof(*val);
+}
+
+bool read_float32_swap(int fd, float *val)
+{
+  int tmp;
+  if (!read_int32_normal(fd, &tmp))
+    return false;
+  tmp = (tmp<<24) | (tmp<<8 & 0xff0000) | (tmp>>8 & 0xff00) | (tmp>>24);
+  *val = (float)tmp;
+  return true;
+}
+
 int main(int argc, char** argv) {
   char *input, *output;
+  bool swap;
   float xyz[3];
   float scalar;
   int cell[8];
   int i, j;
   int npts, ncells;
   int fd;
+  bool (*read_int32)(int fd, int *val);
+  bool (*read_float32)(int fd, float *val);
 
-  if (!parse_args(argc, argv, &input, &output)) {
+  if (!parse_args(argc, argv, &input, &output, &swap)) {
     return 1;
+  }
+
+  if (swap) {
+    read_int32 = &read_int32_swap;
+    read_float32 = &read_float32_swap;
+  } else {
+    read_int32 = &read_int32_normal;
+    read_float32 = &read_float32_normal;
   }
 
   if ((fd = open(input, O_RDONLY)) == -1) {
@@ -128,7 +172,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if(read(fd, &npts, sizeof(int)) != sizeof(int)) {
+  if (!read_int32(fd, &npts)) {
     printf("Bad read on file (in points): %s\n", input);
     return 1;
   }
@@ -139,17 +183,17 @@ int main(int argc, char** argv) {
   vtkFloatArray *newScalars = vtkFloatArray::New();
   for (i = 0 ; i < npts ; i++)
   {
-    read(fd, &xyz[0], sizeof(float));
-    read(fd, &xyz[1], sizeof(float));
-    read(fd, &xyz[2], sizeof(float));
-    read(fd, &scalar, sizeof(float));
+    read_float32(fd, &xyz[0]);
+    read_float32(fd, &xyz[1]);
+    read_float32(fd, &xyz[2]);
+    read_float32(fd, &scalar);
 
     newPts -> InsertPoint(i, xyz);
     newScalars -> InsertValue(i, scalar);
   }
 
   vtkCellArray *cells = vtkCellArray::New();
-  if(read(fd, &ncells, sizeof(int)) != sizeof(int)) {
+  if (!read_int32(fd, &ncells)) {
     printf("Bad read on file (in cells): %s\n", input);
     return 1;
   }
@@ -162,7 +206,7 @@ int main(int argc, char** argv) {
 
   for(i = 0; i < ncells; i++) {
     for(j = 0; j < 8; j++) {
-      read(fd, &cell[j], sizeof(int));
+      read_int32(fd, &cell[j]);
       hex->GetPointIds()->SetId(j,cell[j]);
     }
     cells->InsertNextCell(hex);
