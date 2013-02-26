@@ -435,15 +435,12 @@ one uses \texttt{FC=bgxlf90\_r, MPIFC=mpixlf90\_r} and \texttt{CC=bgxlc\_r} to c
 On the contrary, on some BlueGene systems that use the native AIX linker option "-Wl,-relax" can lead to problems and must be suppressed from \texttt{flags.guess}.
 
 \noindent
-Also, \texttt{AR=ar, ARFLAGS=cru} and \texttt{RANLIB=ranlib} are hardwired in all \texttt{Makefile.in} files by default, but to cross-compile on BlueGene/P one needs to change
-these values to \texttt{AR=bgar, ARFLAGS=cru} and \texttt{RANLIB=bgranlib}. Thus the easiest thing to do is to modify
-all \texttt{Makefile.in} files and the \texttt{configure} script to set them automatically by \texttt{configure}.
 One then just needs to pass the right commands to the \texttt{configure} script:
 
 \noindent
 \texttt{   ./configure --prefix=/path/to/SPECFEM3DG\_SP --host=Babel --build=BGP \\}
-\texttt{      FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r AR=bgar ARFLAGS=cru \\}
-\texttt{      RANLIB=bgranlib LOCAL\_PATH\_IS\_ALSO\_GLOBAL=false}
+\texttt{      FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r  \\}
+\texttt{      LOCAL\_PATH\_IS\_ALSO\_GLOBAL=false}
 
 \noindent
 This trick can be useful for all hosts on which one needs to cross-compile.
