@@ -2513,13 +2513,12 @@ or\texttt{ }~\\
 grid file) format which can be viewed in ParaView, for example:
 
 \begin{lyxcode}
-mesh2vtu.pl~-i~file.mesh~-o~file.vtu
+mesh2vtu~-i~file.mesh~-o~file.vtu
 \end{lyxcode}
-\item Notice that this Perl script uses a program \texttt{mesh2vtu} in the
-\texttt{UTILS/Visualization/Paraview/}~\\
-\texttt{mesh2vtu} directory, which further uses the
+\item Notice that this program \texttt{mesh2vtu}, in the
+\texttt{UTILS/Visualization/Paraview/mesh2vtu} directory, uses the
 VTK \urlwithparentheses{www.vtk.org} run-time library for its execution. Therefore,
-make sure you have them properly set in the script.
+make sure you have it properly installed.
 \end{enumerate}
 \item \textbf{Copy over the source and receiver .vtk file}
 
