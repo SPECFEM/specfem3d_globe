@@ -1,16 +1,14 @@
 #!/usr/bin/perl
 
 use Getopt::Std;
-use File::Basename;
+use FindBin;
 use POSIX;
 
-$progname = basename($0);
-$ugrid    = "/opt/seismo-util/source/mesh2vtu/ugrid_pts";
-$REQLIBS  = "env LD_LIBRARY_PATH=/opt/seismo-util/lib/vtk";
+$ugrid = "$FindBin::Bin/ugrid_pts";
 
 sub Usage {
     print STDERR <<END;
-Usage: $progname -i input-file -o output-file
+Usage: $0 -i input-file -o output-file
     Takes an input file (ascii) with a number of points
     and transforms them into an unstructured grid file
 
@@ -24,7 +22,7 @@ Usage: $progname -i input-file -o output-file
       ...
       x_n y_n z_n scalar_n   
 
-    This is a wrapper around $ugrid
+    This is a wrapper around ugrid_pts
 
     Brian Savage 6/26/2004
     
@@ -39,12 +37,12 @@ if(@ARGV == 0) {
 if(!getopts('i:o:L')){die "Check input paramaters \n";}
 
 if(!defined($opt_i)) {
-    die "$progname: Must specify input file -i input-file\n";
+    die "$0: Must specify input file -i input-file\n";
 }
 if(!defined($opt_o)) {
-    die "$progname: Must specify output file -o output-file\n";
+    die "$0: Must specify output file -o output-file\n";
 }
-#print "$REQLIBS $ugrid $opt_i $opt_o\n";
+#print "$ugrid $opt_i $opt_o\n";
 if($opt_L){
   open(FILE, "$opt_i");
   @lines = <FILE>;
@@ -59,10 +57,10 @@ if($opt_L){
     print OUT "@pt $mag\n";
   }
   print "Running ugrid\n";
-  system("$REQLIBS $ugrid points2vtu.tempfile $opt_o");
+  system("$ugrid points2vtu.tempfile $opt_o");
 }
 else{
-  system("$REQLIBS $ugrid $opt_i $opt_o");
+  system("$ugrid $opt_i $opt_o");
 }
 
 1;
