@@ -179,14 +179,4 @@ echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
 echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
 echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
 
-# Added by IDRIS: set to default values if not passed as arguments
-if [ "X${AR}" == "X" ]; then AR="ar"; fi
-if [ "X${RANLIB}" == "X" ]; then RANLIB="ranlib"; fi
-if [ "X${ARFLAGS}" == "X" ]; then ARFLAGS="cru"; fi
-
-# Added by IDRIS to crosscompile on BlueGene/P
-echo AR=\"$AR\" | sed 's/\$/\\\$/g'
-echo ARFLAGS=\"$ARFLAGS\" | sed 's/\$/\\\$/g'
-echo RANLIB=\"$RANLIB\" | sed 's/\$/\\\$/g'
-
 # end of file
