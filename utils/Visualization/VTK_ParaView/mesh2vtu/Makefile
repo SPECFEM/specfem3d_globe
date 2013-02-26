@@ -18,7 +18,7 @@ VTK_CPPFLAGS := -I$(VTK)/include -I$(VTK)/include/vtk
 VTK_LDFLAGS := -L$(VTK)/lib64/vtk -L$(VTK)/lib/vtk -lvtkCommon -lvtkIO -lvtkFiltering -lvtkGraphics
 endif
 
-CPPFLAGS = -O3 $(VTK_CPPFLAGS) -Wno-deprecated
+CPPFLAGS = -O3 $(VTK_CPPFLAGS) -Wall -Wno-deprecated
 LIBS = $(VTK_LDFLAGS)
 
 #############################################################
