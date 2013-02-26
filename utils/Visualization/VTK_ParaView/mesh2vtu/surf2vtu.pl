@@ -1,15 +1,13 @@
 #!/usr/bin/perl
 
 use Getopt::Std;
-use File::Basename;
+use FindBin;
 
-$progname = basename($0);
-$surf2vtu = "/opt/seismo-util/source/mesh2vtu/surf2vtu";
-$REQLIBS  = "env LD_LIBRARY_PATH=/opt/seismo-util/lib/vtk";
+$surf2vtu = "$FindBin::Bin/surf2vtu";
 
 sub Usage {
     print STDERR <<END;
-Usage: $progname -i input-file -o output-file
+Usage: $0 -i input-file -o output-file
     Takes an input file (binary) with a number of points and a number of cells
     and transforms them into an unstructured grid file
 
@@ -42,12 +40,12 @@ if(@ARGV == 0) {
 if(!getopts('i:o:')){die "Check input paramaters \n";}
 
 if(!defined($opt_i)) {
-    die "$progname: Must specify input file -i input-file\n";
+    die "$0: Must specify input file -i input-file\n";
 }
 if(!defined($opt_o)) {
-    die "$progname: Must specify output file -o output-file\n";
+    die "$0: Must specify output file -o output-file\n";
 }
-#print "$REQLIBS $surf2vtu $opt_i $opt_o\n";
-system("$REQLIBS $surf2vtu $opt_i $opt_o");
+#print "$surf2vtu $opt_i $opt_o\n";
+system("$surf2vtu $opt_i $opt_o");
 
 1;

@@ -12,9 +12,9 @@ use POSIX;
 sub Usage {
   print STDERR <<EOF;
   
-Usage: plot_movie_GMT_binary_VTK.pl file_name
+Usage: $0 file_name
   
-  ex. ./plot_movie_GMT_binary_VTK.pl OUTPUT_FILES/bin_movie_00***.d
+  ex. $0 OUTPUT_FILES/bin_movie_00***.d
   
 EOF
 exit(1)
