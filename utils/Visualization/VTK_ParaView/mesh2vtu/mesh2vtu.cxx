@@ -51,31 +51,86 @@
 #include <vtk/vtkPointSet.h>
 #include <vtk/vtkHexahedron.h>
 
+void usage(char *progname)
+{
+  printf("Usage: %s -i input-file -o output-file\n"
+         "    Takes an input file (binary) with a number of points and a number of cells\n"
+         "    and transforms them into an unstructured grid file\n"
+         "\n"
+         "    -i input-file (Binary file)\n"
+         "    -o output-file (XML Unstructured Grid File)\n"
+         "\n"
+         "    Input Binary files have this structure:\n"
+         "      number_of_points          integer (4 bytes)\n"
+         "      x_1, y_1, z_1, scalar_1   4 reals (4 bytes each)\n"
+         "      ...\n"
+         "      x_n, y_n, z_n, scalar_n   4 reals (4 bytes each)\n"
+         "      number_of_cells           integer (4 bytes)\n"
+         "      cell_1 (eight points)     8 integers (4 bytes each)\n"
+         "      ...\n"
+         "      cell_n                    8 integers (4 bytes each)\n"
+         "\n", progname);
+}
 
-int main(int argc, char** argv) {
+bool parse_args(int argc, char **argv, char **input, char **output)
+{
+  int c;
 
-  if (argc < 3) {
-    printf("Usage: mesh2vtu input_file output_file\n");
-    return 0;
+  *input = *output = NULL;
+
+  while ( (c = getopt(argc, argv, "i:o:")) != -1) {
+    switch (c) {
+    case 'i':
+      *input = optarg;
+      break;
+    case 'o':
+      *output = optarg;
+      break;
+    case '?':
+      usage(argv[0]);
+      return false;
+    default:
+      printf("?? getopt returned character code 0%o ??\n", c);
+      return false;
+    }
   }
 
+  if (*input == NULL) {
+    printf("ERROR: Must specify input file -i input-file\n\n");
+    usage(argv[0]);
+    return false;
+  }
+
+  if (*output == NULL) {
+    printf("ERROR: Must specify output file -o output-file\n\n");
+    usage(argv[0]);
+    return false;
+  }
+
+  return true;
+}
+
+int main(int argc, char** argv) {
+  char *input, *output;
   float xyz[3];
   float scalar;
   int cell[8];
-  FILE *file;
   int i, j;
   int npts, ncells;
-  int pid[8];
-
   int fd;
 
-  if((fd = open(argv[1], O_RDONLY)) == -1) {
-    printf("Error opening file: %s.\n", argv[1]);
-    return 0;
+  if (!parse_args(argc, argv, &input, &output)) {
+    return 1;
+  }
+
+  if ((fd = open(input, O_RDONLY)) == -1) {
+    printf("Error opening file: %s.\n", input);
+    return 1;
   }
 
   if(read(fd, &npts, sizeof(int)) != sizeof(int)) {
-    printf("Bad read on file (in points): %s\n", argv[1]);
+    printf("Bad read on file (in points): %s\n", input);
+    return 1;
   }
 
   printf("mesh2vtu: Reading in points: %d\n", npts);
@@ -95,7 +150,8 @@ int main(int argc, char** argv) {
 
   vtkCellArray *cells = vtkCellArray::New();
   if(read(fd, &ncells, sizeof(int)) != sizeof(int)) {
-    printf("Bad read on file (in cells): %s\n", argv[1]);
+    printf("Bad read on file (in cells): %s\n", input);
+    return 1;
   }
 
   printf("mesh2vtu: Reading in cells: %d\n", ncells);
@@ -130,7 +186,7 @@ int main(int argc, char** argv) {
 
   vtkXMLUnstructuredGridWriter* writer = vtkXMLUnstructuredGridWriter::New();
   writer -> SetInput(dataSet);
-  writer -> SetFileName(argv[2]);
+  writer -> SetFileName(output);
   writer -> Write();
 
   writer -> Delete();
