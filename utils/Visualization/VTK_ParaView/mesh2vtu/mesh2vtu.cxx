@@ -139,7 +139,7 @@ bool read_float32_swap(int fd, float *val)
   if (!read_int32_normal(fd, &tmp))
     return false;
   tmp = (tmp<<24) | (tmp<<8 & 0xff0000) | (tmp>>8 & 0xff00) | (tmp>>24);
-  *val = (float)tmp;
+  memcpy(val, &tmp, sizeof(tmp));
   return true;
 }
 
