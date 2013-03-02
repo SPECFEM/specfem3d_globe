@@ -58,8 +58,8 @@ program combine_surf_data
 ! ------------------ program starts here -------------------
 
   do i = 1, 7
-    call getarg(i,arg(i))
-    if (i < 7 .and. trim(arg(i)) == '') then
+    call get_command_argument(i,arg(i))
+    if (i < 7 .and. len_trim(arg(i)) == 0) then
       write(*,*) ' '
       write(*,*) ' Usage: xcombine_surf_data slice_list filename surfname input_dir output_dir high/low-resolution 2D/3D'
       write(*,*) ' filename.bin can be either'
@@ -192,7 +192,7 @@ program combine_surf_data
   write(em_mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'_element.surf'
   command_name='rm -f '//trim(pt_mesh_file)//' '//trim(em_mesh_file)//' '//trim(mesh_file)
 
-  call system(trim(command_name))
+  !call system(trim(command_name))
   call open_file_fd(trim(pt_mesh_file)//char(0),pfd)
   call open_file_fd(trim(em_mesh_file)//char(0),efd)
 
@@ -340,7 +340,7 @@ program combine_surf_data
   print *, ' '
   print *, 'cat mesh files ...'
   print *, trim(command_name)
-  call system(trim(command_name))
+  !call system(trim(command_name))
 
   print *, 'Done writing '//trim(mesh_file)
   print *, ' '
