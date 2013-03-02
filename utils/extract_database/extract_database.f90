@@ -16,12 +16,12 @@ program extract_databases
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: junk
   real(kind=CUSTOM_REAL) :: junk2
 
-  call getarg(1,infile)
-  call getarg(2,s_ireg)
-  call getarg(3,s_num)
-  call getarg(4,outfile)
-  if (trim(infile) == '' .or. trim(s_ireg) == '' .or. trim(s_num) == '' &
-   .or. trim(outfile) == '') then 
+  call get_command_argument(1,infile)
+  call get_command_argument(2,s_ireg)
+  call get_command_argument(3,s_num)
+  call get_command_argument(4,outfile)
+  if (len_trim(infile) == 0 .or. len_trim(s_ireg) == 0 .or. len_trim(s_num) == 0 &
+   .or. len_trim(outfile) == 0) then 
      print *, 'Usage: extract_databases infile ireg num outfile'
      print *, '  ireg = 1, 2, 3'
      print *, '  num = 10 for rho,  11 for kappav, 12 for muv '

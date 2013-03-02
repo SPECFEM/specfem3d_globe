@@ -77,8 +77,8 @@ program combine_vol_data
 
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 7
-    call getarg(i,arg(i))
-    if (i < 7 .and. trim(arg(i)) == '') then
+    call get_command_argument(i,arg(i))
+    if (i < 7 .and. len_trim(arg(i)) == 0) then
       print *, ' '
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
       print *, '        output_dir high/low-resolution [region]'
@@ -96,7 +96,7 @@ program combine_vol_data
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! get region id
-  if (trim(arg(7)) == '') then
+  if (len_trim(arg(7)) == 0) then
     iregion  = 0
   else
     read(arg(7),*) iregion
@@ -208,6 +208,7 @@ program combine_vol_data
 
     print *, 'nspec(it) = ', nspec(1:num_node)
     print *, 'nglob(it) = ', nglob(1:num_node)
+    print *, 'nelement(it) = ', nelement(1:num_node)
 
     call write_integer_fd(efd,sum(nelement(1:num_node)))
 
@@ -462,7 +463,7 @@ program combine_vol_data
     print *, ' '
     print *, 'cat mesh files: '
     print *, trim(command_name)
-    call system(trim(command_name))
+    !call system(trim(command_name))
 
   enddo
 
