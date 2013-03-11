@@ -52,6 +52,10 @@ all: default
 
 required: bin obj
 
+@COND_ADIOS_TRUE@gen_adios_inc:
+	(cd setup/adios_xml_files; gpp.py *.xml; mv *.fh ../../src/specfem3D)
+@COND_ADIOS_FALSE@gen_adios_inc:
+
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
 
@@ -81,7 +85,7 @@ obj:
 xmeshfem3D:  required
 	     (cd src/meshfem3D; make)
 
-xspecfem3D:  required
+xspecfem3D:  required gen_adios_inc
 	     (cd src/specfem3D; make)
 
 xcreate_header_file:  required
