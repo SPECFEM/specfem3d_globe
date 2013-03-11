@@ -1,4 +1,3 @@
 # List files that should not be committed
 *.mod
 obj/*
-
