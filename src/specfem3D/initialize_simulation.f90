@@ -107,7 +107,8 @@
 
     ! GPU_MODE: parameter is optional, may not be in the Par_file
     call read_gpu_mode(GPU_MODE)
-
+    ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
+    call read_adios_enabled(ADIOS_ENABLED)
   endif
 
   ! distributes parameters from master to all processes
@@ -147,6 +148,8 @@
 
   ! broadcasts optional GPU_MODE
   call broadcast_gpu_parameters(myrank,GPU_MODE)
+  ! broadcasts optional ADIOS_ENABLED 
+  call broadcast_adios_parameters(myrank,ADIOS_ENABLED)
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -313,6 +316,18 @@
   ! initializes VTK window
   if( VTK_MODE ) then
     if(myrank == 0 ) call initialize_vtkwindow(GPU_MODE)
+  endif
+
+  ! save simulation info to ADIOS header
+  if (ADIOS_ENABLED) then
+    call adios_setup()
+  endif
+  if (ADIOS_ENABLED) then
+    ! TODO use only one ADIOS group to write simulation parameters
+    !      i.e. merge write_solver... write_par_... into
+    !      write_specfem3D_globe_adios_header()
+    !call write_solver_info_header_ADIOS()
+    call write_par_file_header_ADIOS()
   endif
 
   end subroutine initialize_simulation
