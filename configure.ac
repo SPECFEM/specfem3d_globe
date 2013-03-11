@@ -40,6 +40,13 @@ AC_ARG_WITH([cuda],
 AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
 AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
 
+AC_ARG_WITH([adios],
+    [AC_HELP_STRING([--with-adios],
+        [build ADIOS enabled version @<:@default=no@:>@])],
+    [want_adios="$withval"],
+    [want_adios=no])
+AM_CONDITIONAL([COND_ADIOS], [test "$want_adios" != no])
+
 AC_ARG_WITH([vtk],
     [AC_HELP_STRING([--with-vtk],
         [build VTK enabled version @<:@default=no@:>@])],
@@ -85,6 +92,11 @@ AC_LANG_POP(C)
 
 # influential environment variables
 
+AC_ARG_VAR(ADIOS_INC, [Directory where ADIOS headers are installed])
+AC_ARG_VAR(ADIOS_LIB, [Directory where ADIOS libraries are installed])
+AC_ARG_VAR(MXML_INC, [Directory where MXML headers are installed])
+AC_ARG_VAR(MXML_LIB, [Directory where MXML libraries are installed])
+
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
@@ -107,14 +119,18 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 fi
 
-
-
 # Checks for libraries.
 
 
 # Checks for header files.
 
 CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
+
+if test "$want_adios" = yes; then
+  CIT_MXML_HEADER
+  CIT_MXML_LIB
+  CIT_ADIOS_LIB
+fi	
 
 if test "$want_cuda" = yes; then
     CIT_CUDA_COMPILER
