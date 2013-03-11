@@ -342,3 +342,25 @@
   if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting GPU_MODE')
 
   end subroutine broadcast_gpu_parameters
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+  include "constants.h"
+  include "precision.h"
+
+  integer:: myrank
+  logical:: ADIOS_ENABLED 
+  ! local parameters
+  integer :: ier
+
+  call MPI_BCAST(ADIOS_ENABLED,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting ADIOS_ENABLED')
+
+  end subroutine broadcast_adios_parameters

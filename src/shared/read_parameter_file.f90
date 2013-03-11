@@ -48,7 +48,7 @@
 
   include "constants.h"
 
-! parameters read from parameter file
+  ! parameters read from parameter file
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
@@ -232,3 +232,27 @@
   call close_parameter_file()
 
   end subroutine read_gpu_mode
+
+
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_adios_enabled(ADIOS_ENABLED)
+
+  implicit none
+  include "constants.h"
+
+  logical :: ADIOS_ENABLED 
+
+  ! initializes flags
+  ADIOS_ENABLED = .false.
+
+  ! opens file Par_file
+  call open_parameter_file()
+
+  call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
+
+  ! close parameter file
+  call close_parameter_file()
+
+  end subroutine read_adios_enabled
