@@ -30,9 +30,11 @@ subroutine adios_setup()
   use adios_write_mod, only: adios_init
 
   implicit none
-  integer :: adios_err
+  integer :: adios_err, sizeMB
 
-  call adios_init ("./DATA/par_header.xml", adios_err);
+  call adios_init_noxml (adios_err);
+  sizeMB = 200 ! TODO 200MB is surely not the right size for the adios buffer
+  call adios_allocate_buffer (sizeMB , adios_err)
 end subroutine adios_setup
 
 !> @brief Finalize ADIOS. Must be called once everything is written down.
