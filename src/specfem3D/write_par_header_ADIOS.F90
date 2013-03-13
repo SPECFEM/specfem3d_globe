@@ -25,11 +25,17 @@
 !
 !=====================================================================
 
+
+!> \file write_par_header_ADIOS.F90
+!! \brief Write in the adios file a group with all the parameters that insure
+!!        reproductibility
+
 !
-!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !
 
-!> @brief Write data found in Par_file into ADIOS result file header.
+!> @brief Write simulation parameters into ADIOS result file header.
+!!
 !! Write the ADIOS header containing values to ensure reproductibility of
 !! the simulation. These values come form the following files :
 !! DATA/Par_file, DATA/CMTSOLUTION, DATA/STATIONS
@@ -45,39 +51,39 @@ subroutine write_par_file_header_ADIOS ()
   ! local parameters
   !-------------------------------------------------------------------
   ! parameters read from parameter file (cf. DATA/Par_file)
-  integer  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,NOISE_TOMOGRAPHY
+  integer  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,        &
+      NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,        &
+      NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, MOVIE_VOLUME_TYPE,           &
+      MOVIE_START,MOVIE_STOP, NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,               &
+      NOISE_TOMOGRAPHY
 
   double precision :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-          HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM, &
-          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,&
-          MOVIE_SOUTH_DEG,RECORD_LENGTH_IN_MINUTES
+      CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,                  &
+      GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,         &
+      MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,           &
+      RECORD_LENGTH_IN_MINUTES
 
-  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-         MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-         RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-         SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW, &
-         ABSORBING_CONDITIONS,SAVE_FORWARD, &
-         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
-  ! values from CMTSOLUTION
+  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, MOVIE_SURFACE,    &
+      MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,                      &
+      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW, &
+      ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
+      OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
+      ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
+      SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+
+  ! values from CMTSOLUTION -------------------------------
   ! integer          :: NSOURCES -> in specfem_par module
   integer,           dimension(NSOURCES) :: yr, mo, da, ho, mi
   double precision,  dimension(NSOURCES) :: sec, t_shift, hdur, lat, long, depth
   double precision,  dimension(NSOURCES) :: mrr, mtt, mpp, mrt, mrp, mtp 
-  integer :: datasource_length
+  integer :: datasource_length ! write for later reading of datasource
   character(len=5) :: datasource_tmp
   character(len=16):: event_name
-  character(len=:), allocatable  :: datasource
-  !character(len=256) :: datasource
+  character(len=:), allocatable  :: datasource  ! F03 feature
 
-  ! values from STATIONS
+  ! values from STATIONS ----------------------------------
   integer :: NSTATIONS
-  integer :: station_name_length, network_name_length
+  integer :: station_name_length, network_name_length ! for later reading
   character(len=MAX_LENGTH_STATION_NAME) :: station_name_tmp
   character(len=MAX_LENGTH_NETWORK_NAME) :: network_name_tmp
   character(len=:),   allocatable :: station_name, network_name 
@@ -86,43 +92,48 @@ subroutine write_par_file_header_ADIOS ()
   character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
   character(len=256) :: string, CMTSOLUTION, STATIONS
 
-  integer                 :: isource, irec, ier
   ! Adios variables
   integer                 :: adios_err
-  integer*8               :: adios_group, adios_handle, varid
-  integer*8               :: adios_groupsize, adios_totalsize ! for the .fh file
-  ! TODO : find a better name once the use of ADIOS is more completely
-  ! implemented
-  character(len=27)       :: filename = "OUTPUT_FILES/header_tmp.bp" 
-  integer*8 :: group_size_inc
+  integer(kind=8)         :: adios_group, adios_handle, varid
+  integer(kind=8)         :: adios_groupsize, adios_totalsize
+  ! TODO: find a better name once the use of ADIOS is more completely
+  !       implemented
+  character(len=27) :: filename = "OUTPUT_FILES/header_specfem3d_globe.bp" 
+  integer(kind=8)   :: group_size_inc
+  integer           :: model_length ! for later reading of MODEL
+  integer           :: isource, irec, ier
 
 
   ! ensure that only the master open the adios handle inside MPI_COMM_SELF
   if(myrank == 0) then
-    call adios_declare_group (adios_group, "SPECFEM3D_GLOBE_HEADER", "", 0, adios_err)
+    call adios_declare_group (adios_group, "SPECFEM3D_GLOBE_HEADER",           &
+                              "", 0, adios_err)
     call adios_select_method (adios_group, "MPI", "", "", adios_err)
 
-    group_size_inc = 0
+    group_size_inc = 0 ! Adios group size. Incremented by adios_helpers
+
     !--*** Values read from DATA/Par_file ***
     ! extract all unmodified values from the Par_file
-    call read_parameter_file(OUTPUT_FILES,                                                                    & 
-                             LOCAL_PATH,LOCAL_TMP_PATH,MODEL,                                                 & 
-                             NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES,  & 
-                             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,                                       & 
-                             NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,                                      & 
-                             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,                                        & 
-                             NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,                                               & 
-                             ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,                        & 
-                             CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,   & 
-                             HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,RECORD_LENGTH_IN_MINUTES,                & 
-                             MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,                   & 
-                             ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,                                  & 
-                             MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,                                         & 
-                             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION,                              & 
-                             SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,SAVE_FORWARD,   & 
-                             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, & 
-                             ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                               & 
-                             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
+    call read_parameter_file(OUTPUT_FILES,                                     & 
+        LOCAL_PATH, LOCAL_TMP_PATH, MODEL,                                     & 
+        NTSTEP_BETWEEN_OUTPUT_SEISMOS, NTSTEP_BETWEEN_READ_ADJSRC,             &
+        NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS,     & 
+        NUMBER_OF_THIS_RUN, NCHUNKS, SIMULATION_TYPE, MOVIE_VOLUME_TYPE,       &
+        MOVIE_START, MOVIE_STOP, NEX_XI, NEX_ETA, NPROC_XI, NPROC_ETA,         & 
+        ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES,             & 
+        CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES,               &
+        GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM,     &
+        RECORD_LENGTH_IN_MINUTES, MOVIE_EAST_DEG, MOVIE_WEST_DEG,              &
+        MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, ELLIPTICITY, GRAVITY, ROTATION,      &
+        TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE,         & 
+        RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,  &
+        ATTENUATION, ATTENUATION_NEW, ABSORBING_CONDITIONS, SAVE_FORWARD,      & 
+        OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                &
+        OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                      &
+        WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,             &
+        USE_BINARY_FOR_LARGE_FILE, NOISE_TOMOGRAPHY)
+
+    model_length = len(MODEL)
     ! define adios variables for the Par_file
     !-- double precision variables
     call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_XI_IN_DEGREES", "/specfem3D_globe_parameter_file", group_size_inc)
@@ -178,6 +189,9 @@ subroutine write_par_file_header_ADIOS ()
     call define_adios_byte_scalar (adios_group, "WRITE_SEISMOGRAMS_BY_MASTER", "/specfem3D_globe_parameter_file", group_size_inc)
     call define_adios_byte_scalar (adios_group, "SAVE_ALL_SEISMOS_IN_ONE_FILE", "/specfem3D_globe_parameter_file", group_size_inc)
     call define_adios_byte_scalar (adios_group, "USE_BINARY_FOR_LARGE_FILE", "/specfem3D_globe_parameter_file", group_size_inc)
+    !-- string variables
+    call define_adios_integer_scalar (adios_group, "model_length", "/specfem3D_globe_parameter_file", group_size_inc)
+    call define_adios_string (adios_group, "MODEL", "/specfem3D_globe_parameter_file", model_length, group_size_inc)
 
     !--*** Values read from DATA/CMTSOLUTION ***--
     ! extract all unmodified values from CMTSOLUTION
@@ -186,10 +200,11 @@ subroutine write_par_file_header_ADIOS ()
     !      routines
     call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
     open(unit=1,file=CMTSOLUTION,status='old',action='read')
-    datasource_length = 4*NSOURCES
+    datasource_length = 4*NSOURCES ! a datasource is 4 character, by convention 
     allocate(character(len=(datasource_length)) :: datasource, stat=ier)
     if (ier /=0) &
-        call exit_MPI (myrank, "error allocating datasource string for adios header")
+        call exit_MPI (myrank, &
+            "error allocating datasource string for adios header")
     datasource = ""
     ! ADIOS only  (1) byte for a string. This may cause data overwriting.
     ! => increase the generate by the string size -1
@@ -201,9 +216,7 @@ subroutine write_par_file_header_ADIOS ()
       do while( len_trim(string) == 0 )
       read(1,"(a256)") string
       enddo
-
-      ! read header with event information -- TODO there is more to add
-      !read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource(:,isource),yr(isource), &
+      ! read header with event information
       read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource_tmp,yr(isource), &
           mo(isource),da(isource),ho(isource),mi(isource),sec(isource)
       datasource = datasource // datasource_tmp
@@ -321,16 +334,14 @@ subroutine write_par_file_header_ADIOS ()
     call define_adios_string (adios_group, "station_name", "/CMTSOLUTION", station_name_length, group_size_inc)
     call define_adios_string (adios_group, "network_name", "/CMTSOLUTION", network_name_length, group_size_inc)
 
+    ! open the file where the headers have to be written
     call adios_open (adios_handle, "SPECFEM3D_GLOBE_HEADER", filename, "w", &
                      MPI_COMM_SELF, adios_err);
-
-    ! Automatically generated Fortran code by ADIOS gpp.py script:
-    ! $> $ADIOS_DIR/bin/gpp.py par_header.xml
-    ! Re-run each time the xml file is modified.
-    ! #include "gwrite_SPECFEM3D_GLOBE_HEADER.fh"
+    ! The group size have been auto-incremented
     adios_groupsize = group_size_inc
-
     call adios_group_size (adios_handle, adios_groupsize, adios_totalsize, adios_err)
+
+    ! Write variables from 'Par_file'
     call adios_write (adios_handle, "ANGULAR_WIDTH_XI_IN_DEGREES", ANGULAR_WIDTH_XI_IN_DEGREES, adios_err)
     call adios_write (adios_handle, "ANGULAR_WIDTH_ETA_IN_DEGREES", ANGULAR_WIDTH_ETA_IN_DEGREES, adios_err)
     call adios_write (adios_handle, "CENTER_LONGITUDE_IN_DEGREES", CENTER_LONGITUDE_IN_DEGREES, adios_err)
@@ -382,6 +393,10 @@ subroutine write_par_file_header_ADIOS ()
     call adios_write (adios_handle, "WRITE_SEISMOGRAMS_BY_MASTER", WRITE_SEISMOGRAMS_BY_MASTER, adios_err)
     call adios_write (adios_handle, "SAVE_ALL_SEISMOS_IN_ONE_FILE", SAVE_ALL_SEISMOS_IN_ONE_FILE, adios_err)
     call adios_write (adios_handle, "USE_BINARY_FOR_LARGE_FILE", USE_BINARY_FOR_LARGE_FILE, adios_err)
+    call adios_write (adios_handle, "model_length", model_length, adios_err)
+    call adios_write (adios_handle, "MODEL", MODEL, adios_err)
+
+    ! Write variables from  'CMTSOLUTION'
     call adios_write (adios_handle, "NSOURCES", NSOURCES, adios_err)
     call adios_write (adios_handle, "year", yr, adios_err)
     call adios_write (adios_handle, "month", mo, adios_err)
@@ -403,6 +418,7 @@ subroutine write_par_file_header_ADIOS ()
     call adios_write (adios_handle, "datasource_length", datasource_length, adios_err)
     call adios_write (adios_handle, "datasource", datasource, adios_err)
 
+    ! Write variables from 'STATIONS' 
     call adios_write (adios_handle, "NSTATIONS", NSTATIONS, adios_err)
     call adios_write (adios_handle, "station_latitude", stlat, adios_err)
     call adios_write (adios_handle, "station_longitude", stlon, adios_err)
@@ -425,10 +441,3 @@ subroutine write_par_file_header_ADIOS ()
   endif
 
 end subroutine write_par_file_header_ADIOS
-
-
-!subroutine define_adios_header_par_file (adios_group, group_size_inc)
-!  implicit none
-!end subroutine define_adios_header_par_file
-
-
