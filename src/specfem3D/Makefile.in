@@ -250,7 +250,7 @@ LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
 # using ADIOS files
 ADIOS_OBJECTS= \
 	$O/write_par_header_ADIOS.adios.o \
-	$O/adios_manager.adios.o
+	$O/adios_manager.adios.o  \
 	$O/adios_helpers.adios.o
 ADIOS_STUBS = \
 	$O/write_par_header_ADIOS.noadios.o
@@ -418,7 +418,13 @@ $O/%.cudacc.o: ${CUDAD}/%.c ${SETUP}/config.h
 $O/%.adios.o: %.F90 ${SETUP}/config.h
 	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
 
+$O/%.adios.o: %.f90 ${SETUP}/config.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
 $O/%.noadios.o: %.F90 
+	${FC} -c -o $@ $<
+
+$O/%.noadios.o: %.f90 
 	${FC} -c -o $@ $<
 
 #######################################
