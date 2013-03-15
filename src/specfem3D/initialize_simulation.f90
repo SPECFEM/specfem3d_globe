@@ -327,7 +327,7 @@
     !      i.e. merge write_solver... write_par_... into
     !      write_specfem3D_globe_adios_header()
     !call write_solver_info_header_ADIOS()
-    call write_par_file_header_ADIOS()
+    call write_specfem_header_adios()
   endif
 
   end subroutine initialize_simulation

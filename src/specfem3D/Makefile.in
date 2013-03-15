@@ -249,7 +249,7 @@ LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
 
 # using ADIOS files
 ADIOS_OBJECTS= \
-	$O/write_par_header_ADIOS.adios.o \
+	$O/write_specfem_adios_header.adios.o \
 	$O/adios_manager.adios.o  \
 	$O/adios_helpers.adios.o
 ADIOS_STUBS = \
