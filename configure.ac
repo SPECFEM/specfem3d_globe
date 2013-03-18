@@ -10,7 +10,9 @@ dnl You must have recent versions of Autoconf and Automake installed.
 AC_PREREQ(2.61)
 AC_INIT([Specfem3D Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
-AC_CONFIG_HEADER([setup/config.h])
+AC_CONFIG_HEADERS([setup/config.h],
+                  [sed 's/\/\*\(.*\)\*\//!\1/g' setup/config.h > setup/config.fh])
+dnl [awk '/\/\*/,/\*\//{sub(/^/,"!")};{print}' setup/config.h > setup/config.fh])
 AC_CONFIG_MACRO_DIR([m4])
 
 
@@ -78,6 +80,7 @@ flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
 eval $flags
 
+
 AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
@@ -136,6 +139,10 @@ if test "$want_cuda" = yes; then
     CIT_CUDA_COMPILER
 fi
 
+#mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
+configure_flags_str="FC=$FC FCFLAGS=$FLAGS_NO_CHECK" 
+AC_DEFINE_UNQUOTED([CONFIGURE_FLAGS],["${configure_flags_str}"],
+          [configuration flags to be save in the adios output file.])
 # Checks for typedefs, structures, and compiler characteristics.
 
 
@@ -154,7 +161,7 @@ AC_OUTPUT
 AH_BOTTOM([
 /* Uncomment and define to select optimized file i/o for regional simulations */
 /* map fails when output files are > 4GB, which is often the case for GPU simulations */
-// #define USE_MAP_FUNCTION
+/* #define USE_MAP_FUNCTION */
 ])
 
 dnl end of configure.ac
