@@ -30,6 +30,8 @@
 !! \brief Write in the adios file a group with all the parameters that insure
 !!        reproductibility
 
+#include "config.fh"
+
 !
 !-------------------------------------------------------------------------------
 !
@@ -108,6 +110,9 @@ subroutine write_specfem_header_adios()
 
     group_size_inc = 0 ! Adios group size. Incremented by adios_helpers
 
+    !-- *** Define variables used to configure specfem
+    call define_solver_info_variables (adios_group, group_size_inc)
+
     !--*** Values read from DATA/Par_file ***
     ! extract all unmodified values from the Par_file
     call read_parameter_file(OUTPUT_FILES,                                     & 
@@ -153,6 +158,9 @@ subroutine write_specfem_header_adios()
     adios_groupsize = group_size_inc
     call adios_group_size (adios_handle, adios_groupsize,                      &
                            adios_totalsize, adios_err)
+
+    ! Write variables from 'config.h'
+    call write_adios_solver_info_variables (adios_handle)
 
     ! Write variables from 'Par_file'
     call write_adios_par_file_variables (adios_handle,                         &
@@ -202,6 +210,26 @@ subroutine write_specfem_header_adios()
 ! which is not currently designed to do that.
 contains
 
+!> \brief Define ADIOS variable to store values from 'setup/config.h'. Store
+!!        configuration parameters to insure reproductibility
+!! \param adios_group The ADIOS entity grouping variables for data transferts
+!! \param group_size_inc The group size to increment wrt. the variable size
+subroutine define_solver_info_variables (adios_group, group_size_inc)
+  implicit none
+  ! Parameters
+  integer(kind=8), intent(in)    :: adios_group
+  integer(kind=8), intent(inout) :: group_size_inc
+  ! Variables
+  integer :: pkg_str_len, conf_flags_len
+ 
+  pkg_str_len    = len_trim(PACKAGE_STRING)
+  conf_flags_len = len_trim(CONFIGURE_FLAGS)
+  call define_adios_integer_scalar (adios_group, "package_string_length", "/solver_info", group_size_inc)
+  call define_adios_string (adios_group, "package_name", "/solver_info", pkg_str_len, group_size_inc)
+  call define_adios_integer_scalar (adios_group, "conf_flags_len", "/solver_info", group_size_inc)
+  call define_adios_string (adios_group, "conf_flags", "/solver_info", conf_flags_len, group_size_inc)
+end subroutine define_solver_info_variables
+
 !> \brief Define ADIOS variable to store values from the Par_file
 !! \param adios_group The ADIOS entity grouping variables for data transferts
 !! \param group_size_inc The group size to increment wrt. the variable size
@@ -209,6 +237,7 @@ contains
 !!                     Usefull for reading back the MODEL
 subroutine define_par_file_variables (adios_group, group_size_inc, model_length)
   implicit none
+  ! Parameters
   integer(kind=8), intent(in)    :: adios_group
   integer(kind=8), intent(inout) :: group_size_inc
   integer, intent(in)            :: model_length ! for later reading of MODEL
@@ -513,6 +542,29 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
   network_name_length = len(network_name)
 end subroutine read_raw_stations
 
+!> \brief Wrapper to write the 'config.h' variables into the adios header
+!! \param adios_handle The handle to the file where the variable should be
+!!                     written
+subroutine write_adios_solver_info_variables (adios_handle)
+  implicit none
+  ! Parameters
+  integer(kind=8), intent(in)    :: adios_handle
+  ! Variables
+  integer :: pkg_str_len, conf_flags_len, adios_err
+  character(len=:), allocatable :: pkg_str
+  character(len=:), allocatable :: conf_flags
+ 
+  pkg_str    = trim(PACKAGE_STRING)
+  conf_flags = trim(CONFIGURE_FLAGS)
+
+  pkg_str_len    = len_trim(PACKAGE_STRING)
+  conf_flags_len = len_trim(CONFIGURE_FLAGS)
+  call adios_write (adios_handle, "package_string_length", pkg_str_len, adios_err)
+  call adios_write (adios_handle, "package_name", pkg_str, adios_err)
+  call adios_write (adios_handle, "conf_flags_len", conf_flags_len, adios_err)
+  call adios_write (adios_handle, "conf_flags", conf_flags, adios_err)
+end subroutine write_adios_solver_info_variables 
+
 !> \brief Wrapper to write the 'Par_file' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
@@ -686,5 +738,6 @@ subroutine write_adios_stations_variables (adios_handle,                       &
   call adios_write (adios_handle, "station_name", station_name, adios_err)
   call adios_write (adios_handle, "network_name", network_name, adios_err)
 end subroutine write_adios_stations_variables
+
 
 end subroutine write_specfem_header_adios

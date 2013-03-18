@@ -1,5 +1,8 @@
 /* setup/config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* configuration flags to be save in the adios output file. */
+#undef CONFIGURE_FLAGS
+
 /* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 #undef FC_DUMMY_MAIN
@@ -59,9 +62,6 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
@@ -71,5 +71,5 @@
 
 /* Uncomment and define to select optimized file i/o for regional simulations */
 /* map fails when output files are > 4GB, which is often the case for GPU simulations */
-// #define USE_MAP_FUNCTION
+/* #define USE_MAP_FUNCTION */
 

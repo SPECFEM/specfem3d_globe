@@ -2466,6 +2466,7 @@ $as_echo "$as_me: error: $flags_guess failed" >&2;}
 eval $flags
 
 
+
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -6365,6 +6366,13 @@ See \`config.log' for more details." >&2;}
 
 fi
 
+#mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
+configure_flags_str="FC=$FC"" FCFLAGS=""$FLAGS_NO_CHECK"""
+
+cat >>confdefs.h <<_ACEOF
+#define CONFIGURE_FLAGS "${configure_flags_str}"
+_ACEOF
+
 # Checks for typedefs, structures, and compiler characteristics.
 
 
@@ -7605,6 +7613,11 @@ $as_echo "$as_me: error: could not create -" >&2;}
 
   esac
 
+
+  case $ac_file$ac_mode in
+    "setup/config.h":H) sed 's/\/\*\(.*\)\*\//!\1/g' setup/config.h > setup/config.fh ;;
+
+  esac
 done # for ac_tag
 
 
