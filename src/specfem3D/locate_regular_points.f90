@@ -55,7 +55,7 @@ subroutine read_kl_regular_grid(GRID)
   nlayer = 1
   do while (nlayer <= NM_KL_REG_LAYER)
     read(10,*,iostat=ios) GRID%rlayer(nlayer), GRID%ndoubling(nlayer)
-    if (ios.ne.0) exit
+    if (ios/=0) exit
     nlayer = nlayer + 1
   enddo
   close(10)
