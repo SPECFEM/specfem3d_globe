@@ -251,6 +251,7 @@
                                 hprime_xx(i,5)*B1_m1_m2_5points(5,j)
       enddo
     enddo
+
     do k = 1,NGLLX
       do j=1,m1
         do i=1,m1
@@ -262,6 +263,7 @@
         enddo
       enddo
     enddo
+
     do j=1,m1
       do i=1,m2
         C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
@@ -429,6 +431,7 @@
                                 hprimewgll_xxT(i,5)*C1_m1_m2_5points(5,j)
       enddo
     enddo
+
     do k = 1,NGLLX
       do j=1,m1
         do i=1,m1
@@ -440,6 +443,7 @@
         enddo
       enddo
     enddo
+
     do j=1,m1
       do i=1,m2
         E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
