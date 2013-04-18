@@ -679,7 +679,7 @@
         enddo
       enddo
     enddo
-  enddo ! END DO CRUST MANTLE
+  enddo ! enddo CRUST MANTLE
 
   ! rescale in inner core
 
@@ -708,7 +708,7 @@
         enddo
       enddo
     enddo
-  enddo ! END DO INNER CORE
+  enddo ! enddo INNER CORE
 
   ! precompute Runge-Kutta coefficients
   call get_attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)

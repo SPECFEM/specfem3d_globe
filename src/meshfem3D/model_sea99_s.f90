@@ -196,15 +196,15 @@
 
   !----------------------- depth in the model ------------------
   dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)
-  if (dep .le. SEA99M_V%sea99_depth(1)) then
+  if (dep <= SEA99M_V%sea99_depth(1)) then
      id1 = 1
      xd1 = 0
-  else if (dep .ge. SEA99M_V%sea99_depth(SEA99M_V%sea99_ndep)) then
+  else if (dep >= SEA99M_V%sea99_depth(SEA99M_V%sea99_ndep)) then
      id1 = SEA99M_V%sea99_ndep
      xd1 = 0
   else
      do i = 2, SEA99M_V%sea99_ndep
-        if (dep .le. SEA99M_V%sea99_depth(i)) then
+        if (dep <= SEA99M_V%sea99_depth(i)) then
            id1 = i-1
            xd1 = (dep-SEA99M_V%sea99_depth(i-1)) / (SEA99M_V%sea99_depth(i) - SEA99M_V%sea99_depth(i-1))
            exit

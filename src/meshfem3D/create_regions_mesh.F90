@@ -280,7 +280,7 @@
     nspec_att = nspec
   else
     nspec_att = 1
-  end if
+  endif
   allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
           tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'

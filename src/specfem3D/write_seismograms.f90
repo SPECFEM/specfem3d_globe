@@ -391,9 +391,9 @@
       phi = backaz
       if (phi>180.) then
          phi = phi-180.
-      elseif (phi<180.) then
+      else if (phi<180.) then
          phi = phi+180.
-      elseif (phi==180.) then
+      else if (phi==180.) then
          phi = backaz
       endif
 
@@ -407,7 +407,7 @@
             seismogram_tmp(iorientation,isample) = &
                cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
          enddo
-      elseif (iorientation == 5) then ! transverse component
+      else if (iorientation == 5) then ! transverse component
          do isample = 1,seismo_current
             seismogram_tmp(iorientation,isample) = &
             -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)

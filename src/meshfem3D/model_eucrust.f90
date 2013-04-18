@@ -131,7 +131,7 @@
   do i=1,36058
 
     read(11,'(a80)',iostat=ierror) line
-    if(ierror .ne. 0 ) stop
+    if(ierror /= 0 ) stop
 
     read(line,*)lon,lat,vp_uppercrust,vp_lowercrust,vp_avg,topo,basement,upper_lower_depth,moho_depth
 

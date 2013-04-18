@@ -626,7 +626,7 @@
        velsl(i)=weightul*GC_V%velocsnp(i)+weightur*GC_V%velocsnp(i)+&
                weightll*GC_V%velocs(1,ileftlng,i)+weightlr*GC_V%velocs(1,irightlng,i)
       enddo
-    elseif(iupcolat==180*CRUSTMAP_RESOLUTION) then
+    else if(iupcolat==180*CRUSTMAP_RESOLUTION) then
       ! south pole
       do i=1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*GC_V%thickness(iupcolat,ileftlng,i)+weightur*GC_V%thickness(iupcolat,irightlng,i)+&

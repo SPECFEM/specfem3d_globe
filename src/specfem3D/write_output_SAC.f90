@@ -286,10 +286,10 @@
    if (NZJDAY  > 365 .and. .not. is_leap_year(NZYEAR)) then
       NZJDAY = mod(NZJDAY,365)
       NZYEAR = yr + 1
-   elseif (NZJDAY  > 366 .and. is_leap_year(NZYEAR)) then
+   else if (NZJDAY  > 366 .and. is_leap_year(NZYEAR)) then
       NZJDAY = mod(NZJDAY,366)
       NZYEAR = yr + 1
-   elseif (NZJDAY == 366 .and. is_leap_year(NZYEAR)) then
+   else if (NZJDAY == 366 .and. is_leap_year(NZYEAR)) then
       NZJDAY = 366
    endif
   endif
@@ -631,7 +631,7 @@
 
     if (CUSTOM_REAL == SIZE_REAL) then
       call write_n_real(seismogram_tmp(iorientation,1:seismo_current),seismo_current)
-    elseif (CUSTOM_REAL == SIZE_DOUBLE) then
+    else if (CUSTOM_REAL == SIZE_DOUBLE) then
       call write_n_real(real(seismogram_tmp(iorientation,1:seismo_current)),seismo_current)
     endif
 

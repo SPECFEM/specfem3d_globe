@@ -313,7 +313,7 @@
             NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
 !$OMP END MASTER
 !$OMP BARRIER
-      end if
+      endif
 
       if(INCLUDE_CENTRAL_CUBE) then
           if(iphase > 7 .and. iphase_CC <= 4) then
@@ -325,7 +325,7 @@
                    ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,accel_inner_core,NDIM,iphase_CC)
 !$OMP END MASTER
 !$OMP BARRIER
-          end if
+          endif
       endif
 
     endif
@@ -640,8 +640,8 @@
       epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
     endif
 ! end ispec loop
-   end do
-!$OMP END DO
+   enddo
+!$OMP enddo
 
 ! end ispec_globe strided loop
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE

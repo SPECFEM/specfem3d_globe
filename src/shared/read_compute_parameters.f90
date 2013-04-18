@@ -263,7 +263,7 @@
     if(mod(NEX_ETA/4,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 4*NPROC_ETA'
     if(mod(NEX_XI/8,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
     if(mod(NEX_ETA/8,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
-  elseif (SUPPRESS_CRUSTAL_MESH .or. .not. ADD_4TH_DOUBLING) then
+  else if (SUPPRESS_CRUSTAL_MESH .or. .not. ADD_4TH_DOUBLING) then
     if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
     if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
     if(mod(NEX_XI/8,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 8*NPROC_XI'
@@ -614,7 +614,7 @@
   ! the 670-discontinuity is moved up to 650 km depth.
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     NER_771_670 = NER_771_670 + 1
-  end if
+  endif
 
   !----
   !----  change some values in the case of regular PREM with two crustal layers or of 3D models
@@ -1117,7 +1117,7 @@
       rmaxs(14) = RICB / R_EARTH
       rmins(14) = R_CENTRAL_CUBE / R_EARTH
 
-    elseif (ONE_CRUST) then
+    else if (ONE_CRUST) then
 
       ! 1D models:
       ! in order to increase stability and therefore to allow cheaper
@@ -1521,7 +1521,7 @@
       rmaxs(15) = RICB / R_EARTH
       rmins(15) = R_CENTRAL_CUBE / R_EARTH
 
-    elseif (ONE_CRUST) then
+    else if (ONE_CRUST) then
 
       ! 1D models:
       ! in order to increase stability and therefore to allow cheaper

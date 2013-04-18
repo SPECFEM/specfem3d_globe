@@ -105,7 +105,7 @@
 
   do i = 1,j
     read(10,rec=i,fmt='(F20.15)') HMM%rho_in(i)
-  end do
+  enddo
 
   close(10)
 
@@ -215,6 +215,6 @@
     drho = 0.
     dvp = 0.
     dvs = 0.
-  end if
+  endif
 
   end subroutine model_heterogen_mantle

@@ -536,7 +536,7 @@
 
                        displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
-                    elseif(USE_COMPONENT == 2) then
+                    else if(USE_COMPONENT == 2) then
 
                        ! compute unit tangent vector to the surface (N-S)
                        RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
@@ -554,7 +554,7 @@
 
                        displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
 
-                    elseif(USE_COMPONENT == 3) then
+                    else if(USE_COMPONENT == 3) then
 
                        ! compute unit tangent to the surface (E-W)
                        rhoval = sqrt(xcoord**2 + ycoord**2)
@@ -850,9 +850,9 @@
         if(OUTPUT_BINARY) then
           if(USE_COMPONENT == 1) then
            write(outputname,"('bin_movie_',i6.6,'.d')") it
-          elseif(USE_COMPONENT == 2) then
+          else if(USE_COMPONENT == 2) then
            write(outputname,"('bin_movie_',i6.6,'.N')") it
-          elseif(USE_COMPONENT == 3) then
+          else if(USE_COMPONENT == 3) then
            write(outputname,"('bin_movie_',i6.6,'.E')") it
           endif
           open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown', &
@@ -862,9 +862,9 @@
         else
           if(USE_COMPONENT == 1) then
            write(outputname,"('ascii_movie_',i6.6,'.d')") it
-          elseif(USE_COMPONENT == 2) then
+          else if(USE_COMPONENT == 2) then
            write(outputname,"('ascii_movie_',i6.6,'.N')") it
-          elseif(USE_COMPONENT == 3) then
+          else if(USE_COMPONENT == 3) then
            write(outputname,"('ascii_movie_',i6.6,'.E')") it
           endif
           open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown', &

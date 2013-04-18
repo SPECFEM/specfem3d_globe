@@ -9,7 +9,7 @@ program attenuation
 !
 ! Brian Savage 19/01/05
 !  This code should not produce the exact values that attenuation_prem.c
-!    It has been updated to use a more robust inversion for the 
+!    It has been updated to use a more robust inversion for the
 !    the stress and strain relaxation times
 !    A simplex inversion is used
 !
@@ -36,14 +36,14 @@ program attenuation
   write(*,*)
 !  write(*,*)'number of mechanisms: '
   read(5,*, end=13)n
-42 continue 
+42 continue
 !  write(*,*)'Q: '
   read(5,*, end=13)Q
-  
+
   tau_e(:)  = 0.0d0
   tau_s(:)  = 0.0d0
   omega_not = 0.0d0
-  
+
   !  call attenuation_liu(t1, t2, n, Q, omega_not, tau_s, tau_e)
   call attenuation_simplex(t1, t2, n, Q, omega_not, tau_s, tau_e)
   if(write_central_period == 0) then
@@ -53,7 +53,7 @@ program attenuation
      write(*,*)'! tau sigma evenly spaced in log frequency, does not depend on value of Q'
      do i = 1,n
         write(*,'(A13,I1,A4,F30.20,A2)')'  tau_sigma(',i,') = ', tau_s(i), 'd0'
-     end do
+     enddo
      write(*,*)
      write(*,*)"! check in which region we are based upon doubling flag"
      write(*,*)
@@ -67,41 +67,41 @@ program attenuation
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_INNER_CORE)'
      write(*,*)
-  end if
+  endif
   if(Q == 312.0d0) then
      write(*,*)'!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_CMB_670)'
      write(*,*)
-  end if
+  endif
   if(Q == 143.0d0) then
      write(*,*)'!--- d670 -> d220, target Q_mu: 143.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_670_220)'
      write(*,*)
-  end if
+  endif
   if(Q == 80.0d0) then
      write(*,*)'!--- d220 -> depth of 80 km, target Q_mu:  80.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_220_80)'
      write(*,*)
-  end if
+  endif
   if(Q == 600.0d0) then
      write(*,*)'!--- depth of 80 km -> surface, target Q_mu: 600.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_80_SURFACE)'
      write(*,*)
-  end if
-  
+  endif
+
   do i = 1,n
      write(*,'(A12,I1,A4,F30.20,A2)')'     tau_mu(',i,') = ', tau_e(i), 'd0'
-  end do
+  enddo
   write(*,'(A17,F20.10,A2)')'       Q_mu = ', Q, 'd0'
   write(*,*)
 
   goto 42
-  
-  
+
+
 13 continue
   write(*,*)'!--- do nothing for fluid outer core (no attenuation there)'
   write(*,*)
@@ -124,12 +124,12 @@ subroutine attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
   real(8), dimension(N_SLS) :: tauinv
 
   tauinv(:) = - 1.0 / tau_s(:)
-  
+
   alphaval(:)  = 1 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2. + &
        deltat**3*tauinv(:)**3 / 6. + deltat**4*tauinv(:)**4 / 24.
   betaval(:)   = deltat / 2. + deltat**2*tauinv(:) / 3. + deltat**3*tauinv(:)**2 / 8. + deltat**4*tauinv(:)**3 / 24.
   gammaval(:)  = deltat / 2. + deltat**2*tauinv(:) / 6. + deltat**3*tauinv(:)**2 / 24.0
-  
+
 end subroutine attenuation_memory_values
 
 subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
@@ -160,7 +160,7 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
   T_c_source_nondim = T_c_source / scale_t
-  
+
 !--- compute central angular frequency of source (non dimensionalized)
   f_c_source = ONE / T_c_source_nondim
   w_c_source = TWO_PI * f_c_source
@@ -174,14 +174,14 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
 !--- compute a, b and Omega parameters, also compute one minus sum of betas
   a_val = ONE
   b_val = ZERO
-  
+
   do i = 1,N_SLS
     a_val = a_val - w_c_source * w_c_source * tau_mu(i) * &
       (tau_mu(i) - tau_sigma(i)) / (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
     b_val = b_val + w_c_source * (tau_mu(i) - tau_sigma(i)) / &
       (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
   enddo
-  
+
   big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0);
 
 !--- quantity by which to scale mu to get mu_relaxed
@@ -286,7 +286,7 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   expo = exp1 - dexp
   do i=1,100
      expo = expo + dexp
-     df       = 10.0d0**(expo+dexp) - 10.0d0**(expo) 
+     df       = 10.0d0**(expo+dexp) - 10.0d0**(expo)
      omega    = PI2 * 10.0d0**(expo)
      write(*,*) 'df,expo,omega: ',df,expo,omega
      a = real(1.0d0 - n)
@@ -332,7 +332,7 @@ end subroutine attenuation_invert_SVD
 subroutine invert(x,b,A,n)
 
   implicit none
-  
+
   integer n
   real(8), dimension(n)   :: x, b
   real(8), dimension(n,n) :: A
@@ -368,8 +368,8 @@ subroutine invert(x,b,A,n)
   enddo
 
 end subroutine invert
-    
-    
+
+
 
 
 FUNCTION pythag_dp(a,b)
@@ -387,8 +387,8 @@ FUNCTION pythag_dp(a,b)
         pythag_dp=0.0d0
      else
         pythag_dp=absb*sqrt(1.0d0+(absa/absb)**2)
-     end if
-  end if
+     endif
+  endif
 END FUNCTION pythag_dp
 
 SUBROUTINE svdcmp_dp(a,w,v,p)
@@ -432,8 +432,8 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
                 spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
            a(i:m,i)=scale*a(i:m,i)
-        end if
-     end if
+        endif
+     endif
      w(i)=scale*g
      g=0.0d0
      scale=0.0d0
@@ -452,9 +452,9 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim=2,ncopies=size(rv1(l:n))) * &
                 spread(rv1(l:n),dim=1,ncopies=size(tempm(l:m)))
            a(i,l:n)=scale*a(i,l:n)
-        end if
-     end if
-  end do
+        endif
+     endif
+  enddo
   anorm=maxval(abs(w)+abs(rv1))
 !  write(*,*)W
   do i=n,1,-1
@@ -465,14 +465,14 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
 !           v(l:n,l:n)=v(l:n,l:n)+outerprod_d(v(l:n,i),n-1+1,tempn(l:n),n-l+1)
            v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim=2,ncopies=size(tempn(l:n))) * &
                 spread(tempn(l:n), dim=1, ncopies=size(v(l:n,i)))
-        end if
+        endif
         v(i,l:n)=0.0d0
         v(l:n,i)=0.0d0
-     end if
+     endif
      v(i,i)=1.0d0
      g=rv1(i)
      l=i
-  end do
+  enddo
   do i=min(m,n),1,-1
      l=i+1
      g=w(i)
@@ -486,9 +486,9 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
         a(i:m,i)=a(i:m,i)*g
      else
         a(i:m,i)=0.0d0
-     end if
+     endif
      a(i,i)=a(i,i)+1.0d0
-  end do
+  enddo
   do k=n,1,-1
      do its=1,30
         do l=k,1,-1
@@ -510,19 +510,19 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
                  tempm(1:m)=a(1:m,nm)
                  a(1:m,nm)=a(1:m,nm)*c+a(1:m,i)*s
                  a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
-              end do
+              enddo
               exit
-           end if
-        end do
+           endif
+        enddo
         z=w(k)
         if (l == k) then
            if (z < 0.0d0) then
               w(k)=-z
               v(1:n,k)=-v(1:n,k)
-           end if
+           endif
            exit
-        end if
-        if (its == 30) then 
+        endif
+        if (its == 30) then
            write(*,*) 'svdcmp_dp: no convergence in svdcmp'
            call exit(-1)
         endif
@@ -559,17 +559,17 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
               z=1.0d0/z
               c=f*z
               s=h*z
-           end if
+           endif
            f= (c*g)+(s*y)
            x=-(s*g)+(c*y)
            tempm(1:m)=a(1:m,j)
            a(1:m,j)=a(1:m,j)*c+a(1:m,i)*s
            a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
-        end do
+        enddo
         rv1(l)=0.0d0
         rv1(k)=f
         w(k)=x
-     end do
-  end do
+     enddo
+  enddo
 END SUBROUTINE svdcmp_dp
-                
+

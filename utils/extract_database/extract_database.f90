@@ -21,7 +21,7 @@ program extract_databases
   call get_command_argument(3,s_num)
   call get_command_argument(4,outfile)
   if (len_trim(infile) == 0 .or. len_trim(s_ireg) == 0 .or. len_trim(s_num) == 0 &
-   .or. len_trim(outfile) == 0) then 
+   .or. len_trim(outfile) == 0) then
      print *, 'Usage: extract_databases infile ireg num outfile'
      print *, '  ireg = 1, 2, 3'
      print *, '  num = 10 for rho,  11 for kappav, 12 for muv '
@@ -47,7 +47,7 @@ program extract_databases
   enddo
   read(11) junk(:,:,:,1:nspec)
   close(11)
-  
+
   open(12,file=outfile,status='unknown',form='unformatted')
   write(12) junk(:,:,:,1:nspec)
   close(12)

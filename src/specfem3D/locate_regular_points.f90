@@ -485,7 +485,7 @@ subroutine chunk_map(k,xx,yy,zz,xi,eta)
      if (z > 0)  xi = 10
   else
      stop 'chunk number k < 6'
-  end if
+  endif
 
 end subroutine chunk_map
 
