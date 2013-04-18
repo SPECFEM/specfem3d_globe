@@ -357,7 +357,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      fv(j+1) = funk(x)
   enddo
 
-  call qsort(fv,n+1,place)
+  call bubble_sort(fv,n+1,place)
 
   do i = 1,n+1
      vtmp(:,i) = v(:,place(i))
@@ -466,7 +466,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
         endif
      endif
 
-     call qsort(fv,n+1,place)
+     call bubble_sort(fv,n+1,place)
      do i = 1,n+1
         vtmp(:,i) = v(:,place(i))
      enddo
@@ -570,7 +570,6 @@ end function max_size_simplex
 
 
 !!!!!!!
-! subroutine qsort
 !    - Implementation of a Bubble Sort Routine
 !    Input
 !      X = Input/Output
@@ -588,7 +587,7 @@ end function max_size_simplex
 !         X = [ 1 2 3 4 ] on Output
 !         I = [ 3 4 2 1 ] on Output
 !
-subroutine qsort(X,n,I)
+subroutine bubble_sort(X,n,I)
   implicit none
   integer n
   real(8) X(n)
@@ -616,7 +615,7 @@ subroutine qsort(X,n,I)
      enddo
   enddo
 
-end subroutine qsort
+end subroutine bubble_sort
 
 
 
