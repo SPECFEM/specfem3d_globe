@@ -148,28 +148,28 @@
                      sumdershapeeta = sumdershapeeta + hlagrange_eta
                      sumdershapegamma = sumdershapegamma + hlagrange_gamma
 
-                  end do
-               end do
-            end do
+                  enddo
+               enddo
+            enddo
 
             ! Check the lagrange polynomial and its derivative
             if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
               .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
               .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
                     call exit_MPI(myrank,'new mesh are wrong in recalc_jacobian_gall3D.f90')
-            end if
+            endif
             if(abs(sumshape-one) >  TINYVAL) then
                     call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll3D.f90')
-            end if
+            endif
             if(abs(sumdershapexi) >  TINYVAL) then
                     call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll3D.f90')
-            end if
+            endif
             if(abs(sumdershapeeta) >  TINYVAL) then
                     call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll3D.f90')
-            end if
+            endif
             if(abs(sumdershapegamma) >  TINYVAL) then
                     call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
-            end if
+            endif
 
 
             jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
@@ -181,7 +181,7 @@
               call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
               print*,'r/lat/lon:',r*R_EARTH_KM,90.0-theta*180./PI,phi*180./PI
               call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
-            end if
+            endif
 
             !     invert the relation (Fletcher p. 50 vol. 2)
             xix = (yeta*zgamma-ygamma*zeta) / jacobian
@@ -219,7 +219,7 @@
                     gammaystore(i,j,k,ispec) = gammay
                     gammazstore(i,j,k,ispec) = gammaz
                 endif
-             end if
+             endif
         enddo
     enddo
   enddo
@@ -308,8 +308,8 @@
               sumshape = sumshape + hlagrange
               sumdershapexi = sumdershapexi + hlagrange_xi
               sumdershapeeta = sumdershapeeta + hlagrange_eta
-           end do
-        end do
+           enddo
+        enddo
 
 
         ! Check the lagrange polynomial
@@ -317,17 +317,17 @@
             .or. abs(ymesh - yelm2D(i,j)) > TINYVAL &
             .or. abs(zmesh - zelm2D(i,j)) > TINYVAL ) then
            call exit_MPI(myrank,'new boundary mesh is wrong in recalc_jacobian_gll2D')
-        end if
+        endif
 
         if (abs(sumshape-one) >  TINYVAL) then
            call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll2D')
-        end if
+        endif
         if (abs(sumdershapexi) >  TINYVAL) then
            call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll2D')
-        end if
+        endif
         if (abs(sumdershapeeta) >  TINYVAL) then
            call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll2D')
-        end if
+        endif
 
         unx = yxi*zeta - yeta*zxi
         uny = zxi*xeta - zeta*xxi
@@ -346,8 +346,8 @@
            normal(2,i,j,ispecb)=uny/jacobian
            normal(3,i,j,ispecb)=unz/jacobian
         endif
-     end do
-  end do
+     enddo
+  enddo
 
   end subroutine recalc_jacobian_gll2D
 

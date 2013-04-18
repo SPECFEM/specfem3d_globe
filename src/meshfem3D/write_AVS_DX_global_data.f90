@@ -249,9 +249,9 @@
                 write(10,*) numpoin,sngl(xstore(i,j,k,ispec)),&
                         sngl(ystore(i,j,k,ispec)),sngl(zstore(i,j,k,ispec))
                 flag(i,j,k,ispec) = numpoin
-        end do
-        end do
-        end do
+        enddo
+        enddo
+        enddo
   enddo
 
   close(10)
@@ -282,9 +282,9 @@
                 write(10,*) nelem,iglob1, &
                         iglob2,iglob3,iglob4,&
                         iglob5,iglob6,iglob7,iglob8
-        end do
-        end do
-        end do
+        enddo
+        enddo
+        enddo
   enddo
 
   close(10)
@@ -344,7 +344,7 @@
                         Qmu(7)=dble(Qmustore(i+1,j+1,k+1,ispec))
                         Qmu(8)=dble(Qmustore(i,j+1,k+1,ispec))
                         Qmu_average=Qmu(1)
-                end if
+                endif
                 !rho_average=sum(rho(1:4))/4.d0
                 !vp_average=sum(vp(1:4))/4.d0
                 !vs_average=sum(vs(1:4))/4.d0
@@ -356,11 +356,11 @@
                         write(1001,*) nelem,rho_average,vp_average,vs_average,Qmu_average
                 else
                         write(1001,*) nelem,rho_average,vp_average,vs_average
-                end if
+                endif
 
-        end do
-        end do
-        end do
+        enddo
+        enddo
+        enddo
   enddo
 
   close(1001)

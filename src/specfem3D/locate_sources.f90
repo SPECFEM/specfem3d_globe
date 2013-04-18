@@ -720,7 +720,7 @@
         else
          if(isource < 10) then
             write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
-          elseif(isource < 100) then
+          else if(isource < 100) then
             write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
           else
             write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
@@ -776,7 +776,7 @@
         else
          if(isource < 10) then
             write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
-          elseif(isource < 100) then
+          else if(isource < 100) then
             write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
           else
             write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource

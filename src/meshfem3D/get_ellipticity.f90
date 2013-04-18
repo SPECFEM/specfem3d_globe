@@ -105,8 +105,8 @@
            ystore(i,j,k,ispec)=ystore(i,j,k,ispec)*factor
            zstore(i,j,k,ispec)=zstore(i,j,k,ispec)*factor
 
-        end do
-      end do
-  end do
+        enddo
+      enddo
+  enddo
   end subroutine get_ellipticity_gll
 

@@ -235,7 +235,7 @@
         if (mod(NPROC_XI,2)/=0) then
           if (ichunk == CHUNK_AB) then
             nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*floor(NPROC_XI/2.d0)
-          elseif (ichunk == CHUNK_AB_ANTIPODE) then
+          else if (ichunk == CHUNK_AB_ANTIPODE) then
             nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*ceiling(NPROC_XI/2.d0)
           endif
         else

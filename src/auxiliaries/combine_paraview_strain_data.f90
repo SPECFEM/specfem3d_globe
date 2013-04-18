@@ -157,7 +157,7 @@ program combine_paraview_movie_data
        read(27) datstore(1:npoint(iproc))
      endif
      close(27)
-    elseif(comp == 'SI1' .or. comp == 'SI2') then
+    else if(comp == 'SI1' .or. comp == 'SI2') then
      write(local_data_file,'(a,i6.6,a)') 'movie3D_SEE',it,'.bin'
      !print *, iproc,'reading from file:'//trim(prname)//trim(local_data_file)
      !print *, 'reading from file:',local_data_file

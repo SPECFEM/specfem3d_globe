@@ -1212,7 +1212,7 @@
 !          moho=0.0d0
 !          found_crust = .false.
           call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,EPCRUST,elem_in_crust)
-!      end if
+!      endif
 
     case default
       stop 'crustal model type not defined'
@@ -1331,7 +1331,7 @@
 
     end select
 
-  end if
+  endif
 
   ! Get tau_e from tau_s and Qmu
   call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
