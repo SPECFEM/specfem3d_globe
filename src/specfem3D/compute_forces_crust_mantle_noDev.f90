@@ -28,7 +28,6 @@
   subroutine compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,icall, &
             accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -45,7 +44,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -54,7 +52,6 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-        !-- idoubling,
           R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
@@ -269,9 +266,9 @@
     if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
        (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
 
-! process the communications every ELEMENTS_NONBLOCKING elements
+! process the non-blocking communications every ELEMENTS_NONBLOCKING elements
     computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
+    if (icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
 
       if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &

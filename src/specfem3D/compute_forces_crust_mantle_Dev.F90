@@ -265,8 +265,8 @@
 
   do ispec_glob = 1,NSPEC_CRUST_MANTLE,ELEMENTS_NONBLOCKING_CM_IC
 
-! process the communications every ELEMENTS_NONBLOCKING elements
-    if (USE_NONBLOCKING_COMMS .and. icall == 2) then
+! process the non-blocking communications every ELEMENTS_NONBLOCKING elements
+    if (icall == 2) then
 
       if(iphase <= 7) then
 !$OMP BARRIER

@@ -157,9 +157,9 @@
     if((icall == 2 .and. is_on_a_slice_edge_outer_core(ispec)) .or. &
        (icall == 1 .and. .not. is_on_a_slice_edge_outer_core(ispec))) cycle
 
-! process the communications every ELEMENTS_NONBLOCKING elements
+! process the non-blocking communications every ELEMENTS_NONBLOCKING elements
     computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_OC) == 0 .and. iphase <= 7) &
+    if (icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_OC) == 0 .and. iphase <= 7) &
       call assemble_MPI_scalar(myrank,accelfluid,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &

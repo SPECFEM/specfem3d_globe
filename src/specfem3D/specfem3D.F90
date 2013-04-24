@@ -1932,12 +1932,6 @@
 
   endif
 
-  if(.not. USE_NONBLOCKING_COMMS) then
-    is_on_a_slice_edge_crust_mantle(:) = .true.
-    is_on_a_slice_edge_outer_core(:) = .true.
-    is_on_a_slice_edge_inner_core(:) = .true.
-  endif
-
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = 0._CUSTOM_REAL
   veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -2395,7 +2389,6 @@
     ! assemble all the contributions between slices using MPI
 
     ! outer core
-    if(USE_NONBLOCKING_COMMS) then
       iphase = 1 ! start the non blocking communications
       call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2473,25 +2466,6 @@
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,iphase)
       enddo
 
-    else ! if(.not. USE_NONBLOCKING_COMMS) then
-
-      call assemble_MPI_scalar_block(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core, &
-            iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL)
-
-    endif
-
     ! multiply by the inverse of the mass matrix and update velocity
     do i=1,NGLOB_OUTER_CORE
       accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
@@ -2503,7 +2477,6 @@
 ! ------------------- new non blocking implementation -------------------
 
     ! outer core
-      if(USE_NONBLOCKING_COMMS) then
         b_iphase = 1 ! start the non blocking communications
         call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2582,25 +2555,6 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,b_iphase)
         enddo
-
-      else ! if(.not. USE_NONBLOCKING_COMMS) then
-
-        call assemble_MPI_scalar_block(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core, &
-            iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            b_buffer_send_faces,b_buffer_received_faces,npoin2D_max_all_CM_IC, &
-            b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL)
-
-      endif
 
 ! ------------------- new non blocking implementation -------------------
 
@@ -3071,7 +3025,6 @@
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-    if(USE_NONBLOCKING_COMMS) then
 
       iphase = 1 ! initialize the non blocking communication counter
       iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
@@ -3135,7 +3088,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-      !---idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -3275,48 +3227,18 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,iphase)
       enddo
-    else
-      ! crust/mantle and inner core handled in the same call
-      ! in order to reduce the number of MPI messages by 2
-      call assemble_MPI_vector_block(myrank, &
-            accel_crust_mantle,accel_inner_core, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
-            iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core, &
-            iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL, &
-            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE),NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY,NCHUNKS_VAL)
-    endif
 
     !---
     !---  use buffers to assemble forces with the central cube
     !---
 
     if(INCLUDE_CENTRAL_CUBE) then
-      if(USE_NONBLOCKING_COMMS) then
         do while (iphase_CC <= 4) ! make sure the last communications are finished and processed
           call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
             ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),accel_inner_core,NDIM,iphase_CC)
         enddo
-      else
-        call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
-          receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
-          ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
-      endif
     endif   ! end of assembling forces with the central cube
 
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
@@ -3350,7 +3272,6 @@
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-      if(USE_NONBLOCKING_COMMS) then
 
         b_iphase = 1 ! initialize the non blocking communication counter
         b_iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
@@ -3553,48 +3474,18 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,b_iphase)
         enddo
-      else
-        ! crust/mantle and inner core handled in the same call
-        ! in order to reduce the number of MPI messages by 2
-        call assemble_MPI_vector_block(myrank, &
-            b_accel_crust_mantle,b_accel_inner_core, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
-            iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core, &
-            iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            b_buffer_send_faces,b_buffer_received_faces, &
-            b_buffer_send_chunkcorn_vector,b_buffer_recv_chunkcorn_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL, &
-            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE),NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY,NCHUNKS_VAL)
-      endif
 
       !---
       !---  use buffers to assemble forces with the central cube
       !---
 
       if(INCLUDE_CENTRAL_CUBE) then
-        if(USE_NONBLOCKING_COMMS) then
           do while (b_iphase_CC <= 4) ! make sure the last communications are finished and processed
             call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
               npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
               receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
               ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),b_accel_inner_core,NDIM,b_iphase_CC)
           enddo
-        else
-          call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-            npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,buffer_slices2,ibool_central_cube, &
-            receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
-            ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,b_accel_inner_core,NDIM)
-        endif
       endif   ! end of assembling forces with the central cube
 
 ! ------------------- new non blocking implementation -------------------
