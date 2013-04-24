@@ -25,25 +25,9 @@
 !
 !=====================================================================
 
-! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                                         #undef _HANDOPT :  turns hand-optimized code off
-! or compile with: -D_HANDOPT
-!#define _HANDOPT
-
-! BEWARE:
-! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
-! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
-! BEWARE: and make sure that all the seismograms you get are the same down to roundoff noise.
-! BEWARE:
-
-! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
-
   subroutine compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-!----------------------
             is_on_a_slice_edge_inner_core,icall, &
             accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -60,7 +44,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
@@ -254,10 +237,6 @@
   integer NSPEC2D_BOTTOM_INNER_CORE
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
-#ifdef _HANDOPT
-  integer, dimension(5) :: iglobv5
-#endif
-
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -309,40 +288,12 @@
 
       do k=1,NGLLZ
         do j=1,NGLLY
-#ifdef _HANDOPT
-! way 2:
-        ! since we know that NGLLX = 5, this should help pipelining
-        iglobv5(:) = ibool(:,j,k,ispec)
-
-        dummyx_loc(1,j,k) = displ_inner_core(1,iglobv5(1))
-        dummyy_loc(1,j,k) = displ_inner_core(2,iglobv5(1))
-        dummyz_loc(1,j,k) = displ_inner_core(3,iglobv5(1))
-
-        dummyx_loc(2,j,k) = displ_inner_core(1,iglobv5(2))
-        dummyy_loc(2,j,k) = displ_inner_core(2,iglobv5(2))
-        dummyz_loc(2,j,k) = displ_inner_core(3,iglobv5(2))
-
-        dummyx_loc(3,j,k) = displ_inner_core(1,iglobv5(3))
-        dummyy_loc(3,j,k) = displ_inner_core(2,iglobv5(3))
-        dummyz_loc(3,j,k) = displ_inner_core(3,iglobv5(3))
-
-        dummyx_loc(4,j,k) = displ_inner_core(1,iglobv5(4))
-        dummyy_loc(4,j,k) = displ_inner_core(2,iglobv5(4))
-        dummyz_loc(4,j,k) = displ_inner_core(3,iglobv5(4))
-
-        dummyx_loc(5,j,k) = displ_inner_core(1,iglobv5(5))
-        dummyy_loc(5,j,k) = displ_inner_core(2,iglobv5(5))
-        dummyz_loc(5,j,k) = displ_inner_core(3,iglobv5(5))
-
-#else
-! way 1:
           do i=1,NGLLX
             iglob1 = ibool(i,j,k,ispec)
             dummyx_loc(i,j,k) = displ_inner_core(1,iglob1)
             dummyy_loc(i,j,k) = displ_inner_core(2,iglob1)
             dummyz_loc(i,j,k) = displ_inner_core(3,iglob1)
           enddo
-#endif
         enddo
       enddo
 
@@ -367,6 +318,7 @@
                                 hprime_xx(i,5)*B3_m1_m2_5points(5,j)
         enddo
       enddo
+
       do j=1,m1
         do i=1,m1
           ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
@@ -391,6 +343,7 @@
           enddo
         enddo
       enddo
+
       do j=1,m1
         do i=1,m2
           C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
@@ -704,6 +657,7 @@
                                 hprimewgll_xxT(i,5)*C3_m1_m2_5points(5,j)
         enddo
       enddo
+
       do i=1,m1
         do j=1,m1
           ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
@@ -728,6 +682,7 @@
           enddo
         enddo
       enddo
+
       do j=1,m1
         do i=1,m2
           E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
@@ -771,23 +726,10 @@
       ! sum contributions from each element to the global mesh and add gravity terms
       do k=1,NGLLZ
         do j=1,NGLLY
-#ifdef _HANDOPT
-! way 2:
-          iglobv5(:) = ibool(:,j,k,ispec)
-
-          accel_inner_core(:,iglobv5(1)) = accel_inner_core(:,iglobv5(1)) + sum_terms(:,1,j,k)
-          accel_inner_core(:,iglobv5(2)) = accel_inner_core(:,iglobv5(2)) + sum_terms(:,2,j,k)
-          accel_inner_core(:,iglobv5(3)) = accel_inner_core(:,iglobv5(3)) + sum_terms(:,3,j,k)
-          accel_inner_core(:,iglobv5(4)) = accel_inner_core(:,iglobv5(4)) + sum_terms(:,4,j,k)
-          accel_inner_core(:,iglobv5(5)) = accel_inner_core(:,iglobv5(5)) + sum_terms(:,5,j,k)
-
-#else
-! way 1:
           do i=1,NGLLX
             iglob1 = ibool(i,j,k,ispec)
             accel_inner_core(:,iglob1) = accel_inner_core(:,iglob1) + sum_terms(:,i,j,k)
           enddo
-#endif
         enddo
       enddo
 
