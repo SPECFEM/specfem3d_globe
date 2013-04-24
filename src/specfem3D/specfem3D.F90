@@ -27,25 +27,8 @@
 !
 ! United States and French Government Sponsorship Acknowledged.
 
-! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                           #undef  _HANDOPT :  turns hand-optimized code off
-! or compile with: -D_HANDOPT
-! (with the IBM xlf compiler, change this to -WF,-D_HANDOPT )
-!
-!#define _HANDOPT
-
 !! DK DK to turn OpenMP on
 !#define USE_OPENMP
-
-! BEWARE:
-! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
-! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
-! BEWARE: and make sure that all the seismograms you get are the same down to roundoff noise.
-! BEWARE:
-
-! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
 
   program xspecfem3D
 
@@ -959,18 +942,15 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
   integer :: irec_master_noise
 
-#ifdef _HANDOPT
-  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_CRUST_MANTLE4, &
-            imodulo_NGLOB_INNER_CORE
-#endif
-
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
   logical :: you_can_start_doing_IOs
 #endif
+
   integer msg_status(MPI_STATUS_SIZE)
 
 ! *************************************************
 ! ************** PROGRAM STARTS HERE **************
+! *************************************************
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -1020,11 +1000,7 @@
 !             required to perform matrix-matrix products at the spectral element level.
 !             For most compilers and hardware, will result in a significant speedup (> 30% or more, sometimes twice faster).
 !
-! note 5: a common technique to help compilers enhance pipelining is loop unrolling. We do this here in a simple
-!             and straigthforward way, so don't be confused about the do-loop writing. For this to take effect,
-!             you have to turn the hand-optimization flag on: compile with additional flag -D_HANDOPT
-!
-! note 6: whenever adding some new code, please make sure to use
+! note 5: whenever adding some new code, please make sure to use
 !             spaces rather than tabs. Tabulators are in principle not allowed in Fortran95.
 !
 !-------------------------------------------------------------------------------------------------
@@ -2148,12 +2124,6 @@
   seismo_offset = it_begin-1
   seismo_current = 0
 
-#ifdef _HANDOPT
-  imodulo_NGLOB_CRUST_MANTLE = mod(NGLOB_CRUST_MANTLE,3)
-  imodulo_NGLOB_CRUST_MANTLE4 = mod(NGLOB_CRUST_MANTLE,4)
-  imodulo_NGLOB_INNER_CORE = mod(NGLOB_INNER_CORE,3)
-#endif
-
 ! get MPI starting time
   time_start = MPI_WTIME()
 
@@ -2167,98 +2137,6 @@
     seismo_current = seismo_current + 1
 
     ! Newark time scheme update
-#ifdef _HANDOPT
-! way 2:
-! One common technique in computational science to help enhance pipelining is loop unrolling
-!
-! we're accessing NDIM=3 components at each line,
-! that is, for an iteration, the register must contain
-! NDIM * displ_ + NDIM * veloc_ + NDIM * accel + deltat + deltatsq..
-! in most cases a real (CUSTOM_REAL) value will have 4 bytes,
-! assuming a default cache size of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
-! rather than with steps of 4
-    ! mantle
-    if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
-      do i = 1,imodulo_NGLOB_CRUST_MANTLE
-        displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-          + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-
-        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-          + deltatover2*accel_crust_mantle(:,i)
-
-        accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-      enddo
-    endif
-    do i = imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
-      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-      displ_crust_mantle(:,i+1) = displ_crust_mantle(:,i+1) &
-        + deltat*veloc_crust_mantle(:,i+1) + deltatsqover2*accel_crust_mantle(:,i+1)
-      displ_crust_mantle(:,i+2) = displ_crust_mantle(:,i+2) &
-        + deltat*veloc_crust_mantle(:,i+2) + deltatsqover2*accel_crust_mantle(:,i+2)
-
-
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-        + deltatover2*accel_crust_mantle(:,i)
-      veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) &
-        + deltatover2*accel_crust_mantle(:,i+1)
-      veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) &
-        + deltatover2*accel_crust_mantle(:,i+2)
-
-      ! set acceleration to zero
-      ! note: we do initialize acceleration in this loop since it is read already into the cache,
-      !           otherwise it would have to be read in again for this explicitly,
-      !           which would make this step more expensive
-      accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-      accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
-      accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
-    enddo
-
-    ! outer core
-    do i=1,NGLOB_OUTER_CORE
-      displ_outer_core(i) = displ_outer_core(i) &
-        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-
-      veloc_outer_core(i) = veloc_outer_core(i) &
-        + deltatover2*accel_outer_core(i)
-
-      accel_outer_core(i) = 0._CUSTOM_REAL
-    enddo
-
-    ! inner core
-    if(imodulo_NGLOB_INNER_CORE >= 1) then
-      do i = 1,imodulo_NGLOB_INNER_CORE
-        displ_inner_core(:,i) = displ_inner_core(:,i) &
-          + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-
-        veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-          + deltatover2*accel_inner_core(:,i)
-
-        accel_inner_core(:,i) = 0._CUSTOM_REAL
-      enddo
-    endif
-    do i = imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE, 3 ! in steps of 3
-      displ_inner_core(:,i) = displ_inner_core(:,i) &
-        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-      displ_inner_core(:,i+1) = displ_inner_core(:,i+1) &
-        + deltat*veloc_inner_core(:,i+1) + deltatsqover2*accel_inner_core(:,i+1)
-      displ_inner_core(:,i+2) = displ_inner_core(:,i+2) &
-        + deltat*veloc_inner_core(:,i+2) + deltatsqover2*accel_inner_core(:,i+2)
-
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-        + deltatover2*accel_inner_core(:,i)
-      veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) &
-        + deltatover2*accel_inner_core(:,i+1)
-      veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) &
-        + deltatover2*accel_inner_core(:,i+2)
-
-      accel_inner_core(:,i) = 0._CUSTOM_REAL
-      accel_inner_core(:,i+1) = 0._CUSTOM_REAL
-      accel_inner_core(:,i+2) = 0._CUSTOM_REAL
-    enddo
-
-#else
-! way 1:
     ! mantle
     do i=1,NGLOB_CRUST_MANTLE
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
@@ -2283,85 +2161,9 @@
         + deltatover2*accel_inner_core(:,i)
       accel_inner_core(:,i) = 0._CUSTOM_REAL
     enddo
-#endif
-
 
     ! backward field
     if (SIMULATION_TYPE == 3) then
-
-#ifdef _HANDOPT
-! way 2:
-      ! mantle
-      if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
-        do i=1,imodulo_NGLOB_CRUST_MANTLE
-          b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-            + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-          b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-            + b_deltatover2*b_accel_crust_mantle(:,i)
-          b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-        enddo
-      endif
-      do i=imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE,3
-        b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-          + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-        b_displ_crust_mantle(:,i+1) = b_displ_crust_mantle(:,i+1) &
-          + b_deltat*b_veloc_crust_mantle(:,i+1) + b_deltatsqover2*b_accel_crust_mantle(:,i+1)
-        b_displ_crust_mantle(:,i+2) = b_displ_crust_mantle(:,i+2) &
-          + b_deltat*b_veloc_crust_mantle(:,i+2) + b_deltatsqover2*b_accel_crust_mantle(:,i+2)
-
-
-        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-          + b_deltatover2*b_accel_crust_mantle(:,i)
-        b_veloc_crust_mantle(:,i+1) = b_veloc_crust_mantle(:,i+1) &
-          + b_deltatover2*b_accel_crust_mantle(:,i+1)
-        b_veloc_crust_mantle(:,i+2) = b_veloc_crust_mantle(:,i+2) &
-          + b_deltatover2*b_accel_crust_mantle(:,i+2)
-
-        b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-        b_accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
-        b_accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
-      enddo
-
-      ! outer core
-      do i=1,NGLOB_OUTER_CORE
-        b_displ_outer_core(i) = b_displ_outer_core(i) &
-          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
-          + b_deltatover2*b_accel_outer_core(i)
-        b_accel_outer_core(i) = 0._CUSTOM_REAL
-      enddo
-
-      ! inner core
-      if(imodulo_NGLOB_INNER_CORE >= 1) then
-        do i=1,imodulo_NGLOB_INNER_CORE
-          b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-            + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-          b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-            + b_deltatover2*b_accel_inner_core(:,i)
-          b_accel_inner_core(:,i) = 0._CUSTOM_REAL
-        enddo
-      endif
-      do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
-        b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-          + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-        b_displ_inner_core(:,i+1) = b_displ_inner_core(:,i+1) &
-          + b_deltat*b_veloc_inner_core(:,i+1) + b_deltatsqover2*b_accel_inner_core(:,i+1)
-        b_displ_inner_core(:,i+2) = b_displ_inner_core(:,i+2) &
-          + b_deltat*b_veloc_inner_core(:,i+2) + b_deltatsqover2*b_accel_inner_core(:,i+2)
-
-        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-          + b_deltatover2*b_accel_inner_core(:,i)
-        b_veloc_inner_core(:,i+1) = b_veloc_inner_core(:,i+1) &
-          + b_deltatover2*b_accel_inner_core(:,i+1)
-        b_veloc_inner_core(:,i+2) = b_veloc_inner_core(:,i+2) &
-          + b_deltatover2*b_accel_inner_core(:,i+2)
-
-        b_accel_inner_core(:,i) = 0._CUSTOM_REAL
-        b_accel_inner_core(:,i+1) = 0._CUSTOM_REAL
-        b_accel_inner_core(:,i+2) = 0._CUSTOM_REAL
-      enddo
-#else
-! way 1:
       ! mantle
       do i=1,NGLOB_CRUST_MANTLE
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
@@ -2386,7 +2188,6 @@
           + b_deltatover2*b_accel_inner_core(:,i)
         b_accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
-#endif
     endif ! SIMULATION_TYPE == 3
 
     ! integral of strain for adjoint movie volume
@@ -3520,44 +3321,6 @@
 
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
 
-#ifdef _HANDOPT
-       ! way 2:
-       if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
-          do i=1,imodulo_NGLOB_CRUST_MANTLE4
-             accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-                  + two_omega_earth*veloc_crust_mantle(2,i)
-             accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-                  - two_omega_earth*veloc_crust_mantle(1,i)
-             accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-          enddo
-       endif
-       do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-          accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-               + two_omega_earth*veloc_crust_mantle(2,i)
-          accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-               - two_omega_earth*veloc_crust_mantle(1,i)
-          accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-
-          accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmassx_crust_mantle(i+1) &
-               + two_omega_earth*veloc_crust_mantle(2,i+1)
-          accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmassy_crust_mantle(i+1) &
-               - two_omega_earth*veloc_crust_mantle(1,i+1)
-          accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
-
-          accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmassx_crust_mantle(i+2) &
-               + two_omega_earth*veloc_crust_mantle(2,i+2)
-          accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmassy_crust_mantle(i+2) &
-               - two_omega_earth*veloc_crust_mantle(1,i+2)
-          accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
-
-          accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmassx_crust_mantle(i+3) &
-               + two_omega_earth*veloc_crust_mantle(2,i+3)
-          accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmassy_crust_mantle(i+3) &
-               - two_omega_earth*veloc_crust_mantle(1,i+3)
-          accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
-       enddo
-#else
-       ! way 1:
        do i=1,NGLOB_CRUST_MANTLE
           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
@@ -3565,48 +3328,9 @@
                - two_omega_earth*veloc_crust_mantle(1,i)
           accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
        enddo
-#endif
 
     else
 
-#ifdef _HANDOPT
-       ! way 2:
-       if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
-          do i=1,imodulo_NGLOB_CRUST_MANTLE4
-             accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-                  + two_omega_earth*veloc_crust_mantle(2,i)
-             accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-                  - two_omega_earth*veloc_crust_mantle(1,i)
-             accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-          enddo
-       endif
-       do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB,4
-          accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-               + two_omega_earth*veloc_crust_mantle(2,i)
-          accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-               - two_omega_earth*veloc_crust_mantle(1,i)
-          accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-
-          accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmassz_crust_mantle(i+1) &
-               + two_omega_earth*veloc_crust_mantle(2,i+1)
-          accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmassz_crust_mantle(i+1) &
-               - two_omega_earth*veloc_crust_mantle(1,i+1)
-          accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
-
-          accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmassz_crust_mantle(i+2) &
-               + two_omega_earth*veloc_crust_mantle(2,i+2)
-          accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmassz_crust_mantle(i+2) &
-               - two_omega_earth*veloc_crust_mantle(1,i+2)
-          accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
-
-          accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmassz_crust_mantle(i+3) &
-               + two_omega_earth*veloc_crust_mantle(2,i+3)
-          accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmassz_crust_mantle(i+3) &
-               - two_omega_earth*veloc_crust_mantle(1,i+3)
-          accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
-       enddo
-#else
-       ! way 1:
        do i=1,NGLOB_CRUST_MANTLE
           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
@@ -3614,7 +3338,6 @@
                - two_omega_earth*veloc_crust_mantle(1,i)
           accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
        enddo
-#endif
 
     endif
 
@@ -3878,44 +3601,6 @@
 
       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
 
-#ifdef _HANDOPT
-         ! way 2:
-         if( imodulo_NGLOB_CRUST_MANTLE4 >=1 ) then
-            do i=1,imodulo_NGLOB_CRUST_MANTLE4
-               b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-                    + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-               b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-                    - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-               b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-            enddo
-         endif
-         do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-
-            b_accel_crust_mantle(1,i+1) = b_accel_crust_mantle(1,i+1)*rmassx_crust_mantle(i+1) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+1)
-            b_accel_crust_mantle(2,i+1) = b_accel_crust_mantle(2,i+1)*rmassy_crust_mantle(i+1) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+1)
-            b_accel_crust_mantle(3,i+1) = b_accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
-
-            b_accel_crust_mantle(1,i+2) = b_accel_crust_mantle(1,i+2)*rmassx_crust_mantle(i+2) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+2)
-            b_accel_crust_mantle(2,i+2) = b_accel_crust_mantle(2,i+2)*rmassy_crust_mantle(i+2) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+2)
-            b_accel_crust_mantle(3,i+2) = b_accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
-
-            b_accel_crust_mantle(1,i+3) = b_accel_crust_mantle(1,i+3)*rmassx_crust_mantle(i+3) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+3)
-            b_accel_crust_mantle(2,i+3) = b_accel_crust_mantle(2,i+3)*rmassy_crust_mantle(i+3) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+3)
-            b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
-         enddo
-#else
-         ! way 1:
          do i=1,NGLOB_CRUST_MANTLE
             b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
@@ -3923,48 +3608,9 @@
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
             b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
          enddo
-#endif
 
       else
 
-#ifdef _HANDOPT
-         ! way 2:
-         if( imodulo_NGLOB_CRUST_MANTLE4 >=1 ) then
-            do i=1,imodulo_NGLOB_CRUST_MANTLE4
-               b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-                    + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-               b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-                    - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-               b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-            enddo
-         endif
-         do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-
-            b_accel_crust_mantle(1,i+1) = b_accel_crust_mantle(1,i+1)*rmassz_crust_mantle(i+1) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+1)
-            b_accel_crust_mantle(2,i+1) = b_accel_crust_mantle(2,i+1)*rmassz_crust_mantle(i+1) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+1)
-            b_accel_crust_mantle(3,i+1) = b_accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
-
-            b_accel_crust_mantle(1,i+2) = b_accel_crust_mantle(1,i+2)*rmassz_crust_mantle(i+2) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+2)
-            b_accel_crust_mantle(2,i+2) = b_accel_crust_mantle(2,i+2)*rmassz_crust_mantle(i+2) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+2)
-            b_accel_crust_mantle(3,i+2) = b_accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
-
-            b_accel_crust_mantle(1,i+3) = b_accel_crust_mantle(1,i+3)*rmassz_crust_mantle(i+3) &
-                 + b_two_omega_earth*b_veloc_crust_mantle(2,i+3)
-            b_accel_crust_mantle(2,i+3) = b_accel_crust_mantle(2,i+3)*rmassz_crust_mantle(i+3) &
-                 - b_two_omega_earth*b_veloc_crust_mantle(1,i+3)
-            b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
-         enddo
-#else
-         ! way 1:
          do i=1,NGLOB_CRUST_MANTLE
             b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
@@ -3972,7 +3618,6 @@
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
             b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
          enddo
-#endif
 
       endif
 
@@ -3997,58 +3642,6 @@
 !-------------------------------------------------------------------------------------------------
 !
     ! Newmark time scheme - corrector for elastic parts
-#ifdef _HANDOPT
-! way 2:
-    ! mantle
-    if( imodulo_NGLOB_CRUST_MANTLE4 >= 1 ) then
-      do i=1,imodulo_NGLOB_CRUST_MANTLE4
-        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-      enddo
-    endif
-    do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-      veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) + deltatover2*accel_crust_mantle(:,i+1)
-      veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) + deltatover2*accel_crust_mantle(:,i+2)
-      veloc_crust_mantle(:,i+3) = veloc_crust_mantle(:,i+3) + deltatover2*accel_crust_mantle(:,i+3)
-    enddo
-
-    ! inner core
-    if(imodulo_NGLOB_INNER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_INNER_CORE
-        accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-               + two_omega_earth*veloc_inner_core(2,i)
-        accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-               - two_omega_earth*veloc_inner_core(1,i)
-        accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-
-        veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-      enddo
-    endif
-    do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
-      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
-      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-
-      accel_inner_core(1,i+1) = accel_inner_core(1,i+1)*rmass_inner_core(i+1) &
-             + two_omega_earth*veloc_inner_core(2,i+1)
-      accel_inner_core(2,i+1) = accel_inner_core(2,i+1)*rmass_inner_core(i+1) &
-             - two_omega_earth*veloc_inner_core(1,i+1)
-      accel_inner_core(3,i+1) = accel_inner_core(3,i+1)*rmass_inner_core(i+1)
-
-      accel_inner_core(1,i+2) = accel_inner_core(1,i+2)*rmass_inner_core(i+2) &
-             + two_omega_earth*veloc_inner_core(2,i+2)
-      accel_inner_core(2,i+2) = accel_inner_core(2,i+2)*rmass_inner_core(i+2) &
-             - two_omega_earth*veloc_inner_core(1,i+2)
-      accel_inner_core(3,i+2) = accel_inner_core(3,i+2)*rmass_inner_core(i+2)
-
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-      veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) + deltatover2*accel_inner_core(:,i+1)
-      veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) + deltatover2*accel_inner_core(:,i+2)
-    enddo
-#else
-! way 1:
     ! mantle
     do i=1,NGLOB_CRUST_MANTLE
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
@@ -4063,61 +3656,8 @@
 
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
-#endif
 
     if (SIMULATION_TYPE == 3) then
-#ifdef _HANDOPT
-! way 2:
-      ! mantle
-      if( imodulo_NGLOB_CRUST_MANTLE4 >= 1 ) then
-        do i=1,imodulo_NGLOB_CRUST_MANTLE4
-          b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-        enddo
-      endif
-      do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
-        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-        b_veloc_crust_mantle(:,i+1) = b_veloc_crust_mantle(:,i+1) + b_deltatover2*b_accel_crust_mantle(:,i+1)
-        b_veloc_crust_mantle(:,i+2) = b_veloc_crust_mantle(:,i+2) + b_deltatover2*b_accel_crust_mantle(:,i+2)
-        b_veloc_crust_mantle(:,i+3) = b_veloc_crust_mantle(:,i+3) + b_deltatover2*b_accel_crust_mantle(:,i+3)
-      enddo
-      ! inner core
-      if(imodulo_NGLOB_INNER_CORE >= 1) then
-        do i=1,imodulo_NGLOB_INNER_CORE
-          b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
-            + b_two_omega_earth*b_veloc_inner_core(2,i)
-          b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
-            - b_two_omega_earth*b_veloc_inner_core(1,i)
-          b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-
-          b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-        enddo
-      endif
-      do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
-        b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
-         + b_two_omega_earth*b_veloc_inner_core(2,i)
-        b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
-         - b_two_omega_earth*b_veloc_inner_core(1,i)
-        b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-
-        b_accel_inner_core(1,i+1) = b_accel_inner_core(1,i+1)*rmass_inner_core(i+1) &
-         + b_two_omega_earth*b_veloc_inner_core(2,i+1)
-        b_accel_inner_core(2,i+1) = b_accel_inner_core(2,i+1)*rmass_inner_core(i+1) &
-         - b_two_omega_earth*b_veloc_inner_core(1,i+1)
-        b_accel_inner_core(3,i+1) = b_accel_inner_core(3,i+1)*rmass_inner_core(i+1)
-
-        b_accel_inner_core(1,i+2) = b_accel_inner_core(1,i+2)*rmass_inner_core(i+2) &
-         + b_two_omega_earth*b_veloc_inner_core(2,i+2)
-        b_accel_inner_core(2,i+2) = b_accel_inner_core(2,i+2)*rmass_inner_core(i+2) &
-         - b_two_omega_earth*b_veloc_inner_core(1,i+2)
-        b_accel_inner_core(3,i+2) = b_accel_inner_core(3,i+2)*rmass_inner_core(i+2)
-
-        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-        b_veloc_inner_core(:,i+1) = b_veloc_inner_core(:,i+1) + b_deltatover2*b_accel_inner_core(:,i+1)
-        b_veloc_inner_core(:,i+2) = b_veloc_inner_core(:,i+2) + b_deltatover2*b_accel_inner_core(:,i+2)
-
-      enddo
-#else
-! way 1:
       ! mantle
       do i=1,NGLOB_CRUST_MANTLE
         b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
@@ -4132,10 +3672,8 @@
 
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
       enddo
-#endif
 
     endif ! SIMULATION_TYPE == 3
-
 
     ! restores last time snapshot saved for backward/reconstruction of wavefields
     ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
