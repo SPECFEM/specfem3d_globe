@@ -1092,7 +1092,6 @@
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
     you_can_start_doing_IOs = .false.
     if (myrank > 0) call MPI_RECV(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank-1, itag, MPI_COMM_WORLD, msg_status,ier)
-!!!!!!!    print *,'starting doing serialized I/Os on rank ',myrank
 #endif
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
@@ -1130,7 +1129,6 @@
               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
               ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-            ! -- idoubling_crust_mantle,
               is_on_a_slice_edge_crust_mantle,rmass_ocean_load, &
               rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
               vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -2086,7 +2084,6 @@
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
 
-!<YANGL
   ! NOISE TOMOGRAPHY
   if ( NOISE_TOMOGRAPHY /= 0 ) then
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
@@ -2116,7 +2113,6 @@
                               SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
                               MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
   endif
-!>YANGL
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -2249,7 +2245,6 @@
       displ_inner_core(:,i+2) = displ_inner_core(:,i+2) &
         + deltat*veloc_inner_core(:,i+2) + deltatsqover2*accel_inner_core(:,i+2)
 
-
       veloc_inner_core(:,i) = veloc_inner_core(:,i) &
         + deltatover2*accel_inner_core(:,i)
       veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) &
@@ -2289,8 +2284,6 @@
       accel_inner_core(:,i) = 0._CUSTOM_REAL
     enddo
 #endif
-
-
 
 
     ! backward field
@@ -2837,7 +2830,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,icall, &
             accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2854,7 +2846,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2868,7 +2859,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-      ! --idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -2881,7 +2871,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,icall, &
             accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2898,7 +2887,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2912,7 +2900,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-        ! --idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -2934,7 +2921,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,b_icall, &
             b_accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2951,7 +2937,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2965,7 +2950,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-     ! --     idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -2978,7 +2962,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,b_icall, &
             b_accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2995,7 +2978,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3009,7 +2991,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-      ! --idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -3027,7 +3008,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,icall, &
             accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3044,7 +3024,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3063,7 +3042,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,icall, &
             accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3080,7 +3058,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3102,7 +3079,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,b_icall, &
             b_accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3119,7 +3095,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3138,7 +3113,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,b_icall, &
             b_accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3155,7 +3129,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3224,7 +3197,6 @@
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
-!<YANGL
     ! NOISE_TOMOGRAPHY
     if ( NOISE_TOMOGRAPHY == 1 ) then
        ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
@@ -3259,7 +3231,6 @@
                               NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                               it,jacobian2D_top_crust_mantle,wgllwgll_xy)
     endif
-!>YANGL
 
     ! ****************************************************
     ! **********  add matching with fluid part  **********
@@ -3334,7 +3305,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,icall, &
             accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3351,7 +3321,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3378,7 +3347,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,icall, &
             accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3395,7 +3363,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3409,7 +3376,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-      ! --idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -3425,7 +3391,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,icall, &
             accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3442,7 +3407,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3461,7 +3425,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,icall, &
             accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3478,7 +3441,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3700,7 +3662,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,b_icall, &
             b_accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3717,7 +3678,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3731,7 +3691,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-      ! --idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -3744,7 +3703,6 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!----------------------
             is_on_a_slice_edge_crust_mantle,b_icall, &
             b_accel_inner_core,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3761,7 +3719,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3775,7 +3732,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-      !--idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -3791,7 +3747,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,b_icall, &
             b_accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3808,7 +3763,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -3827,7 +3781,6 @@
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-!----------------------
             is_on_a_slice_edge_inner_core,b_icall, &
             b_accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
             myrank,iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3844,7 +3797,6 @@
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
-!----------------------
           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
@@ -4312,7 +4264,6 @@
                           eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core, &
                           deltat)
 
-!<YANGL
     ! NOISE TOMOGRAPHY --- source strength kernel
     if (NOISE_TOMOGRAPHY == 3)  &
        call compute_kernels_strength_noise(nmovie_points,ibool_crust_mantle, &
@@ -4320,7 +4271,6 @@
                           normal_x_noise,normal_y_noise,normal_z_noise, &
                           NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                           ibelm_top_crust_mantle)
-!>YANGL
 
     ! --- boundary kernels ------
     if (SAVE_BOUNDARY_MESH) then
@@ -4332,7 +4282,6 @@
         call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-            ! -- idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4349,7 +4298,6 @@
         call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4370,7 +4318,6 @@
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-            ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4387,7 +4334,6 @@
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4407,7 +4353,6 @@
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4424,7 +4369,6 @@
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4446,7 +4390,6 @@
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! -- idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4465,7 +4408,6 @@
       call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core, &
                  b_vector_displ_outer_core,nspec_outer_core, &
                  iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,ispec_is_tiso_outer_core, &
-              ! --idoubling_outer_core, &
                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
                  etax_outer_core,etay_outer_core,etaz_outer_core,&
                  gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
@@ -4487,7 +4429,6 @@
       call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core, &
                  b_vector_displ_outer_core,nspec_outer_core, &
                  iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,ispec_is_tiso_outer_core, &
-              ! --idoubling_outer_core, &
                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
                  etax_outer_core,etay_outer_core,etaz_outer_core,&
                  gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
@@ -4506,7 +4447,6 @@
       call compute_boundary_kernel(displ_inner_core,accel_inner_core, &
                  b_displ_inner_core,nspec_inner_core,iregion_code, &
                  ystore_inner_core,zstore_inner_core,ibool_inner_core,ispec_is_tiso_inner_core, &
-              ! -- idoubling_inner_core, &
                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
                  etax_inner_core,etay_inner_core,etaz_inner_core,&
                  gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
@@ -4543,7 +4483,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-!<YANGL
   ! first step of noise tomography, i.e., save a surface movie at every time step
   ! modified from the subroutine 'write_movie_surface'
   if ( NOISE_TOMOGRAPHY == 1 ) then
@@ -4551,7 +4490,6 @@
                             ibelm_top_crust_mantle,ibool_crust_mantle, &
                             NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie,it)
   endif
-!>YANGL
 
   ! save movie on surface
   if( MOVIE_SURFACE ) then
@@ -4605,14 +4543,14 @@
                         accel_crust_mantle,accel_inner_core, &
                         ibool_crust_mantle,ibool_inner_core)
 
-      else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
+      else if (MOVIE_VOLUME_TYPE == 5) then ! output displacement
         scalingval = scale_displ
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE, &
                     MOVIE_COARSE,ibool_crust_mantle,displ_crust_mantle, &
                     scalingval,mask_3dmovie,nu_3dmovie)
 
-      else if (MOVIE_VOLUME_TYPE == 6) then !output velocity
+      else if (MOVIE_VOLUME_TYPE == 6) then ! output velocity
         scalingval = scale_veloc
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE, &
@@ -4627,30 +4565,11 @@
     endif
   endif ! MOVIE_VOLUME
 
-!daniel: debugging
-!  if( SNAPSHOT_INNER_CORE .and. mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
-!      .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
-!    ! VTK file output
-!    ! displacement values
-!    !write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
-!    !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-!    !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-!    !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-!    !                    displ_inner_core,filename)
 !
-!    write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-!    write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-!    call write_VTK_data_cr_all(myrank,idoubling_inner_core, &
-!                        NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-!                        xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-!                        displ_inner_core,filename)
-!
-!  endif
-
-
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
+
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -4743,8 +4662,7 @@
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
                     epsilondev_crust_mantle,epsilondev_inner_core, &
-                    A_array_rotation,B_array_rotation, &
-                    LOCAL_PATH)
+                    A_array_rotation,B_array_rotation,LOCAL_PATH)
 
   ! synchronize all processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
@@ -4764,9 +4682,7 @@
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
-                  LOCAL_PATH)
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH)
     else
     call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
@@ -4775,42 +4691,34 @@
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
-                  LOCAL_PATH)
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH)
     endif
 
-!<YANGL
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
        call save_kernels_strength_noise(myrank,LOCAL_PATH,Sigma_kl_crust_mantle)
     endif
-!>YANGL
 
     ! outer core
     call save_kernels_outer_core(myrank,scale_t,scale_displ, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
-                        LOCAL_PATH)
+                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core,LOCAL_PATH)
 
     ! inner core
     call save_kernels_inner_core(myrank,scale_t,scale_displ, &
                           rho_kl_inner_core,beta_kl_inner_core,alpha_kl_inner_core, &
-                          rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
-                          LOCAL_PATH)
+                          rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core,LOCAL_PATH)
 
     ! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
       call save_kernels_boundary_kl(myrank,scale_t,scale_displ, &
-                                  moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl, &
-                                  LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
+                                  moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl,LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
     endif
 
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
-      call save_kernels_hessian(myrank,scale_t,scale_displ, &
-                                            hess_kl_crust_mantle,LOCAL_PATH)
+      call save_kernels_hessian(myrank,scale_t,scale_displ,hess_kl_crust_mantle,LOCAL_PATH)
     endif
   endif
 
