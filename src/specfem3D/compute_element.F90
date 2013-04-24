@@ -25,21 +25,6 @@
 !
 !=====================================================================
 
-! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                                         #undef _HANDOPT :  turns hand-optimized code off
-! or compile with: -D_HANDOPT
-!#define _HANDOPT
-
-! BEWARE:
-! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
-! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
-! BEWARE: and make sure that all the seismograms you get are the same down to roundoff noise.
-! BEWARE:
-
-! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
-
   subroutine compute_element_iso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
                     xstore,ystore,zstore, &
@@ -1286,81 +1271,19 @@
 ! local parameters
   real(kind=CUSTOM_REAL) R_xx_val1,R_yy_val1
   integer :: i_SLS
-#ifdef _HANDOPT
-  real(kind=CUSTOM_REAL) R_xx_val2,R_yy_val2,R_xx_val3,R_yy_val3
-  integer :: imodulo_N_SLS
-  integer :: i_SLS1,i_SLS2
-#endif
 
-#ifdef _HANDOPT
-! way 2:
-! note: this should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          by default, N_SLS = 3, therefore we take steps of 3
-  imodulo_N_SLS = mod(N_SLS,3)
-
-  if(imodulo_N_SLS >= 1) then
-    do i_SLS = 1,imodulo_N_SLS
-      R_xx_val1 = R_memory_loc(1,i_SLS)
-      R_yy_val1 = R_memory_loc(2,i_SLS)
-      sigma_xx = sigma_xx - R_xx_val1
-      sigma_yy = sigma_yy - R_yy_val1
-      sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
-    enddo
-  endif
-  if(N_SLS >= imodulo_N_SLS+1) then
-    ! note: another possibility would be using a reduction example for this loop; was tested but it does not improve,
-    ! probably since N_SLS == 3 is too small for a loop benefit
-    do i_SLS = imodulo_N_SLS+1,N_SLS,3
-      R_xx_val1 = R_memory_loc(1,i_SLS)
-      R_yy_val1 = R_memory_loc(2,i_SLS)
-      sigma_xx = sigma_xx - R_xx_val1
-      sigma_yy = sigma_yy - R_yy_val1
-      sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
-
-      i_SLS1=i_SLS+1
-      R_xx_val2 = R_memory_loc(1,i_SLS1)
-      R_yy_val2 = R_memory_loc(2,i_SLS1)
-      sigma_xx = sigma_xx - R_xx_val2
-      sigma_yy = sigma_yy - R_yy_val2
-      sigma_zz = sigma_zz + R_xx_val2 + R_yy_val2
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS1)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS1)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS1)
-
-      i_SLS2 =i_SLS+2
-      R_xx_val3 = R_memory_loc(1,i_SLS2)
-      R_yy_val3 = R_memory_loc(2,i_SLS2)
-      sigma_xx = sigma_xx - R_xx_val3
-      sigma_yy = sigma_yy - R_yy_val3
-      sigma_zz = sigma_zz + R_xx_val3 + R_yy_val3
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS2)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS2)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS2)
-    enddo
-  endif
-#else
-! way 1:
   do i_SLS = 1,N_SLS
-    R_xx_val1 = R_memory_loc(1,i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
-    R_yy_val1 = R_memory_loc(2,i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
+    R_xx_val1 = R_memory_loc(1,i_SLS)
+    R_yy_val1 = R_memory_loc(2,i_SLS)
     sigma_xx = sigma_xx - R_xx_val1
     sigma_yy = sigma_yy - R_yy_val1
     sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-    sigma_xy = sigma_xy - R_memory_loc(3,i_SLS) ! R_memory(3,i_SLS,i,j,k,ispec)
-    sigma_xz = sigma_xz - R_memory_loc(4,i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
-    sigma_yz = sigma_yz - R_memory_loc(5,i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
+    sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
+    sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
+    sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
   enddo
-#endif
 
   end subroutine compute_element_att_stress
-
 
 !
 !--------------------------------------------------------------------------------------------
@@ -1415,12 +1338,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
-#ifdef _HANDOPT
-  real(kind=CUSTOM_REAL) :: alphal,betal,gammal
-  integer :: i,j,k
-#else
   integer :: i_memory
-#endif
 
   ! use Runge-Kutta scheme to march in time
 
@@ -1428,36 +1346,6 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef _HANDOPT
-! way 2:
-  do i_SLS = 1,N_SLS
-
-    alphal = alphaval(i_SLS)
-    betal = betaval(i_SLS)
-    gammal = gammaval(i_SLS)
-
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
-
-    if(ANISOTROPIC_3D_MANTLE_VAL) then
-      factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * c44store(:,:,:,ispec)
-    else
-      factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * muvstore(:,:,:,ispec)
-    endif
-
-    ! this helps to vectorize the inner most loop
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
-                  + factor_common_c44_muv(i,j,k) &
-                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
-        enddo
-      enddo
-    enddo
-  enddo ! i_SLS
-#else
-! way 1:
   do i_SLS = 1,N_SLS
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
@@ -1474,8 +1362,6 @@
                 * (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
     enddo
   enddo ! i_SLS
-#endif
-
 
   end subroutine compute_element_att_memory_cr
 
@@ -1532,12 +1418,7 @@
 
   integer :: i_SLS
 
-#ifdef _HANDOPT
-  real(kind=CUSTOM_REAL) :: alphal,betal,gammal
-  integer :: i,j,k
-#else
   integer :: i_memory
-#endif
 
   ! use Runge-Kutta scheme to march in time
 
@@ -1545,33 +1426,6 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef _HANDOPT
-! way 2:
-  do i_SLS = 1,N_SLS
-
-    alphal = alphaval(i_SLS)
-    betal = betaval(i_SLS)
-    gammal = gammaval(i_SLS)
-
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
-
-    factor_common_use(:,:,:) = factor_common_use(:,:,:) * muvstore(:,:,:,ispec)
-
-    ! this helps to vectorize the inner most loop
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
-                  + factor_common_use(i,j,k) &
-                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
-        enddo
-      enddo
-    enddo
-
-  enddo ! i_SLS
-#else
-! way 1:
   do i_SLS = 1,N_SLS
     factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
     do i_memory = 1,5
@@ -1580,8 +1434,6 @@
             (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
     enddo
   enddo
-#endif
 
   end subroutine compute_element_att_memory_ic
-
 
