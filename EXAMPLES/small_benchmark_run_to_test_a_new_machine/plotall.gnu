@@ -1,5 +1,8 @@
-set terminal postscript eps color solid
-set output '| epstopdf --filter > all_seismograms_comparison.pdf' 
+set terminal postscript color solid
+set output 'all_seismograms_comparison.ps' 
+
+#set terminal postscript eps color solid
+#set output '| epstopdf --filter > all_seismograms_comparison.pdf' 
 
 #set term pdf color solid
 #set output "all_seismograms_comparison.pdf"

@@ -1,7 +1,7 @@
 #!/bin/csh
 
-#echo set term postscript color solid "Helvetica" 22
-#echo set output \"all_seismograms_comparison.ps\"
+echo set term postscript color solid "Helvetica" 22
+echo set output \"all_seismograms_comparison.ps\"
 
 echo set term pdf color solid
 echo set output \"all_seismograms_comparison.pdf\"
