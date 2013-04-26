@@ -6,6 +6,9 @@
 echo set term pdf color solid
 echo set output \"all_seismograms_comparison.pdf\"
 
+echo set terminal postscript eps color solid
+echo "set output '| epstopdf --filter > all_seismograms_comparison.pdf'"
+
 #echo "set term x11"
 #echo "set term wxt"
 
