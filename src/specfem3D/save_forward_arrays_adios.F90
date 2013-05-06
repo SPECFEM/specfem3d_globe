@@ -140,12 +140,14 @@ subroutine save_forward_arrays_adios()
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
-  if (ROTATION_VAL) then
+  ! conditional definition of vars seem to mess with the group size, 
+  ! even if the variables are conditionnaly written.
+!  if (ROTATION_VAL) then
     call define_rotation_forward_arrays_adios(adios_group, group_size_inc)
-  endif
-  if (ATTENUATION_VAL) then
+!  endif
+!  if (ATTENUATION_VAL) then
     call define_attenuation_forward_arrays_adios(adios_group, group_size_inc)
-  endif
+!  endif
 
   ! Open an ADIOS handler to the restart file.
   call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &

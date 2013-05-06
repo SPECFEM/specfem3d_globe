@@ -150,7 +150,7 @@
       b_B_array_rotation = 0._CUSTOM_REAL
     endif
 
-    if (ATTENUATION_VAL) then
+    if(ATTENUATION_VAL) then
       b_R_xx_crust_mantle = 0._CUSTOM_REAL
       b_R_yy_crust_mantle = 0._CUSTOM_REAL
       b_R_xy_crust_mantle = 0._CUSTOM_REAL
@@ -185,9 +185,9 @@
   integer :: ier
   character(len=150) outputname
 
-!  if (ADIOS_FOR_FORWARD_ARRAYS) then
-!    call read_forward_arrays_adios()
-!  else
+  if (ADIOS_FOR_FORWARD_ARRAYS) then
+    call read_forward_arrays_adios()
+  else
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=55,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
           status='old',action='read',form='unformatted',iostat=ier)
@@ -240,7 +240,7 @@
        read(55) b_R_yz_inner_core
     endif
     close(55)
-!  endif ! ADIOS_FOR_FORWARD_ARRAYS
+  endif ! ADIOS_FOR_FORWARD_ARRAYS
 
   ! transfers fields onto GPU
   if(GPU_MODE) then
