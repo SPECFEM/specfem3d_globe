@@ -250,6 +250,7 @@ LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
 # using ADIOS files
 ADIOS_OBJECTS= \
 	$O/read_mesh_databases_adios.adios.o \
+	$O/read_arrays_solver_adios.adios.o \
 	$O/save_forward_arrays_adios.adios.o \
 	$O/read_forward_arrays_adios.adios.o \
 	$O/write_specfem_adios_header.adios.o \

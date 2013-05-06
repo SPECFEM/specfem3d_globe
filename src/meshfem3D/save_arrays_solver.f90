@@ -489,7 +489,6 @@
 
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
-    print *, myrank, " region crust mantle"
     ! crust mantle
     if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
@@ -500,7 +499,6 @@
           num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
           num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
           num_elem_colors_crust_mantle)
-      print *, myrank, "adios crust passed"
     else
       call save_MPI_arrays(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &

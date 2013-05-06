@@ -268,7 +268,8 @@
   ! ADIOS
   !-----------------------------------------------------------------
 
-  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS
+  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
+      ADIOS_FOR_ARRAYS_SOLVER
 
   end module meshfem3D_par
 

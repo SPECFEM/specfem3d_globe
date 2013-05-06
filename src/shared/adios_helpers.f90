@@ -282,3 +282,40 @@ subroutine define_adios_global_integer_1d_array(adios_group, array_name, &
       array_name // "/offset", var_id)
   group_size_inc = group_size_inc + local_dim*4
 end subroutine define_adios_global_integer_1d_array
+
+!-------------------------------------------------------------------------------
+!> Define a global ADIOS 1D logical array and autoincrement the adios
+!! group size.
+!! \param adios_group The adios group where the variables belongs
+!! \param array_name The variable to be defined. This is actually the path for
+!!                   ADIOS. The values are stored in array_name/array
+!! \param len The local dimension of the array.
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \note This function define local, global and offset sizes as well as the
+!!       array to store the values in.
+subroutine define_adios_global_logical_1d_array(adios_group, array_name, &
+    local_dim, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Parameters
+  integer(kind=8), intent(in) :: adios_group
+  character(len=*), intent(in) :: array_name
+  integer, intent(in) :: local_dim
+  integer(kind=8), intent(inout) :: group_size_inc
+  ! Variables
+  integer(kind=8) :: var_id
+
+  call define_adios_integer_scalar (adios_group, "local_dim", array_name, &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "global_dim", array_name, &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "offset", array_name, &
+      group_size_inc)
+!  call adios_define_var(adios_group, "array", array_name, 6, &
+!      "local_dim", "global_dim", "offset", var_id)
+  call adios_define_var(adios_group, "array", array_name, 1, &
+      array_name // "/local_dim", array_name // "/global_dim", &
+      array_name // "/offset", var_id)
+  group_size_inc = group_size_inc + local_dim*1
+end subroutine define_adios_global_logical_1d_array

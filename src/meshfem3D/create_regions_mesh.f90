@@ -39,12 +39,14 @@
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
     IMAIN,volume_total,myrank,LOCAL_PATH, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
     R_CENTRAL_CUBE,RICB,RCMB, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     NGLOB1D_RADIAL_CORNER, &
-    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+    ADIOS_FOR_ARRAYS_SOLVER
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -334,9 +336,13 @@
       call flush_IMAIN()
     endif
     ! saves mesh and model parameters
-    call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
-                           iregion_code,xstore,ystore,zstore, &
-                           NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
+          iregion_code,xstore,ystore,zstore, NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    else
+      call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+          iregion_code,xstore,ystore,zstore, NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    endif
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
@@ -366,15 +372,13 @@
 
     ! compute volume, bottom and top area of that part of the slice
     call compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
 
     ! computes total area and volume
-    call compute_area(myrank,NCHUNKS,iregion_code, &
-                              area_local_bottom,area_local_top,&
-                              volume_local,volume_total, &
-                              RCMB,RICB,R_CENTRAL_CUBE)
+    call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
+        area_local_top, volume_local,volume_total, RCMB,RICB,R_CENTRAL_CUBE)
 
     ! create AVS or DX mesh data for the slices
     if(SAVE_MESH_FILES) then

@@ -109,7 +109,7 @@
     call read_gpu_mode(GPU_MODE)
     ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
     call read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
-        ADIOS_FOR_MPI_ARRAYS)
+        ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER)
   endif
 
   ! distributes parameters from master to all processes
@@ -151,8 +151,7 @@
   call broadcast_gpu_parameters(myrank,GPU_MODE)
   ! broadcasts optional ADIOS_ENABLED 
   call broadcast_adios_parameters(myrank,ADIOS_ENABLED, &
-      ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS)
-
+      ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER)
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
