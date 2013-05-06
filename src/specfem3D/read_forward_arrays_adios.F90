@@ -63,15 +63,15 @@ subroutine read_intermediate_forward_arrays_adios()
   integer(kind=8), dimension(1) :: start, count
 
 
-  file_name = "OUTPUT_FILES/dump_all_arrays_adios.bp" 
+  file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp" 
   call world_size(sizeprocs)
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   
 
   local_dim = NDIM * NGLOB_CRUST_MANTLE 
@@ -79,157 +79,157 @@ subroutine read_intermediate_forward_arrays_adios()
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_crust_mantle/array", 0, 1, &
       displ_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "veloc_crust_mantle/array", 0, 1, &
       veloc_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "accel_crust_mantle/array", 0, 1, &
       accel_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   ! NOTE: perform reads before changing selection, otherwise it will segfault
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   
   local_dim = NDIM * NGLOB_INNER_CORE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_inner_core/array", 0, 1, &
       displ_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "veloc_inner_core/array", 0, 1, &
       veloc_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "accel_inner_core/array", 0, 1, &
       accel_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLOB_OUTER_CORE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_outer_core/array", 0, 1, &
       displ_outer_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "veloc_outer_core/array", 0, 1, &
       veloc_outer_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "accel_outer_core/array", 0, 1, &
       accel_outer_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xx_crust_mantle/array",&
       0, 1, epsilondev_xx_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yy_crust_mantle/array",&
       0, 1, epsilondev_yy_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xy_crust_mantle/array",&
       0, 1, epsilondev_xy_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xz_crust_mantle/array",&
       0, 1, epsilondev_xz_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yz_crust_mantle/array",&
       0, 1, epsilondev_yz_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xx_inner_core/array",&
       0, 1, epsilondev_xx_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yy_inner_core/array",&
       0, 1, epsilondev_yy_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xy_inner_core/array",&
       0, 1, epsilondev_xy_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xz_inner_core/array",&
       0, 1, epsilondev_xz_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yz_inner_core/array",&
       0, 1, epsilondev_yz_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "A_array_rotation/array", 0, 1, &
       A_array_rotation, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "B_array_rotation/array", 0, 1, &
       B_array_rotation, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "R_xx_crust_mantle/array", 0, 1, &
       R_xx_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_yy_crust_mantle/array", 0, 1, &
       R_yy_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_xy_crust_mantle/array", 0, 1, &
       R_xy_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_xz_crust_mantle/array", 0, 1, &
       R_xz_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_yz_crust_mantle/array", 0, 1, &
       R_yz_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "R_xx_inner_core/array", 0, 1, &
       R_xx_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_yy_inner_core/array", 0, 1, &
       R_yy_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_xy_inner_core/array", 0, 1, &
       R_xy_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_xz_inner_core/array", 0, 1, &
       R_xz_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "R_yz_inner_core/array", 0, 1, &
       R_yz_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   ! Close ADIOS handler to the restart file.
   call adios_selection_delete(sel)
   call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call MPI_Barrier(comm, ierr)
 
@@ -256,9 +256,6 @@ subroutine read_forward_arrays_adios()
   character(len=150) :: file_name
   integer(kind=8) :: group_size_inc
   integer :: local_dim, global_dim, offset
-!  integer, parameter :: num_arrays = 9 ! TODO correct number 
-!  character(len=256), dimension(num_arrays) :: local_dims1, local_dims2, &
-!      global_dims1, global_dims2, offsets1, offsets2, array_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
@@ -268,15 +265,15 @@ subroutine read_forward_arrays_adios()
   integer(kind=8), dimension(1) :: start, count
 
 
-  file_name = "OUTPUT_FILES/save_forward_arrays.bp" 
+  file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp" 
   call world_size(sizeprocs)
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   
 
   local_dim = NDIM * NGLOB_CRUST_MANTLE 
@@ -284,93 +281,93 @@ subroutine read_forward_arrays_adios()
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_crust_mantle/array", 0, 1, &
       b_displ_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "veloc_crust_mantle/array", 0, 1, &
       b_veloc_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "accel_crust_mantle/array", 0, 1, &
       b_accel_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   ! NOTE: perform reads before changing selection, otherwise it will segfault
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   
   local_dim = NDIM * NGLOB_INNER_CORE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_inner_core/array", 0, 1, &
       b_displ_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "veloc_inner_core/array", 0, 1, &
       b_veloc_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "accel_inner_core/array", 0, 1, &
       b_accel_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLOB_OUTER_CORE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_outer_core/array", 0, 1, &
       b_displ_outer_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "veloc_outer_core/array", 0, 1, &
       b_veloc_outer_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "accel_outer_core/array", 0, 1, &
       b_accel_outer_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xx_crust_mantle/array",&
       0, 1, b_epsilondev_xx_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yy_crust_mantle/array",&
       0, 1, b_epsilondev_yy_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xy_crust_mantle/array",&
       0, 1, b_epsilondev_xy_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xz_crust_mantle/array",&
       0, 1, b_epsilondev_xz_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yz_crust_mantle/array",&
       0, 1, b_epsilondev_yz_crust_mantle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xx_inner_core/array",&
       0, 1, b_epsilondev_xx_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yy_inner_core/array",&
       0, 1, b_epsilondev_yy_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xy_inner_core/array",&
       0, 1, b_epsilondev_xy_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_xz_inner_core/array",&
       0, 1, b_epsilondev_xz_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_schedule_read(adios_handle, sel, "epsilondev_yz_inner_core/array",&
       0, 1, b_epsilondev_yz_inner_core, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   if (ROTATION_VAL) then
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
@@ -378,13 +375,13 @@ subroutine read_forward_arrays_adios()
     call adios_selection_boundingbox (sel , 1, start, count)
     call adios_schedule_read(adios_handle, sel, "A_array_rotation/array", 0, 1, &
         b_A_array_rotation, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "B_array_rotation/array", 0, 1, &
         b_B_array_rotation, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
 
     call adios_perform_reads(adios_handle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
   endif
 
   if (ATTENUATION_VAL) then
@@ -393,52 +390,52 @@ subroutine read_forward_arrays_adios()
     call adios_selection_boundingbox (sel , 1, start, count)
     call adios_schedule_read(adios_handle, sel, "R_xx_crust_mantle/array", 0, 1, &
         b_R_xx_crust_mantle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_yy_crust_mantle/array", 0, 1, &
         b_R_yy_crust_mantle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_xy_crust_mantle/array", 0, 1, &
         b_R_xy_crust_mantle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_xz_crust_mantle/array", 0, 1, &
         b_R_xz_crust_mantle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_yz_crust_mantle/array", 0, 1, &
         b_R_yz_crust_mantle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
 
     call adios_perform_reads(adios_handle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
 
     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
     call adios_schedule_read(adios_handle, sel, "R_xx_inner_core/array", 0, 1, &
         b_R_xx_inner_core, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_yy_inner_core/array", 0, 1, &
         b_R_yy_inner_core, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_xy_inner_core/array", 0, 1, &
         b_R_xy_inner_core, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_xz_inner_core/array", 0, 1, &
         b_R_xz_inner_core, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
     call adios_schedule_read(adios_handle, sel, "R_yz_inner_core/array", 0, 1, &
         b_R_yz_inner_core, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
 
     call adios_perform_reads(adios_handle, adios_err)
-    call check_adios_err(adios_err)
+    call check_adios_err(myrank,adios_err)
   endif
 
   ! Close ADIOS handler to the restart file.
   call adios_selection_delete(sel)
   call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(adios_err)
+  call check_adios_err(myrank,adios_err)
 
   call MPI_Barrier(comm, ierr)
 

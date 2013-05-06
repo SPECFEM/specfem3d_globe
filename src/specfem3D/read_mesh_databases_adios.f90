@@ -25,66 +25,9 @@
 !
 !=====================================================================
 
-  subroutine read_mesh_databases()
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
-
-  implicit none
-
-  ! local parameters
-  ! timing
-  double precision, external :: wtime
-
-  ! get MPI starting time
-  time_start = wtime()
-
-  ! start reading the databases
-  ! read arrays created by the mesher
-
-  ! reads "solver_data.bin" files for crust and mantle
-  call read_mesh_databases_CM()
-
-  ! reads "solver_data.bin" files for outer core
-  call read_mesh_databases_OC()
-
-  ! reads "solver_data.bin" files for inner core
-  call read_mesh_databases_IC()
-
-  ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
-  call read_mesh_databases_coupling()
-
-  ! reads "addressing.txt" 2-D addressing (needed for stacey boundaries)
-  call read_mesh_databases_addressing()
-
-  ! sets up MPI interfaces, inner/outer elements and mesh coloring
-  call read_mesh_databases_MPI()
-
-  ! absorbing boundaries
-  if(ABSORBING_CONDITIONS) then
-    ! reads "stacey.bin" files
-    call read_mesh_databases_stacey()
-  endif
-
-  ! user output
-  call sync_all()
-  if( myrank == 0 ) then
-    ! elapsed time since beginning of mesh generation
-    tCPU = wtime() - time_start
-    write(IMAIN,*)
-    write(IMAIN,*) 'Elapsed time for reading mesh in seconds = ',sngl(tCPU)
-    write(IMAIN,*)
-  endif
-
-  end subroutine read_mesh_databases
-
-!
 !-------------------------------------------------------------------------------------------------
-!
 
-  subroutine read_mesh_databases_CM()
+  subroutine read_mesh_databases_CM_adios()
 
 ! mesh for CRUST MANTLE region
 
@@ -97,7 +40,7 @@
   logical :: READ_KAPPA_MU,READ_TISO
   ! dummy array that does not need to be actually read
   integer, dimension(:),allocatable :: dummy_idoubling
-  integer :: ier
+  integer :: ierr
 
   ! crust and mantle
 
@@ -137,15 +80,15 @@
   endif
 
   ! allocates dummy array
-  allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy idoubling in crust_mantle')
+  allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank,'error allocating dummy idoubling in crust_mantle')
 
   ! allocates mass matrices
   allocate(rmassx_crust_mantle(NGLOB_XY_CM), &
-          rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
-  if(ier /= 0) stop 'error allocating dummy rmassx, rmassy in crust_mantle'
-  allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
-  if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
+          rmassy_crust_mantle(NGLOB_XY_CM),stat=ierr)
+  if(ierr /= 0) stop 'error allocating dummy rmassx, rmassy in crust_mantle'
+  allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ierr)
+  if(ierr /= 0) stop 'error allocating rmassz in crust_mantle'
 
   ! reads databases file
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
@@ -177,13 +120,13 @@
 
   deallocate(dummy_idoubling)
 
-  end subroutine read_mesh_databases_CM
+  end subroutine read_mesh_databases_CM_adios
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_OC()
+  subroutine read_mesh_databases_OC_adios()
 
 ! mesh for OUTER CORE region
 
@@ -194,7 +137,7 @@
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
   logical :: READ_KAPPA_MU,READ_TISO
-  integer :: ier
+  integer :: ierr
 
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
@@ -217,8 +160,8 @@
   allocate(dummy_rmass(NGLOB_XY_dummy), &
           dummy_ispec_is_tiso(NSPEC_OUTER_CORE), &
           dummy_idoubling_outer_core(NSPEC_OUTER_CORE), &
-          stat=ier)
-  if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec/idoubling in outer core'
+          stat=ierr)
+  if(ierr /= 0) stop 'error allocating dummy rmass and dummy ispec/idoubling in outer core'
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -228,8 +171,8 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
-  if(ier /= 0) stop 'error allocating rmass in outer core'
+  allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ierr)
+  if(ierr /= 0) stop 'error allocating rmass in outer core'
 
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
@@ -260,13 +203,13 @@
      maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
-  end subroutine read_mesh_databases_OC
+  end subroutine read_mesh_databases_OC_adios
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_IC()
+  subroutine read_mesh_databases_IC_adios()
 
 ! mesh for INNER CORE region
 
@@ -277,7 +220,7 @@
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
   logical :: READ_KAPPA_MU,READ_TISO
-  integer :: ier
+  integer :: ierr
 
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
@@ -301,8 +244,8 @@
 
   allocate(dummy_rmass(NGLOB_XY_dummy), &
           dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
-          stat=ier)
-  if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec in inner core'
+          stat=ierr)
+  if(ierr /= 0) stop 'error allocating dummy rmass and dummy ispec in inner core'
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -312,8 +255,8 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
-  if(ier /= 0) stop 'error allocating rmass in inner core'
+  allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ierr)
+  if(ierr /= 0) stop 'error allocating rmass in inner core'
 
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
             NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
@@ -343,13 +286,13 @@
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
-  end subroutine read_mesh_databases_IC
+  end subroutine read_mesh_databases_IC_adios
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_coupling()
+  subroutine read_mesh_databases_coupling_adios()
 
 ! to couple mantle with outer core
 
@@ -364,7 +307,7 @@
 
   ! local parameters
   integer :: njunk1,njunk2,njunk3
-  integer :: ier
+  integer :: ierr
 
   ! crust and mantle
   ! create name of database
@@ -372,8 +315,8 @@
 
   ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening crust_mantle boundary.bin file')
+        status='old',form='unformatted',action='read',iostat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank,'error opening crust_mantle boundary.bin file')
 
   read(27) nspec2D_xmin_crust_mantle
   read(27) nspec2D_xmax_crust_mantle
@@ -417,8 +360,8 @@
 
   ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening outer_core boundary.bin file')
+        status='old',form='unformatted',action='read',iostat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank,'error opening outer_core boundary.bin file')
 
   read(27) nspec2D_xmin_outer_core
   read(27) nspec2D_xmax_outer_core
@@ -461,8 +404,8 @@
 
   ! read info for vertical edges for central cube matching in inner core
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening inner_core boundary.bin file')
+        status='old',form='unformatted',action='read',iostat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank,'error opening inner_core boundary.bin file')
 
   read(27) nspec2D_xmin_inner_core
   read(27) nspec2D_xmax_inner_core
@@ -487,8 +430,8 @@
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+          status='old',form='unformatted',action='read',iostat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
 
     read(27) njunk1,njunk2,njunk3
     if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
@@ -511,13 +454,13 @@
     moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
   endif
 
-  end subroutine read_mesh_databases_coupling
+  end subroutine read_mesh_databases_coupling_adios
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_addressing()
+  subroutine read_mesh_databases_addressing_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -531,12 +474,12 @@
   ! local parameters
   integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
   integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
-  integer :: ier,iproc,iproc_read,iproc_xi,iproc_eta
+  integer :: ierr,iproc,iproc_read,iproc_xi,iproc_eta
 
   ! open file with global slice number addressing
   if(myrank == 0) then
-    open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening addressing.txt')
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank,'error opening addressing.txt')
 
     do iproc = 0,NPROCTOT_VAL-1
       read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
@@ -552,10 +495,10 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ichunk_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_xi_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_eta_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+  call MPI_BCAST(ichunk_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+  call MPI_BCAST(iproc_xi_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+  call MPI_BCAST(iproc_eta_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 
   ! output a topology map of slices - fix 20x by nproc
   if (myrank == 0 ) then
@@ -614,211 +557,182 @@
   ! (needed for stacey conditions)
   ichunk = ichunk_slice(myrank)
 
-  end subroutine read_mesh_databases_addressing
+  end subroutine read_mesh_databases_addressing_adios
 
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_mesh_databases_MPI()
-
+!-------------------------------------------------------------------------------
+!> \brief Read crust mantle MPI arrays from an ADIOS file.
+  subroutine read_mesh_databases_MPI_CM_adios()
+  ! External imports
+  use mpi
+  use adios_read_mod
+  ! Internal imports
   use specfem_par
   use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
-  implicit none
-
-  ! local parameters
-  real :: percentage_edge
-  integer :: ier
-
-  ! read MPI interfaces from file
-
-  ! crust mantle
-  if (ADIOS_FOR_MPI_ARRAYS) then
-    call read_mesh_databases_MPI_CM_adios()
-  else
-    call read_mesh_databases_MPI_CM()
-  endif
-
-  allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-          request_send_vector_cm(num_interfaces_crust_mantle), &
-          request_recv_vector_cm(num_interfaces_crust_mantle), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
-
-  if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-            b_buffer_recv_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-            b_request_send_vector_cm(num_interfaces_crust_mantle), &
-            b_request_recv_vector_cm(num_interfaces_crust_mantle), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_cm etc.')
-  endif
-
-  ! outer core
-  call read_mesh_databases_MPI_OC()
-
-  allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-          buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-          request_send_scalar_oc(num_interfaces_outer_core), &
-          request_recv_scalar_oc(num_interfaces_outer_core), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
-
-  if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-            b_buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-            b_request_send_scalar_oc(num_interfaces_outer_core), &
-            b_request_recv_scalar_oc(num_interfaces_outer_core), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_outer_core etc.')
-  endif
-
-  ! inner core
-  call read_mesh_databases_MPI_IC()
-
-  allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-          buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-          request_send_vector_ic(num_interfaces_inner_core), &
-          request_recv_vector_ic(num_interfaces_inner_core), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_inner_core etc.')
-
-  if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-            b_buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-            b_request_send_vector_ic(num_interfaces_inner_core), &
-            b_request_recv_vector_ic(num_interfaces_inner_core), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_inner_core etc.')
-  endif
-
-
-  ! user output
-  if(myrank == 0) then
-    write(IMAIN,*) 'for overlapping of communications with calculations:'
-    write(IMAIN,*)
-
-    percentage_edge = 100. * nspec_outer_crust_mantle / real(NSPEC_CRUST_MANTLE)
-    write(IMAIN,*) 'percentage of edge elements in crust/mantle ',percentage_edge,'%'
-    write(IMAIN,*) 'percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
-    write(IMAIN,*)
-
-    percentage_edge = 100.* nspec_outer_outer_core / real(NSPEC_OUTER_CORE)
-    write(IMAIN,*) 'percentage of edge elements in outer core ',percentage_edge,'%'
-    write(IMAIN,*) 'percentage of volume elements in outer core ',100. - percentage_edge,'%'
-    write(IMAIN,*)
-
-    percentage_edge = 100. * nspec_outer_inner_core / real(NSPEC_INNER_CORE)
-    write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
-    write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
-    write(IMAIN,*)
-  endif
-  ! synchronizes MPI processes
-  call sync_all()
-
-  end subroutine read_mesh_databases_MPI
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_mesh_databases_MPI_CM()
 
   use specfem_par
   use specfem_par_crustmantle
   implicit none
 
   ! local parameters
-  integer :: ier
-
-  ! crust mantle region
+  integer :: sizeprocs, comm, ierr
+  character(len=150) :: file_name
+  integer(kind=8) :: group_size_inc
+  integer :: local_dim, global_dim, offset
+  ! ADIOS variables
+  integer                 :: adios_err
+  integer(kind=8)         :: adios_group, adios_handle, varid, sel
+  integer(kind=8)         :: adios_groupsize, adios_totalsize
+  integer :: vars_count, attrs_count, current_step, last_step, vsteps
+  character(len=128), dimension(:), allocatable :: adios_names 
+  integer(kind=8), dimension(1) :: start, count
 
   ! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  call create_name_database_adios(prname, IREGION_CRUST_MANTLE, LOCAL_PATH)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
-       status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+  file_name= trim(prname) // "solver_data_mpi.bp" 
+  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
+      "verbose=1", adios_err)
+  call check_adios_err(myrank,adios_err)
+  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
+  call check_adios_err(myrank,adios_err)
 
   ! MPI interfaces
-  read(IIN) num_interfaces_crust_mantle
+  call adios_get_scalar(adios_handle, "num_interfaces", &
+      num_interfaces_crust_mantle, adios_err)
+
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
-          stat=ier)
-  if( ier /= 0 ) &
-    call exit_mpi(myrank,'error allocating array my_neighbours_crust_mantle etc.')
+          stat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank, &
+      'error allocating array my_neighbours_crust_mantle etc.')
 
   if( num_interfaces_crust_mantle > 0 ) then
-    read(IIN) max_nibool_interfaces_cm
-    allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_crust_mantle')
+    call adios_get_scalar(adios_handle, "max_nibool_interfaces", &
+      max_nibool_interfaces_cm, adios_err)
+    allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm, &
+        num_interfaces_crust_mantle), stat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank, &
+        'error allocating array ibool_interfaces_crust_mantle')
 
-    read(IIN) my_neighbours_crust_mantle
-    read(IIN) nibool_interfaces_crust_mantle
-    read(IIN) ibool_interfaces_crust_mantle
+    local_dim = num_interfaces_crust_mantle
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call adios_selection_boundingbox (sel , 1, start, count)
+    call adios_schedule_read(adios_handle, sel, "my_neighbours/array", 0, 1, &
+      my_neighbours_crust_mantle, adios_err)
+    call check_adios_err(myrank,adios_err)
+    call adios_schedule_read(adios_handle, sel, "nibool_interfaces/array", &
+      0, 1, nibool_interfaces_crust_mantle, adios_err)
+    call check_adios_err(myrank,adios_err)
+
+    call adios_perform_reads(adios_handle, adios_err)
+    call check_adios_err(myrank,adios_err)
+
+    local_dim = max_nibool_interfaces_cm * num_interfaces_crust_mantle
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call adios_selection_boundingbox (sel , 1, start, count)
+    call adios_schedule_read(adios_handle, sel, &
+      "ibool_interfaces/array", 0, 1, &
+      ibool_interfaces_crust_mantle, adios_err)
+    call check_adios_err(myrank,adios_err)
+
+    call adios_perform_reads(adios_handle, adios_err)
+    call check_adios_err(myrank,adios_err)
   else
     ! dummy array
     max_nibool_interfaces_cm = 0
-    allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_crust_mantle')
+    allocate(ibool_interfaces_crust_mantle(0,0),stat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank, &
+        'error allocating array dummy ibool_interfaces_crust_mantle')
   endif
 
   ! inner / outer elements
-  read(IIN) nspec_inner_crust_mantle,nspec_outer_crust_mantle
-  read(IIN) num_phase_ispec_crust_mantle
+  call adios_get_scalar(adios_handle, "nspec_inner", &
+      nspec_inner_crust_mantle, adios_err)
+  call adios_get_scalar(adios_handle, "nspec_outer", &
+      nspec_outer_crust_mantle, adios_err)
+  call adios_get_scalar(adios_handle, "num_phase_ispec", &
+      num_phase_ispec_crust_mantle, adios_err)
   if( num_phase_ispec_crust_mantle < 0 ) &
-    call exit_mpi(myrank,'error num_phase_ispec_crust_mantle is < zero')
+      call exit_mpi(myrank,'error num_phase_ispec_crust_mantle is < zero')
 
   allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
-          stat=ier)
-  if( ier /= 0 ) &
-    call exit_mpi(myrank,'error allocating array phase_ispec_inner_crust_mantle')
+          stat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank, &
+      'error allocating array phase_ispec_inner_crust_mantle')
 
-  if(num_phase_ispec_crust_mantle > 0 ) read(IIN) phase_ispec_inner_crust_mantle
+  if(num_phase_ispec_crust_mantle > 0 ) then
+    local_dim = num_phase_ispec_crust_mantle * 2
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call adios_selection_boundingbox (sel , 1, start, count)
+    call adios_schedule_read(adios_handle, sel, &
+      "phase_ispec_inner/array", 0, 1, &
+      phase_ispec_inner_crust_mantle, adios_err)
+    call check_adios_err(myrank,adios_err)
+
+    call adios_perform_reads(adios_handle, adios_err)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! mesh coloring for GPUs
   if( USE_MESH_COLORING_GPU ) then
+    call adios_get_scalar(adios_handle, "num_colors_outer", &
+        num_colors_outer_crust_mantle, adios_err)
+    call adios_get_scalar(adios_handle, "num_colors_inner", &
+        num_colors_inner_crust_mantle, adios_err)
     ! colors
-    read(IIN) num_colors_outer_crust_mantle,num_colors_inner_crust_mantle
 
-    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
-            stat=ier)
-    if( ier /= 0 ) &
+    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle +&
+        num_colors_inner_crust_mantle), stat=ierr)
+    if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_crust_mantle array')
 
-    read(IIN) num_elem_colors_crust_mantle
+    local_dim = num_colors_outer_crust_mantle + num_colors_inner_crust_mantle 
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call adios_selection_boundingbox (sel , 1, start, count)
+    call adios_schedule_read(adios_handle, sel, &
+      "num_elem_colors/array", 0, 1, &
+      num_elem_colors_crust_mantle, adios_err)
+    call check_adios_err(myrank,adios_err)
+
+    call adios_perform_reads(adios_handle, adios_err)
+    call check_adios_err(myrank,adios_err)
   else
     ! allocates dummy arrays
     num_colors_outer_crust_mantle = 0
     num_colors_inner_crust_mantle = 0
-    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
-            stat=ier)
-    if( ier /= 0 ) &
-      call exit_mpi(myrank,'error allocating num_elem_colors_crust_mantle array')
+    allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + &
+        num_colors_inner_crust_mantle), stat=ierr)
+    if( ierr /= 0 ) &
+      call exit_mpi(myrank, &
+          'error allocating num_elem_colors_crust_mantle array')
   endif
+  ! Close ADIOS handler to the restart file.
+  call adios_selection_delete(sel)
+  call adios_read_close(adios_handle, adios_err)
+  call check_adios_err(myrank,adios_err)
+  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
+  call check_adios_err(myrank,adios_err)
 
-  close(IIN)
+  call MPI_Barrier(comm, ierr)
 
-  end subroutine read_mesh_databases_MPI_CM
+  end subroutine read_mesh_databases_MPI_CM_adios
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_MPI_OC()
+  subroutine read_mesh_databases_MPI_OC_adios()
 
   use specfem_par
   use specfem_par_outercore
   implicit none
 
   ! local parameters
-  integer :: ier
+  integer :: ierr
 
   ! crust mantle region
 
@@ -826,22 +740,22 @@
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
-       status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+       status='old',action='read',form='unformatted',iostat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
 
   ! MPI interfaces
   read(IIN) num_interfaces_outer_core
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
-          stat=ier)
-  if( ier /= 0 ) &
+          stat=ierr)
+  if( ierr /= 0 ) &
     call exit_mpi(myrank,'error allocating array my_neighbours_outer_core etc.')
 
   if( num_interfaces_outer_core > 0 ) then
     read(IIN) max_nibool_interfaces_oc
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_outer_core')
+            stat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_outer_core')
 
     read(IIN) my_neighbours_outer_core
     read(IIN) nibool_interfaces_outer_core
@@ -849,8 +763,8 @@
   else
     ! dummy array
     max_nibool_interfaces_oc = 0
-    allocate(ibool_interfaces_outer_core(0,0),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_outer_core')
+    allocate(ibool_interfaces_outer_core(0,0),stat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_outer_core')
   endif
 
   ! inner / outer elements
@@ -860,8 +774,8 @@
     call exit_mpi(myrank,'error num_phase_ispec_outer_core is < zero')
 
   allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),&
-          stat=ier)
-  if( ier /= 0 ) &
+          stat=ierr)
+  if( ierr /= 0 ) &
     call exit_mpi(myrank,'error allocating array phase_ispec_inner_outer_core')
 
   if(num_phase_ispec_outer_core > 0 ) read(IIN) phase_ispec_inner_outer_core
@@ -872,8 +786,8 @@
     read(IIN) num_colors_outer_outer_core,num_colors_inner_outer_core
 
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
-            stat=ier)
-    if( ier /= 0 ) &
+            stat=ierr)
+    if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_outer_core array')
 
     read(IIN) num_elem_colors_outer_core
@@ -882,27 +796,27 @@
     num_colors_outer_outer_core = 0
     num_colors_inner_outer_core = 0
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
-            stat=ier)
-    if( ier /= 0 ) &
+            stat=ierr)
+    if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_outer_core array')
   endif
 
   close(IIN)
 
-  end subroutine read_mesh_databases_MPI_OC
+  end subroutine read_mesh_databases_MPI_OC_adios
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_MPI_IC()
+  subroutine read_mesh_databases_MPI_IC_adios()
 
   use specfem_par
   use specfem_par_innercore
   implicit none
 
   ! local parameters
-  integer :: ier
+  integer :: ierr
 
   ! crust mantle region
 
@@ -910,22 +824,22 @@
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
-       status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+       status='old',action='read',form='unformatted',iostat=ierr)
+  if( ierr /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
 
   ! MPI interfaces
   read(IIN) num_interfaces_inner_core
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
-          stat=ier)
-  if( ier /= 0 ) &
+          stat=ierr)
+  if( ierr /= 0 ) &
     call exit_mpi(myrank,'error allocating array my_neighbours_inner_core etc.')
 
   if( num_interfaces_inner_core > 0 ) then
     read(IIN) max_nibool_interfaces_ic
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_inner_core')
+            stat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_inner_core')
 
     read(IIN) my_neighbours_inner_core
     read(IIN) nibool_interfaces_inner_core
@@ -933,8 +847,8 @@
   else
     ! dummy array
     max_nibool_interfaces_ic = 0
-    allocate(ibool_interfaces_inner_core(0,0),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_inner_core')
+    allocate(ibool_interfaces_inner_core(0,0),stat=ierr)
+    if( ierr /= 0 ) call exit_mpi(myrank,'error allocating array dummy ibool_interfaces_inner_core')
   endif
 
   ! inner / outer elements
@@ -944,8 +858,8 @@
     call exit_mpi(myrank,'error num_phase_ispec_inner_core is < zero')
 
   allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
-          stat=ier)
-  if( ier /= 0 ) &
+          stat=ierr)
+  if( ierr /= 0 ) &
     call exit_mpi(myrank,'error allocating array phase_ispec_inner_inner_core')
 
   if(num_phase_ispec_inner_core > 0 ) read(IIN) phase_ispec_inner_inner_core
@@ -956,8 +870,8 @@
     read(IIN) num_colors_outer_inner_core,num_colors_inner_inner_core
 
     allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
-            stat=ier)
-    if( ier /= 0 ) &
+            stat=ierr)
+    if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
 
     read(IIN) num_elem_colors_inner_core
@@ -966,21 +880,21 @@
     num_colors_outer_inner_core = 0
     num_colors_inner_inner_core = 0
     allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
-            stat=ier)
-    if( ier /= 0 ) &
+            stat=ierr)
+    if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
   endif
 
   close(IIN)
 
-  end subroutine read_mesh_databases_MPI_IC
+  end subroutine read_mesh_databases_MPI_IC_adios
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_mesh_databases_stacey()
+  subroutine read_mesh_databases_stacey_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -990,7 +904,7 @@
   implicit none
 
   ! local parameters
-  integer :: ier
+  integer :: ierr
 
   ! crust and mantle
 
@@ -999,8 +913,8 @@
 
   ! read arrays for Stacey conditions
   open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for crust mantle')
+        status='old',form='unformatted',action='read',iostat=ierr)
+  if( ierr /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for crust mantle')
 
   read(27) nimin_crust_mantle
   read(27) nimax_crust_mantle
@@ -1017,8 +931,8 @@
 
   ! read arrays for Stacey conditions
   open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for outer core')
+        status='old',form='unformatted',action='read',iostat=ierr)
+  if( ierr /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for outer core')
 
   read(27) nimin_outer_core
   read(27) nimax_outer_core
@@ -1028,5 +942,5 @@
   read(27) nkmin_eta_outer_core
   close(27)
 
-  end subroutine read_mesh_databases_stacey
+  end subroutine read_mesh_databases_stacey_adios
 

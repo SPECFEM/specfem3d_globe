@@ -194,6 +194,29 @@ MESHER_ARRAY_OBJECTS = \
 	$(EMPTY_MACRO)
 
 LIBSPECFEM_MESHER = $O/libspecfem_mesher.a
+#
+# using ADIOS files
+ADIOS_OBJECTS= \
+	$O/adios_manager.shared_adios.o  \
+	$O/adios_helpers.shared_adios.o  \
+	$O/save_arrays_solver_adios.adios.o
+ADIOS_STUBS = \
+	$O/adios_empty_stubs.noadios.o
+
+@COND_ADIOS_FALSE@ADIOS_OBJECTS = $(ADIOS_STUBS)
+
+# ADIOS
+# with configure: ./configure --with-cuda ADIOS_LIB=.. ADIOS_INC=.. MPI_INC=..
+@COND_ADIOS_TRUE@ADIOS_LIBS = -ladiosf -lmxml
+@COND_ADIOS_FALSE@ADIOS_LIBS = 
+
+ADIOS_LIB_LOCATION = @ADIOS_LIB@ @MXML_LIB@
+ADIOS_LINK = $(ADIOS_LIB_LOCATION) $(ADIOS_LIBS)
+ADIOS_INC = @ADIOS_INC@ -I../../setup -I../../ 
+
+#@COND_ADIOS_TRUE@CPPFLAGS = -I../../setup @CPPFLAGS@
+@COND_ADIOS_TRUE@MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(ADIOS_INC) $(FLAGS_CHECK)
+@COND_ADIOS_TRUE@MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(ADIOS_INC) $(FLAGS_NO_CHECK)
 
 #######################################
 
@@ -223,11 +246,11 @@ bak: backup
 ####
 
 # rules for the main programs
-XMESHFEM_OBJECTS = $(MESHER_ARRAY_OBJECTS) $O/exit_mpi.sharedmpi.o $(LIBSPECFEM_MESHER)
+XMESHFEM_OBJECTS = $(MESHER_ARRAY_OBJECTS) $(ADIOS_OBJECTS) $O/exit_mpi.sharedmpi.o $(LIBSPECFEM_MESHER)
 
 xmeshfem3D: $(XMESHFEM_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS) $(ADIOS_LINK)
 
 
 clean:
@@ -264,7 +287,29 @@ $O/%.sharedmpi.o: ${SHARED}/%.f90 ${SETUP}/constants.h
 $O/%.cc.o: ${SHARED}/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
 
+#######################################
 
+###
+### ADIOS compilation
+###
+
+$O/%.adios.o: %.F90 ${SETUP}/config.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.adios.o: %.f90 ${SETUP}/config.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.noadios.o: %.F90 
+	${FC} -c -o $@ $<
+
+$O/%.noadios.o: %.f90 
+	${FC} -c -o $@ $<
+
+$O/%.shared_adios.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.shared_adios.o: ${SHARED}/%.F90 ${SETUP}/constants.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
 #######################################
 
 ###

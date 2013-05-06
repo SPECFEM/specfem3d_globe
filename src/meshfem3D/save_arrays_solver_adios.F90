@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+  subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                     iregion_code,xstore,ystore,zstore, &
                     NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
@@ -319,13 +319,13 @@
     call save_arrays_solver_meshfiles(myrank,nspec)
   endif
 
-  end subroutine save_arrays_solver
+  end subroutine save_arrays_solver_adios
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_arrays_solver_meshfiles(myrank,nspec)
+  subroutine save_arrays_solver_meshfiles_adios(myrank,nspec)
 
 ! outputs model files in binary format
 
@@ -464,180 +464,170 @@
     deallocate(temp_store)
   endif ! ATTENUATION
 
-  end subroutine save_arrays_solver_meshfiles
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-
-  subroutine save_arrays_solver_MPI(iregion_code)
-
-  use meshfem3D_par,only: &
-    myrank,LOCAL_PATH, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
-    ADIOS_FOR_MPI_ARRAYS
-
-!  use create_MPI_interfaces_par
-
-  use MPI_crust_mantle_par
-  use MPI_outer_core_par
-  use MPI_inner_core_par
-
-  implicit none
-
-  integer,intent(in):: iregion_code
-
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
-    print *, myrank, " region crust mantle"
-    ! crust mantle
-    if (ADIOS_FOR_MPI_ARRAYS) then
-      call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
-          num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-          my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
-          ibool_interfaces_crust_mantle, &
-          nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
-          num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-          num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
-          num_elem_colors_crust_mantle)
-      print *, myrank, "adios crust passed"
-    else
-      call save_MPI_arrays(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
-          num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-          my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
-          ibool_interfaces_crust_mantle, &
-          nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
-          num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-          num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
-          num_elem_colors_crust_mantle)
-    endif
-
-  case( IREGION_OUTER_CORE )
-    ! outer core
-    if (ADIOS_FOR_MPI_ARRAYS) then
-      call save_MPI_arrays_adios(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
-          num_interfaces_outer_core,max_nibool_interfaces_oc, &
-          my_neighbours_outer_core,nibool_interfaces_outer_core, &
-          ibool_interfaces_outer_core, &
-          nspec_inner_outer_core,nspec_outer_outer_core, &
-          num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-          num_colors_outer_outer_core,num_colors_inner_outer_core, &
-          num_elem_colors_outer_core)
-    else
-      call save_MPI_arrays(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
-          num_interfaces_outer_core,max_nibool_interfaces_oc, &
-          my_neighbours_outer_core,nibool_interfaces_outer_core, &
-          ibool_interfaces_outer_core, &
-          nspec_inner_outer_core,nspec_outer_outer_core, &
-          num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-          num_colors_outer_outer_core,num_colors_inner_outer_core, &
-          num_elem_colors_outer_core)
-    endif
-
-  case( IREGION_INNER_CORE )
-    ! inner core
-    if (ADIOS_FOR_MPI_ARRAYS) then
-      call save_MPI_arrays_adios(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
-          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-          my_neighbours_inner_core,nibool_interfaces_inner_core, &
-          ibool_interfaces_inner_core, &
-          nspec_inner_inner_core,nspec_outer_inner_core, &
-          num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-          num_colors_outer_inner_core,num_colors_inner_inner_core, &
-          num_elem_colors_inner_core)
-    else
-      call save_MPI_arrays(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
-          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-          my_neighbours_inner_core,nibool_interfaces_inner_core, &
-          ibool_interfaces_inner_core, &
-          nspec_inner_inner_core,nspec_outer_inner_core, &
-          num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-          num_colors_outer_inner_core,num_colors_inner_inner_core, &
-          num_elem_colors_inner_core)
-    endif
-  end select
-
-  end subroutine save_arrays_solver_MPI
-
+  end subroutine save_arrays_solver_meshfiles_adios
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
 !
+subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
+   num_interfaces,max_nibool_interfaces, my_neighbours,nibool_interfaces, &
+   ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
+   phase_ispec_inner, num_colors_outer,num_colors_inner, num_elem_colors)
 
-  subroutine save_MPI_arrays(myrank,iregion_code,LOCAL_PATH, &
-                                  num_interfaces,max_nibool_interfaces, &
-                                  my_neighbours,nibool_interfaces, &
-                                  ibool_interfaces, &
-                                  nspec_inner,nspec_outer, &
-                                  num_phase_ispec,phase_ispec_inner, &
-                                  num_colors_outer,num_colors_inner, &
-                                  num_elem_colors)
+  use mpi
+  use adios_write_mod
   implicit none
 
   include "constants.h"
 
   integer :: iregion_code,myrank
-
   character(len=150) :: LOCAL_PATH
-
   ! MPI interfaces
   integer :: num_interfaces,max_nibool_interfaces
   integer, dimension(num_interfaces) :: my_neighbours
   integer, dimension(num_interfaces) :: nibool_interfaces
   integer, dimension(max_nibool_interfaces,num_interfaces) :: &
-    ibool_interfaces
-
+      ibool_interfaces
   ! inner/outer elements
   integer :: nspec_inner,nspec_outer
   integer :: num_phase_ispec
   integer,dimension(num_phase_ispec,2) :: phase_ispec_inner
-
   ! mesh coloring
   integer :: num_colors_outer,num_colors_inner
   integer, dimension(num_colors_outer + num_colors_inner) :: &
     num_elem_colors
 
   ! local parameters
-  character(len=150) :: prname
-  integer :: ier
+  character(len=150) :: prname, outputname, group_name
+  integer :: ierr, sizeprocs, comm, local_dim
+  integer(kind=8) :: group_size_inc
+  ! ADIOS variables
+  integer                 :: adios_err
+  integer(kind=8)         :: adios_group, adios_handle, varid
+  integer(kind=8)         :: adios_groupsize, adios_totalsize
 
   ! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+  call create_name_database_adios(prname,iregion_code,LOCAL_PATH)
 
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
-       status='unknown',action='write',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+  outputname = trim(prname) // "solver_data_mpi.bp" 
+  write(group_name,"('SPECFEM3D_GLOBE_MPI_ARRAYS_reg',i1)") iregion_code
+  call world_size(sizeprocs) ! TODO keep it in parameters
+  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+  group_size_inc = 0
+  call adios_declare_group(adios_group, group_name, &
+      "", 0, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-  ! MPI interfaces
-  write(IOUT) num_interfaces
+  !! MPI interfaces
+  call define_adios_integer_scalar (adios_group, "num_interfaces", "", &
+      group_size_inc)
   if( num_interfaces > 0 ) then
-    write(IOUT) max_nibool_interfaces
-    write(IOUT) my_neighbours
-    write(IOUT) nibool_interfaces
-    write(IOUT) ibool_interfaces
+    call define_adios_integer_scalar(adios_group, "max_nibool_interfaces", &
+        "", group_size_inc)
+    call define_adios_global_integer_1d_array(adios_group, "my_neighbours", &
+        num_interfaces, group_size_inc)
+    call define_adios_global_integer_1d_array(adios_group, "nibool_interfaces",&
+        num_interfaces, group_size_inc)
+    local_dim = max_nibool_interfaces*num_interfaces
+    call define_adios_global_integer_1d_array(adios_group, "ibool_interfaces", &
+        local_dim, group_size_inc)
   endif
 
   ! inner/outer elements
-  write(IOUT) nspec_inner,nspec_outer
-  write(IOUT) num_phase_ispec
-  if(num_phase_ispec > 0 ) write(IOUT) phase_ispec_inner
+  call define_adios_integer_scalar (adios_group, "nspec_inner", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "nspec_outer", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "num_phase_ispec", "", &
+      group_size_inc)
+  if(num_phase_ispec > 0 ) then
+    local_dim = num_phase_ispec * 2
+    call define_adios_global_integer_1d_array(adios_group, "phase_ispec_inner", &
+        local_dim, group_size_inc)
+  endif
 
   ! mesh coloring
   if( USE_MESH_COLORING_GPU ) then
-    write(IOUT) num_colors_outer,num_colors_inner
-    write(IOUT) num_elem_colors
+    call define_adios_integer_scalar (adios_group, "num_colors_outer", "", &
+        group_size_inc)
+    call define_adios_integer_scalar (adios_group, "num_colors_inner", "", &
+        group_size_inc)
+    call define_adios_global_integer_1d_array(adios_group, "num_elem_colors", &
+        num_colors_outer + num_colors_inner, group_size_inc)
   endif
 
-  close(IOUT)
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, &
+      outputname, "w", comm, adios_err);
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
 
-  end subroutine save_MPI_arrays
+  ! MPI interfaces
+  call adios_write(adios_handle, "num_interfaces", num_interfaces, adios_err)
+  if( num_interfaces > 0 ) then
+    call adios_write(adios_handle, "max_nibool_interfaces", &
+        max_nibool_interfaces, adios_err)
+
+    local_dim = num_interfaces
+
+    call adios_set_path (adios_handle, "my_neighbours", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", my_neighbours, adios_err)
+
+    call adios_set_path (adios_handle, "nibool_interfaces", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", nibool_interfaces, adios_err)
+
+    local_dim = max_nibool_interfaces * num_interfaces
+
+    call adios_set_path (adios_handle, "ibool_interfaces", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        ibool_interfaces, adios_err)
+    call adios_set_path (adios_handle, "", adios_err)
+  endif
+
+  ! inner/outer elements
+  call adios_write(adios_handle, "nspec_inner", nspec_inner, adios_err)
+  call adios_write(adios_handle, "nspec_outer", nspec_outer, adios_err)
+  call adios_write(adios_handle, "num_phase_ispec", num_phase_ispec, adios_err)
+
+  if(num_phase_ispec > 0 ) then
+    local_dim = num_phase_ispec * 2
+    call adios_set_path (adios_handle, "phase_ispec_inner", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        phase_ispec_inner, adios_err)
+    call adios_set_path (adios_handle, "", adios_err)
+  endif
+
+  ! mesh coloring
+  if( USE_MESH_COLORING_GPU ) then
+    call adios_write(adios_handle, "num_colors_outer", nspec_inner, adios_err)
+    call adios_write(adios_handle, "num_colors_inner", nspec_inner, adios_err)
+    local_dim = num_colors_outer + num_colors_inner
+    call adios_set_path (adios_handle, "num_elem_colors", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        num_elem_colors, adios_err)
+    call adios_set_path (adios_handle, "", adios_err)
+  endif
+
+  call adios_close(adios_handle, adios_err)
+
+  end subroutine save_MPI_arrays_adios
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_arrays_solver_boundary()
+  subroutine save_arrays_solver_boundary_adios()
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
 
@@ -692,5 +682,29 @@
 
   close(27)
 
-  end subroutine save_arrays_solver_boundary
+  end subroutine save_arrays_solver_boundary_adios
+
+!-------------------------------------------------------------------------------
+!> Write local, global and offset dimensions to ADIOS 
+!! \param adios_handle Handle to the adios file
+!! \param local_dim Number of elements to be written by one process
+!! \param sizeprocs Number of MPI processes
+subroutine write_1D_global_array_adios_dims(adios_handle, myrank, &
+    local_dim, sizeprocs)
+  use adios_write_mod
+
+  implicit none
+
+  integer(kind=8), intent(in) :: adios_handle
+  integer, intent(in) :: sizeprocs, local_dim, myrank
+
+  integer :: adios_err
+
+  call adios_write(adios_handle, "local_dim", local_dim, adios_err)
+  call check_adios_err(myrank,adios_err)
+  call adios_write(adios_handle, "global_dim", local_dim*sizeprocs, adios_err)
+  call check_adios_err(myrank,adios_err)
+  call adios_write(adios_handle, "offset", local_dim*myrank, adios_err)
+  call check_adios_err(myrank,adios_err)
+end subroutine write_1D_global_array_adios_dims
 

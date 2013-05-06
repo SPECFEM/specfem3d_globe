@@ -39,11 +39,13 @@ end subroutine adios_setup
 
 !> @brief Finalize ADIOS. Must be called once everything is written down.
 subroutine adios_cleanup()
+  use mpi
   use adios_write_mod, only: adios_finalize
-  use specfem_par
 
   implicit none
-  integer :: adios_err
+  integer :: myrank
+  integer :: adios_err, ierr
 
+  call MPI_Comm_rank(MPI_COMM_WORLD, myrank, ierr)
   call adios_finalize (myrank, adios_err)
 end subroutine adios_cleanup

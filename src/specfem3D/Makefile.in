@@ -249,11 +249,12 @@ LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
 
 # using ADIOS files
 ADIOS_OBJECTS= \
+	$O/read_mesh_databases_adios.adios.o \
 	$O/save_forward_arrays_adios.adios.o \
 	$O/read_forward_arrays_adios.adios.o \
 	$O/write_specfem_adios_header.adios.o \
-	$O/adios_manager.adios.o  \
-	$O/adios_helpers.adios.o
+	$O/adios_manager.shared_adios.o  \
+	$O/adios_helpers.shared_adios.o
 ADIOS_STUBS = \
 	$O/adios_empty_stubs.noadios.o
 
@@ -429,6 +430,11 @@ $O/%.noadios.o: %.F90
 $O/%.noadios.o: %.f90 
 	${FC} -c -o $@ $<
 
+$O/%.shared_adios.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.shared_adios.o: ${SHARED}/%.F90 ${SETUP}/constants.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
 #######################################
 
 ###

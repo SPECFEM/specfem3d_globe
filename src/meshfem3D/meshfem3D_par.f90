@@ -264,6 +264,11 @@
 
   ! this for non blocking MPI
   logical, dimension(:), allocatable :: is_on_a_slice_edge
+  !-----------------------------------------------------------------
+  ! ADIOS
+  !-----------------------------------------------------------------
+
+  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS
 
   end module meshfem3D_par
 
@@ -392,7 +397,7 @@
   logical, dimension(:), allocatable :: ispec_is_tiso
 
   ! name of the database file
-  character(len=150) :: prname
+  character(len=150) :: prname, prname_adios
 
   end module create_regions_mesh_par2
 

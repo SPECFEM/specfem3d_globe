@@ -108,8 +108,8 @@
     ! GPU_MODE: parameter is optional, may not be in the Par_file
     call read_gpu_mode(GPU_MODE)
     ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
-    call read_adios_enabled(ADIOS_ENABLED)
-    call read_adios_for_forward_arrays(ADIOS_FOR_FORWARD_ARRAYS)
+    call read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
+        ADIOS_FOR_MPI_ARRAYS)
   endif
 
   ! distributes parameters from master to all processes
@@ -150,7 +150,8 @@
   ! broadcasts optional GPU_MODE
   call broadcast_gpu_parameters(myrank,GPU_MODE)
   ! broadcasts optional ADIOS_ENABLED 
-  call broadcast_adios_parameters(myrank,ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS)
+  call broadcast_adios_parameters(myrank,ADIOS_ENABLED, &
+      ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS)
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -319,7 +320,6 @@
     if(myrank == 0 ) call initialize_vtkwindow(GPU_MODE)
   endif
 
-  ! save simulation info to ADIOS header
   if (ADIOS_ENABLED) then
     call adios_setup()
   endif

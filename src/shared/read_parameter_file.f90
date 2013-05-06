@@ -236,37 +236,26 @@
 
 !-------------------------------------------------------------------------------------------------
 !
-  subroutine read_adios_enabled(ADIOS_ENABLED)
+  subroutine read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
+      ADIOS_FOR_MPI_ARRAYS)
 
   implicit none
   include "constants.h"
 
-  logical :: ADIOS_ENABLED 
+  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS
 
   ! initializes flags
   ADIOS_ENABLED = .false.
+  ADIOS_FOR_FORWARD_ARRAYS = .false.
+  ADIOS_FOR_MPI_ARRAYS = .false.
   ! opens file Par_file
   call open_parameter_file()
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
-  call close_parameter_file()
-
-  end subroutine read_adios_enabled
-
-!-------------------------------------------------------------------------------------------------
-!
-  subroutine read_adios_for_forward_arrays(ADIOS_FOR_FORWARD_ARRAYS)
-
-  implicit none
-  include "constants.h"
-
-  logical :: ADIOS_FOR_FORWARD_ARRAYS
-
-  ! initializes flags
-  ADIOS_FOR_FORWARD_ARRAYS = .false.
-  ! opens file Par_file
-  call open_parameter_file()
   call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, &
       'solver.ADIOS_FOR_FORWARD_ARRAYS')
+  call read_value_logical(ADIOS_FOR_MPI_ARRAYS, &
+      'solver.ADIOS_FOR_MPI_ARRAYS')
   call close_parameter_file()
 
-  end subroutine read_adios_for_forward_arrays
+  end subroutine read_adios_parameters
+
