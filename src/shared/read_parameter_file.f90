@@ -236,7 +236,6 @@
 
 !-------------------------------------------------------------------------------------------------
 !
-
   subroutine read_adios_enabled(ADIOS_ENABLED)
 
   implicit none
@@ -246,13 +245,28 @@
 
   ! initializes flags
   ADIOS_ENABLED = .false.
-
   ! opens file Par_file
   call open_parameter_file()
-
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
-
-  ! close parameter file
   call close_parameter_file()
 
   end subroutine read_adios_enabled
+
+!-------------------------------------------------------------------------------------------------
+!
+  subroutine read_adios_for_forward_arrays(ADIOS_FOR_FORWARD_ARRAYS)
+
+  implicit none
+  include "constants.h"
+
+  logical :: ADIOS_FOR_FORWARD_ARRAYS
+
+  ! initializes flags
+  ADIOS_FOR_FORWARD_ARRAYS = .false.
+  ! opens file Par_file
+  call open_parameter_file()
+  call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, &
+      'solver.ADIOS_FOR_FORWARD_ARRAYS')
+  call close_parameter_file()
+
+  end subroutine read_adios_for_forward_arrays

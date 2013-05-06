@@ -224,10 +224,14 @@ subroutine define_solver_info_variables (adios_group, group_size_inc)
  
   pkg_str_len    = len_trim(PACKAGE_STRING)
   conf_flags_len = len_trim(CONFIGURE_FLAGS)
-  call define_adios_integer_scalar (adios_group, "package_string_length", "/solver_info", group_size_inc)
-  call define_adios_string (adios_group, "package_name", "/solver_info", pkg_str_len, group_size_inc)
-  call define_adios_integer_scalar (adios_group, "conf_flags_len", "/solver_info", group_size_inc)
-  call define_adios_string (adios_group, "conf_flags", "/solver_info", conf_flags_len, group_size_inc)
+  call define_adios_integer_scalar (adios_group, "package_string_length", &
+      "/solver_info", group_size_inc)
+  call define_adios_string (adios_group, "package_name", "/solver_info", &
+      pkg_str_len, group_size_inc)
+  call define_adios_integer_scalar (adios_group, "conf_flags_len", &
+      "/solver_info", group_size_inc)
+  call define_adios_string (adios_group, "conf_flags", "/solver_info", &
+      conf_flags_len, group_size_inc)
 end subroutine define_solver_info_variables
 
 !> \brief Define ADIOS variable to store values from the Par_file
@@ -243,21 +247,35 @@ subroutine define_par_file_variables (adios_group, group_size_inc, model_length)
   integer, intent(in)            :: model_length ! for later reading of MODEL
 
   !-- double precision variables
-  call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_XI_IN_DEGREES", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_ETA_IN_DEGREES", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "CENTER_LONGITUDE_IN_DEGREES", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "CENTER_LATITUDE_IN_DEGREES", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "GAMMA_ROTATION_AZIMUTH", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "HDUR_MOVIE", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_TOP_KM", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_BOTTOM_KM", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_EAST_DEG", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_WEST_DEG", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_NORTH_DEG", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_SOUTH_DEG", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "RECORD_LENGTH_IN_MINUTES", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_XI_IN_DEGREES", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_ETA_IN_DEGREES", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "CENTER_LONGITUDE_IN_DEGREES", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "CENTER_LATITUDE_IN_DEGREES", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "GAMMA_ROTATION_AZIMUTH", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "HDUR_MOVIE", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "MOVIE_TOP_KM", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "MOVIE_BOTTOM_KM", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "MOVIE_EAST_DEG", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "MOVIE_WEST_DEG", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "MOVIE_NORTH_DEG", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "MOVIE_SOUTH_DEG", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_double_scalar (adios_group, "RECORD_LENGTH_IN_MINUTES", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
   !-- integer variables 
-  call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_OUTPUT_SEISMOS", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_OUTPUT_SEISMOS", &
+      "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_READ_ADJSRC", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_FRAMES", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_OUTPUT_INFO", "/specfem3D_globe_parameter_file", group_size_inc)

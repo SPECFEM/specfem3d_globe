@@ -249,11 +249,13 @@ LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
 
 # using ADIOS files
 ADIOS_OBJECTS= \
+	$O/save_forward_arrays_adios.adios.o \
+	$O/read_forward_arrays_adios.adios.o \
 	$O/write_specfem_adios_header.adios.o \
 	$O/adios_manager.adios.o  \
 	$O/adios_helpers.adios.o
 ADIOS_STUBS = \
-	$O/write_par_header_ADIOS.noadios.o
+	$O/adios_empty_stubs.noadios.o
 
 @COND_ADIOS_TRUE@XSPECFEM_OBJECTS_ADIOS = $(XSPECFEM_OBJECTS_PRE) $(ADIOS_OBJECTS)
 @COND_ADIOS_FALSE@XSPECFEM_OBJECTS_ADIOS = $(XSPECFEM_OBJECTS_PRE) $(ADIOS_STUBS)

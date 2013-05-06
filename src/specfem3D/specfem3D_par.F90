@@ -307,7 +307,7 @@ module specfem_par
   ! ADIOS
   !-----------------------------------------------------------------
 
-  logical :: ADIOS_ENABLED 
+  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS
 
   !-----------------------------------------------------------------
   ! time scheme
