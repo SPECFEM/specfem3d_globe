@@ -40,7 +40,8 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
   use meshfem3D_par,only: &
-    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, LOCAL_PATH
+    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, LOCAL_PATH, &
+    ADIOS_FOR_SOLVER_MESHFILES
 
   use create_regions_mesh_par2,only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -934,19 +935,25 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
     ! outputs model files in binary format
-    call save_arrays_solver_meshfiles(myrank,nspec)
+    if (ADIOS_FOR_SOLVER_MESHFILES) then
+      call save_arrays_solver_meshfiles_adios(myrank,iregion_code, &
+          reg_name, nspec)
+    else
+      call save_arrays_solver_meshfiles(myrank,nspec)
+    endif
   endif
 
 end subroutine save_arrays_solver_adios
 
-!
-!-------------------------------------------------------------------------------------------------
-!
 
-subroutine save_arrays_solver_meshfiles_adios(myrank,nspec)
+!------------------------------------------------------------------------------
+!> \brief TODO
+subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
+    reg_name, nspec)
 
   ! outputs model files in binary format
-
+  use mpi
+  use adios_write_mod
   use constants
 
   use meshfem3D_models_par,only: &
@@ -959,85 +966,234 @@ subroutine save_arrays_solver_meshfiles_adios(myrank,nspec)
 
   implicit none
 
-  integer :: myrank
-  integer :: nspec
+  integer :: myrank, nspec, iregion_code
+  character(len=150) :: reg_name
 
   ! local parameters
   integer :: i,j,k,ispec,ier
   real(kind=CUSTOM_REAL) :: scaleval1,scaleval2
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
 
+  ! local parameters
+  character(len=150) :: outputname, group_name
+  integer :: ierr, sizeprocs, comm, local_dim
+  integer(kind=8) :: group_size_inc
+  ! ADIOS variables
+  integer                 :: adios_err
+  integer(kind=8)         :: adios_group, adios_handle, varid
+  integer(kind=8)         :: adios_groupsize, adios_totalsize
+
   ! scaling factors to re-dimensionalize units
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
 
+  call world_size(sizeprocs) ! TODO keep it in parameters
+  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+
   ! isotropic model
-  ! vp
-  open(unit=27,file=prname(1:len_trim(prname))//'vp.bin', &
-       status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening vp.bin file')
+  ! vp ----------------------------------------------------
+  outputname = trim(reg_name) // "vp.bp" 
+  write(group_name,"('SPECFEM3D_GLOBE_VP_reg',i1)") iregion_code
+  group_size_inc = 0
+  call adios_declare_group(adios_group, group_name, &
+      "", 0, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-  write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
-  close(27)
-  ! vs
-  open(unit=27,file=prname(1:len_trim(prname))//'vs.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening vs.bin file')
+  local_dim = size (kappavstore) 
+  call define_adios_global_real_1d_array(adios_group, "vp", &
+      local_dim, group_size_inc)
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, &
+      outputname, "w", comm, adios_err);
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
+  call adios_set_path (adios_handle, "vp", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", &
+      sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1, &
+      adios_err)
 
-  write(27) sqrt( muvstore/rhostore )*scaleval1
-  close(27)
-  ! rho
-  open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+  call adios_set_path (adios_handle, "", adios_err)
+  call adios_close(adios_handle, adios_err)
+  ! vs -----------------------------------------------------
+  outputname = trim(reg_name) // "vs.bp" 
+  write(group_name,"('SPECFEM3D_GLOBE_VS_reg',i1)") iregion_code
+  group_size_inc = 0
+  call adios_declare_group(adios_group, group_name, &
+      "", 0, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-  write(27) rhostore*scaleval2
-  close(27)
+  local_dim = size (rhostore) 
+  call define_adios_global_real_1d_array(adios_group, "vs", &
+      local_dim, group_size_inc)
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, &
+      outputname, "w", comm, adios_err);
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
+  call adios_set_path (adios_handle, "vs", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", &
+      sqrt( muvstore/rhostore )*scaleval1, &
+      adios_err)
+
+  call adios_set_path (adios_handle, "", adios_err)
+  call adios_close(adios_handle, adios_err)
+  ! rho ----------------------------------------------------
+  outputname = trim(reg_name) // "rho.bp" 
+  write(group_name,"('SPECFEM3D_GLOBE_RHO_reg',i1)") iregion_code
+  group_size_inc = 0
+  call adios_declare_group(adios_group, group_name, &
+      "", 0, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+
+  local_dim = size (rhostore) 
+  call define_adios_global_real_1d_array(adios_group, "rho", &
+      local_dim, group_size_inc)
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, &
+      outputname, "w", comm, adios_err);
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
+  call adios_set_path (adios_handle, "rho", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", &
+      rhostore *scaleval2, &
+      adios_err)
+
+  call adios_set_path (adios_handle, "", adios_err)
+  call adios_close(adios_handle, adios_err)
 
   ! transverse isotropic model
   if( TRANSVERSE_ISOTROPY ) then
-    ! vpv
-    open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vpv.bin file')
+    ! vpv ----------------------------------------------------
+    outputname = trim(reg_name) // "vpv.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_VPV_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-    write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
-    close(27)
-    ! vph
-    open(unit=27,file=prname(1:len_trim(prname))//'vph.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vph.bin file')
+    local_dim = size (kappavstore) 
+    call define_adios_global_real_1d_array(adios_group, "vpv", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "vpv", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1, &
+        adios_err)
 
-    write(27) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
-    close(27)
-    ! vsv
-    open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vsv.bin file')
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
+    ! vph ----------------------------------------------------
+    outputname = trim(reg_name) // "vph.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_VPH_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-    write(27) sqrt( muvstore/rhostore )*scaleval1
-    close(27)
-    ! vsh
-    open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vsh.bin file')
+    local_dim = size (kappavstore) 
+    call define_adios_global_real_1d_array(adios_group, "vph", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "vph", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1, &
+        adios_err)
 
-    write(27) sqrt( muhstore/rhostore )*scaleval1
-    close(27)
-    ! rho
-    open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
+    ! vsv -----------------------------------------------------
+    outputname = trim(reg_name) // "vsv.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_VSV_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-    write(27) rhostore*scaleval2
-    close(27)
-    ! eta
-    open(unit=27,file=prname(1:len_trim(prname))//'eta.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening eta.bin file')
+    local_dim = size (rhostore) 
+    call define_adios_global_real_1d_array(adios_group, "vsv", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "vsv", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        sqrt( muvstore/rhostore )*scaleval1, &
+        adios_err)
 
-    write(27) eta_anisostore
-    close(27)
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
+    ! vsh -----------------------------------------------------
+    outputname = trim(reg_name) // "vsh.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_VSH_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
+
+    local_dim = size (rhostore) 
+    call define_adios_global_real_1d_array(adios_group, "vsh", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "vsh", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        sqrt( muhstore/rhostore )*scaleval1, &
+        adios_err)
+
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
+    ! eta ----------------------------------------------------
+    outputname = trim(reg_name) // "eta.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_ETA_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
+
+    local_dim = size (eta_anisostore) 
+    call define_adios_global_real_1d_array(adios_group, "eta", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "eta", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        eta_anisostore, &
+        adios_err)
+
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
   endif ! TRANSVERSE_ISOTROPY
 
   ! shear attenuation
@@ -1070,13 +1226,31 @@ subroutine save_arrays_solver_meshfiles_adios(myrank,nspec)
       enddo
     endif
 
-    ! Qmu
-    open(unit=27,file=prname(1:len_trim(prname))//'qmu.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening qmu.bin file')
+    ! Qmu --------------------------------------------------
+    outputname = trim(reg_name) // "qmu.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_QMU_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-    write(27) temp_store
-    close(27)
+    local_dim = size (temp_store) 
+    call define_adios_global_real_1d_array(adios_group, "qmu", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "qmu", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", &
+        temp_store, &
+        adios_err)
+
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
 
     ! frees temporary memory
     deallocate(temp_store)

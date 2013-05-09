@@ -308,7 +308,7 @@ module specfem_par
   !-----------------------------------------------------------------
 
   logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER
+      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES
 
   !-----------------------------------------------------------------
   ! time scheme
