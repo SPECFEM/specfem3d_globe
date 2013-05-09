@@ -54,7 +54,11 @@
   call read_mesh_databases_IC()
 
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
-  call read_mesh_databases_coupling()
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call read_mesh_databases_coupling_adios()
+  else
+    call read_mesh_databases_coupling()
+  endif
 
   ! reads "addressing.txt" 2-D addressing (needed for stacey boundaries)
   call read_mesh_databases_addressing()

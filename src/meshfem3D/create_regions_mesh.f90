@@ -338,7 +338,9 @@
     ! saves mesh and model parameters
     if (ADIOS_FOR_ARRAYS_SOLVER) then
       call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
-          iregion_code,xstore,ystore,zstore, NSPEC2D_TOP,NSPEC2D_BOTTOM)
+          iregion_code,xstore,ystore,zstore,  &
+          NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+          NSPEC2D_TOP,NSPEC2D_BOTTOM)
     else
       call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
           iregion_code,xstore,ystore,zstore, NSPEC2D_TOP,NSPEC2D_BOTTOM)

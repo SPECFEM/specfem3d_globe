@@ -27,6 +27,7 @@
 
 subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                     iregion_code,xstore,ystore,zstore, &
+                    NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                     NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
   use mpi
@@ -73,7 +74,8 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   ! boundary parameters locator
-  integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
+  integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+      NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX
 
   ! local parameters
   integer :: i,j,k,ispec,iglob,ier
@@ -655,50 +657,268 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
   ! absorbing boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
+  outputname = trim(reg_name) // "boundary.bp" 
 
-  write(27) nspec2D_xmin
-  write(27) nspec2D_xmax
-  write(27) nspec2D_ymin
-  write(27) nspec2D_ymax
-  write(27) NSPEC2D_BOTTOM
-  write(27) NSPEC2D_TOP
+  write(group_name,"('SPECFEM3D_GLOBE_BOUNDARY_reg',i1)") iregion_code
+  group_size_inc = 0
+  call adios_declare_group(adios_group, group_name, &
+      "", 0, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-  write(27) ibelm_xmin
-  write(27) ibelm_xmax
-  write(27) ibelm_ymin
-  write(27) ibelm_ymax
-  write(27) ibelm_bottom
-  write(27) ibelm_top
+  call define_adios_integer_scalar (adios_group, "nspec2D_xmin", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "nspec2D_xmax", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "nspec2D_ymin", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "nspec2D_ymax", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "NSPEC2D_BOTTOM", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "NSPEC2D_TOP", "", &
+      group_size_inc)
+  
+  !local_dim = NSPEC2DMAX_XMIN_YMAX
+  local_dim = size (ibelm_xmin) 
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_xmin", &
+      local_dim, group_size_inc)
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_xmax", &
+      local_dim, group_size_inc)
 
-  write(27) normal_xmin
-  write(27) normal_xmax
-  write(27) normal_ymin
-  write(27) normal_ymax
-  write(27) normal_bottom
-  write(27) normal_top
+  !local_dim = NSPEC2DMAX_YMIN_YMAX
+  local_dim = size (ibelm_ymin) 
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_ymin", &
+      local_dim, group_size_inc)
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_ymax", &
+      local_dim, group_size_inc)
 
-  write(27) jacobian2D_xmin
-  write(27) jacobian2D_xmax
-  write(27) jacobian2D_ymin
-  write(27) jacobian2D_ymax
-  write(27) jacobian2D_bottom
-  write(27) jacobian2D_top
+  !local_dim = NSPEC2D_BOTTOM
+  local_dim = size (ibelm_bottom) 
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_bottom", &
+      local_dim, group_size_inc)
 
-  close(27)
+  !local_dim = NSPEC2D_TOP
+  local_dim = size (ibelm_top) 
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_top", &
+      local_dim, group_size_inc)
+
+  !local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
+  local_dim = size (normal_xmin) 
+  call define_adios_global_real_1d_array(adios_group, "normal_xmin", &
+      local_dim, group_size_inc)
+  call define_adios_global_real_1d_array(adios_group, "normal_xmax", &
+      local_dim, group_size_inc)
+
+  !local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX
+  local_dim = size (normal_ymin) 
+  call define_adios_global_real_1d_array(adios_group, "normal_ymin", &
+      local_dim, group_size_inc)
+  call define_adios_global_real_1d_array(adios_group, "normal_ymax", &
+      local_dim, group_size_inc)
+
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM
+  local_dim = size (normal_bottom) 
+  call define_adios_global_real_1d_array(adios_group, "normal_bottom", &
+      local_dim, group_size_inc)
+
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP
+  local_dim = size (normal_top) 
+  call define_adios_global_real_1d_array(adios_group, "normal_top", &
+      local_dim, group_size_inc)
+
+  !local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
+  local_dim = size (jacobian2D_xmin) 
+  call define_adios_global_real_1d_array(adios_group, "jacobian2D_xmin", &
+      local_dim, group_size_inc)
+  call define_adios_global_real_1d_array(adios_group, "jacobian2D_xmax", &
+      local_dim, group_size_inc)
+  !local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX
+  local_dim = size (jacobian2D_ymin) 
+  call define_adios_global_real_1d_array(adios_group, "jacobian2D_ymin", &
+      local_dim, group_size_inc)
+  call define_adios_global_real_1d_array(adios_group, "jacobian2D_ymax", &
+      local_dim, group_size_inc)
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM
+  local_dim = size (jacobian2D_bottom) 
+  call define_adios_global_real_1d_array(adios_group, "jacobian2D_bottom", &
+      local_dim, group_size_inc)
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP
+  local_dim = size (jacobian2D_top) 
+  call define_adios_global_real_1d_array(adios_group, "jacobian2D_top", &
+      local_dim, group_size_inc)
+
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, &
+      outputname, "w", comm, adios_err);
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
+
+  call adios_write(adios_handle, "nspec2D_xmin", nspec2D_xmin, adios_err)
+  call adios_write(adios_handle, "nspec2D_xmax", nspec2D_xmax, adios_err)
+  call adios_write(adios_handle, "nspec2D_ymin", nspec2D_ymin, adios_err)
+  call adios_write(adios_handle, "nspec2D_ymax", nspec2D_ymax, adios_err)
+  call adios_write(adios_handle, "NSPEC2D_BOTTOM", NSPEC2D_BOTTOM, adios_err)
+  call adios_write(adios_handle, "NSPEC2D_TOP", NSPEC2D_TOP, adios_err)
+  
+  !local_dim = NSPEC2DMAX_XMIN_XMAX
+  local_dim = size (ibelm_xmin) 
+  call adios_set_path (adios_handle, "ibelm_xmin", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_xmin, adios_err)
+  call adios_set_path (adios_handle, "ibelm_xmax", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_xmax, adios_err)
+
+  !local_dim = NSPEC2DMAX_YMIN_YMAX
+  local_dim = size (ibelm_ymin) 
+  call adios_set_path (adios_handle, "ibelm_ymin", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_ymin, adios_err)
+  call adios_set_path (adios_handle, "ibelm_ymax", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_ymax, adios_err)
+
+  !local_dim = NSPEC2D_BOTTOM
+  local_dim = size (ibelm_bottom) 
+  call adios_set_path (adios_handle, "ibelm_bottom", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_bottom, adios_err)
+
+  !local_dim = NSPEC2D_TOP
+  local_dim = size (ibelm_top) 
+  call adios_set_path (adios_handle, "ibelm_top", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_top, adios_err)
+
+  !local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
+  local_dim = size (normal_xmin) 
+  call adios_set_path (adios_handle, "normal_xmin", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_xmin, adios_err)
+  call adios_set_path (adios_handle, "normal_xmax", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_xmax, adios_err)
+
+  !local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX
+  local_dim = size (normal_ymin) 
+  call adios_set_path (adios_handle, "normal_ymin", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_ymin, adios_err)
+  call adios_set_path (adios_handle, "normal_ymax", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_ymax, adios_err)
+
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM
+  local_dim = size (normal_bottom) 
+  call adios_set_path (adios_handle, "normal_bottom", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_bottom, adios_err)
+
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP
+  local_dim = size (normal_top) 
+  call adios_set_path (adios_handle, "normal_top", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_top, adios_err)
+
+  !local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
+  local_dim = size (jacobian2D_xmin) 
+  call adios_set_path (adios_handle, "jacobian2D_xmin", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", jacobian2D_xmin, adios_err)
+  call adios_set_path (adios_handle, "jacobian2D_xmax", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", jacobian2D_xmax, adios_err)
+
+  !local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX
+  local_dim = size (jacobian2D_ymin) 
+  call adios_set_path (adios_handle, "jacobian2D_ymin", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", jacobian2D_ymin, adios_err)
+  call adios_set_path (adios_handle, "jacobian2D_ymax", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", jacobian2D_ymax, adios_err)
+
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM
+  local_dim = size (jacobian2D_bottom) 
+  call adios_set_path (adios_handle, "jacobian2D_bottom", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", jacobian2D_bottom, adios_err)
+
+  !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP
+  local_dim = size (jacobian2D_top) 
+  call adios_set_path (adios_handle, "jacobian2D_top", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", jacobian2D_top, adios_err)
+
+  call adios_set_path (adios_handle, "", adios_err)
+  call adios_close(adios_handle, adios_err)
+
 
   if(ATTENUATION) then
-    open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
-          status='unknown', form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
+    outputname = trim(reg_name) // "attenuation.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_ATTENUATION_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-    write(27) tau_s
-    write(27) tau_e_store
-    write(27) Qmu_store
-    write(27) T_c_source
-    close(27)
+    call define_adios_double_scalar(adios_group, "T_c_source", "", &
+        group_size_inc)
+
+    local_dim = size(tau_s)
+    call define_adios_global_double_1d_array(adios_group, "tau_s", &
+        local_dim, group_size_inc)
+    local_dim = size(tau_e_store)
+    call define_adios_global_double_1d_array(adios_group, "tau_e_store", &
+        local_dim, group_size_inc)
+    local_dim = size(Qmu_store)
+    call define_adios_global_double_1d_array(adios_group, "Qmu_store", &
+        local_dim, group_size_inc)
+
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+
+    call adios_write(adios_handle, "T_c_source", T_c_source, adios_err)
+
+    local_dim = size (tau_s) 
+    call adios_set_path (adios_handle, "tau_s", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", tau_s, adios_err)
+    local_dim = size (tau_e_store) 
+    call adios_set_path (adios_handle, "tau_e_store", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", tau_e_store, adios_err)
+    local_dim = size (Qmu_store) 
+    call adios_set_path (adios_handle, "Qmu_store", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", Qmu_store, adios_err)
+
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
   endif
 
   if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then

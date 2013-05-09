@@ -447,21 +447,26 @@
 
   ! starts reading the databases
   call read_mesh_databases()
-
+print*, "after read }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
   ! sets up reference element GLL points/weights/derivatives
   call setup_GLL_points()
+print*, "after GLL }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
 
   ! reads topography & bathymetry & ellipticity
   call read_topography_bathymetry()
+print*, "after tomo }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
 
   ! prepares sources and receivers
   call setup_sources_receivers()
+print*, "after source }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
 
   ! sets up and precomputes simulation arrays
   call prepare_timerun()
+print*, "after timerun }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
 
   ! steps through time iterations
   call iterate_time()
+print*, "after iterate }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
 
   ! saves last time frame and finishes kernel calculations
   call finalize_simulation()

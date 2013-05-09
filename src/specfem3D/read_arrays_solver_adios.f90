@@ -113,8 +113,15 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call check_adios_err(myrank,adios_err)
 
   ! read coordinates of the mesh
-  call adios_get_scalar(adios_handle, "nspec", lnspec, adios_err)
-  call adios_get_scalar(adios_handle, "nglob", lnglob, adios_err)
+  call adios_selection_writeblock(sel, myrank)
+  call adios_schedule_read(adios_handle, sel, "nspec", 0, 1, &
+     lnspec, adios_err)
+  call adios_schedule_read(adios_handle, sel, "nglob", 0, 1, &
+     lnglob, adios_err)
+  !call adios_get_scalar(adios_handle, "nspec", lnspec, adios_err)
+  !call adios_get_scalar(adios_handle, "nglob", lnglob, adios_err)
+  call adios_perform_reads(adios_handle, adios_err)
+  call check_adios_err(myrank,adios_err)
 
   ! checks dimensions
   if( lnspec /= nspec ) then
