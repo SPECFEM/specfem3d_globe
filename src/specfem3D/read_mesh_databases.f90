@@ -69,7 +69,11 @@
   ! absorbing boundaries
   if(ABSORBING_CONDITIONS) then
     ! reads "stacey.bin" files
-    call read_mesh_databases_stacey()
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_mesh_databases_stacey_adios()
+    else
+      call read_mesh_databases_stacey()
+    endif
   endif
 
   ! user output

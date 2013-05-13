@@ -197,6 +197,7 @@ LIBSPECFEM_MESHER = $O/libspecfem_mesher.a
 #
 # using ADIOS files
 ADIOS_OBJECTS= \
+	$O/get_absorb_adios.adios.o  \
 	$O/adios_manager.shared_adios.o  \
 	$O/adios_helpers.shared_adios.o  \
 	$O/save_arrays_solver_adios.adios.o

@@ -170,8 +170,9 @@
 
     ! sets up Stacey absorbing boundary indices
     if(NCHUNKS /= 6) then
-      call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
-                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
+      call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
+          njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
+          NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
     endif
 
   ! only create mass matrix and save all the final arrays in the second pass
@@ -368,7 +369,11 @@
         call flush_IMAIN()
       endif
       ! saves boundary file
-      call save_arrays_solver_boundary()
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
+        call save_arrays_solver_boundary_adios()
+      else
+        call save_arrays_solver_boundary()
+      endif
 
     endif
 

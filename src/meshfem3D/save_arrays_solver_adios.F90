@@ -923,12 +923,28 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   endif
 
   if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-    open(unit=27,file=prname(1:len_trim(prname))//'dvp.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
+    outputname = trim(reg_name) // "dvp.bp" 
+    write(group_name,"('SPECFEM3D_GLOBE_DVP_reg',i1)") iregion_code
+    group_size_inc = 0
+    call adios_declare_group(adios_group, group_name, &
+        "", 0, adios_err)
+    call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-    write(27) dvpstore
-    close(27)
+    local_dim = size (dvpstore) 
+    call define_adios_global_real_1d_array(adios_group, "dvp", &
+        local_dim, group_size_inc)
+    ! Open an ADIOS handler to the restart file.
+    call adios_open (adios_handle, group_name, &
+        outputname, "w", comm, adios_err);
+    call adios_group_size (adios_handle, group_size_inc, &
+                           adios_totalsize, adios_err)
+    call adios_set_path (adios_handle, "dvp", adios_err)
+    call write_1D_global_array_adios_dims(adios_handle, myrank, &
+        local_dim, sizeprocs)
+    call adios_write(adios_handle, "array", dvpstore, adios_err)
+
+    call adios_set_path (adios_handle, "", adios_err)
+    call adios_close(adios_handle, adios_err)
   endif
 
 
@@ -1420,12 +1436,14 @@ end subroutine save_MPI_arrays_adios
 subroutine save_arrays_solver_boundary_adios()
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
-
+  use mpi
+  
   use meshfem3d_par,only: &
-    myrank
+    myrank, LOCAL_PATH
 
   use meshfem3D_models_par,only: &
-    SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
+    HONOR_1D_SPHERICAL_MOHO
+    !SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
 
   use create_regions_mesh_par2, only: &
     NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
@@ -1436,9 +1454,17 @@ subroutine save_arrays_solver_boundary_adios()
     prname
 
   implicit none
+  include "constants.h"
 
   ! local parameters
-  integer :: ier
+  ! local parameters
+  character(len=150) :: outputname, group_name
+  integer :: ierr, sizeprocs, comm, local_dim
+  integer(kind=8) :: group_size_inc
+  ! ADIOS variables
+  integer                 :: adios_err
+  integer(kind=8)         :: adios_group, adios_handle, varid
+  integer(kind=8)         :: adios_groupsize, adios_totalsize
 
   ! first check the number of surface elements are the same for Moho, 400, 670
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
@@ -1450,28 +1476,107 @@ subroutine save_arrays_solver_boundary_adios()
   if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
            call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
-  ! writing surface topology databases
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
-       status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+  outputname = trim(LOCAL_PATH) // "/boundary_disc.bp" 
+  group_name = "SPECFEM3D_GLOBE_BOUNDARY_DISC"
+  call world_size(sizeprocs) ! TODO keep it in parameters
+  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+  group_size_inc = 0
+  call adios_declare_group(adios_group, group_name, &
+      "", 0, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
-  write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
+  call define_adios_integer_scalar (adios_group, "NSPEC2D_MOHO", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "NSPEC2D_400", "", &
+      group_size_inc)
+  call define_adios_integer_scalar (adios_group, "NSPEC2D_670", "", &
+      group_size_inc)
 
-  write(27) ibelm_moho_top
-  write(27) ibelm_moho_bot
+  local_dim = NSPEC2D_MOHO
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_moho_top", &
+        local_dim, group_size_inc)
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_moho_bot", &
+        local_dim, group_size_inc)
+  local_dim = NSPEC2D_400
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_400_top", &
+        local_dim, group_size_inc)
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_400_bot", &
+        local_dim, group_size_inc)
+  local_dim = NSPEC2D_670 
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_670_top", &
+        local_dim, group_size_inc)
+  call define_adios_global_integer_1d_array(adios_group, "ibelm_670_bot", &
+        local_dim, group_size_inc)
+  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_MOHO
+  call define_adios_global_real_1d_array(adios_group, "normal_moho", &
+        local_dim, group_size_inc)
+  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_400
+  call define_adios_global_real_1d_array(adios_group, "normal_400", &
+        local_dim, group_size_inc)
+  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_670
+  call define_adios_global_real_1d_array(adios_group, "normal_670", &
+        local_dim, group_size_inc)
 
-  write(27) ibelm_400_top
-  write(27) ibelm_400_bot
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, &
+      outputname, "w", comm, adios_err);
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
 
-  write(27) ibelm_670_top
-  write(27) ibelm_670_bot
+  call adios_write(adios_handle, "NSPEC2D_MOHO", NSPEC2D_MOHO, adios_err)
+  call adios_write(adios_handle, "NSPEC2D_400", NSPEC2D_400, adios_err)
+  call adios_write(adios_handle, "NSPEC2D_670", NSPEC2D_670, adios_err)
 
-  write(27) normal_moho
-  write(27) normal_400
-  write(27) normal_670
+  local_dim = NSPEC2D_MOHO
+  call adios_set_path (adios_handle, "ibelm_moho_top", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_moho_top, adios_err)
+  call adios_set_path (adios_handle, "ibelm_moho_bot", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_moho_bot, adios_err)
 
-  close(27)
+  local_dim = NSPEC2D_400 
+  call adios_set_path (adios_handle, "ibelm_400_top", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_400_top, adios_err)
+  call adios_set_path (adios_handle, "ibelm_400_bot", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_400_bot, adios_err)
 
+  local_dim = NSPEC2D_670
+  call adios_set_path (adios_handle, "ibelm_670_top", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_670_top, adios_err)
+  call adios_set_path (adios_handle, "ibelm_670_bot", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", ibelm_670_bot, adios_err)
+
+  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_MOHO
+  call adios_set_path (adios_handle, "normal_moho", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_moho, adios_err)
+
+  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_400
+  call adios_set_path (adios_handle, "normal_400", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_400, adios_err)
+
+  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_670
+  call adios_set_path (adios_handle, "normal_670", adios_err)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, &
+      local_dim, sizeprocs)
+  call adios_write(adios_handle, "array", normal_670, adios_err)
+
+  call adios_set_path (adios_handle, "", adios_err)
+  call adios_close(adios_handle, adios_err)
 end subroutine save_arrays_solver_boundary_adios
 
 !-------------------------------------------------------------------------------

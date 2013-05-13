@@ -25,17 +25,18 @@
 !
 !=====================================================================
 
-  subroutine get_absorb(myrank,prname,iboun,nspec, &
+  subroutine get_absorb(myrank,prname,iregion, iboun,nspec, &
                         nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
 ! Stacey, define flags for absorbing boundaries
+  use meshfem3D_par, only: ADIOS_FOR_ARRAYS_SOLVER
 
   implicit none
 
   include "constants.h"
 
-  integer :: nspec,myrank
+  integer :: nspec,myrank, iregion
 
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
@@ -133,19 +134,24 @@
   if(ispecb5 /= NSPEC2D_BOTTOM) &
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
 
-  ! save these temporary arrays for the solver for Stacey conditions
-  open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file')
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
+        nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+  else  
+    ! save these temporary arrays for the solver for Stacey conditions
+    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file')
 
-  write(27) nimin
-  write(27) nimax
-  write(27) njmin
-  write(27) njmax
-  write(27) nkmin_xi
-  write(27) nkmin_eta
+    write(27) nimin
+    write(27) nimax
+    write(27) njmin
+    write(27) njmax
+    write(27) nkmin_xi
+    write(27) nkmin_eta
 
-  close(27)
+    close(27)
+  endif
 
   end subroutine get_absorb
 
