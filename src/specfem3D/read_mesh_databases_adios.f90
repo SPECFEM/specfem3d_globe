@@ -26,9 +26,9 @@
 !=====================================================================
 
 
-!-------------------------------------------------------------------------------------------------
-!
-
+!===============================================================================
+!> \brief Read adios boundary arrays created by the mesher
+!!        (file: regX_boundary.bp)
 subroutine read_mesh_databases_coupling_adios()
   use adios_read_mod
 
@@ -638,13 +638,9 @@ subroutine read_mesh_databases_coupling_adios()
     moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
   endif
 
-  end subroutine read_mesh_databases_coupling_adios
+end subroutine read_mesh_databases_coupling_adios
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_mesh_databases_addressing_adios()
+subroutine read_mesh_databases_addressing_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -741,10 +737,10 @@ subroutine read_mesh_databases_coupling_adios()
   ! (needed for stacey conditions)
   ichunk = ichunk_slice(myrank)
 
-  end subroutine read_mesh_databases_addressing_adios
+end subroutine read_mesh_databases_addressing_adios
 
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> \brief Read crust mantle MPI arrays from an ADIOS file.
 subroutine read_mesh_databases_MPI_CM_adios()
   ! External imports
@@ -929,7 +925,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
 end subroutine read_mesh_databases_MPI_CM_adios
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> \brief Read outer core MPI arrays from an ADIOS file.
 subroutine read_mesh_databases_MPI_OC_adios()
   use mpi
@@ -1113,7 +1109,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
 end subroutine read_mesh_databases_MPI_OC_adios
 
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> \brief Read outer core MPI arrays from an ADIOS file.
 subroutine read_mesh_databases_MPI_IC_adios()
   use mpi
@@ -1295,13 +1291,11 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   call MPI_Barrier(comm, ierr)
 
-  end subroutine read_mesh_databases_MPI_IC_adios
+end subroutine read_mesh_databases_MPI_IC_adios
 
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
+!===============================================================================
+!> \brief Read Stacey BC arrays from an ADIOS file.
 subroutine read_mesh_databases_stacey_adios()
 
   use mpi
@@ -1439,7 +1433,6 @@ subroutine read_mesh_databases_stacey_adios()
   call check_adios_err(myrank,adios_err)
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
-
 
 end subroutine read_mesh_databases_stacey_adios
 

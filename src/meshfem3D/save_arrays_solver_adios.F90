@@ -25,6 +25,33 @@
 !
 !=====================================================================
 
+!-------------------------------------------------------------------------------
+!> \file get_absorb_adios.f90
+!! \brief Function to write stacey boundary condition to disk with ADIOS.
+!! \author MPBL      
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+!> \brief Main routine to save the arrays from the mesher to the solver with the
+!!        help of ADIOS
+!! \param myrank The MPI rank of the current process
+!! \param nspec Number of GLL points per element
+!! \param nglob Number of mesh points
+!! \param idoubling Array of information on every mesh point
+!! \param ibool Array of information on every mesh point
+!! \param iregion_code The region the absorbing conditon is written for. Check
+!!                     constant.h files to see what these regions are.
+!! \param xstore Array with the x coordinates of the mesh points 
+!! \param ystore Array with the y coordinates of the mesh points 
+!! \param zstore Array with the z coordinates of the mesh points 
+!! \param NSPEC2DMAX_XMIN_XMAX Integer to compute the size of the arrays
+!!                             in argument
+!! \param NSPEC2DMAX_YMIN_YMAX Integer to compute the size of the arrays
+!!                             in argument
+!! \param NSPEC2D_TOP Integer to compute the size of the arrays
+!!                    in argument
+!! \param NSPEC2D_BOTTOM Integer to compute the size of the arrays
+!!                       in argument
 subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                     iregion_code,xstore,ystore,zstore, &
                     NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
@@ -46,7 +73,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   use create_regions_mesh_par2,only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -92,19 +119,31 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   integer(kind=8)         :: adios_group, adios_handle, varid
   integer(kind=8)         :: adios_groupsize, adios_totalsize
 
-  ! create the name for the database of the current slide and region
+  ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
 
+  !---------------------------------------------------------
+  !--- Solver data arrays ----------------------------------
+  !---------------------------------------------------------
+
+  ! create the name for the database of the current slide and region
   outputname = trim(reg_name) // "solver_data.bp" 
 
+  ! save arrays for the solver to run.
   write(group_name,"('SPECFEM3D_GLOBE_ARRAYS_SOLVER_reg',i1)") iregion_code
   call world_size(sizeprocs) ! TODO keep it in parameters
+  ! Alias COMM_WORLD to use ADIOS
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+  ! set the adios group size to 0 before incremented by calls to 
+  ! helpers functions.
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, &
       "", 0, adios_err)
+  ! We set the transport method to 'MPI'. This seems to be the correct choice
+  ! for now. We might want to move this to the constant.h file later on.
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   ! save nspec and nglob, to be used in combine_paraview_data
   call define_adios_integer_scalar (adios_group, "nspec", "", &
       group_size_inc)
@@ -262,7 +301,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         local_dim, group_size_inc)
   endif
 
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
@@ -335,6 +374,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     enddo
   enddo
 
+  !--- Schedule writes for the previously defined ADIOS variables
   ! save nspec and nglob, to be used in combine_paraview_data
   call adios_write(adios_handle, "nspec", nspec, adios_err)
   call adios_write(adios_handle, "nglob", nglob, adios_err)
@@ -645,27 +685,32 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
 
+  ! Clean the temporary arrays containing the node information
   deallocate(tmp_array_x)
   deallocate(tmp_array_y)
   deallocate(tmp_array_z)
 
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-!**** STOP HERE FOR WRITING ADIOS ARRAYS SOLVER ********************
-!#### TODO REMOVE WHEN ADIOS WRITE IS CODED ########################
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  !---------------------------------------------------------
+  !--- Boundary arrays -------------------------------------
+  !---------------------------------------------------------
 
-  ! absorbing boundary parameters
+  ! Postpend the actual file name.
   outputname = trim(reg_name) // "boundary.bp" 
 
+  ! save boundary arrays in ADIOS files 
   write(group_name,"('SPECFEM3D_GLOBE_BOUNDARY_reg',i1)") iregion_code
+  ! set the adios group size to 0 before incremented by calls to 
+  ! helpers functions.
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, &
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   call define_adios_integer_scalar (adios_group, "nspec2D_xmin", "", &
       group_size_inc)
   call define_adios_integer_scalar (adios_group, "nspec2D_xmax", "", &
@@ -748,12 +793,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   call define_adios_global_real_1d_array(adios_group, "jacobian2D_top", &
       local_dim, group_size_inc)
 
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
+  !--- Schedule writes for the previously defined ADIOS variables
   call adios_write(adios_handle, "nspec2D_xmin", nspec2D_xmin, adios_err)
   call adios_write(adios_handle, "nspec2D_xmax", nspec2D_xmax, adios_err)
   call adios_write(adios_handle, "nspec2D_ymin", nspec2D_ymin, adios_err)
@@ -869,10 +915,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", jacobian2D_top, adios_err)
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
 
-
+  !---------------------------------------------------------
+  !--- Attenuation arrays ----------------------------------
+  !---------------------------------------------------------
   if(ATTENUATION) then
     outputname = trim(reg_name) // "attenuation.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_ATTENUATION_reg',i1)") iregion_code
@@ -881,6 +930,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables -----------------------------
     call define_adios_double_scalar(adios_group, "T_c_source", "", &
         group_size_inc)
 
@@ -894,12 +944,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     call define_adios_global_double_1d_array(adios_group, "Qmu_store", &
         local_dim, group_size_inc)
 
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. ---------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
 
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_write(adios_handle, "T_c_source", T_c_source, adios_err)
 
     local_dim = size (tau_s) 
@@ -918,10 +969,14 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", Qmu_store, adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
   endif
 
+  !---------------------------------------------------------
+  !--- dvp arrays ------------------------------------------
+  !---------------------------------------------------------
   if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     outputname = trim(reg_name) // "dvp.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_DVP_reg',i1)") iregion_code
@@ -930,24 +985,29 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables -----------------------------
     local_dim = size (dvpstore) 
     call define_adios_global_real_1d_array(adios_group, "dvp", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. ---------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
     call adios_set_path (adios_handle, "dvp", adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", dvpstore, adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
   endif
 
-
+  !---------------------------------------------------------
+  !--- mehsfiles arrays ------------------------------------
+  !---------------------------------------------------------
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
     ! outputs model files in binary format
@@ -962,8 +1022,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 end subroutine save_arrays_solver_adios
 
 
-!------------------------------------------------------------------------------
-!> \brief TODO
+!===============================================================================
+!> \brief Save the meshfiles that will be used by the solver in an ADIOS format.
+!! 
+!! \param myrank The MPI rank of the current process.
+!! \param iregion_code Code of the region considered. See constant.h for details
+!! \param reg_name Output file prefix with the name of the region included
+!! \param nspec Number of GLL points per spectral elements
 subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
     reg_name, nspec)
 
@@ -1007,7 +1072,9 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   ! isotropic model
-  ! vp ----------------------------------------------------
+  !---------------------------------------------------------
+  !--- vp arrays -------------------------------------------
+  !---------------------------------------------------------
   outputname = trim(reg_name) // "vp.bp" 
   write(group_name,"('SPECFEM3D_GLOBE_VP_reg',i1)") iregion_code
   group_size_inc = 0
@@ -1015,14 +1082,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   local_dim = size (kappavstore) 
   call define_adios_global_real_1d_array(adios_group, "vp", &
       local_dim, group_size_inc)
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
+  !--- Schedule writes for the previously defined ADIOS variables
   call adios_set_path (adios_handle, "vp", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
@@ -1030,9 +1099,12 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1, &
       adios_err)
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
-  ! vs -----------------------------------------------------
+  !---------------------------------------------------------
+  !--- vs arrays -------------------------------------------
+  !---------------------------------------------------------
   outputname = trim(reg_name) // "vs.bp" 
   write(group_name,"('SPECFEM3D_GLOBE_VS_reg',i1)") iregion_code
   group_size_inc = 0
@@ -1040,14 +1112,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   local_dim = size (rhostore) 
   call define_adios_global_real_1d_array(adios_group, "vs", &
       local_dim, group_size_inc)
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
+  !--- Schedule writes for the previously defined ADIOS variables
   call adios_set_path (adios_handle, "vs", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
@@ -1055,9 +1129,12 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       sqrt( muvstore/rhostore )*scaleval1, &
       adios_err)
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
-  ! rho ----------------------------------------------------
+  !---------------------------------------------------------
+  !--- rho arrays ------------------------------------------
+  !---------------------------------------------------------
   outputname = trim(reg_name) // "rho.bp" 
   write(group_name,"('SPECFEM3D_GLOBE_RHO_reg',i1)") iregion_code
   group_size_inc = 0
@@ -1065,14 +1142,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   local_dim = size (rhostore) 
   call define_adios_global_real_1d_array(adios_group, "rho", &
       local_dim, group_size_inc)
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
+  !--- Schedule writes for the previously defined ADIOS variables
   call adios_set_path (adios_handle, "rho", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
@@ -1080,12 +1159,15 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       rhostore *scaleval2, &
       adios_err)
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
 
   ! transverse isotropic model
   if( TRANSVERSE_ISOTROPY ) then
-    ! vpv ----------------------------------------------------
+    !-------------------------------------------------------
+    !--- vpv arrays ----------------------------------------
+    !-------------------------------------------------------
     outputname = trim(reg_name) // "vpv.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_VPV_reg',i1)") iregion_code
     group_size_inc = 0
@@ -1093,14 +1175,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables ----------------------------
     local_dim = size (kappavstore) 
     call define_adios_global_real_1d_array(adios_group, "vpv", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. --------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vpv", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1108,9 +1192,12 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1, &
         adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
-    ! vph ----------------------------------------------------
+    !-------------------------------------------------------
+    !--- vph arrays ----------------------------------------
+    !-------------------------------------------------------
     outputname = trim(reg_name) // "vph.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_VPH_reg',i1)") iregion_code
     group_size_inc = 0
@@ -1118,14 +1205,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables ----------------------------
     local_dim = size (kappavstore) 
     call define_adios_global_real_1d_array(adios_group, "vph", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. --------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vph", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1133,9 +1222,12 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1, &
         adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
-    ! vsv -----------------------------------------------------
+    !-------------------------------------------------------
+    !--- vsv arrays ----------------------------------------
+    !-------------------------------------------------------
     outputname = trim(reg_name) // "vsv.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_VSV_reg',i1)") iregion_code
     group_size_inc = 0
@@ -1143,14 +1235,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables ----------------------------
     local_dim = size (rhostore) 
     call define_adios_global_real_1d_array(adios_group, "vsv", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. --------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vsv", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1158,9 +1252,12 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         sqrt( muvstore/rhostore )*scaleval1, &
         adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
-    ! vsh -----------------------------------------------------
+    !-------------------------------------------------------
+    !--- vsh arrays ----------------------------------------
+    !-------------------------------------------------------
     outputname = trim(reg_name) // "vsh.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_VSH_reg',i1)") iregion_code
     group_size_inc = 0
@@ -1168,14 +1265,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables ----------------------------
     local_dim = size (rhostore) 
     call define_adios_global_real_1d_array(adios_group, "vsh", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. --------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vsh", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1183,9 +1282,12 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         sqrt( muhstore/rhostore )*scaleval1, &
         adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
-    ! eta ----------------------------------------------------
+    !-------------------------------------------------------
+    !--- eta arrays ----------------------------------------
+    !-------------------------------------------------------
     outputname = trim(reg_name) // "eta.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_ETA_reg',i1)") iregion_code
     group_size_inc = 0
@@ -1193,14 +1295,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables ----------------------------
     local_dim = size (eta_anisostore) 
     call define_adios_global_real_1d_array(adios_group, "eta", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. --------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "eta", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1208,12 +1312,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         eta_anisostore, &
         adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
   endif ! TRANSVERSE_ISOTROPY
 
   ! shear attenuation
   if( ATTENUATION ) then
+    !-------------------------------------------------------
+    !--- Qmu arrays ----------------------------------------
+    !-------------------------------------------------------
     ! saves Qmu_store to full custom_real array
     ! uses temporary array
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
@@ -1242,7 +1350,6 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       enddo
     endif
 
-    ! Qmu --------------------------------------------------
     outputname = trim(reg_name) // "qmu.bp" 
     write(group_name,"('SPECFEM3D_GLOBE_QMU_reg',i1)") iregion_code
     group_size_inc = 0
@@ -1250,14 +1357,16 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         "", 0, adios_err)
     call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+    !--- Define ADIOS variables -----------------------------
     local_dim = size (temp_store) 
     call define_adios_global_real_1d_array(adios_group, "qmu", &
         local_dim, group_size_inc)
-    ! Open an ADIOS handler to the restart file.
+    !--- Open an ADIOS handler to the restart file. --------
     call adios_open (adios_handle, group_name, &
         outputname, "w", comm, adios_err);
     call adios_group_size (adios_handle, group_size_inc, &
                            adios_totalsize, adios_err)
+    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "qmu", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1265,6 +1374,7 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         temp_store, &
         adios_err)
 
+    !--- Reset the path to zero and perform the actual write to disk
     call adios_set_path (adios_handle, "", adios_err)
     call adios_close(adios_handle, adios_err)
 
@@ -1275,8 +1385,23 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
 end subroutine save_arrays_solver_meshfiles_adios
 
 
-!------------------------------------------------------------------------------
-!> \brief TODO
+!===============================================================================
+!> \brief Save the arrays use by the solver for MPI communications.
+!! 
+!! \param myrank The MPI rank of the current process.
+!! \param iregion_code Code of the region considered. See constant.h for details
+!! \param LOCAL_PATH The full path to the output directory
+!! \param num_interfaces The number of interfaces between processors
+!! \param max_nibool_interfaces
+!! \param my_neighbours
+!! \param nibool_interfaces
+!! \param ibool_interfaces
+!! \param nspec_inner Number of spectral elements in the inner core
+!! \param nspec_outer Number of spectral elemetns in the outer core
+!! \param num_phase_ispec
+!! \param phase_ispec_inner
+!! \param num_colors_inner Number of colors for GPU computing in the inner core.
+!! \param num_colors_outer Number of colors for GPU computing in the outer core.
 subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
    num_interfaces,max_nibool_interfaces, my_neighbours,nibool_interfaces, &
    ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
@@ -1326,6 +1451,7 @@ subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   !! MPI interfaces
   call define_adios_integer_scalar (adios_group, "num_interfaces", "", &
       group_size_inc)
@@ -1364,12 +1490,13 @@ subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
         num_colors_outer + num_colors_inner, group_size_inc)
   endif
 
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
+  !--- Schedule writes for the previously defined ADIOS variables
   ! MPI interfaces
   call adios_write(adios_handle, "num_interfaces", num_interfaces, adios_err)
   if( num_interfaces > 0 ) then
@@ -1426,13 +1553,14 @@ subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
     call adios_set_path (adios_handle, "", adios_err)
   endif
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_close(adios_handle, adios_err)
 
 end subroutine save_MPI_arrays_adios
 
 
-!-------------------------------------------------------------------------------
-
+!===============================================================================
+!> \brief Write boundary conditions (MOHO, 400, 600) to a single ADIOS file.
 subroutine save_arrays_solver_boundary_adios()
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
@@ -1485,6 +1613,7 @@ subroutine save_arrays_solver_boundary_adios()
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   call define_adios_integer_scalar (adios_group, "NSPEC2D_MOHO", "", &
       group_size_inc)
   call define_adios_integer_scalar (adios_group, "NSPEC2D_400", "", &
@@ -1517,12 +1646,13 @@ subroutine save_arrays_solver_boundary_adios()
   call define_adios_global_real_1d_array(adios_group, "normal_670", &
         local_dim, group_size_inc)
 
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
+  !--- Schedule writes for the previously defined ADIOS variables
   call adios_write(adios_handle, "NSPEC2D_MOHO", NSPEC2D_MOHO, adios_err)
   call adios_write(adios_handle, "NSPEC2D_400", NSPEC2D_400, adios_err)
   call adios_write(adios_handle, "NSPEC2D_670", NSPEC2D_670, adios_err)
@@ -1575,6 +1705,7 @@ subroutine save_arrays_solver_boundary_adios()
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", normal_670, adios_err)
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
 end subroutine save_arrays_solver_boundary_adios

@@ -134,11 +134,13 @@
   if(ispecb5 /= NSPEC2D_BOTTOM) &
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
 
+  ! save these temporary arrays for the solver for Stacey conditions
+  ! This files will be saved with the help of ADIOS if the 
+  ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
   if (ADIOS_FOR_ARRAYS_SOLVER) then
     call get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
         nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
   else  
-    ! save these temporary arrays for the solver for Stacey conditions
     open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file')

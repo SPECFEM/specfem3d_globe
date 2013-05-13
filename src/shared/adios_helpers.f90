@@ -32,7 +32,7 @@
 !! \author MPBL      
 !-------------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Get the ADIOS error message from an adios error number if there is an error.
 !! \param adios_err The error code considered.
 subroutine check_adios_err(myrank, adios_err)
@@ -49,7 +49,7 @@ subroutine check_adios_err(myrank, adios_err)
 end subroutine check_adios_err
 
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define an ADIOS scalar double precision variable and autoincrement 
 !! the adios group size by (8).
 !! \param adios_group The adios group where the variables belongs
@@ -73,7 +73,7 @@ subroutine define_adios_double_scalar (adios_group, name, path, group_size_inc)
   group_size_inc = group_size_inc + 8
 end subroutine define_adios_double_scalar
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define an ADIOS scalar integer variable and autoincrement the adios
 !! group size by (4).
 !! \param adios_group The adios group where the variables belongs
@@ -97,7 +97,7 @@ subroutine define_adios_integer_scalar (adios_group, name, path, group_size_inc)
   group_size_inc = group_size_inc + 4
 end subroutine define_adios_integer_scalar
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define an ADIOS scalar byte variable and autoincrement the adios
 !! group size by (1).
 !! \param adios_group The adios group where the variables belongs
@@ -121,7 +121,7 @@ subroutine define_adios_byte_scalar (adios_group, name, path, group_size_inc)
   group_size_inc = group_size_inc + 1
 end subroutine define_adios_byte_scalar
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a local ADIOS array of integers and autoincrement the adios
 !! group size by (4 * number of elements).
 !! \param adios_group The adios group where the variables belongs
@@ -150,7 +150,7 @@ subroutine define_adios_integer_local_array1D (adios_group, name, path, dim, dim
   group_size_inc = group_size_inc + 4*dim
 end subroutine define_adios_integer_local_array1D
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a local ADIOS array of doubles and autoincrement the adios
 !! group size by (8 * number of elements).
 !! \param adios_group The adios group where the variables belongs
@@ -179,7 +179,7 @@ subroutine define_adios_double_local_array1D (adios_group, name, path, dim, dim_
   group_size_inc = group_size_inc + 8*dim
 end subroutine define_adios_double_local_array1D
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a local ADIOS string and autoincrement the adios
 !! group size by (1 * string's length).
 !! \param adios_group The adios group where the variables belongs
@@ -209,7 +209,7 @@ subroutine define_adios_string (adios_group, name, path, length, group_size_inc)
   group_size_inc = group_size_inc + 1*length 
 end subroutine define_adios_string
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a global ADIOS 1D real array and autoincrement the adios
 !! group size.
 !! \param adios_group The adios group where the variables belongs
@@ -246,7 +246,7 @@ subroutine define_adios_global_real_1d_array(adios_group, array_name, &
   group_size_inc = group_size_inc + local_dim*4
 end subroutine define_adios_global_real_1d_array
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a global ADIOS 1D integer array and autoincrement the adios
 !! group size.
 !! \param adios_group The adios group where the variables belongs
@@ -283,7 +283,7 @@ subroutine define_adios_global_integer_1d_array(adios_group, array_name, &
   group_size_inc = group_size_inc + local_dim*4
 end subroutine define_adios_global_integer_1d_array
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a global ADIOS 1D logical array and autoincrement the adios
 !! group size.
 !! \param adios_group The adios group where the variables belongs
@@ -320,7 +320,7 @@ subroutine define_adios_global_logical_1d_array(adios_group, array_name, &
   group_size_inc = group_size_inc + local_dim*1
 end subroutine define_adios_global_logical_1d_array
 
-!-------------------------------------------------------------------------------
+!===============================================================================
 !> Define a global ADIOS 1D real array and autoincrement the adios
 !! group size.
 !! \param adios_group The adios group where the variables belongs

@@ -26,6 +26,9 @@
 !=====================================================================
 
 
+!===============================================================================
+!> \brief Read adios attenuation arrays created by the mesher
+!         (regX_attenuation.bp)
 subroutine read_attenuation_adios(myrank, prname, &
    factor_common, scale_factor, tau_s, vx, vy, vz, vnspec, T_c_source)
 

@@ -25,6 +25,31 @@
 !
 !=====================================================================
 
+!-------------------------------------------------------------------------------
+!> \file get_absorb_adios.f90
+!! \brief Function to write stacey boundary condition to disk with ADIOS.
+!! \author MPBL      
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+!> \brief Write stacey boundary conditions to a single file using ADIOS 
+!!
+!! \param myrank The MPI rank of the current process
+!! \param iregion The region the absorbing conditon is written for. Check
+!!                constant.h files to see what these regions are.
+!! \param nimin An array to be written
+!! \param nimax An array to be written
+!! \param njmin An array to be written
+!! \param njmax An array to be written
+!! \param nkmin_xi An array to be written
+!! \param nkmin_eta An array to be written
+!! \param NSPEC2DMAX_XMIN_XMAX Integer to compute the size of the arrays
+!!                             in argument
+!! \param NSPEC2DMAX_YMIN_YMAX Integer to compute the size of the arrays
+!!                             in argument
+!! 
+!! \note This routine only call adios to write the file to disk, Note that he
+!!       necessary data preparation is done by the get_absorb() routine.
 subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
   nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
@@ -53,19 +78,27 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
   integer(kind=8)         :: adios_group, adios_handle, varid
   integer(kind=8)         :: adios_groupsize, adios_totalsize
 
+  ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion,LOCAL_PATH)
 
+  ! Postpend the actual file name.
   outputname = trim(reg_name) // "stacey.bp" 
 
   ! save these temporary arrays for the solver for Stacey conditions
   write(group_name,"('SPECFEM3D_GLOBE_STACEY_reg',i1)") iregion
   call world_size(sizeprocs) ! TODO keep it in parameters
+  ! Alias COMM_WORLD to use ADIOS
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+  ! set the adios group size to 0 before incremented by calls to 
+  ! helpers functions.
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, &
       "", 0, adios_err)
+  ! We set the transport method to 'MPI'. This seems to be the correct choice
+  ! for now. We might want to move this to the constant.h file later on.
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
+  !--- Define ADIOS variables -----------------------------
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX 
   call define_adios_global_integer_1d_array(adios_group, "njmin", &
       local_dim, group_size_inc)
@@ -81,12 +114,13 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
   call define_adios_global_integer_1d_array(adios_group, "nkmin_eta", &
       local_dim, group_size_inc)
 
-  ! Open an ADIOS handler to the restart file.
+  !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
+  !--- Schedule writes for the previously defined ADIOS variables
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX 
   call adios_set_path (adios_handle, "njmin", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
@@ -119,6 +153,7 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", nkmin_eta, adios_err)
 
+  !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", adios_err)
   call adios_close(adios_handle, adios_err)
 

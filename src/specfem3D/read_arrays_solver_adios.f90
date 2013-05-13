@@ -25,8 +25,8 @@
 !
 !=====================================================================
 
-! read arrays created by the mesher
-
+!===============================================================================
+!> \brief Read adios arrays created by the mesher (file: regX_solver_data.bp)
 subroutine read_arrays_solver_adios(iregion_code,myrank, &
               nspec,nglob,nglob_xy, &
               nspec_iso,nspec_tiso,nspec_ani, &
@@ -101,11 +101,14 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   character(len=128), dimension(:), allocatable :: adios_names 
   integer(kind=8), dimension(1) :: start, count
 
+  ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(prname, iregion_code, LOCAL_PATH)
 
+  ! Postpend the actual file name.
   file_name= trim(prname) // "solver_data.bp" 
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
+  ! Setup the ADIOS library to read the file
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
@@ -356,12 +359,14 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to
+  ! the mass matrix on Stacey edges for the crust_mantle and outer_core regions
+  ! but not for the inner_core region thus the mass matrix must be replaced by
+  ! three mass matrices including the "C" damping matrix 
   !
-  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix
+  ! is needed for the sake of performance, only "rmassz" array will be filled
+  ! and "rmassx" & "rmassy" will be obsolete
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
@@ -396,6 +401,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
     call check_adios_err(myrank,adios_err)
   endif
 
+  ! Clean everything and close the ADIOS file
   call adios_selection_delete(sel)
   call adios_read_close(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
