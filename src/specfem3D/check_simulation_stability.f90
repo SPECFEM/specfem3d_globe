@@ -26,7 +26,6 @@
 !=====================================================================
 
   subroutine check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                          b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
@@ -46,10 +45,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: b_displ_inner_core
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
     eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
@@ -64,7 +59,6 @@
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
   real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,strain2_norm,strain2_norm_all
-  real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   ! names of the data files for all the processors in MPI
   character(len=150) outputname
   ! timer MPI
@@ -107,23 +101,6 @@
   call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                       MPI_COMM_WORLD,ier)
 
-  if (SIMULATION_TYPE == 3) then
-    b_Usolidnorm = max( &
-             maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                          b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-             maxval(sqrt(b_displ_inner_core(1,:)**2  &
-                        + b_displ_inner_core(2,:)**2 &
-                        + b_displ_inner_core(3,:)**2)))
-
-    b_Ufluidnorm = maxval(abs(b_displ_outer_core))
-
-    ! compute the maximum of the maxima for all the slices using an MPI reduction
-    call MPI_REDUCE(b_Usolidnorm,b_Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
-    call MPI_REDUCE(b_Ufluidnorm,b_Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
-  endif
-
   if (COMPUTE_AND_STORE_STRAIN) then
     Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
     strain2_norm= maxval(abs(epsilondev_crust_mantle))
@@ -140,13 +117,12 @@
 
     ! rescale maximum displacement to correct dimensions
     Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
-    write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
-    write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-
-    if (SIMULATION_TYPE == 3) then
-      b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
-      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+    if (SIMULATION_TYPE == 1) then
+      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
+      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+    else
+      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',Usolidnorm_all
+      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',Ufluidnorm_all
     endif
 
     if(COMPUTE_AND_STORE_STRAIN) then
@@ -316,15 +292,14 @@
     write(IOUT,*) 'Time step # ',it
     write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
     write(IOUT,*)
-    write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
-    write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-    write(IOUT,*)
-
-    if (SIMULATION_TYPE == 3) then
-      write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
-      write(IOUT,*)
+    if (SIMULATION_TYPE == 1) then
+      write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
+      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+    else
+      write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',Usolidnorm_all
+      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',Ufluidnorm_all
     endif
+    write(IOUT,*)
 
     write(IOUT,*) 'Elapsed time in seconds = ',tCPU
     write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
@@ -408,16 +383,20 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0) &
-      call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
-    if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
-      call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
-
-    if(SIMULATION_TYPE == 3) then
-      if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+    if(Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0) then
+      if(SIMULATION_TYPE == 1) then
+        call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
+      else
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
-      if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+      endif
+    endif
+
+    if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) then
+      if(SIMULATION_TYPE == 1) then
+        call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
+      else
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
+      endif
     endif
 
   endif
