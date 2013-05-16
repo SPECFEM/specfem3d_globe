@@ -254,7 +254,7 @@ Then, to configure the software for your system, run the \texttt{configure}
 shell script. This script will attempt to guess the appropriate configuration
 values for your system. However, at a minimum, it is recommended that
 you explicitly specify the appropriate command names for your Fortran
-compiler and MPI package (another option is to define FC, CC and MPIF90 in your .bash\_profile 
+compiler and MPI package (another option is to define FC, CC and MPIF90 in your .bash\_profile
 or your .cshrc file):
 
 \begin{lyxcode}
@@ -601,7 +601,7 @@ need to be set in the \texttt{Par\_file}:
 
 \begin{description}
 \item [{\texttt{SIMULATION\_TYPE}}] is set to 1 for forward simulations,
-2 for adjoint simulations for sources (see Section \ref{sec:Adjoint-simulation-finite})
+2 for adjoint simulations for sources (see Section \ref{sec:Adjoint-simulation-sources})
 and 3 for kernel simulations (see Section \ref{sec:Finite-Frequency-Kernels}).
 \item [{\texttt{SAVE\_FORWARD}}] is only set to \texttt{.true.} for a forward
 simulation with the last frame of the simulation saved, as part of
@@ -1402,7 +1402,7 @@ If you know the earthquake source in strike/dip/rake format rather than in \text
 use the C code \texttt{utils/strike\_dip\_rake\_to\_CMTSOLUTION.c} to convert it.
 The conversion formulas are given for instance in \cite{AkRi80}.
 Note that the \cite{AkRi80} convention is slightly different from the Harvard \texttt{CMTSOLUTION} convention
-(the sign of some components is different). The C code outputs both. 
+(the sign of some components is different). The C code outputs both.
 
 Centroid latitude and longitude should be provided in geographical
 coordinates. The code converts these coordinates to geocentric coordinates~\citep{DaTr98}.
