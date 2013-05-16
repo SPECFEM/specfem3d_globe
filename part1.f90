@@ -1,6 +1,7 @@
 
 !! DK DK
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
+!! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
 
     ! Newmark time scheme update
@@ -1658,7 +1659,7 @@
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
       endif
-    else
+    else ! case of SIMULATION_TYPE == 2
       if( nrec_local > 0 ) &
         call write_adj_seismograms(seismograms,number_receiver_global, &
                                   nrec_local,it,nit_written,DT, &

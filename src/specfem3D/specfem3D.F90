@@ -2130,8 +2130,17 @@
     ! update position in seismograms
     seismo_current = seismo_current + 1
 
-!! DK DK for forward run
+!! DK DK
+!! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
+!! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
+!! DK DK
     include "part1.f90"
+
+!! DK DK
+!! DK DK this first part handles the case SIMULATION_TYPE == 3
+!! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
+!! DK DK
+    include "part2.f90"
 
 !
 !---- end of time iteration loop
