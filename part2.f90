@@ -509,22 +509,12 @@
     endif ! Stacey conditions
 
     ! add adjoint sources and add sources for backward/reconstructed wavefield
-    if (SIMULATION_TYPE == 3) then
-      if( nadj_rec_local > 0 ) &
-        call compute_add_sources_adjoint(myrank,nrec, &
-                                nadj_rec_local,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
-                                accel_crust_mantle,adj_sourcearrays, &
-                                nu,xi_receiver,eta_receiver,gamma_receiver, &
-                                xigll,yigll,zigll,ibool_crust_mantle, &
-                                islice_selected_rec,ispec_selected_rec, &
-                                NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
-                                it,it_begin,station_name,network_name,DT)
+    if (SIMULATION_TYPE == 3) &
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
-    endif
 
     ! NOISE_TOMOGRAPHY
 !   if ( NOISE_TOMOGRAPHY == 1 ) then
@@ -638,9 +628,9 @@
 
         b_icall = 2 ! now compute all the inner elements in the case of non blocking MPI
 
-!       ! compute internal forces in the solid regions
+        ! compute internal forces in the solid regions
 
-!       ! for anisotropy and gravity, x y and z contain r theta and phi
+        ! for anisotropy and gravity, x y and z contain r theta and phi
 
         if( USE_DEVILLE_PRODUCTS_VAL ) then
           call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &

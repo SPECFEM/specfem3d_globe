@@ -125,7 +125,9 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',Ufluidnorm_all
     endif
 
-    if(COMPUTE_AND_STORE_STRAIN) then
+!! DK DK UNDO_ATT
+!   if(COMPUTE_AND_STORE_STRAIN) then
+    if(SIMULATION_TYPE == 1 .and. COMPUTE_AND_STORE_STRAIN) then
       write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif
@@ -285,7 +287,13 @@
     write(IMAIN,*)
 
     ! write time stamp file to give information about progression of simulation
-    write(outputname,"('/timestamp',i6.6)") it
+!! DK DK UNDO_ATT
+    if(SIMULATION_TYPE == 1) then
+!     write(outputname,"('/timestamp',i6.6)") it
+      write(outputname,"('/timestamp_forward',i6.6)") it
+    else
+      write(outputname,"('/timestamp_backward',i6.6)") it
+    endif
 
     open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
 

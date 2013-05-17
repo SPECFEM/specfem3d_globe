@@ -227,6 +227,9 @@
   ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
+!! DK DK UNDO_ATT make sure NSTEP is a multiple of NT_500
+  if(mod(NSTEP,NT_500) /= 0) NSTEP = (NSTEP/NT_500 + 1)*NT_500
+
 ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 

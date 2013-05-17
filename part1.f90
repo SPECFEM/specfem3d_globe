@@ -77,7 +77,8 @@
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
       call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
-                          SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
+!!!!! DK DK UNDO_ATT                          SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
+                          1,OUTPUT_FILES,time_start,DT,t0,NSTEP, &  !!!!! DK DK UNDO_ATT
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
 !     if (SIMULATION_TYPE == 3) then
 !       call check_simulation_stability(it,b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
@@ -915,7 +916,9 @@
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
     ! add adjoint sources only if adjoint simulation is performed for source inversion only
-    if (SIMULATION_TYPE == 2) then
+!! DK DK UNDO_ATT this must remain here even when SIMULATION_TYPE == 3 because it applies to array
+!! DK DK UNDO_ATT accel_crust_mantle rather than b_accel_crust_mantle
+    if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
       if( nadj_rec_local > 0 ) &
         call compute_add_sources_adjoint(myrank,nrec, &
                                 nadj_rec_local,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
@@ -928,22 +931,12 @@
     endif
 
 !   ! add adjoint sources and add sources for backward/reconstructed wavefield
-!   if (SIMULATION_TYPE == 3) then
-!     if( nadj_rec_local > 0 ) &
-!       call compute_add_sources_adjoint(myrank,nrec, &
-!                               nadj_rec_local,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
-!                               accel_crust_mantle,adj_sourcearrays, &
-!                               nu,xi_receiver,eta_receiver,gamma_receiver, &
-!                               xigll,yigll,zigll,ibool_crust_mantle, &
-!                               islice_selected_rec,ispec_selected_rec, &
-!                               NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
-!                               it,it_begin,station_name,network_name,DT)
+!   if (SIMULATION_TYPE == 3) &
 !     call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
 !                               b_accel_crust_mantle,sourcearrays, &
 !                               DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
 !                               islice_selected_source,ispec_selected_source,it, &
 !                               hdur,xi_source,eta_source,gamma_source,nu_source)
-!   endif
 
     ! NOISE_TOMOGRAPHY
     if ( NOISE_TOMOGRAPHY == 1 ) then
