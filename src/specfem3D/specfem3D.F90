@@ -750,6 +750,9 @@
   double precision, external :: comp_source_time_function
   double precision t0
 
+!! DK DK UNDO_ATT
+  integer :: iteration_on_subset,it_of_this_subset
+
 ! receiver information
   integer nrec,nrec_local
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec,number_receiver_global
@@ -2125,6 +2128,8 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
+  if(.not. UNDO_ATT) then
+
   do it = it_begin,it_end
 
     ! update position in seismograms
@@ -2134,18 +2139,53 @@
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
-    include "part1.f90"
+    include "part1_classical.f90"
 
 !! DK DK
 !! DK DK this first part handles the case SIMULATION_TYPE == 3
 !! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
 !! DK DK
-    include "part2.f90"
+    include "part2_classical.f90"
 
 !
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
+
+  else ! if UNDO_ATT
+
+!! DK DK this should not be difficult to fix and test, but not done yet by lack of time
+  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATT'
+
+  it = 0
+  do iteration_on_subset = 1, NSTEP / NT_500
+    do it_of_this_subset = 1, NT_500
+
+      it = it + 1
+!     if(myrank == 0) print *,'doing time step ',it
+
+    ! update position in seismograms
+    seismo_current = seismo_current + 1
+
+!! DK DK
+!! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
+!! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
+!! DK DK
+    include "part1_undo_att.f90"
+
+!! DK DK
+!! DK DK this first part handles the case SIMULATION_TYPE == 3
+!! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
+!! DK DK
+    include "part2_undo_att.f90"
+
+!
+!---- end of time iteration loop
+!
+    enddo
+  enddo   ! end of main time loop
+
+  endif ! of if .not. UNDO_ATT
 
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------

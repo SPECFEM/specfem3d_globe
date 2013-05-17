@@ -51,6 +51,7 @@
   integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 
 !! DK DK UNDO_ATT
+  logical, parameter :: UNDO_ATT = .true.
   integer, parameter :: NT_500 = 50   !! DK DK how often we dump restart files to undo attenuation
 
 !*********************************************************************************************************
