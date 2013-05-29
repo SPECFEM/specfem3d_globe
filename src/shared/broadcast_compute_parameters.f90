@@ -352,7 +352,8 @@
 !1        forward arrays are stored with the help of ADIOS.
 subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
     ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-    ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES)
+    ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, &
+    ADIOS_FOR_AVS_DX)
 
   implicit none
 
@@ -363,7 +364,7 @@ subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
   
   integer:: myrank
   logical:: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES
+      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
   ! local parameters
   integer :: ier
   call MPI_BCAST(ADIOS_ENABLED,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
@@ -380,5 +381,8 @@ subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
   call MPI_BCAST(ADIOS_FOR_SOLVER_MESHFILES,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_MPI(myrank, &
       'error broadcasting ADIOS_FOR_SOLVER_MESHFILES')
+  call MPI_BCAST(ADIOS_FOR_AVS_DX,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_MPI(myrank, &
+      'error broadcasting ADIOS_FOR_AVS_DX')
 
 end subroutine broadcast_adios_parameters

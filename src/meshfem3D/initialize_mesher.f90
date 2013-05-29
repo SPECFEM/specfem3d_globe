@@ -105,7 +105,7 @@
     ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
     call read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
         ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-        ADIOS_FOR_SOLVER_MESHFILES)
+        ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
 
   endif
 
@@ -145,7 +145,7 @@
   ! broadcasts optional ADIOS_ENABLED 
   call broadcast_adios_parameters(myrank,ADIOS_ENABLED, &
       ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-      ADIOS_FOR_SOLVER_MESHFILES)
+      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
 
   ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')

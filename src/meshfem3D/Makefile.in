@@ -200,6 +200,8 @@ ADIOS_OBJECTS= \
 	$O/get_absorb_adios.adios.o  \
 	$O/adios_manager.shared_adios.o  \
 	$O/adios_helpers.shared_adios.o  \
+	$O/write_AVS_DX_global_data_adios.adios.o \
+	$O/create_regions_mesh_adios.adios.o \
 	$O/save_arrays_solver_adios.adios.o
 ADIOS_STUBS = \
 	$O/adios_empty_stubs.noadios.o

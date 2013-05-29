@@ -110,7 +110,7 @@
     ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
     call read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
         ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-        ADIOS_FOR_SOLVER_MESHFILES)
+        ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
   endif
 
   ! distributes parameters from master to all processes
@@ -153,7 +153,7 @@
   ! broadcasts optional ADIOS_ENABLED 
   call broadcast_adios_parameters(myrank,ADIOS_ENABLED, &
       ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-      ADIOS_FOR_SOLVER_MESHFILES)
+      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 

@@ -1170,23 +1170,29 @@
 
 
 !
-!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !
 
-  subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
+subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
 
   use meshfem3d_par,only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN
+    RMIDDLE_CRUST,ROCEAN, &
+    ADIOS_FOR_AVS_DX
+
 
   use meshfem3D_models_par,only: &
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
     nspl,rspl,espl,espl2
 
   use create_regions_mesh_par2
+
+  ! Modules for temporary AVS/DX data
+  use AVS_DX_global_mod
+
   implicit none
 
   ! number of spectral elements in each block
@@ -1196,7 +1202,12 @@
   ! arrays used for AVS or DX files
   integer, dimension(:), allocatable :: num_ibool_AVS_DX
   logical, dimension(:), allocatable :: mask_ibool
-  integer :: ier
+  ! structures used for ADIOS AVS/DX files
+  type(avs_dx_global_t) :: avs_dx_global_vars
+
+  character(len=150) :: reg_name, outputname, group_name
+  integer :: comm, sizeprocs, ier
+  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
 
   ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
   ! allocate memory for arrays
@@ -1205,8 +1216,13 @@
           stat=ier)
   if(ier /= 0) stop 'error in allocate 21'
 
-  call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore, &
-                                num_ibool_AVS_DX,mask_ibool,npointot)
+  if (ADIOS_FOR_AVS_DX) then 
+    call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
+        num_ibool_AVS_DX, mask_ibool)
+  else
+    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
+        xstore,ystore,zstore, num_ibool_AVS_DX,mask_ibool,npointot)
+  endif
 
   call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
           idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &

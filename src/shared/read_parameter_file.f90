@@ -238,13 +238,13 @@
 !
   subroutine read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
       ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-      ADIOS_FOR_SOLVER_MESHFILES)
+      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
 
   implicit none
   include "constants.h"
 
   logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES
+      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
 
   ! initializes flags
   ADIOS_ENABLED = .false.
@@ -252,6 +252,7 @@
   ADIOS_FOR_MPI_ARRAYS = .false.
   ADIOS_FOR_ARRAYS_SOLVER = .false.
   ADIOS_FOR_SOLVER_MESHFILES = .false.
+  ADIOS_FOR_AVS_DX = .false.
   ! opens file Par_file
   call open_parameter_file()
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
@@ -264,6 +265,8 @@
         'solver.ADIOS_FOR_ARRAYS_SOLVER')
     call read_value_logical(ADIOS_FOR_SOLVER_MESHFILES, &
         'solver.ADIOS_FOR_ARRAYS_SOLVER')
+    call read_value_logical(ADIOS_FOR_AVS_DX, &
+        'solver.ADIOS_FOR_AVS_DX')
   endif
   call close_parameter_file()
 
