@@ -48,6 +48,7 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
 
   ! Modules for temporary AVS/DX data
   use AVS_DX_global_mod
+  use AVS_DX_global_faces_mod
 
   implicit none
 
@@ -60,6 +61,7 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
   logical, dimension(npointot), intent(inout) :: mask_ibool
   ! structures used for ADIOS AVS/DX files
   type(avs_dx_global_t) :: avs_dx_global_vars
+  type(avs_dx_global_faces_t) :: avs_dx_global_faces_vars
 
   character(len=150) :: reg_name, outputname, group_name
   integer :: comm, sizeprocs, ier
@@ -78,24 +80,50 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
   call adios_select_method(adios_group, "MPI", "", "", ier)
+
   !--- Define ADIOS variables -----------------------------
   call define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
       npointot, mask_ibool, group_size_inc, avs_dx_global_vars)
+    
+  call define_AVS_DX_global_faces_data_adios (adios_group, &
+      myrank, prname, nspec, iMPIcut_xi,iMPIcut_eta, &
+      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+      RMIDDLE_CRUST,ROCEAN,iregion_code, &
+      group_size_inc, avs_dx_global_faces_vars)
+
   !--- Open an ADIOS handler to the AVS_DX file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, ier);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, ier)
+
   !--- Schedule writes for the previously defined ADIOS variables
   call prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
       nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
       mask_ibool, npointot, avs_dx_global_vars)
   call write_AVS_DX_global_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_global_vars)
+
+  call prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
+      iMPIcut_xi,iMPIcut_eta, &
+      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+      RMIDDLE_CRUST,ROCEAN,iregion_code, &
+      avs_dx_global_faces_vars)
+  call write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
+      sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
+
   !--- Reset the path to zero and perform the actual write to disk
   call adios_set_path (adios_handle, "", ier)
   call adios_close(adios_handle, ier)
+
   !--- Clean up temporary arrays -------------------------
   call free_AVS_DX_global_data_adios(myrank, avs_dx_global_vars)
-
+  call free_AVS_DX_global_faces_data_adios(myrank, avs_dx_global_faces_vars, &
+      ISOTROPIC_3D_MANTLE)
 end subroutine crm_save_mesh_files_adios

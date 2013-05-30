@@ -255,8 +255,9 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
     if(.not. mask_ibool(iglob3)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob3) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+      avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec)) 
+      avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,1,ispec))
+      avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,1,ispec))
     endif
     if(.not. mask_ibool(iglob4)) then
       numpoin = numpoin + 1

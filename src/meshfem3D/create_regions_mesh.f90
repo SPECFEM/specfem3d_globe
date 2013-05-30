@@ -1222,14 +1222,15 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
   else
     call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
         xstore,ystore,zstore, num_ibool_AVS_DX,mask_ibool,npointot)
+
+    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi, &
+        iMPIcut_eta,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX, &
+        mask_ibool,npointot, rhostore,kappavstore,muvstore,nspl,rspl, &
+        espl,espl2, ELLIPTICITY,ISOTROPIC_3D_MANTLE, RICB,RCMB, &
+        RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+        RMIDDLE_CRUST,ROCEAN,iregion_code)
   endif
 
-  call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-          idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
-          rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-          ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-          RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-          RMIDDLE_CRUST,ROCEAN,iregion_code)
 
   call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
           idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
