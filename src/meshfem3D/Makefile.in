@@ -202,6 +202,8 @@ ADIOS_OBJECTS= \
 	$O/adios_helpers.shared_adios.o  \
 	$O/write_AVS_DX_global_data_adios.adios.o \
 	$O/write_AVS_DX_global_faces_data_adios.adios.o \
+	$O/write_AVS_DX_global_chunks_data_adios.adios.o \
+	$O/write_AVS_DX_surface_data_adios.adios.o \
 	$O/create_regions_mesh_adios.adios.o \
 	$O/save_arrays_solver_adios.adios.o
 ADIOS_STUBS = \

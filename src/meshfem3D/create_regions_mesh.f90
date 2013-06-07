@@ -1229,8 +1229,6 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
         espl,espl2, ELLIPTICITY,ISOTROPIC_3D_MANTLE, RICB,RCMB, &
         RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
         RMIDDLE_CRUST,ROCEAN,iregion_code)
-  endif
-
 
   call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
           idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
@@ -1245,6 +1243,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
           ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
           RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
           RMIDDLE_CRUST,ROCEAN,iregion_code)
+  endif
 
   ! Output material information for all GLL points
   ! Can be use to check the mesh
@@ -1252,7 +1251,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
   !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
   deallocate(num_ibool_AVS_DX,mask_ibool)
 
-  end subroutine crm_save_mesh_files
+end subroutine crm_save_mesh_files
 
 !
 !-------------------------------------------------------------------------------------------------
