@@ -88,10 +88,13 @@ DEFAULT = \
 
 all: default
 
-default: $(DEFAULT)
+default: change_date_of_calling_code $(DEFAULT)
 
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
+
+change_date_of_calling_code:
+	touch src/specfem3D/specfem3D.F90
 
 ifdef CLEAN
 clean:
