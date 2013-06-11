@@ -2147,6 +2147,9 @@
 !! DK DK
     include "part2_classical.f90"
 
+!! DK DK empty file for now
+    include "part3_classical.f90"
+
 !
 !---- end of time iteration loop
 !
