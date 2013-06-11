@@ -727,11 +727,6 @@
   double precision, external :: comp_source_time_function
   double precision t0
 
-!! DK DK
-#ifdef UNDO_ATT
-  integer :: iteration_on_subset,it_of_this_subset
-#endif
-
 ! receiver information
   integer nrec,nrec_local
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec,number_receiver_global
@@ -924,6 +919,13 @@
   integer msg_status(MPI_STATUS_SIZE)
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
+
+#ifdef UNDO_ATT
+  integer :: iteration_on_subset,it_of_this_subset
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE,NT_500) :: displ_crust_mantle_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE,NT_500) :: displ_outer_core_store_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE,NT_500) :: displ_inner_core_store_as_bwf
+#endif
 
   
 
