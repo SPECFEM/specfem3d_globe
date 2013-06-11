@@ -134,8 +134,8 @@ $O/model_prem.o: ${SETUP}/constants.h $S/model_prem.f90
 $O/param_reader.o: $S/param_reader.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o $S/param_reader.c
 
-$O/read_compute_parameters.o: ${SETUP}/constants.h $S/read_compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} $S/read_compute_parameters.f90
+$O/read_compute_parameters.o: ${SETUP}/constants.h $S/read_compute_parameters.F90
+	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} $S/read_compute_parameters.F90
 
 $O/read_parameter_file.o: ${SETUP}/constants.h $S/read_parameter_file.f90
 	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} $S/read_parameter_file.f90
