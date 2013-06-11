@@ -750,8 +750,10 @@
   double precision, external :: comp_source_time_function
   double precision t0
 
-!! DK DK UNDO_ATT
+!! DK DK
+#ifdef UNDO_ATT
   integer :: iteration_on_subset,it_of_this_subset
+#endif
 
 ! receiver information
   integer nrec,nrec_local
@@ -2128,7 +2130,7 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-  if(.not. UNDO_ATT) then
+#ifndef UNDO_ATT
 
   do it = it_begin,it_end
 
@@ -2139,26 +2141,27 @@
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
-    include "part1_classical.f90"
+    include "part1_classical.F90"
 
 !! DK DK
 !! DK DK this first part handles the case SIMULATION_TYPE == 3
 !! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
 !! DK DK
-    include "part2_classical.f90"
+    include "part2_classical.F90"
 
 !! DK DK empty file for now
-    include "part3_classical.f90"
+    include "part3_classical.F90"
 
 !
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
 
-  else ! if UNDO_ATT
+! ifdef UNDO_ATT
+#else
 
 !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
-  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATT'
+  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using compile flag UNDO_ATT'
 
   it = 0
   do iteration_on_subset = 1, NSTEP / NT_500
@@ -2174,13 +2177,13 @@
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
-    include "part1_undo_att.f90"
+    include "part1_undo_att.F90"
 
 !! DK DK
 !! DK DK this first part handles the case SIMULATION_TYPE == 3
 !! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
 !! DK DK
-    include "part2_undo_att.f90"
+    include "part2_undo_att.F90"
 
 !
 !---- end of time iteration loop
@@ -2188,7 +2191,7 @@
     enddo
   enddo   ! end of main time loop
 
-  endif ! of if .not. UNDO_ATT
+#endif
 
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
