@@ -2141,7 +2141,7 @@
     include "part2_classical.F90"
 
 !! DK DK empty file for now
-    include "part3_classical.F90"
+    include "part3_kernel_computation.F90"
 
 !
 !---- end of time iteration loop
@@ -2175,6 +2175,8 @@
 !! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
 !! DK DK
     include "part2_undo_att.F90"
+
+    include "part3_kernel_computation.F90"
 
 !
 !---- end of time iteration loop
