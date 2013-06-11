@@ -402,22 +402,11 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
 
-! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: b_R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_eps_trace_over_3_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: b_R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_eps_trace_over_3_inner_core
-
 ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
-  double precision, dimension(:,:), allocatable :: buffer_slices,b_buffer_slices,buffer_slices2
-  double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices,b_buffer_all_cube_from_slices
+  double precision, dimension(:,:), allocatable :: buffer_slices,buffer_slices2
+  double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
   integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,receiver_cube_from_slices
 
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
@@ -623,17 +612,7 @@
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
   double precision scale_t,scale_t_inv,scale_displ,scale_veloc
 
-! ADJOINT
-  real(kind=CUSTOM_REAL) b_deltat,b_deltatover2,b_deltatsqover2
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
-    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle, Sigma_kl_crust_mantle
@@ -719,8 +698,7 @@
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
   integer :: npoin2D_max_all_CM_IC
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_faces,buffer_received_faces, &
-                                                           b_buffer_send_faces,b_buffer_received_faces
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_faces,buffer_received_faces
 
 ! for non blocking communications
   logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
@@ -735,7 +713,6 @@
 ! iphase is for the crust_mantle, outer_core and inner_core regions
 ! iphase_CC is for the central cube
   integer :: iphase,iphase_CC,icall
-  integer :: b_iphase,b_iphase_CC,b_icall
 
 ! parameters for the source
   integer it
@@ -805,12 +782,10 @@
   integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
 
 ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                                                          b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
-     buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
-     b_buffer_send_chunkcorn_vector,b_buffer_recv_chunkcorn_vector
+     buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -854,11 +829,6 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
   integer ichunk,iproc_xi,iproc_eta
-
-!ADJOINT
-  real(kind=CUSTOM_REAL) b_two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
-    b_A_array_rotation,b_B_array_rotation
 
   double precision :: time_start
 
@@ -952,6 +922,10 @@
 #endif
 
   integer msg_status(MPI_STATUS_SIZE)
+
+  include "declaration_part_for_backward_wavefield_simulation.f90"
+
+  
 
 ! *************************************************
 ! ************** PROGRAM STARTS HERE **************
