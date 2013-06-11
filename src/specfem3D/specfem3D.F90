@@ -918,15 +918,15 @@
 
   integer msg_status(MPI_STATUS_SIZE)
 
-  include "declaration_part_for_backward_wavefield_simulation.f90"
-
-#ifdef UNDO_ATT
-  integer :: iteration_on_subset,it_of_this_subset
+#ifdef UNDO_ATT_SIM3
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE,NT_500) :: displ_crust_mantle_store_as_bwf
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE,NT_500) :: displ_outer_core_store_store_as_bwf
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE,NT_500) :: displ_inner_core_store_as_bwf
 #endif
 
+  integer :: iteration_on_subset,it_of_this_subset
+
+  include "declaration_part_for_backward_wavefield_simulation.f90"
   
 
 ! *************************************************
@@ -1175,8 +1175,7 @@
 !ZN    allocate(b_buffer_send_faces(1,1,1), &
 !ZN             b_buffer_received_faces(1,1,1),stat=ier)
 !ZN  endif
-
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
+!ZN  if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
 
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
          iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
@@ -2154,35 +2153,94 @@
 !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
   if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using compile flag UNDO_ATT'
 
-  it = 0
-  do iteration_on_subset = 1, NSTEP / NT_500
-    do it_of_this_subset = 1, NT_500
-
-      it = it + 1
-!     if(myrank == 0) print *,'doing time step ',it
-
-    ! update position in seismograms
-    seismo_current = seismo_current + 1
-
+!
+!-------------------------------------------------------------------------------
+!
+!Old part of Dimitri
+!! DK DK  it = 0
+!! DK DK  do iteration_on_subset = 1, NSTEP / NT_500
+!! DK DK    do it_of_this_subset = 1, NT_500
 !! DK DK
-!! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
-!! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
+!! DK DK      it = it + 1
+!! DK DK!     if(myrank == 0) print *,'doing time step ',it
 !! DK DK
-    include "part1_undo_att.F90"
+!! DK DK    ! update position in seismograms
+!! DK DK    seismo_current = seismo_current + 1
+!! DK DK
+!! DK DK!! DK DK
+!! DK DK!! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
+!! DK DK!! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
+!! DK DK!! DK DK
+!! DK DK    include "part1_undo_att.F90"
+!! DK DK
+!! DK DK!! DK DK
+!! DK DK!! DK DK this first part handles the case SIMULATION_TYPE == 3
+!! DK DK!! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
+!! DK DK!! DK DK
+!! DK DK    include "part2_undo_att.F90"
+!! DK DK
+!! DK DK    include "part3_kernel_computation.F90"
+!! DK DK
+!!! DK DK
+!! DK DK!---- end of time iteration loop
+!! DK DK!
+!! DK DK    enddo
+!! DK DK  enddo   ! end of main time loop
+!
+!-------------------------------------------------------------------------------
+!
+!New part of ZN
+  if(SIMULATION_TYPE == 1)then
+    it = 0
+    do iteration_on_subset = 1, NSTEP / NT_500
+      ! save files to local disk or tape system if restart file
+      if(iteration_on_subset /= NT_500)then
+         call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+                    NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
+                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                    displ_inner_core,veloc_inner_core,accel_inner_core, &
+                    displ_outer_core,veloc_outer_core,accel_outer_core, &
+                    R_memory_crust_mantle,R_memory_inner_core, &
+                    epsilondev_crust_mantle,epsilondev_inner_core, &
+                    A_array_rotation,B_array_rotation,LOCAL_PATH,iteration_on_subset)
+      endif
 
-!! DK DK
-!! DK DK this first part handles the case SIMULATION_TYPE == 3
-!! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
-!! DK DK
-    include "part2_undo_att.F90"
+      do it_of_this_subset = 1, NT_500
 
-    include "part3_kernel_computation.F90"
+        it = it + 1
+!       if(myrank == 0) print *,'doing time step ',it
+
+        ! update position in seismograms
+        seismo_current = seismo_current + 1
+
+        include "part1_undo_att.F90"
+
+      enddo
+    enddo   ! end of main time loop
+
+  endif
+
+  if(SIMULATION_TYPE == 3)then
+    it = 0
+    do iteration_on_subset = 1, NSTEP / NT_500
+      do it_of_this_subset = 1, NT_500
+
+        it = it + 1
+!       if(myrank == 0) print *,'doing time step ',it
+
+        ! update position in seismograms
+        seismo_current = seismo_current + 1
+
+        include "part1_undo_att.F90"
+
+        include "part3_kernel_computation.F90"
 
 !
 !---- end of time iteration loop
 !
-    enddo
-  enddo   ! end of main time loop
+      enddo
+    enddo   ! end of main time loop
+  endif
 
 #endif
 
@@ -2268,6 +2326,9 @@
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize closing snapshots')
 
+#ifdef UNDO_ATT
+  !ZN we move this part of code inside the time loop above
+#else
   ! save files to local disk or tape system if restart file
   call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
@@ -2277,6 +2338,7 @@
                     R_memory_crust_mantle,R_memory_inner_core, &
                     epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH)
+#endif
 
   ! synchronize all processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
