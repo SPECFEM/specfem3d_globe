@@ -23,6 +23,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: b_vector_displ_outer_core
+
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_faces,b_buffer_received_faces
 
   integer :: b_iphase,b_iphase_CC,b_icall

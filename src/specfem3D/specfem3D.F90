@@ -670,7 +670,7 @@
      reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: vector_accel_outer_core, &
-             vector_displ_outer_core, b_vector_displ_outer_core
+             vector_displ_outer_core
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
@@ -1167,14 +1167,15 @@
            buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi buffer')
 
-  if(SIMULATION_TYPE > 1) then
-    allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
-             b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
-  else
-! dummy allocation of unusued arrays
-    allocate(b_buffer_send_faces(1,1,1), &
-             b_buffer_received_faces(1,1,1),stat=ier)
-  endif
+!ZN  if(SIMULATION_TYPE > 1) then
+!ZN    allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
+!ZN             b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+!ZN  else
+!ZN! dummy allocation of unusued arrays
+!ZN    allocate(b_buffer_send_faces(1,1,1), &
+!ZN             b_buffer_received_faces(1,1,1),stat=ier)
+!ZN  endif
+
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
 
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
@@ -1653,14 +1654,14 @@
             ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating cube buffers')
 
-    if(SIMULATION_TYPE > 1) then
-      allocate(b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
-               b_buffer_slices(npoin2D_cube_from_slices,NDIM))
-    else
-! dummy allocation of unusued arrays
-      allocate(b_buffer_all_cube_from_slices(1,1,1), &
-               b_buffer_slices(1,1))
-    endif
+!ZN    if(SIMULATION_TYPE > 1) then
+!ZN      allocate(b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
+!ZN               b_buffer_slices(npoin2D_cube_from_slices,NDIM))
+!ZN    else
+!ZN! dummy allocation of unusued arrays
+!ZN      allocate(b_buffer_all_cube_from_slices(1,1,1), &
+!ZN               b_buffer_slices(1,1))
+!ZN    endif
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating backward cube buffers')
 
     ! handles the communications with the central cube if it was included in the mesh
@@ -1688,11 +1689,16 @@
 
     ! allocate fictitious buffers for cube and slices with a dummy size
     ! just to be able to use them as arguments in subroutine calls
+!ZN    allocate(sender_from_slices_to_cube(1), &
+!ZN         buffer_all_cube_from_slices(1,1,1), &
+!ZN         b_buffer_all_cube_from_slices(1,1,1), &
+!ZN         buffer_slices(1,1), &
+!ZN         b_buffer_slices(1,1), &
+!ZN         buffer_slices2(1,1), &
+!ZN         ibool_central_cube(1,1),stat=ier)
     allocate(sender_from_slices_to_cube(1), &
             buffer_all_cube_from_slices(1,1,1), &
-            b_buffer_all_cube_from_slices(1,1,1), &
             buffer_slices(1,1), &
-            b_buffer_slices(1,1), &
             buffer_slices2(1,1), &
             ibool_central_cube(1,1),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating dummy buffers')
@@ -1858,6 +1864,7 @@
   endif ! MOVIE_VOLUME
 
   ! sets up time increments and rotation constants
+  ! we keep the b_deltat,b_deltatover2,b_deltatsqover2,b_two_omega_earth which are just scalar variables 
   call prepare_timerun_constants(myrank,NSTEP, &
                     DT,t0,scale_t,scale_t_inv,scale_displ,scale_veloc, &
                     deltat,deltatover2,deltatsqover2, &
@@ -1875,6 +1882,7 @@
 
   ! precomputes attenuation factors
   if(ATTENUATION_VAL) then
+  ! we keep the b_alphaval,b_betaval,b_gammaval which are just scalar variables 
     call prepare_timerun_attenuation(myrank, &
                 factor_scale_crust_mantle,one_minus_sum_beta_crust_mantle,factor_common_crust_mantle, &
                 factor_scale_inner_core,one_minus_sum_beta_inner_core,factor_common_inner_core, &
@@ -1973,7 +1981,7 @@
     alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
 
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+!ZN    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
     ! deviatoric kernel check
     if( deviatoric_outercore) then
@@ -2019,6 +2027,9 @@
   ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
   !          will be read in the time loop after the Newmark time scheme update.
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
+#ifdef UNDO_ATT
+  if(NUMBER_OF_THIS_RUN > 1) stop 'now we do not support NUMBER_OF_THIS_RUN > 1 case in UNDO_ATT '
+#else
   call read_forward_arrays_startrun(myrank,NSTEP, &
                     SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     it_begin,it_end, &
@@ -2034,6 +2045,8 @@
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
+#endif
+
 
   ! NOISE TOMOGRAPHY
   if ( NOISE_TOMOGRAPHY /= 0 ) then
@@ -2064,6 +2077,8 @@
                               SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
                               MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
   endif
+
+  include "codes_between_declaration_and_time_loop_for_backward_wavefield_simulation.f90"
 
 !
 !-------------------------------------------------------------------------------------------------
