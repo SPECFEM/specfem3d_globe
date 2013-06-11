@@ -918,13 +918,13 @@
 
   integer msg_status(MPI_STATUS_SIZE)
 
-#ifdef UNDO_ATT_SIM3
+!ZN#ifdef UNDO_ATT_SIM3
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE,NT_500) :: displ_crust_mantle_store_as_bwf
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE,NT_500) :: displ_outer_core_store_store_as_bwf
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE,NT_500) :: displ_inner_core_store_as_bwf
-#endif
+!ZN#endif
 
-  integer :: iteration_on_subset,it_of_this_subset
+  integer :: iteration_on_subset,it_of_this_subset,j
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
   
@@ -1171,7 +1171,6 @@
 !ZN    allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
 !ZN             b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
 !ZN  else
-!ZN! dummy allocation of unusued arrays
 !ZN    allocate(b_buffer_send_faces(1,1,1), &
 !ZN             b_buffer_received_faces(1,1,1),stat=ier)
 !ZN  endif
@@ -2193,9 +2192,8 @@
   if(SIMULATION_TYPE == 1)then
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_500
-      ! save files to local disk or tape system if restart file
-      if(iteration_on_subset /= NT_500)then
-         call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+
+      call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
@@ -2203,42 +2201,73 @@
                     R_memory_crust_mantle,R_memory_inner_core, &
                     epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH,iteration_on_subset)
-      endif
 
       do it_of_this_subset = 1, NT_500
 
         it = it + 1
-!       if(myrank == 0) print *,'doing time step ',it
 
-        ! update position in seismograms
         seismo_current = seismo_current + 1
 
         include "part1_undo_att.F90"
 
       enddo
-    enddo   ! end of main time loop
+    enddo 
 
   endif
 
   if(SIMULATION_TYPE == 3)then
+
     it = 0
+
     do iteration_on_subset = 1, NSTEP / NT_500
+
+       call read_forward_arrays_undoatt(myrank, &
+                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                    b_R_memory_crust_mantle,b_R_memory_inner_core, &
+                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_500-iteration_on_subset+1)
+
       do it_of_this_subset = 1, NT_500
 
         it = it + 1
-!       if(myrank == 0) print *,'doing time step ',it
+        seismo_current = seismo_current + 1
+        include "part2_undo_att.F90"
 
-        ! update position in seismograms
+        displ_crust_mantle_store_as_bwf(:,:,it_of_this_subset) = displ_crust_mantle(:,:)
+        displ_outer_core_store_store_as_bwf(:,it_of_this_subset) = displ_outer_core(:)
+        displ_inner_core_store_as_bwf(:,:,it_of_this_subset) = displ_inner_core(:,:)
+
+      enddo
+
+      do it_of_this_subset = 1, NT_500
+        do i = 1, NDIM
+          do j =1,NGLOB_CRUST_MANTLE_ADJOINT
+            b_displ_crust_mantle(i,j) = displ_crust_mantle_store_as_bwf(i,j,NT_500-it_of_this_subset+1)
+          enddo
+        enddo
+
+        do j =1,NGLOB_OUTER_CORE_ADJOINT
+            b_displ_outer_core(j) = displ_outer_core_store_store_as_bwf(j,NT_500-it_of_this_subset+1)
+        enddo
+
+        do i = 1, NDIM
+          do j =1,NGLOB_INNER_CORE_ADJOINT
+            b_displ_inner_core(i,j) = displ_inner_core_store_as_bwf(i,j,NT_500-it_of_this_subset+1)
+          enddo
+        enddo
+
+        it = it + 1
+
         seismo_current = seismo_current + 1
 
         include "part1_undo_att.F90"
 
         include "part3_kernel_computation.F90"
 
-!
-!---- end of time iteration loop
-!
       enddo
+
     enddo   ! end of main time loop
   endif
 

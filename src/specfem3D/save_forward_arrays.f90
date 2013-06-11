@@ -176,7 +176,7 @@
 
   ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    write(outputname,'(a,i6.6,a,i6.6)') 'proc',myrank,'_save_frame_at',iteration_on_subset
+    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
