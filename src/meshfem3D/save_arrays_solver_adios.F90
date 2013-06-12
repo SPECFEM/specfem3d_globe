@@ -1072,86 +1072,83 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   ! isotropic model
-  !---------------------------------------------------------
-  !--- vp arrays -------------------------------------------
-  !---------------------------------------------------------
-  outputname = trim(reg_name) // "vp.bp" 
-  write(group_name,"('SPECFEM3D_GLOBE_VP_reg',i1)") iregion_code
+  outputname = trim(reg_name) // "solver_meshfiles.bp" 
+  write(group_name,"('SPECFEM3D_GLOBE_solver_meshfiles_reg',i1)") iregion_code
+
   group_size_inc = 0
+
   call adios_declare_group(adios_group, group_name, &
       "", 0, adios_err)
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
   !--- Define ADIOS variables -----------------------------
+  !--- vp arrays -------------------------------------------
   local_dim = size (kappavstore) 
   call define_adios_global_real_1d_array(adios_group, "vp", &
       local_dim, group_size_inc)
+  !--- vs arrays -------------------------------------------
+  local_dim = size (rhostore) 
+  call define_adios_global_real_1d_array(adios_group, "vs", &
+      local_dim, group_size_inc)
+  !--- rho arrays ------------------------------------------
+  local_dim = size (rhostore) 
+  call define_adios_global_real_1d_array(adios_group, "rho", &
+      local_dim, group_size_inc)
+  ! transverse isotropic model
+  if( TRANSVERSE_ISOTROPY ) then
+    !--- vpv arrays ----------------------------------------
+    local_dim = size (kappavstore) 
+    call define_adios_global_real_1d_array(adios_group, "vpv", &
+        local_dim, group_size_inc)
+    !--- vph arrays ----------------------------------------
+    local_dim = size (kappavstore) 
+    call define_adios_global_real_1d_array(adios_group, "vph", &
+        local_dim, group_size_inc)
+    !--- vsv arrays ----------------------------------------
+    local_dim = size (rhostore) 
+    call define_adios_global_real_1d_array(adios_group, "vsv", &
+        local_dim, group_size_inc)
+    !--- vsh arrays ----------------------------------------
+    local_dim = size (rhostore) 
+    call define_adios_global_real_1d_array(adios_group, "vsh", &
+        local_dim, group_size_inc)
+    !--- eta arrays ----------------------------------------
+    local_dim = size (eta_anisostore) 
+    call define_adios_global_real_1d_array(adios_group, "eta", &
+        local_dim, group_size_inc)
+  endif
+  if( ATTENUATION ) then
+    !--- Qmu arrays ----------------------------------------
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    call define_adios_global_real_1d_array(adios_group, "qmu", &
+        local_dim, group_size_inc)
+  endif
+
   !--- Open an ADIOS handler to the restart file. ---------
   call adios_open (adios_handle, group_name, &
       outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
+
   !--- Schedule writes for the previously defined ADIOS variables
+  !--- vp arrays -------------------------------------------
+  local_dim = size (kappavstore) 
   call adios_set_path (adios_handle, "vp", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", &
       sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1, &
       adios_err)
-
-  !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (adios_handle, "", adios_err)
-  call adios_close(adios_handle, adios_err)
-  !---------------------------------------------------------
   !--- vs arrays -------------------------------------------
-  !---------------------------------------------------------
-  outputname = trim(reg_name) // "vs.bp" 
-  write(group_name,"('SPECFEM3D_GLOBE_VS_reg',i1)") iregion_code
-  group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-      "", 0, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-  !--- Define ADIOS variables -----------------------------
   local_dim = size (rhostore) 
-  call define_adios_global_real_1d_array(adios_group, "vs", &
-      local_dim, group_size_inc)
-  !--- Open an ADIOS handler to the restart file. ---------
-  call adios_open (adios_handle, group_name, &
-      outputname, "w", comm, adios_err);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
-  !--- Schedule writes for the previously defined ADIOS variables
   call adios_set_path (adios_handle, "vs", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", &
       sqrt( muvstore/rhostore )*scaleval1, &
       adios_err)
-
-  !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (adios_handle, "", adios_err)
-  call adios_close(adios_handle, adios_err)
-  !---------------------------------------------------------
   !--- rho arrays ------------------------------------------
-  !---------------------------------------------------------
-  outputname = trim(reg_name) // "rho.bp" 
-  write(group_name,"('SPECFEM3D_GLOBE_RHO_reg',i1)") iregion_code
-  group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-      "", 0, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-  !--- Define ADIOS variables -----------------------------
   local_dim = size (rhostore) 
-  call define_adios_global_real_1d_array(adios_group, "rho", &
-      local_dim, group_size_inc)
-  !--- Open an ADIOS handler to the restart file. ---------
-  call adios_open (adios_handle, group_name, &
-      outputname, "w", comm, adios_err);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
-  !--- Schedule writes for the previously defined ADIOS variables
   call adios_set_path (adios_handle, "rho", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
@@ -1159,162 +1156,48 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       rhostore *scaleval2, &
       adios_err)
 
-  !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (adios_handle, "", adios_err)
-  call adios_close(adios_handle, adios_err)
-
   ! transverse isotropic model
   if( TRANSVERSE_ISOTROPY ) then
-    !-------------------------------------------------------
     !--- vpv arrays ----------------------------------------
-    !-------------------------------------------------------
-    outputname = trim(reg_name) // "vpv.bp" 
-    write(group_name,"('SPECFEM3D_GLOBE_VPV_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-    !--- Define ADIOS variables ----------------------------
     local_dim = size (kappavstore) 
-    call define_adios_global_real_1d_array(adios_group, "vpv", &
-        local_dim, group_size_inc)
-    !--- Open an ADIOS handler to the restart file. --------
-    call adios_open (adios_handle, group_name, &
-        outputname, "w", comm, adios_err);
-    call adios_group_size (adios_handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vpv", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", &
         sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1, &
         adios_err)
-
-    !--- Reset the path to zero and perform the actual write to disk
-    call adios_set_path (adios_handle, "", adios_err)
-    call adios_close(adios_handle, adios_err)
-    !-------------------------------------------------------
     !--- vph arrays ----------------------------------------
-    !-------------------------------------------------------
-    outputname = trim(reg_name) // "vph.bp" 
-    write(group_name,"('SPECFEM3D_GLOBE_VPH_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-    !--- Define ADIOS variables ----------------------------
     local_dim = size (kappavstore) 
-    call define_adios_global_real_1d_array(adios_group, "vph", &
-        local_dim, group_size_inc)
-    !--- Open an ADIOS handler to the restart file. --------
-    call adios_open (adios_handle, group_name, &
-        outputname, "w", comm, adios_err);
-    call adios_group_size (adios_handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vph", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", &
         sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1, &
         adios_err)
-
-    !--- Reset the path to zero and perform the actual write to disk
-    call adios_set_path (adios_handle, "", adios_err)
-    call adios_close(adios_handle, adios_err)
-    !-------------------------------------------------------
     !--- vsv arrays ----------------------------------------
-    !-------------------------------------------------------
-    outputname = trim(reg_name) // "vsv.bp" 
-    write(group_name,"('SPECFEM3D_GLOBE_VSV_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-    !--- Define ADIOS variables ----------------------------
     local_dim = size (rhostore) 
-    call define_adios_global_real_1d_array(adios_group, "vsv", &
-        local_dim, group_size_inc)
-    !--- Open an ADIOS handler to the restart file. --------
-    call adios_open (adios_handle, group_name, &
-        outputname, "w", comm, adios_err);
-    call adios_group_size (adios_handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vsv", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", &
         sqrt( muvstore/rhostore )*scaleval1, &
         adios_err)
-
-    !--- Reset the path to zero and perform the actual write to disk
-    call adios_set_path (adios_handle, "", adios_err)
-    call adios_close(adios_handle, adios_err)
-    !-------------------------------------------------------
     !--- vsh arrays ----------------------------------------
-    !-------------------------------------------------------
-    outputname = trim(reg_name) // "vsh.bp" 
-    write(group_name,"('SPECFEM3D_GLOBE_VSH_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-    !--- Define ADIOS variables ----------------------------
     local_dim = size (rhostore) 
-    call define_adios_global_real_1d_array(adios_group, "vsh", &
-        local_dim, group_size_inc)
-    !--- Open an ADIOS handler to the restart file. --------
-    call adios_open (adios_handle, group_name, &
-        outputname, "w", comm, adios_err);
-    call adios_group_size (adios_handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "vsh", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", &
         sqrt( muhstore/rhostore )*scaleval1, &
         adios_err)
-
-    !--- Reset the path to zero and perform the actual write to disk
-    call adios_set_path (adios_handle, "", adios_err)
-    call adios_close(adios_handle, adios_err)
-    !-------------------------------------------------------
     !--- eta arrays ----------------------------------------
-    !-------------------------------------------------------
-    outputname = trim(reg_name) // "eta.bp" 
-    write(group_name,"('SPECFEM3D_GLOBE_ETA_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-    !--- Define ADIOS variables ----------------------------
     local_dim = size (eta_anisostore) 
-    call define_adios_global_real_1d_array(adios_group, "eta", &
-        local_dim, group_size_inc)
-    !--- Open an ADIOS handler to the restart file. --------
-    call adios_open (adios_handle, group_name, &
-        outputname, "w", comm, adios_err);
-    call adios_group_size (adios_handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    !--- Schedule writes for the previously defined ADIOS variables
     call adios_set_path (adios_handle, "eta", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
     call adios_write(adios_handle, "array", &
         eta_anisostore, &
         adios_err)
-
-    !--- Reset the path to zero and perform the actual write to disk
-    call adios_set_path (adios_handle, "", adios_err)
-    call adios_close(adios_handle, adios_err)
   endif ! TRANSVERSE_ISOTROPY
 
   ! shear attenuation
@@ -1350,23 +1233,7 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
       enddo
     endif
 
-    outputname = trim(reg_name) // "qmu.bp" 
-    write(group_name,"('SPECFEM3D_GLOBE_QMU_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
-
-    !--- Define ADIOS variables -----------------------------
-    local_dim = size (temp_store) 
-    call define_adios_global_real_1d_array(adios_group, "qmu", &
-        local_dim, group_size_inc)
-    !--- Open an ADIOS handler to the restart file. --------
-    call adios_open (adios_handle, group_name, &
-        outputname, "w", comm, adios_err);
-    call adios_group_size (adios_handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    !--- Schedule writes for the previously defined ADIOS variables
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
     call adios_set_path (adios_handle, "qmu", adios_err)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         local_dim, sizeprocs)
@@ -1374,13 +1241,13 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
         temp_store, &
         adios_err)
 
-    !--- Reset the path to zero and perform the actual write to disk
-    call adios_set_path (adios_handle, "", adios_err)
-    call adios_close(adios_handle, adios_err)
-
     ! frees temporary memory
     deallocate(temp_store)
   endif ! ATTENUATION
+
+  !--- Reset the path to zero and perform the actual write to disk
+  call adios_set_path (adios_handle, "", adios_err)
+  call adios_close(adios_handle, adios_err)
 
 end subroutine save_arrays_solver_meshfiles_adios
 
