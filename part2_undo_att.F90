@@ -560,7 +560,7 @@
     endif ! Stacey conditions
 
     ! add adjoint sources and add sources for backward/reconstructed wavefield
-    if (SIMULATION_TYPE == 3) &
+    if (SIMULATION_TYPE == 3) then
 #ifdef UNDO_ATT
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
@@ -574,6 +574,7 @@
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 #endif
+    endif
 
     ! NOISE_TOMOGRAPHY
 !   if ( NOISE_TOMOGRAPHY == 1 ) then
