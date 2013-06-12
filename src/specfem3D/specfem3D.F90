@@ -2038,6 +2038,19 @@
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
 #ifdef UNDO_ATT
   if(NUMBER_OF_THIS_RUN > 1) stop 'now we do not support NUMBER_OF_THIS_RUN > 1 case in UNDO_ATT '
+  ! define correct time steps if restart files
+  if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
+    stop 'number of restart runs can not be less than 1 or greater than NSTEP'
+  if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
+
+  it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1
+  if (NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    it_end = NUMBER_OF_THIS_RUN * (NSTEP / NUMBER_OF_RUNS)
+  else
+    ! Last run may be a bit larger
+    it_end = NSTEP
+  endif
 #else
   call read_forward_arrays_startrun(myrank,NSTEP, &
                     SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
