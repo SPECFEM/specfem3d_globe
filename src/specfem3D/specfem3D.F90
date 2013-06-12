@@ -2203,8 +2203,8 @@
   if(SIMULATION_TYPE == 1)then
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_500
-
-      call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+      if(SAVE_FORWARD)then
+        call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
@@ -2212,6 +2212,7 @@
                     R_memory_crust_mantle,R_memory_inner_core, &
                     epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH,iteration_on_subset)
+      endif
 
       do it_of_this_subset = 1, NT_500
 
