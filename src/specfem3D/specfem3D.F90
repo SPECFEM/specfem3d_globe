@@ -2215,6 +2215,16 @@
 
   endif
 
+  if(SIMULATION_TYPE == 2)then
+   !!add this part
+!ZN  !ZN we need to be careful to arrange this part
+!ZN  ! save source derivatives for adjoint simulations
+!ZN  if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
+!ZN    call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
+!ZN                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
+!ZN  endif
+  endif
+
   if(SIMULATION_TYPE == 3)then
 
     it = 0
@@ -2264,7 +2274,33 @@
 
         include "part1_undo_att.F90"
 
+        call compute_stain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+                                        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                        epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
+
+        call compute_stain_crust_mantle(b_displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+                                        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                        b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle)
+
+        call  compute_stain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
+                                       xix_inner_core,xiy_inner_core,xiz_inner_core,&
+                                       etax_inner_core,etay_inner_core,etaz_inner_core,&
+                                       gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                       epsilondev_inner_core,eps_trace_over_3_inner_core)
+
+        call  compute_stain_inner_core(b_displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
+                                       xix_inner_core,xiy_inner_core,xiz_inner_core,&
+                                       etax_inner_core,etay_inner_core,etaz_inner_core,&
+                                       gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                       b_epsilondev_inner_core,b_eps_trace_over_3_inner_core)
+
         include "part3_kernel_computation.F90"
+
+        include "part4_save_kernel.F90"
 
       enddo
 
@@ -2279,7 +2315,7 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
-
+  !ZN need to be remove for undoing att
   ! synchronize all processes, waits until all processes have written their seismograms
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize after time loop')
@@ -2373,6 +2409,9 @@
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize saving forward')
 
+#ifdef UNDO_ATT
+  !ZN we move this part of code(save kernels)inside the time loop above
+#else
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
 
@@ -2427,11 +2466,13 @@
     endif
   endif
 
+  !ZN we need to be careful to arrange this part
   ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
     call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
                                 nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
   endif
+#endif
 
   ! frees dynamically allocated memory
   ! mpi buffers

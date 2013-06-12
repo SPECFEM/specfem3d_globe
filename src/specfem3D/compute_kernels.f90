@@ -1003,5 +1003,326 @@
 
   end subroutine compute_kernels_hessian
 
+!=====================================================================
+
+  subroutine compute_stain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool,&
+          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+          epsilondev,epsilon_trace_over_3)
+
+  implicit none
+
+  include "constants.h"
+
+! include values created by the mesher
+! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+! array with derivatives of Lagrange polynomials and precalculated products
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+
+
+! arrays with mesh parameters per slice
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
+
+!local parameters
+  integer ispec,iglob,ispec_strain
+  integer i,j,k,l
+
+  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
+  real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
+  real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
+
+  real(kind=CUSTOM_REAL) hp1,hp2,hp3
+
+  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+
+  real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
+
+  real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+
+
+  do ispec = 1,NSPEC_CRUST_MANTLE
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            hp1 = hprime_xx(i,l)
+            iglob = ibool(l,j,k,ispec)
+            tempx1l = tempx1l + displ_crust_mantle(1,iglob)*hp1
+            tempy1l = tempy1l + displ_crust_mantle(2,iglob)*hp1
+            tempz1l = tempz1l + displ_crust_mantle(3,iglob)*hp1
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+            hp2 = hprime_yy(j,l)
+            iglob = ibool(i,l,k,ispec)
+            tempx2l = tempx2l + displ_crust_mantle(1,iglob)*hp2
+            tempy2l = tempy2l + displ_crust_mantle(2,iglob)*hp2
+            tempz2l = tempz2l + displ_crust_mantle(3,iglob)*hp2
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+            hp3 = hprime_zz(k,l)
+            iglob = ibool(i,j,l,ispec)
+            tempx3l = tempx3l + displ_crust_mantle(1,iglob)*hp3
+            tempy3l = tempy3l + displ_crust_mantle(2,iglob)*hp3
+            tempz3l = tempz3l + displ_crust_mantle(3,iglob)*hp3
+          enddo
+
+!         get derivatives of ux, uy and uz with respect to x, y and z
+
+          xixl = xix(i,j,k,ispec)
+          xiyl = xiy(i,j,k,ispec)
+          xizl = xiz(i,j,k,ispec)
+          etaxl = etax(i,j,k,ispec)
+          etayl = etay(i,j,k,ispec)
+          etazl = etaz(i,j,k,ispec)
+          gammaxl = gammax(i,j,k,ispec)
+          gammayl = gammay(i,j,k,ispec)
+          gammazl = gammaz(i,j,k,ispec)
+
+! compute the jacobian
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+          duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+          duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
+          duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
+
+          duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
+          duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
+          duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
+
+! precompute some sums to save CPU time
+          duxdxl_plus_duydyl = duxdxl + duydyl
+          duxdxl_plus_duzdzl = duxdxl + duzdzl
+          duydyl_plus_duzdzl = duydyl + duzdzl
+          duxdyl_plus_duydxl = duxdyl + duydxl
+          duzdxl_plus_duxdzl = duzdxl + duxdzl
+          duzdyl_plus_duydzl = duzdyl + duydzl
+
+! compute deviatoric strain
+          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+            ispec_strain = 1
+          else
+            ispec_strain = ispec
+          endif
+          epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
+          epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+          epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
+        enddo ! NGLLX
+      enddo ! NGLLY
+    enddo ! NGLLZ
+
+    !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
+        enddo
+      enddo
+    enddo
+
+  enddo   ! spectral element loop NSPEC_CRUST_MANTLE
+
+  end subroutine compute_stain_crust_mantle
+
+
+!=====================================================================
+
+  subroutine compute_stain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool,&
+          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+          epsilondev,epsilon_trace_over_3)
+
+  implicit none
+
+  include "constants.h"
+
+! include values created by the mesher
+! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+! array with derivatives of Lagrange polynomials and precalculated products
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+
+
+! arrays with mesh parameters per slice
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
+
+!local parameters
+  integer ispec,iglob,ispec_strain
+  integer i,j,k,l
+
+  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
+  real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
+  real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
+
+  real(kind=CUSTOM_REAL) hp1,hp2,hp3
+
+  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+
+  real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
+
+  real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+
+
+  do ispec = 1,NSPEC_INNER_CORE
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            hp1 = hprime_xx(i,l)
+            iglob = ibool(l,j,k,ispec)
+            tempx1l = tempx1l + displ_inner_core(1,iglob)*hp1
+            tempy1l = tempy1l + displ_inner_core(2,iglob)*hp1
+            tempz1l = tempz1l + displ_inner_core(3,iglob)*hp1
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+            hp2 = hprime_yy(j,l)
+            iglob = ibool(i,l,k,ispec)
+            tempx2l = tempx2l + displ_inner_core(1,iglob)*hp2
+            tempy2l = tempy2l + displ_inner_core(2,iglob)*hp2
+            tempz2l = tempz2l + displ_inner_core(3,iglob)*hp2
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+            hp3 = hprime_zz(k,l)
+            iglob = ibool(i,j,l,ispec)
+            tempx3l = tempx3l + displ_inner_core(1,iglob)*hp3
+            tempy3l = tempy3l + displ_inner_core(2,iglob)*hp3
+            tempz3l = tempz3l + displ_inner_core(3,iglob)*hp3
+          enddo
+
+!         get derivatives of ux, uy and uz with respect to x, y and z
+
+          xixl = xix(i,j,k,ispec)
+          xiyl = xiy(i,j,k,ispec)
+          xizl = xiz(i,j,k,ispec)
+          etaxl = etax(i,j,k,ispec)
+          etayl = etay(i,j,k,ispec)
+          etazl = etaz(i,j,k,ispec)
+          gammaxl = gammax(i,j,k,ispec)
+          gammayl = gammay(i,j,k,ispec)
+          gammazl = gammaz(i,j,k,ispec)
+
+! compute the jacobian
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+          duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+          duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
+          duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
+
+          duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
+          duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
+          duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
+
+! precompute some sums to save CPU time
+          duxdxl_plus_duydyl = duxdxl + duydyl
+          duxdxl_plus_duzdzl = duxdxl + duzdzl
+          duydyl_plus_duzdzl = duydyl + duzdzl
+          duxdyl_plus_duydxl = duxdyl + duydxl
+          duzdxl_plus_duxdzl = duzdxl + duxdzl
+          duzdyl_plus_duydzl = duzdyl + duydzl
+
+! compute deviatoric strain
+          if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+            ispec_strain = 1
+          else
+            ispec_strain = ispec
+          endif
+          epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
+          epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+          epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
+        enddo ! NGLLX
+      enddo ! NGLLY
+    enddo ! NGLLZ
+
+    !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
+        enddo
+      enddo
+    enddo
+
+  enddo   ! spectral element loop NSPEC_CRUST_MANTLE
+
+  end subroutine compute_stain_inner_core
+
 
 
