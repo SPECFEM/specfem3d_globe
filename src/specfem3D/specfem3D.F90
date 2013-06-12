@@ -2254,6 +2254,12 @@
 
   if(SIMULATION_TYPE == 3)then
 
+#ifdef UNDO_ATT
+      if(ATTENUATION_VAL)then
+          PARTIAL_PHYS_DISPERSION_ONLY = .false.
+      endif
+#endif
+
     allocate(displ_crust_mantle_store_as_bwf(NDIM,NGLOB_CRUST_MANTLE,NT_500),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_as_bwf')
     allocate(displ_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_500),stat=ier)

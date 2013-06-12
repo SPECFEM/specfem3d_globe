@@ -591,6 +591,7 @@
 !       ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
 !       ! therefore, we must add it here, before applying the inverse of mass matrix
 !   else
+#ifndef UNDO_ATT
     if ( NOISE_TOMOGRAPHY == 3 ) then
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
@@ -602,6 +603,7 @@
                               NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                               it,jacobian2D_top_crust_mantle,wgllwgll_xy)
     endif
+#endif
 
     ! ****************************************************
     ! **********  add matching with fluid part  **********
@@ -940,6 +942,7 @@
     ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
     !          and adjoint sources will become more complicated
     !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
+#ifndef UNDO_ATT
     if(SIMULATION_TYPE == 3 .and. it == 1) then
       call read_forward_arrays(myrank, &
                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
@@ -949,6 +952,7 @@
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
     endif
+#endif
 
 ! write the seismograms with time shift
 
