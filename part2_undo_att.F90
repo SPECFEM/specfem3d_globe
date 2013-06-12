@@ -116,6 +116,32 @@
     ! Stacey absorbing boundaries
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if (SIMULATION_TYPE == 3) then
+#ifdef UNDO_ATT
+      call compute_stacey_outer_core_forward(ichunk,SAVE_FORWARD, &
+                              it,ibool_outer_core, &
+                              b_veloc_outer_core,b_accel_outer_core, &
+                              vp_outer_core,wgllwgll_xz,wgllwgll_yz,wgllwgll_xy, &
+                              jacobian2D_bottom_outer_core, &
+                              jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+                              jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
+                              ibelm_bottom_outer_core, &
+                              ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
+                              ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+                              nimin_outer_core,nimax_outer_core, &
+                              njmin_outer_core,njmax_outer_core, &
+                              nkmin_xi_outer_core,nkmin_eta_outer_core, &
+                              NSPEC2D_BOTTOM, &
+                              nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+                              nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+                              reclen_zmin, &
+                              reclen_xmin_outer_core,reclen_xmax_outer_core, &
+                              reclen_ymin_outer_core,reclen_ymax_outer_core, &
+                              nabs_zmin_oc, &
+                              nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc, &
+                              absorb_zmin_outer_core, &
+                              absorb_xmin_outer_core,absorb_xmax_outer_core, &
+                              absorb_ymin_outer_core,absorb_ymax_outer_core)
+#else
         call compute_stacey_outer_core_backward(ichunk, &
                               NSTEP,it,ibool_outer_core, &
                               b_accel_outer_core, &
@@ -136,6 +162,7 @@
                               absorb_zmin_outer_core, &
                               absorb_xmin_outer_core,absorb_xmax_outer_core, &
                               absorb_ymin_outer_core,absorb_ymax_outer_core)
+#endif
 !      call compute_stacey_outer_core(ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
 !                            NSTEP,it,ibool_outer_core, &
 !                            veloc_outer_core,accel_outer_core,b_accel_outer_core, &
@@ -469,6 +496,29 @@
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if(SIMULATION_TYPE == 3) then
+#ifdef UNDO_ATT
+      call compute_stacey_crust_mantle_forward(ichunk, &
+                              it,SAVE_FORWARD,ibool_crust_mantle, &
+                              b_veloc_crust_mantle,b_accel_crust_mantle, &
+                              jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+                              jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+                              wgllwgll_xz,wgllwgll_yz, &
+                              normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
+                              normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+                              rho_vp_crust_mantle,rho_vs_crust_mantle, &
+                              ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+                              ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+                              nimin_crust_mantle,nimax_crust_mantle, &
+                              njmin_crust_mantle,njmax_crust_mantle, &
+                              nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+                              nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+                              nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+                              reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
+                              reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+                              nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
+                              absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
+                              absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
+#else
         call compute_stacey_crust_mantle_backward(ichunk, &
                               NSTEP,it,ibool_crust_mantle, &
                               b_accel_crust_mantle, &
@@ -484,6 +534,7 @@
                               nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
                               absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
                               absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
+#endif
 !      call compute_stacey_crust_mantle(ichunk, &
 !                            NSTEP,it,SAVE_FORWARD,ibool_crust_mantle, &
 !                            veloc_crust_mantle,b_accel_crust_mantle, &

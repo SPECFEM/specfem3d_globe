@@ -918,9 +918,9 @@
 
   integer msg_status(MPI_STATUS_SIZE)
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:) :: displ_crust_mantle_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(:,:) :: displ_outer_core_store_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(:,:,:) :: displ_inner_core_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_crust_mantle_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_inner_core_store_as_bwf
 
   integer :: iteration_on_subset,it_of_this_subset,j
   integer :: it_temp,seismo_current_temp
@@ -1861,13 +1861,19 @@
   endif ! MOVIE_VOLUME
 
   ! sets up time increments and rotation constants
-  ! we keep the b_deltat,b_deltatover2,b_deltatsqover2,b_two_omega_earth which are just scalar variables 
   call prepare_timerun_constants(myrank,NSTEP, &
                     DT,t0,scale_t,scale_t_inv,scale_displ,scale_veloc, &
                     deltat,deltatover2,deltatsqover2, &
                     b_deltat,b_deltatover2,b_deltatsqover2, &
                     two_omega_earth,A_array_rotation,B_array_rotation, &
                     b_two_omega_earth, SIMULATION_TYPE)
+
+#ifdef UNDO_ATT
+   b_deltat = deltat
+   b_deltatover2 = deltatover2
+   b_deltatsqover2 = deltatsqover2
+   b_two_omega_earth = two_omega_earth
+#endif
 
   ! precomputes gravity factors
   call prepare_timerun_gravity(myrank, &
@@ -1879,7 +1885,6 @@
 
   ! precomputes attenuation factors
   if(ATTENUATION_VAL) then
-  ! we keep the b_alphaval,b_betaval,b_gammaval which are just scalar variables 
     call prepare_timerun_attenuation(myrank, &
                 factor_scale_crust_mantle,one_minus_sum_beta_crust_mantle,factor_common_crust_mantle, &
                 factor_scale_inner_core,one_minus_sum_beta_inner_core,factor_common_inner_core, &
@@ -1894,6 +1899,13 @@
                 c33store_inner_core,c44store_inner_core, &
                 alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
                 deltat,b_deltat,LOCAL_PATH)
+
+#ifdef UNDO_ATT
+   b_alphaval = alphaval
+   b_betaval = betaval
+   b_gammaval = gammaval
+#endif
+
   endif
 
   if(myrank == 0) then
@@ -2217,11 +2229,26 @@
   if(SIMULATION_TYPE == 2)then
    !!add this part
 !ZN  !ZN we need to be careful to arrange this part
-!ZN  ! save source derivatives for adjoint simulations
-!ZN  if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
-!ZN    call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-!ZN                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
-!ZN  endif
+
+    it = 0
+    do iteration_on_subset = 1, NSTEP / NT_500
+
+      do it_of_this_subset = 1, NT_500
+
+        it = it + 1
+
+        seismo_current = seismo_current + 1
+
+        include "part1_undo_att.F90"
+
+        ! save source derivatives for adjoint simulations
+        if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
+          call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
+                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
+        endif
+
+      enddo
+    enddo 
   endif
 
   if(SIMULATION_TYPE == 3)then
@@ -2478,7 +2505,6 @@
     endif
   endif
 
-  !ZN we need to be careful to arrange this part
   ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
     call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
