@@ -918,13 +918,12 @@
 
   integer msg_status(MPI_STATUS_SIZE)
 
-!ZN#ifdef UNDO_ATT_SIM3
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE,NT_500) :: displ_crust_mantle_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE,NT_500) :: displ_outer_core_store_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE,NT_500) :: displ_inner_core_store_as_bwf
-!ZN#endif
+  real(kind=CUSTOM_REAL), dimension(:,:,:) :: displ_crust_mantle_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:) :: displ_outer_core_store_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:,:) :: displ_inner_core_store_as_bwf
 
   integer :: iteration_on_subset,it_of_this_subset,j
+  integer :: it_temp,seismo_current_temp
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
   
@@ -2227,6 +2226,13 @@
 
   if(SIMULATION_TYPE == 3)then
 
+    allocate(displ_crust_mantle_store_as_bwf(NDIM,NGLOB_CRUST_MANTLE,NT_500),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_as_bwf')
+    allocate(displ_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_500),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
+    allocate(displ_inner_core_store_as_bwf(NDIM,NGLOB_INNER_CORE,NT_500),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_inner_core_store_as_bwf')
+
     it = 0
 
     do iteration_on_subset = 1, NSTEP / NT_500
@@ -2239,6 +2245,9 @@
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_500-iteration_on_subset+1)
 
+      it_temp = it 
+      seismo_current_temp = seismo_current
+
       do it_of_this_subset = 1, NT_500
 
         it = it + 1
@@ -2250,6 +2259,9 @@
         displ_inner_core_store_as_bwf(:,:,it_of_this_subset) = displ_inner_core(:,:)
 
       enddo
+
+      it = it_temp
+      seismo_current = seismo_current_temp
 
       do it_of_this_subset = 1, NT_500
         do i = 1, NDIM
