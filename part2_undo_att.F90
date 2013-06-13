@@ -60,14 +60,14 @@
       !       for reconstructing the rotational contributions
       if(CUSTOM_REAL == SIZE_REAL) then
         time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
-#ifdef UNDO_ATT
+if(UNDO_ATT_WITH_STORE)then
         time = sngl((dble(NSTEP-(iteration_on_subset*NT_500-it_of_this_subset+1))*DT-t0)*scale_t_inv)
-#endif
+endif
       else
         time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
-#ifdef UNDO_ATT
+if(UNDO_ATT_WITH_STORE)then
         time = (dble(NSTEP-(iteration_on_subset*NT_500-it_of_this_subset+1))*DT-t0)*scale_t_inv
-#endif
+endif
       endif
 
       b_iphase = 0 ! do not start any non blocking communications at this stage
@@ -122,7 +122,7 @@
     ! Stacey absorbing boundaries
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if (SIMULATION_TYPE == 3) then
-#ifdef UNDO_ATT
+if(UNDO_ATT_WITH_STORE)then
       call compute_stacey_outer_core_forward(ichunk,SAVE_FORWARD, &
                               it,ibool_outer_core, &
                               b_veloc_outer_core,b_accel_outer_core, &
@@ -147,7 +147,7 @@
                               absorb_zmin_outer_core, &
                               absorb_xmin_outer_core,absorb_xmax_outer_core, &
                               absorb_ymin_outer_core,absorb_ymax_outer_core)
-#else
+else
         call compute_stacey_outer_core_backward(ichunk, &
                               NSTEP,it,ibool_outer_core, &
                               b_accel_outer_core, &
@@ -168,7 +168,7 @@
                               absorb_zmin_outer_core, &
                               absorb_xmin_outer_core,absorb_xmax_outer_core, &
                               absorb_ymin_outer_core,absorb_ymax_outer_core)
-#endif
+endif
 !      call compute_stacey_outer_core(ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
 !                            NSTEP,it,ibool_outer_core, &
 !                            veloc_outer_core,accel_outer_core,b_accel_outer_core, &
@@ -502,7 +502,7 @@
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if(SIMULATION_TYPE == 3) then
-#ifdef UNDO_ATT
+if(UNDO_ATT_WITH_STORE)then
       call compute_stacey_crust_mantle_forward(ichunk, &
                               it,SAVE_FORWARD,ibool_crust_mantle, &
                               b_veloc_crust_mantle,b_accel_crust_mantle, &
@@ -524,7 +524,7 @@
                               nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
                               absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
                               absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
-#else
+else
         call compute_stacey_crust_mantle_backward(ichunk, &
                               NSTEP,it,ibool_crust_mantle, &
                               b_accel_crust_mantle, &
@@ -540,7 +540,7 @@
                               nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
                               absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
                               absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
-#endif
+endif
 !      call compute_stacey_crust_mantle(ichunk, &
 !                            NSTEP,it,SAVE_FORWARD,ibool_crust_mantle, &
 !                            veloc_crust_mantle,b_accel_crust_mantle, &
@@ -567,19 +567,19 @@
 
     ! add adjoint sources and add sources for backward/reconstructed wavefield
     if (SIMULATION_TYPE == 3) then
-#ifdef UNDO_ATT
+if(UNDO_ATT_WITH_STORE)then
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,iteration_on_subset*NT_500-it_of_this_subset+1, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
-#else
+else
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
-#endif
+endif
     endif
 
     ! NOISE_TOMOGRAPHY
@@ -606,7 +606,7 @@
 !       ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
 !       ! therefore, we must add it here, before applying the inverse of mass matrix
 !   else
-#ifndef UNDO_ATT
+if(.not. UNDO_ATT_WITH_STORE)then
     if ( NOISE_TOMOGRAPHY == 3 ) then
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
@@ -618,7 +618,7 @@
                               NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                               it,jacobian2D_top_crust_mantle,wgllwgll_xy)
     endif
-#endif
+endif
 
     ! ****************************************************
     ! **********  add matching with fluid part  **********
@@ -957,7 +957,7 @@
     ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
     !          and adjoint sources will become more complicated
     !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
-#ifndef UNDO_ATT
+if(.not. UNDO_ATT_WITH_STORE)then
     if(SIMULATION_TYPE == 3 .and. it == 1) then
       call read_forward_arrays(myrank, &
                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
@@ -967,7 +967,7 @@
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
     endif
-#endif
+endif
 
 ! write the seismograms with time shift
 

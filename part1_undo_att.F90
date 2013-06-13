@@ -1640,7 +1640,7 @@
   endif ! nrec_local
 
   ! write the current or final seismograms
-#ifdef UNDO_ATT
+if(UNDO_ATT_WITH_STORE)then
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
@@ -1668,7 +1668,7 @@
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
-#else
+else
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
@@ -1696,7 +1696,7 @@
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
-#endif
+endif
 
 !
 !-------------------------------------------------------------------------------------------------

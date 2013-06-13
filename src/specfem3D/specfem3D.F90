@@ -924,6 +924,7 @@
 
   integer :: iteration_on_subset,it_of_this_subset,j
   integer :: it_temp,seismo_current_temp
+  logical :: UNDO_ATT_WITH_STORE
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
   
@@ -2268,10 +2269,7 @@
   if(SIMULATION_TYPE == 3)then
 
 #ifdef UNDO_ATT
-!ZN besure that we set PARTIAL_PHYS_DISPERSION_ONLY = .false. in UNDO_ATT
-!ZN      if(ATTENUATION_VAL)then
-!ZN          PARTIAL_PHYS_DISPERSION_ONLY = .false.
-!ZN      endif
+   UNDO_ATT_WITH_STORE = .true.
 #endif
 
     allocate(displ_crust_mantle_store_as_bwf(NDIM,NGLOB_CRUST_MANTLE,NT_500),stat=ier)
