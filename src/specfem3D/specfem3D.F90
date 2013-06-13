@@ -2358,8 +2358,6 @@
 
         include "part3_kernel_computation.F90"
 
-        include "part4_save_kernel.F90"
-
       enddo
 
     enddo   ! end of main time loop
@@ -2467,9 +2465,6 @@
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize saving forward')
 
-#ifdef UNDO_ATT
-  !ZN we move this part of code(save kernels)inside the time loop above
-#else
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
 
@@ -2529,7 +2524,6 @@
     call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
                                 nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
   endif
-#endif
 
   ! frees dynamically allocated memory
   ! mpi buffers
