@@ -2300,9 +2300,9 @@
         seismo_current = seismo_current + 1
         include "part2_undo_att.F90"
 
-        displ_crust_mantle_store_as_bwf(:,:,it_of_this_subset) = displ_crust_mantle(:,:)
-        displ_outer_core_store_store_as_bwf(:,it_of_this_subset) = displ_outer_core(:)
-        displ_inner_core_store_as_bwf(:,:,it_of_this_subset) = displ_inner_core(:,:)
+        displ_crust_mantle_store_as_bwf(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
+        displ_outer_core_store_store_as_bwf(:,it_of_this_subset) = b_displ_outer_core(:)
+        displ_inner_core_store_as_bwf(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
       enddo
 

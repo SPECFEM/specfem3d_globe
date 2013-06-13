@@ -1665,7 +1665,7 @@ if(UNDO_ATT_WITH_STORE)then
                                   NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
         nit_written = it
     endif
-    seismo_offset = seismo_offset + seismo_current
+!ZN    seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
 else
