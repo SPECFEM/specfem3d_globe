@@ -922,9 +922,10 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_as_bwf
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_inner_core_store_as_bwf
 
-  integer :: iteration_on_subset,it_of_this_subset,j
+  integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
   integer :: it_temp,seismo_current_temp
   logical :: UNDO_ATT_WITH_STORE
+  real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
   
