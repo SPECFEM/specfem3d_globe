@@ -1640,6 +1640,35 @@
   endif ! nrec_local
 
   ! write the current or final seismograms
+#ifdef UNDO_ATT
+  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+    if (SIMULATION_TYPE == 1) then
+      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+            network_name,stlat,stlon,stele,stbur, &
+            nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,t0,it_end, &
+            yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC,t_shift_SAC, &
+            elat_SAC,elon_SAC,depth_SAC,event_name_SAC,cmt_lat_SAC,cmt_lon_SAC,&
+            cmt_depth_SAC,cmt_hdur_SAC,NPROCTOT_VAL, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
+      if(myrank==0) then
+        write(IMAIN,*)
+        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
+        write(IMAIN,*)
+      endif
+    elseif(SIMULATION_TYPE == 2)then ! case of SIMULATION_TYPE == 2
+      if( nrec_local > 0 ) &
+        call write_adj_seismograms(seismograms,number_receiver_global, &
+                                  nrec_local,it,nit_written,DT, &
+                                  NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
+        nit_written = it
+    endif
+    seismo_offset = seismo_offset + seismo_current
+    seismo_current = 0
+  endif
+#else
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
@@ -1667,6 +1696,7 @@
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
+#endif
 
 !
 !-------------------------------------------------------------------------------------------------

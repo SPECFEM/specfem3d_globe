@@ -60,8 +60,14 @@
       !       for reconstructing the rotational contributions
       if(CUSTOM_REAL == SIZE_REAL) then
         time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
+#ifdef UNDO_ATT
+        time = sngl((dble(NSTEP-(iteration_on_subset*NT_500-it_of_this_subset+1))*DT-t0)*scale_t_inv)
+#endif
       else
         time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
+#ifdef UNDO_ATT
+        time = (dble(NSTEP-(iteration_on_subset*NT_500-it_of_this_subset+1))*DT-t0)*scale_t_inv
+#endif
       endif
 
       b_iphase = 0 ! do not start any non blocking communications at this stage
@@ -1004,33 +1010,33 @@
   endif ! nrec_local
 
   ! write the current or final seismograms
-!ZN  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
-!ZN    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-!ZN      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-!ZN            network_name,stlat,stlon,stele,stbur, &
-!ZN            nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,t0,it_end, &
-!ZN            yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC,t_shift_SAC, &
-!ZN            elat_SAC,elon_SAC,depth_SAC,event_name_SAC,cmt_lat_SAC,cmt_lon_SAC,&
-!ZN            cmt_depth_SAC,cmt_hdur_SAC,NPROCTOT_VAL, &
-!ZN            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-!ZN            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!ZN            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
-!ZN            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
-!ZN      if(myrank==0) then
-!ZN        write(IMAIN,*)
-!ZN        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
-!ZN        write(IMAIN,*)
-!ZN      endif
-!ZN!   else ! case of SIMULATION_TYPE == 2
-!ZN!     if( nrec_local > 0 ) &
-!ZN!       call write_adj_seismograms(seismograms,number_receiver_global, &
-!ZN!                                 nrec_local,it,nit_written,DT, &
-!ZN!                                 NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
-!ZN!       nit_written = it
-!ZN    endif
-!ZN    seismo_offset = seismo_offset + seismo_current
-!ZN    seismo_current = 0
-!ZN  endif
+  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+            network_name,stlat,stlon,stele,stbur, &
+            nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,t0,it_end, &
+            yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC,t_shift_SAC, &
+            elat_SAC,elon_SAC,depth_SAC,event_name_SAC,cmt_lat_SAC,cmt_lon_SAC,&
+            cmt_depth_SAC,cmt_hdur_SAC,NPROCTOT_VAL, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
+      if(myrank==0) then
+        write(IMAIN,*)
+        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
+        write(IMAIN,*)
+      endif
+!   else ! case of SIMULATION_TYPE == 2
+!     if( nrec_local > 0 ) &
+!       call write_adj_seismograms(seismograms,number_receiver_global, &
+!                                 nrec_local,it,nit_written,DT, &
+!                                 NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
+!       nit_written = it
+    endif
+    seismo_offset = seismo_offset + seismo_current
+    seismo_current = 0
+  endif
 
 !
 !-------------------------------------------------------------------------------------------------
