@@ -919,7 +919,8 @@
   integer msg_status(MPI_STATUS_SIZE)
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_crust_mantle_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_as_bwf,&
+                                                         accel_outer_core_store_store_as_bwf
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_inner_core_store_as_bwf
 
   integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
@@ -2277,6 +2278,8 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_as_bwf')
     allocate(displ_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_500),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
+    allocate(accel_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_500),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
     allocate(displ_inner_core_store_as_bwf(NDIM,NGLOB_INNER_CORE,NT_500),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_inner_core_store_as_bwf')
 
@@ -2303,6 +2306,7 @@
 
         displ_crust_mantle_store_as_bwf(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
         displ_outer_core_store_store_as_bwf(:,it_of_this_subset) = b_displ_outer_core(:)
+        accel_outer_core_store_store_as_bwf(:,it_of_this_subset) = b_accel_outer_core(:)
         displ_inner_core_store_as_bwf(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
       enddo
@@ -2319,6 +2323,7 @@
 
         do j =1,NGLOB_OUTER_CORE_ADJOINT
             b_displ_outer_core(j) = displ_outer_core_store_store_as_bwf(j,NT_500-it_of_this_subset+1)
+            b_accel_outer_core(j) = accel_outer_core_store_store_as_bwf(j,NT_500-it_of_this_subset+1)
         enddo
 
         do i = 1, NDIM
@@ -2333,25 +2338,25 @@
 
         include "part1_undo_att.F90"
 
-        call compute_stain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+        call compute_strain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                                         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                                         etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                                         gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                         epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
 
-        call compute_stain_crust_mantle(b_displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+        call compute_strain_crust_mantle(b_displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                                         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                                         etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                                         gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                         b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle)
 
-        call  compute_stain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
+        call  compute_strain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
                                        xix_inner_core,xiy_inner_core,xiz_inner_core,&
                                        etax_inner_core,etay_inner_core,etaz_inner_core,&
                                        gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
                                        epsilondev_inner_core,eps_trace_over_3_inner_core)
 
-        call  compute_stain_inner_core(b_displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
+        call  compute_strain_inner_core(b_displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
                                        xix_inner_core,xiy_inner_core,xiz_inner_core,&
                                        etax_inner_core,etay_inner_core,etaz_inner_core,&
                                        gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
