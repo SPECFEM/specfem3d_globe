@@ -1005,7 +1005,7 @@
 
 !=====================================================================
 
-  subroutine compute_stain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool,&
+  subroutine compute_strain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool,&
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           epsilondev,epsilon_trace_over_3)
 
@@ -1161,12 +1161,12 @@
 
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 
-  end subroutine compute_stain_crust_mantle
+  end subroutine compute_strain_crust_mantle
 
 
 !=====================================================================
 
-  subroutine compute_stain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool,&
+  subroutine compute_strain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool,&
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           epsilondev,epsilon_trace_over_3)
 
@@ -1322,7 +1322,7 @@
 
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 
-  end subroutine compute_stain_inner_core
+  end subroutine compute_strain_inner_core
 
 
 
