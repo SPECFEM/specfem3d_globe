@@ -918,10 +918,10 @@
 
   integer msg_status(MPI_STATUS_SIZE)
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_crust_mantle_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_as_bwf,&
-                                                         accel_outer_core_store_store_as_bwf
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_inner_core_store_as_bwf
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_crust_mantle_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_buffer,&
+                                                         accel_outer_core_store_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_inner_core_store_buffer
 
   integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
   integer :: it_temp,seismo_current_temp
@@ -2040,7 +2040,7 @@
   !          will be read in the time loop after the Newmark time scheme update.
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
 #ifdef UNDO_ATT
-  if(NUMBER_OF_THIS_RUN > 1) stop 'now we do not support NUMBER_OF_THIS_RUN > 1 case in UNDO_ATT '
+  if(NUMBER_OF_THIS_RUN > 1) stop 'currently we do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATT'
   ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
@@ -2273,14 +2273,14 @@
    UNDO_ATT_WITH_STORE = .true.
 #endif
 
-    allocate(displ_crust_mantle_store_as_bwf(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_as_bwf')
-    allocate(displ_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
-    allocate(accel_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
-    allocate(displ_inner_core_store_as_bwf(NDIM,NGLOB_INNER_CORE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_inner_core_store_as_bwf')
+    allocate(displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_buffer')
+    allocate(displ_outer_core_store_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_buffer')
+    allocate(accel_outer_core_store_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_buffer')
+    allocate(displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_inner_core_store_buffer')
 
     it = 0
 
@@ -2303,10 +2303,10 @@
         seismo_current = seismo_current + 1
         include "part2_undo_att.F90"
 
-        displ_crust_mantle_store_as_bwf(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
-        displ_outer_core_store_store_as_bwf(:,it_of_this_subset) = b_displ_outer_core(:)
-        accel_outer_core_store_store_as_bwf(:,it_of_this_subset) = b_accel_outer_core(:)
-        displ_inner_core_store_as_bwf(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
+        displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
+        displ_outer_core_store_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
+        accel_outer_core_store_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
+        displ_inner_core_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
       enddo
 
@@ -2316,18 +2316,18 @@
       do it_of_this_subset = 1, NT_DUMP
         do i = 1, NDIM
           do j =1,NGLOB_CRUST_MANTLE_ADJOINT
-            b_displ_crust_mantle(i,j) = displ_crust_mantle_store_as_bwf(i,j,NT_DUMP-it_of_this_subset+1)
+            b_displ_crust_mantle(i,j) = displ_crust_mantle_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
           enddo
         enddo
 
         do j =1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = displ_outer_core_store_store_as_bwf(j,NT_DUMP-it_of_this_subset+1)
-            b_accel_outer_core(j) = accel_outer_core_store_store_as_bwf(j,NT_DUMP-it_of_this_subset+1)
+            b_displ_outer_core(j) = displ_outer_core_store_store_buffer(j,NT_DUMP-it_of_this_subset+1)
+            b_accel_outer_core(j) = accel_outer_core_store_store_buffer(j,NT_DUMP-it_of_this_subset+1)
         enddo
 
         do i = 1, NDIM
           do j =1,NGLOB_INNER_CORE_ADJOINT
-            b_displ_inner_core(i,j) = displ_inner_core_store_as_bwf(i,j,NT_DUMP-it_of_this_subset+1)
+            b_displ_inner_core(i,j) = displ_inner_core_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
           enddo
         enddo
 
