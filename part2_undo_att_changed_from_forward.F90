@@ -446,7 +446,7 @@
       call compute_add_sources(myrank,NSOURCES, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,NSTEP-(iteration_on_subset*NT_500-it_of_this_subset), &
+                                islice_selected_source,ispec_selected_source,NSTEP-(iteration_on_subset*NT_DUMP-it_of_this_subset), &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
 if(.not. UNDO_ATT_WITH_STORE)then
@@ -796,12 +796,12 @@ endif
 if(UNDO_ATT_WITH_STORE)then
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     do irec_local = 1,nrec_local
-      do i = 1,seismo_current/NT_500
-         do j = 1,NT_500/2
+      do i = 1,seismo_current/NT_DUMP
+         do j = 1,NT_DUMP/2
             do k = 1,3
-              seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_500 + j)
-              seismograms(k,irec_local,(i-1)*NT_500 + j)  = seismograms(k,irec_local,(i-1)*NT_500 + (NT_500-j+1))
-              seismograms(k,irec_local,(i-1)*NT_500 + (NT_500-j+1)) = seismograms_temp(k)  
+              seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP + j)
+              seismograms(k,irec_local,(i-1)*NT_DUMP + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1))
+              seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)  
             enddo          
          enddo
       enddo

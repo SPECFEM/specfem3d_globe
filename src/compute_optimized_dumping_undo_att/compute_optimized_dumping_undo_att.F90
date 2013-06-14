@@ -103,7 +103,7 @@
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
-  integer :: NT_500_optimal_to_use,number_of_dumpings_to_do
+  integer :: NT_DUMP_optimal_to_use,number_of_dumpings_to_do
   double precision :: gigabytes_avail_per_core,percentage_to_use_per_core,what_we_can_use_in_GB,size_to_store_at_each_time_step, &
                          disk_size_of_each_dumping
 
@@ -184,14 +184,6 @@
   print *,'total points per slice = ',sum(nglob)
   print *
   print *,'number of time steps = ',NSTEP
-  print *,'time-stepping of the solver will be: ',DT
-  print *
-  if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
-    print *,'MOVIE_VOLUME :',MOVIE_VOLUME
-    print *,'MOVIE_SURFACE:',MOVIE_SURFACE
-    print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
-    print *
-  endif
 
   print *,'approximate static memory needed by the solver:'
   print *,'----------------------------------------------'
@@ -220,7 +212,8 @@
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
   print *
 
-  print *,'How much memory (in GB) is installed on your machine per CPU core (of GPU card)?'
+  print *,'How much memory (in GB) is installed on your machine per CPU core?'
+  print *,'        (or per GPU card or per INTEL MIC Phi board)?'
   print *,'  (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)'
   read(*,*) gigabytes_avail_per_core
 
@@ -228,8 +221,8 @@
   if(gigabytes_avail_per_core > 32.d0) stop 'more than 32 GB per core does not seem realistic; exiting...'
 
   print *
-  print *,'What percentage of this total do you allow us to use, keeping in mind that you need to leave'
-  print *,'some memory available for the GNU/Linux system to run?'
+  print *,'What percentage of this total do you allow us to use, keeping in mind that you'
+  print *,'need to leave some memory available for the GNU/Linux system to run?'
   print *,'  (a typical value is 90%; 92% to 95% is probably OK too; 85% is very safe)'
   read(*,*) percentage_to_use_per_core
 
@@ -245,13 +238,12 @@
   print *,'without undoing of attenuation you are using ',static_memory_size,' GB per core'
 
   if(static_memory_size >= gigabytes_avail_per_core) &
-    stop 'you are using more than what you told us is installed!!! there is an error'
+    stop 'you are using more memory than what you told us is installed!!! there is an error'
 
   if(static_memory_size >= what_we_can_use_in_GB) &
-    stop 'you are using more than what you allow us to use!!! there is an error'
+    stop 'you are using more memory than what you allowed us to use!!! there is an error'
 
 ! compute the size to store in memory at each time step
-
   size_to_store_at_each_time_step = 0
 
 ! displ_crust_mantle
@@ -267,15 +259,20 @@
   size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
 
   print *
-  print *,'each time step to store to memory to undo attenuation requires storing ',size_to_store_at_each_time_step,' GB per core'
+  print *,'each time step to store in memory to undo attenuation requires storing ',size_to_store_at_each_time_step,' GB per core'
 
   print *
-  print *,'the optimal value for NT_500 in setup/constants.h is thus:'
-  NT_500_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size) / size_to_store_at_each_time_step)
-  print *,'NT_500 = ',NT_500_optimal_to_use
-  print *,'thus please edit that file, put this value in it and recompile the whole code with "make clean ; make all"'
+  print *,'*******************************************************************************'
+  print *,'the optimal value to put in setup/constants.h is thus:'
+  NT_DUMP_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size) / size_to_store_at_each_time_step)
+  print *
+  print *,'NT_DUMP = ',NT_DUMP_optimal_to_use
+  print *
+  print *,'thus please edit that file, put this value in it and recompile the whole code'
+  print *,'with "make clean ; make all"'
+  print *,'*******************************************************************************'
 
-! compute the size to dump to disk
+! compute the size of files to dump to disk
   disk_size_of_each_dumping = 0
 
 ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
@@ -288,8 +285,7 @@
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
 ! A_array_rotation,B_array_rotation
-  if (ROTATION) &
-    disk_size_of_each_dumping = disk_size_of_each_dumping + &
+  if (ROTATION) disk_size_of_each_dumping = disk_size_of_each_dumping + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROTATION*2.d0*dble(CUSTOM_REAL)
 
   if (ATTENUATION) then
@@ -306,24 +302,27 @@
   disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
 
 !! DK DK this formula could be made more precise here; currently in some cases it can probably be off by +1 or -1
-  number_of_dumpings_to_do = nint(NSTEP / dble(NT_500_optimal_to_use))
+  number_of_dumpings_to_do = nint(NSTEP / dble(NT_DUMP_optimal_to_use))
 
   print *
   print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
 
   print *
-  print *,'each dumping to store to disk to undo attenuation requires storing ',disk_size_of_each_dumping,' GB per core'
+  print *,'each dumping on the disk to undo attenuation requires storing ',disk_size_of_each_dumping,' GB per core'
 
   print *
-  print *,'ALL dumpings require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+  print *,'ALL dumpings on the disk require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
 
   print *
-  print *,'each dumping to store to disk to undo attenuation requires storing ',disk_size_of_each_dumping*NPROCTOT, &
+  print *,'each dumping on the disk requires storing ',disk_size_of_each_dumping*NPROCTOT, &
                ' GB for all cores'
 
   print *
-  print *,'ALL dumpings require storing (WITHOUT epsilondev) ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT, &
-               ' GB for all cores'
+  print *,'*******************************************************************************'
+  print *,'ALL dumpings on the disk require storing (WITHOUT epsilondev) ', &
+               disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+  print *,'*******************************************************************************'
+  print *
 
 ! convert back from GB
   disk_size_of_each_dumping = disk_size_of_each_dumping * 1.d9
@@ -339,16 +338,20 @@
 ! convert to GB
   disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
 
+!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
+!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
+!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
+!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
   print *
-  print *,'ALL dumpings require storing (WITH epsilondev) ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT, &
-               ' GB for all cores'
+  print *,'ALL dumpings on the disk require storing (WITH epsilondev) ', &
+               disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB to disk for all cores'
 
-#ifdef UNDO_ATT
+#ifndef UNDO_ATT
   print *
-  print *,'******************************************************************************************'
-  print *,'BEWARE, -DUNDO_ATT not used to compile the code, and thus undoing is currently turned off,'
-  print *,'i.e. the above estimates are currently NOT USED.'
-  print *,'******************************************************************************************'
+  print *,'*******************************************************************************'
+  print *,'BEWARE, -DUNDO_ATT not used to compile the code, and thus undoing is currently'
+  print *,'turned off, i.e. the above estimates are currently NOT USED.'
+  print *,'*******************************************************************************'
   print *
 #endif
 

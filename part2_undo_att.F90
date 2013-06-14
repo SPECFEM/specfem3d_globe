@@ -61,12 +61,12 @@
       if(CUSTOM_REAL == SIZE_REAL) then
         time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
 if(UNDO_ATT_WITH_STORE)then
-        time = sngl((dble(NSTEP-(iteration_on_subset*NT_500-it_of_this_subset+1))*DT-t0)*scale_t_inv)
+        time = sngl((dble(NSTEP-(iteration_on_subset*NT_DUMP-it_of_this_subset+1))*DT-t0)*scale_t_inv)
 endif
       else
         time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
 if(UNDO_ATT_WITH_STORE)then
-        time = (dble(NSTEP-(iteration_on_subset*NT_500-it_of_this_subset+1))*DT-t0)*scale_t_inv
+        time = (dble(NSTEP-(iteration_on_subset*NT_DUMP-it_of_this_subset+1))*DT-t0)*scale_t_inv
 endif
       endif
 
@@ -571,7 +571,7 @@ if(UNDO_ATT_WITH_STORE)then
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,iteration_on_subset*NT_500-it_of_this_subset+1, &
+                                islice_selected_source,ispec_selected_source,iteration_on_subset*NT_DUMP-it_of_this_subset+1, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 else
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
@@ -1013,12 +1013,12 @@ endif
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       do irec_local = 1,nrec_local
-        do i = 1,seismo_current/NT_500
-           do j = 1,NT_500/2
+        do i = 1,seismo_current/NT_DUMP
+           do j = 1,NT_DUMP/2
               do k = 1,3
-                seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_500 + j)
-                seismograms(k,irec_local,(i-1)*NT_500 + j)  = seismograms(k,irec_local,(i-1)*NT_500 + (NT_500-j+1))
-                seismograms(k,irec_local,(i-1)*NT_500 + (NT_500-j+1)) = seismograms_temp(k)  
+                seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP + j)
+                seismograms(k,irec_local,(i-1)*NT_DUMP + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1))
+                seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)  
               enddo          
            enddo
         enddo

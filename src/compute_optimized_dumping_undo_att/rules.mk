@@ -29,7 +29,6 @@
 
 compute_optimized_dumping_undo_att_TARGETS = \
 	$E/xcompute_optimized_dumping_undo_att \
-	${OUTPUT}/values_from_mesher.h \
 	$(EMPTY_MACRO)
 
 compute_optimized_dumping_undo_att_OBJECTS = \
@@ -53,17 +52,6 @@ compute_optimized_dumping_undo_att_SHARED_OBJECTS = \
 	$O/rthetaphi_xyz.o \
 	$O/save_header_file.o \
 	$(EMPTY_MACRO)
-
-#######################################
-
-####
-#### Mesher header file
-####
-
-${OUTPUT}/values_from_mesher.h: $E/xcompute_optimized_dumping_undo_att $B/DATA/Par_file
-	@-rm -f $@
-	$E/xcompute_optimized_dumping_undo_att
-	@test -f $@
 
 #######################################
 

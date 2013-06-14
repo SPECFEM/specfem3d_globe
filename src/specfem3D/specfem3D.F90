@@ -2184,8 +2184,8 @@
 !
 !Old part of Dimitri
 !! DK DK  it = 0
-!! DK DK  do iteration_on_subset = 1, NSTEP / NT_500
-!! DK DK    do it_of_this_subset = 1, NT_500
+!! DK DK  do iteration_on_subset = 1, NSTEP / NT_DUMP
+!! DK DK    do it_of_this_subset = 1, NT_DUMP
 !! DK DK
 !! DK DK      it = it + 1
 !! DK DK!     if(myrank == 0) print *,'doing time step ',it
@@ -2218,7 +2218,7 @@
 !New part of ZN
   if(SIMULATION_TYPE == 1)then
     it = 0
-    do iteration_on_subset = 1, NSTEP / NT_500
+    do iteration_on_subset = 1, NSTEP / NT_DUMP
       if(SAVE_FORWARD)then
         call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
@@ -2229,7 +2229,7 @@
                     A_array_rotation,B_array_rotation,LOCAL_PATH,iteration_on_subset)
       endif
 
-      do it_of_this_subset = 1, NT_500
+      do it_of_this_subset = 1, NT_DUMP
 
         it = it + 1
 
@@ -2247,9 +2247,9 @@
 !ZN  !ZN we need to be careful to arrange this part
 
     it = 0
-    do iteration_on_subset = 1, NSTEP / NT_500
+    do iteration_on_subset = 1, NSTEP / NT_DUMP
 
-      do it_of_this_subset = 1, NT_500
+      do it_of_this_subset = 1, NT_DUMP
 
         it = it + 1
 
@@ -2273,18 +2273,18 @@
    UNDO_ATT_WITH_STORE = .true.
 #endif
 
-    allocate(displ_crust_mantle_store_as_bwf(NDIM,NGLOB_CRUST_MANTLE,NT_500),stat=ier)
+    allocate(displ_crust_mantle_store_as_bwf(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_as_bwf')
-    allocate(displ_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_500),stat=ier)
+    allocate(displ_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
-    allocate(accel_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_500),stat=ier)
+    allocate(accel_outer_core_store_store_as_bwf(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_as_bwf')
-    allocate(displ_inner_core_store_as_bwf(NDIM,NGLOB_INNER_CORE,NT_500),stat=ier)
+    allocate(displ_inner_core_store_as_bwf(NDIM,NGLOB_INNER_CORE,NT_DUMP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_inner_core_store_as_bwf')
 
     it = 0
 
-    do iteration_on_subset = 1, NSTEP / NT_500
+    do iteration_on_subset = 1, NSTEP / NT_DUMP
 
        call read_forward_arrays_undoatt(myrank, &
                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
@@ -2292,12 +2292,12 @@
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_500-iteration_on_subset+1)
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_DUMP-iteration_on_subset+1)
 
       it_temp = it 
       seismo_current_temp = seismo_current
 
-      do it_of_this_subset = 1, NT_500
+      do it_of_this_subset = 1, NT_DUMP
 
         it = it + 1
         seismo_current = seismo_current + 1
@@ -2313,21 +2313,21 @@
       it = it_temp
       seismo_current = seismo_current_temp
 
-      do it_of_this_subset = 1, NT_500
+      do it_of_this_subset = 1, NT_DUMP
         do i = 1, NDIM
           do j =1,NGLOB_CRUST_MANTLE_ADJOINT
-            b_displ_crust_mantle(i,j) = displ_crust_mantle_store_as_bwf(i,j,NT_500-it_of_this_subset+1)
+            b_displ_crust_mantle(i,j) = displ_crust_mantle_store_as_bwf(i,j,NT_DUMP-it_of_this_subset+1)
           enddo
         enddo
 
         do j =1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = displ_outer_core_store_store_as_bwf(j,NT_500-it_of_this_subset+1)
-            b_accel_outer_core(j) = accel_outer_core_store_store_as_bwf(j,NT_500-it_of_this_subset+1)
+            b_displ_outer_core(j) = displ_outer_core_store_store_as_bwf(j,NT_DUMP-it_of_this_subset+1)
+            b_accel_outer_core(j) = accel_outer_core_store_store_as_bwf(j,NT_DUMP-it_of_this_subset+1)
         enddo
 
         do i = 1, NDIM
           do j =1,NGLOB_INNER_CORE_ADJOINT
-            b_displ_inner_core(i,j) = displ_inner_core_store_as_bwf(i,j,NT_500-it_of_this_subset+1)
+            b_displ_inner_core(i,j) = displ_inner_core_store_as_bwf(i,j,NT_DUMP-it_of_this_subset+1)
           enddo
         enddo
 
