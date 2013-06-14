@@ -123,8 +123,7 @@
 !
 !=====================================================================
 
-  subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
-                    NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
+  subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
@@ -142,7 +141,7 @@
 
   integer SIMULATION_TYPE
   logical SAVE_FORWARD
-  integer NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
+  integer NUMBER_OF_RUNS
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle

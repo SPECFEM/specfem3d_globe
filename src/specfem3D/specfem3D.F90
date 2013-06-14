@@ -2220,8 +2220,7 @@
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_500
       if(SAVE_FORWARD)then
-        call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
-                    NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
+        call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
