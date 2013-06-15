@@ -80,6 +80,6 @@ $(compute_optimized_dumping_undo_att_OBJECTS): S := ${S_TOP}/src/compute_optimiz
 ## compute_optimized_dumping_undo_att objects
 ##
 
-$O/compute_optimized_dumping_undo_att.o: $S/compute_optimized_dumping_undo_att.F90
-	${FCCOMPILE_CHECK} -c -o $O/compute_optimized_dumping_undo_att.o ${FCFLAGS_f90} $S/compute_optimized_dumping_undo_att.F90
+$O/compute_optimized_dumping_undo_att.o: $S/compute_optimized_dumping_undo_att.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_optimized_dumping_undo_att.o ${FCFLAGS_f90} $S/compute_optimized_dumping_undo_att.f90
 

@@ -346,14 +346,14 @@
   print *,'ALL dumpings on the disk require storing (WITH epsilondev) ', &
                disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB to disk for all cores'
 
-#ifndef UNDO_ATT
-  print *
-  print *,'*******************************************************************************'
-  print *,'BEWARE, -DUNDO_ATT not used to compile the code, and thus undoing is currently'
-  print *,'turned off, i.e. the above estimates are currently NOT USED.'
-  print *,'*******************************************************************************'
-  print *
-#endif
+  if(.not. UNDO_ATT) then
+    print *
+    print *,'*******************************************************************************'
+    print *,'BEWARE, UNDO_ATT is .false. and thus undoing is currently'
+    print *,'turned off, i.e. the above estimates are currently NOT USED.'
+    print *,'*******************************************************************************'
+    print *
+  endif
 
   end program xcompute_optimized_dumping
 

@@ -925,7 +925,6 @@
 
   integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
   integer :: it_temp,seismo_current_temp
-  logical :: UNDO_ATT_WITH_STORE
   real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
@@ -1871,12 +1870,12 @@
                     two_omega_earth,A_array_rotation,B_array_rotation, &
                     b_two_omega_earth, SIMULATION_TYPE)
 
-#ifdef UNDO_ATT
+  if(UNDO_ATT) then
    b_deltat = deltat
    b_deltatover2 = deltatover2
    b_deltatsqover2 = deltatsqover2
    b_two_omega_earth = two_omega_earth
-#endif
+  endif
 
   ! precomputes gravity factors
   call prepare_timerun_gravity(myrank, &
@@ -1903,11 +1902,11 @@
                 alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
                 deltat,b_deltat,LOCAL_PATH)
 
-#ifdef UNDO_ATT
+  if(UNDO_ATT) then
    b_alphaval = alphaval
    b_betaval = betaval
    b_gammaval = gammaval
-#endif
+  endif
 
   endif
 
@@ -2039,8 +2038,8 @@
   ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
   !          will be read in the time loop after the Newmark time scheme update.
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
-#ifdef UNDO_ATT
-  if(NUMBER_OF_THIS_RUN > 1) stop 'currently we do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATT'
+if(UNDO_ATT) then
+  if(NUMBER_OF_THIS_RUN > 1) stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATT'
   ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
@@ -2054,7 +2053,7 @@
     ! Last run may be a bit larger
     it_end = NSTEP
   endif
-#else
+else
   call read_forward_arrays_startrun(myrank,NSTEP, &
                     SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     it_begin,it_end, &
@@ -2070,7 +2069,7 @@
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
-#endif
+endif
 
 
   ! NOISE TOMOGRAPHY
@@ -2146,7 +2145,7 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-#ifndef UNDO_ATT
+if(.not. UNDO_ATT) then
 
   do it = it_begin,it_end
 
@@ -2157,65 +2156,32 @@
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
-    include "part1_classical.F90"
+    include "part1_classical.f90"
 
 !! DK DK
 !! DK DK this first part handles the case SIMULATION_TYPE == 3
 !! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
 !! DK DK
-    include "part2_classical.F90"
+    include "part2_classical.f90"
 
 !! DK DK empty file for now
-    include "part3_kernel_computation.F90"
+    include "part3_kernel_computation.f90"
 
 !
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
 
-! ifdef UNDO_ATT
-#else
+else ! if UNDO_ATT
 
 !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
-  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using compile flag UNDO_ATT'
+  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATT'
 
 !
 !-------------------------------------------------------------------------------
 !
-!Old part of Dimitri
-!! DK DK  it = 0
-!! DK DK  do iteration_on_subset = 1, NSTEP / NT_DUMP
-!! DK DK    do it_of_this_subset = 1, NT_DUMP
-!! DK DK
-!! DK DK      it = it + 1
-!! DK DK!     if(myrank == 0) print *,'doing time step ',it
-!! DK DK
-!! DK DK    ! update position in seismograms
-!! DK DK    seismo_current = seismo_current + 1
-!! DK DK
-!! DK DK!! DK DK
-!! DK DK!! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
-!! DK DK!! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
-!! DK DK!! DK DK
-!! DK DK    include "part1_undo_att.F90"
-!! DK DK
-!! DK DK!! DK DK
-!! DK DK!! DK DK this first part handles the case SIMULATION_TYPE == 3
-!! DK DK!! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
-!! DK DK!! DK DK
-!! DK DK    include "part2_undo_att.F90"
-!! DK DK
-!! DK DK    include "part3_kernel_computation.F90"
-!! DK DK
-!!! DK DK
-!! DK DK!---- end of time iteration loop
-!! DK DK!
-!! DK DK    enddo
-!! DK DK  enddo   ! end of main time loop
-!
-!-------------------------------------------------------------------------------
-!
-!New part of ZN
+
+! New part of ZN
   if(SIMULATION_TYPE == 1)then
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_DUMP
@@ -2235,7 +2201,7 @@
 
         seismo_current = seismo_current + 1
 
-        include "part1_undo_att.F90"
+        include "part1_undo_att.f90"
 
       enddo
     enddo 
@@ -2255,7 +2221,7 @@
 
         seismo_current = seismo_current + 1
 
-        include "part1_undo_att.F90"
+        include "part1_undo_att.f90"
 
         ! save source derivatives for adjoint simulations
         if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
@@ -2268,10 +2234,6 @@
   endif
 
   if(SIMULATION_TYPE == 3)then
-
-#ifdef UNDO_ATT
-   UNDO_ATT_WITH_STORE = .true.
-#endif
 
     allocate(displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_buffer')
@@ -2301,7 +2263,7 @@
 
         it = it + 1
         seismo_current = seismo_current + 1
-        include "part2_undo_att.F90"
+        include "part2_undo_att.f90"
 
         displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
         displ_outer_core_store_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
@@ -2335,7 +2297,7 @@
 
         seismo_current = seismo_current + 1
 
-        include "part1_undo_att.F90"
+        include "part1_undo_att.f90"
 
         call compute_strain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                                         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
@@ -2361,14 +2323,14 @@
                                        gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
                                        b_epsilondev_inner_core,b_eps_trace_over_3_inner_core)
 
-        include "part3_kernel_computation.F90"
+        include "part3_kernel_computation.f90"
 
       enddo
 
     enddo   ! end of main time loop
   endif
 
-#endif
+endif
 
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -2376,7 +2338,9 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
-  !ZN need to be remove for undoing att
+
+  !ZN need to be removed for undoing att
+
   ! synchronize all processes, waits until all processes have written their seismograms
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize after time loop')
@@ -2452,11 +2416,9 @@
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize closing snapshots')
 
-#ifdef UNDO_ATT
   !ZN we move this part of code inside the time loop above
-#else
   ! save files to local disk or tape system if restart file
-  call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+  if(.not. UNDO_ATT) call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
@@ -2464,7 +2426,6 @@
                     R_memory_crust_mantle,R_memory_inner_core, &
                     epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH)
-#endif
 
   ! synchronize all processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
