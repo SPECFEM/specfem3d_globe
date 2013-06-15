@@ -1635,7 +1635,7 @@
   endif ! nrec_local
 
   ! write the current or final seismograms
-if(UNDO_ATT)then
+if(undo_att_sim_type_3)then
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &

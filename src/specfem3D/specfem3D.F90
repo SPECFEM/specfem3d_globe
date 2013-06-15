@@ -926,8 +926,11 @@
   integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
   integer :: it_temp,seismo_current_temp
   real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
+  logical :: undo_att_sim_type_3
 
   include "declaration_part_for_backward_wavefield_simulation.f90"
+
+  undo_att_sim_type_3 = .false.
   
 
 ! *************************************************
@@ -2234,6 +2237,8 @@ else ! if UNDO_ATT
   endif
 
   if(SIMULATION_TYPE == 3)then
+
+    undo_att_sim_type_3 = .true.
 
     allocate(displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_buffer')
