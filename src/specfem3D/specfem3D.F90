@@ -2217,7 +2217,6 @@ else ! if UNDO_ATT
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
-                    epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH,iteration_on_subset)
       endif
 
@@ -2281,7 +2280,6 @@ else ! if UNDO_ATT
                     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_DUMP-iteration_on_subset+1)
 
       it_temp = it 

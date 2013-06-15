@@ -128,7 +128,6 @@
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
-                    epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation, &
                     LOCAL_PATH,iteration_on_subset)
 
@@ -152,12 +151,8 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
     R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-    epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
-    epsilondev_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
     A_array_rotation,B_array_rotation
@@ -186,8 +181,6 @@
     write(55) displ_outer_core
     write(55) veloc_outer_core
     write(55) accel_outer_core
-    write(55) epsilondev_crust_mantle
-    write(55) epsilondev_inner_core
     if (ROTATION_VAL) then
       write(55) A_array_rotation
       write(55) B_array_rotation

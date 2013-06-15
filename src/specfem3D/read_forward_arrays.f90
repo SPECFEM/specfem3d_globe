@@ -291,8 +291,6 @@
   read(55) b_displ_outer_core
   read(55) b_veloc_outer_core
   read(55) b_accel_outer_core
-  read(55) b_epsilondev_crust_mantle
-  read(55) b_epsilondev_inner_core
   if (ROTATION_VAL) then
     read(55) b_A_array_rotation
     read(55) b_B_array_rotation
