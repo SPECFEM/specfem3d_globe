@@ -2416,7 +2416,6 @@ endif
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize closing snapshots')
 
-  !ZN we move this part of code inside the time loop above
   ! save files to local disk or tape system if restart file
   if(.not. UNDO_ATT) call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
