@@ -1616,16 +1616,17 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
+        eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
+        epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
+        epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
+        epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+        epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+        epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
       enddo
     enddo
   enddo
 
-  eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
-  epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
-  epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
-  epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-  epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-  epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
 
  end subroutine compute_element_strain_undo_att_Dev
 
@@ -1798,16 +1799,18 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
+        templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
+        epsilondev_loc_nplus1(1,i,j,k) = duxdxl - templ
+        epsilondev_loc_nplus1(2,i,j,k) = duydyl - templ
+        epsilondev_loc_nplus1(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+        epsilondev_loc_nplus1(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+        epsilondev_loc_nplus1(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
       enddo
     enddo
   enddo
 
-  templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
-  epsilondev_loc_nplus1(1,i,j,k) = duxdxl - templ
-  epsilondev_loc_nplus1(2,i,j,k) = duydyl - templ
-  epsilondev_loc_nplus1(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-  epsilondev_loc_nplus1(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-  epsilondev_loc_nplus1(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
 
  end subroutine compute_element_strain_att_Dev
 !=====================================================================
