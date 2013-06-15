@@ -319,32 +319,10 @@
 
   print *
   print *,'*******************************************************************************'
-  print *,'ALL dumpings on the disk require storing (WITHOUT epsilondev) ', &
+  print *,'ALL dumpings on the disk require storing ', &
                disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
   print *,'*******************************************************************************'
   print *
-
-! convert back from GB
-  disk_size_of_each_dumping = disk_size_of_each_dumping * 1.d9
-
-! epsilondev_crust_mantle
-  disk_size_of_each_dumping = disk_size_of_each_dumping + &
-      5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
-
-! epsilondev_inner_core
-  disk_size_of_each_dumping = disk_size_of_each_dumping + &
-      5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
-
-! convert to GB
-  disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
-
-!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
-!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
-!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
-!! DK DK remove this tomorrow if Zhinan confirms that it is OK to do so
-  print *
-  print *,'ALL dumpings on the disk require storing (WITH epsilondev) ', &
-               disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB to disk for all cores'
 
   if(.not. UNDO_ATT) then
     print *
