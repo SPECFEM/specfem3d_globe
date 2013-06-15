@@ -958,8 +958,6 @@
   real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
   logical :: undo_att_sim_type_3
 
-  include "declaration_part_for_backward_wavefield_simulation.f90"
-
   undo_att_sim_type_3 = .false.
   
 
