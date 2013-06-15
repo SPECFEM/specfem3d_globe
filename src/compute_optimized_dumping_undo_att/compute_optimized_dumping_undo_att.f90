@@ -218,7 +218,7 @@
   read(*,*) gigabytes_avail_per_core
 
   if(gigabytes_avail_per_core < 0.1d0) stop 'less than 100 MB per core does not seem realistic; exiting...'
-  if(gigabytes_avail_per_core > 32.d0) stop 'more than 32 GB per core does not seem realistic; exiting...'
+  if(gigabytes_avail_per_core > 100.d0) stop 'more than 100 GB per core does not seem realistic; exiting...'
 
   print *
   print *,'What percentage of this total do you allow us to use, keeping in mind that you'
