@@ -47,8 +47,9 @@
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
-          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
+!ZN          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
+          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
+          alphaval,betaval,gammaval,factor_common, &
           vx,vy,vz,vnspec)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
@@ -57,12 +58,14 @@
 
   include "constants.h"
 
+  real(kind=CUSTOM_REAL) deltat 
+
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core,veloc_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
@@ -82,8 +85,8 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -143,6 +146,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1 !ZN
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
@@ -152,7 +156,7 @@
 
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3,templ
+  real(kind=CUSTOM_REAL) fac1,fac2,fac3
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) kappal
 
@@ -170,7 +174,7 @@
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
   integer :: int_radius
-  integer :: ispec,ispec_strain
+  integer :: ispec
   integer :: i,j,k
   integer :: iglob1
 
@@ -404,21 +408,21 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            ! compute deviatoric strain
-            if (COMPUTE_AND_STORE_STRAIN) then
-              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-                ispec_strain = 1
-              else
-                ispec_strain = ispec
-              endif
-              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              epsilondev_loc(1,i,j,k) = duxdxl - templ
-              epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-            endif
+!ZN            ! compute deviatoric strain
+!ZN            if (COMPUTE_AND_STORE_STRAIN) then
+!ZN              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+!ZN                ispec_strain = 1
+!ZN              else
+!ZN                ispec_strain = ispec
+!ZN              endif
+!ZN              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+!ZN              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+!ZN              epsilondev_loc(1,i,j,k) = duxdxl - templ
+!ZN              epsilondev_loc(2,i,j,k) = duydyl - templ
+!ZN              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+!ZN              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+!ZN              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+!ZN            endif
 
             if(ATTENUATION_VAL) then
               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
@@ -747,19 +751,24 @@
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
 
+        call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
+                                            veloc_inner_core,deltat,ibool,hprime_xx,hprime_xxT,&
+                                            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
         ! updates R_memory
         call compute_element_att_memory_ic(ispec,R_memory, &
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
-                                      epsilondev,epsilondev_loc)
+!ZN                                      epsilondev,epsilondev_loc)
+                                      epsilondev_loc_nplus1,epsilondev_loc) !ZN
+
 
       endif
 
-      ! save deviatoric strain for Runge-Kutta scheme
-      if(COMPUTE_AND_STORE_STRAIN) then
-        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-      endif
+!ZN      ! save deviatoric strain for Runge-Kutta scheme
+!ZN      if(COMPUTE_AND_STORE_STRAIN) then
+!ZN        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+!ZN      endif
 
     endif   ! end test to exclude fictitious elements in central cube
 

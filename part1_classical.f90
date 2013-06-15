@@ -64,10 +64,22 @@
 ! do *NOT* use array syntax for that loop, otherwise you will get a compiler error when MOVIE_VOLUME is off
 ! because the shape of the arrays will not match (due to some arrays purposely declared with a dummy size of 1)
       do ispec = 1,NSPEC_CRUST_MANTLE
+        call compute_element_strain_undo_att_noDev(ispec,nglob_crust_mantle,nspec_crust_mantle,&
+                                              displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+                                              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+                                              etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
+                                              epsilondev_loc_crust_mantle,eps_trace_over_3_loc_crust_mantle)
         Iepsilondev_crust_mantle(:,:,:,:,ispec) = Iepsilondev_crust_mantle(:,:,:,:,ispec)  &
-                                              + deltat*epsilondev_crust_mantle(:,:,:,:,ispec)
+                                              + deltat*epsilondev_loc_crust_mantle(:,:,:,:)
         Ieps_trace_over_3_crust_mantle(:,:,:,ispec) = Ieps_trace_over_3_crust_mantle(:,:,:,ispec) &
-                                              + deltat*eps_trace_over_3_crust_mantle(:,:,:,ispec)
+                                              + deltat*eps_trace_over_3_loc_crust_mantle(:,:,:)
+
+!ZN
+!ZN        Iepsilondev_crust_mantle(:,:,:,:,ispec) = Iepsilondev_crust_mantle(:,:,:,:,ispec)  &
+!ZN                                              + deltat*epsilondev_crust_mantle(:,:,:,:,ispec)
+!ZN        Ieps_trace_over_3_crust_mantle(:,:,:,ispec) = Ieps_trace_over_3_crust_mantle(:,:,:,ispec) &
+!ZN                                              + deltat*eps_trace_over_3_crust_mantle(:,:,:,ispec)
       enddo
     endif
 
@@ -76,7 +88,7 @@
     ! and output timestamp file to check that simulation is running fine
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
       call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+!ZN                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
 !!!!! DK DK UNDO_ATT                          SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           1,OUTPUT_FILES,time_start,DT,t0,NSTEP, &  !!!!! DK DK UNDO_ATT
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
@@ -558,8 +570,9 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle, &
-          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          R_memory_crust_mantle,epsilondev_crust_mantle, &
+!ZN          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, & !ZN
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -599,8 +612,9 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle, &
-          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          R_memory_crust_mantle,epsilondev_crust_mantle, &
+!ZN          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, & !ZN
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -727,8 +741,9 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+!ZN          one_minus_sum_beta_inner_core, &
+          R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core,& !ZN
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -761,8 +776,9 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+!ZN          one_minus_sum_beta_inner_core, &
+          R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -1095,8 +1111,9 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle, &
-          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          R_memory_crust_mantle,epsilondev_crust_mantle, &
+!ZN          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -1136,8 +1153,9 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle, &
-          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          R_memory_crust_mantle,epsilondev_crust_mantle, &
+!ZN          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, & !ZN
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -1172,8 +1190,9 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+!ZN          one_minus_sum_beta_inner_core, &
+          R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -1206,8 +1225,9 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+!ZN          one_minus_sum_beta_inner_core, &
+          R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -1609,7 +1629,7 @@
 
     else if (SIMULATION_TYPE == 2) then
       call compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
-                    eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+!ZN                    eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                     hxir_store,hetar_store,hgammar_store, &
                     hpxir_store,hpetar_store,hpgammar_store, &
@@ -1959,9 +1979,14 @@
       if (MOVIE_VOLUME_TYPE == 1) then  ! output strains
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
-                    muvstore_crust_mantle_3dmovie, &
-                    mask_3dmovie,nu_3dmovie)
+!ZN                    it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+!ZN                    muvstore_crust_mantle_3dmovie, &
+                    it,muvstore_crust_mantle_3dmovie, &
+                    mask_3dmovie,nu_3dmovie,& !ZN
+                    NSPEC_CRUST_MANTLE,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+                    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+                    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle) !ZN
 
       else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then
         ! output the Time Integral of Strain, or \mu*TIS
@@ -1972,16 +1997,17 @@
                     mask_3dmovie,nu_3dmovie)
 
       else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
-        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
-                        div_displ_outer_core, &
-                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
-                        eps_trace_over_3_inner_core, &
-                        epsilondev_crust_mantle,epsilondev_inner_core, &
-                        LOCAL_PATH, &
-                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                        accel_crust_mantle,accel_inner_core, &
-                        ibool_crust_mantle,ibool_inner_core)
+!ZN for undo_att this type of MOVIE is not supported 
+!ZN        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
+!ZN                        div_displ_outer_core, &
+!ZN                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
+!ZN                        eps_trace_over_3_inner_core, &
+!ZN                        epsilondev_crust_mantle,epsilondev_inner_core, &
+!ZN                        LOCAL_PATH, &
+!ZN                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
+!ZN                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+!ZN                        accel_crust_mantle,accel_inner_core, &
+!ZN                        ibool_crust_mantle,ibool_inner_core)
 
       else if (MOVIE_VOLUME_TYPE == 5) then ! output displacement
         scalingval = scale_displ
@@ -2004,4 +2030,5 @@
       endif ! MOVIE_VOLUME_TYPE
     endif
   endif ! MOVIE_VOLUME
+
 

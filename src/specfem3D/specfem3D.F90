@@ -395,23 +395,25 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: epsilondev_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
 
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: b_R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_eps_trace_over_3_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_epsilondev_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_eps_trace_over_3_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: b_R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_eps_trace_over_3_inner_core
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_epsilondev_inner_core
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_eps_trace_over_3_inner_core
 
 ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
@@ -2032,16 +2034,16 @@
   endif
 
   ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
-  eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-  eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-  if(FIX_UNDERFLOW_PROBLEM) then
-    eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-    eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
-    epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
-  endif
+!ZN  eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+!ZN  epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+!ZN  eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+!ZN  epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+!ZN  if(FIX_UNDERFLOW_PROBLEM) then
+!ZN    eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
+!ZN    epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+!ZN    eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
+!ZN    epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
+!ZN  endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
@@ -2087,13 +2089,13 @@ else
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
-                    epsilondev_crust_mantle,epsilondev_inner_core, &
+!ZN                    epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation, &
                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
+!ZN                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
 endif
 
@@ -2233,7 +2235,6 @@ else ! if UNDO_ATT
 
   if(SIMULATION_TYPE == 2)then
    !!add this part
-!ZN  !ZN we need to be careful to arrange this part
 
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_DUMP
@@ -2245,12 +2246,6 @@ else ! if UNDO_ATT
         seismo_current = seismo_current + 1
 
         include "part1_undo_att.f90"
-
-        ! save source derivatives for adjoint simulations
-        if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
-          call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
-        endif
 
       enddo
     enddo 
@@ -2323,29 +2318,29 @@ else ! if UNDO_ATT
 
         include "part1_undo_att.f90"
 
-        call compute_strain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
-                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
-                                        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                        epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
+!ZN        call compute_strain_crust_mantle(displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+!ZN                                         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+!ZN                                         etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+!ZN                                         gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!ZN                                         epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
 
-        call compute_strain_crust_mantle(b_displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
-                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
-                                        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                        b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle)
+!ZN         call compute_strain_crust_mantle(b_displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+!ZN                                         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+!ZN                                         etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+!ZN                                         gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!ZN                                         b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle)
 
-        call  compute_strain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
-                                       xix_inner_core,xiy_inner_core,xiz_inner_core,&
-                                       etax_inner_core,etay_inner_core,etaz_inner_core,&
-                                       gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                       epsilondev_inner_core,eps_trace_over_3_inner_core)
+!ZN         call  compute_strain_inner_core(displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
+!ZN                                        xix_inner_core,xiy_inner_core,xiz_inner_core,&
+!ZN                                        etax_inner_core,etay_inner_core,etaz_inner_core,&
+!ZN                                        gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!ZN                                        epsilondev_inner_core,eps_trace_over_3_inner_core)
 
-        call  compute_strain_inner_core(b_displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
-                                       xix_inner_core,xiy_inner_core,xiz_inner_core,&
-                                       etax_inner_core,etay_inner_core,etaz_inner_core,&
-                                       gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                       b_epsilondev_inner_core,b_eps_trace_over_3_inner_core)
+!ZN         call  compute_strain_inner_core(b_displ_inner_core,hprime_xx,hprime_yy,hprime_zz,ibool_inner_core,&
+!ZN                                        xix_inner_core,xiy_inner_core,xiz_inner_core,&
+!ZN                                        etax_inner_core,etay_inner_core,etaz_inner_core,&
+!ZN                                        gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!ZN                                        b_epsilondev_inner_core,b_eps_trace_over_3_inner_core)
 
         include "part3_kernel_computation.f90"
 
@@ -2447,7 +2442,7 @@ endif
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
-                    epsilondev_crust_mantle,epsilondev_inner_core, &
+!ZN                    epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH)
 
   ! synchronize all processes

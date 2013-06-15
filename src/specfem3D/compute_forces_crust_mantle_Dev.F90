@@ -52,7 +52,8 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
+!ZN          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
+          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
@@ -66,7 +67,8 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL) deltat  
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle,veloc_crust_mantle
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
@@ -101,8 +103,8 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer :: vx,vy,vz,vnspec
 
@@ -158,6 +160,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1 !ZN
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
@@ -411,7 +414,8 @@
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+!ZN                    R_memory,epsilon_trace_over_3, &
+                    R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -425,7 +429,8 @@
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+!ZN                    R_memory,epsilon_trace_over_3, &
+                    R_memory, & !ZN
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -438,7 +443,8 @@
                     wgll_cube, &
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+!ZN                    R_memory,epsilon_trace_over_3, &
+                    R_memory, & !ZN
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -562,19 +568,23 @@
 
     if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
 
+      call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
+                                          deltat,ibool,hprime_xx,hprime_xxT,&
+                                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
       ! updates R_memory
       call compute_element_att_memory_cr(ispec,R_memory, &
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       c44store,muvstore, &
-                                      epsilondev,epsilondev_loc)
+!ZN                                      epsilondev,epsilondev_loc)
+                                      epsilondev_loc_nplus1,epsilondev_loc)
 
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) then
-      epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-    endif
+!ZN    if(COMPUTE_AND_STORE_STRAIN) then
+!ZN      epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+!ZN    endif
 ! end ispec loop
    enddo
 !$OMP enddo

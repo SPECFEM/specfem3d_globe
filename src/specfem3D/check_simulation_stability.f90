@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+!ZN                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
 
@@ -45,10 +45,10 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
-    eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
-    epsilondev_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
+!ZN    eps_trace_over_3_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
+!ZN    epsilondev_crust_mantle
 
   integer SIMULATION_TYPE
   character(len=150) OUTPUT_FILES
@@ -58,7 +58,7 @@
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,strain2_norm,strain2_norm_all
+!ZN  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,strain2_norm,strain2_norm_all
   ! names of the data files for all the processors in MPI
   character(len=150) outputname
   ! timer MPI
@@ -101,14 +101,14 @@
   call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                       MPI_COMM_WORLD,ier)
 
-  if (COMPUTE_AND_STORE_STRAIN) then
-    Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
-    strain2_norm= maxval(abs(epsilondev_crust_mantle))
-    call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
-    call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-             MPI_COMM_WORLD,ier)
-  endif
+!ZN  if (COMPUTE_AND_STORE_STRAIN) then
+!ZN    Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
+!ZN    strain2_norm= maxval(abs(epsilondev_crust_mantle))
+!ZN    call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
+!ZN             MPI_COMM_WORLD,ier)
+!ZN    call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
+!ZN             MPI_COMM_WORLD,ier)
+!ZN  endif
 
   if(myrank == 0) then
 
@@ -127,10 +127,10 @@
 
 !! DK DK UNDO_ATT
 !   if(COMPUTE_AND_STORE_STRAIN) then
-    if(SIMULATION_TYPE == 1 .and. COMPUTE_AND_STORE_STRAIN) then
-      write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
-      write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
-    endif
+!ZN    if(SIMULATION_TYPE == 1 .and. COMPUTE_AND_STORE_STRAIN) then
+!ZN      write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
+!ZN      write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
+!ZN    endif
 
     ! information about the current run only
     SHOW_SEPARATE_RUN_INFORMATION = NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS

@@ -39,8 +39,11 @@
     ! and output timestamp file to check that simulation is running fine
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
       if (SIMULATION_TYPE == 3) then
+!ZN        call check_simulation_stability(it,b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
+!ZN                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+!ZN                          SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
+!ZN                          it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
         call check_simulation_stability(it,b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
-                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
       endif
@@ -378,8 +381,9 @@ endif
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
+!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -419,8 +423,9 @@ endif
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
+!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -456,8 +461,8 @@ endif
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -490,8 +495,8 @@ endif
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -736,8 +741,9 @@ endif
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
+!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -777,8 +783,9 @@ endif
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
+!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
@@ -813,8 +820,8 @@ endif
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -847,8 +854,8 @@ endif
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
@@ -964,7 +971,7 @@ if(.not. UNDO_ATT)then
                     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
+!ZN                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
     endif
 endif

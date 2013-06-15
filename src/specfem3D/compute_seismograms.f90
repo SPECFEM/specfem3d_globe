@@ -191,7 +191,7 @@
 !
 
   subroutine compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
-                    eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+!ZN                    eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                     hxir_store,hetar_store,hgammar_store, &
                     hpxir_store,hpetar_store,hpgammar_store, &
@@ -213,10 +213,10 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
-    eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-    epsilondev_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
+!ZN    eps_trace_over_3_crust_mantle
+!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
+!ZN    epsilondev_crust_mantle
 
   double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
@@ -266,6 +266,9 @@
 
   double precision, external :: comp_source_time_function
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
+
   do irec_local = 1,nrec_local
 
     ! get global number of that receiver
@@ -284,6 +287,13 @@
     dxz = ZERO
     dyz = ZERO
 
+    call compute_element_strain_undo_att_noDev(ispec_selected_source(irec),NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+                                               displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
+                                               xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                               etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                               gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
+                                               epsilondev_loc_crust_mantle,eps_trace_over_3_loc_crust_mantle)
+
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -296,12 +306,19 @@
           uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
           uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
-          eps_trace = eps_trace + dble(eps_trace_over_3_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-          dxx = dxx + dble(epsilondev_crust_mantle(1,i,j,k,ispec_selected_source(irec)))*hlagrange
-          dyy = dyy + dble(epsilondev_crust_mantle(2,i,j,k,ispec_selected_source(irec)))*hlagrange
-          dxy = dxy + dble(epsilondev_crust_mantle(3,i,j,k,ispec_selected_source(irec)))*hlagrange
-          dxz = dxz + dble(epsilondev_crust_mantle(4,i,j,k,ispec_selected_source(irec)))*hlagrange
-          dyz = dyz + dble(epsilondev_crust_mantle(5,i,j,k,ispec_selected_source(irec)))*hlagrange
+!ZN           eps_trace = eps_trace + dble(eps_trace_over_3_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
+!ZN           dxx = dxx + dble(epsilondev_crust_mantle(1,i,j,k,ispec_selected_source(irec)))*hlagrange
+!ZN           dyy = dyy + dble(epsilondev_crust_mantle(2,i,j,k,ispec_selected_source(irec)))*hlagrange
+!ZN           dxy = dxy + dble(epsilondev_crust_mantle(3,i,j,k,ispec_selected_source(irec)))*hlagrange
+!ZN           dxz = dxz + dble(epsilondev_crust_mantle(4,i,j,k,ispec_selected_source(irec)))*hlagrange
+!ZN           dyz = dyz + dble(epsilondev_crust_mantle(5,i,j,k,ispec_selected_source(irec)))*hlagrange
+
+          eps_trace = eps_trace + dble(eps_trace_over_3_loc_crust_mantle(i,j,k))*hlagrange
+          dxx = dxx + dble(epsilondev_loc_crust_mantle(1,i,j,k))*hlagrange
+          dyy = dyy + dble(epsilondev_loc_crust_mantle(2,i,j,k))*hlagrange
+          dxy = dxy + dble(epsilondev_loc_crust_mantle(3,i,j,k))*hlagrange
+          dxz = dxz + dble(epsilondev_loc_crust_mantle(4,i,j,k))*hlagrange
+          dyz = dyz + dble(epsilondev_loc_crust_mantle(5,i,j,k))*hlagrange
 
           displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
 
