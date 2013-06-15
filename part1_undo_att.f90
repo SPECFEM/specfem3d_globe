@@ -1,10 +1,5 @@
 
 !! DK DK
-!! DK DK this should be written in the future, starting from a copy of part1_classical.f90 once part1_classical.f90 is debugged
-!! DK DK
-
-
-!! DK DK
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
@@ -1640,7 +1635,7 @@
   endif ! nrec_local
 
   ! write the current or final seismograms
-if(UNDO_ATT_WITH_STORE)then
+if(UNDO_ATT)then
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &

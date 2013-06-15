@@ -1,8 +1,4 @@
 
-!! DK DK
-!! DK DK this should be written in the future, starting from a copy of part1_classical.f90 once part1_classical.f90 is debugged
-!! DK DK
-
     ! Newmark time scheme update
 
     ! mantle
@@ -449,7 +445,7 @@
                                 islice_selected_source,ispec_selected_source,NSTEP-(iteration_on_subset*NT_DUMP-it_of_this_subset), &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
-if(.not. UNDO_ATT_WITH_STORE)then
+if(.not. UNDO_ATT)then
     if ( NOISE_TOMOGRAPHY == 3 ) then
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
@@ -793,7 +789,7 @@ endif
   endif ! nrec_local
 
   ! write the current or final seismograms
-if(UNDO_ATT_WITH_STORE)then
+if(UNDO_ATT)then
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     do irec_local = 1,nrec_local
       do i = 1,seismo_current/NT_DUMP
@@ -801,8 +797,8 @@ if(UNDO_ATT_WITH_STORE)then
             do k = 1,3
               seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP + j)
               seismograms(k,irec_local,(i-1)*NT_DUMP + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1))
-              seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)  
-            enddo          
+              seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)
+            enddo
          enddo
       enddo
     enddo
