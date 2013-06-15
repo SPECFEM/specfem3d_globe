@@ -140,7 +140,9 @@
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,&
          SAVE_REGULAR_KL)
 
-  if(SIMULATION_TYPE /= 3) stop 'optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file'
+! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
+! thus set it to that value here in this serial code even if it has a different value in the Par_file
+  SIMULATION_TYPE = 3
 
 ! count the total number of sources in the CMTSOLUTION file
   call count_number_of_sources(NSOURCES)
@@ -321,6 +323,7 @@
   print *,'*******************************************************************************'
   print *,'ALL dumpings on the disk require storing ', &
                disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+  print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
   print *,'*******************************************************************************'
   print *
 
