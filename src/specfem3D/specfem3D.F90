@@ -1201,14 +1201,14 @@
            buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi buffer')
 
-!ZN  if(SIMULATION_TYPE > 1) then
-!ZN    allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
-!ZN             b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
-!ZN  else
-!ZN    allocate(b_buffer_send_faces(1,1,1), &
-!ZN             b_buffer_received_faces(1,1,1),stat=ier)
-!ZN  endif
-!ZN  if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
+  if(SIMULATION_TYPE > 1) then
+    allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
+             b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+  else
+    allocate(b_buffer_send_faces(1,1,1), &
+             b_buffer_received_faces(1,1,1),stat=ier)
+  endif
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
 
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
          iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
@@ -1686,14 +1686,14 @@
             ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating cube buffers')
 
-!ZN    if(SIMULATION_TYPE > 1) then
-!ZN      allocate(b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
-!ZN               b_buffer_slices(npoin2D_cube_from_slices,NDIM))
-!ZN    else
-!ZN! dummy allocation of unusued arrays
-!ZN      allocate(b_buffer_all_cube_from_slices(1,1,1), &
-!ZN               b_buffer_slices(1,1))
-!ZN    endif
+    if(SIMULATION_TYPE > 1) then
+      allocate(b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
+               b_buffer_slices(npoin2D_cube_from_slices,NDIM))
+    else
+! dummy allocation of unusued arrays
+      allocate(b_buffer_all_cube_from_slices(1,1,1), &
+               b_buffer_slices(1,1))
+    endif
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating backward cube buffers')
 
     ! handles the communications with the central cube if it was included in the mesh
@@ -1721,18 +1721,13 @@
 
     ! allocate fictitious buffers for cube and slices with a dummy size
     ! just to be able to use them as arguments in subroutine calls
-!ZN    allocate(sender_from_slices_to_cube(1), &
-!ZN         buffer_all_cube_from_slices(1,1,1), &
-!ZN         b_buffer_all_cube_from_slices(1,1,1), &
-!ZN         buffer_slices(1,1), &
-!ZN         b_buffer_slices(1,1), &
-!ZN         buffer_slices2(1,1), &
-!ZN         ibool_central_cube(1,1),stat=ier)
     allocate(sender_from_slices_to_cube(1), &
-            buffer_all_cube_from_slices(1,1,1), &
-            buffer_slices(1,1), &
-            buffer_slices2(1,1), &
-            ibool_central_cube(1,1),stat=ier)
+         buffer_all_cube_from_slices(1,1,1), &
+         b_buffer_all_cube_from_slices(1,1,1), &
+         buffer_slices(1,1), &
+         b_buffer_slices(1,1), &
+         buffer_slices2(1,1), &
+         ibool_central_cube(1,1),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating dummy buffers')
 
   endif
@@ -2025,7 +2020,7 @@
     alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
 
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-!ZN    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
     ! deviatoric kernel check
     if( deviatoric_outercore) then
@@ -2134,8 +2129,6 @@ endif
                               SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
                               MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
   endif
-
-  include "codes_between_declaration_and_time_loop_for_backward_wavefield_simulation.f90"
 
 !
 !-------------------------------------------------------------------------------------------------
