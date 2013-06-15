@@ -238,6 +238,7 @@
 
   print *
   print *,'without undoing of attenuation you are using ',static_memory_size,' GB per core'
+  print *,'  i.e. ',sngl(100.d0 * static_memory_size / gigabytes_avail_per_core),'% of the installed memory'
 
   if(static_memory_size >= gigabytes_avail_per_core) &
     stop 'you are using more memory than what you told us is installed!!! there is an error'
