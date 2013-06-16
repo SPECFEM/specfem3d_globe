@@ -908,17 +908,23 @@ endif
   ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      do irec_local = 1,nrec_local
-        do i = 1,seismo_current/NT_DUMP
-           do j = 1,NT_DUMP/2
-              do k = 1,3
-                seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP + j)
-                seismograms(k,irec_local,(i-1)*NT_DUMP + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1))
-                seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)
-              enddo
+      if(mod(NT_DUMP,2) == 0)then
+        do irec_local = 1,nrec_local; do i = 1,seismo_current/NT_DUMP; do j = 1,NT_DUMP/2
+           do k = 1,3
+              seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP + j)
+              seismograms(k,irec_local,(i-1)*NT_DUMP + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1))
+              seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)
            enddo
-        enddo
-      enddo
+         enddo; enddo; enddo
+      else
+        do irec_local = 1,nrec_local; do i = 1,seismo_current/NT_DUMP; do j = 1,(NT_DUMP-1)/2
+           do k = 1,3
+              seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP + j)
+              seismograms(k,irec_local,(i-1)*NT_DUMP + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1))
+              seismograms(k,irec_local,(i-1)*NT_DUMP + (NT_DUMP-j+1)) = seismograms_temp(k)
+           enddo
+         enddo; enddo; enddo
+      endif
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,stbur, &
             nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,t0,it_end, &
