@@ -521,14 +521,15 @@ if(UNDO_ATTENUATION)then
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1, &
+                                islice_selected_source,ispec_selected_source, &
+                                iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 else
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source)
+                                islice_selected_source,ispec_selected_source, &
+                                it,hdur,xi_source,eta_source,gamma_source,nu_source)
 endif
     endif
 
@@ -912,7 +913,8 @@ endif
         do irec_local = 1,nrec_local; do i = 1,seismo_current/NT_DUMP_ATTENUATION; do j = 1,NT_DUMP_ATTENUATION/2
            do k = 1,3
               seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j)
-              seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1))
+              seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j) = &
+                     seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1))
               seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1)) = seismograms_temp(k)
            enddo
          enddo; enddo; enddo
@@ -920,7 +922,8 @@ endif
         do irec_local = 1,nrec_local; do i = 1,seismo_current/NT_DUMP_ATTENUATION; do j = 1,(NT_DUMP_ATTENUATION-1)/2
            do k = 1,3
               seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j)
-              seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j)  = seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1))
+              seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j) = &
+                     seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1))
               seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1)) = seismograms_temp(k)
            enddo
          enddo; enddo; enddo
