@@ -57,7 +57,7 @@
                         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
                         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
                         USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY,NOISE_TOMOGRAPHY,&
-                        SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
+                        SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 
   implicit none
 
@@ -147,7 +147,7 @@
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
   logical :: PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
-  integer :: NT_DUMP
+  integer :: NT_DUMP_ATTENUATION
 
   ! reads in Par_file values
   call read_parameter_file(OUTPUT_FILES,LOCAL_PATH,MODEL, &
@@ -167,7 +167,7 @@
                           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
                           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
-                          SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
+                          SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 
   ! converts values to radians
   MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
@@ -227,8 +227,8 @@
   ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP) /= 0) NSTEP = (NSTEP/NT_DUMP + 1)*NT_DUMP
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
 
 ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK

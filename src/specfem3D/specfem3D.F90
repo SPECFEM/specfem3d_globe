@@ -859,7 +859,7 @@
           NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY,NT_DUMP
+          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION
 
   double precision DT,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
@@ -1063,7 +1063,7 @@
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
-                PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
+                PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -2189,7 +2189,7 @@ else ! if UNDO_ATTENUATION
 ! New part of ZN
   if(SIMULATION_TYPE == 1)then
     it = 0
-    do iteration_on_subset = 1, NSTEP / NT_DUMP
+    do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
       if(SAVE_FORWARD)then
         call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
@@ -2199,7 +2199,7 @@ else ! if UNDO_ATTENUATION
                     A_array_rotation,B_array_rotation,LOCAL_PATH,iteration_on_subset)
       endif
 
-      do it_of_this_subset = 1, NT_DUMP
+      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
 
@@ -2216,9 +2216,9 @@ else ! if UNDO_ATTENUATION
    !!add this part
 
     it = 0
-    do iteration_on_subset = 1, NSTEP / NT_DUMP
+    do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
 
-      do it_of_this_subset = 1, NT_DUMP
+      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
 
@@ -2234,30 +2234,30 @@ else ! if UNDO_ATTENUATION
 
     undo_att_sim_type_3 = .true.
 
-    allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
+    allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')
-    allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
+    allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
-    allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
+    allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
-    allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE,NT_DUMP),stat=ier)
+    allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_inner_core_store_buffer')
 
     it = 0
 
-    do iteration_on_subset = 1, NSTEP / NT_DUMP
+    do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
 
        call read_forward_arrays_undoatt(myrank, &
                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_DUMP-iteration_on_subset+1)
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_DUMP_ATTENUATION-iteration_on_subset+1)
 
       it_temp = it
       seismo_current_temp = seismo_current
 
-      do it_of_this_subset = 1, NT_DUMP
+      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
         seismo_current = seismo_current + 1
@@ -2273,21 +2273,21 @@ else ! if UNDO_ATTENUATION
       it = it_temp
       seismo_current = seismo_current_temp
 
-      do it_of_this_subset = 1, NT_DUMP
+      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
         do i = 1, NDIM
           do j =1,NGLOB_CRUST_MANTLE_ADJOINT
-            b_displ_crust_mantle(i,j) = b_displ_crust_mantle_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
+            b_displ_crust_mantle(i,j) = b_displ_crust_mantle_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
           enddo
         enddo
 
         do j =1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = b_displ_outer_core_store_buffer(j,NT_DUMP-it_of_this_subset+1)
-            b_accel_outer_core(j) = b_accel_outer_core_store_buffer(j,NT_DUMP-it_of_this_subset+1)
+            b_displ_outer_core(j) = b_displ_outer_core_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_accel_outer_core(j) = b_accel_outer_core_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
         enddo
 
         do i = 1, NDIM
           do j =1,NGLOB_INNER_CORE_ADJOINT
-            b_displ_inner_core(i,j) = b_displ_inner_core_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
+            b_displ_inner_core(i,j) = b_displ_inner_core_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
           enddo
         enddo
 

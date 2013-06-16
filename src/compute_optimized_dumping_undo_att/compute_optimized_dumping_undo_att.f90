@@ -103,12 +103,12 @@
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
-  integer :: NT_DUMP_optimal_to_use,number_of_dumpings_to_do
+  integer :: NT_DUMP_ATTENUATION_optimal_to_use,number_of_dumpings_to_do
   double precision :: gigabytes_avail_per_core,percentage_to_use_per_core,what_we_can_use_in_GB,size_to_store_at_each_time_step, &
                          disk_size_of_each_dumping
 
   logical :: PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
-  integer :: NT_DUMP
+  integer :: NT_DUMP_ATTENUATION
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -141,7 +141,7 @@
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,&
-         SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
+         SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 
 ! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
 ! thus set it to that value here in this serial code even if it has a different value in the Par_file
@@ -270,9 +270,9 @@
   print *
   print *,'*******************************************************************************'
   print *,'the optimal value to put in setup/constants.h is thus:'
-  NT_DUMP_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size) / size_to_store_at_each_time_step)
+  NT_DUMP_ATTENUATION_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size) / size_to_store_at_each_time_step)
   print *
-  print *,'NT_DUMP = ',NT_DUMP_optimal_to_use
+  print *,'NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal_to_use
   print *
   print *,'thus please edit that file, put this value in it and recompile the whole code'
   print *,'with "make clean ; make all"'
@@ -308,7 +308,7 @@
   disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
 
 !! DK DK this formula could be made more precise here; currently in some cases it can probably be off by +1 or -1
-  number_of_dumpings_to_do = nint(NSTEP / dble(NT_DUMP_optimal_to_use))
+  number_of_dumpings_to_do = nint(NSTEP / dble(NT_DUMP_ATTENUATION_optimal_to_use))
 
   print *
   print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
