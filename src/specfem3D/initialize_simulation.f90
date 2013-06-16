@@ -388,13 +388,16 @@
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
     call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
+  if(UNDO_ATTENUATION .and. PARTIAL_PHYS_DISPERSION_ONLY) &
+          call exit_MPI(myrank,'cannot have both UNDO_ATTENUATION and PARTIAL_PHYS_DISPERSION_ONLY')
+
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
       if(.not. UNDO_ATTENUATION)then
-        if( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) &
-          call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
+        if(.not. PARTIAL_PHYS_DISPERSION_ONLY) &
+     call exit_MPI(myrank,'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
       endif
 
       ! user output
