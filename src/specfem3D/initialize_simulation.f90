@@ -392,8 +392,10 @@
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
-      if( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) &
-        call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
+      if(.not. UNDO_ATT)then
+        if( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) &
+          call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
+      endif
 
       ! user output
       if( myrank == 0 ) write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
