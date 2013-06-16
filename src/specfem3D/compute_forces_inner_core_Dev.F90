@@ -236,6 +236,8 @@
   integer NSPEC2D_BOTTOM_INNER_CORE
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
+  real(kind=CUSTOM_REAL) templ
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -406,13 +408,7 @@
             duzdyl_plus_duydzl = duzdyl + duydzl
 
             if (COMPUTE_AND_STORE_STRAIN) then
-              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-                ispec_strain = 1
-              else
-                ispec_strain = ispec
-              endif
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
               epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
