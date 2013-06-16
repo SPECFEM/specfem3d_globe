@@ -531,30 +531,6 @@
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
   endif
 
-  ! backward/reconstruction of forward wavefield:
-  ! can only mimic attenuation effects on velocity at this point, since no full wavefield snapshots are stored
-  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
-
-    ! attenuation mimic:
-    ! mimicking average (not full) effect of attenuation on apparent velocities, not amplitudes. that is,
-    ! phase shifts will be partially accounted for, but amplitudes will differ in adjoint simulations
-    if( ATTENUATION ) then
-      if(UNDO_ATTENUATION)then  
-         !ZN in undoing attenuation we do not have to use the mimmic way for inclusion of visoelastic effect
-         write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
-      else
-         write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .true.'
-      endif
-    else
-      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
-    endif
-
-  else
-
-    ! calculates full attenuation (phase & amplitude effects) if used
-    write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
-  endif
-
   ! attenuation and/or adjoint simulations
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
     .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then

@@ -386,7 +386,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
-    ! note: after call to this routines read_compute_parameters() we will set
+    ! note: after call to this routine read_compute_parameters() we will set
     ! mgll_v%model_gll flag and reset
     ! THREE_D_MODEL = THREE_D_MODEL_S29EA
     ! (not done here because we will use mgll_v%model_gll flag to identify this

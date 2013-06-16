@@ -42,7 +42,7 @@
                                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
                                 SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
-                                SAVE_REGULAR_KL)
+                                SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
 
   implicit none
 
@@ -52,7 +52,7 @@
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY
+          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY,NT_DUMP
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
@@ -67,7 +67,8 @@
          ABSORBING_CONDITIONS,SAVE_FORWARD, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL
+         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
+         PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -126,8 +127,19 @@
   ! define the velocity model
   call read_value_string(MODEL, 'model.MODEL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MODEL'
+
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH..'
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
+
+  call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'solver.PARTIAL_PHYS_DISPERSION_ONLY', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: PARTIAL_PHYS_DISPERSION_ONLY'
+
+  call read_value_logical(UNDO_ATTENUATION, 'solver.UNDO_ATTENUATION', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: UNDO_ATTENUATION'
+
+  call read_value_integer(NT_DUMP, 'solver.NT_DUMP', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP'
+
   call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MOVIE_SURFACE'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME', ierr)

@@ -254,12 +254,12 @@
  end subroutine write_movie_volume_mesh
 
 ! ---------------------------------------------
-  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, & 
-                    it,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie,& 
+  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
+                    it,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie,&
                     hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle) 
+                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle)
 
 
   implicit none

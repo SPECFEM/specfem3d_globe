@@ -50,7 +50,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec)
+          vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
 
   implicit none
 
@@ -60,7 +60,7 @@
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  real(kind=CUSTOM_REAL) deltat 
+  real(kind=CUSTOM_REAL) deltat
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core,veloc_inner_core
@@ -81,7 +81,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_INNER_CORE) :: idoubling
@@ -338,9 +339,9 @@
             else
               ispec_strain = ispec
             endif
-            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
-            epsilondev_loc(1,i,j,k) = duxdxl - templ 
-            epsilondev_loc(2,i,j,k) = duydyl - templ 
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+            epsilondev_loc(1,i,j,k) = duxdxl - templ
+            epsilondev_loc(2,i,j,k) = duydyl - templ
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -657,7 +658,7 @@
                   R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
                   factor_common_use * &
                   (betaval(i_SLS) * &
-                  epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
+                  epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
         enddo
       enddo
 

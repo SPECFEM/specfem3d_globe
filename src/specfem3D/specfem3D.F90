@@ -859,7 +859,7 @@
           NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
+          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY,NT_DUMP
 
   double precision DT,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
@@ -872,7 +872,8 @@
           SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL
+          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
+          PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -905,7 +906,6 @@
 ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
 
-! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -953,7 +953,7 @@
   logical :: undo_att_sim_type_3
 
   undo_att_sim_type_3 = .false.
-  
+
 
 ! *************************************************
 ! ************** PROGRAM STARTS HERE **************
@@ -1062,7 +1062,8 @@
                 hprime_xx,hprime_yy,hprime_zz,hprime_xxT, &
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL)
+                rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
+                PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -2207,7 +2208,7 @@ else ! if UNDO_ATTENUATION
         include "part1_undo_att.f90"
 
       enddo
-    enddo 
+    enddo
 
   endif
 
@@ -2226,7 +2227,7 @@ else ! if UNDO_ATTENUATION
         include "part1_undo_att.f90"
 
       enddo
-    enddo 
+    enddo
   endif
 
   if(SIMULATION_TYPE == 3)then
@@ -2253,7 +2254,7 @@ else ! if UNDO_ATTENUATION
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH, NSTEP/NT_DUMP-iteration_on_subset+1)
 
-      it_temp = it 
+      it_temp = it
       seismo_current_temp = seismo_current
 
       do it_of_this_subset = 1, NT_DUMP

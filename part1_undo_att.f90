@@ -54,7 +54,7 @@
     ! and output timestamp file to check that simulation is running fine
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
       call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                          1,OUTPUT_FILES,time_start,DT,t0,NSTEP, & 
+                          1,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
     endif
 
@@ -312,10 +312,10 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, & 
+          R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -355,7 +355,7 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
     endif
 
     ! Deville routine
@@ -391,7 +391,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -424,7 +424,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
     endif
 
     ! Stacey
@@ -603,7 +603,7 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -643,7 +643,7 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
       endif
 
       ! Deville routine
@@ -679,7 +679,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -712,7 +712,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
       endif
 
 ! assemble all the contributions between slices using MPI
@@ -952,7 +952,7 @@ endif
                     mask_3dmovie,nu_3dmovie)
 
       else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
-!!!!!! for undo_att this type of MOVIE is not supported 
+!!!!!! for undo_att this type of MOVIE is not supported
 !!!        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
 !!!                        div_displ_outer_core, &
 !!!                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &

@@ -381,7 +381,6 @@
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                NGLOB
 
-! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -424,7 +423,11 @@
 ! this for non blocking MPI
   logical, dimension(:), allocatable :: is_on_a_slice_edge
 
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
+  integer :: NT_DUMP
+
 ! ************** PROGRAM STARTS HERE **************
+
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -542,7 +545,8 @@
           HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
           DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
           WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
-          USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL)
+          USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
+          PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
   endif
 
   ! distributes parameters from master to all processes

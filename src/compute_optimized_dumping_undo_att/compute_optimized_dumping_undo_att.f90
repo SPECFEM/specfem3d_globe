@@ -107,6 +107,9 @@
   double precision :: gigabytes_avail_per_core,percentage_to_use_per_core,what_we_can_use_in_GB,size_to_store_at_each_time_step, &
                          disk_size_of_each_dumping
 
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
+  integer :: NT_DUMP
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! read the parameter file and compute additional parameters
@@ -138,7 +141,7 @@
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,&
-         SAVE_REGULAR_KL)
+         SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
 
 ! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
 ! thus set it to that value here in this serial code even if it has a different value in the Par_file

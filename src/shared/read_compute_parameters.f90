@@ -57,13 +57,11 @@
                         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
                         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
                         USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY,NOISE_TOMOGRAPHY,&
-                        SAVE_REGULAR_KL)
-
+                        SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
 
   implicit none
 
   include "constants.h"
-
 
 ! parameters read from parameter file
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
@@ -148,6 +146,8 @@
 
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
+  integer :: NT_DUMP
 
   ! reads in Par_file values
   call read_parameter_file(OUTPUT_FILES,LOCAL_PATH,MODEL, &
@@ -167,7 +167,7 @@
                           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
                           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
-                          SAVE_REGULAR_KL)
+                          SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP)
 
   ! converts values to radians
   MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
@@ -350,8 +350,6 @@
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
-
-
 
   end subroutine read_compute_parameters
 

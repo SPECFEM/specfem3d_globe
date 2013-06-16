@@ -52,8 +52,8 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, & 
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
+          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
 
   implicit none
 
@@ -97,12 +97,13 @@
 ! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec
 
-  real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta,deltat 
+  real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta,deltat
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -381,9 +382,9 @@
               ispec_strain = ispec
             endif
 
-            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
-            epsilondev_loc(1,i,j,k) = duxdxl - templ 
-            epsilondev_loc(2,i,j,k) = duydyl - templ 
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+            epsilondev_loc(1,i,j,k) = duxdxl - templ
+            epsilondev_loc(2,i,j,k) = duydyl - templ
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl

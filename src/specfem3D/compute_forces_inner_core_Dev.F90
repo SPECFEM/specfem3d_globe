@@ -49,7 +49,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec)
+          vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -57,7 +57,7 @@
 
   include "constants.h"
 
-  real(kind=CUSTOM_REAL) deltat 
+  real(kind=CUSTOM_REAL) deltat
 
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
@@ -84,6 +84,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -143,7 +144,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
@@ -751,7 +752,7 @@
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
-                                      epsilondev_loc_nplus1,epsilondev_loc) 
+                                      epsilondev_loc_nplus1,epsilondev_loc)
 
 
       endif

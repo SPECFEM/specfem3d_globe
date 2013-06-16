@@ -32,10 +32,10 @@
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
-                    R_memory, & 
+                    R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -65,7 +65,6 @@
   ! store anisotropic properties only where needed to save memory
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         kappavstore,muvstore
-
 
   ! attenuation
   ! memory variables for attenuation
@@ -112,6 +111,8 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
+
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   ! isotropic element
 
@@ -337,9 +338,6 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-
-
-
   subroutine compute_element_tiso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
                     xstore,ystore,zstore, &
@@ -347,10 +345,10 @@
                     wgll_cube, &
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
-                    R_memory, & 
+                    R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -383,7 +381,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         kappavstore,muvstore
 
-
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -395,7 +392,6 @@
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
-
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
 
@@ -405,7 +401,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -445,6 +440,8 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
+
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   ! transverse isotropic element
 
@@ -863,7 +860,6 @@
 !--------------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_element_aniso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
                     xstore,ystore,zstore, &
@@ -876,8 +872,7 @@
                     R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -958,6 +953,8 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
+
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   !  anisotropic elements
 
@@ -1340,7 +1337,7 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
-                                        epsilondev_loc_nplus1,epsilondev_loc) 
+                                        epsilondev_loc_nplus1,epsilondev_loc)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1398,7 +1395,7 @@
     do i_memory = 1,5
        R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
             + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
+            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
     enddo
   enddo
 
@@ -1425,7 +1422,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
 
 !  local variable
-  integer :: i,j,k,iglob 
+  integer :: i,j,k,iglob
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
@@ -1450,7 +1447,7 @@
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duydyl,duzdzl,duxdyl,duydxl,duzdxl,duxdzl,duzdyl,duydzl,&
-                         duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&                         
+                         duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&
                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
     do k=1,NGLLZ
@@ -1572,7 +1569,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
+        eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
         epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
         epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
         epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -1606,7 +1603,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
 
 !  local variable
-  integer :: i,j,k,iglob 
+  integer :: i,j,k,iglob
   real(kind=CUSTOM_REAL) :: templ
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
@@ -1632,7 +1629,7 @@
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duydyl,duzdzl,duxdyl,duydxl,duzdxl,duxdzl,duzdyl,duydzl,&
-                         duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&                         
+                         duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&
                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
 
@@ -1755,7 +1752,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
+        templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
         epsilondev_loc_nplus1(1,i,j,k) = duxdxl - templ
         epsilondev_loc_nplus1(2,i,j,k) = duydyl - templ
         epsilondev_loc_nplus1(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
