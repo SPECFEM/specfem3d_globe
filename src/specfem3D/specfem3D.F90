@@ -942,10 +942,10 @@
 
   integer msg_status(MPI_STATUS_SIZE)
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_crust_mantle_store_buffer
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_outer_core_store_store_buffer,&
-                                                         accel_outer_core_store_store_buffer
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ_inner_core_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_crust_mantle_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_outer_core_store_buffer,&
+                                                         b_accel_outer_core_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_inner_core_store_buffer
 
   integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
   integer :: it_temp,seismo_current_temp
@@ -2234,14 +2234,14 @@ else ! if UNDO_ATTENUATION
 
     undo_att_sim_type_3 = .true.
 
-    allocate(displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_crust_mantle_store_buffer')
-    allocate(displ_outer_core_store_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_buffer')
-    allocate(accel_outer_core_store_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_outer_core_store_store_buffer')
-    allocate(displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE,NT_DUMP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating displ_inner_core_store_buffer')
+    allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')
+    allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
+    allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
+    allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE,NT_DUMP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_inner_core_store_buffer')
 
     it = 0
 
@@ -2263,10 +2263,10 @@ else ! if UNDO_ATTENUATION
         seismo_current = seismo_current + 1
         include "part2_undo_att.f90"
 
-        displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
-        displ_outer_core_store_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
-        accel_outer_core_store_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
-        displ_inner_core_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
+        b_displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
+        b_displ_outer_core_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
+        b_accel_outer_core_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
+        b_displ_inner_core_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
       enddo
 
@@ -2276,18 +2276,18 @@ else ! if UNDO_ATTENUATION
       do it_of_this_subset = 1, NT_DUMP
         do i = 1, NDIM
           do j =1,NGLOB_CRUST_MANTLE_ADJOINT
-            b_displ_crust_mantle(i,j) = displ_crust_mantle_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
+            b_displ_crust_mantle(i,j) = b_displ_crust_mantle_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
           enddo
         enddo
 
         do j =1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = displ_outer_core_store_store_buffer(j,NT_DUMP-it_of_this_subset+1)
-            b_accel_outer_core(j) = accel_outer_core_store_store_buffer(j,NT_DUMP-it_of_this_subset+1)
+            b_displ_outer_core(j) = b_displ_outer_core_store_buffer(j,NT_DUMP-it_of_this_subset+1)
+            b_accel_outer_core(j) = b_accel_outer_core_store_buffer(j,NT_DUMP-it_of_this_subset+1)
         enddo
 
         do i = 1, NDIM
           do j =1,NGLOB_INNER_CORE_ADJOINT
-            b_displ_inner_core(i,j) = displ_inner_core_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
+            b_displ_inner_core(i,j) = b_displ_inner_core_store_buffer(i,j,NT_DUMP-it_of_this_subset+1)
           enddo
         enddo
 

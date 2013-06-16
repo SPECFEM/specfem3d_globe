@@ -1,7 +1,6 @@
 
 !! DK DK for kernel calculations
 
-
 ! kernel calculations
   if (SIMULATION_TYPE == 3) then
     ! crust mantle
