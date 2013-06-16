@@ -52,7 +52,6 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-!ZN          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
@@ -103,8 +102,6 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
-!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer :: vx,vy,vz,vnspec
 
@@ -160,7 +157,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1 !ZN
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
@@ -414,7 +411,6 @@
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                     ibool, &
-!ZN                    R_memory,epsilon_trace_over_3, &
                     R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
@@ -429,8 +425,7 @@
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
-!ZN                    R_memory,epsilon_trace_over_3, &
-                    R_memory, & !ZN
+                    R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -443,8 +438,7 @@
                     wgll_cube, &
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
-!ZN                    R_memory,epsilon_trace_over_3, &
-                    R_memory, & !ZN
+                    R_memory, & 
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -576,15 +570,10 @@
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       c44store,muvstore, &
-!ZN                                      epsilondev,epsilondev_loc)
                                       epsilondev_loc_nplus1,epsilondev_loc)
 
     endif
 
-    ! save deviatoric strain for Runge-Kutta scheme
-!ZN    if(COMPUTE_AND_STORE_STRAIN) then
-!ZN      epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-!ZN    endif
 ! end ispec loop
    enddo
 !$OMP enddo

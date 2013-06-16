@@ -52,8 +52,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-!ZN          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &  !ZN
+          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, & 
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
   implicit none
@@ -89,7 +88,7 @@
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle,veloc_crust_mantle !ZN
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle,veloc_crust_mantle
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -98,13 +97,12 @@
 ! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec
 
-  real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta,deltat !ZN
+  real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta,deltat 
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -113,7 +111,6 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
-!ZN  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -383,12 +380,10 @@
             else
               ispec_strain = ispec
             endif
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-!ZN            epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-!ZN            epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) !ZN
-            epsilondev_loc(1,i,j,k) = duxdxl - templ !ZN
-            epsilondev_loc(2,i,j,k) = duydyl - templ !ZN
+
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
+            epsilondev_loc(1,i,j,k) = duxdxl - templ 
+            epsilondev_loc(2,i,j,k) = duydyl - templ 
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl

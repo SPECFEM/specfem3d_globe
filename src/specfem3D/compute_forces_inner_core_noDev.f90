@@ -48,7 +48,6 @@
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-!ZN          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
           vx,vy,vz,vnspec)
@@ -82,9 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1 !ZN
-!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1 
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_INNER_CORE) :: idoubling
@@ -341,12 +338,9 @@
             else
               ispec_strain = ispec
             endif
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-!ZN            epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-!ZN            epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) !ZN
-            epsilondev_loc(1,i,j,k) = duxdxl - templ !ZN
-            epsilondev_loc(2,i,j,k) = duydyl - templ !ZN
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl) 
+            epsilondev_loc(1,i,j,k) = duxdxl - templ 
+            epsilondev_loc(2,i,j,k) = duydyl - templ 
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -663,24 +657,11 @@
                   R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
                   factor_common_use * &
                   (betaval(i_SLS) * &
-!ZN                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-                  epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) !ZN
+                  epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
         enddo
       enddo
 
     endif
-
-!ZN    if (COMPUTE_AND_STORE_STRAIN) then
-!ZN! save deviatoric strain for Runge-Kutta scheme
-!ZN      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-!ZN      do k=1,NGLLZ
-!ZN        do j=1,NGLLY
-!ZN          do i=1,NGLLX
-!ZN            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
-!ZN          enddo
-!ZN        enddo
-!ZN      enddo
-!ZN    endif
 
   endif   ! end test to exclude fictitious elements in central cube
 

@@ -191,7 +191,6 @@
 !
 
   subroutine compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
-!ZN                    eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                     hxir_store,hetar_store,hgammar_store, &
                     hpxir_store,hpetar_store,hpgammar_store, &
@@ -213,10 +212,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle
-!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
-!ZN    eps_trace_over_3_crust_mantle
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-!ZN    epsilondev_crust_mantle
 
   double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
@@ -305,13 +300,6 @@
           uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
           uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
           uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
-
-!ZN           eps_trace = eps_trace + dble(eps_trace_over_3_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-!ZN           dxx = dxx + dble(epsilondev_crust_mantle(1,i,j,k,ispec_selected_source(irec)))*hlagrange
-!ZN           dyy = dyy + dble(epsilondev_crust_mantle(2,i,j,k,ispec_selected_source(irec)))*hlagrange
-!ZN           dxy = dxy + dble(epsilondev_crust_mantle(3,i,j,k,ispec_selected_source(irec)))*hlagrange
-!ZN           dxz = dxz + dble(epsilondev_crust_mantle(4,i,j,k,ispec_selected_source(irec)))*hlagrange
-!ZN           dyz = dyz + dble(epsilondev_crust_mantle(5,i,j,k,ispec_selected_source(irec)))*hlagrange
 
           eps_trace = eps_trace + dble(eps_trace_over_3_loc_crust_mantle(i,j,k))*hlagrange
           dxx = dxx + dble(epsilondev_loc_crust_mantle(1,i,j,k))*hlagrange

@@ -9,8 +9,6 @@
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
-!ZN                          epsilondev_crust_mantle,b_epsilondev_crust_mantle, &
-!ZN                          eps_trace_over_3_crust_mantle,b_eps_trace_over_3_crust_mantle, &
                           deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
@@ -37,8 +35,6 @@
                           rho_kl_inner_core,beta_kl_inner_core, &
                           alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
-!ZN                          epsilondev_inner_core,b_epsilondev_inner_core, &
-!ZN                          eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core, &
                           deltat,displ_inner_core,hprime_xx,hprime_xxT,&
                           xix_inner_core,xiy_inner_core,xiz_inner_core,&
                           etax_inner_core,etay_inner_core,etaz_inner_core,&

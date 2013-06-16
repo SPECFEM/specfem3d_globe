@@ -47,7 +47,6 @@
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-!ZN          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
           vx,vy,vz,vnspec)
@@ -85,8 +84,6 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -146,7 +143,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1 !ZN
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1 
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
@@ -408,21 +405,20 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-!ZN            ! compute deviatoric strain
-!ZN            if (COMPUTE_AND_STORE_STRAIN) then
-!ZN              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-!ZN                ispec_strain = 1
-!ZN              else
-!ZN                ispec_strain = ispec
-!ZN              endif
-!ZN              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-!ZN              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN              epsilondev_loc(1,i,j,k) = duxdxl - templ
-!ZN              epsilondev_loc(2,i,j,k) = duydyl - templ
-!ZN              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-!ZN              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-!ZN              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-!ZN            endif
+            if (COMPUTE_AND_STORE_STRAIN) then
+              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                ispec_strain = 1
+              else
+                ispec_strain = ispec
+              endif
+              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+              epsilondev_loc(1,i,j,k) = duxdxl - templ
+              epsilondev_loc(2,i,j,k) = duydyl - templ
+              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+            endif
 
             if(ATTENUATION_VAL) then
               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
@@ -759,16 +755,10 @@
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
-!ZN                                      epsilondev,epsilondev_loc)
-                                      epsilondev_loc_nplus1,epsilondev_loc) !ZN
+                                      epsilondev_loc_nplus1,epsilondev_loc) 
 
 
       endif
-
-!ZN      ! save deviatoric strain for Runge-Kutta scheme
-!ZN      if(COMPUTE_AND_STORE_STRAIN) then
-!ZN        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-!ZN      endif
 
     endif   ! end test to exclude fictitious elements in central cube
 

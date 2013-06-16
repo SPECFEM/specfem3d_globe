@@ -32,8 +32,7 @@
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
-!ZN                    R_memory,epsilon_trace_over_3, &
-                    R_memory, & !ZN
+                    R_memory, & 
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -73,7 +72,6 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-!ZN  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer :: vx,vy,vz,vnspec
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
@@ -111,7 +109,6 @@
   double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
 
-!ZN  integer :: ispec_strain
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
@@ -160,15 +157,6 @@
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-!ZN          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-!ZN            ispec_strain = 1
-!ZN!$OMP CRITICAL
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN!$OMP END CRITICAL
-!ZN          else
-!ZN            ispec_strain = ispec
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN          endif
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -359,8 +347,7 @@
                     wgll_cube, &
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
-!ZN                    R_memory,epsilon_trace_over_3, &
-                    R_memory, & !ZN
+                    R_memory, & 
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -402,7 +389,6 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-!ZN  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer vx,vy,vz,vnspec
 
@@ -456,7 +442,6 @@
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
-!ZN  integer :: ispec_strain
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
@@ -505,15 +490,6 @@
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-!ZN          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-!ZN            ispec_strain = 1
-!ZN!$OMP CRITICAL
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN!$OMP END CRITICAL
-!ZN          else
-!ZN            ispec_strain = ispec
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN          endif
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -897,7 +873,6 @@
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                     ibool, &
-!ZN                    R_memory,epsilon_trace_over_3, &
                     R_memory, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
@@ -940,7 +915,6 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-!ZN  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer vx,vy,vz,vnspec
 
@@ -981,7 +955,6 @@
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
-!ZN  integer :: ispec_strain
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
@@ -1030,15 +1003,6 @@
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-!ZN          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-!ZN            ispec_strain = 1
-!ZN!$OMP CRITICAL
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN!$OMP END CRITICAL
-!ZN          else
-!ZN            ispec_strain = ispec
-!ZN            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-!ZN          endif
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -1296,7 +1260,6 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
-!ZN                                        epsilondev,epsilondev_loc)
                                         epsilondev_loc_nplus1,epsilondev_loc)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
@@ -1335,7 +1298,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
 
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -1362,9 +1324,6 @@
     endif
 
     do i_memory = 1,5
-!ZN      R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-!ZN                + factor_common_c44_muv(:,:,:) &
-!ZN                * (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
                 + factor_common_c44_muv(:,:,:) &
                 * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
@@ -1381,8 +1340,7 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
-!ZN                                        epsilondev,epsilondev_loc)
-                                        epsilondev_loc_nplus1,epsilondev_loc) !ZN
+                                        epsilondev_loc_nplus1,epsilondev_loc) 
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1419,7 +1377,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
 
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
 
@@ -1441,8 +1398,7 @@
     do i_memory = 1,5
        R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
             + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-!ZN            (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) !ZN
+            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
     enddo
   enddo
 

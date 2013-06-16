@@ -254,17 +254,12 @@
  end subroutine write_movie_volume_mesh
 
 ! ---------------------------------------------
-
-!ZN  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-!ZN                    it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
-!ZN                    mask_3dmovie,nu_3dmovie)
-
-  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, & !ZN
-                    it,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie,& !ZN
+  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, & 
+                    it,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie,& 
                     hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle) !ZN
+                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle) 
 
 
   implicit none
@@ -274,8 +269,6 @@
 
   ! input
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
-!ZN  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: eps_trace_over_3_crust_mantle
-!ZN  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
@@ -345,13 +338,6 @@
       if(mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
-!ZN       eps_loc(1,1)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_crust_mantle(1,i,j,k,ispec)
-!ZN       eps_loc(2,2)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_crust_mantle(2,i,j,k,ispec)
-!ZN       eps_loc(3,3)=eps_trace_over_3_crust_mantle(i,j,k,ispec)- &
-!ZN                 epsilondev_crust_mantle(1,i,j,k,ispec) - epsilondev_crust_mantle(2,i,j,k,ispec)
-!ZN       eps_loc(1,2)=epsilondev_crust_mantle(3,i,j,k,ispec)
-!ZN       eps_loc(1,3)=epsilondev_crust_mantle(4,i,j,k,ispec)
-!ZN       eps_loc(2,3)=epsilondev_crust_mantle(5,i,j,k,ispec)
 
        eps_loc(1,1)=eps_trace_over_3_loc_crust_mantle(i,j,k) + epsilondev_loc_crust_mantle(1,i,j,k)
        eps_loc(2,2)=eps_trace_over_3_loc_crust_mantle(i,j,k) + epsilondev_loc_crust_mantle(2,i,j,k)

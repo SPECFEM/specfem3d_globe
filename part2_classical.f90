@@ -39,10 +39,6 @@
     ! and output timestamp file to check that simulation is running fine
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
       if (SIMULATION_TYPE == 3) then
-!ZN        call check_simulation_stability(it,b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
-!ZN                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
-!ZN                          SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-!ZN                          it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
         call check_simulation_stability(it,b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
@@ -141,30 +137,6 @@
                               absorb_zmin_outer_core, &
                               absorb_xmin_outer_core,absorb_xmax_outer_core, &
                               absorb_ymin_outer_core,absorb_ymax_outer_core)
-!      call compute_stacey_outer_core(ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
-!                            NSTEP,it,ibool_outer_core, &
-!                            veloc_outer_core,accel_outer_core,b_accel_outer_core, &
-!                            vp_outer_core,wgllwgll_xz,wgllwgll_yz,wgllwgll_xy, &
-!                            jacobian2D_bottom_outer_core, &
-!                            jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
-!                            jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
-!                            ibelm_bottom_outer_core, &
-!                            ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
-!                            ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
-!                            nimin_outer_core,nimax_outer_core, &
-!                            njmin_outer_core,njmax_outer_core, &
-!                            nkmin_xi_outer_core,nkmin_eta_outer_core, &
-!                            NSPEC2D_BOTTOM, &
-!                            nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-!                            nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
-!                            reclen_zmin, &
-!                            reclen_xmin_outer_core,reclen_xmax_outer_core, &
-!                            reclen_ymin_outer_core,reclen_ymax_outer_core, &
-!                            nabs_zmin_oc, &
-!                            nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc, &
-!                            absorb_zmin_outer_core, &
-!                            absorb_xmin_outer_core,absorb_xmax_outer_core, &
-!                            absorb_ymin_outer_core,absorb_ymax_outer_core)
       endif
     endif ! Stacey conditions
 
@@ -350,8 +322,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
@@ -392,8 +362,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
@@ -430,7 +398,6 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
           b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
@@ -464,7 +431,6 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
           b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
@@ -492,27 +458,6 @@
                               nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
                               absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
                               absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
-!      call compute_stacey_crust_mantle(ichunk, &
-!                            NSTEP,it,SAVE_FORWARD,ibool_crust_mantle, &
-!                            veloc_crust_mantle,b_accel_crust_mantle, &
-!                            jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
-!                            jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
-!                            wgllwgll_xz,wgllwgll_yz, &
-!                            normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
-!                            normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
-!                            rho_vp_crust_mantle,rho_vs_crust_mantle, &
-!                            ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
-!                            ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
-!                            nimin_crust_mantle,nimax_crust_mantle, &
-!                            njmin_crust_mantle,njmax_crust_mantle, &
-!                            nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
-!                            nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-!                            nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
-!                            reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
-!                            reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
-!                            nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
-!                            absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
-!                            absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
       endif
     endif ! Stacey conditions
 
@@ -525,30 +470,6 @@
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
     endif
 
-    ! NOISE_TOMOGRAPHY
-!   if ( NOISE_TOMOGRAPHY == 1 ) then
-!      ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
-!      ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
-!      ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
-!      ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
-!      call add_source_master_rec_noise(myrank,nrec, &
-!                               NSTEP,accel_crust_mantle,noise_sourcearray, &
-!                               ibool_crust_mantle,islice_selected_rec,ispec_selected_rec, &
-!                               it,irec_master_noise)
-!   else if ( NOISE_TOMOGRAPHY == 2 ) then
-!      ! second step of noise tomography, i.e., read the surface movie saved at every timestep
-!      ! use the movie to drive the ensemble forward wavefield
-!      call noise_read_add_surface_movie(nmovie_points,accel_crust_mantle, &
-!                             normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-!                             ibelm_top_crust_mantle,ibool_crust_mantle, &
-!                             NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-!                             NSTEP-it+1,jacobian2D_top_crust_mantle,wgllwgll_xy)
-!       ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
-!       ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
-!       ! note the ensemble forward sources are generally distributed on the surface of the earth
-!       ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
-!       ! therefore, we must add it here, before applying the inverse of mass matrix
-!   else
     if ( NOISE_TOMOGRAPHY == 3 ) then
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
@@ -677,8 +598,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
@@ -719,8 +638,6 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-!ZN          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
-!ZN          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
@@ -756,7 +673,6 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
           b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
@@ -790,7 +706,6 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-!ZN          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
           b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
@@ -906,7 +821,6 @@
                     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
-!ZN                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
     endif
 
@@ -914,31 +828,6 @@
 
 ! store the seismograms only if there is at least one receiver located in this slice
   if (nrec_local > 0) then
-!   if (SIMULATION_TYPE == 1) then
-!     call compute_seismograms(nrec_local,nrec,displ_crust_mantle, &
-!                               nu,hxir_store,hetar_store,hgammar_store, &
-!                               scale_displ,ibool_crust_mantle, &
-!                               ispec_selected_rec,number_receiver_global, &
-!                               seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!                               seismograms)
-
-!   else if (SIMULATION_TYPE == 2) then
-!     call compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
-!                   eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
-!                   nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-!                   hxir_store,hetar_store,hgammar_store, &
-!                   hpxir_store,hpetar_store,hpgammar_store, &
-!                   tshift_cmt,hdur_gaussian,DT,t0,scale_displ, &
-!                   hprime_xx,hprime_yy,hprime_zz, &
-!                   xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-!                   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-!                   gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!                   moment_der,sloc_der,stshift_der,shdur_der, &
-!                   NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms,deltat, &
-!                   ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
-!                   NSTEP,it,nit_written)
-
-!   else
     if (SIMULATION_TYPE == 3) then
       call compute_seismograms_backward(nrec_local,nrec,b_displ_crust_mantle, &
                                 nu,hxir_store,hetar_store,hgammar_store, &
@@ -968,12 +857,6 @@
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
       endif
-!   else ! case of SIMULATION_TYPE == 2
-!     if( nrec_local > 0 ) &
-!       call write_adj_seismograms(seismograms,number_receiver_global, &
-!                                 nrec_local,it,nit_written,DT, &
-!                                 NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
-!       nit_written = it
     endif
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
