@@ -109,7 +109,7 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',Ufluidnorm_all
     endif
 
-!! DK DK UNDO_ATT
+!! DK DK UNDO_ATTENUATION
 
     ! information about the current run only
     SHOW_SEPARATE_RUN_INFORMATION = NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS
@@ -266,7 +266,7 @@
     write(IMAIN,*)
 
     ! write time stamp file to give information about progression of simulation
-!! DK DK UNDO_ATT
+!! DK DK UNDO_ATTENUATION
     if(SIMULATION_TYPE == 1) then
 !     write(outputname,"('/timestamp',i6.6)") it
       write(outputname,"('/timestamp_forward',i6.6)") it

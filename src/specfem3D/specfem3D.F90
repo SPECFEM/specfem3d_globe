@@ -1890,7 +1890,7 @@
                     two_omega_earth,A_array_rotation,B_array_rotation, &
                     b_two_omega_earth, SIMULATION_TYPE)
 
-  if(UNDO_ATT) then
+  if(UNDO_ATTENUATION) then
    b_deltat = deltat
    b_deltatover2 = deltatover2
    b_deltatsqover2 = deltatsqover2
@@ -1922,7 +1922,7 @@
                 alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
                 deltat,b_deltat,LOCAL_PATH)
 
-  if(UNDO_ATT) then
+  if(UNDO_ATTENUATION) then
    b_alphaval = alphaval
    b_betaval = betaval
    b_gammaval = gammaval
@@ -2046,8 +2046,8 @@
   ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
   !          will be read in the time loop after the Newmark time scheme update.
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
-if(UNDO_ATT) then
-  if(NUMBER_OF_THIS_RUN > 1) stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATT'
+if(UNDO_ATTENUATION) then
+  if(NUMBER_OF_THIS_RUN > 1) stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
   ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
@@ -2149,7 +2149,7 @@ endif
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-if(.not. UNDO_ATT) then
+if(.not. UNDO_ATTENUATION) then
 
   do it = it_begin,it_end
 
@@ -2176,10 +2176,10 @@ if(.not. UNDO_ATT) then
 !
   enddo   ! end of main time loop
 
-else ! if UNDO_ATT
+else ! if UNDO_ATTENUATION
 
 !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
-  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATT'
+  if(NUMBER_OF_RUNS /= 1) stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATTENUATION'
 
 !
 !-------------------------------------------------------------------------------
@@ -2390,7 +2390,7 @@ endif
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize closing snapshots')
 
   ! save files to local disk or tape system if restart file
-  if(.not. UNDO_ATT) call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+  if(.not. UNDO_ATTENUATION) call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &

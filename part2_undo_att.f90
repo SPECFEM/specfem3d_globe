@@ -59,12 +59,12 @@
       !       for reconstructing the rotational contributions
       if(CUSTOM_REAL == SIZE_REAL) then
         time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
-if(UNDO_ATT)then
+if(UNDO_ATTENUATION)then
         time = sngl((dble(NSTEP-(iteration_on_subset*NT_DUMP-it_of_this_subset+1))*DT-t0)*scale_t_inv)
 endif
       else
         time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
-if(UNDO_ATT)then
+if(UNDO_ATTENUATION)then
         time = (dble(NSTEP-(iteration_on_subset*NT_DUMP-it_of_this_subset+1))*DT-t0)*scale_t_inv
 endif
       endif
@@ -121,7 +121,7 @@ endif
     ! Stacey absorbing boundaries
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if (SIMULATION_TYPE == 3) then
-if(UNDO_ATT)then
+if(UNDO_ATTENUATION)then
       call compute_stacey_outer_core_forward(ichunk,SAVE_FORWARD, &
                               it,ibool_outer_core, &
                               b_veloc_outer_core,b_accel_outer_core, &
@@ -473,7 +473,7 @@ endif
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if(SIMULATION_TYPE == 3) then
-if(UNDO_ATT)then
+if(UNDO_ATTENUATION)then
       call compute_stacey_crust_mantle_forward(ichunk, &
                               it,SAVE_FORWARD,ibool_crust_mantle, &
                               b_veloc_crust_mantle,b_accel_crust_mantle, &
@@ -517,7 +517,7 @@ endif
 
     ! add adjoint sources and add sources for backward/reconstructed wavefield
     if (SIMULATION_TYPE == 3) then
-if(UNDO_ATT)then
+if(UNDO_ATTENUATION)then
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
@@ -532,7 +532,7 @@ else
 endif
     endif
 
-if(.not. UNDO_ATT)then
+if(.not. UNDO_ATTENUATION)then
     if ( NOISE_TOMOGRAPHY == 3 ) then
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
@@ -879,7 +879,7 @@ endif
     ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
     !          and adjoint sources will become more complicated
     !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
-if(.not. UNDO_ATT)then
+if(.not. UNDO_ATTENUATION)then
     if(SIMULATION_TYPE == 3 .and. it == 1) then
       call read_forward_arrays(myrank, &
                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &

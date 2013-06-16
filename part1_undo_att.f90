@@ -463,8 +463,8 @@
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
     ! add adjoint sources only if adjoint simulation is performed for source inversion only
-!! DK DK UNDO_ATT this must remain here even when SIMULATION_TYPE == 3 because it applies to array
-!! DK DK UNDO_ATT accel_crust_mantle rather than b_accel_crust_mantle
+!! DK DK UNDO_ATTENUATION this must remain here even when SIMULATION_TYPE == 3 because it applies to array
+!! DK DK UNDO_ATTENUATION accel_crust_mantle rather than b_accel_crust_mantle
     if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
       if( nadj_rec_local > 0 ) &
         call compute_add_sources_adjoint(myrank,nrec, &

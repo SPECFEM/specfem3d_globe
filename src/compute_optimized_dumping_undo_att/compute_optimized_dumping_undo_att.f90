@@ -328,10 +328,10 @@
   print *,'*******************************************************************************'
   print *
 
-  if(.not. UNDO_ATT) then
+  if(.not. UNDO_ATTENUATION) then
     print *
     print *,'*******************************************************************************'
-    print *,'BEWARE, UNDO_ATT is .false. and thus undoing is currently'
+    print *,'BEWARE, UNDO_ATTENUATION is .false. and thus undoing is currently'
     print *,'turned off, i.e. the above estimates are currently NOT USED.'
     print *,'*******************************************************************************'
     print *

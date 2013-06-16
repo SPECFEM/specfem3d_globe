@@ -539,7 +539,7 @@
     ! mimicking average (not full) effect of attenuation on apparent velocities, not amplitudes. that is,
     ! phase shifts will be partially accounted for, but amplitudes will differ in adjoint simulations
     if( ATTENUATION ) then
-      if(UNDO_ATT)then  
+      if(UNDO_ATTENUATION)then  
          !ZN in undoing attenuation we do not have to use the mimmic way for inclusion of visoelastic effect
          write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
       else

@@ -51,8 +51,8 @@
   integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 
 !! DK DK to undo attenuation
-  logical, parameter :: UNDO_ATT = .true. ! .false.
-  integer, parameter :: NT_DUMP = 50   !! DK DK how often we dump restart files to undo attenuation
+  logical, parameter :: UNDO_ATTENUATION = .true. ! .false.
+  integer, parameter :: NT_DUMP = 100   !! DK DK how often we dump restart files to undo attenuation
 
 !*********************************************************************************************************
 ! added these parameters for the future GPU version of the solver with mesh coloring
