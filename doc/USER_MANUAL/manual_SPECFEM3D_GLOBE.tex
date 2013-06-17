@@ -2485,14 +2485,24 @@ the volumetric kernel files from all slices into one mesh file, and
 \begin{lyxcode}
 {\footnotesize make~combine\_vol\_data~}{\footnotesize \par}
 
-{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize filename}~{\footnotesize input\_dir}~{\footnotesize output\_dir}~{\footnotesize high/low-resolution}~{\footnotesize {[}region]}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize kernel\_filename}~
+{\footnotesize input\_topo\_dir}~
+{\footnotesize input\_file\_dir}~{\footnotesize output\_dir}
+
+{\footnotesize low/high-resolution-flag-0-or-1}~{\footnotesize {[}region]}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{input\_dir} is the directory where all the individual
 kernel files are stored, and \texttt{output\_dir} is where the mesh
-file will be written.
+file will be written. Give 0 for low resolution and 1 for high resolution.
+If region is not specified, all three regions (crust and mantle, outer core, inner core)
+will be collected, otherwise, only the specified region will be.
+Here is an example: 
+\texttt{./xcombine\_vol\_data slices\_major alpha\_kernel input\_topo\_dir}
+\texttt{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~input\_file\_dir output\_dir 1}
 
 \begin{lyxcode}
-{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir~hi~gh/low-resolution~2D/3D}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir}
+{\footnotesize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~low/high-resolution~2D/3D}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{surfname} should correspond to the specific kernel file
 name, and can be chosen from \texttt{Moho}, \texttt{400}, \texttt{670},
