@@ -144,6 +144,11 @@ case $build_os in
         ;;
 esac
 
+# If you wish, set CFLAGS here instead of on the command-line.
+# This will then be persistent across calls to configure.
+# If you don't set it, then the default value will be determined by autoconf.
+#DEF_CFLAGS="-g -O3"
+
 if test "x$FLAGS_CHECK" = "x"; then
     FLAGS_CHECK="$DEF_FFLAGS"
 fi
@@ -158,5 +163,10 @@ echo MPIFC=\"$MPIFC\" | sed 's/\$/\\\$/g'
 echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
 echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
 echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
+if [ -n "${DEF_CFLAGS+set}" -a -z "${CFLAGS+set}" ]; then
+# We only set this if it's set in this file and the user hasn't
+# overridden it on the command-line.
+echo CFLAGS=\"$DEF_CFLAGS\" | sed 's/\$/\\\$/g'
+fi
 
 # end of file
