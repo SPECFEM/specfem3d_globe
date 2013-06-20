@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-subroutine read_kl_regular_grid(GRID)
+subroutine read_kl_regular_grid(myrank, GRID)
 
   implicit none
   include 'constants.h'
@@ -45,7 +45,7 @@ subroutine read_kl_regular_grid(GRID)
 
   type (kl_reg_grid_variables), intent(inout) :: GRID
 
-  integer :: ios,nlayer,i,nlat,nlon,npts_this_layer
+  integer :: myrank,ios,nlayer,i,nlat,nlon,npts_this_layer
 
   ! improvements to make: read-in by master and broadcast to all slaves
   open(10,file=PATHNAME_KL_REG,iostat=ios,status='old',action='read')
@@ -61,7 +61,7 @@ subroutine read_kl_regular_grid(GRID)
   close(10)
 
   if (nlayer > NM_KL_REG_LAYER) then
-    call exit_MPI('Increase NM_KL_REG_LAYER limit')
+    call exit_MPI(myrank, 'Increase NM_KL_REG_LAYER limit')
   endif
 
   GRID%nlayer = nlayer
@@ -78,7 +78,7 @@ subroutine read_kl_regular_grid(GRID)
     GRID%npts_before_layer(i+1) = GRID%npts_before_layer(i) + npts_this_layer
   enddo
   if (GRID%npts_total <= 0) then
-    call exit_MPI('No Model points read in')
+    call exit_MPI(myrank, 'No Model points read in')
   endif
 
 end subroutine read_kl_regular_grid
@@ -116,7 +116,7 @@ subroutine find_regular_grid_slice_number(slice_number, GRID, &
 
   ! assuming 6 chunks full global simulations right now
   if (NCHUNKS /= 6 .or. NPROC_XI /= NPROC_ETA) then
-    call exit_MPI('Only deal with 6 chunks at this moment')
+    call exit_MPI(0, 'Only deal with 6 chunks at this moment')
   endif
 
   xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI

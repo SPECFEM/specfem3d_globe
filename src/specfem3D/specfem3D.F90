@@ -1316,7 +1316,7 @@
   endif
 
   if (SAVE_REGULAR_KL) then
-    call read_kl_regular_grid(KL_REG_GRID)
+    call read_kl_regular_grid(myrank, KL_REG_GRID)
 
     if (myrank==0) then
       allocate(slice_number(KL_REG_GRID%npts_total))
