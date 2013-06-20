@@ -13,6 +13,7 @@ AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_CANONICAL_HOST
 
 # 'configure' options
 

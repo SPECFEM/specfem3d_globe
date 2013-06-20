@@ -1,0 +1,2 @@
+# This file is empty. We don't use AC_PROG_INSTALL, but configure erroneously
+# uses this file to check for config.{guess,sub} and other auxiliary files.
