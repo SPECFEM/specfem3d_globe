@@ -106,14 +106,18 @@
   type (model_s40rts_variables) S40RTS_V
 ! model_s40rts_variables
 
-  integer k,l,m
+  integer k,l,m,ier
 
   character(len=150) S40RTS, P12
   call get_value_string(S40RTS, 'model.S40RTS', 'DATA/s40rts/S40RTS.dat')
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')    !model P12 is in s20rts data directory
 
 ! S40RTS degree 20 S model from Ritsema
-  open(unit=10,file=S40RTS,status='old',action='read')
+  open(unit=10,file=S40RTS,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(S40RTS), '": ', ier
+    call exit_MPI(0, 'error model s40rts')
+  endif
   do k=0,NK_20
     do l=0,NS_40
       read(10,*) S40RTS_V%dvs_a(k,l,0),(S40RTS_V%dvs_a(k,l,m),S40RTS_V%dvs_b(k,l,m),m=1,l)
@@ -122,7 +126,11 @@
   close(10)
 
 ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old',action='read')
+  open(unit=10,file=P12,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
+    call exit_MPI(0, 'error model s40rts')
+  endif
   do k=0,NK_20
     do l=0,12
       read(10,*) S40RTS_V%dvp_a(k,l,0),(S40RTS_V%dvp_a(k,l,m),S40RTS_V%dvp_b(k,l,m),m=1,l)

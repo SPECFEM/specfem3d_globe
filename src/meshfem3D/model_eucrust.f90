@@ -122,7 +122,11 @@
 
   ! opens data file
   call get_value_string(filename, 'model.eu', 'DATA/eucrust-07/ds01.txt')
-  open(unit=11,file=filename,status='old',action='read')
+  open(unit=11,file=filename,status='old',action='read',iostat=ierror)
+  if ( ierror /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(filename), '": ', ierror
+    call exit_MPI(0, 'error model eucrust')
+  endif
 
   ! skip first line
   read(11,*)

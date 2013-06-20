@@ -208,7 +208,7 @@
 ! model_crust_variables
 
 ! local variables
-  integer i
+  integer i,ier
   integer ila,icolat
   integer ikey
 
@@ -219,13 +219,23 @@
   call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
   call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
 
-  open(unit=1,file=CNtype2,status='old',action='read')
+  open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(CNtype2), '": ', ier
+    call exit_MPI(0, 'error model crust2.0')
+  endif
+
   do ila=1,NCAP_CRUST/2
     read(1,*) icolat,(CM_V%abbreviation(ila,i),i=1,NCAP_CRUST)
   enddo
   close(1)
 
-  open(unit=1,file=CNtype2_key_modif,status='old',action='read')
+  open(unit=1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(CNtype2_key_modif), '": ', ier
+    call exit_MPI(0, 'error model crust2.0')
+  endif
+
   h_moho_min=HUGEVAL
   h_moho_max=-HUGEVAL
   do ikey=1,NKEYS_CRUST

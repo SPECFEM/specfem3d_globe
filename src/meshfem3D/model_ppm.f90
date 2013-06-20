@@ -173,9 +173,9 @@
   ! counts entries
   counter=0
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) then
-    write(IMAIN,*) ' error count opening: ',trim(filename)
-    call exit_mpi(0,"error count opening model ppm")
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
+    call exit_mpi(0, "error opening model ppm")
   endif
 
   ! first line is text and will be ignored
@@ -214,7 +214,7 @@
   ! vs values
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
-    write(IMAIN,*) ' error opening: ',trim(filename)
+    write(IMAIN,*) ' error opening "', trim(filename), '": ', ier
     call exit_mpi(0,"error opening model ppm")
   endif
   read(10,'(a150)') line   ! first line is text

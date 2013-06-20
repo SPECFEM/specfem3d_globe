@@ -383,7 +383,7 @@
   type (model_aniso_mantle_variables) AMM_V
 ! model_aniso_mantle_variables
 
-  integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
+  integer ier,nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
   double precision ra(47),pari(14,47)
   double precision bet2(14,34,37,73)
@@ -398,7 +398,11 @@
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
   call get_value_string(glob_prem3sm01, 'model.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
-  open(19,file=glob_prem3sm01,status='old',action='read')
+  open(19,file=glob_prem3sm01,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(glob_prem3sm01), '": ', ier
+    call exit_MPI(0, 'error model aniso mantle')
+  endif
 
 !
 ! read the models
@@ -459,7 +463,11 @@
 ! normalized, in percents: 100 G/L
 !
   call get_value_string(globpreman3sm01, 'model.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
-  open(unit=15,file=globpreman3sm01,status='old',action='read')
+  open(unit=15,file=globpreman3sm01,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(globpreman3sm01), '": ', ier
+    call exit_MPI(0, 'error model aniso mantle')
+  endif
 
   do nf = 7,nfin,2
     ipa = nf
@@ -539,6 +547,8 @@
 
   implicit none
 
+  include "constants.h"
+
 ! read the reference Earth model: rho, Vph, Vsv, XI, PHI, ETA
 ! array par(i,nlayer)
 ! output: array pari(ipar, nlayer): rho, A, L, xi-1, phi-1, eta-1
@@ -556,7 +566,12 @@
   nri = 47
 
   call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
-  open(unit=13,file=Adrem119,status='old',action='read')
+  open(unit=13,file=Adrem119,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(Adrem119), '": ', ier
+    call exit_MPI(0, 'error model aniso mantle')
+  endif
+
   read(13,*,iostat=ier) nlayer,minlay,moho,nout,neff,nband,kiti,null
   if (ier /= 0) then
     close(13)

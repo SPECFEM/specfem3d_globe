@@ -954,6 +954,7 @@
     hsplfile,refmodel,kernstri,desckern)
 
   implicit none
+  include "constants.h"
 
   integer, parameter :: mxhpar=2
   integer, parameter :: mxkern=200
@@ -984,9 +985,10 @@
 
   integer :: ncoef,i,ihor,ifst,ilst,ifst1,ios,lstr,nmodkern,idummy,nhorpar,lmax
 
-  open(lu,file=filename,iostat=ios)
-  if(ios /= 0) then
-  stop 'error opening 3-d model'
+  open(lu,file=filename,status='old',action='read',iostat=ios)
+  if ( ios /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(filename), '": ', ios
+    call exit_MPI(0, 'error model s362ani')
   endif
   do while (ios == 0)
   read(lu,"(a)",iostat=ios) string

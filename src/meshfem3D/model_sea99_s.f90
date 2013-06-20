@@ -119,13 +119,17 @@
   type (model_sea99_s_variables) SEA99M_V
   ! model_sea99_s_variables
 
-  integer :: i,ia,io,j
+  integer :: i,ia,io,j,ier
 
 !----------------------- choose input file:  ------------------
 ! relative anomaly
 
 
-  open(1,file='DATA/Lebedev_sea99/sea99_dvsvs')
+  open(1,file='DATA/Lebedev_sea99/sea99_dvsvs',status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "DATA/Lebedev_sea99/sea99_dvsvs": ', ier
+    call exit_MPI(0, 'error model sea99_s')
+  endif
 
 !----------------------- read input file:  ------------------
 

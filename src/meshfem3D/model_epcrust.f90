@@ -94,10 +94,16 @@
   character(len=150) EPCRUST_FNM
   character(len=150),dimension(15) :: header
   double precision,dimension(15) :: tmp
-  integer:: ilon, jlat
+  integer:: ier, ilon, jlat
 
   call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
-  open(unit=1001,file=EPCRUST_FNM,status='old',action='read')
+
+  open(unit=1001,file=EPCRUST_FNM,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(EPCRUST_FNM), '": ', ier
+    call exit_MPI(0, 'error model epcrust')
+  endif
+
   read(1001,*) header
 
   do jlat = 1,EPCRUST_NLAT
