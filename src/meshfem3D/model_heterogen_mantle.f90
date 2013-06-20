@@ -85,7 +85,7 @@
 
   include "constants.h"
 
-  integer i,j
+  integer i,j,ier
 
 ! model_heterogen_m_variables
   type model_heterogen_m_variables
@@ -99,7 +99,11 @@
 
 ! open heterogen.dat
   open(unit=10,file='./DATA/heterogen/heterogen.dat',access='direct',&
-       form='formatted',recl=20,status='old',action='read')
+       form='formatted',recl=20,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "./DATA/heterogen/heterogen.dat": ', ier
+    call exit_MPI(0, 'error model heterogen')
+  endif
 
   j = N_R*N_THETA*N_PHI
 

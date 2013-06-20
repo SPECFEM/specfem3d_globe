@@ -101,7 +101,7 @@
   type (model_s20rts_variables) S20RTS_V
 ! model_s20rts_variables
 
-  integer k,l,m
+  integer k,l,m,ier
 
   character(len=150) S20RTS, P12
 
@@ -109,7 +109,11 @@
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')
 
 ! S20RTS degree 20 S model from Ritsema
-  open(unit=10,file=S20RTS,status='old',action='read')
+  open(unit=10,file=S20RTS,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(S20RTS), '": ', ier
+    call exit_MPI(0, 'error model s20rts')
+  endif
   do k=0,NK_20
     do l=0,NS_20
       read(10,*) S20RTS_V%dvs_a(k,l,0),(S20RTS_V%dvs_a(k,l,m),S20RTS_V%dvs_b(k,l,m),m=1,l)
@@ -118,7 +122,11 @@
   close(10)
 
 ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old',action='read')
+  open(unit=10,file=P12,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
+    call exit_MPI(0, 'error model s20rts')
+  endif
   do k=0,NK_20
     do l=0,12
       read(10,*) S20RTS_V%dvp_a(k,l,0),(S20RTS_V%dvp_a(k,l,m),S20RTS_V%dvp_b(k,l,m),m=1,l)

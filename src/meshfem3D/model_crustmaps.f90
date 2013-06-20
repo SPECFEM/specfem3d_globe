@@ -212,7 +212,7 @@
   character(len=50) :: config_name
   character(len=150) :: default_name
   character(len=150) :: eucrust
-  integer :: ila, iln
+  integer :: ier, ila, iln
 
   write(config_name,'(a,a1,i1)') 'model.eucrust', var_letter, ind
   write(default_name,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
@@ -220,6 +220,11 @@
   call get_value_string(eucrust, config_name, default_name)
 
   open(unit=1,file=eucrust,status='old',action='read')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(eucrust), '": ', ier
+    call exit_MPI(0, 'error model crustmap')
+  endif
+
   do ila=1,180*CRUSTMAP_RESOLUTION
     read(1,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
   enddo
