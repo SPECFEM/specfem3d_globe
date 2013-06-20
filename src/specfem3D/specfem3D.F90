@@ -4103,7 +4103,7 @@
     ! crust mantle
     if (SAVE_REGULAR_KL) then
     call save_regular_kernels_crust_mantle(myrank, &
-                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, &
+                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
                   scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
