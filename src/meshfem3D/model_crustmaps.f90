@@ -147,7 +147,7 @@
   type (model_crustmaps_variables) GC_V
   !model_crustmaps_variables
 
-  integer ila,iln,i,l
+  integer i,l
 
   do i=3,7
     l = i - 2
