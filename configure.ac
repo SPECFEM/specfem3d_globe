@@ -18,7 +18,7 @@ AC_CANONICAL_HOST
 # 'configure' options
 
 AC_ARG_ENABLE([double-precision],
-    [AC_HELP_STRING([--enable-double-precision],
+    [AS_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
     [want_double_precision="$enableval"],
     [want_double_precision=no])
