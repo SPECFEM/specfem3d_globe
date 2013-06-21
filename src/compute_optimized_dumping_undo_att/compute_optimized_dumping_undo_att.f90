@@ -181,6 +181,7 @@
   NGLOB1D_RADIAL_TEMP(:) = &
   (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
 
+  print *
   print *,'number of processors = ',NPROCTOT
   print *
   print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
@@ -189,6 +190,7 @@
   print *,'total points per slice = ',sum(nglob)
   print *
   print *,'number of time steps = ',NSTEP
+  print *
 
   print *,'approximate static memory needed by the solver:'
   print *,'----------------------------------------------'
@@ -269,13 +271,12 @@
 
   print *
   print *,'*******************************************************************************'
-  print *,'the optimal value to put in setup/constants.h is thus:'
+  print *,'the optimal value to put in DATA/Par_file is thus:'
   NT_DUMP_ATTENUATION_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size) / size_to_store_at_each_time_step)
   print *
   print *,'NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal_to_use
   print *
-  print *,'thus please edit that file, put this value in it and recompile the whole code'
-  print *,'with "make clean ; make all"'
+  print *,'(no need to then recompile the code, just edit the file and change the value)'
   print *,'*******************************************************************************'
 
 ! compute the size of files to dump to disk
@@ -317,11 +318,11 @@
   print *,'each dumping on the disk to undo attenuation requires storing ',disk_size_of_each_dumping,' GB per core'
 
   print *
-  print *,'ALL dumpings on the disk require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
-
-  print *
   print *,'each dumping on the disk requires storing ',disk_size_of_each_dumping*NPROCTOT, &
                ' GB for all cores'
+
+  print *
+  print *,'ALL dumpings on the disk require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
 
   print *
   print *,'*******************************************************************************'
