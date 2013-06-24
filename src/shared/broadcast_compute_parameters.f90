@@ -57,7 +57,7 @@
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY, &
-                SAVE_REGULAR_KL)
+                SAVE_REGULAR_KL,UNDO_ATTENUATION)
 
   implicit none
 
@@ -90,7 +90,7 @@
           SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE,&
-          SAVE_REGULAR_KL
+          SAVE_REGULAR_KL,UNDO_ATTENUATION
 
   character(len=150) LOCAL_PATH,MODEL
 
@@ -128,7 +128,7 @@
   ! local parameters
   double precision, dimension(31) :: bcast_double_precision
   integer, dimension(39) :: bcast_integer
-  logical, dimension(36) :: bcast_logical
+  logical, dimension(37) :: bcast_logical
   integer ier
 
   ! master process prepares broadcasting arrays
@@ -160,7 +160,7 @@
             HONOR_1D_SPHERICAL_MOHO,MOVIE_COARSE, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
             ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE,&
-            SAVE_REGULAR_KL/)
+            SAVE_REGULAR_KL,UNDO_ATTENUATION/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -173,7 +173,7 @@
   ! broadcasts the information read on the master to the nodes
   call MPI_BCAST(bcast_integer,39,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(bcast_double_precision,31,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(bcast_logical,36,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(bcast_logical,37,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
   ! broadcasts non-single value parameters
   call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -284,6 +284,7 @@
     WRITE_SEISMOGRAMS_BY_MASTER= bcast_logical(34)
     USE_BINARY_FOR_LARGE_FILE= bcast_logical(35)
     SAVE_REGULAR_KL = bcast_logical(36)
+    UNDO_ATTENUATION = bcast_logical(37)
 
     ! double precisions
     DT = bcast_double_precision(1)
