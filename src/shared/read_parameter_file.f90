@@ -25,6 +25,14 @@
 !
 !=====================================================================
 
+!!!!!! VERY IMPORTANT
+!!!!!! VERY IMPORTANT
+!!!!!! VERY IMPORTANT if you add new parameters to DATA/Par_file, remember to also
+!!!!!! VERY IMPORTANT broadcast them with MPI_BCAST in src/shared/broadcast_compute_parameters.f90
+!!!!!! VERY IMPORTANT otherwise the code will *NOT* work
+!!!!!! VERY IMPORTANT
+!!!!!! VERY IMPORTANT
+
   subroutine read_parameter_file(OUTPUT_FILES,LOCAL_PATH,MODEL, &
                                 NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
                                 NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
