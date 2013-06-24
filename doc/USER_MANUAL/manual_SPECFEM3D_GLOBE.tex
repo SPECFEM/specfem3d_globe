@@ -157,7 +157,7 @@ which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaW
 it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
 In particular, it can accurately handle very distorted mesh elements \citep{OlSe11}.\\
 
-It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08}.
+It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08,MeStTh12}.
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
 It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
 
@@ -170,7 +170,7 @@ This is particularly true at the scale of the full Earth.\\
 For a detailed introduction to the SEM as applied to
 global and regional seismic wave propagation, please consult \citet{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07}.
 A detailed theoretical analysis of the dispersion
-and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07} and \citet{SeOl08}.\\
+and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07}, \citet{SeOl08} and \citet{MeStTh12}.\\
 
 Effects due to lateral variations in compressional-wave
 speed, shear-wave speed, density, a 3D crustal model, ellipticity,
