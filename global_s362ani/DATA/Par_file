@@ -54,6 +54,13 @@ ABSORBING_CONDITIONS            = .false.
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 15.0d0
 
+# to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
+# use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
+# but requires a significant amount of disk space for temporary storage.
+PARTIAL_PHYS_DISPERSION_ONLY    = .true.
+UNDO_ATTENUATION                = .false.
+NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
+
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
 #MOVIE_COARSE does not work with create_movie_AVS_DX
