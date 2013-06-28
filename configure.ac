@@ -13,11 +13,12 @@ AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_CANONICAL_HOST
 
 # 'configure' options
 
 AC_ARG_ENABLE([double-precision],
-    [AC_HELP_STRING([--enable-double-precision],
+    [AS_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
     [want_double_precision="$enableval"],
     [want_double_precision=no])

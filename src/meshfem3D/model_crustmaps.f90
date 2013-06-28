@@ -147,167 +147,15 @@
   type (model_crustmaps_variables) GC_V
   !model_crustmaps_variables
 
+  integer i,l
 
-
-  integer ila,iln,i,l
-
-  character(len=150)           eucrustt3,eucrustt4,eucrustt5,eucrustt6,eucrustt7,&
-                               eucrustr3,eucrustr4,eucrustr5,eucrustr6,eucrustr7,&
-                               eucrustp3,eucrustp4,eucrustp5,eucrustp6,eucrustp7,&
-                               eucrusts3,eucrusts4,eucrusts5,eucrusts6,eucrusts7
-
-!Matthias Meschede
-  call get_value_string(eucrustt3, 'model.eucrustt3','DATA/crustmap/eucrustt3.cmap')
-  call get_value_string(eucrustt4, 'model.eucrustt4','DATA/crustmap/eucrustt4.cmap')
-  call get_value_string(eucrustt5, 'model.eucrustt5','DATA/crustmap/eucrustt5.cmap')
-  call get_value_string(eucrustt6, 'model.eucrustt6','DATA/crustmap/eucrustt6.cmap')
-  call get_value_string(eucrustt7, 'model.eucrustt7','DATA/crustmap/eucrustt7.cmap')
-
-  call get_value_string(eucrustr3, 'model.eucrustr3','DATA/crustmap/eucrustr3.cmap')
-  call get_value_string(eucrustr4, 'model.eucrustr4','DATA/crustmap/eucrustr4.cmap')
-  call get_value_string(eucrustr5, 'model.eucrustr5','DATA/crustmap/eucrustr5.cmap')
-  call get_value_string(eucrustr6, 'model.eucrustr6','DATA/crustmap/eucrustr6.cmap')
-  call get_value_string(eucrustr7, 'model.eucrustr7','DATA/crustmap/eucrustr7.cmap')
-
-  call get_value_string(eucrustp3, 'model.eucrustp3','DATA/crustmap/eucrustp3.cmap')
-  call get_value_string(eucrustp4, 'model.eucrustp4','DATA/crustmap/eucrustp4.cmap')
-  call get_value_string(eucrustp5, 'model.eucrustp5','DATA/crustmap/eucrustp5.cmap')
-  call get_value_string(eucrustp6, 'model.eucrustp6','DATA/crustmap/eucrustp6.cmap')
-  call get_value_string(eucrustp7, 'model.eucrustp7','DATA/crustmap/eucrustp7.cmap')
-
-  call get_value_string(eucrusts3, 'model.eucrusts3','DATA/crustmap/eucrusts3.cmap')
-  call get_value_string(eucrusts4, 'model.eucrusts4','DATA/crustmap/eucrusts4.cmap')
-  call get_value_string(eucrusts5, 'model.eucrusts5','DATA/crustmap/eucrusts5.cmap')
-  call get_value_string(eucrusts6, 'model.eucrusts6','DATA/crustmap/eucrusts6.cmap')
-  call get_value_string(eucrusts7, 'model.eucrusts7','DATA/crustmap/eucrusts7.cmap')
-
-
-
-  open(unit=1,file=eucrustt3,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%thickness(ila,iln,1),iln=1,360*CRUSTMAP_RESOLUTION)
+  do i=3,7
+    l = i - 2
+    call read_general_crustmap_layer(GC_V%thickness(:,:,l), 't', i)
+    call read_general_crustmap_layer(GC_V%density(:,:,l),   'r', i)
+    call read_general_crustmap_layer(GC_V%velocp(:,:,l),    'p', i)
+    call read_general_crustmap_layer(GC_V%velocs(:,:,l),    's', i)
   enddo
-  close(1)
-
-  open(unit=1,file=eucrustt4,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%thickness(ila,iln,2),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustt5,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%thickness(ila,iln,3),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustt6,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%thickness(ila,iln,4),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustt7,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%thickness(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-
-
- open(unit=1,file=eucrustr3,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%density(ila,iln,1),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
- open(unit=1,file=eucrustr4,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%density(ila,iln,2),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustr5,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%density(ila,iln,3),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustr6,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%density(ila,iln,4),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustr7,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%density(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-
-
-  open(unit=1,file=eucrustp3,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocp(ila,iln,1),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustp4,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocp(ila,iln,2),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustp5,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocp(ila,iln,3),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustp6,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocp(ila,iln,4),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrustp7,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocp(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-
-
-  open(unit=1,file=eucrusts3,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocs(ila,iln,1),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrusts4,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocs(ila,iln,2),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrusts5,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocs(ila,iln,3),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrusts6,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocs(ila,iln,4),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
-
-  open(unit=1,file=eucrusts7,status='old',action='read')
-  do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (GC_V%velocs(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
-  enddo
-  close(1)
 
   GC_V%thicknessnp(:) = 0.0
   GC_V%thicknesssp(:) = 0.0
@@ -344,6 +192,45 @@
 
 
   end subroutine read_general_crustmap
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_general_crustmap_layer(var,var_letter,ind)
+
+  implicit none
+  include "constants.h"
+
+  double precision, intent(out), &
+    dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION)&
+    :: var
+  character(len=1), intent(in) :: var_letter
+  integer, intent(in) :: ind
+
+  ! local variables
+  character(len=50) :: config_name
+  character(len=150) :: default_name
+  character(len=150) :: eucrust
+  integer :: ier, ila, iln
+
+  write(config_name,'(a,a1,i1)') 'model.eucrust', var_letter, ind
+  write(default_name,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
+
+  call get_value_string(eucrust, config_name, default_name)
+
+  open(unit=1,file=eucrust,status='old',action='read')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(eucrust), '": ', ier
+    call exit_MPI(0, 'error model crustmap')
+  endif
+
+  do ila=1,180*CRUSTMAP_RESOLUTION
+    read(1,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
+  enddo
+  close(1)
+
+  end subroutine read_general_crustmap_layer
 
 !
 !-------------------------------------------------------------------------------------------------

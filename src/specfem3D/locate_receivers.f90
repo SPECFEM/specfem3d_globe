@@ -46,6 +46,8 @@
   include "constants.h"
   include "precision.h"
 
+  integer, allocatable, dimension(:) :: station_duplet
+
   integer NPROCTOT,NCHUNKS
 
   logical ELLIPTICITY,TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
@@ -143,9 +145,15 @@
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, dimension(nrec) :: stlat,stlon,stele,stbur
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
+  double precision, allocatable, dimension(:) :: xi_receiver_subset,eta_receiver_subset,gamma_receiver_subset
 
   character(len=150) OUTPUT_FILES
   character(len=2) bic
+
+  integer nrec_SUBSET_current_size,irec_in_this_subset,irec_already_done
+  double precision, allocatable, dimension(:) :: x_found_subset,y_found_subset,z_found_subset
+  double precision, allocatable, dimension(:) :: final_distance_subset
+  integer, allocatable, dimension(:) :: ispec_selected_rec_subset
 
 ! **************
 
@@ -185,15 +193,7 @@
           x_found(nrec), &
           y_found(nrec), &
           z_found(nrec), &
-          final_distance(nrec), &
-          ispec_selected_rec_all(nrec,0:NPROCTOT-1), &
-          xi_receiver_all(nrec,0:NPROCTOT-1), &
-          eta_receiver_all(nrec,0:NPROCTOT-1), &
-          gamma_receiver_all(nrec,0:NPROCTOT-1), &
-          x_found_all(nrec,0:NPROCTOT-1), &
-          y_found_all(nrec,0:NPROCTOT-1), &
-          z_found_all(nrec,0:NPROCTOT-1), &
-          final_distance_all(nrec,0:NPROCTOT-1),stat=ier)
+          final_distance(nrec),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
 
   ! read that STATIONS file on the master
@@ -212,6 +212,30 @@
     enddo
     ! close receiver file
     close(1)
+
+! BS BS begin
+! In case that the same station and network name appear twice (or more times) in the STATIONS
+! file, problems occur, as two (or more) seismograms are written (with mode
+! "append") to a file with same name. The philosophy here is to accept multiple
+! appearences and to just add a count to the station name in this case.
+    allocate(station_duplet(nrec))
+    station_duplet=0
+    do irec = 1,nrec
+      do i=1,irec-1
+        if ((station_name(irec)==station_name(i)) .and. &
+            (network_name(irec)==network_name(i))) then
+
+            station_duplet(i)=station_duplet(i)+1
+            if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
+              write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
+            else
+              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at lease 3')
+            endif
+
+        endif
+      enddo
+    enddo
+! BS BS end
 
     ! if receivers can not be buried, sets depth to zero
     if( .not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0
@@ -425,9 +449,46 @@
 ! find the best (xi,eta) for each receiver
 ! ****************************************
 
-! loop on all the receivers to iterate in that slice
-  do irec = 1,nrec
+!! loop on all the receivers to iterate in that slice
+!  do irec = 1,nrec
 
+! loop on all the receivers
+! gather source information in subsets to reduce memory requirements
+
+islice_selected_rec(:) = -1
+! loop over subsets of receivers
+  do irec_already_done = 0, nrec, nrec_SUBSET_MAX
+
+! the size of the subset can be the maximum size, or less (if we are in the last subset,
+! or if there are fewer sources than the maximum size of a subset)
+  nrec_SUBSET_current_size = min(nrec_SUBSET_MAX, nrec - irec_already_done)
+
+! allocate arrays specific to each subset
+  allocate(ispec_selected_rec_subset(nrec_SUBSET_current_size), &
+           ispec_selected_rec_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          xi_receiver_subset(nrec_SUBSET_current_size), &
+          eta_receiver_subset(nrec_SUBSET_current_size), &
+          gamma_receiver_subset(nrec_SUBSET_current_size), &
+          xi_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          eta_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          gamma_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          x_found_subset(nrec_SUBSET_current_size), &
+          y_found_subset(nrec_SUBSET_current_size), &
+          z_found_subset(nrec_SUBSET_current_size), &
+          x_found_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          y_found_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          z_found_all(nrec_SUBSET_current_size,0:NPROCTOT-1), &
+          final_distance_subset(nrec_SUBSET_current_size), &
+          final_distance_all(nrec_SUBSET_current_size,0:NPROCTOT-1),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
+
+! loop over the stations within this subset
+  do irec_in_this_subset = 1,nrec_SUBSET_current_size
+
+! mapping from station number in current subset to real station number in all the subsets
+  irec = irec_in_this_subset + irec_already_done
+
+    ispec_selected_rec_subset(irec_in_this_subset) = ispec_selected_rec(irec)
     ispec_iterate = ispec_selected_rec(irec)
 
 ! use initial guess in xi and eta
@@ -525,36 +586,43 @@
          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 ! store xi,eta and x,y,z of point found
-    xi_receiver(irec) = xi
-    eta_receiver(irec) = eta
-    gamma_receiver(irec) = gamma
+    xi_receiver_subset(irec_in_this_subset) = xi
+    eta_receiver_subset(irec_in_this_subset) = eta
+    gamma_receiver_subset(irec_in_this_subset) = gamma
     x_found(irec) = x
     y_found(irec) = y
     z_found(irec) = z
+    x_found_subset(irec_in_this_subset) = x_found(irec)
+    y_found_subset(irec_in_this_subset) = y_found(irec)
+    z_found_subset(irec_in_this_subset) = z_found(irec)
 
 ! compute final distance between asked and found (converted to km)
     final_distance(irec) = dsqrt((x_target(irec)-x_found(irec))**2 + &
         (y_target(irec)-y_found(irec))**2 + (z_target(irec)-z_found(irec))**2)*R_EARTH/1000.d0
 
-  enddo
+    final_distance_subset(irec_in_this_subset) = final_distance(irec)
+
+  enddo ! end of loop on all stations within current subset
 
 ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
-  call MPI_GATHER(ispec_selected_rec,nrec,MPI_INTEGER,ispec_selected_rec_all,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_GATHER(xi_receiver,nrec,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec, &
+  call MPI_GATHER(ispec_selected_rec_subset,nrec_SUBSET_current_size,MPI_INTEGER,ispec_selected_rec_all,nrec_SUBSET_current_size, &
+                  MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  call MPI_GATHER(xi_receiver_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(eta_receiver,nrec,MPI_DOUBLE_PRECISION,eta_receiver_all,nrec, &
+  call MPI_GATHER(eta_receiver_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,eta_receiver_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,gamma_receiver_all,nrec, &
+  call MPI_GATHER(gamma_receiver_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,gamma_receiver_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(final_distance,nrec,MPI_DOUBLE_PRECISION,final_distance_all,nrec, &
+  call MPI_GATHER(final_distance_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,final_distance_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(x_found,nrec,MPI_DOUBLE_PRECISION,x_found_all,nrec, &
+  call MPI_GATHER(x_found_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,x_found_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(y_found,nrec,MPI_DOUBLE_PRECISION,y_found_all,nrec, &
+  call MPI_GATHER(y_found_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,y_found_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(z_found,nrec,MPI_DOUBLE_PRECISION,z_found_all,nrec, &
+  call MPI_GATHER(z_found_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,z_found_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! this is executed by main process only
@@ -564,24 +632,53 @@
     if(any(ispec_selected_rec_all(:,:) == -1)) call exit_MPI(myrank,'gather operation failed for receivers')
 
     ! MPI loop on all the results to determine the best slice
-    islice_selected_rec(:) = -1
-    do irec = 1,nrec
-      distmin = HUGEVAL
+    !do irec = 1,nrec
+    do irec_in_this_subset = 1,nrec_SUBSET_current_size
+
+     ! mapping from station number in current subset to real station number in all the subsets
+     irec = irec_in_this_subset + irec_already_done
+
+     distmin = HUGEVAL
       do iprocloop = 0,NPROCTOT-1
-        if(final_distance_all(irec,iprocloop) < distmin) then
-          distmin = final_distance_all(irec,iprocloop)
+        if(final_distance_all(irec_in_this_subset,iprocloop) < distmin) then
+          distmin = final_distance_all(irec_in_this_subset,iprocloop)
           islice_selected_rec(irec) = iprocloop
-          ispec_selected_rec(irec) = ispec_selected_rec_all(irec,iprocloop)
-          xi_receiver(irec) = xi_receiver_all(irec,iprocloop)
-          eta_receiver(irec) = eta_receiver_all(irec,iprocloop)
-          gamma_receiver(irec) = gamma_receiver_all(irec,iprocloop)
-          x_found(irec) = x_found_all(irec,iprocloop)
-          y_found(irec) = y_found_all(irec,iprocloop)
-          z_found(irec) = z_found_all(irec,iprocloop)
+          ispec_selected_rec(irec) = ispec_selected_rec_all(irec_in_this_subset,iprocloop)
+          xi_receiver(irec) = xi_receiver_all(irec_in_this_subset,iprocloop)
+          eta_receiver(irec) = eta_receiver_all(irec_in_this_subset,iprocloop)
+          gamma_receiver(irec) = gamma_receiver_all(irec_in_this_subset,iprocloop)
+          x_found(irec) = x_found_all(irec_in_this_subset,iprocloop)
+          y_found(irec) = y_found_all(irec_in_this_subset,iprocloop)
+          z_found(irec) = z_found_all(irec_in_this_subset,iprocloop)
         endif
       enddo
       final_distance(irec) = distmin
     enddo
+
+  endif ! end of section executed by main process only
+
+  deallocate(ispec_selected_rec_subset)
+  deallocate(ispec_selected_rec_all)
+  deallocate(xi_receiver_subset)
+  deallocate(eta_receiver_subset)
+  deallocate(gamma_receiver_subset)
+  deallocate(xi_receiver_all)
+  deallocate(eta_receiver_all)
+  deallocate(gamma_receiver_all)
+  deallocate(x_found_subset)
+  deallocate(y_found_subset)
+  deallocate(z_found_subset)
+  deallocate(x_found_all)
+  deallocate(y_found_all)
+  deallocate(z_found_all)
+  deallocate(final_distance_subset)
+  deallocate(final_distance_all)
+
+  enddo ! end of loop over all station subsets
+
+
+! this is executed by main process only
+  if(myrank == 0) then
 
     nrec_found = 0
     do irec=1,nrec
@@ -732,14 +829,6 @@
   deallocate(y_found)
   deallocate(z_found)
   deallocate(final_distance)
-  deallocate(ispec_selected_rec_all)
-  deallocate(xi_receiver_all)
-  deallocate(eta_receiver_all)
-  deallocate(gamma_receiver_all)
-  deallocate(x_found_all)
-  deallocate(y_found_all)
-  deallocate(z_found_all)
-  deallocate(final_distance_all)
 
   end subroutine locate_receivers
 

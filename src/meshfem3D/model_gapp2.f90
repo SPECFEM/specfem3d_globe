@@ -105,7 +105,10 @@
 
   ! reads in GAP-P2 model from Obayashi
   open(unit=10,file=GAPP2,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file for GAPP2 model')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(GAPP2), '": ', ier
+    call exit_MPI(0, 'error model GAPP2')
+  endif
 
   read(10,*) no,na,nnr,dela,delo
 

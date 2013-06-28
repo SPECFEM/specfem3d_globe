@@ -154,10 +154,10 @@ The software package SPECFEM3D\_GLOBE simulates three-dimensional
 global and regional seismic wave propagation based upon the spectral-element method (SEM).
 The SEM is a continuous Galerkin technique \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11},
 which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11};
-it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
+it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,LeRa74,Arn82,JoPi86,BoMaHe91,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
 In particular, it can accurately handle very distorted mesh elements \citep{OlSe11}.\\
 
-It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08}.
+It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08,MeStTh12}.
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
 It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
 
@@ -170,7 +170,7 @@ This is particularly true at the scale of the full Earth.\\
 For a detailed introduction to the SEM as applied to
 global and regional seismic wave propagation, please consult \citet{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07}.
 A detailed theoretical analysis of the dispersion
-and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07} and \citet{SeOl08}.\\
+and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07}, \citet{SeOl08} and \citet{MeStTh12}.\\
 
 Effects due to lateral variations in compressional-wave
 speed, shear-wave speed, density, a 3D crustal model, ellipticity,
@@ -254,7 +254,8 @@ Then, to configure the software for your system, run the \texttt{configure}
 shell script. This script will attempt to guess the appropriate configuration
 values for your system. However, at a minimum, it is recommended that
 you explicitly specify the appropriate command names for your Fortran
-compiler and MPI package:
+compiler and MPI package (another option is to define FC, CC and MPIF90 in your .bash\_profile
+or your .cshrc file):
 
 \begin{lyxcode}
 ./configure~FC=ifort~MPIFC=mpif90
@@ -266,8 +267,6 @@ Before running the \texttt{configure} script, you should probably edit file \tex
 \item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine.
 \item [{\texttt{IBM compiler}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
 \item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
-In addition, the \texttt{clock\_gettime} routine, which is used by the \texttt{SCOTCH} library that we use, does not exist in Mac OS.
-You will need to replace it with \texttt{clock\_get\_time} if you want to use \texttt{SCOTCH}.
 \end{description}
 
 When compiling on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, we suggest running the \texttt{configure} script
@@ -600,7 +599,7 @@ need to be set in the \texttt{Par\_file}:
 
 \begin{description}
 \item [{\texttt{SIMULATION\_TYPE}}] is set to 1 for forward simulations,
-2 for adjoint simulations for sources (see Section \ref{sec:Adjoint-simulation-finite})
+2 for adjoint simulations for sources (see Section \ref{sec:Adjoint-simulation-sources})
 and 3 for kernel simulations (see Section \ref{sec:Finite-Frequency-Kernels}).
 \item [{\texttt{SAVE\_FORWARD}}] is only set to \texttt{.true.} for a forward
 simulation with the last frame of the simulation saved, as part of
@@ -1393,14 +1392,15 @@ is the time in the first column of the output seismogram.
 \noindent \begin{centering}
 \includegraphics[width=3in]{figures/gauss_vs_triangle_mod}
 \par\end{centering}
-
-\caption{Comparison of the shape of a triangle and the Gaussian function actually
-used.}
-
-
+\caption{Comparison of the shape of a triangle and the Gaussian function actually used.}
 \label{fig:gauss.vs.triangle}
 \end{figure}
 
+If you know the earthquake source in strike/dip/rake format rather than in \texttt{CMTSOLUTION} format,
+use the C code \texttt{utils/strike\_dip\_rake\_to\_CMTSOLUTION.c} to convert it.
+The conversion formulas are given for instance in \cite{AkRi80}.
+Note that the \cite{AkRi80} convention is slightly different from the Harvard \texttt{CMTSOLUTION} convention
+(the sign of some components is different). The C code outputs both.
 
 Centroid latitude and longitude should be provided in geographical
 coordinates. The code converts these coordinates to geocentric coordinates~\citep{DaTr98}.
@@ -2483,14 +2483,24 @@ the volumetric kernel files from all slices into one mesh file, and
 \begin{lyxcode}
 {\footnotesize make~combine\_vol\_data~}{\footnotesize \par}
 
-{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize filename}~{\footnotesize input\_dir}~{\footnotesize output\_dir}~{\footnotesize high/low-resolution}~{\footnotesize {[}region]}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize kernel\_filename}~
+{\footnotesize input\_topo\_dir}~
+{\footnotesize input\_file\_dir}~{\footnotesize output\_dir}
+
+{\footnotesize low/high-resolution-flag-0-or-1}~{\footnotesize {[}region]}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{input\_dir} is the directory where all the individual
 kernel files are stored, and \texttt{output\_dir} is where the mesh
-file will be written.
+file will be written. Give 0 for low resolution and 1 for high resolution.
+If region is not specified, all three regions (crust and mantle, outer core, inner core)
+will be collected, otherwise, only the specified region will be.
+Here is an example: 
+\texttt{./xcombine\_vol\_data slices\_major alpha\_kernel input\_topo\_dir}
+\texttt{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~input\_file\_dir output\_dir 1}
 
 \begin{lyxcode}
-{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir~hi~gh/low-resolution~2D/3D}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir}
+{\footnotesize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~low/high-resolution~2D/3D}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{surfname} should correspond to the specific kernel file
 name, and can be chosen from \texttt{Moho}, \texttt{400}, \texttt{670},

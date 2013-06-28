@@ -213,8 +213,9 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
-! maximum number of sources to locate simultaneously
+! maximum number of sources and receivers to locate simultaneously
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
+  integer, parameter :: NREC_SUBSET_MAX = 200
 
 ! use a force source located exactly at a grid point instead of a CMTSOLUTION source
 ! this can be useful e.g. for asteroid impact simulations

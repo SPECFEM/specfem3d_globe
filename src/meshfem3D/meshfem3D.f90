@@ -865,7 +865,7 @@
                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,NOISE_TOMOGRAPHY)
+                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
 
   endif   ! end of section executed by main process only
 

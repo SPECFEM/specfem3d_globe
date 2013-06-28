@@ -383,7 +383,7 @@
   type (model_aniso_mantle_variables) AMM_V
 ! model_aniso_mantle_variables
 
-  integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
+  integer ier,nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
   double precision ra(47),pari(14,47)
   double precision bet2(14,34,37,73)
@@ -398,7 +398,11 @@
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
   call get_value_string(glob_prem3sm01, 'model.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
-  open(19,file=glob_prem3sm01,status='old',action='read')
+  open(19,file=glob_prem3sm01,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(glob_prem3sm01), '": ', ier
+    call exit_MPI(0, 'error model aniso mantle')
+  endif
 
 !
 ! read the models
@@ -459,7 +463,11 @@
 ! normalized, in percents: 100 G/L
 !
   call get_value_string(globpreman3sm01, 'model.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
-  open(unit=15,file=globpreman3sm01,status='old',action='read')
+  open(unit=15,file=globpreman3sm01,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(globpreman3sm01), '": ', ier
+    call exit_MPI(0, 'error model aniso mantle')
+  endif
 
   do nf = 7,nfin,2
     ipa = nf
@@ -539,12 +547,14 @@
 
   implicit none
 
+  include "constants.h"
+
 ! read the reference Earth model: rho, Vph, Vsv, XI, PHI, ETA
 ! array par(i,nlayer)
 ! output: array pari(ipar, nlayer): rho, A, L, xi-1, phi-1, eta-1
 
   integer i,j,k,ip,ifanis,idum1,idum2,idum3,nlayer,nout,neff,&
-          nband,nri,minlay,moho,kiti
+          nband,nri,minlay,moho,kiti,ier
   double precision pari(14,47),qkappa(47),qshear(47),par(6,47)
   double precision epa(14,47),ra(47),dcori(47),ri(47)
   double precision corpar(21,47)
@@ -552,59 +562,88 @@
   character(len=80) null
   character(len=150) Adrem119
 
-     ifanis = 1
-     nri = 47
+  ifanis = 1
+  nri = 47
 
-     call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
-     open(unit=13,file=Adrem119,status='old',action='read')
-     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
+  call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
+  open(unit=13,file=Adrem119,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(Adrem119), '": ', ier
+    call exit_MPI(0, 'error model aniso mantle')
+  endif
 
-     if(kiti == 0) read(13,"(20a4)",end = 77) idum1
-     read(13,"(20a4)",end = 77) idum2
-     read(13,"(20a4)",end = 77) idum3
+  read(13,*,iostat=ier) nlayer,minlay,moho,nout,neff,nband,kiti,null
+  if (ier /= 0) then
+    close(13)
+    return
+  endif
 
-     do i = 1,nlayer
-       read(13,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
-     enddo
+  if (kiti == 0) then
+    read(13,"(20a4)",iostat=ier) idum1
+    if (ier /= 0) then
+      close(13)
+      return
+    endif
+  endif
+  read(13,"(20a4)",iostat=ier) idum2
+  if (ier /= 0) then
+    close(13)
+    return
+  endif
+  read(13,"(20a4)",iostat=ier) idum3
+  if (ier /= 0) then
+    close(13)
+    return
+  endif
 
-     do i = 1,nlayer
-       ri(i) = 0.001*ra(i)
-     enddo
+  do i = 1,nlayer
+    read(13,"(4x,f11.1,8d12.5)",iostat=ier) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
+    if (ier /= 0) then
+      close(13)
+      return
+    endif
+  enddo
 
-     do i = 1,nlayer
-       rho = par(1,i)
-       pari(1,i) = rho
-!    A : pari(2,i)
-       pari(2,i) = rho*(par(2,i)**2)
-       aa = pari(2,i)
-!    L : pari(3,i)
-       pari(3,i) = rho*(par(3,i)**2)
-       al = pari(3,i)
-!    Xi : pari(4,i)= (N-L)/L
-       an = al*par(4,i)
-       pari(4,i) = 0.
-       pari(4,i) = par(4,i) - 1.
-!    Phi : pari(5,i)=(a-c)/a
-       pari(5,i) = - par(5,i) + 1.
-       ac = par(5,i)*aa
-!    f : pari(4,i)
-       af = par(6,i)*(aa - 2.*al)
-       pari(6,i) = par(6,i)
-       do ip = 7,14
-         pari(ip,i) = 0.
-       enddo
-       vsv = 0.
-       vsh = 0.
-       if(al < 0.0001 .or. an < 0.0001) goto 12
-       vsv = dsqrt(al/rho)
-       vsh = dsqrt(an/rho)
- 12    vpv = dsqrt(ac/rho)
-       vph = dsqrt(aa/rho)
-     enddo
+  do i = 1,nlayer
+    ri(i) = 0.001*ra(i)
+  enddo
+
+  do i = 1,nlayer
+    rho = par(1,i)
+    pari(1,i) = rho
+! A : pari(2,i)
+    pari(2,i) = rho*(par(2,i)**2)
+    aa = pari(2,i)
+! L : pari(3,i)
+    pari(3,i) = rho*(par(3,i)**2)
+    al = pari(3,i)
+! Xi : pari(4,i)= (N-L)/L
+    an = al*par(4,i)
+    pari(4,i) = 0.
+    pari(4,i) = par(4,i) - 1.
+! Phi : pari(5,i)=(a-c)/a
+    pari(5,i) = - par(5,i) + 1.
+    ac = par(5,i)*aa
+! f : pari(4,i)
+    af = par(6,i)*(aa - 2.*al)
+    pari(6,i) = par(6,i)
+    do ip = 7,14
+      pari(ip,i) = 0.
+    enddo
+    vsv = 0.
+    vsh = 0.
+    if (al >= 0.0001 .and. an >= 0.0001) then
+      vsv = dsqrt(al/rho)
+      vsh = dsqrt(an/rho)
+    endif
+    vpv = dsqrt(ac/rho)
+    vph = dsqrt(aa/rho)
+  enddo
 
   red = 1.
   do i = 1,nlayer
-    read(13,"(15x,6e12.5,f11.1)",end = 77) (epa(j,i),j = 1,6),dcori(i)
+    read(13,"(15x,6e12.5,f11.1)",iostat=ier) (epa(j,i),j = 1,6),dcori(i)
+    if (ier /= 0) exit
     epa(7,i) = epa(2,i)
     epa(8,i) = epa(2,i)
     epa(9,i) = epa(3,i)
@@ -620,11 +659,11 @@
       epa(j,i) = red*epa(j,i)
     enddo
 
-    read(13,"(21f7.3)",end = 77) (corpar(j,i),j = 1,21)
-
+    read(13,"(21f7.3)",iostat=ier) (corpar(j,i),j = 1,21)
+    if (ier /= 0) exit
   enddo
 
-77 close(13)
+  close(13)
 
   end subroutine lecmod
 

@@ -1323,7 +1323,7 @@
   endif
 
   if (SAVE_REGULAR_KL) then
-    call read_kl_regular_grid(KL_REG_GRID)
+    call read_kl_regular_grid(myrank, KL_REG_GRID)
 
     if (myrank==0) then
       allocate(slice_number(KL_REG_GRID%npts_total))
@@ -2410,7 +2410,7 @@ endif
     ! crust mantle
     if (SAVE_REGULAR_KL) then
     call save_regular_kernels_crust_mantle(myrank, &
-                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, &
+                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
                   scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
