@@ -30,9 +30,8 @@
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
-                          epsilondev_crust_mantle,b_epsilondev_crust_mantle, &
-                          eps_trace_over_3_crust_mantle,b_eps_trace_over_3_crust_mantle, &
-                          deltat)
+                          deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
+                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   implicit none
 
@@ -49,30 +48,38 @@
 
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-     accel_crust_mantle
+     accel_crust_mantle,displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
     b_displ_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-    epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    b_epsilondev_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
-    eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    b_eps_trace_over_3_crust_mantle
-
   real(kind=CUSTOM_REAL) deltat
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprime_xxT
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) :: prod !, cijkl_kl_local
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_matrix,b_epsilondev_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_matrix,&
+                                                          b_eps_trace_over_3_loc_matrix
   integer :: i,j,k,ispec,iglob
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
+
+    call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+                                             displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
+                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
+                                             epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
+
+    call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+                                             b_displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
+                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
+                                             b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+
+
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -95,14 +102,14 @@
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
              + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
-          epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
-          b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
+          epsilondev_loc(:) = epsilondev_loc_matrix(:,i,j,k)
+          b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
 
           ! For anisotropic kernels
           if (ANISOTROPIC_KL) then
 
-            call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
-                                        b_eps_trace_over_3_crust_mantle(i,j,k,ispec),b_epsilondev_loc)
+            call compute_strain_product(prod,eps_trace_over_3_loc_matrix(i,j,k),epsilondev_loc, &
+                                        b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
             cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
 
           else
@@ -119,8 +126,8 @@
             ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
             ! note: multiplication with kappa(x) will be done after the time loop
             alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) &
-                             * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
+               + deltat * (9 * eps_trace_over_3_loc_matrix(i,j,k) &
+                             * b_eps_trace_over_3_loc_matrix(i,j,k))
 
           endif
 
@@ -446,9 +453,8 @@
                           rho_kl_inner_core,beta_kl_inner_core, &
                           alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
-                          epsilondev_inner_core,b_epsilondev_inner_core, &
-                          eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core, &
-                          deltat)
+                          deltat,displ_inner_core,hprime_xx,hprime_xxT,&
+                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 
   implicit none
@@ -462,31 +468,38 @@
     rho_kl_inner_core, beta_kl_inner_core, alpha_kl_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-     accel_inner_core
+     accel_inner_core,displ_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
     b_displ_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
-    epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
-    b_epsilondev_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: &
-    eps_trace_over_3_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
-    b_eps_trace_over_3_inner_core
-
   real(kind=CUSTOM_REAL) deltat
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprime_xxT
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_matrix,b_epsilondev_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_matrix,&
+                                                          b_eps_trace_over_3_loc_matrix
 
   integer :: i,j,k,ispec,iglob
 
 
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
+
+    call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
+                                             displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&
+                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
+                                             epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
+
+    call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
+                                             b_displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&
+                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
+                                             b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -497,8 +510,9 @@
              + accel_inner_core(2,iglob) * b_displ_inner_core(2,iglob) &
              + accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob) )
 
-          epsilondev_loc(:) = epsilondev_inner_core(:,i,j,k,ispec)
-          b_epsilondev_loc(:) = b_epsilondev_inner_core(:,i,j,k,ispec)
+          epsilondev_loc(:) = epsilondev_loc_matrix(:,i,j,k)
+          b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
+
           beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
              + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
                 + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
@@ -506,7 +520,7 @@
                 + epsilondev_loc(5)*b_epsilondev_loc(5)) )
 
           alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
-             + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
+                + deltat * (9 * eps_trace_over_3_loc_matrix(i,j,k) * b_eps_trace_over_3_loc_matrix(i,j,k))
         enddo
       enddo
     enddo
@@ -1002,6 +1016,3 @@
 
 
   end subroutine compute_kernels_hessian
-
-
-

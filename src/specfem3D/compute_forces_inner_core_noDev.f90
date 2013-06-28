@@ -48,9 +48,9 @@
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
-          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec)
+          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
+          alphaval,betaval,gammaval,factor_common, &
+          vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
 
   implicit none
 
@@ -60,8 +60,10 @@
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
 
+  real(kind=CUSTOM_REAL) deltat
+
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core,veloc_inner_core
 
 ! for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -79,9 +81,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_INNER_CORE) :: idoubling
@@ -207,6 +208,7 @@
 ! local to global mapping
   integer NSPEC2D_BOTTOM_INNER_CORE
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+  real(kind=CUSTOM_REAL) templ
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -337,9 +339,9 @@
             else
               ispec_strain = ispec
             endif
-            epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+            epsilondev_loc(1,i,j,k) = duxdxl - templ
+            epsilondev_loc(2,i,j,k) = duydyl - templ
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -644,6 +646,10 @@
 
     if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
 
+       call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
+                                             veloc_inner_core,deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
+                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
+
       do i_SLS = 1,N_SLS
         factor_common_use = factor_common(i_SLS,:,:,:,ispec)
         do i_memory = 1,5
@@ -652,20 +658,7 @@
                   R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
                   factor_common_use * &
                   (betaval(i_SLS) * &
-                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-        enddo
-      enddo
-
-    endif
-
-    if (COMPUTE_AND_STORE_STRAIN) then
-! save deviatoric strain for Runge-Kutta scheme
-      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
-          enddo
+                  epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
         enddo
       enddo
 

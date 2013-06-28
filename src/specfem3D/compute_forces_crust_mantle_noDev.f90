@@ -52,8 +52,8 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
+          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
 
   implicit none
 
@@ -88,7 +88,7 @@
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle,veloc_crust_mantle
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -97,13 +97,13 @@
 ! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec
 
-  real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
+  real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta,deltat
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -111,7 +111,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -147,6 +147,7 @@
 
   integer ispec,iglob,ispec_strain
   integer i,j,k,l
+  real(kind=CUSTOM_REAL) templ
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
@@ -380,9 +381,10 @@
             else
               ispec_strain = ispec
             endif
-            epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+            epsilondev_loc(1,i,j,k) = duxdxl - templ
+            epsilondev_loc(2,i,j,k) = duydyl - templ
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -911,6 +913,10 @@
 
     if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
 
+       call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
+                                             deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
+                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
+
 ! use Runge-Kutta scheme to march in time
       do i_SLS = 1,N_SLS
         do i_memory = 1,5
@@ -930,24 +936,26 @@
           R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * &
                     R_memory(i_memory,i_SLS,:,:,:,ispec) + &
                     factor_common_c44_muv * &
-                    (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + &
-                    gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+!ZN                    (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + &
+!ZN                    gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+                    (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + &
+                    gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
         enddo
       enddo
 
     endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) then
-      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
-          enddo
-        enddo
-      enddo
-    endif
+!ZN    if(COMPUTE_AND_STORE_STRAIN) then
+!ZN      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+!ZN      do k=1,NGLLZ
+!ZN        do j=1,NGLLY
+!ZN          do i=1,NGLLX
+!ZN            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
+!ZN          enddo
+!ZN        enddo
+!ZN      enddo
+!ZN    endif
 
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 

@@ -25,12 +25,12 @@
 !
 !=====================================================================
 
-  subroutine compute_coupling_fluid_CMB(displ_crust_mantle,b_displ_crust_mantle, &
+  subroutine compute_coupling_fluid_CMB(displ_crust_mantle, &
                             ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                            accel_outer_core,b_accel_outer_core, &
+                            accel_outer_core, &
                             normal_top_outer_core,jacobian2D_top_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                            SIMULATION_TYPE,nspec_top)
+                            nspec_top)
 
   implicit none
 
@@ -39,14 +39,11 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
@@ -55,7 +52,6 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
-  integer SIMULATION_TYPE
   integer nspec_top
 
   ! local parameters
@@ -100,20 +96,6 @@
         ! update fluid acceleration/pressure
         accel_outer_core(iglob_oc) = accel_outer_core(iglob_oc) + weight*displ_n
 
-        if (SIMULATION_TYPE == 3) then
-          ! get displacement in crust mantle
-          iglob_cm = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
-          displ_x = b_displ_crust_mantle(1,iglob_cm)
-          displ_y = b_displ_crust_mantle(2,iglob_cm)
-          displ_z = b_displ_crust_mantle(3,iglob_cm)
-
-          displ_n = displ_x*nx + displ_y*ny + displ_z*nz
-
-          ! update fluid acceleration/pressure
-          iglob_oc = ibool_outer_core(i,j,k,ispec)
-          b_accel_outer_core(iglob_oc) = b_accel_outer_core(iglob_oc) + weight*displ_n
-        endif
-
       enddo
     enddo
   enddo
@@ -124,12 +106,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_fluid_ICB(displ_inner_core,b_displ_inner_core, &
+  subroutine compute_coupling_fluid_ICB(displ_inner_core, &
                             ibool_inner_core,ibelm_top_inner_core,  &
-                            accel_outer_core,b_accel_outer_core, &
+                            accel_outer_core, &
                             normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                            SIMULATION_TYPE,nspec_bottom)
+                            nspec_bottom)
 
   implicit none
 
@@ -138,14 +120,11 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
     displ_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
@@ -154,7 +133,6 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
 
-  integer SIMULATION_TYPE
   integer nspec_bottom
 
   ! local parameters
@@ -199,22 +177,6 @@
         ! update fluid acceleration/pressure
         accel_outer_core(iglob_oc) = accel_outer_core(iglob_oc) - weight*displ_n
 
-        if (SIMULATION_TYPE == 3) then
-          ! get displacement in inner core
-          iglob_ic = ibool_inner_core(i,j,k_corresp,ispec_selected)
-          displ_x = b_displ_inner_core(1,iglob_ic)
-          displ_y = b_displ_inner_core(2,iglob_ic)
-          displ_z = b_displ_inner_core(3,iglob_ic)
-
-          displ_n = displ_x*nx + displ_y*ny + displ_z*nz
-
-
-          ! update fluid acceleration/pressure
-          iglob_oc = ibool_outer_core(i,j,k,ispec)
-          b_accel_outer_core(iglob_oc) = b_accel_outer_core(iglob_oc) - weight*displ_n
-
-        endif
-
       enddo
     enddo
   enddo
@@ -225,15 +187,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-  subroutine compute_coupling_CMB_fluid(displ_crust_mantle,b_displ_crust_mantle, &
-                            accel_crust_mantle,b_accel_crust_mantle, &
+  subroutine compute_coupling_CMB_fluid(displ_crust_mantle, &
+                            accel_crust_mantle, &
                             ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                            accel_outer_core,b_accel_outer_core, &
+                            accel_outer_core, &
                             normal_top_outer_core,jacobian2D_top_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                             RHO_TOP_OC,minus_g_cmb, &
-                            SIMULATION_TYPE,nspec_bottom)
+                            nspec_bottom)
 
   implicit none
 
@@ -242,14 +203,11 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle,accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle,b_accel_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
@@ -261,7 +219,6 @@
   double precision RHO_TOP_OC
   real(kind=CUSTOM_REAL) minus_g_cmb
 
-  integer SIMULATION_TYPE
   integer nspec_bottom
 
   ! local parameters
@@ -309,19 +266,6 @@
         accel_crust_mantle(2,iglob_mantle) = accel_crust_mantle(2,iglob_mantle) + weight*ny*pressure
         accel_crust_mantle(3,iglob_mantle) = accel_crust_mantle(3,iglob_mantle) + weight*nz*pressure
 
-        if (SIMULATION_TYPE == 3) then
-          if(GRAVITY_VAL) then
-            pressure = RHO_TOP_OC * (- b_accel_outer_core(iglob_oc) &
-               + minus_g_cmb *(b_displ_crust_mantle(1,iglob_mantle)*nx &
-               + b_displ_crust_mantle(2,iglob_mantle)*ny + b_displ_crust_mantle(3,iglob_mantle)*nz))
-          else
-            pressure = - RHO_TOP_OC * b_accel_outer_core(iglob_oc)
-          endif
-          b_accel_crust_mantle(1,iglob_mantle) = b_accel_crust_mantle(1,iglob_mantle) + weight*nx*pressure
-          b_accel_crust_mantle(2,iglob_mantle) = b_accel_crust_mantle(2,iglob_mantle) + weight*ny*pressure
-          b_accel_crust_mantle(3,iglob_mantle) = b_accel_crust_mantle(3,iglob_mantle) + weight*nz*pressure
-        endif
-
       enddo
     enddo
   enddo
@@ -333,14 +277,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_ICB_fluid(displ_inner_core,b_displ_inner_core, &
-                            accel_inner_core,b_accel_inner_core, &
+  subroutine compute_coupling_ICB_fluid(displ_inner_core, &
+                            accel_inner_core, &
                             ibool_inner_core,ibelm_top_inner_core,  &
-                            accel_outer_core,b_accel_outer_core, &
+                            accel_outer_core, &
                             normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                             RHO_BOTTOM_OC,minus_g_icb, &
-                            SIMULATION_TYPE,nspec_top)
+                            nspec_top)
 
   implicit none
 
@@ -349,14 +293,11 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
     displ_inner_core,accel_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core,b_accel_inner_core
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
@@ -368,7 +309,6 @@
   double precision RHO_BOTTOM_OC
   real(kind=CUSTOM_REAL) minus_g_icb
 
-  integer SIMULATION_TYPE
   integer nspec_top
 
   ! local parameters
@@ -415,19 +355,6 @@
         accel_inner_core(2,iglob_inner_core) = accel_inner_core(2,iglob_inner_core) - weight*ny*pressure
         accel_inner_core(3,iglob_inner_core) = accel_inner_core(3,iglob_inner_core) - weight*nz*pressure
 
-        if (SIMULATION_TYPE == 3) then
-          if(GRAVITY_VAL) then
-            pressure = RHO_BOTTOM_OC * (- b_accel_outer_core(iglob) &
-               + minus_g_icb *(b_displ_inner_core(1,iglob_inner_core)*nx &
-               + b_displ_inner_core(2,iglob_inner_core)*ny + b_displ_inner_core(3,iglob_inner_core)*nz))
-          else
-            pressure = - RHO_BOTTOM_OC * b_accel_outer_core(iglob)
-          endif
-          b_accel_inner_core(1,iglob_inner_core) = b_accel_inner_core(1,iglob_inner_core) - weight*nx*pressure
-          b_accel_inner_core(2,iglob_inner_core) = b_accel_inner_core(2,iglob_inner_core) - weight*ny*pressure
-          b_accel_inner_core(3,iglob_inner_core) = b_accel_inner_core(3,iglob_inner_core) - weight*nz*pressure
-        endif
-
       enddo
     enddo
   enddo
@@ -438,12 +365,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
+  subroutine compute_coupling_ocean(accel_crust_mantle, &
                             rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                             rmass_ocean_load,normal_top_crust_mantle, &
                             ibool_crust_mantle,ibelm_top_crust_mantle, &
                             updated_dof_ocean_load,NGLOB_XY, &
-                            SIMULATION_TYPE,nspec_top, &
+                            nspec_top, &
                             ABSORBING_CONDITIONS)
 
   implicit none
@@ -454,11 +381,10 @@
   integer :: NGLOB_XY
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_accel_crust_mantle
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -477,14 +403,12 @@
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
   logical :: ABSORBING_CONDITIONS
 
-  integer SIMULATION_TYPE
   integer nspec_top
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: force_normal_comp,b_force_normal_comp
+  real(kind=CUSTOM_REAL) :: force_normal_comp
   real(kind=CUSTOM_REAL) :: additional_term_x,additional_term_y,additional_term_z
-  real(kind=CUSTOM_REAL) :: b_additional_term_x,b_additional_term_y,b_additional_term_z
-  real(kind=CUSTOM_REAL) :: additional_term,b_additional_term
+  real(kind=CUSTOM_REAL) :: additional_term
   real(kind=CUSTOM_REAL) :: nx,ny,nz
   integer :: i,j,k,ispec,ispec2D,iglob
 
@@ -531,20 +455,6 @@
                  accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term_y * ny
                  accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term_z * nz
 
-                 if (SIMULATION_TYPE == 3) then
-                    b_force_normal_comp = b_accel_crust_mantle(1,iglob)*nx / rmassx_crust_mantle(iglob) + &
-                         b_accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) + &
-                         b_accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)
-
-                    b_additional_term_x = (rmass_ocean_load(iglob) - rmassx_crust_mantle(iglob)) * b_force_normal_comp
-                    b_additional_term_y = (rmass_ocean_load(iglob) - rmassy_crust_mantle(iglob)) * b_force_normal_comp
-                    b_additional_term_z = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * b_force_normal_comp
-
-                    b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) + b_additional_term_x * nx
-                    b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) + b_additional_term_y * ny
-                    b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) + b_additional_term_z * nz
-                 endif
-
                  ! done with this point
                  updated_dof_ocean_load(iglob) = .true.
 
@@ -590,18 +500,6 @@
                  accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term * nx
                  accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term * ny
                  accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term * nz
-
-                 if (SIMULATION_TYPE == 3) then
-                    b_force_normal_comp = (b_accel_crust_mantle(1,iglob)*nx + &
-                         b_accel_crust_mantle(2,iglob)*ny + &
-                         b_accel_crust_mantle(3,iglob)*nz) / rmassz_crust_mantle(iglob)
-
-                    b_additional_term = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * b_force_normal_comp
-
-                    b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) + b_additional_term * nx
-                    b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) + b_additional_term * ny
-                    b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) + b_additional_term * nz
-                 endif
 
                  ! done with this point
                  updated_dof_ocean_load(iglob) = .true.

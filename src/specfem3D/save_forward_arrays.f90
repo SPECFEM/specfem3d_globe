@@ -31,7 +31,6 @@
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
-                    epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation, &
                     LOCAL_PATH)
 
@@ -55,12 +54,8 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
     R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-    epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
-    epsilondev_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
     A_array_rotation,B_array_rotation
@@ -84,8 +79,6 @@
     write(55) displ_outer_core
     write(55) veloc_outer_core
     write(55) accel_outer_core
-    write(55) epsilondev_crust_mantle
-    write(55) epsilondev_inner_core
     write(55) A_array_rotation
     write(55) B_array_rotation
     write(55) R_memory_crust_mantle
@@ -106,8 +99,6 @@
     write(55) displ_outer_core
     write(55) veloc_outer_core
     write(55) accel_outer_core
-    write(55) epsilondev_crust_mantle
-    write(55) epsilondev_inner_core
     if (ROTATION_VAL) then
       write(55) A_array_rotation
       write(55) B_array_rotation
@@ -120,3 +111,77 @@
   endif
 
   end subroutine save_forward_arrays
+!
+!=====================================================================
+
+  subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
+                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                    displ_inner_core,veloc_inner_core,accel_inner_core, &
+                    displ_outer_core,veloc_outer_core,accel_outer_core, &
+                    R_memory_crust_mantle,R_memory_inner_core, &
+                    A_array_rotation,B_array_rotation, &
+                    LOCAL_PATH,iteration_on_subset)
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank
+
+  integer SIMULATION_TYPE
+  logical SAVE_FORWARD
+  integer NUMBER_OF_RUNS
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
+    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
+    displ_inner_core,veloc_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
+    displ_outer_core,veloc_outer_core,accel_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+    R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
+    R_memory_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
+    A_array_rotation,B_array_rotation
+
+  character(len=150) LOCAL_PATH
+
+  integer iteration_on_subset
+
+  ! local parameters
+  character(len=150) outputname
+
+
+  ! save files to local disk or tape system if restart file
+  if(NUMBER_OF_RUNS > 1) stop 'NUMBER_OF_RUNS > 1 is not support for undoing attenuation'
+
+  ! save last frame of the forward simulation
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
+    write(55) displ_crust_mantle
+    write(55) veloc_crust_mantle
+    write(55) accel_crust_mantle
+    write(55) displ_inner_core
+    write(55) veloc_inner_core
+    write(55) accel_inner_core
+    write(55) displ_outer_core
+    write(55) veloc_outer_core
+    write(55) accel_outer_core
+    if (ROTATION_VAL) then
+      write(55) A_array_rotation
+      write(55) B_array_rotation
+    endif
+    if (ATTENUATION_VAL) then
+      write(55) R_memory_crust_mantle
+      write(55) R_memory_inner_core
+    endif
+    close(55)
+  endif
+
+  end subroutine save_forward_arrays_undoatt
+
