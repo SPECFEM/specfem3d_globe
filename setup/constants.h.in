@@ -697,6 +697,8 @@
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
 ! this for LDDRK
+  logical, parameter :: USE_LDDRK = .false. ! .true.
+
   integer, parameter :: NSTAGE = 6
   real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
@@ -709,6 +711,4 @@
   real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: C_LDDRK = &
     (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL,&
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
-
-  logical, parameter :: USE_LDDRK = .false. ! .true.
 
