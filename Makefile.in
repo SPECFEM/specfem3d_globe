@@ -67,6 +67,7 @@ OUTPUT = $B/OUTPUT_FILES
 SUBDIRS = \
 	shared \
 	create_header_file \
+	compute_optimized_dumping_undo_att \
 	meshfem3D \
 	specfem3D \
 	auxiliaries
@@ -74,6 +75,7 @@ SUBDIRS = \
 # default targets
 DEFAULT = \
 	xcreate_header_file \
+	xcompute_optimized_dumping_undo_att \
 	xmeshfem3D \
 	xspecfem3D \
 	xcheck_buffers_1D \
@@ -88,10 +90,13 @@ DEFAULT = \
 
 all: default
 
-default: $(DEFAULT)
+default: change_date_of_calling_code $(DEFAULT)
 
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
+
+change_date_of_calling_code:
+	touch src/specfem3D/specfem3D.F90
 
 ifdef CLEAN
 clean:
@@ -108,6 +113,7 @@ help:
 	@echo "    xmeshfem3D"
 	@echo "    xspecfem3D"
 	@echo "    xcreate_header_file"
+	@echo "    xcompute_optimized_dumping_undo_att"
 	@echo "    xcheck_buffers_1D"
 	@echo "    xcheck_buffers_2D"
 	@echo "    xcheck_buffers_corners_chunks"

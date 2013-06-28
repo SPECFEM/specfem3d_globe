@@ -258,7 +258,7 @@
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
 
 ! idoubling_crust_mantle (not needed anymore..)
-!  static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
+! static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
 ! idoubling_outer_core
   static_memory_size = static_memory_size + NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
 ! idoubling_inner_core
@@ -334,25 +334,28 @@
 
 ! add arrays used to save strain for attenuation or for adjoint runs
 
+!! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
 ! epsilondev_crust_mantle
-  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
+! static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! eps_trace_over_3_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
+! static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! epsilondev_inner_core
-  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
+! static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! eps_trace_over_3_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
+! static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! add arrays used for adjoint runs only (LQY: not very accurate)
 
 ! b_R_memory_crust_mantle
-! b_epsilondev_crust_mantle
-! b_eps_trace_over_3_crust_mantle
+!! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
+!!! b_epsilondev_crust_mantle
+!!! b_eps_trace_over_3_crust_mantle
 ! rho_kl_crust_mantle,beta_kl_crust_mantle, alpha_kl_crust_mantle
-  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
+! static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
+  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
 
 ! b_div_displ_outer_core
@@ -360,10 +363,12 @@
   static_memory_size = static_memory_size + 3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
 ! b_R_memory_inner_core
-! b_epsilondev_inner_core
-! b_eps_trace_over_3_inner_core
+!! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
+!!! b_epsilondev_inner_core
+!!! b_eps_trace_over_3_inner_core
 ! rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
-  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
+! static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
+  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
 ! b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
