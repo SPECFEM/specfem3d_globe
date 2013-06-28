@@ -548,7 +548,7 @@
                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
                 c33store_inner_core,c44store_inner_core, &
                 alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
-                deltat,b_deltat,LOCAL_PATH)
+                deltat,b_deltat,LOCAL_PATH,tau_sigma_dble)
 
   ! precomputes attenuation factors
 

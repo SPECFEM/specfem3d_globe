@@ -108,6 +108,12 @@
      one_minus_sum_beta = one_minus_sum_beta - beta(i)
   enddo
 
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we have put the 1/2 factor there we need to remove it
+!ZN from the expression in which we use the strain here in the code.
+!ZN This is why here Brian Savage multiplies beta(:) * tauinv(:) by 2.0 to compensate for the 1/2 factor used before
   factor_common(:) = 2.0d0 * beta(:) * tauinv(:)
 
   end subroutine get_attenuation_property_values

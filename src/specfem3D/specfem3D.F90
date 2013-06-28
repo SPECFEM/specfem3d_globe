@@ -940,6 +940,21 @@
   logical :: you_can_start_doing_IOs
 #endif
 
+!this is for LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+            displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+            displ_outer_core_lddrk,veloc_outer_core_lddrk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+            displ_inner_core_lddrk,veloc_inner_core_lddrk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+            A_array_rotation_lddrk,B_array_rotation_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:,:), allocatable :: R_memory_crust_mantle_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:,:), allocatable :: R_memory_inner_core_lddrk
+  integer :: NSTAGE_TIME_SCHEME,istage
+  double precision, dimension(N_SLS) :: tau_sigma_dble
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+
   integer msg_status(MPI_STATUS_SIZE)
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_crust_mantle_store_buffer
@@ -953,6 +968,7 @@
   logical :: undo_att_sim_type_3
 
   undo_att_sim_type_3 = .false.
+
 
 
 ! *************************************************
@@ -1921,7 +1937,12 @@
                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
                 c33store_inner_core,c44store_inner_core, &
                 alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
-                deltat,b_deltat,LOCAL_PATH)
+                deltat,b_deltat,LOCAL_PATH,tau_sigma_dble)
+    if(CUSTOM_REAL == SIZE_REAL) then
+      tau_sigma_CUSTOM_REAL(:) = sngl(tau_sigma_dble(:))
+    else
+      tau_sigma_CUSTOM_REAL(:) = tau_sigma_dble(:)
+    endif
 
   if(UNDO_ATTENUATION) then
    b_alphaval = alphaval
@@ -1965,6 +1986,97 @@
   displ_inner_core(:,:) = 0._CUSTOM_REAL
   veloc_inner_core(:,:) = 0._CUSTOM_REAL
   accel_inner_core(:,:) = 0._CUSTOM_REAL
+
+  if(USE_LDDRK)then
+    if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
+        stop 'error: LDDRK is not implemented for adjoint tomography'
+    NSTAGE_TIME_SCHEME = 6
+    allocate(displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_crust_mantle_lddrk'
+    allocate(veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_crust_mantle_lddrk'
+    allocate(displ_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_outer_core_lddrk'
+    allocate(veloc_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_outer_core_lddrk'
+    allocate(displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_inner_core_lddrk'
+    allocate(veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_inner_core_lddrk'
+
+    displ_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+    veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+    displ_outer_core_lddrk(:) = 0._CUSTOM_REAL
+    veloc_outer_core_lddrk(:) = 0._CUSTOM_REAL
+    displ_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+    veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+
+    allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+
+    A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+    B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+
+    allocate(R_memory_crust_mantle_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    allocate(R_memory_inner_core_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+
+    R_memory_crust_mantle_lddrk(:,:,:,:,:,:) = 0._CUSTOM_REAL
+    R_memory_inner_core_lddrk(:,:,:,:,:,:) = 0._CUSTOM_REAL
+
+    if(FIX_UNDERFLOW_PROBLEM) then
+      displ_crust_mantle_lddrk(:,:) = VERYSMALLVAL
+      veloc_crust_mantle_lddrk(:,:) = VERYSMALLVAL
+      displ_outer_core_lddrk(:) = VERYSMALLVAL
+      veloc_outer_core_lddrk(:) = VERYSMALLVAL
+      displ_inner_core_lddrk(:,:) = VERYSMALLVAL
+      veloc_inner_core_lddrk(:,:) = VERYSMALLVAL
+      A_array_rotation_lddrk(:,:,:,:) = VERYSMALLVAL
+      B_array_rotation_lddrk(:,:,:,:) = VERYSMALLVAL
+      R_memory_crust_mantle_lddrk(:,:,:,:,:,:) = VERYSMALLVAL
+      R_memory_inner_core_lddrk(:,:,:,:,:,:) = VERYSMALLVAL
+    endif
+  else
+    NSTAGE_TIME_SCHEME = 1
+    allocate(displ_crust_mantle_lddrk(NDIM,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_crust_mantle_lddrk'
+    allocate(veloc_crust_mantle_lddrk(NDIM,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_crust_mantle_lddrk'
+    allocate(displ_outer_core_lddrk(1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_outer_core_lddrk'
+    allocate(veloc_outer_core_lddrk(1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_outer_core_lddrk'
+    allocate(displ_inner_core_lddrk(NDIM,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_inner_core_lddrk'
+    allocate(veloc_inner_core_lddrk(NDIM,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_inner_core_lddrk'
+
+    displ_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+    veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+    displ_outer_core_lddrk(:) = 0._CUSTOM_REAL
+    veloc_outer_core_lddrk(:) = 0._CUSTOM_REAL
+    displ_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+    veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+
+    allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+
+    A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+    B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+
+    allocate(R_memory_crust_mantle_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    allocate(R_memory_inner_core_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+
+    R_memory_crust_mantle_lddrk(:,:,:,:,:,:) = 0._CUSTOM_REAL
+    R_memory_inner_core_lddrk(:,:,:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
   ! put negligible initial value to avoid very slow underflow trapping
   if(FIX_UNDERFLOW_PROBLEM) then
@@ -2161,7 +2273,11 @@ if(.not. UNDO_ATTENUATION) then
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
-    include "part1_classical.f90"
+    if(USE_LDDRK)then
+      include "part1_undo_att.f90"
+    else
+      include "part1_classical.f90"
+    endif
 
 !! DK DK
 !! DK DK this first part handles the case SIMULATION_TYPE == 3
@@ -2397,7 +2513,6 @@ endif
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
                     R_memory_crust_mantle,R_memory_inner_core, &
-!ZN                    epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation,LOCAL_PATH)
 
   ! synchronize all processes

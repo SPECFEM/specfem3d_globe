@@ -53,7 +53,8 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -227,6 +228,12 @@
 ! local to global mapping
   integer NSPEC2D_BOTTOM_INNER_CORE,iend,ispec_glob
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+
+!for LDDRK
+  integer :: istage
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -571,7 +578,8 @@
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       c44store,muvstore, &
-                                      epsilondev_loc_nplus1,epsilondev_loc)
+                                      epsilondev_loc_nplus1,epsilondev_loc,&
+                                      istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat)
 
     endif
 

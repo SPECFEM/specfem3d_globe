@@ -53,7 +53,8 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL)
 
   implicit none
 
@@ -255,6 +256,11 @@
   integer NSPEC2D_BOTTOM_INNER_CORE
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
+!for LDDRK
+  integer :: istage
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -382,6 +388,11 @@
               ispec_strain = ispec
             endif
 
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
+!ZN from the expression in which we use the strain later in the code.
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
             epsilondev_loc(1,i,j,k) = duxdxl - templ
             epsilondev_loc(2,i,j,k) = duydyl - templ
@@ -933,29 +944,28 @@
             factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)
           endif
 
-          R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * &
-                    R_memory(i_memory,i_SLS,:,:,:,ispec) + &
-                    factor_common_c44_muv * &
-!ZN                    (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + &
-!ZN                    gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-                    (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + &
-                    gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+!          R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * &
+!                    R_memory(i_memory,i_SLS,:,:,:,ispec) + &
+!                    factor_common_c44_muv * &
+!                    (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + &
+!                    gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+
+         if(USE_LDDRK)then
+           R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &
+                    deltat * (factor_common_c44_muv(:,:,:)*epsilondev_loc(i_memory,:,:,:) - &
+                              R_memory(i_memory,i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))
+           R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
+                                               BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
+         else
+           R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+                + factor_common_c44_muv(:,:,:) &
+                * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+         endif
+
         enddo
       enddo
 
     endif
-
-! save deviatoric strain for Runge-Kutta scheme
-!ZN    if(COMPUTE_AND_STORE_STRAIN) then
-!ZN      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-!ZN      do k=1,NGLLZ
-!ZN        do j=1,NGLLY
-!ZN          do i=1,NGLLX
-!ZN            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
-!ZN          enddo
-!ZN        enddo
-!ZN      enddo
-!ZN    endif
 
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 

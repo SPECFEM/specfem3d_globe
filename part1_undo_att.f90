@@ -6,67 +6,87 @@
 
     ! Newmark time scheme update
 
-    ! mantle
-    do i=1,NGLOB_CRUST_MANTLE
-      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-        + deltatover2*accel_crust_mantle(:,i)
-      accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-    enddo
-    ! outer core
-    do i=1,NGLOB_OUTER_CORE
-      displ_outer_core(i) = displ_outer_core(i) &
-        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-      veloc_outer_core(i) = veloc_outer_core(i) &
-        + deltatover2*accel_outer_core(i)
-      accel_outer_core(i) = 0._CUSTOM_REAL
-    enddo
-    ! inner core
-    do i=1,NGLOB_INNER_CORE
-      displ_inner_core(:,i) = displ_inner_core(:,i) &
-        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-        + deltatover2*accel_inner_core(:,i)
-      accel_inner_core(:,i) = 0._CUSTOM_REAL
-    enddo
 
-    ! integral of strain for adjoint movie volume
-    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
-! do *NOT* use array syntax for that loop, otherwise you will get a compiler error when MOVIE_VOLUME is off
-! because the shape of the arrays will not match (due to some arrays purposely declared with a dummy size of 1)
-      do ispec = 1,NSPEC_CRUST_MANTLE
-        call compute_element_strain_undo_att_noDev(ispec,nglob_crust_mantle,nspec_crust_mantle,&
+  do istage = 1, NSTAGE_TIME_SCHEME !ZN begin loop of istage
+    if(USE_LDDRK)then
+      ! mantle
+      accel_crust_mantle(:,:) = 0._CUSTOM_REAL
+      ! outer core
+      accel_outer_core(:) = 0._CUSTOM_REAL
+      ! inner core
+      accel_inner_core(:,:) = 0._CUSTOM_REAL
+    else
+      ! mantle
+      do i=1,NGLOB_CRUST_MANTLE
+        displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
+          + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
+        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
+          + deltatover2*accel_crust_mantle(:,i)
+        accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+      enddo
+      ! outer core
+      do i=1,NGLOB_OUTER_CORE
+        displ_outer_core(i) = displ_outer_core(i) &
+          + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
+        veloc_outer_core(i) = veloc_outer_core(i) &
+          + deltatover2*accel_outer_core(i)
+        accel_outer_core(i) = 0._CUSTOM_REAL
+      enddo
+      ! inner core
+      do i=1,NGLOB_INNER_CORE
+        displ_inner_core(:,i) = displ_inner_core(:,i) &
+          + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) &
+          + deltatover2*accel_inner_core(:,i)
+        accel_inner_core(:,i) = 0._CUSTOM_REAL
+      enddo
+    endif
+
+    if(istage == 1)then
+      ! integral of strain for adjoint movie volume
+      if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
+      ! do *NOT* use array syntax for that loop, otherwise you will get a compiler error when MOVIE_VOLUME is off
+      ! because the shape of the arrays will not match (due to some arrays purposely declared with a dummy size of 1)
+        do ispec = 1,NSPEC_CRUST_MANTLE
+          call compute_element_strain_undo_att_noDev(ispec,nglob_crust_mantle,nspec_crust_mantle,&
                                               displ_crust_mantle,hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                                               xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                                               etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                                               gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
                                               epsilondev_loc_crust_mantle,eps_trace_over_3_loc_crust_mantle)
-        Iepsilondev_crust_mantle(:,:,:,:,ispec) = Iepsilondev_crust_mantle(:,:,:,:,ispec)  &
+          Iepsilondev_crust_mantle(:,:,:,:,ispec) = Iepsilondev_crust_mantle(:,:,:,:,ispec)  &
                                               + deltat*epsilondev_loc_crust_mantle(:,:,:,:)
-        Ieps_trace_over_3_crust_mantle(:,:,:,ispec) = Ieps_trace_over_3_crust_mantle(:,:,:,ispec) &
+          Ieps_trace_over_3_crust_mantle(:,:,:,ispec) = Ieps_trace_over_3_crust_mantle(:,:,:,ispec) &
                                               + deltat*eps_trace_over_3_loc_crust_mantle(:,:,:)
-      enddo
-    endif
+        enddo
+      endif
 
-    ! compute the maximum of the norm of the displacement
-    ! in all the slices using an MPI reduction
-    ! and output timestamp file to check that simulation is running fine
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
-      call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                          1,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
+      ! compute the maximum of the norm of the displacement
+      ! in all the slices using an MPI reduction
+      ! and output timestamp file to check that simulation is running fine
+      if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin+4 .or. it == it_end) then
+        call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                            1,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
+                            it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
+      endif
     endif
-
     ! ****************************************************
     !   big loop over all spectral elements in the fluid
     ! ****************************************************
-
-    ! compute internal forces in the fluid region
-    if(CUSTOM_REAL == SIZE_REAL) then
-      time = sngl((dble(it-1)*DT-t0)*scale_t_inv)
+    if(USE_LDDRK)then
+      ! compute internal forces in the fluid region
+      if(CUSTOM_REAL == SIZE_REAL) then
+        time = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
+      else
+        time = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
+      endif
     else
-      time = (dble(it-1)*DT-t0)*scale_t_inv
+      ! compute internal forces in the fluid region
+      if(CUSTOM_REAL == SIZE_REAL) then
+        time = sngl((dble(it-1)*DT-t0)*scale_t_inv)
+      else
+        time = (dble(it-1)*DT-t0)*scale_t_inv
+      endif
     endif
 
     iphase = 0 ! do not start any non blocking communications at this stage
@@ -93,7 +113,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
     else
       ! div_displ_outer_core is initialized to zero in the following subroutine.
       call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -115,7 +136,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
     endif
 
     ! Stacey absorbing boundaries
@@ -217,7 +239,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
         call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -238,7 +261,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
       endif
 
       do while (iphase <= 7) ! make sure the last communications are finished and processed
@@ -258,10 +282,20 @@
       enddo
 
     ! multiply by the inverse of the mass matrix and update velocity
-    do i=1,NGLOB_OUTER_CORE
-      accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-      veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-    enddo
+    if(USE_LDDRK)then
+      do i=1,NGLOB_OUTER_CORE
+        accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
+        veloc_outer_core_lddrk(i) =  ALPHA_LDDRK(istage) * veloc_outer_core_lddrk(i) + deltat * accel_outer_core(i)
+        displ_outer_core_lddrk(i) =  ALPHA_LDDRK(istage) * displ_outer_core_lddrk(i) + deltat * veloc_outer_core(i)
+        veloc_outer_core(i) = veloc_outer_core(i) + BETA_LDDRK(istage) * veloc_outer_core_lddrk(i)
+        displ_outer_core(i) = displ_outer_core(i) + BETA_LDDRK(istage) * displ_outer_core_lddrk(i)
+      enddo
+    else
+      do i=1,NGLOB_OUTER_CORE
+        accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
+        veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
+      enddo
+    endif
 
 ! ------------------- new non blocking implementation -------------------
     ! ****************************************************
@@ -315,7 +349,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -355,7 +390,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
     endif
 
     ! Deville routine
@@ -391,7 +427,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -424,7 +461,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
     endif
 
     ! Stacey
@@ -460,7 +498,7 @@
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source)
+                                hdur,xi_source,eta_source,gamma_source,nu_source,istage)
 
     ! add adjoint sources only if adjoint simulation is performed for source inversion only
 !! DK DK UNDO_ATTENUATION this must remain here even when SIMULATION_TYPE == 3 because it applies to array
@@ -603,7 +641,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -643,7 +682,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
       endif
 
       ! Deville routine
@@ -679,7 +719,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -712,7 +753,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
       endif
 
 ! assemble all the contributions between slices using MPI
@@ -793,9 +835,20 @@
     ! Newmark time scheme - corrector for elastic parts
 
     ! mantle
-    do i=1,NGLOB_CRUST_MANTLE
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    enddo
+    if(USE_LDDRK)then
+      do i=1,NGLOB_CRUST_MANTLE
+        veloc_crust_mantle_lddrk(:,i) = ALPHA_LDDRK(istage) * veloc_crust_mantle_lddrk(:,i) &
+                                        + deltat * accel_crust_mantle(:,i)
+        displ_crust_mantle_lddrk(:,i) = ALPHA_LDDRK(istage) * displ_crust_mantle_lddrk(:,i) &
+                                        + deltat * veloc_crust_mantle(:,i)
+        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + BETA_LDDRK(istage) * veloc_crust_mantle_lddrk(:,i)
+        displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + BETA_LDDRK(istage) * displ_crust_mantle_lddrk(:,i)
+      enddo
+    else
+      do i=1,NGLOB_CRUST_MANTLE
+        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
+      enddo
+    endif
     ! inner core
     do i=1,NGLOB_INNER_CORE
       accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
@@ -804,8 +857,18 @@
              - two_omega_earth*veloc_inner_core(1,i)
       accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
+      if(USE_LDDRK)then
+        veloc_inner_core_lddrk(:,i) = ALPHA_LDDRK(istage) * veloc_inner_core_lddrk(:,i) &
+                                        + deltat * accel_inner_core(:,i)
+        displ_inner_core_lddrk(:,i) = ALPHA_LDDRK(istage) * displ_inner_core_lddrk(:,i) &
+                                        + deltat * veloc_inner_core(:,i)
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) + BETA_LDDRK(istage) * veloc_inner_core_lddrk(:,i)
+        displ_inner_core(:,i) = displ_inner_core(:,i) + BETA_LDDRK(istage) * displ_inner_core_lddrk(:,i)
+      else
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
+      endif
     enddo
+  enddo !ZN end loop of istage
 
 ! write the seismograms with time shift
 

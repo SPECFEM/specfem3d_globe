@@ -93,7 +93,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
     else
       ! div_displ_outer_core is initialized to zero in the following subroutine.
       call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -115,7 +116,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
     endif
 
     ! Stacey absorbing boundaries
@@ -217,7 +219,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
         call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -238,7 +241,8 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
+           ibool_outer_core,MOVIE_VOLUME,&
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
       endif
 
       do while (iphase <= 7) ! make sure the last communications are finished and processed
@@ -316,7 +320,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -356,7 +361,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
     endif
 
     ! Deville routine
@@ -392,7 +398,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -425,7 +432,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
     endif
 
     ! Stacey
@@ -461,7 +469,7 @@
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source)
+                                hdur,xi_source,eta_source,gamma_source,nu_source,istage)
 
     ! add adjoint sources only if adjoint simulation is performed for source inversion only
 !! DK DK UNDO_ATTENUATION this must remain here even when SIMULATION_TYPE == 3 because it applies to array
@@ -616,7 +624,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -656,7 +665,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
       endif
 
       ! Deville routine
@@ -692,7 +702,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -725,7 +736,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
       endif
 
 ! assemble all the contributions between slices using MPI
