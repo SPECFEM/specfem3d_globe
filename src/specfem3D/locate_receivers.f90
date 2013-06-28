@@ -213,7 +213,7 @@
     ! close receiver file
     close(1)
 
-! BS BS begin      
+! BS BS begin
 ! In case that the same station and network name appear twice (or more times) in the STATIONS
 ! file, problems occur, as two (or more) seismograms are written (with mode
 ! "append") to a file with same name. The philosophy here is to accept multiple
@@ -230,9 +230,9 @@
               write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
             else
               call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at lease 3')
-            endif      
+            endif
 
-        endif    
+        endif
       enddo
     enddo
 ! BS BS end
@@ -606,7 +606,7 @@ islice_selected_rec(:) = -1
 
 ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
-  
+
   call MPI_GATHER(ispec_selected_rec_subset,nrec_SUBSET_current_size,MPI_INTEGER,ispec_selected_rec_all,nrec_SUBSET_current_size, &
                   MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
