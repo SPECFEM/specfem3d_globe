@@ -29,7 +29,7 @@
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source)
+                                hdur,xi_source,eta_source,gamma_source,nu_source,istage)
 
   implicit none
 
@@ -65,6 +65,9 @@
   double precision :: f0
   double precision, external :: comp_source_time_function_rickr
 
+!for LDDRK
+  integer :: istage
+
   do isource = 1,NSOURCES
 
 
@@ -88,7 +91,12 @@
         !endif
 
         ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-        stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+        if(USE_LDDRK)then
+          stf_used = FACTOR_FORCE_SOURCE * &
+                     comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
+        else
+          stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+        endif
 
         ! we use a force in a single direction along one of the components:
         !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
@@ -97,8 +105,12 @@
                          + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
       else
-
-        stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        if(USE_LDDRK)then
+          stf = comp_source_time_function(dble(it-1)*DT + &
+                                          dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        else
+          stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        endif
 
         !     distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then

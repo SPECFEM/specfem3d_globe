@@ -157,6 +157,11 @@
 
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
+!ZN from the expression in which we use the strain later in the code.
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
@@ -486,6 +491,11 @@
 
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
+!ZN from the expression in which we use the strain later in the code.
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
@@ -999,6 +1009,11 @@
 
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
+!ZN from the expression in which we use the strain later in the code.
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
@@ -1257,7 +1272,8 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
-                                        epsilondev_loc_nplus1,epsilondev_loc)
+                                        epsilondev_loc_nplus1,epsilondev_loc,&
+                                        istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1304,6 +1320,12 @@
 
   integer :: i_memory
 
+! for LDDRK
+  integer :: istage
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+  real(kind=CUSTOM_REAL) :: deltat
+
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
@@ -1320,11 +1342,21 @@
       factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * muvstore(:,:,:,ispec)
     endif
 
-    do i_memory = 1,5
-      R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-                + factor_common_c44_muv(:,:,:) &
-                * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
-    enddo
+    if(USE_LDDRK)then
+      do i_memory = 1,5
+        R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &
+                      deltat * (factor_common_c44_muv(:,:,:)*epsilondev_loc(i_memory,:,:,:) - &
+                                R_memory(i_memory,i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))
+        R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
+                                               BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
+      enddo
+    else
+      do i_memory = 1,5
+        R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+                  + factor_common_c44_muv(:,:,:) &
+                  * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+      enddo
+    endif
   enddo ! i_SLS
 
   end subroutine compute_element_att_memory_cr
@@ -1337,7 +1369,8 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
-                                        epsilondev_loc_nplus1,epsilondev_loc)
+                                        epsilondev_loc_nplus1,epsilondev_loc,&
+                                        istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1384,6 +1417,12 @@
 
   integer :: i_memory
 
+! for LDDRK
+  integer :: istage
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+  real(kind=CUSTOM_REAL) :: deltat
+
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
@@ -1392,11 +1431,28 @@
 
   do i_SLS = 1,N_SLS
     factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
-    do i_memory = 1,5
-       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-    enddo
+!    do i_memory = 1,5
+!       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+!            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+!            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+!    enddo
+
+    if(USE_LDDRK)then
+      do i_memory = 1,5
+        R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &
+            deltat * (muvstore(:,:,:,ispec) * factor_common_use(:,:,:)*epsilondev_loc(i_memory,:,:,:) - &
+                      R_memory(i_memory,i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))
+        R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
+                                               BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
+      enddo
+    else
+      do i_memory = 1,5
+         R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+              + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+              (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+      enddo
+    endif
+
   enddo
 
   end subroutine compute_element_att_memory_ic

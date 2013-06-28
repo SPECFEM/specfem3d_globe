@@ -44,7 +44,8 @@
                             hprime_xx,hprime_xxT, &
                             hprimewgll_xx,hprimewgll_xxT, &
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-                            ibool,MOVIE_VOLUME)
+                            ibool,MOVIE_VOLUME,&
+                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -166,11 +167,18 @@
 
   integer :: computed_elements
 
+! for LDDRK
+  integer :: istage
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
+            A_array_rotation_lddrk,B_array_rotation_lddrk
+
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  if(istage == 1) then
+    if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
   computed_elements = 0
 
@@ -394,16 +402,18 @@
                           + dpotentialdzl * gzl)
             endif
 
-            ! divergence of displacement field with gravity on
-            ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
-            !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
-            !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
-              div_displfluid(i,j,k,ispec) =  &
-                        minus_rho_g_over_kappa_fluid(int_radius) &
-                        * (dpotentialdx_with_rot * gxl &
-                         + dpotentialdy_with_rot * gyl &
-                         + dpotentialdzl * gzl)
+            if(istage == 1)then
+              ! divergence of displacement field with gravity on
+              ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
+              !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
+              !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
+              if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
+                div_displfluid(i,j,k,ispec) =  &
+                          minus_rho_g_over_kappa_fluid(int_radius) &
+                          * (dpotentialdx_with_rot * gxl &
+                          + dpotentialdy_with_rot * gyl &
+                          + dpotentialdzl * gzl)
+              endif
             endif
 
           endif
@@ -474,9 +484,18 @@
 
     ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
-      ! use the source saved above
-      A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
-      B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
+      if(USE_LDDRK)then
+        ! use the source saved above
+        A_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec) + source_euler_A(:,:,:)
+        A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec)
+
+        B_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * B_array_rotation_lddrk(:,:,:,ispec) + source_euler_B(:,:,:)
+        B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * B_array_rotation_lddrk(:,:,:,ispec)
+      else
+        ! use the source saved above
+        A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
+        B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
+      endif
     endif
 
   enddo   ! spectral element loop
