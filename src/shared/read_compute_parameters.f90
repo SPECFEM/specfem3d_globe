@@ -777,6 +777,14 @@
 
   endif
 
+! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+! depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+! (for instance for models with a large range of Poisson's ratio values).
+! Since the code computes the time step using the Newmark scheme, for LDDRK we simply
+! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+  if(USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
 
   end subroutine rcp_set_timestep_and_layers
 
