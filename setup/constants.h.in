@@ -699,6 +699,16 @@
 ! this for LDDRK
   logical, parameter :: USE_LDDRK = .false. ! .true.
 
+! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+! depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+! (for instance for models with a large range of Poisson's ratio values).
+! Since the SPECFEM3D_GLOBE code computes the time step using the Newmark scheme, for LDDRK we will simply
+! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+  logical, parameter :: INCREASE_CFL_FOR_LDDRK = .true.
+  double precision, parameter :: RATIO_BY_WHICH_TO_INCREASE_IT = 1.5d0
+
   integer, parameter :: NSTAGE = 6
   real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
