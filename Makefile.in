@@ -27,14 +27,56 @@
 
 # @configure_input@
 
+#######################################
+
+FC = @FC@
+FCFLAGS = #@FCFLAGS@
+MPIFC = @MPIFC@
+MPILIBS = @MPILIBS@
+FLAGS_CHECK = @FLAGS_CHECK@
+FCFLAGS_f90 = @FCFLAGS_f90@ -I@top_builddir@ -I${SETUP}
+FC_MODEXT = @FC_MODEXT@
+FC_MODDIR = @FC_MODDIR@
+ 
+FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
+MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+CPPFLAGS = -I${SETUP} @CPPFLAGS@
+
+## compilation directories
+# B : build directory
+B = @top_builddir@
+# E : executables directory
+E = $B/bin
+# O : objects directory
+O = $B/obj
+# S_TOP : source file root directory
+S_TOP = @top_srcdir@
+# setup file directory
+SETUP = $B/setup
+# output file directory
+OUTPUT = $B/OUTPUT_FILES
+
 ####
 #### targets
 ####
 
+# code subdirectories
+SUBDIRS = \
+	shared \
+	create_header_file \
+	compute_optimized_dumping_undo_att \
+	meshfem3D \
+	specfem3D \
+	auxiliaries
+
 # default targets
 DEFAULT = \
-	xmeshfem3D \
 	xcreate_header_file \
+	xcompute_optimized_dumping_undo_att \
+	xmeshfem3D \
 	xspecfem3D \
 	xcheck_buffers_1D \
 	xcheck_buffers_2D \
@@ -46,89 +88,23 @@ DEFAULT = \
 	xcreate_movie_GMT_global \
 	$(EMPTY_MACRO)
 
-default: $(DEFAULT)
-
 all: default
 
-required: bin obj
+default: change_date_of_calling_code $(DEFAULT)
 
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
 
-bak: backup
+change_date_of_calling_code:
+	touch src/specfem3D/specfem3D.F90
 
-mesh : meshfem3D
-spec : specfem3D
-
-specfem3D: xspecfem3D
-meshfem3D: xmeshfem3D
-
-create_header_file: xcreate_header_file
-combine_vol_data: xcombine_vol_data
-combine_vol_data_vtk: xcombine_vol_data_vtk
-combine_surf_data: xcombine_surf_data
-convolve_source_timefunction: xconvolve_source_timefunction
-create_movie_AVS_DX: xcreate_movie_AVS_DX
-create_movie_GMT_global: xcreate_movie_GMT_global
-
-bin:
-	mkdir -p bin
-
-obj:
-	mkdir -p obj
-
-
-xmeshfem3D:  required
-	     (cd src/meshfem3D; make)
-
-xspecfem3D:  required
-	     (cd src/specfem3D; make)
-
-xcreate_header_file:  required
-	     (cd src/create_header_file; make)
-
-xcheck_buffers_1D: required
-	(cd src/auxiliaries ; make xcheck_buffers_1D)
-
-xcheck_buffers_2D: required
-	(cd src/auxiliaries ; make xcheck_buffers_2D)
-
-xcheck_buffers_corners_chunks: required
-	(cd src/auxiliaries ; make xcheck_buffers_corners_chunks)
-
-xcheck_buffers_faces_chunks: required
-	(cd src/auxiliaries ; make xcheck_buffers_faces_chunks)
-
-xcombine_AVS_DX: required
-	(cd src/auxiliaries ; make xcombine_AVS_DX)
-
-xcombine_vol_data: required
-	(cd src/auxiliaries ; make xcombine_vol_data)
-
-xcombine_vol_data_vtk: required
-	(cd src/auxiliaries ; make xcombine_vol_data_vtk)
-
-xcombine_surf_data: required
-	(cd src/auxiliaries ; make xcombine_surf_data)
-
-xconvolve_source_timefunction: required
-	(cd src/auxiliaries ; make xconvolve_source_timefunction)
-
-xcreate_movie_AVS_DX: required
-	(cd src/auxiliaries ; make xcreate_movie_AVS_DX)
-
-xcreate_movie_GMT_global: required
-	(cd src/auxiliaries ; make xcreate_movie_GMT_global)
-
-
-clean: required
-	(rm -rf bin lib obj )
-	(cd src/meshfem3D; make clean)
-	(cd src/specfem3D; make clean)
-	(cd src/create_header_file; make clean)
-	(cd src/auxiliaries; make clean)
-	(rm -rf src/meshfem3D/*.mod src/specfem3D/*.mod src/auxiliaries/*.mod)
-
+ifdef CLEAN
+clean:
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
+else
+clean:
+	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
+endif
 
 help:
 	@echo "usage: make [executable]"
@@ -137,15 +113,47 @@ help:
 	@echo "    xmeshfem3D"
 	@echo "    xspecfem3D"
 	@echo "    xcreate_header_file"
+	@echo "    xcompute_optimized_dumping_undo_att"
 	@echo "    xcheck_buffers_1D"
 	@echo "    xcheck_buffers_2D"
 	@echo "    xcheck_buffers_corners_chunks"
 	@echo "    xcheck_buffers_faces_chunks"
 	@echo "    xcombine_vol_data"
-	@echo "    xcombine_vol_data_vtk"
 	@echo "    xcombine_surf_data"
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
 	@echo ""
+
+.PHONY: all default backup clean help
+
+# Get dependencies and rules for building stuff
+include $(patsubst %, ${S_TOP}/src/%/rules.mk, $(SUBDIRS))
+
+##
+## Shortcuts
+##
+
+# Shortcut for: <prog>/<xprog> -> bin/<xprog>
+define target_shortcut
+$(patsubst $E/%, %, $(1)): $(1)
+.PHONY: $(patsubst $E/%, %, $(1))
+$(patsubst $E/x%, %, $(1)): $(1)
+.PHONY: $(patsubst $E/x%, %, $(1))
+endef
+
+# Shortcut for: dir -> src/dir/<targets in here>
+define shortcut
+$(1): $($(1)_TARGETS)
+.PHONY: $(1)
+$$(foreach target, $$(filter $E/%,$$($(1)_TARGETS)), $$(eval $$(call target_shortcut,$$(target))))
+endef
+
+$(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
+
+# Other old shortcuts
+bak: backup
+mesh: $E/xmeshfem3D
+spec: $E/xspecfem3D
+.PHONY: bak mesh spec
 

@@ -8,18 +8,17 @@ dnl You must have recent versions of Autoconf and Automake installed.
 
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D Globe], [5.1.5], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
-AC_CONFIG_HEADERS([setup/config.h],
-                  [sed 's/\/\*\(.*\)\*\//!\1/g' setup/config.h > setup/config.fh])
-dnl [awk '/\/\*/,/\*\//{sub(/^/,"!")};{print}' setup/config.h > setup/config.fh])
+AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_CANONICAL_HOST
 
 # 'configure' options
 
 AC_ARG_ENABLE([double-precision],
-    [AC_HELP_STRING([--enable-double-precision],
+    [AS_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
     [want_double_precision="$enableval"],
     [want_double_precision=no])
@@ -33,28 +32,6 @@ fi
 AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
-AC_ARG_WITH([cuda],
-    [AC_HELP_STRING([--with-cuda],
-        [build cuda GPU enabled version @<:@default=no@:>@])],
-    [want_cuda="$withval"],
-    [want_cuda=no])
-#AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" = yes])
-AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
-AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
-
-AC_ARG_WITH([adios],
-    [AC_HELP_STRING([--with-adios],
-        [build ADIOS enabled version @<:@default=no@:>@])],
-    [want_adios="$withval"],
-    [want_adios=no])
-AM_CONDITIONAL([COND_ADIOS], [test "$want_adios" != no])
-
-AC_ARG_WITH([vtk],
-    [AC_HELP_STRING([--with-vtk],
-        [build VTK enabled version @<:@default=no@:>@])],
-    [want_vtk="$withval"],
-    [want_vtk=no])
-AM_CONDITIONAL([COND_VTK], [test "$want_vtk" != no])
 
 # Checks for programs.
 
@@ -80,7 +57,6 @@ flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
 eval $flags
 
-
 AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
@@ -95,24 +71,9 @@ AC_LANG_POP(C)
 
 # influential environment variables
 
-AC_ARG_VAR(ADIOS_INC, [Directory where ADIOS headers are installed])
-AC_ARG_VAR(ADIOS_LIB, [Directory where ADIOS libraries are installed])
-AC_ARG_VAR(MXML_INC, [Directory where MXML headers are installed])
-AC_ARG_VAR(MXML_LIB, [Directory where MXML libraries are installed])
-
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
-AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
-AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
-
-AC_ARG_VAR(CUDA_LIB,[Location of CUDA library libcudart])
-AC_ARG_VAR(CUDA_INC,[Location of CUDA include files])
-AC_ARG_VAR(MPI_INC,[Location of MPI include mpi.h, which is needed by nvcc when compiling cuda files])
-
-AC_ARG_VAR(AR, [ar library creation])
-AC_ARG_VAR(ARFLAGS, [ar flag library creation])
-AC_ARG_VAR(RANLIB, [ranlib library creation])
-
+AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags])
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
@@ -122,46 +83,80 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 fi
 
+
+
 # Checks for libraries.
 
 
 # Checks for header files.
 
-CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
+CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
 
-if test "$want_adios" = yes; then
-  CIT_MXML_HEADER
-  CIT_MXML_LIB
-  CIT_ADIOS_LIB
-fi	
 
-if test "$want_cuda" = yes; then
-    CIT_CUDA_COMPILER
-fi
-
-#mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
-configure_flags_str="FC=$FC FCFLAGS=$FLAGS_NO_CHECK" 
-AC_DEFINE_UNQUOTED([CONFIGURE_FLAGS],["${configure_flags_str}"],
-          [configuration flags to be save in the adios output file.])
 # Checks for typedefs, structures, and compiler characteristics.
 
+CIT_FC_MODULE_EXTENSION
+AC_SUBST([FC_MODEXT])
+CIT_FC_MODULE_FLAG([], [])
+CIT_FC_MODULE_OUTPUT_FLAG([
+	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+	FC_MODDIR=./obj
+], [
+	FC_MODDIR=.
+])
+AC_SUBST([FC_MODDIR])
 
 # Checks for library functions.
 
+
 AC_CONFIG_FILES([
-  Makefile 
-  src/auxiliaries/Makefile 
-  src/meshfem3D/Makefile 
-  src/specfem3D/Makefile 
-  src/create_header_file/Makefile 
-  setup/constants.h setup/precision.h])
+    Makefile
+    setup/constants.h
+    setup/precision.h
+])
+AC_CONFIG_FILES([
+    DATA/Par_file:DATA/Par_file
+    DATA/CMTSOLUTION:DATA/CMTSOLUTION
+    DATA/STATIONS:DATA/STATIONS
+])
+AC_CONFIG_LINKS([
+    DATA/crust2.0:DATA/crust2.0
+    DATA/crustmap:DATA/crustmap
+    DATA/epcrust:DATA/epcrust
+    DATA/eucrust-07:DATA/eucrust-07
+    DATA/heterogen:DATA/heterogen
+    DATA/Lebedev_sea99:DATA/Lebedev_sea99
+    DATA/Montagner_model:DATA/Montagner_model
+    DATA/old:DATA/old
+    DATA/PPM:DATA/PPM
+    DATA/QRFSI12:DATA/QRFSI12
+    DATA/s20rts:DATA/s20rts
+    DATA/s362ani:DATA/s362ani
+    DATA/s40rts:DATA/s40rts
+    DATA/Simons_model:DATA/Simons_model
+    DATA/topo_bathy:DATA/topo_bathy
+    DATA/Zhao_JP_model:DATA/Zhao_JP_model
+])
+AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
+AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
+AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
+
 AC_OUTPUT
 
-#daniel: adding custom lines to config.h.in through autoheader
-AH_BOTTOM([
-/* Uncomment and define to select optimized file i/o for regional simulations */
-/* map fails when output files are > 4GB, which is often the case for GPU simulations */
-/* #define USE_MAP_FUNCTION */
-])
+dnl FYI, this is not a "result", but AS_ECHO is not available in 2.61, and it
+dnl basically works like a portable echo.
+AC_MSG_RESULT([])
+AS_BOX([$PACKAGE_NAME $PACKAGE_VERSION])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([$0 has completed and set up a default configuration to build.])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([You may wish to modify the following files before building:])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/Par_file],
+                              [Set parameters affecting the build and simulation before running make and compiling.])])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/CMTSOLUTION],
+                              [Set the source parameters before running the solver.])])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/STATIONS],
+                              [Set the receiver stations before running the solver.])])
+AC_MSG_RESULT([])
 
 dnl end of configure.ac
