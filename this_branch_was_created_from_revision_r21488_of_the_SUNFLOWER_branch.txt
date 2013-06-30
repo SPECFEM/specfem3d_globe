@@ -1,7 +1,0 @@
-
-------------------------------------------------------------------------
-r21488 | lefebvre | 2013-03-11 19:02:42 +0100 (Mon, 11 Mar 2013) | 1 line
-
-Branched from SPECFEM3D_GLOBE_SUNFLOWER to add the ADIOS file format in the GPU version
-------------------------------------------------------------------------
-
