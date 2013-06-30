@@ -10,7 +10,9 @@ dnl You must have recent versions of Autoconf and Automake installed.
 AC_PREREQ(2.61)
 AC_INIT([Specfem3D Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
-AC_CONFIG_HEADER([setup/config.h])
+AC_CONFIG_HEADERS([setup/config.h],
+                  [sed 's/\/\*\(.*\)\*\//!\1/g' setup/config.h > setup/config.fh])
+dnl [awk '/\/\*/,/\*\//{sub(/^/,"!")};{print}' setup/config.h > setup/config.fh])
 AC_CONFIG_MACRO_DIR([m4])
 
 
@@ -39,6 +41,13 @@ AC_ARG_WITH([cuda],
 #AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" = yes])
 AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
 AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
+
+AC_ARG_WITH([adios],
+    [AC_HELP_STRING([--with-adios],
+        [build ADIOS enabled version @<:@default=no@:>@])],
+    [want_adios="$withval"],
+    [want_adios=no])
+AM_CONDITIONAL([COND_ADIOS], [test "$want_adios" != no])
 
 AC_ARG_WITH([vtk],
     [AC_HELP_STRING([--with-vtk],
@@ -71,6 +80,7 @@ flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
 eval $flags
 
+
 AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
@@ -84,6 +94,11 @@ AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.
 AC_LANG_POP(C)
 
 # influential environment variables
+
+AC_ARG_VAR(ADIOS_INC, [Directory where ADIOS headers are installed])
+AC_ARG_VAR(ADIOS_LIB, [Directory where ADIOS libraries are installed])
+AC_ARG_VAR(MXML_INC, [Directory where MXML headers are installed])
+AC_ARG_VAR(MXML_LIB, [Directory where MXML libraries are installed])
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
@@ -107,8 +122,6 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 fi
 
-
-
 # Checks for libraries.
 
 
@@ -116,10 +129,20 @@ fi
 
 CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 
+if test "$want_adios" = yes; then
+  CIT_MXML_HEADER
+  CIT_MXML_LIB
+  CIT_ADIOS_LIB
+fi	
+
 if test "$want_cuda" = yes; then
     CIT_CUDA_COMPILER
 fi
 
+#mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
+configure_flags_str="FC=$FC FCFLAGS=$FLAGS_NO_CHECK" 
+AC_DEFINE_UNQUOTED([CONFIGURE_FLAGS],["${configure_flags_str}"],
+          [configuration flags to be save in the adios output file.])
 # Checks for typedefs, structures, and compiler characteristics.
 
 
@@ -138,7 +161,7 @@ AC_OUTPUT
 AH_BOTTOM([
 /* Uncomment and define to select optimized file i/o for regional simulations */
 /* map fails when output files are > 4GB, which is often the case for GPU simulations */
-// #define USE_MAP_FUNCTION
+/* #define USE_MAP_FUNCTION */
 ])
 
 dnl end of configure.ac

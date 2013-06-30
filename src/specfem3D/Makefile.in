@@ -91,6 +91,8 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = -I../../setup @CPPFLAGS@
 
+LDFLAGS = @LDFLAGS@
+
 #AR = ar
 #ARFLAGS = cru
 #RANLIB = ranlib
@@ -245,6 +247,35 @@ LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
 @COND_CUDA_TRUE@XSPECFEM_OBJECTS_PRE = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.sharedmpi.o $(LIBSPECFEM_SOLVER) $(CUDA_OBJECTS)
 @COND_CUDA_FALSE@XSPECFEM_OBJECTS_PRE = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.sharedmpi.o $(LIBSPECFEM_SOLVER) $(CUDA_STUBS)
 
+# using ADIOS files
+ADIOS_OBJECTS= \
+	$O/read_attenuation_adios.adios.o \
+	$O/read_mesh_databases_adios.adios.o \
+	$O/read_arrays_solver_adios.adios.o \
+	$O/save_forward_arrays_adios.adios.o \
+	$O/read_forward_arrays_adios.adios.o \
+	$O/write_specfem_adios_header.adios.o \
+	$O/adios_manager.shared_adios.o  \
+	$O/adios_helpers.shared_adios.o
+ADIOS_STUBS = \
+	$O/adios_empty_stubs.noadios.o
+
+@COND_ADIOS_TRUE@XSPECFEM_OBJECTS_ADIOS = $(XSPECFEM_OBJECTS_PRE) $(ADIOS_OBJECTS)
+@COND_ADIOS_FALSE@XSPECFEM_OBJECTS_ADIOS = $(XSPECFEM_OBJECTS_PRE) $(ADIOS_STUBS)
+
+# ADIOS
+# with configure: ./configure --with-cuda ADIOS_LIB=.. ADIOS_INC=.. MPI_INC=..
+@COND_ADIOS_TRUE@ADIOS_LIBS = -ladiosf -lmxml
+@COND_ADIOS_FALSE@ADIOS_LIBS = 
+
+ADIOS_LIB_LOCATION = @ADIOS_LIB@ @MXML_LIB@
+ADIOS_LINK = $(ADIOS_LIB_LOCATION) $(ADIOS_LIBS)
+ADIOS_INC = @ADIOS_INC@ -I../../setup -I../../ 
+
+#@COND_ADIOS_TRUE@CPPFLAGS = -I../../setup @CPPFLAGS@
+@COND_ADIOS_TRUE@MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(ADIOS_INC) $(FLAGS_CHECK)
+@COND_ADIOS_TRUE@MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(ADIOS_INC) $(FLAGS_NO_CHECK)
+
 
 # vtk visualization
 VTK_OBJECTS = \
@@ -253,8 +284,8 @@ VTK_OBJECTS = \
 VTK_STUBS = \
 	$O/visual_vtk_stubs.visualc.o
 
-@COND_VTK_TRUE@XSPECFEM_OBJECTS = $(XSPECFEM_OBJECTS_PRE) $(VTK_OBJECTS)
-@COND_VTK_FALSE@XSPECFEM_OBJECTS = $(XSPECFEM_OBJECTS_PRE) $(VTK_STUBS)
+@COND_VTK_TRUE@XSPECFEM_OBJECTS = $(XSPECFEM_OBJECTS_ADIOS) $(VTK_OBJECTS)
+@COND_VTK_FALSE@XSPECFEM_OBJECTS = $(XSPECFEM_OBJECTS_ADIOS) $(VTK_STUBS)
 
 @COND_VTK_TRUE@CPPFLAGS = -I../../setup @CPPFLAGS@ -DWITH_VTK
 @COND_VTK_TRUE@FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK) -DWITH_VTK
@@ -291,9 +322,9 @@ bak: backup
 
 xspecfem3D: $(XSPECFEM_OBJECTS)
 @COND_CUDA_TRUE@@COND_CUDA5_TRUE@	${NVCCLINK} -o $(CUDA_DEVICE_OBJ) $(CUDA_OBJECTS)
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(CUDA_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK)
-@COND_CUDA_FALSE@	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(CUDA_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK) $(ADIOS_LINK) $(LDFLAGS)
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK) $(ADIOS_LINK) $(LDFLAGS)
+@COND_CUDA_FALSE@	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK) $(ADIOS_LINK) $(LDFLAGS)
 
 reqheader:
 	(cd ../create_header_file; make)
@@ -383,6 +414,29 @@ $O/%.cuda.o: ${CUDAD}/%.cu ${SETUP}/config.h ${CUDAD}/mesh_constants_cuda.h ${CU
 $O/%.cudacc.o: ${CUDAD}/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) $(MPI_INC) -o $@ ${CUDAD}/$< 
 
+#######################################
+
+###
+### ADIOS compilation
+###
+
+$O/%.adios.o: %.F90 ${SETUP}/config.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.adios.o: %.f90 ${SETUP}/config.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.noadios.o: %.F90 
+	${FC} -c -o $@ $<
+
+$O/%.noadios.o: %.f90 
+	${FC} -c -o $@ $<
+
+$O/%.shared_adios.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
+
+$O/%.shared_adios.o: ${SHARED}/%.F90 ${SETUP}/constants.h
+	${MPIFC} -c $(ADIOS_INC) $(FCFLAGS) $(MPI_INC) -o $@ $<
 #######################################
 
 ###
