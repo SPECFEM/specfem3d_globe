@@ -1,4 +1,3 @@
-%% LyX 1.5.1 created this file.  For more info, see www.lyx.org/.
 
 \documentclass[oneside,english]{book}
 \usepackage[T1]{fontenc}
@@ -95,8 +94,7 @@
 \title{\thispagestyle{empty}\textbf{SPECFEM3D\_GLOBE}\\
 \textbf{User Manual}}
 %
-\author{$\copyright$ Princeton University / California Institute of Technology (USA) and\\
-University of Pau / CNRS / INRIA (France)\\
+\author{$\copyright$ Princeton University (USA) and CNRS / INRIA / University of Pau (France)\\
 Version 5.1}
 
 \date{\noindent \today}
@@ -104,15 +102,17 @@ Version 5.1}
 \maketitle
 
 \section*{Authors}
-The SPECFEM3D\_GLOBE package was first developed by Dimitri Komatitsch and Jeroen Tromp at Harvard University and Caltech, USA, starting in 1998, based on earlier work by Dimitri Komatitsch and Jean-Pierre Vilotte at Institut de Physique du Globe (IPGP) in Paris, France from 1995 to 1997.\\
+The SPECFEM3D\_GLOBE package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at Institut de Physique du Globe (IPGP) in Paris, France
+from 1995 to 1997 and then by Dimitri Komatitsch and Jeroen Tromp at Harvard University and Caltech, USA, starting in 1998.
+The story started on March 28, 1995, when Prof. Yvon Maday from CNRS and University of Paris, France, gave a lecture to
+Dimitri Komatitsch and Jean-Pierre Vilotte at IPG about the nice properties of the spectral-element method that he had used for
+other equations. We are deeply indebted and thankful to him for that.
 
 Since then it has been developed and maintained by a development team: in alphabetical order,
-Piero Basini,
-C\'eline Blitz,
 Ebru Bozda\u{g},
-Emanuele Casarotti,
+Joseph Charles,
 Min Chen,
-Hom Nath Gharti,
+Dominik G\"oddeke,
 Vala Hj\"orleifsd\'ottir,
 Sue Kientz,
 Dimitri Komatitsch,
@@ -122,21 +122,24 @@ Pieyre Le Loher,
 Qinya Liu,
 Yang Luo,
 Alessia Maggi,
-Federica Magnoni,
 Roland Martin,
 Dennis McRitchie,
 Matthias Meschede,
+Peter Messmer,
 David Mich\'ea,
 Tarje Nissen-Meyer,
 Daniel Peter,
+Max Rietmann,
+Elliott Sales de Andrade,
 Brian Savage,
 Bernhard Schuberth,
 Anne Sieminski,
 Leif Strand,
 Carl Tape,
 Jeroen Tromp,
+Jean-Pierre Vilotte,
+Zhinan Xie,
 Hejun Zhu.\\
-% \toall{add full list of developers here and update the AUTHORS file accordingly}
 
 The cover graphic of the manual was created
 by Santiago Lombeyda from Caltech's Center for Advanced Computing Research (CACR) \urlwithparentheses{http://www.cacr.caltech.edu}.\\
@@ -148,13 +151,15 @@ by Santiago Lombeyda from Caltech's Center for Advanced Computing Research (CACR
 \chapter{Introduction}
 
 The software package SPECFEM3D\_GLOBE simulates three-dimensional
-global and regional seismic wave propagation based upon the spectral-element
-method (SEM). The SEM is a continuous Galerkin technique, which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11}; it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
+global and regional seismic wave propagation based upon the spectral-element method (SEM).
+The SEM is a continuous Galerkin technique \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11},
+which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11};
+it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,LeRa74,Arn82,JoPi86,BoMaHe91,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
 In particular, it can accurately handle very distorted mesh elements \citep{OlSe11}.\\
 
-It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08}.
+It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08,MeStTh12}.
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
-It is also very well suited to parallel implementation on very large supercomputers \citep{KoTr02a,KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
+It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
 
 Note that in many geological models in the context of seismic wave propagation studies
 (except for instance for fault dynamic rupture studies, in which very high frequencies or supershear rupture need to be modeled near the fault, see e.g. \cite{BeGlCrViPi07,BeGlCrVi09,PuAmKa09,TaCrEtViBeSa10})
@@ -163,17 +168,17 @@ conforming mesh doubling bricks can efficiently handle mesh size variations \cit
 This is particularly true at the scale of the full Earth.\\
 
 For a detailed introduction to the SEM as applied to
-global and regional seismic wave propagation, please consult \citet{KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07,TrKoLi08}.
+global and regional seismic wave propagation, please consult \citet{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07}.
 A detailed theoretical analysis of the dispersion
-and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07} and \citet{SeOl07}.\\
+and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07}, \citet{SeOl08} and \citet{MeStTh12}.\\
 
 Effects due to lateral variations in compressional-wave
 speed, shear-wave speed, density, a 3D crustal model, ellipticity,
 topography and bathymetry, the oceans, rotation, and self-gravitation are included.
 The package can accommodate full 21-parameter anisotropy \citep{ChTr07}
-as well as lateral variations in attenuation \citep{SavWiTr05}. Adjoint
+as well as lateral variations in attenuation \citep{SaKoTr10}. Adjoint
 capabilities and finite-frequency kernel simulations are also included
-\citep{LiTr06,TrKoLi08,LiTr08,FiIgBuKe09,ViOp09}.\\
+\citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,LiTr06,LiTr08,FiIgBuKe09,ViOp09}.\\
 
 The SEM was originally developed in computational fluid dynamics \citep{Pat84,MaPa89}
 and has been successfully adapted to address problems in seismic wave propagation.
@@ -183,34 +188,36 @@ perfectly diagonal mass matrix, include \cite{CoJoTo93}, \cite{Kom97},
 whereas applications involving Chebyshev basis functions and a nondiagonal mass matrix
 include \cite{SePr94}, \cite{PrCaSe94} and \cite{SePrPr95}.\\
 
-All SPECFEM3D\_GLOBE software is written in Fortran90 with full portability
-in mind, and conforms strictly to the Fortran95 standard. It uses
-no obsolete or obsolescent features of Fortran77. The package uses
+All SPECFEM3D\_GLOBE software is written in Fortran2003 with full portability
+in mind, and conforms strictly to the Fortran2003 standard. It uses
+no obsolete or obsolescent features of Fortran. The package uses
 parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.\\
 
-SPECFEM3D won the Gordon Bell award for best performance at the SuperComputing~2003
+SPECFEM3D\_GLOBE won the Gordon Bell award for best performance at the SuperComputing~2003
 conference in Phoenix, Arizona (USA) (see \cite{KoTsChTr03}
 and \url{www.sc-conference.org/sc2003/nr_finalaward.html}).
 It was a finalist again in 2008 for a run at 0.16 petaflops (sustained) on 149,784 processors of the `Jaguar' Cray XT5 system at Oak Ridge National Laboratories (USA) \citep{CaKoLaTiMiLeSnTr08}.
 It also won the BULL Joseph Fourier supercomputing award in 2010.\\
 
 The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}
-as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML) \citep{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10}.
+as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML)
+\citep{MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10,KoMa07} for the case of single-chunk simulations in regional models.
 
 \section{Citation}
 
 If you use SPECFEM3D\_GLOBE for your own research, please cite at least one
-of the following articles: \cite{TrKoLi08,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,KoGoErMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
+of the following articles: \cite{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
 
 If you use this new version 5.1, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
 in which results of 3D non blocking MPI runs are presented: \cite{KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.\\
 
-If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others: \cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
+If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others:
+\cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
 If you use 3D mantle model S20RTS, please cite \citet{RiVaWo99}.\\
 
 Domain decomposition is explained in detail in \cite{MaKoBlLe08}, and excellent scaling up to 150,000 processor cores in shown for instance in
-\cite{CaKoLaTiMiLeSnTr08,KoLaMi08a,MaKoBlLe08,KoErGoMi10,KoGoErMi10,Kom11}.\\
+\cite{CaKoLaTiMiLeSnTr08,KoLaMi08a,MaKoBlLe08,KoErGoMi10,Kom11}.\\
 
 The corresponding Bib\TeX{} entries may be found
 in file \texttt{doc/USER\_MANUAL/bibliography.bib}.
@@ -236,9 +243,9 @@ The SPECFEM3D\_GLOBE software package comes in a gzipped tar ball.
 In the directory in which you want to install the package, type
 
 \begin{lyxcode}
-tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.2.tar.gz
+tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.5.tar.gz
 \end{lyxcode}
-The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.2} will then contain
+The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.5} will then contain
 the source code.\\
 
 We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
@@ -246,8 +253,9 @@ We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.ba
 Then, to configure the software for your system, run the \texttt{configure}
 shell script. This script will attempt to guess the appropriate configuration
 values for your system. However, at a minimum, it is recommended that
-you explicitly specify the appropriate command names for your Fortran90
-compiler and MPI package:
+you explicitly specify the appropriate command names for your Fortran
+compiler and MPI package (another option is to define FC, CC and MPIF90 in your .bash\_profile
+or your .cshrc file):
 
 \begin{lyxcode}
 ./configure~FC=ifort~MPIFC=mpif90
@@ -257,10 +265,8 @@ Before running the \texttt{configure} script, you should probably edit file \tex
 
 \begin{description}
 \item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine.
-\item [{\texttt{IBM or Cray compilers}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
+\item [{\texttt{IBM compiler}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
 \item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
-In addition, the \texttt{clock\_gettime} routine, which is used by the \texttt{SCOTCH} library that we use, does not exist in Mac OS.
-You will need to replace it with \texttt{clock\_get\_time} if you want to use \texttt{SCOTCH}.
 \end{description}
 
 When compiling on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, we suggest running the \texttt{configure} script
@@ -285,18 +291,18 @@ You can do this for instance with the example given in EXAMPLES/small\_benchmark
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
 greater than 2 gigabytes, which is the upper limit for 32-bit addressing.
-In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}''
-to the compiler options otherwise the compiler will display an error
+In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' or \texttt{``-mcmodel=medium -shared-intel}''
+to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
 
 A summary of the most important configuration variables follows.
 
 \begin{description}
-\item [{\texttt{FC}}] Fortran90 compiler command name. By default, \texttt{configure}
+\item [{\texttt{FC}}] Fortran compiler command name. By default, \texttt{configure}
 will execute the command names of various well-known Fortran compilers
 in succession, picking the first one it finds that works.
-\item [{\texttt{MPIFC}}] MPI Fortran90 command name. The default is \texttt{mpif90}.
+\item [{\texttt{MPIFC}}] MPI Fortran command name. The default is \texttt{mpif90}.
 This must correspond to the same underlying compiler specified by
 \texttt{FC}; otherwise, you will encounter compilation or link errors
 when you attempt to build the code. If you are unsure about this,
@@ -307,10 +313,8 @@ MPI compiler command for your system:
 ./configure~FC=mpif90~MPIFC=mpif90
 \end{lyxcode}
 \begin{description}
-\item [{\texttt{FLAGS\_CHECK}}] Compiler flags for non-critical subroutines.
-\item [{\texttt{FLAGS\_NO\_CHECK}}] Compiler flags for creating fast, production-run
-code for critical subroutines.
-\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}] 
+\item [{\texttt{FLAGS\_CHECK}}] Compiler flags.
+\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}]
 If you want the parallel mesher to write a parallel (i.e., split) database for the solver on the
 local disks of each of the compute nodes, set this flag to \texttt{.false.}.
 Some systems have no local disks
@@ -370,39 +374,83 @@ from your system administrator. Selecting the right compiler and compiler
 flags can make a tremendous difference in terms of performance. We
 welcome feedback on your experience with various compilers and flags.\\
 
+When using a slow or not too powerful shared disk system or when running extremely large simulations
+(on tens of thousands of processor cores), one can add \texttt{-DUSE\_SERIAL\_CASCADE\_FOR\_IOs} to the compiler flags
+in file \texttt{flags.guess} before running \texttt{configure} to make the mesher output mesh data
+to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
+Do not use this option if you do not need it because it will slow down the mesher and the beginning of the solver if your
+shared file system is fast and reliable.
+
 If you run scaling benchmarks of the code, for instance to measure its performance on a new machine, and are not interested in the physical results
 (the seismograms) for these runs, you can set \texttt{DO\_BENCHMARK\_RUN\_ONLY} to \texttt{.true.} in file \texttt{setup/constants.h.in} before running the \texttt{configure} script.
 
 Finally, before compiling, make sure that the subdirectories \texttt{obj},
 \texttt{bak} and \texttt{OUTPUT\_FILES} exist within the directory
-with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.2}). The \texttt{go\_mesher}
-script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES}
-directory.
+with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.5}). The \texttt{go\_mesher}
+script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES} directory.
 
 \section{Compiling on an IBM BlueGene}
 
+\underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
+
+\noindent
+Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:\\
+
+\noindent
+\texttt{-g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w}\\
+\noindent
+\texttt{-qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Q -Q+rank,swap\_all -Wl,-relax}\\
+
+\noindent
+The most relevant are the -qarch and -qtune flags, otherwise if these flags are set to ``auto'' then they are wrongly assigned to
+the architecture of the frond-end node, which is different from that on the compute nodes.
+You will need to set these flags to the right architecture for your BlueGene compute nodes, which is not necessarily ``qp'';
+ask your system administrator.
+On some machines if is necessary to use -O2 in these flags instead of -O3 due to a compiler bug of the XLF version installed.
+We thus suggest to first try -O3, and then if the code does not compile or does not run fine then switch back to -O2.
+The debug flags (-g, -qfullpath) do not influence performance but are useful to get at least some insights in case of problems.\\
+
+\noindent
+Before running \texttt{configure}, select the XL Fortran compiler by typing \texttt{module load bgq-xl/1.0}
+or \texttt{module load bgq-xl} (another, less efficient option is to load the GNU compilers using \texttt{module load bgq-gnu/4.4.6} or similar).\\
+
+\noindent
+Then, to configure the code, type this:\\
+
+\noindent
+\texttt{./configure FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r LOCAL\_PATH\_IS\_ALSO\_GLOBAL=true}\\
+
+\noindent
+\underline{Older installation instruction for IBM BlueGene, from 2011:}\\
+
+\noindent
 To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
 
-\texttt{   FLAGS\_NO\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
+\noindent
+\texttt{   FLAGS\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
 \texttt{   -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap\_all -Wl,-relax"}
 
-Option "-Wl,-relax" must be added to be able to link the binaries \texttt{xmeshfem3D}
-and \texttt{xspecfem3D} because on BlueGene the final link step is done by the \texttt{gcc} compiler even if
+\noindent
+Option "-Wl,-relax" must be added on many (but not all) BlueGene systems to be able to link the binaries \texttt{xmeshfem3D}
+and \texttt{xspecfem3D} because the final link step is done by the GNU \texttt{ld} linker even if
 one uses \texttt{FC=bgxlf90\_r, MPIFC=mpixlf90\_r} and \texttt{CC=bgxlc\_r} to create all the object files.
+On the contrary, on some BlueGene systems that use the native AIX linker option "-Wl,-relax" can lead to problems and must be suppressed from \texttt{flags.guess}.
 
-Also, \texttt{AR=ar, ARFLAGS=cru} and \texttt{RANLIB=ranlib} are hardwired in all \texttt{Makefile.in} files by default, but to cross-compile on BlueGene/P one needs to change
-these values to \texttt{AR=bgar, ARFLAGS=cru} and \texttt{RANLIB=bgranlib}. Thus the easiest thing to do is to modify
-all \texttt{Makefile.in} files and the \texttt{configure} script to set them automatically by \texttt{configure}.
+\noindent
 One then just needs to pass the right commands to the \texttt{configure} script:
 
+\noindent
 \texttt{   ./configure --prefix=/path/to/SPECFEM3DG\_SP --host=Babel --build=BGP \\}
-\texttt{      FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r AR=bgar ARFLAGS=cru \\}
-\texttt{      RANLIB=bgranlib LOCAL\_PATH\_IS\_ALSO\_GLOBAL=false}
+\texttt{      FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r  \\}
+\texttt{      LOCAL\_PATH\_IS\_ALSO\_GLOBAL=false}
 
+\noindent
 This trick can be useful for all hosts on which one needs to cross-compile.
 
+\noindent
 On BlueGene, one also needs to run the \texttt{xcreate\_header\_file} binary file manually rather than in the Makefile:
 
+\noindent
    \texttt{bgrun -np 1 -mode VN -exe ./bin/xcreate\_header\_file}
 
 \section{Using a cross compiler}
@@ -418,7 +466,7 @@ architecture. In such a case, typing \texttt{``make all''} on the frontend will 
 \noindent
 2/ after running the \texttt{``configure''} script, create two copies of the Makefiles:
 \\
-\red{TODO: this has not been tested out yet, any feedback is welcomed}
+\red{TODO: this has not been tested out yet, any feedback is welcome}
 \\
 
 \noindent
@@ -426,7 +474,6 @@ In \texttt{src/create\_header\_file/Makefile} put this instead of the current va
 
 \begin{verbatim}
 FLAGS_CHECK = -O0
-FLAGS_NO_CHECK = -O0
 \end{verbatim}
 
 \noindent
@@ -467,6 +514,30 @@ Then:
 
 \noindent
 should work.
+
+\section{Adding OpenMP support in addition to MPI}
+
+OpenMP support can be enabled in addition to MPI. However, in many cases performance will not improve
+because our pure MPI implementation is already heavily optimized and thus the resulting code will in fact
+be slightly slower. A possible exception could be IBM BlueGene-type architectures.
+
+To enable OpenMP, uncomment the OpenMP compiler option in two lines in file \texttt{src/specfem3D/Makefile.in}
+(before running \texttt{configure}) and also uncomment the \texttt{\#define USE\_OPENMP} statement in file\\
+\texttt{src/specfem3D/specfem3D.F90}.
+
+The DO-loop using OpenMP threads has a SCHEDULE property. The OMP\_SCHEDULE
+environment variable can set the scheduling policy of that DO-loop.
+Tests performed by Marcin Zielinski at SARA (The Netherlands) showed that often
+the best scheduling policy is DYNAMIC with the size of the chunk equal to the number of
+OpenMP threads, but most preferably being twice as the number of
+OpenMP threads (thus chunk size = 8 for 4 OpenMP threads etc).
+If OMP\_SCHEDULE is not set or is empty, the DO-loop will assume generic
+scheduling policy, which will slow down the job quite a bit.
+
+\section{Visualizing the subroutine calling tree of the source code}
+
+Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
+\texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
 
 \chapter{\label{cha:Running-the-Mesher}Running the Mesher \texttt{xmeshfem3D}}
 
@@ -528,7 +599,7 @@ need to be set in the \texttt{Par\_file}:
 
 \begin{description}
 \item [{\texttt{SIMULATION\_TYPE}}] is set to 1 for forward simulations,
-2 for adjoint simulations (see Section \ref{sec:Adjoint-simulation-finite})
+2 for adjoint simulations for sources (see Section \ref{sec:Adjoint-simulation-sources})
 and 3 for kernel simulations (see Section \ref{sec:Finite-Frequency-Kernels}).
 \item [{\texttt{SAVE\_FORWARD}}] is only set to \texttt{.true.} for a forward
 simulation with the last frame of the simulation saved, as part of
@@ -594,8 +665,13 @@ version of PREM.
 \item [{\texttt{1D\_1066a}}] Spherically symmetric earth model 1066A \citep{gilbertdziewonski1975}.
 When \texttt{\small ATTENTUATION} is on, it uses an unpublished 1D
 attenuation model from Scripps.
-\item [{\texttt{1D\_ak135}}] Spherically symmetric isotropic AK135 model
-\citep{KeEnBu95}.
+\item [{\texttt{1D\_ak135f\_no\_mud}}] Spherically symmetric isotropic AK135 model
+\citep{KeEnBu95} modified to use the density and Q attenuation models of \cite{MoKe95}.
+That modified model is traditionally called AK135-F,
+see \url{http://rses.anu.edu.au/seismology/ak135/ak135f.html} for more details.
+As we do not want to use the 300~m-thick mud layer from that model nor the ocean layer,
+above the d120 discontinuity we switch back to the classical AK135 model of \cite{KeEnBu95},
+i.e., we use AK135-F below and AK135 above.
 \item [{\texttt{1}D\_ref}] A recent 1D Earth model developed by \citet{KuDzEk06}.
 This model is the 1D background model for the 3D models s362ani, s362wmani,
 s362ani\_prem, and s29ea.
@@ -612,7 +688,7 @@ crust. These `one-crust' models are:
 
 \texttt{1D\_iasp91\_onecrust}, \texttt{1D\_1066a\_onecrust}
 
-\texttt{1D\_ak135\_onecrust}
+\texttt{1D\_ak135f\_no\_mud\_onecrust}
 
 \begin{description}
 \item [{\textmd{Fully~3D~models:}}]~
@@ -682,7 +758,7 @@ should be incorporated. Turning this feature on is relatively cheap
 numerically.
 \item [{\texttt{ATTENUATION}}] Set to \texttt{.true.} if attenuation should
 be incorporated. Turning this feature on increases the memory requirements
-significantly (roughly by a factor of~1.5), and is numerically fairly
+significantly (roughly by a factor of~2), and is numerically fairly
 expensive. Of course for realistic simulations this flag should be
 turned on. See \citet{KoTr99,KoTr02a} for a discussion on the implementation
 of attenuation based upon standard linear solids.
@@ -1166,7 +1242,7 @@ mesh files.
 \section{Memory requirements}
 
 The SPECFEM3D\_GLOBE memory requirements can be estimated before or
-after running the mesher using the small serial program \texttt{\small xcreate\_header\_file},
+after running the mesher using the small serial program \texttt{\small ./bin/xcreate\_header\_file},
 which reads the input file \texttt{\small DATA/Par\_file} and displays
 the total amount of memory that will be needed by the mesher and the
 solver to run it. This way, users can easily modify the parameters
@@ -1316,14 +1392,15 @@ is the time in the first column of the output seismogram.
 \noindent \begin{centering}
 \includegraphics[width=3in]{figures/gauss_vs_triangle_mod}
 \par\end{centering}
-
-\caption{Comparison of the shape of a triangle and the Gaussian function actually
-used.}
-
-
+\caption{Comparison of the shape of a triangle and the Gaussian function actually used.}
 \label{fig:gauss.vs.triangle}
 \end{figure}
 
+If you know the earthquake source in strike/dip/rake format rather than in \texttt{CMTSOLUTION} format,
+use the C code \texttt{utils/strike\_dip\_rake\_to\_CMTSOLUTION.c} to convert it.
+The conversion formulas are given for instance in \cite{AkRi80}.
+Note that the \cite{AkRi80} convention is slightly different from the Harvard \texttt{CMTSOLUTION} convention
+(the sign of some components is different). The C code outputs both.
 
 Centroid latitude and longitude should be provided in geographical
 coordinates. The code converts these coordinates to geocentric coordinates~\citep{DaTr98}.
@@ -1602,7 +1679,9 @@ number of elements is greater than 1248), the radial distribution
 of elements needs to be adjusted as well to maintain spectral elements
 that are as cube-like as possible. The code attempts to do this, but
 be sure to view the mesh with your favorite graphics package to make
-sure that the element are well behaved. Remember: a high-quality mesh is paramount for accurate simulations. In addition to a reorganization of the radial distribution of elements,
+sure that the element are well behaved.
+Remember: a high-quality mesh is paramount for accurate simulations.
+In addition to a reorganization of the radial distribution of elements,
 the time stepping and period range in which the attenuation is applied
 is automatically determined. The minimum and maximum periods for attenuation
 are:
@@ -1685,7 +1764,7 @@ parameters in the \texttt{Par\_file} are \texttt{SIMULATION\_TYPE}
 (1, 2 or 3) and \texttt{SAVE\_FORWARD} (boolean).
 
 
-\section{\label{sec:Adjoint-simulation-sources}Adjoint Simulations for Sources}
+\section{\label{sec:Adjoint-simulation-sources}Adjoint Simulations for Sources Only (not for the Model)}
 
 In the case where a specific misfit function is minimized to invert
 for the earthquake source parameters, the gradient of the misfit function
@@ -1780,9 +1859,11 @@ files, set the parameters \texttt{\small SIMULATION\_TYPE}{\small{}
 -F}), and run the solver.
 
 \begin{itemize}
-\item Notice that attenuation is not implemented yet for the computation
-of finite-frequency kernels; therefore set \texttt{ATTENUATION = .false.}
-in the \texttt{Par\_file}.
+\item Notice that attenuation is not fully implemented yet for the computation
+of finite-frequency kernels; if \texttt{ATTENUATION = .true.} is set
+in the \texttt{Par\_file}, only effects on phase shift are accounted for
+but not on amplitude of the signals. However, we suggest you use the same
+setting for \texttt{ATTENUATION} as for your forward simulations.
 \item We also suggest you modify the half duration of the \texttt{CMTSOLUTION}
 to be similar to the accuracy of the simulation (see Equation \ref{eq:shortest_period}
 or \ref{eq:shortest_period_regional}) to avoid too much high-frequency
@@ -1858,6 +1939,11 @@ where \texttt{proc??????} represents the processor number, and \texttt{reg\_?}
 denotes the region these kernels are for, including mantle (\texttt{reg\_1}),
 outer core (\texttt{reg\_2}), and inner core (\texttt{reg\_3}). The
 output kernels are in the unit of $s/km^{3}$.
+\item Note that if you set the flag \texttt{APPROXIMATE\_HESS\_KL = .true.} in
+the \texttt{constants.h} file and recompile the solver, the adjoint simulation
+also saves files \texttt{proc??????\_reg\_1\_hess\_kernel.bin} which can
+be used as preconditioners in the crust-mantle region for iterative inverse
+optimization schemes.
 \end{itemize}
 \item \textbf{Run the boundary kernel simulation}
 
@@ -2397,14 +2483,24 @@ the volumetric kernel files from all slices into one mesh file, and
 \begin{lyxcode}
 {\footnotesize make~combine\_vol\_data~}{\footnotesize \par}
 
-{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize filename}~{\footnotesize input\_dir}~{\footnotesize output\_dir}~{\footnotesize high/low-resolution}~{\footnotesize {[}region]}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize kernel\_filename}~
+{\footnotesize input\_topo\_dir}~
+{\footnotesize input\_file\_dir}~{\footnotesize output\_dir}
+
+{\footnotesize low/high-resolution-flag-0-or-1}~{\footnotesize {[}region]}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{input\_dir} is the directory where all the individual
 kernel files are stored, and \texttt{output\_dir} is where the mesh
-file will be written.
+file will be written. Give 0 for low resolution and 1 for high resolution.
+If region is not specified, all three regions (crust and mantle, outer core, inner core)
+will be collected, otherwise, only the specified region will be.
+Here is an example: 
+\texttt{./xcombine\_vol\_data slices\_major alpha\_kernel input\_topo\_dir}
+\texttt{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~input\_file\_dir output\_dir 1}
 
 \begin{lyxcode}
-{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir~hi~gh/low-resolution~2D/3D}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir}
+{\footnotesize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~low/high-resolution~2D/3D}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{surfname} should correspond to the specific kernel file
 name, and can be chosen from \texttt{Moho}, \texttt{400}, \texttt{670},
@@ -2427,13 +2523,12 @@ or\texttt{ }~\\
 grid file) format which can be viewed in ParaView, for example:
 
 \begin{lyxcode}
-mesh2vtu.pl~-i~file.mesh~-o~file.vtu
+mesh2vtu~-i~file.mesh~-o~file.vtu
 \end{lyxcode}
-\item Notice that this Perl script uses a program \texttt{mesh2vtu} in the
-\texttt{UTILS/Visualization/Paraview/}~\\
-\texttt{mesh2vtu} directory, which further uses the
+\item Notice that this program \texttt{mesh2vtu}, in the
+\texttt{UTILS/Visualization/Paraview/mesh2vtu} directory, uses the
 VTK \urlwithparentheses{www.vtk.org} run-time library for its execution. Therefore,
-make sure you have them properly set in the script.
+make sure you have it properly installed.
 \end{enumerate}
 \item \textbf{Copy over the source and receiver .vtk file}
 
@@ -2686,7 +2781,7 @@ the mesh by the subroutine \texttt{model\_crust}~\\
 \texttt{.f90}. To accomplish this, the flag \texttt{CRUSTAL}, set
 in the subroutine \texttt{get\_model\_parameters.f90}, is used
 to indicate a 3D crustal model. When this flag is set to \texttt{.true.},
-the crust on top of the 1D reference model (PREM, IASP91, or AK135)
+the crust on top of the 1D reference model (PREM, IASP91, or AK135F\_NO\_MUD)
 is removed and replaced by extending the mantle. The 3D crustal model
 is subsequently overprinted onto the crust-less 1D reference model.
 The call to the 3D crustal routine is of the form
@@ -3233,12 +3328,11 @@ to Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu} or to the CIG Compu
 
 \chapter*{\label{cha:Copyright}Copyright}
 
-Main authors: Dimitri Komatitsch and Jeroen Tromp
+Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 
-Princeton University, USA,
-and University of Pau / CNRS / INRIA, France
+Princeton University, USA, and CNRS / INRIA / University of Pau, France
 
-$\copyright$ Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA, December 2010
+$\copyright$ Princeton University and CNRS / INRIA / University of Pau, April 2011
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -3251,7 +3345,7 @@ by the Free Software Foundation (see Appendix \ref{cha:License}).\\
      new convention for the name of seismograms, to conform to the IRIS standard;
      new directory structure.\\
 
- v. 5.0, many developers, some with Princeton Tiger logo on their shirts, February 2010:
+ v. 5.0, many developers, February 2010:
      new moho mesh stretching honoring crust2.0 moho depths,
      new attenuation assignment, new SAC headers, new general crustal models,
      faster performance due to Deville routines and enhanced loop unrolling,
@@ -3267,7 +3361,7 @@ by the Free Software Foundation (see Appendix \ref{cha:License}).\\
 
  v. 3.6 Many people, many affiliations, September 2006:
       adjoint and kernel calculations, fixed IASP91 model,
-      added AK135 and 1066a, fixed topography/bathymetry routine,
+      added AK135F\_NO\_MUD and 1066a, fixed topography/bathymetry routine,
       new attenuation routines, faster and better I/Os on very large
       systems, many small improvements and bug fixes, new `configure'
       script, new Pyre version, new user's manual etc..\\
@@ -3340,23 +3434,26 @@ and the Harvard CMT convention is
 \chapter{\label{cha:Non-Dimensionalization-Conventions}Non-Dimensionalization
 Conventions{\small{} }}
 
-All physical parameters used by the code are non-dimensionalized according
-to the conventions summarized in Table~{\small \ref{table:conventions}.
+All physical parameters used are non-dimensionalized internally in the code
+in order to work in a reference Earth of radius 1. In Table~{\small \ref{table:conventions} in the right column are the values by which
+we divide the parameters of the left column internally to perform the calculations.
+The values output and saved by the code (seismograms, sensitivity kernels...) are then
+scaled back to the right physical dimensions before being saved.
 }%
 \begin{table}[ht]
 \noindent \begin{centering}
 {\small }\begin{tabular}{|c|c|}
 \hline
-quantity (units)  & non-dimensionalized with \tabularnewline
+quantity (units)  & divided internally by \tabularnewline
 \hline
 distance (m)  & \texttt{R\_EARTH} \tabularnewline
-time (s)  & $\sqrt{\texttt{PI}\times\texttt{GRAV}\times\texttt{RHOAV}}$ \tabularnewline
+time (s)  & $1/\sqrt{\texttt{PI}\times\texttt{GRAV}\times\texttt{RHOAV}}$ \tabularnewline
 density (kg/m$^{3}$)  & \texttt{RHOAV} \tabularnewline
 \hline
 \end{tabular}
 \par\end{centering}{\small \par}
 
-\caption{Non-dimensionalization employed by the code. The constants \texttt{R\_EARTH}
+\caption{Non-dimensionalization convention employed internally by the code. The constants \texttt{R\_EARTH}
 (the radius of the Earth), \texttt{PI} (the number $\pi$), \texttt{GRAV}
 (the universal gravitational constant), and \texttt{RHOAV} (the Earth's
 average density) are defined in the \texttt{constants.h} file. }
@@ -3488,7 +3585,8 @@ Information about the simulation (i.e., event/station information, sampling rate
 
 Seismic networks, such as the Global Seismographic Network (GSN), generally involve various types of instruments with different bandwidths, sampling properties and component configurations. There are standards to name channel codes depending on instrument properties. IRIS  \texttt{(www.iris.edu)} uses SEED/FDSN format for channel codes, which are represented by three letters, such as \texttt{LHN}, \texttt{BHZ}, etc. In older versions of the SPECFEM package, a common format was used for the channel codes of all seismograms, which was \texttt{LHE/LHN/LHZ} for three components. To avoid confusion when comparisons are made to observed data, we are now using the FDSN convention for SEM seismograms. In the following, we give a brief explanation of the FDSN convention and how it is adopted in SEM seismograms. Please visit \texttt{www.iris.edu/manuals/SEED\_appA.htm} for further information.\\
 
-\noindent \textbf{\texttt{Band code:}} The first letter in the channel code denotes the band code of seismograms, which depends on the response band and the sampling rate of instruments. The list of band codes used by IRIS is shown in Figure \ref{fig:IRIS_band_codes}. The sampling rate of SEM synthetics is controlled by the resolution of simulations rather than instrument properties. However, for consistency, we follow the FDSN convention for SEM seismograms governed by their sampling rate. For SEM synthetics, we consider band codes for which $dt \leq 1$ s. The FDSN convention also considers the response band of instruments. For instance, short-period and broad-band seismograms with the same sampling rate correspond to different band codes, such as S and B, respectively. In such cases, we consider SEM seismograms as broad band, ignoring the corner period ($\geq 10$ s) of the response band of instruments (note that at these resolutions, the minimum period in the SEM synthetics will be less than $10$ s). Accordingly, when you run a simulation the band code will be chosen depending on the resolution of the synthetics, and channel codes of SEM seismograms will start with either \texttt{L}, \texttt{M}, \texttt{B}, \texttt{H}, \texttt{C} or \texttt{F}, shown by red color in the figure.\\
+\noindent \textbf{\texttt{Band code:}} The first letter in the channel code denotes the band code of seismograms, which depends on the response band and the sampling rate of instruments. The list of band codes used by IRIS is shown in Figure \ref{fig:IRIS_band_codes}. The sampling rate of SEM synthetics is controlled by the resolution of simulations rather than instrument properties. However, for consistency, we follow the FDSN convention for SEM seismograms governed by their sampling rate. For SEM synthetics, we consider band codes for which $dt \leq 1$ s. The FDSN convention also considers the response band of instruments. For instance, short-period and broad-band seismograms with the same sampling rate correspond to different band codes, such as S and B, respectively. In such cases, we consider SEM seismograms as broad band, ignoring the corner period ($\geq 10$ s) of the response band of instruments (note that at these resolutions, the minimum period in the SEM synthetics will be less than $10$ s).
+Accordingly, when you run a simulation the band code will be chosen depending on the resolution of the synthetics, and channel codes of SEM seismograms will start with either \texttt{L}, \texttt{M}, \texttt{B}, \texttt{H}, \texttt{C} or \texttt{F}, shown by red color in the figure.\\
 
 \begin{figure}[ht]
 \noindent \begin{centering}
@@ -3538,7 +3636,7 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 \end{lyxcode}
   make sure you're pointing to the right 'mpif90' wrapper command.
 
-  Normally, this message will appear when you're mixing two different Fortran
+  Normally, this message will appear when you are mixing two different Fortran
   compilers. That is, using e.g. gfortran to compile non-MPI files
   and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.
 
