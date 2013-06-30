@@ -163,7 +163,7 @@ program global_slice_number
         endif
       enddo
 
-      if (nchunks /= 6 .and. (chunk(i) > nchunks .or. abs(xi(i) > pi/2) .or. abs(eta(i)) > pi/2)) then
+      if (nchunks /= 6 .and. (chunk(i) > nchunks .or. abs(xi(i)) > pi/2 .or. abs(eta(i)) > pi/2)) then
         write(ch_usage,*) 'Check if point ', x, ',', y, ',', z, ' is within the region or not'
         print *, trim(ch_usage)
         stop

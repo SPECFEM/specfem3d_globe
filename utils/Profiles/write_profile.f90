@@ -431,7 +431,7 @@
 !   make sure that the first point of the profile is at zero and the last is at the surface
       if(islice == 1) then
          r_prem = rmin
-      elseif(islice == nit+1) then
+      else if(islice == nit+1) then
          r_prem = rmax
       endif
 
@@ -446,7 +446,7 @@ if((THREE_D_MODEL/=0 .or. TOPOGRAPHY ) .and. &
 !   print *,'rprem before: ',r_prem*R_EARTH
    r_prem = r_prem*(ONE + gamma * (elevation/R_EARTH) /r_prem)
 !   print *,'r_prem after: ',r_prem*R_EARTH
-elseif((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+else if((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
    r_prem = ROCEAN/R_EARTH
 endif
 ! end add_topography
@@ -481,7 +481,7 @@ endif
      if(OCEANS .and. elevation < -500.0) then
 !        iline_ocean = iline
         nlayers_ocean = floor(-elevation/500.0d0)
-     elseif((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+     else if((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
         nlayers_ocean = floor((R_EARTH - ROCEAN)/500.0d0)
      endif
 

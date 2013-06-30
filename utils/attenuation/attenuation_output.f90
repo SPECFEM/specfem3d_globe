@@ -12,10 +12,10 @@
 !    However, the values here should match those which are output from attenuation_prem.c
 !    This code was used for testing the implementation of 3D attenuation
 !    Brian Savage, 22/03/04
-    implicit none 
+    implicit none
     include "OUTPUT_FILES/values_from_mesher.h"
     include "constants.h"
-    
+
     integer i,j,k,ispec
     integer myrank, vnspec, process, iregion
     character(len=150) prname, LOCAL_PATH
@@ -23,7 +23,7 @@
     double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_AC) :: factor_common
     double precision, dimension(N_SLS)                                         :: tau_s
     double precision T_c_source
-    
+
     LOCAL_PATH = "/scratch/DATABASES_MPI_BRIAN/att"
     process    = 42
     iregion    = IREGION_CRUST_MANTLE
@@ -33,11 +33,11 @@
     open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin',status='old',form='unformatted')
     read(27) tau_s
     close(27)
-    
+
     open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',form='unformatted')
     read(27) T_c_source
     close(27);
-    
+
     open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',form='unformatted')
     read(27) scale_factor
     close(27)
@@ -50,7 +50,7 @@
     write(*,*)' tau_sigma(1) = ', tau_s(1)
     write(*,*)' tau_sigma(2) = ', tau_s(2)
     write(*,*)' tau_sigma(3) = ', tau_s(3)
-    
+
     do ispec = 1, NSPEC_CRUST_MANTLE_AC
        do k = 1, NGLLZ
           do j = 1, NGLLY
@@ -65,5 +65,5 @@
        enddo
     enddo
   end program attenuation_output
-  
-  
+
+

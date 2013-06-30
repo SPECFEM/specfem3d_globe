@@ -5,8 +5,9 @@
 #  uses xglobal_slice_number and xnormal_plane, compile first from global_slice_util/
 #  Qinya Liu, Caltech, May 2007
 
-# modify the following line for the correct location of perl libs (UTILS/lib)
-use lib '/opt/seismo-util/lib/perl';
+# modify the following line for the correct location of perl libs (utils/lib)
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use CMT_TOOLS;
 
 if (@ARGV != 4) {die("Usage: global_slice_number.pl CMTSOLUTION STATIONS_ADJOINT Par_file lat_belt_width (in degrees)\n");}

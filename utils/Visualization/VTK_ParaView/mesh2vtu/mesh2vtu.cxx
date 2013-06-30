@@ -51,31 +51,130 @@
 #include <vtk/vtkPointSet.h>
 #include <vtk/vtkHexahedron.h>
 
+void usage(char *progname)
+{
+  printf("Usage: %s -i input-file -o output-file\n"
+         "    Takes an input file (binary) with a number of points and a number of cells\n"
+         "    and transforms them into an unstructured grid file\n"
+         "\n"
+         "    -i input-file (Binary file)\n"
+         "    -o output-file (XML Unstructured Grid File)\n"
+         "    -s Perform byte swapping on input file\n"
+         "\n"
+         "    Input Binary files have this structure:\n"
+         "      number_of_points          integer (4 bytes)\n"
+         "      x_1, y_1, z_1, scalar_1   4 reals (4 bytes each)\n"
+         "      ...\n"
+         "      x_n, y_n, z_n, scalar_n   4 reals (4 bytes each)\n"
+         "      number_of_cells           integer (4 bytes)\n"
+         "      cell_1 (eight points)     8 integers (4 bytes each)\n"
+         "      ...\n"
+         "      cell_n                    8 integers (4 bytes each)\n"
+         "\n", progname);
+}
 
-int main(int argc, char** argv) {
+bool parse_args(int argc, char **argv, char **input, char **output, bool *swap)
+{
+  int c;
 
-  if (argc < 3) {
-    printf("Usage: mesh2vtu input_file output_file\n");
-    return 0;
+  *input = *output = NULL;
+  *swap = false;
+
+  while ( (c = getopt(argc, argv, "i:o:s")) != -1) {
+    switch (c) {
+    case 'i':
+      *input = optarg;
+      break;
+    case 'o':
+      *output = optarg;
+      break;
+    case 's':
+      *swap = true;
+      break;
+    case '?':
+      usage(argv[0]);
+      return false;
+    default:
+      printf("?? getopt returned character code 0%o ??\n", c);
+      return false;
+    }
   }
 
+  if (*input == NULL) {
+    printf("ERROR: Must specify input file -i input-file\n\n");
+    usage(argv[0]);
+    return false;
+  }
+
+  if (*output == NULL) {
+    printf("ERROR: Must specify output file -o output-file\n\n");
+    usage(argv[0]);
+    return false;
+  }
+
+  return true;
+}
+
+bool read_int32_normal(int fd, int *val)
+{
+  return read(fd, val, sizeof(*val)) == sizeof(*val);
+}
+
+bool read_int32_swap(int fd, int *val)
+{
+  if (!read_int32_normal(fd, val))
+    return false;
+  *val = (*val<<24) | (*val<<8 & 0xff0000) | (*val>>8 & 0xff00) | (*val>>24);
+  return true;
+}
+
+bool read_float32_normal(int fd, float *val)
+{
+  return read(fd, val, sizeof(*val)) == sizeof(*val);
+}
+
+bool read_float32_swap(int fd, float *val)
+{
+  int tmp;
+  if (!read_int32_normal(fd, &tmp))
+    return false;
+  tmp = (tmp<<24) | (tmp<<8 & 0xff0000) | (tmp>>8 & 0xff00) | (tmp>>24);
+  memcpy(val, &tmp, sizeof(tmp));
+  return true;
+}
+
+int main(int argc, char** argv) {
+  char *input, *output;
+  bool swap;
   float xyz[3];
   float scalar;
   int cell[8];
-  FILE *file;
   int i, j;
   int npts, ncells;
-  int pid[8];
-
   int fd;
+  bool (*read_int32)(int fd, int *val);
+  bool (*read_float32)(int fd, float *val);
 
-  if((fd = open(argv[1], O_RDONLY)) == -1) {
-    printf("Error opening file: %s.\n", argv[1]);
-    return 0;
+  if (!parse_args(argc, argv, &input, &output, &swap)) {
+    return 1;
   }
 
-  if(read(fd, &npts, sizeof(int)) != sizeof(int)) {
-    printf("Bad read on file (in points): %s\n", argv[1]);
+  if (swap) {
+    read_int32 = &read_int32_swap;
+    read_float32 = &read_float32_swap;
+  } else {
+    read_int32 = &read_int32_normal;
+    read_float32 = &read_float32_normal;
+  }
+
+  if ((fd = open(input, O_RDONLY)) == -1) {
+    printf("Error opening file: %s.\n", input);
+    return 1;
+  }
+
+  if (!read_int32(fd, &npts)) {
+    printf("Bad read on file (in points): %s\n", input);
+    return 1;
   }
 
   printf("mesh2vtu: Reading in points: %d\n", npts);
@@ -84,18 +183,19 @@ int main(int argc, char** argv) {
   vtkFloatArray *newScalars = vtkFloatArray::New();
   for (i = 0 ; i < npts ; i++)
   {
-    read(fd, &xyz[0], sizeof(float));
-    read(fd, &xyz[1], sizeof(float));
-    read(fd, &xyz[2], sizeof(float));
-    read(fd, &scalar, sizeof(float));
+    read_float32(fd, &xyz[0]);
+    read_float32(fd, &xyz[1]);
+    read_float32(fd, &xyz[2]);
+    read_float32(fd, &scalar);
 
     newPts -> InsertPoint(i, xyz);
     newScalars -> InsertValue(i, scalar);
   }
 
   vtkCellArray *cells = vtkCellArray::New();
-  if(read(fd, &ncells, sizeof(int)) != sizeof(int)) {
-    printf("Bad read on file (in cells): %s\n", argv[1]);
+  if (!read_int32(fd, &ncells)) {
+    printf("Bad read on file (in cells): %s\n", input);
+    return 1;
   }
 
   printf("mesh2vtu: Reading in cells: %d\n", ncells);
@@ -106,7 +206,7 @@ int main(int argc, char** argv) {
 
   for(i = 0; i < ncells; i++) {
     for(j = 0; j < 8; j++) {
-      read(fd, &cell[j], sizeof(int));
+      read_int32(fd, &cell[j]);
       hex->GetPointIds()->SetId(j,cell[j]);
     }
     cells->InsertNextCell(hex);
@@ -130,7 +230,7 @@ int main(int argc, char** argv) {
 
   vtkXMLUnstructuredGridWriter* writer = vtkXMLUnstructuredGridWriter::New();
   writer -> SetInput(dataSet);
-  writer -> SetFileName(argv[2]);
+  writer -> SetFileName(output);
   writer -> Write();
 
   writer -> Delete();

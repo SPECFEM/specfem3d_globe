@@ -1,0 +1,15 @@
+# vtk DataFile Version 2.0
+Source and Receiver VTK file
+ASCII
+
+DATASET POLYDATA
+POINTS     2 float
+  0.3378290     -0.8056306     -0.2134582    
+ -0.2327318     -0.7878500      0.5702204    
+ 
+POINT_DATA 2
+SCALARS volume float
+LOOKUP_TABLE default
+1200
+1200
+
