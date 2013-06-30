@@ -447,7 +447,6 @@
 
   ! starts reading the databases
   call read_mesh_databases()
-
   ! sets up reference element GLL points/weights/derivatives
   call setup_GLL_points()
 

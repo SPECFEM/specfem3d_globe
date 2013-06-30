@@ -102,6 +102,11 @@
     if(err_occurred() /= 0) &
       call exit_MPI(myrank,'an error occurred while reading the parameter file')
 
+    ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
+    call read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
+        ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
+        ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
+
   endif
 
   ! distributes parameters from master to all processes
@@ -137,6 +142,10 @@
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
+  ! broadcasts optional ADIOS_ENABLED 
+  call broadcast_adios_parameters(myrank,ADIOS_ENABLED, &
+      ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
+      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
 
   ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
@@ -146,5 +155,9 @@
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
 
   if(NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
+
+  if (ADIOS_ENABLED) then
+    call adios_setup()
+  endif
 
   end subroutine initialize_mesher

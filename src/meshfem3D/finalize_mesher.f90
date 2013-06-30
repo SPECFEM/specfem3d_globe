@@ -170,5 +170,9 @@
   ! synchronize all the processes to make sure everybody has finished
   call sync_all()
 
+  if (ADIOS_ENABLED) then
+    call adios_cleanup()
+  endif
+
   end subroutine finalize_mesher
 

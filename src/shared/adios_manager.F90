@@ -25,38 +25,27 @@
 !
 !=====================================================================
 
-subroutine create_name_database(prname,iproc,iregion_code,LOCAL_PATH)
-
-! create the name of the database for the mesher and the solver
-
-  implicit none
-  integer iproc,iregion_code
-
-! name of the database file
-  character(len=150) prname,procname,LOCAL_PATH
-
-! create the name for the database of the current slide and region
-  write(procname,"('/proc',i6.6,'_reg',i1,'_')") iproc,iregion_code
-! create full name with path
-  prname = trim(LOCAL_PATH) // procname
-
-end subroutine create_name_database
-
-subroutine create_name_database_adios(prname,iregion_code,LOCAL_PATH)
-
-  ! create the name of the database for the mesher and the solver
+!> @brief Initialize ADIOS and setup the xml output file
+subroutine adios_setup()
+  use adios_write_mod, only: adios_init
 
   implicit none
+  integer :: adios_err, sizeMB
 
-  integer iregion_code
+  call adios_init_noxml (adios_err);
+  sizeMB = 200 ! TODO 200MB is surely not the right size for the adios buffer
+  call adios_allocate_buffer (sizeMB , adios_err)
+end subroutine adios_setup
 
-! name of the database file
-  character(len=150) prname,procname,LOCAL_PATH
+!> @brief Finalize ADIOS. Must be called once everything is written down.
+subroutine adios_cleanup()
+  use mpi
+  use adios_write_mod, only: adios_finalize
 
-! create the name for the database of the current slide and region
-  write(procname,"('/reg',i1,'_')") iregion_code
+  implicit none
+  integer :: myrank
+  integer :: adios_err, ierr
 
-! create full name with path
-  prname = trim(LOCAL_PATH) // procname
-
-end subroutine create_name_database_adios
+  call MPI_Comm_rank(MPI_COMM_WORLD, myrank, ierr)
+  call adios_finalize (myrank, adios_err)
+end subroutine adios_cleanup

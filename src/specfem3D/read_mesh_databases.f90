@@ -54,7 +54,11 @@
   call read_mesh_databases_IC()
 
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
-  call read_mesh_databases_coupling()
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call read_mesh_databases_coupling_adios()
+  else
+    call read_mesh_databases_coupling()
+  endif
 
   ! reads "addressing.txt" 2-D addressing (needed for stacey boundaries)
   call read_mesh_databases_addressing()
@@ -65,7 +69,11 @@
   ! absorbing boundaries
   if(ABSORBING_CONDITIONS) then
     ! reads "stacey.bin" files
-    call read_mesh_databases_stacey()
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_mesh_databases_stacey_adios()
+    else
+      call read_mesh_databases_stacey()
+    endif
   endif
 
   ! user output
@@ -148,31 +156,56 @@
   if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
 
   ! reads databases file
-  call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
-            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
-            nspec_iso,nspec_tiso,nspec_ani, &
-            rho_vp_crust_mantle,rho_vs_crust_mantle, &
-            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-            rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-            kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-            c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-            c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-            c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-            c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-            c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-            c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-            c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
-            READ_KAPPA_MU,READ_TISO, &
-            ABSORBING_CONDITIONS,LOCAL_PATH)
+  if(ADIOS_FOR_ARRAYS_SOLVER) then
+    call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
+        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
+        nspec_iso,nspec_tiso,nspec_ani, &
+        rho_vp_crust_mantle,rho_vs_crust_mantle, &
+        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+        c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+        c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+        c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+        c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+        c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+        c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+        c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+        ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+        rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+        READ_KAPPA_MU,READ_TISO, &
+        ABSORBING_CONDITIONS,LOCAL_PATH)
+  else
+    call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
+        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
+        nspec_iso,nspec_tiso,nspec_ani, &
+        rho_vp_crust_mantle,rho_vs_crust_mantle, &
+        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+        c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+        c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+        c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+        c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+        c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+        c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+        c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+        ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+        rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+        READ_KAPPA_MU,READ_TISO, &
+        ABSORBING_CONDITIONS,LOCAL_PATH)
+  endif
 
   ! check that the number of points in this slice is correct
-  if(minval(ibool_crust_mantle(:,:,:,:)) /= 1 .or. &
-    maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
+  if(minval(ibool_crust_mantle(:,:,:,:)) /= 1) &
+      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
+  if(maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
   deallocate(dummy_idoubling)
@@ -231,34 +264,62 @@
   allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
   if(ier /= 0) stop 'error allocating rmass in outer core'
 
-  call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
-            nspec_iso,nspec_tiso,nspec_ani, &
-            vp_outer_core,dummy_array, &
-            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-            xix_outer_core,xiy_outer_core,xiz_outer_core, &
-            etax_outer_core,etay_outer_core,etaz_outer_core, &
-            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-            rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-            dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
-            READ_KAPPA_MU,READ_TISO, &
-            ABSORBING_CONDITIONS,LOCAL_PATH)
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
+              NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
+              nspec_iso,nspec_tiso,nspec_ani, &
+              vp_outer_core,dummy_array, &
+              xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+              xix_outer_core,xiy_outer_core,xiz_outer_core, &
+              etax_outer_core,etay_outer_core,etaz_outer_core, &
+              gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+              rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+              dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
+              READ_KAPPA_MU,READ_TISO, &
+              ABSORBING_CONDITIONS,LOCAL_PATH)
+  else
+    call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
+              NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
+              nspec_iso,nspec_tiso,nspec_ani, &
+              vp_outer_core,dummy_array, &
+              xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+              xix_outer_core,xiy_outer_core,xiz_outer_core, &
+              etax_outer_core,etay_outer_core,etaz_outer_core, &
+              gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+              rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+              dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
+              READ_KAPPA_MU,READ_TISO, &
+              ABSORBING_CONDITIONS,LOCAL_PATH)
+  endif
 
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
 
   ! check that the number of points in this slice is correct
-  if(minval(ibool_outer_core(:,:,:,:)) /= 1 .or. &
-     maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) &
-    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
+  ! check that the number of points in this slice is correct
+  if(minval(ibool_outer_core(:,:,:,:)) /= 1) &
+      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
+  if(maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) then
+    call exit_MPI(myrank, 'incorrect global numbering: &
+        & iboolmax does not equal nglob in outer core')
+  endif
 
   end subroutine read_mesh_databases_OC
 
@@ -315,27 +376,51 @@
   allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
   if(ier /= 0) stop 'error allocating rmass in inner core'
 
-  call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
-            nspec_iso,nspec_tiso,nspec_ani, &
-            dummy_array,dummy_array, &
-            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-            etax_inner_core,etay_inner_core,etaz_inner_core, &
-            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-            rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-            dummy_array,dummy_array,dummy_array, &
-            c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,c33store_inner_core, &
-            dummy_array,dummy_array,dummy_array, &
-            c44store_inner_core,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-            dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load, &
-            READ_KAPPA_MU,READ_TISO, &
-            ABSORBING_CONDITIONS,LOCAL_PATH)
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
+              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
+              nspec_iso,nspec_tiso,nspec_ani, &
+              dummy_array,dummy_array, &
+              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+              xix_inner_core,xiy_inner_core,xiz_inner_core, &
+              etax_inner_core,etay_inner_core,etaz_inner_core, &
+              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+              rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+              dummy_array,dummy_array,dummy_array, &
+              c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,c33store_inner_core, &
+              dummy_array,dummy_array,dummy_array, &
+              c44store_inner_core,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+              dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load, &
+              READ_KAPPA_MU,READ_TISO, &
+              ABSORBING_CONDITIONS,LOCAL_PATH)
+  else
+    call read_arrays_solver(IREGION_INNER_CORE,myrank, &
+              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
+              nspec_iso,nspec_tiso,nspec_ani, &
+              dummy_array,dummy_array, &
+              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+              xix_inner_core,xiy_inner_core,xiz_inner_core, &
+              etax_inner_core,etay_inner_core,etaz_inner_core, &
+              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+              rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+              dummy_array,dummy_array,dummy_array, &
+              c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              dummy_array,dummy_array,c33store_inner_core, &
+              dummy_array,dummy_array,dummy_array, &
+              c44store_inner_core,dummy_array,dummy_array, &
+              dummy_array,dummy_array,dummy_array, &
+              ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+              dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load, &
+              READ_KAPPA_MU,READ_TISO, &
+              ABSORBING_CONDITIONS,LOCAL_PATH)
+  endif
 
   deallocate(dummy_ispec_is_tiso,dummy_rmass)
 
@@ -636,7 +721,11 @@
   ! read MPI interfaces from file
 
   ! crust mantle
-  call read_mesh_databases_MPI_CM()
+  if (ADIOS_FOR_MPI_ARRAYS) then
+    call read_mesh_databases_MPI_CM_adios()
+  else
+    call read_mesh_databases_MPI_CM()
+  endif
 
   allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
           buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
@@ -655,7 +744,11 @@
   endif
 
   ! outer core
-  call read_mesh_databases_MPI_OC()
+  if (ADIOS_FOR_MPI_ARRAYS) then
+    call read_mesh_databases_MPI_OC_adios()
+  else
+    call read_mesh_databases_MPI_OC()
+  endif
 
   allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
           buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
@@ -674,7 +767,11 @@
   endif
 
   ! inner core
-  call read_mesh_databases_MPI_IC()
+  if (ADIOS_FOR_MPI_ARRAYS) then
+    call read_mesh_databases_MPI_IC_adios()
+  else
+    call read_mesh_databases_MPI_IC()
+  endif
 
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
           buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &

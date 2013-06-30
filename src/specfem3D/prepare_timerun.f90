@@ -745,7 +745,11 @@
   tau_sigma_dble(:) = 0.d0
 
   ! reads in attenuation values
-  call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call create_name_database_adios(prnamel, IREGION_CRUST_MANTLE, LOCAL_PATH)
+  else 
+    call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+  endif
   call get_attenuation_model_3D_or_1D(myrank, prnamel, &
                                      omsb_crust_mantle_dble, &
                                      factor_common_crust_mantle_dble, &
@@ -760,7 +764,11 @@
   tau_sigma_dble = 0.d0
 
   ! reads in attenuation values
-  call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call create_name_database_adios(prnamel, IREGION_INNER_CORE, LOCAL_PATH)
+  else
+    call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+  endif
   call get_attenuation_model_3D_or_1D(myrank, prnamel, &
                                      omsb_inner_core_dble, &
                                      factor_common_inner_core_dble, &

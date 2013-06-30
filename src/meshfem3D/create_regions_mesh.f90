@@ -39,12 +39,14 @@
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
     IMAIN,volume_total,myrank,LOCAL_PATH, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
     R_CENTRAL_CUBE,RICB,RCMB, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     NGLOB1D_RADIAL_CORNER, &
-    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+    ADIOS_FOR_ARRAYS_SOLVER
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -168,8 +170,9 @@
 
     ! sets up Stacey absorbing boundary indices
     if(NCHUNKS /= 6) then
-      call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
-                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
+      call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
+          njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
+          NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
     endif
 
   ! only create mass matrix and save all the final arrays in the second pass
@@ -334,9 +337,15 @@
       call flush_IMAIN()
     endif
     ! saves mesh and model parameters
-    call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
-                           iregion_code,xstore,ystore,zstore, &
-                           NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
+          iregion_code,xstore,ystore,zstore,  &
+          NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+          NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    else
+      call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+          iregion_code,xstore,ystore,zstore, NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    endif
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
@@ -360,21 +369,23 @@
         call flush_IMAIN()
       endif
       ! saves boundary file
-      call save_arrays_solver_boundary()
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
+        call save_arrays_solver_boundary_adios()
+      else
+        call save_arrays_solver_boundary()
+      endif
 
     endif
 
     ! compute volume, bottom and top area of that part of the slice
     call compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
 
     ! computes total area and volume
-    call compute_area(myrank,NCHUNKS,iregion_code, &
-                              area_local_bottom,area_local_top,&
-                              volume_local,volume_total, &
-                              RCMB,RICB,R_CENTRAL_CUBE)
+    call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
+        area_local_top, volume_local,volume_total, RCMB,RICB,R_CENTRAL_CUBE)
 
     ! create AVS or DX mesh data for the slices
     if(SAVE_MESH_FILES) then
@@ -1159,23 +1170,29 @@
 
 
 !
-!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !
 
-  subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
+subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
 
   use meshfem3d_par,only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN
+    RMIDDLE_CRUST,ROCEAN, &
+    ADIOS_FOR_AVS_DX
+
 
   use meshfem3D_models_par,only: &
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
     nspl,rspl,espl,espl2
 
   use create_regions_mesh_par2
+
+  ! Modules for temporary AVS/DX data
+  use AVS_DX_global_mod
+
   implicit none
 
   ! number of spectral elements in each block
@@ -1185,7 +1202,12 @@
   ! arrays used for AVS or DX files
   integer, dimension(:), allocatable :: num_ibool_AVS_DX
   logical, dimension(:), allocatable :: mask_ibool
-  integer :: ier
+  ! structures used for ADIOS AVS/DX files
+  type(avs_dx_global_t) :: avs_dx_global_vars
+
+  character(len=150) :: reg_name, outputname, group_name
+  integer :: comm, sizeprocs, ier
+  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
 
   ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
   ! allocate memory for arrays
@@ -1194,15 +1216,19 @@
           stat=ier)
   if(ier /= 0) stop 'error in allocate 21'
 
-  call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore, &
-                                num_ibool_AVS_DX,mask_ibool,npointot)
+  if (ADIOS_FOR_AVS_DX) then 
+    call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
+        num_ibool_AVS_DX, mask_ibool)
+  else
+    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
+        xstore,ystore,zstore, num_ibool_AVS_DX,mask_ibool,npointot)
 
-  call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-          idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
-          rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-          ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-          RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-          RMIDDLE_CRUST,ROCEAN,iregion_code)
+    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi, &
+        iMPIcut_eta,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX, &
+        mask_ibool,npointot, rhostore,kappavstore,muvstore,nspl,rspl, &
+        espl,espl2, ELLIPTICITY,ISOTROPIC_3D_MANTLE, RICB,RCMB, &
+        RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+        RMIDDLE_CRUST,ROCEAN,iregion_code)
 
   call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
           idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
@@ -1217,6 +1243,7 @@
           ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
           RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
           RMIDDLE_CRUST,ROCEAN,iregion_code)
+  endif
 
   ! Output material information for all GLL points
   ! Can be use to check the mesh
@@ -1224,7 +1251,7 @@
   !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
   deallocate(num_ibool_AVS_DX,mask_ibool)
 
-  end subroutine crm_save_mesh_files
+end subroutine crm_save_mesh_files
 
 !
 !-------------------------------------------------------------------------------------------------
