@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -26,9 +26,9 @@
 !=====================================================================
 
   subroutine define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
-                                        hprime_xx,hprime_yy,hprime_zz, &
-                                        hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-                                        wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
+         hprime_xx,hprime_yy,hprime_zz, &
+         hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
   implicit none
 

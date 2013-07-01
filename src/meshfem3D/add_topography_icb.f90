@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,7 @@
     if(r > 0.0d0 .and. r <= RICB/R_EARTH) then
 ! stretching between center and RICB
       gamma = r/(RICB/R_EARTH)
-    elseif(r>= RICB/R_EARTH .and. r <= RCMB/R_EARTH) then
+    else if(r>= RICB/R_EARTH .and. r <= RCMB/R_EARTH) then
 ! stretching between RICB and RCMB
       gamma = (r - RCMB/R_EARTH) / (RICB/R_EARTH - RCMB/R_EARTH)
     endif

@@ -6,8 +6,8 @@
  !
  !          Main authors: Dimitri Komatitsch and Jeroen Tromp
  !                        Princeton University, USA
- !             and University of Pau / CNRS / INRIA, France
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+ !             and CNRS / INRIA / University of Pau, France
+ ! (c) Princeton University and CNRS / INRIA / University of Pau
  !                            April 2011
  !
  ! This program is free software; you can redistribute it and/or modify
@@ -45,8 +45,7 @@ by Dennis McRitchie (Princeton University, USA)
  any problems on that account. There are no wrapper functions used: just
  the C routine called directly from a Fortran routine. Also, regarding
  the use of C, I assumed this would not be a problem since there are
- already six C files that make up part of the build (though they all are
- related to the pyre-framework).
+ already a few C files that make up part of the build.
  ..
 */
 
