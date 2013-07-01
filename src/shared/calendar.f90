@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -455,10 +455,10 @@
 !
 ! Explanation of all internal variables.
 ! jdref   Julian Day on which 1 March begins in the reference year.
-! jmonth  Month counter which equals month+1 if month .gt. 2
-!          or month+13 if month .le. 2.
-! jyear   Year index,  jyear=iyear if iyear .gt. 0, jyear=iyear+1
-!            if iyear .lt. 0.  Thus, jyear does not skip year 0
+! jmonth  Month counter which equals month+1 if month > 2
+!          or month+13 if month <= 2.
+! jyear   Year index,  jyear=iyear if iyear > 0, jyear=iyear+1
+!            if iyear < 0.  Thus, jyear does not skip year 0
 !            like iyear does between BC and AD years.
 ! leap    =1 if the year is a leap year, =0 if not.
 ! n1yr    Number of complete individual years between iyear and
@@ -482,7 +482,7 @@
 !            this is 100*365 + 25 = 36525.
 ! nyrs    Number of years from the beginning of yr400
 !              to the beginning of jyear.  (Used for option +/-3).
-! yr400   The largest multiple of 400 years that is .le. jyear.
+! yr400   The largest multiple of 400 years that is <= jyear.
 !
 !
 !----------------------------------------------------------------
@@ -502,7 +502,7 @@
   if (abs(ioptn) <= 3) then
    if (iyear > 0) then
       jyear = iyear
-   elseif (iyear == 0) then
+   else if (iyear == 0) then
       write(*,*) 'For calndr(), you specified the nonexistent year 0'
       stop
    else
@@ -585,7 +585,7 @@
 ! OPTIONS -2 and +2:
 ! Given the day number of the year (idayct) and the year (iyear),
 ! compute the day of the month (iday) and the month (month).
-  elseif (abs(ioptn) == 2) then
+  else if (abs(ioptn) == 2) then
 !
   if (idayct < 60+leap) then
    month  = (idayct-1)/31
@@ -604,7 +604,7 @@
 ! OPTIONS -3 and +3:
 ! Given a calendar date (iday,month,iyear), compute the Julian Day
 ! number (idayct) that starts at noon.
-  elseif (abs(ioptn) == 3) then
+  else if (abs(ioptn) == 3) then
 !
 !     Shift to a system where the year starts on 1 March, so January
 !     and February belong to the preceding year.
@@ -616,7 +616,7 @@
     jmonth = month +  1
   endif
 !
-!     Find the closest multiple of 400 years that is .le. jyear.
+!     Find the closest multiple of 400 years that is <= jyear.
   yr400 = (jyear/400)*400
 !           = multiple of 400 years at or less than jyear.
   if (jyear < yr400) then
@@ -743,7 +743,7 @@
    endif
   endif
 !
-!     Adjust the year if it is .le. 0, and hence BC (Before Christ).
+!     Adjust the year if it is <= 0, and hence BC (Before Christ).
   if (iyear <= 0) then
    iyear = iyear - 1
   endif

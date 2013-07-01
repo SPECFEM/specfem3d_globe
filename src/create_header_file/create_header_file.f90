@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -232,21 +232,39 @@
   print *,'approximate static memory needed by the solver:'
   print *,'----------------------------------------------'
   print *
-  print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
+  print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
   print *
-! note: using less memory becomes only an issue if the code scaling is bad.
-!          most users will run simulations with an executable using far less than 80% RAM per core
-!          since they prefer having a faster computational time (and use a higher number of cores).
-!! DK DK reply to note: yes, but that is not "green computing" at all!
-!! DK DK Thus one day people will probably need to worry about not wasting resources...
-! print *,'   (should be below and typically equal to 80% or 90% of the memory installed per core)'
+  print *,'(you can get a more precise estimate of the size used per MPI process'
+  print *,' by typing "size -d bin/xspecfem3D"'
+  print *,' after compiling the code with the DATA/Par_file you plan to use)'
+  print *
+  print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
+  print *,'                                = ',static_memory_size/1048576.d0,' MiB'
+  print *,'                                = ',static_memory_size/1.d9,' GB'
+  print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
+  print *
+
+! note: using less memory becomes an issue only if the strong scaling of the code is poor.
+!          Some users will run simulations with an executable using far less than 80% RAM per core
+!          if they prefer having a faster computational time (and use a higher number of cores).
+
   print *,'   (should be below 80% or 90% of the memory installed per core)'
   print *,'   (if significantly more, the job will not run by lack of memory)'
-  print *,'   (note that if significantly less, you waste a significant amount of memory per processor core)'
-  print *,'   (but that can be perfectly acceptable if you can afford it and want faster results by using more cores)'
+  print *,'   (note that if significantly less, you waste a significant amount'
+  print *,'    of memory per processor core)'
+  print *,'   (but that can be perfectly acceptable if you can afford it and'
+  print *,'    want faster results by using more cores)'
   print *
-  print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
+  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  else
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  endif
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
   print *
 
   end program xcreate_header_file
