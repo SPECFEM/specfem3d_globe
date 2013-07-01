@@ -263,7 +263,7 @@
       rmaxs(14) = RICB / R_EARTH
       rmins(14) = R_CENTRAL_CUBE / R_EARTH
 
-    elseif (ONE_CRUST) then
+    else if (ONE_CRUST) then
 
       ! 1D models:
       ! in order to increase stability and therefore to allow cheaper
@@ -667,7 +667,7 @@
       rmaxs(15) = RICB / R_EARTH
       rmins(15) = R_CENTRAL_CUBE / R_EARTH
 
-    elseif (ONE_CRUST) then
+    else if (ONE_CRUST) then
 
       ! 1D models:
       ! in order to increase stability and therefore to allow cheaper

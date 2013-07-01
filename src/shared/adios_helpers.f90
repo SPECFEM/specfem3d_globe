@@ -29,7 +29,7 @@
 !-------------------------------------------------------------------------------
 !> \file adios_helpers.f90
 !! \brief Helpers to set up adios features.
-!! \author MPBL      
+!! \author MPBL
 !-------------------------------------------------------------------------------
 
 !===============================================================================
@@ -50,12 +50,12 @@ end subroutine check_adios_err
 
 
 !===============================================================================
-!> Define an ADIOS scalar double precision variable and autoincrement 
+!> Define an ADIOS scalar double precision variable and autoincrement
 !! the adios group size by (8).
 !! \param adios_group The adios group where the variables belongs
 !! \param name The variable to be defined
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_double_scalar (adios_group, name, path, group_size_inc)
@@ -68,7 +68,7 @@ subroutine define_adios_double_scalar (adios_group, name, path, group_size_inc)
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 6 == real(kind=8) 
+  ! adios: 6 == real(kind=8)
   call adios_define_var (adios_group, name, path, 6,  "", "", "", varid)
   group_size_inc = group_size_inc + 8
 end subroutine define_adios_double_scalar
@@ -79,7 +79,7 @@ end subroutine define_adios_double_scalar
 !! \param adios_group The adios group where the variables belongs
 !! \param name The variable to be defined
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_integer_scalar (adios_group, name, path, group_size_inc)
@@ -92,7 +92,7 @@ subroutine define_adios_integer_scalar (adios_group, name, path, group_size_inc)
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 2 == integer(kind=4) 
+  ! adios: 2 == integer(kind=4)
   call adios_define_var (adios_group, name, path, adios_integer,  "", "", "", varid)
   group_size_inc = group_size_inc + 4
 end subroutine define_adios_integer_scalar
@@ -103,7 +103,7 @@ end subroutine define_adios_integer_scalar
 !! \param adios_group The adios group where the variables belongs
 !! \param name The variable to be defined
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_byte_scalar (adios_group, name, path, group_size_inc)
@@ -116,7 +116,7 @@ subroutine define_adios_byte_scalar (adios_group, name, path, group_size_inc)
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 0 == byte == any_data_type(kind=1) 
+  ! adios: 0 == byte == any_data_type(kind=1)
   call adios_define_var (adios_group, name, path, 0,  "", "", "", varid)
   group_size_inc = group_size_inc + 1
 end subroutine define_adios_byte_scalar
@@ -127,7 +127,7 @@ end subroutine define_adios_byte_scalar
 !! \param adios_group The adios group where the variables belongs
 !! \param name The variable to be defined
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param dim The number of elements in the 1D array. Required to
 !!            correctly increment adios group size.
 !! \param dim_str The "stringified" version of dim. Needed by adios
@@ -145,7 +145,7 @@ subroutine define_adios_integer_local_array1D (adios_group, name, path, dim, dim
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 2 == integer 
+  ! adios: 2 == integer
   call adios_define_var (adios_group, name, path, 2,  dim_str, "", "", varid)
   group_size_inc = group_size_inc + 4*dim
 end subroutine define_adios_integer_local_array1D
@@ -156,7 +156,7 @@ end subroutine define_adios_integer_local_array1D
 !! \param adios_group The adios group where the variables belongs
 !! \param name The variable to be defined
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param dim The number of elements in the 1D array. Required to
 !!            correctly increment adios group size.
 !! \param dim_str The "stringified" version of dim. Needed by adios
@@ -174,7 +174,7 @@ subroutine define_adios_double_local_array1D (adios_group, name, path, dim, dim_
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 6 == real(kind=8) 
+  ! adios: 6 == real(kind=8)
   call adios_define_var (adios_group, name, path, 6, dim_str, "", "", varid)
   group_size_inc = group_size_inc + 8*dim
 end subroutine define_adios_double_local_array1D
@@ -185,7 +185,7 @@ end subroutine define_adios_double_local_array1D
 !! \param adios_group The adios group where the variables belongs
 !! \param name The variable to be defined
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param len The length of the string(number of character. in Fortran
 !!            it does not include a final '\0' -- null -- character)
 !! \param group_size_inc The inout adios group size to increment
@@ -203,10 +203,10 @@ subroutine define_adios_string (adios_group, name, path, length, group_size_inc)
   integer                          :: length
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
-  
-  ! adios: 9 == string 
+
+  ! adios: 9 == string
   call adios_define_var (adios_group, name, path, 9,  "", "", "", varid)
-  group_size_inc = group_size_inc + 1*length 
+  group_size_inc = group_size_inc + 1*length
 end subroutine define_adios_string
 
 !===============================================================================

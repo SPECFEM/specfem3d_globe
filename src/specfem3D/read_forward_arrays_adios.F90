@@ -32,7 +32,7 @@
 
 !-------------------------------------------------------------------------------
 !> \brief Read forward arrays from an ADIOS file.
-!> \note read_intermediate_forward_arrays_adios() 
+!> \note read_intermediate_forward_arrays_adios()
 !!       and read_forward_arrays_adios() are not factorized, because
 !>       the latest read the bp file in "b_" prefixed arrays
 subroutine read_intermediate_forward_arrays_adios()
@@ -51,7 +51,7 @@ subroutine read_intermediate_forward_arrays_adios()
   character(len=150) :: file_name
   integer(kind=8) :: group_size_inc
   integer :: local_dim, global_dim, offset
-!  integer, parameter :: num_arrays = 9 ! TODO correct number 
+!  integer, parameter :: num_arrays = 9 ! TODO correct number
 !  character(len=256), dimension(num_arrays) :: local_dims1, local_dims2, &
 !      global_dims1, global_dims2, offsets1, offsets2, array_name
   ! ADIOS variables
@@ -59,11 +59,11 @@ subroutine read_intermediate_forward_arrays_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
 
-  file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp" 
+  file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
   call world_size(sizeprocs)
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
@@ -72,9 +72,9 @@ subroutine read_intermediate_forward_arrays_adios()
   call check_adios_err(myrank,adios_err)
   call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
   call check_adios_err(myrank,adios_err)
-  
 
-  local_dim = NDIM * NGLOB_CRUST_MANTLE 
+
+  local_dim = NDIM * NGLOB_CRUST_MANTLE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_crust_mantle/array", 0, 1, &
@@ -90,7 +90,7 @@ subroutine read_intermediate_forward_arrays_adios()
   ! NOTE: perform reads before changing selection, otherwise it will segfault
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
-  
+
   local_dim = NDIM * NGLOB_INNER_CORE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
@@ -237,7 +237,7 @@ end subroutine read_intermediate_forward_arrays_adios
 
 !-------------------------------------------------------------------------------
 !> \brief Read forward arrays from an ADIOS file.
-!> \note read_intermediate_forward_arrays_adios() 
+!> \note read_intermediate_forward_arrays_adios()
 !!       and read_forward_arrays_adios() are not factorized, because
 !>       the latest read the bp file in "b_" prefixed arrays
 subroutine read_forward_arrays_adios()
@@ -261,11 +261,11 @@ subroutine read_forward_arrays_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
 
-  file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp" 
+  file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
   call world_size(sizeprocs)
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
@@ -274,9 +274,9 @@ subroutine read_forward_arrays_adios()
   call check_adios_err(myrank,adios_err)
   call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
   call check_adios_err(myrank,adios_err)
-  
 
-  local_dim = NDIM * NGLOB_CRUST_MANTLE 
+
+  local_dim = NDIM * NGLOB_CRUST_MANTLE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "displ_crust_mantle/array", 0, 1, &
@@ -292,7 +292,7 @@ subroutine read_forward_arrays_adios()
   ! NOTE: perform reads before changing selection, otherwise it will segfault
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
-  
+
   local_dim = NDIM * NGLOB_INNER_CORE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)

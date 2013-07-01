@@ -73,7 +73,7 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
-  outputname = trim(reg_name) // "AVS_DX.bp" 
+  outputname = trim(reg_name) // "AVS_DX.bp"
   write(group_name,"('SPECFEM3D_GLOBE_AVS_DX_reg',i1)") iregion_code
   call world_size(sizeprocs) ! TODO keep it in parameters
   ! Alias COMM_WORLD to use ADIOS
@@ -88,7 +88,7 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
   !--- Define ADIOS variables -----------------------------
   call define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
       npointot, mask_ibool, group_size_inc, avs_dx_global_vars)
-    
+
   call define_AVS_DX_global_faces_data_adios (adios_group, &
       myrank, prname, nspec, iMPIcut_xi,iMPIcut_eta, &
       ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
