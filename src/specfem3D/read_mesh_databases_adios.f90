@@ -54,7 +54,7 @@ subroutine read_mesh_databases_coupling_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
@@ -62,7 +62,7 @@ subroutine read_mesh_databases_coupling_adios()
   ! crust and mantle
   ! create name of database
   call create_name_database_adios(prname, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  file_name= trim(prname) // "boundary.bp" 
+  file_name= trim(prname) // "boundary.bp"
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
@@ -91,7 +91,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2DMAX_XMIN_XMAX_CM
-  local_dim = size (ibelm_xmin_crust_mantle) 
+  local_dim = size (ibelm_xmin_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_xmin/array", 0, 1, &
@@ -105,7 +105,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2DMAX_YMIN_YMAX_CM
-  local_dim = size (ibelm_ymin_crust_mantle) 
+  local_dim = size (ibelm_ymin_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_ymin/array", 0, 1, &
@@ -119,7 +119,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2D_BOTTOM_CM
-  local_dim = size (ibelm_bottom_crust_mantle) 
+  local_dim = size (ibelm_bottom_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_bottom/array", 0, 1, &
@@ -130,7 +130,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2D_TOP_CM
-  local_dim = size (ibelm_top_crust_mantle) 
+  local_dim = size (ibelm_top_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_top/array", 0, 1, &
@@ -141,7 +141,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
-  local_dim = size (normal_xmin_crust_mantle) 
+  local_dim = size (normal_xmin_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_xmin/array", 0, 1, &
@@ -155,7 +155,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
-  local_dim = size (normal_ymin_crust_mantle) 
+  local_dim = size (normal_ymin_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_ymin/array", 0, 1, &
@@ -169,7 +169,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
-  local_dim = size (ibelm_bottom_crust_mantle) 
+  local_dim = size (ibelm_bottom_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_bottom/array", 0, 1, &
@@ -180,7 +180,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_CM
-  local_dim = size (ibelm_top_crust_mantle) 
+  local_dim = size (ibelm_top_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_top/array", 0, 1, &
@@ -191,7 +191,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
-  local_dim = size (jacobian2D_xmin_crust_mantle) 
+  local_dim = size (jacobian2D_xmin_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_xmin/array", 0, 1, &
@@ -205,7 +205,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
-  local_dim = size (jacobian2D_ymin_crust_mantle) 
+  local_dim = size (jacobian2D_ymin_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_ymin/array", 0, 1, &
@@ -219,7 +219,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
-  local_dim = size (jacobian2D_bottom_crust_mantle) 
+  local_dim = size (jacobian2D_bottom_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_bottom/array", 0, 1, &
@@ -230,7 +230,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLX*NGLLY*NSPEC2D_TOP_CM
-  local_dim = size (jacobian2D_top_crust_mantle) 
+  local_dim = size (jacobian2D_top_crust_mantle)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_top/array", 0, 1, &
@@ -254,7 +254,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! create name of database
   call create_name_database_adios(prname, IREGION_OUTER_CORE, LOCAL_PATH)
-  file_name= trim(prname) // "boundary.bp" 
+  file_name= trim(prname) // "boundary.bp"
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
@@ -285,7 +285,7 @@ subroutine read_mesh_databases_coupling_adios()
   nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
   !local_dim = NSPEC2DMAX_XMIN_XMAX_OC
-  local_dim = size (ibelm_xmin_outer_core) 
+  local_dim = size (ibelm_xmin_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_xmin/array", 0, 1, &
@@ -299,7 +299,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2DMAX_YMIN_YMAX_OC
-  local_dim = size (ibelm_ymin_outer_core) 
+  local_dim = size (ibelm_ymin_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_ymin/array", 0, 1, &
@@ -313,7 +313,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2D_BOTTOM_OC
-  local_dim = size (ibelm_bottom_outer_core) 
+  local_dim = size (ibelm_bottom_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_bottom/array", 0, 1, &
@@ -324,7 +324,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2D_TOP_OC
-  local_dim = size (ibelm_top_outer_core) 
+  local_dim = size (ibelm_top_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_top/array", 0, 1, &
@@ -335,7 +335,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
-  local_dim = size (normal_xmin_outer_core) 
+  local_dim = size (normal_xmin_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_xmin/array", 0, 1, &
@@ -349,7 +349,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
-  local_dim = size (normal_ymin_outer_core) 
+  local_dim = size (normal_ymin_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_ymin/array", 0, 1, &
@@ -363,7 +363,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
-  local_dim = size (normal_bottom_outer_core) 
+  local_dim = size (normal_bottom_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_bottom/array", 0, 1, &
@@ -374,7 +374,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_OC
-  local_dim = size (normal_top_outer_core) 
+  local_dim = size (normal_top_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "normal_top/array", 0, 1, &
@@ -385,7 +385,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
-  local_dim = size (jacobian2D_xmin_outer_core) 
+  local_dim = size (jacobian2D_xmin_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_xmin/array", 0, 1, &
@@ -399,7 +399,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
-  local_dim = size (jacobian2D_ymin_outer_core) 
+  local_dim = size (jacobian2D_ymin_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_ymin/array", 0, 1, &
@@ -414,7 +414,7 @@ subroutine read_mesh_databases_coupling_adios()
 
 
   !local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
-  local_dim = size (jacobian2D_bottom_outer_core) 
+  local_dim = size (jacobian2D_bottom_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_bottom/array", 0, 1, &
@@ -425,7 +425,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NGLLX*NGLLY*NSPEC2D_TOP_OC
-  local_dim = size (jacobian2D_top_outer_core) 
+  local_dim = size (jacobian2D_top_outer_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "jacobian2D_top/array", 0, 1, &
@@ -448,7 +448,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! create name of database
   call create_name_database_adios(prname, IREGION_INNER_CORE, LOCAL_PATH)
-  file_name= trim(prname) // "boundary.bp" 
+  file_name= trim(prname) // "boundary.bp"
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
@@ -477,7 +477,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2DMAX_XMIN_XMAX_IC
-  local_dim = size (ibelm_xmin_inner_core) 
+  local_dim = size (ibelm_xmin_inner_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_xmin/array", 0, 1, &
@@ -491,7 +491,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2DMAX_YMIN_YMAX_IC
-  local_dim = size (ibelm_ymin_inner_core) 
+  local_dim = size (ibelm_ymin_inner_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_ymin/array", 0, 1, &
@@ -505,7 +505,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2D_BOTTOM_IC
-  local_dim = size (ibelm_bottom_inner_core) 
+  local_dim = size (ibelm_bottom_inner_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_bottom/array", 0, 1, &
@@ -516,7 +516,7 @@ subroutine read_mesh_databases_coupling_adios()
   call check_adios_err(myrank,adios_err)
 
   !local_dim = NSPEC2D_TOP_IC
-  local_dim = size (ibelm_top_inner_core) 
+  local_dim = size (ibelm_top_inner_core)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "ibelm_top/array", 0, 1, &
@@ -535,7 +535,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-    file_name = LOCAL_PATH // "boundary_disc.bp" 
+    file_name = LOCAL_PATH // "boundary_disc.bp"
     call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
         "verbose=1", adios_err)
     call check_adios_err(myrank,adios_err)
@@ -761,13 +761,13 @@ subroutine read_mesh_databases_MPI_CM_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   ! create the name for the database of the current slide and region
   call create_name_database_adios(prname, IREGION_CRUST_MANTLE, LOCAL_PATH)
 
-  file_name= trim(prname) // "solver_data_mpi.bp" 
+  file_name= trim(prname) // "solver_data_mpi.bp"
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
@@ -894,7 +894,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
     if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_crust_mantle array')
 
-    local_dim = num_colors_outer_crust_mantle + num_colors_inner_crust_mantle 
+    local_dim = num_colors_outer_crust_mantle + num_colors_inner_crust_mantle
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
     call adios_schedule_read(adios_handle, sel, &
@@ -944,13 +944,13 @@ subroutine read_mesh_databases_MPI_OC_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   ! create the name for the database of the current slide and region
   call create_name_database_adios(prname, IREGION_OUTER_CORE, LOCAL_PATH)
 
-  file_name= trim(prname) // "solver_data_mpi.bp" 
+  file_name= trim(prname) // "solver_data_mpi.bp"
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
@@ -1129,13 +1129,13 @@ subroutine read_mesh_databases_MPI_IC_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   ! create the name for the database of the current slide and region
   call create_name_database_adios(prname, IREGION_INNER_CORE, LOCAL_PATH)
 
-  file_name= trim(prname) // "solver_data_mpi.bp" 
+  file_name= trim(prname) // "solver_data_mpi.bp"
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
@@ -1262,7 +1262,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
     if( ierr /= 0 ) &
       call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
 
-    local_dim = num_colors_outer_inner_core + num_colors_inner_inner_core 
+    local_dim = num_colors_outer_inner_core + num_colors_inner_inner_core
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
     call adios_schedule_read(adios_handle, sel, &
@@ -1317,7 +1317,7 @@ subroutine read_mesh_databases_stacey_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   ! crust and mantle
@@ -1325,7 +1325,7 @@ subroutine read_mesh_databases_stacey_adios()
   ! create name of database
   call create_name_database_adios(reg_name, IREGION_CRUST_MANTLE, LOCAL_PATH)
 
-  file_name= trim(reg_name) // "stacey.bp" 
+  file_name= trim(reg_name) // "stacey.bp"
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
@@ -1335,7 +1335,7 @@ subroutine read_mesh_databases_stacey_adios()
   call check_adios_err(myrank,adios_err)
   ! read arrays for Stacey conditions
 
-  local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM 
+  local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "njmin/array", 0, 1, &
@@ -1353,7 +1353,7 @@ subroutine read_mesh_databases_stacey_adios()
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = 2*NSPEC2DMAX_YMIN_YMAX_CM 
+  local_dim = 2*NSPEC2DMAX_YMIN_YMAX_CM
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "nimin/array", 0, 1, &
@@ -1382,7 +1382,7 @@ subroutine read_mesh_databases_stacey_adios()
   ! create name of database
   call create_name_database_adios(reg_name, IREGION_OUTER_CORE, LOCAL_PATH)
 
-  file_name= trim(reg_name) // "stacey.bp" 
+  file_name= trim(reg_name) // "stacey.bp"
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
@@ -1392,7 +1392,7 @@ subroutine read_mesh_databases_stacey_adios()
   call check_adios_err(myrank,adios_err)
   ! read arrays for Stacey conditions
 
-  local_dim = 2*NSPEC2DMAX_XMIN_XMAX_OC 
+  local_dim = 2*NSPEC2DMAX_XMIN_XMAX_OC
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "njmin/array", 0, 1, &
@@ -1410,7 +1410,7 @@ subroutine read_mesh_databases_stacey_adios()
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = 2*NSPEC2DMAX_YMIN_YMAX_OC 
+  local_dim = 2*NSPEC2DMAX_YMIN_YMAX_OC
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "nimin/array", 0, 1, &

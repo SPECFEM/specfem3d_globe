@@ -62,7 +62,7 @@ subroutine read_attenuation_adios(myrank, prname, &
   integer(kind=8)         :: adios_group, adios_handle, varid, sel
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   ! checks if attenuation is on and anything to do
@@ -72,7 +72,7 @@ subroutine read_attenuation_adios(myrank, prname, &
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  file_name= trim(prname) // "attenuation.bp" 
+  file_name= trim(prname) // "attenuation.bp"
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
@@ -87,7 +87,7 @@ subroutine read_attenuation_adios(myrank, prname, &
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = size (tau_s) 
+  local_dim = size (tau_s)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "tau_s/array", 0, 1, &
@@ -97,7 +97,7 @@ subroutine read_attenuation_adios(myrank, prname, &
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = size (factor_common) 
+  local_dim = size (factor_common)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "tau_e_store/array", 0, 1, &
@@ -107,7 +107,7 @@ subroutine read_attenuation_adios(myrank, prname, &
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = size (scale_factor) 
+  local_dim = size (scale_factor)
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "Qmu_store/array", 0, 1, &
