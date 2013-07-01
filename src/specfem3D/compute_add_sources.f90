@@ -98,11 +98,11 @@
           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
         endif
 
-        ! we use a force in a single direction along one of the components:
-        !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
-        ! e.g. nu_source(3,:) here would be a source normal to the surface (z-direction).
-        accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob)  &
-                         + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+          ! we use a force in a single direction along one of the components:
+          !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
+          ! e.g. nu_source(3,:) here would be a source normal to the surface (z-direction).
+          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob)  &
+                           + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
       else
         if(USE_LDDRK)then
@@ -112,28 +112,28 @@
           stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
         endif
 
-        !     distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          stf_used = sngl(stf)
-        else
-          stf_used = stf
-        endif
+          !     distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            stf_used = sngl(stf)
+          else
+            stf_used = stf
+          endif
 
-        !     add source array
-        ispec = ispec_selected_source(isource)
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              iglob = ibool_crust_mantle(i,j,k,ispec)
+          !     add source array
+          ispec = ispec_selected_source(isource)
+          do k=1,NGLLZ
+            do j=1,NGLLY
+              do i=1,NGLLX
+                iglob = ibool_crust_mantle(i,j,k,ispec)
 
-              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                + sourcearrays(:,i,j,k,isource)*stf_used
+                accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+                  + sourcearrays(:,i,j,k,isource)*stf_used
 
             enddo
           enddo
         enddo
 
-      endif ! USE_FORCE_POINT_SOURCE
+        endif ! USE_FORCE_POINT_SOURCE
 
     endif
 
@@ -243,15 +243,15 @@
   irec_local = 0
   do irec = 1,nrec
 
-    ! adds source (only if this proc carries the source)
-    if(myrank == islice_selected_rec(irec)) then
-      irec_local = irec_local + 1
+      ! adds source (only if this proc carries the source)
+      if(myrank == islice_selected_rec(irec)) then
+        irec_local = irec_local + 1
 
-      ! adds source contributions
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
+        ! adds source contributions
+        do k=1,NGLLZ
+          do j=1,NGLLY
+            do i=1,NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
 
 
             ! adds adjoint source acting at this time step (it):
@@ -319,7 +319,7 @@
       enddo
     endif
 
-  enddo
+    enddo
 
 
   end subroutine compute_add_sources_adjoint
@@ -434,11 +434,11 @@
           enddo
         enddo
 
-      endif ! USE_FORCE_POINT_SOURCE
+        endif ! USE_FORCE_POINT_SOURCE
 
-    endif
+      endif
 
-  enddo
+    enddo
 
   end subroutine compute_add_sources_backward
 

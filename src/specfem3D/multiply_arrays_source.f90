@@ -38,17 +38,19 @@
 
   include "constants.h"
 
-! source arrays
+  ! source arrays
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: G11,G12,G13,G21,G22,G23,G31,G32,G33
   double precision, dimension(NGLLX) :: hxis,hpxis
   double precision, dimension(NGLLY) :: hetas,hpetas
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
-  integer k,l,m
+  integer :: k,l,m
 
-  integer ir,it,iv
+  ! local parameters
+  integer :: ir,it,iv
 
+  ! initializes
   sourcearrayd(:,k,l,m) = ZERO
 
   do iv=1,NGLLZ

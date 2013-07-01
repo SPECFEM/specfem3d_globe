@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-subroutine stretching_function(r_top,r_bottom,ner,stretch_tab)
+  subroutine stretching_function(r_top,r_bottom,ner,stretch_tab)
 
 ! define stretch_tab which contains r_top and r_bottom for each element layer in the crust for 3D models.
 !
@@ -76,14 +76,14 @@ subroutine stretching_function(r_top,r_bottom,ner,stretch_tab)
     stretch_tab(2,i) = stretch_tab(1,i+1)
   enddo
 
-end subroutine stretching_function
+  end subroutine stretching_function
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
 
-subroutine stretching_function_regional(r_top,r_bottom,ner,stretch_tab)
+  subroutine stretching_function_regional(r_top,r_bottom,ner,stretch_tab)
 
 ! define stretch_tab which contains r_top and r_bottom for each element layer in the crust for 3D models.
 !
@@ -144,6 +144,6 @@ subroutine stretching_function_regional(r_top,r_bottom,ner,stretch_tab)
   stretch_tab(2,2) = 6336000.d0  ! bottom second layer
   stretch_tab(2,3) = r_bottom     ! bottom third layer
 
-end subroutine stretching_function_regional
+  end subroutine stretching_function_regional
 
 

@@ -96,15 +96,14 @@
 ! compressional wave speed vp: km/s
 ! shear wave speed vs: km/s
 
-  integer iregion_code
+  double precision :: x,rho,vp,vs,Qmu,Qkappa
+  integer :: iregion_code
 
-  double precision x,rho,vp,vs,Qmu,Qkappa
+  ! local parameters
+  double precision :: r,frac,scaleval
+  integer :: i
 
-  integer i
-
-  double precision r,frac,scaleval
-
-! compute real physical radius in meters
+  ! compute real physical radius in meters
   r = x * R_EARTH
 
   i = 1

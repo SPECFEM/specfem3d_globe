@@ -33,9 +33,6 @@
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
-  !subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,tshift_cmt, &
-  !               elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
-
   subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,&
                                     event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,cmt_lat, &
@@ -72,15 +69,15 @@
   !integer, parameter :: LENGTH_REGION_NAME = 150
   !character(len=LENGTH_REGION_NAME) region
 
-! get event information for SAC header on the master
+  ! get event information for SAC header on the master
   if(myrank == 0) then
+
+    ! note: mb as (body wave) moment magnitude is not used any further,
+    !       see comment in write_output_SAC() routine
 
     call get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift, &
                         elat,elon,depth,mb, &
                         cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
-
-    !call get_event_info_serial(yr,jda,ho,mi,sec,tshift_cmt,elat,elon,depth,mb,region, &
-    !                    cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
 
     ! create the event name
     !write(ename(1:12),'(a12)') region(1:12)
@@ -132,10 +129,6 @@
                             elat_pde,elon_pde,depth_pde,mb,&
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
-
-  !subroutine get_event_info_serial(yr,jda,ho,mi,sec,tshift_cmt,elat,elon,depth,mb,region,&
-  !                          cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
-
   implicit none
 
   include "constants.h"
@@ -176,20 +169,8 @@
 !
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
 
-  open(unit=821,file=CMTSOLUTION,iostat=ios,status='old',action='read')
+  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
   if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info_serial)'
-
-  !icounter = 0
-  !do while(ios == 0)
-  !  read(821,"(a)",iostat=ios) dummystring
-  !  if(ios == 0) icounter = icounter + 1
-  !enddo
-  !close(821)
-  !if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
-  !  stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
-  !NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
-  !if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
-  !open(unit=821,file=CMTSOLUTION,status='old',action='read')
 
   ! example header line of CMTSOLUTION file
   !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
@@ -199,40 +180,40 @@
   do isource=1,NSOURCES
 
     ! read header with event information
-    read(821,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+    read(IIN,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
     jda=julian_day(yr,mo,da)
 
     ! ignore line with event name
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) e_n(isource)
 
     ! read time shift
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) t_s(isource)
 
     ! read half duration
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(15:len_trim(string)),*) hdur(isource)
 
     ! read latitude
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(10:len_trim(string)),*) lat(isource)
 
     ! read longitude
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(11:len_trim(string)),*) lon(isource)
 
     ! read depth
-    read(821,"(a)") string
+    read(IIN,"(a)") string
     read(string(7:len_trim(string)),*) depth(isource)
 
     ! ignore the last 6 lines with moment tensor info
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
-    read(821,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
+    read(IIN,"(a)") string
   enddo
 
   ! sets tshift_cmt to zero
@@ -257,50 +238,7 @@
     t_shift = minval(t_s(1:NSOURCES))
   endif
 
-  close(821)
-
-
-
-!  ! read header with event information
-!  read(821,*) datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
-!
-!  jda=julian_day(yr,mo,da)
-!
-!  ! ignore line with event name
-!  read(821,"(a)") string
-!
-!  ! read time shift
-!  read(821,"(a)") string
-!  read(string(12:len_trim(string)),*) tshift_cmt
-!
-!  if (NSOURCES == 1) then
-!
-!  ! read half duration
-!    read(821,"(a)") string
-!    read(string(15:len_trim(string)),*) cmt_hdur
-!
-!  ! read latitude
-!    read(821,"(a)") string
-!    read(string(10:len_trim(string)),*) cmt_lat
-!
-!  ! read longitude
-!    read(821,"(a)") string
-!    read(string(11:len_trim(string)),*) cmt_lon
-!
-!  ! read depth
-!    read(821,"(a)") string
-!    read(string(7:len_trim(string)),*) cmt_depth
-!
-!  else
-!
-!    cmt_hdur=-1e8
-!    cmt_lat=-1e8
-!    cmt_lon=-1e8
-!    cmt_depth=-1e8
-!
-!  endif
-!
-!  close(821)
+  close(IIN)
 
   end subroutine get_event_info_serial
 

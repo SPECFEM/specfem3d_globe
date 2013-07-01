@@ -291,38 +291,39 @@
 
     write(IMAIN,*) 'model:'
 
+    ! model mesh parameters
     if(ISOTROPIC_3D_MANTLE) then
-      write(IMAIN,*) '  incorporates 3-D lateral variations'
+      write(IMAIN,*) '  incorporating 3-D lateral variations'
     else
       write(IMAIN,*) '  no 3-D lateral variations'
     endif
     if(HETEROGEN_3D_MANTLE) then
-      write(IMAIN,*) '  incorporates heterogeneities in the mantle'
+      write(IMAIN,*) '  incorporating heterogeneities in the mantle'
     else
       write(IMAIN,*) '  no heterogeneities in the mantle'
     endif
     if(CRUSTAL) then
-      write(IMAIN,*) '  incorporates crustal variations'
+      write(IMAIN,*) '  incorporating crustal variations'
     else
       write(IMAIN,*) '  no crustal variations'
     endif
     if(ONE_CRUST) then
-      write(IMAIN,*) '  uses one layer only in PREM crust'
+      write(IMAIN,*) '  using one layer only in PREM crust'
     else
-      write(IMAIN,*) '  uses unmodified 1D crustal model with two layers'
+      write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
     endif
     if(TRANSVERSE_ISOTROPY) then
-      write(IMAIN,*) '  incorporates transverse isotropy'
+      write(IMAIN,*) '  incorporating transverse isotropy'
     else
       write(IMAIN,*) '  no transverse isotropy'
     endif
     if(ANISOTROPIC_INNER_CORE_VAL) then
-      write(IMAIN,*) '  incorporates anisotropic inner core'
+      write(IMAIN,*) '  incorporating anisotropic inner core'
     else
       write(IMAIN,*) '  no inner-core anisotropy'
     endif
     if(ANISOTROPIC_3D_MANTLE_VAL) then
-      write(IMAIN,*) '  incorporates anisotropic mantle'
+      write(IMAIN,*) '  incorporating anisotropic mantle'
     else
       write(IMAIN,*) '  no general mantle anisotropy'
     endif

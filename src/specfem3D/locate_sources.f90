@@ -41,7 +41,7 @@
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   include "constants.h"
@@ -104,11 +104,11 @@
   double precision dist,typical_size
   double precision xi,eta,gamma,dx,dy,dz,dxi,deta
 
-! topology of the control points of the surface element
+  ! topology of the control points of the surface element
   integer iax,iay,iaz
   integer iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
 
-! coordinates of the control points of the surface element
+  ! coordinates of the control points of the surface element
   double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
   integer iter_loop
@@ -171,7 +171,7 @@
   double precision :: f0,t0_ricker
   double precision t_cmt_used(NSOURCES)
 
-! mask source region (mask values are between 0 and 1, with 0 around sources)
+  ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
 
 ! **************
@@ -203,7 +203,7 @@
   call MPI_BCAST(moment_tensor,6*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(min_tshift_cmt_original,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-! define topology of the control element
+  ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
 
 ! initializes source mask
@@ -215,15 +215,15 @@
 ! get MPI starting time for all sources
   time_start = MPI_WTIME()
 
-! loop on all the sources
-! gather source information in subsets to reduce memory requirements
+  ! loop on all the sources
+  ! gather source information in subsets to reduce memory requirements
 
-! loop over subsets of sources
+  ! loop over subsets of sources
   do isources_already_done = 0, NSOURCES, NSOURCES_SUBSET_MAX
 
-! the size of the subset can be the maximum size, or less (if we are in the last subset,
-! or if there are fewer sources than the maximum size of a subset)
-  NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
+    ! the size of the subset can be the maximum size, or less (if we are in the last subset,
+    ! or if there are fewer sources than the maximum size of a subset)
+    NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
 
 ! allocate arrays specific to each subset
   allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size), &
@@ -244,92 +244,92 @@
     z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary source arrays')
 
-! make sure we clean the subset array before the gather
-  ispec_selected_source_subset(:) = 0
+    ! make sure we clean the subset array before the gather
+    ispec_selected_source_subset(:) = 0
 
-! loop over sources within this subset
-  do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
+    ! loop over sources within this subset
+    do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
 
-! mapping from source number in current subset to real source number in all the subsets
-  isource = isource_in_this_subset + isources_already_done
+      ! mapping from source number in current subset to real source number in all the subsets
+      isource = isource_in_this_subset + isources_already_done
 
-! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-  if(ASSUME_PERFECT_SPHERE) then
-    theta = PI/2.0d0 - lat(isource)*PI/180.0d0
-  else
-    theta = PI/2.0d0 - atan(0.99329534d0*dtan(lat(isource)*PI/180.0d0))
-  endif
+      ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
+      if(ASSUME_PERFECT_SPHERE) then
+        theta = PI_OVER_TWO - lat(isource)*DEGREES_TO_RADIANS
+      else
+        theta = PI_OVER_TWO - atan(0.99329534d0*dtan(lat(isource)*DEGREES_TO_RADIANS))
+      endif
 
-  phi = long(isource)*PI/180.0d0
-  call reduce(theta,phi)
+      phi = long(isource)*DEGREES_TO_RADIANS
+      call reduce(theta,phi)
 
-! get the moment tensor
-  Mrr = moment_tensor(1,isource)
-  Mtt = moment_tensor(2,isource)
-  Mpp = moment_tensor(3,isource)
-  Mrt = moment_tensor(4,isource)
-  Mrp = moment_tensor(5,isource)
-  Mtp = moment_tensor(6,isource)
+      ! get the moment tensor
+      Mrr = moment_tensor(1,isource)
+      Mtt = moment_tensor(2,isource)
+      Mpp = moment_tensor(3,isource)
+      Mrt = moment_tensor(4,isource)
+      Mrp = moment_tensor(5,isource)
+      Mtp = moment_tensor(6,isource)
 
-! convert from a spherical to a Cartesian representation of the moment tensor
-  st=dsin(theta)
-  ct=dcos(theta)
-  sp=dsin(phi)
-  cp=dcos(phi)
+      ! convert from a spherical to a Cartesian representation of the moment tensor
+      st=dsin(theta)
+      ct=dcos(theta)
+      sp=dsin(phi)
+      cp=dcos(phi)
 
-  Mxx(isource)=st*st*cp*cp*Mrr+ct*ct*cp*cp*Mtt+sp*sp*Mpp &
-      +2.0d0*st*ct*cp*cp*Mrt-2.0d0*st*sp*cp*Mrp-2.0d0*ct*sp*cp*Mtp
-  Myy(isource)=st*st*sp*sp*Mrr+ct*ct*sp*sp*Mtt+cp*cp*Mpp &
-      +2.0d0*st*ct*sp*sp*Mrt+2.0d0*st*sp*cp*Mrp+2.0d0*ct*sp*cp*Mtp
-  Mzz(isource)=ct*ct*Mrr+st*st*Mtt-2.0d0*st*ct*Mrt
-  Mxy(isource)=st*st*sp*cp*Mrr+ct*ct*sp*cp*Mtt-sp*cp*Mpp &
-      +2.0d0*st*ct*sp*cp*Mrt+st*(cp*cp-sp*sp)*Mrp+ct*(cp*cp-sp*sp)*Mtp
-  Mxz(isource)=st*ct*cp*Mrr-st*ct*cp*Mtt &
-      +(ct*ct-st*st)*cp*Mrt-ct*sp*Mrp+st*sp*Mtp
-  Myz(isource)=st*ct*sp*Mrr-st*ct*sp*Mtt &
-      +(ct*ct-st*st)*sp*Mrt+ct*cp*Mrp-st*cp*Mtp
+      Mxx(isource)=st*st*cp*cp*Mrr+ct*ct*cp*cp*Mtt+sp*sp*Mpp &
+          +2.0d0*st*ct*cp*cp*Mrt-2.0d0*st*sp*cp*Mrp-2.0d0*ct*sp*cp*Mtp
+      Myy(isource)=st*st*sp*sp*Mrr+ct*ct*sp*sp*Mtt+cp*cp*Mpp &
+          +2.0d0*st*ct*sp*sp*Mrt+2.0d0*st*sp*cp*Mrp+2.0d0*ct*sp*cp*Mtp
+      Mzz(isource)=ct*ct*Mrr+st*st*Mtt-2.0d0*st*ct*Mrt
+      Mxy(isource)=st*st*sp*cp*Mrr+ct*ct*sp*cp*Mtt-sp*cp*Mpp &
+          +2.0d0*st*ct*sp*cp*Mrt+st*(cp*cp-sp*sp)*Mrp+ct*(cp*cp-sp*sp)*Mtp
+      Mxz(isource)=st*ct*cp*Mrr-st*ct*cp*Mtt &
+          +(ct*ct-st*st)*cp*Mrt-ct*sp*Mrp+st*sp*Mtp
+      Myz(isource)=st*ct*sp*Mrr-st*ct*sp*Mtt &
+          +(ct*ct-st*st)*sp*Mrt+ct*cp*Mrp-st*cp*Mtp
 
-! record three components for each station
-  do iorientation = 1,3
+      ! record three components for each station
+      do iorientation = 1,3
 
-!   North
-    if(iorientation == 1) then
-      stazi = 0.d0
-      stdip = 0.d0
-!   East
-    else if(iorientation == 2) then
-      stazi = 90.d0
-      stdip = 0.d0
-!   Vertical
-    else if(iorientation == 3) then
-      stazi = 0.d0
-      stdip = - 90.d0
-    else
-      call exit_MPI(myrank,'incorrect orientation')
-    endif
+        !   North
+        if(iorientation == 1) then
+          stazi = 0.d0
+          stdip = 0.d0
+        !   East
+        else if(iorientation == 2) then
+          stazi = 90.d0
+          stdip = 0.d0
+        !   Vertical
+        else if(iorientation == 3) then
+          stazi = 0.d0
+          stdip = - 90.d0
+        else
+          call exit_MPI(myrank,'incorrect orientation')
+        endif
 
-!   get the orientation of the seismometer
-    thetan=(90.0d0+stdip)*PI/180.0d0
-    phin=stazi*PI/180.0d0
+        !   get the orientation of the seismometer
+        thetan=(90.0d0+stdip)*DEGREES_TO_RADIANS
+        phin=stazi*DEGREES_TO_RADIANS
 
-! we use the same convention as in Harvard normal modes for the orientation
+        ! we use the same convention as in Harvard normal modes for the orientation
 
-!   vertical component
-    n(1) = dcos(thetan)
-!   N-S component
-    n(2) = - dsin(thetan)*dcos(phin)
-!   E-W component
-    n(3) = dsin(thetan)*dsin(phin)
+        !   vertical component
+        n(1) = dcos(thetan)
+        !   N-S component
+        n(2) = - dsin(thetan)*dcos(phin)
+        !   E-W component
+        n(3) = dsin(thetan)*dsin(phin)
 
-!   get the Cartesian components of n in the model: nu
-    nu_source(iorientation,1,isource) = n(1)*st*cp+n(2)*ct*cp-n(3)*sp
-    nu_source(iorientation,2,isource) = n(1)*st*sp+n(2)*ct*sp+n(3)*cp
-    nu_source(iorientation,3,isource) = n(1)*ct-n(2)*st
+        !   get the Cartesian components of n in the model: nu
+        nu_source(iorientation,1,isource) = n(1)*st*cp+n(2)*ct*cp-n(3)*sp
+        nu_source(iorientation,2,isource) = n(1)*st*sp+n(2)*ct*sp+n(3)*cp
+        nu_source(iorientation,3,isource) = n(1)*ct-n(2)*st
 
-  enddo
+      enddo
 
-! normalized source radius
-  r0 = R_UNIT_SPHERE
+      ! normalized source radius
+      r0 = R_UNIT_SPHERE
 
   if(ELLIPTICITY) then
     if(TOPOGRAPHY) then
@@ -421,19 +421,19 @@
       enddo
     enddo
 
-! calculates a gaussian mask around source point
-    if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
-      call calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
-                            x_target_source,y_target_source,z_target_source, &
-                            ibool,xstore,ystore,zstore,NGLOB)
-    endif
+        ! calculates a gaussian mask around source point
+        if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
+          call calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
+                                x_target_source,y_target_source,z_target_source, &
+                                ibool,xstore,ystore,zstore,NGLOB)
+        endif
 
-! end of loop on all the elements in current slice
-  enddo
+      ! end of loop on all the elements in current slice
+      enddo
 
-! *******************************************
-! find the best (xi,eta,gamma) for the source
-! *******************************************
+      ! *******************************************
+      ! find the best (xi,eta,gamma) for the source
+      ! *******************************************
 
   ! if we have not located a target element, the source is not in this slice
   ! therefore use first element only for fictitious iterative search
@@ -444,29 +444,29 @@
     iz_initial_guess_source = 2
   endif
 
-  ! for point sources, the location will be exactly at a GLL point
-  ! otherwise this tries to find best location
-  if( USE_FORCE_POINT_SOURCE ) then
-    ! store xi,eta,gamma and x,y,z of point found
-    ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
-    !          see e.g. in compute_add_sources.f90
-    xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
-    eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
-    gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
+      ! for point sources, the location will be exactly at a GLL point
+      ! otherwise this tries to find best location
+      if( USE_FORCE_POINT_SOURCE ) then
+        ! store xi,eta,gamma and x,y,z of point found
+        ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
+        !          see e.g. in compute_add_sources.f90
+        xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
+        eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
+        gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
 
-    iglob = ibool(ix_initial_guess_source,iy_initial_guess_source, &
-        iz_initial_guess_source,ispec_selected_source_subset(isource_in_this_subset))
-    x_found_source(isource_in_this_subset) = xstore(iglob)
-    y_found_source(isource_in_this_subset) = ystore(iglob)
-    z_found_source(isource_in_this_subset) = zstore(iglob)
+        iglob = ibool(ix_initial_guess_source,iy_initial_guess_source, &
+            iz_initial_guess_source,ispec_selected_source_subset(isource_in_this_subset))
+        x_found_source(isource_in_this_subset) = xstore(iglob)
+        y_found_source(isource_in_this_subset) = ystore(iglob)
+        z_found_source(isource_in_this_subset) = zstore(iglob)
 
-    ! compute final distance between asked and found (converted to km)
-    final_distance_source_subset(isource_in_this_subset) = &
-      dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
-            (y_target_source-y_found_source(isource_in_this_subset))**2 + &
-            (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
+        ! compute final distance between asked and found (converted to km)
+        final_distance_source_subset(isource_in_this_subset) = &
+          dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
+                (y_target_source-y_found_source(isource_in_this_subset))**2 + &
+                (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
 
-  else
+      else
 
     ! use initial guess in xi, eta and gamma
     xi = xigll(ix_initial_guess_source)
@@ -513,21 +513,22 @@
 
     enddo
 
-    ! iterate to solve the non linear system
-    do iter_loop = 1,NUM_ITER
+        ! iterate to solve the non linear system
+        do iter_loop = 1,NUM_ITER
 
-      ! recompute jacobian for the new point
-      call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+          ! recompute jacobian for the new point
+          call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
+                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-      ! compute distance to target location
-      dx = - (x - x_target_source)
-      dy = - (y - y_target_source)
-      dz = - (z - z_target_source)
+          ! compute distance to target location
+          dx = - (x - x_target_source)
+          dy = - (y - y_target_source)
+          dz = - (z - z_target_source)
 
-      ! compute increments
-      dxi  = xix*dx + xiy*dy + xiz*dz
-      deta = etax*dx + etay*dy + etaz*dz
-      dgamma = gammax*dx + gammay*dy + gammaz*dz
+          ! compute increments
+          dxi  = xix*dx + xiy*dy + xiz*dz
+          deta = etax*dx + etay*dy + etaz*dz
+          dgamma =  gammax*dx + gammay*dy + gammaz*dz
 
       ! update values
       xi = xi + dxi
@@ -663,20 +664,22 @@
       endif
       write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
 
-      ! writes out actual source position to vtk file
-      write(IOVTK,*) sngl(x_found_source(isource_in_this_subset)), &
-                    sngl(y_found_source(isource_in_this_subset)), &
-                    sngl(z_found_source(isource_in_this_subset))
+        ! writes out actual source position to vtk file
+        write(IOVTK,*) sngl(x_found_source(isource_in_this_subset)), &
+                      sngl(y_found_source(isource_in_this_subset)), &
+                      sngl(z_found_source(isource_in_this_subset))
 
-      ! get latitude, longitude and depth of the source that will be used
-      call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset), &
-           z_found_source(isource_in_this_subset),r_found_source,theta_source(isource),phi_source(isource))
-      call reduce(theta_source(isource),phi_source(isource))
+        ! get latitude, longitude and depth of the source that will be used
+        call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset), &
+                                 y_found_source(isource_in_this_subset), &
+                                 z_found_source(isource_in_this_subset), &
+                                 r_found_source,theta_source(isource),phi_source(isource))
+        call reduce(theta_source(isource),phi_source(isource))
 
-      ! convert geocentric to geographic colatitude
-      colat_source = PI/2.0d0 &
-      - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
-      if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
+        ! convert geocentric to geographic colatitude
+        colat_source = PI_OVER_TWO &
+          - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
+        if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
       write(IMAIN,*)
       write(IMAIN,*) 'original (requested) position of the source:'
@@ -808,17 +811,17 @@
 
   enddo ! end of loop over all source subsets
 
-! display maximum error in location estimate
+  ! display maximum error in location estimate
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
   endif
 
-
-! main process broadcasts the results to all the slices
+  ! main process broadcasts the results to all the slices
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
   call MPI_BCAST(xi_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
