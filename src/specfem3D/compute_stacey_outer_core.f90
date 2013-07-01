@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_stacey_outer_core()
 
   use constants_solver
@@ -169,8 +168,6 @@
                                                                 absorb_xmax_outer_core, &
                                                                 5) ! <= xmax
     endif
-
-
 
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) then
       call write_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,it)

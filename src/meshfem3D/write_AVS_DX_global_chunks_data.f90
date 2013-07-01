@@ -86,7 +86,6 @@
   double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
   real(kind=CUSTOM_REAL) dvp,dvs
 
-
 ! writing points
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='unknown')
   open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXpointschunks_stability.txt',status='unknown')

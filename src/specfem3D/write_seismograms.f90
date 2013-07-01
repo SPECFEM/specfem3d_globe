@@ -483,7 +483,6 @@
               OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,MODEL, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
               iorientation,phi,chn,sisname)
-
     endif ! OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY
 
     ! ASCII output format
@@ -493,7 +492,6 @@
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
               SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank, &
               iorientation,sisname,sisname_big_file)
-
     endif  ! OUTPUT_SEISMOS_ASCII_TEXT
 
   enddo ! do iorientation
