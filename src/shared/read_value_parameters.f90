@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@
   integer ierr
   common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr /= 0) return
   read(string_read,*) value_to_read
 
@@ -55,7 +55,7 @@
   integer ierr
   common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr /= 0) return
   read(string_read,*) value_to_read
 
@@ -73,7 +73,7 @@
   integer ierr
   common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr /= 0) return
   read(string_read,*) value_to_read
 
@@ -91,7 +91,7 @@
   integer ierr
   common /param_err_common/ ierr
 
-  call param_read(string_read, len(string_read), name, len(name), ierr);
+  call param_read(string_read, len(string_read), name, len(name), ierr)
   if (ierr /= 0) return
   value_to_read = string_read
 
@@ -106,7 +106,7 @@
   character(len=50) filename
   filename = 'DATA/Par_file'
 
-  call param_open(filename, len(filename), ierr);
+  call param_open(filename, len(filename), ierr)
   if (ierr /= 0) return
 
   end subroutine open_parameter_file
@@ -115,7 +115,7 @@
 
   subroutine close_parameter_file
 
-  call param_close();
+  call param_close()
 
   end subroutine close_parameter_file
 
