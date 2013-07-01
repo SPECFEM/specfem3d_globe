@@ -26,8 +26,8 @@
 !=====================================================================
 
   subroutine get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
-                        xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_XI_FACE,iregion,npoin2D_eta)
+                                  xstore,ystore,zstore,mask_ibool,npointot, &
+                                  NSPEC2D_XI_FACE,iregion,npoin2D_eta)
 
 ! this routine detects cut planes along eta
 ! In principle the left cut plane of the first slice
@@ -38,7 +38,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank,iregion
+  integer :: nspec,myrank,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE
 
 
@@ -64,9 +64,9 @@
 ! processor identification
   character(len=150) prname
 
-! theoretical number of surface elements in the buffers
-! cut planes along eta=constant correspond to XI faces
-      nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
+  ! theoretical number of surface elements in the buffers
+  ! cut planes along eta=constant correspond to XI faces
+  nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
 
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
@@ -78,10 +78,10 @@
 ! global point number and coordinates left MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin2D_eta = 0
 
   ! nb of elements in this cut-plane
@@ -120,15 +120,15 @@
 !
 ! determine if the element falls on the right MPI cut plane
 !
-      nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
+  nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin2D_eta = 0
 
   ! nb of elements in this cut-plane

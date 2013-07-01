@@ -26,8 +26,8 @@
 !=====================================================================
 
   subroutine get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
-                        xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_ETA_FACE,iregion,npoin2D_xi)
+                                  xstore,ystore,zstore,mask_ibool,npointot, &
+                                  NSPEC2D_ETA_FACE,iregion,npoin2D_xi)
 
 ! this routine detects cut planes along xi
 ! In principle the left cut plane of the first slice
@@ -38,7 +38,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank,iregion
+  integer :: nspec,myrank,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_ETA_FACE
 
   logical iMPIcut_xi(2,nspec)
@@ -54,7 +54,7 @@
   logical mask_ibool(npointot)
 
 ! global element numbering
-  integer ispec
+  integer :: ispec
 
 ! MPI cut-plane element numbering
   integer ispecc1,ispecc2,npoin2D_xi,ix,iy,iz
@@ -64,9 +64,10 @@
 ! processor identification
   character(len=150) prname,errmsg
 
-! theoretical number of surface elements in the buffers
-! cut planes along xi=constant correspond to ETA faces
-      nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,1)
+  ! theoretical number of surface elements in the buffers
+  ! cut planes along xi=constant correspond to ETA faces
+  nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,1)
+
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
 
@@ -88,15 +89,15 @@
     endif
     call exit_mpi(myrank,'error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting')
   endif
-! erase the logical mask used to mark points already found
+
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin2D_xi = 0
 
-! nb of elements in this cut-plane
+  ! nb of elements in this cut-plane
   ispecc1=0
-
   do ispec=1,nspec
     if(iMPIcut_xi(1,ispec)) then
       ispecc1=ispecc1+1
@@ -124,7 +125,7 @@
 
   close(10)
 
-! compare number of surface elements detected to analytical value
+  ! compare number of surface elements detected to analytical value
   if(ispecc1 /= nspec2Dtheor) then
     write(errmsg,*) 'error MPI cut-planes detection in xi=left T=',nspec2Dtheor,' C=',ispecc1
     call exit_MPI(myrank,errmsg)
@@ -132,22 +133,21 @@
 !
 ! determine if the element falls on the right MPI cut plane
 !
-      nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
+  nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt', &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolright_xi.txt for this process')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin2D_xi = 0
 
-! nb of elements in this cut-plane
+  ! nb of elements in this cut-plane
   ispecc2=0
-
   do ispec=1,nspec
     if(iMPIcut_xi(2,ispec)) then
       ispecc2=ispecc2+1
@@ -175,7 +175,7 @@
 
   close(10)
 
-! compare number of surface elements detected to analytical value
+  ! compare number of surface elements detected to analytical value
   if(ispecc2 /= nspec2Dtheor) then
     write(errmsg,*) 'error MPI cut-planes detection in xi=right T=',nspec2Dtheor,' C=',ispecc2
     call exit_MPI(myrank,errmsg)
