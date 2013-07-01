@@ -233,6 +233,7 @@
     read(821,"(a)") string
     read(821,"(a)") string
   enddo
+
   ! sets tshift_cmt to zero
   tshift_cmt = 0.
 

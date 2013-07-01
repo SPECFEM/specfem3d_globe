@@ -34,6 +34,7 @@
 ! for a given point (xcoord,ycoord,zcoord), specify the noise direction "normal_x/y/z_noise"
 !     and noise distribution "mask_noise"
 ! USERS need to modify this subroutine for their own noise characteristics
+
   subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
                   mask_noise_out)
@@ -69,9 +70,9 @@
 
   end subroutine noise_distribution_direction
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! read parameters
@@ -143,7 +144,7 @@
 
   ! noise distribution and noise direction
   ipoin = 0
-  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+  do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
 
     k = NGLLZ
@@ -169,7 +170,7 @@
 
   !!!BEGIN!!! save mask_noise for check, a file called "mask_noise" is saved in "./OUTPUT_FIELS/"
   ipoin = 0
-  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+  do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
     k = NGLLZ
     ! loop on all the points inside the element
@@ -218,9 +219,9 @@
 
   end subroutine read_parameters_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! check for consistency of the parameters
@@ -313,12 +314,14 @@
 
   end subroutine check_parameters_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
-! read and construct the "source" (source time function based upon noise spectrum) for "ensemble forward source"
+! read and construct the "source" (source time function based upon noise spectrum)
+! for "ensemble forward source"
+
   subroutine compute_arrays_source_noise(myrank, &
                                          xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
                                          xigll,yigll,zigll,NSTEP)
@@ -403,9 +406,9 @@
 
   end subroutine compute_arrays_source_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
@@ -444,9 +447,9 @@
 
   end subroutine add_source_master_rec_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
