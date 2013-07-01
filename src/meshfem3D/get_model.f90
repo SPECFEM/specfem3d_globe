@@ -65,6 +65,16 @@
   ! attenuation values
   integer :: vx,vy,vz,vnspec
   double precision, dimension(N_SLS)                     :: tau_s
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec)        :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
   double precision :: T_c_source

@@ -112,15 +112,14 @@
 ! compressional wave speed vp: km/s
 ! shear wave speed vs: km/s
 
-  integer iregion_code
+  double precision :: x,rho,vp,vs,Qmu,Qkappa
+  integer :: iregion_code
 
-  double precision x,rho,vp,vs,Qmu,Qkappa
+  ! local parameters
+  double precision :: r,frac,scaleval
+  integer :: i
 
-  integer i
-
-  double precision r,frac,scaleval
-
-! compute real physical radius in meters
+  ! compute real physical radius in meters
   r = x * R_EARTH
 
   i = 1
@@ -1022,7 +1021,7 @@
   Mak135_V%Qmu_ak135(135) =   599.990000000000
   Mak135_V%Qmu_ak135(136) =   599.990000000000
 
-! strip the crust and replace it with mantle
+  ! strip the crust and replace it with mantle
   if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
     Mak135_V%vp_ak135(133:136) = Mak135_V%vp_ak135(132)
     Mak135_V%vs_ak135(133:136) = Mak135_V%vs_ak135(132)

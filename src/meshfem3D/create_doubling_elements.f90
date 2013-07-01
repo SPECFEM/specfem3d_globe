@@ -124,7 +124,17 @@
   integer iproc_xi,iproc_eta
 
 ! attenuation
-  integer nspec_att
+  integer :: nspec_att
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS)                  :: tau_s

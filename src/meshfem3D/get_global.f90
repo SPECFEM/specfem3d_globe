@@ -40,26 +40,28 @@
 
   ! input parameters
   integer, intent(in) :: npointot,nspec
-  double precision, intent(in) :: xp(npointot),yp(npointot),zp(npointot)
 
-  integer, intent(out) :: iglob(npointot),loc(npointot)
-  logical, intent(out) :: ifseg(npointot)
+  double precision, dimension(npointot), intent(in) :: xp,yp,zp
+
+  integer, dimension(npointot), intent(out) :: iglob,loc
+  logical, dimension(npointot), intent(out) :: ifseg
   integer, intent(out) :: nglob
 
-! variables
-  integer ispec,i,j
-  integer ieoff,ilocnum,nseg,ioff,iseg,ig
-
-  integer, dimension(:), allocatable :: ind,ninseg,iwork
+  ! local variables
   double precision, dimension(:), allocatable :: work
+  integer, dimension(:), allocatable :: ind,ninseg,iwork
+  integer :: ispec,i,j,ier
+  integer :: ieoff,ilocnum,nseg,ioff,iseg,ig
 
-! dynamically allocate arrays
-  allocate(ind(npointot))
-  allocate(ninseg(npointot))
-  allocate(iwork(npointot))
-  allocate(work(npointot))
+  ! dynamically allocate arrays
+  allocate(ind(npointot), &
+          ninseg(npointot), &
+          iwork(npointot), &
+          work(npointot), &
+          stat=ier)
+  if( ier /= 0 ) stop 'error allocating local array in get_global'
 
-! establish initial pointers
+  ! establish initial pointers
   do ispec=1,nspec
     ieoff=NGLLX * NGLLY * NGLLZ * (ispec-1)
     do ilocnum=1,NGLLX * NGLLY * NGLLZ
@@ -158,9 +160,12 @@
   integer:: i,j,k,ispec,ier
 
   ! copies original array
-  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(mask_ibool(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &
+          mask_ibool(nglob), &
+          stat=ier)
+  if(ier /= 0) stop 'error allocating local arrays in get_global_indirect_addressing'
 
+  ! initializes arrays
   mask_ibool(:) = -1
   copy_ibool_ori(:,:,:,:) = ibool(:,:,:,:)
 
@@ -188,7 +193,7 @@
   deallocate(copy_ibool_ori,stat=ier); if(ier /= 0) stop 'error in deallocate'
   deallocate(mask_ibool,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
-end subroutine get_global_indirect_addressing
+  end subroutine get_global_indirect_addressing
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -202,12 +207,13 @@ end subroutine get_global_indirect_addressing
 !
   implicit none
 
-  integer n
-  double precision A(n)
-  integer IND(n)
+  integer :: n
+  double precision,dimension(n) :: A
+  integer,dimension(n) :: IND
 
-  integer i,j,l,ir,indx
-  double precision q
+  ! local parameters
+  integer :: i,j,l,ir,indx
+  double precision :: q
 
   do j=1,n
    IND(j)=j
@@ -215,41 +221,47 @@ end subroutine get_global_indirect_addressing
 
   if (n == 1) return
 
-  L=n/2+1
-  ir=n
-  100 CONTINUE
-   IF (l>1) THEN
-      l=l-1
-      indx=ind(l)
-      q=a(indx)
-   ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
-      ir=ir-1
+  L = n/2 + 1
+  ir = n
+
+  do while( .true. )
+
+    IF ( l > 1 ) THEN
+      l = l-1
+      indx = ind(l)
+      q = a(indx)
+    ELSE
+      indx = ind(ir)
+      q = a(indx)
+      ind(ir) = ind(1)
+      ir = ir-1
+
+      ! checks exit criterion
       if (ir == 1) then
-         ind(1)=indx
+         ind(1) = indx
          return
       endif
-   ENDIF
-   i=l
-   j=l+l
-  200    CONTINUE
-   IF (J <= IR) THEN
-      IF (J<IR) THEN
-         IF ( A(IND(j))<A(IND(j+1)) ) j=j+1
+    ENDIF
+
+    i = l
+    j = l+l
+
+    do while( J <= IR )
+      IF ( J < IR ) THEN
+        IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
       ENDIF
-      IF (q<A(IND(j))) THEN
-         IND(I)=IND(J)
-         I=J
-         J=J+J
+      IF ( q < A(IND(j)) ) THEN
+        IND(I) = IND(J)
+        I = J
+        J = J+J
       ELSE
-         J=IR+1
+        J = IR+1
       ENDIF
-   goto 200
-   ENDIF
-   IND(I)=INDX
-  goto 100
+    enddo
+
+    IND(I)=INDX
+  enddo
+
   end subroutine rank
 
 !
@@ -262,13 +274,13 @@ end subroutine get_global_indirect_addressing
 !
   implicit none
 
-  integer n
+  integer :: n
+  integer,dimension(n) :: IND
+  integer,dimension(n) :: IA,IW
+  double precision,dimension(n) :: A,B,C,W
 
-  integer IND(n)
-  integer IA(n),IW(n)
-  double precision A(n),B(n),C(n),W(n)
-
-  integer i
+  ! local parameter
+  integer :: i
 
   IW(:) = IA(:)
   W(:) = A(:)

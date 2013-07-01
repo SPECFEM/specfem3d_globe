@@ -121,16 +121,15 @@
 ! shear quality factor Qmu
 ! bulk quality factor Qkappa
 
-  integer iregion_code
+  double precision :: x,rho,vpv,vph,vsv,vsh,eta,Qmu,Qkappa
+  integer :: iregion_code
+  logical :: CRUSTAL
 
-  double precision x,rho,vpv,vph,vsv,vsh,eta,Qmu,Qkappa
+  ! local parameters
+  double precision :: r,frac,scaleval
+  integer :: i
 
-  integer i
-
-  double precision r,frac,scaleval
-  logical CRUSTAL
-
-! compute real physical radius in meters
+  ! compute real physical radius in meters
   r = x * R_EARTH
 
   i = 1
@@ -201,6 +200,7 @@
   subroutine define_model_1dref(USE_EXTERNAL_CRUSTAL_MODEL,Mref_V)
 
   implicit none
+
   include "constants.h"
 
 ! model_1dref_variables
@@ -7425,7 +7425,7 @@
  1.00000000000000 , &
  1.00000000000000 /)
 
-! strip the crust and replace it by mantle
+  ! strip the crust and replace it by mantle
   if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
     ! sets values for depths less than 24.4 km to mantle values below
     Mref_V%density_ref(718:750) = Mref_V%density_ref(717)
@@ -7436,7 +7436,6 @@
     Mref_V%Qmu_ref(718:750) = Mref_V%Qmu_ref(717)
     Mref_V%Qkappa_ref(718:750) = Mref_V%Qkappa_ref(717)
   endif
-
 
   end subroutine define_model_1dref
 

@@ -101,13 +101,14 @@
   if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
   if(myrank /= 0) allocate(AM_V%Qtau_s(N_SLS))
+
+  ! broadcasts to all others
   call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-
 
   end subroutine
 
@@ -144,7 +145,7 @@
   type (model_attenuation_variables) AM_V
 ! model_attenuation_variables
 
-  integer min_att_period, max_att_period
+  integer :: min_att_period, max_att_period
 
   AM_V%min_period = min_att_period * 1.0d0
   AM_V%max_period = max_att_period * 1.0d0
@@ -286,15 +287,16 @@
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
-  integer myrank
-  integer REFERENCE_1D_MODEL
-  double precision RICB, RCMB, R670, R220, R80
-  double precision tau_e(N_SLS)
+  integer :: myrank,REFERENCE_1D_MODEL
+  double precision :: RICB, RCMB, R670, R220, R80
 
-  integer i,ier
-  double precision Qb
-  double precision R120
+  ! local parameters
+  double precision :: tau_e(N_SLS)
+  double precision :: Qb
+  double precision :: R120
+  integer :: i,ier
 
+  ! parameter definitions
   Qb = 57287.0d0
   R120 = 6251.d3 ! as defined by IASP91
 
@@ -356,8 +358,8 @@
   endif
 
   do i = 1, AM_V%Qn
-     call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
-     AM_V%Qtau_e(:,i) = tau_e(:)
+    call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
+    AM_V%Qtau_e(:,i) = tau_e(:)
   enddo
 
   end subroutine model_attenuation_setup
@@ -367,6 +369,7 @@
 !
 
   subroutine model_attenuation_getstored_tau(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+
 ! includes min_period, max_period, and N_SLS
 
   implicit none
@@ -425,10 +428,11 @@
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
-  double precision Qmu_in, T_c_source
+  double precision :: Qmu_in, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
 
-  integer rw
+  ! local parameters
+  integer :: rw
 
   ! READ
   rw = 1
@@ -465,12 +469,15 @@
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
 
-  integer myrank, ier
-  double precision Qmu, Qmu_new
+  integer ier
+  double precision :: Qmu
   double precision, dimension(N_SLS) :: tau_e
-  integer rw
+  integer :: rw
 
-  integer Qtmp
+  ! local parameters
+  double precision :: Qmu_new
+  integer :: myrank
+  integer :: Qtmp
   integer, save :: first_time_called = 1
 
   if(first_time_called == 1) then

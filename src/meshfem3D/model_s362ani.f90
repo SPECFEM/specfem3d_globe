@@ -57,7 +57,7 @@
 
   integer THREE_D_MODEL
 
-! used for 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
+  ! used for 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
   integer, parameter :: maxker=200
   integer, parameter :: maxl=72
   integer, parameter :: maxcoe=2000
@@ -126,7 +126,6 @@
   call MPI_BCAST(kerstr,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(refmdl,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-
 
   end subroutine model_s362ani_broadcast
 
@@ -197,18 +196,17 @@
   inquire(file=modeldef,exist=exists)
   if(exists) then
     call gt3dmodl(lu,modeldef, &
-        maxhpa,maxker,maxcoe, &
-        numhpa,numker,numcoe,lmxhpa, &
-        ihpakern,itypehpa,coe, &
-        itpspl,xlaspl,xlospl,radspl, &
-        numvar,ivarkern,varstr, &
-        refmdl,kerstr,hsplfl,dskker,ierror)
+                  maxhpa,maxker,maxcoe, &
+                  numhpa,numker,numcoe,lmxhpa, &
+                  ihpakern,itypehpa,coe, &
+                  itpspl,xlaspl,xlospl,radspl, &
+                  numvar,ivarkern,varstr, &
+                  refmdl,kerstr,hsplfl,dskker,ierror)
   else
     write(6,"('the model ',a,' does not exits')") modeldef(1:len_trim(modeldef))
   endif
 
-!         --- check arrays
-
+  !  check arrays
   if(numker > maxker) stop 'numker > maxker'
   do ihpa=1,numhpa
     if(itypehpa(ihpa) == 1) then
@@ -817,12 +815,12 @@
 
 
   subroutine gt3dmodl(lu,targetfile, &
-      maxhpa,maxker,maxcoe, &
-      numhpa,numker,numcoe,lmxhpa, &
-      ihpakern,itypehpa,coe, &
-      itpspl,xlatspl,xlonspl,radispl, &
-      numvar,ivarkern,varstr, &
-      refmdl,kerstr,hsplfl,dskker,ierror)
+                      maxhpa,maxker,maxcoe, &
+                      numhpa,numker,numcoe,lmxhpa, &
+                      ihpakern,itypehpa,coe, &
+                      itpspl,xlatspl,xlonspl,radispl, &
+                      numvar,ivarkern,varstr, &
+                      refmdl,kerstr,hsplfl,dskker,ierror)
 
   implicit none
 
@@ -1104,7 +1102,7 @@
 
   integer :: ncon,nver
 
-!daniel: original
+! Daniel Peter: original define
 !
 !  real(kind=4) verlat(1)
 !  real(kind=4) verlon(1)
@@ -1113,7 +1111,7 @@
 !  integer icon(1)
 !  real(kind=4) con(1)
 
-!daniel: avoiding out-of-bounds errors
+! Daniel Peter: avoiding out-of-bounds errors
   real(kind=4) verlat(nver)
   real(kind=4) verlon(nver)
   real(kind=4) verrad(nver)
@@ -1257,7 +1255,12 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
+! originally called
+!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
+!              xlospl(1,ihpa),radspl(1,ihpa), &
+!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
+! making sure of array bounds
         call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
@@ -1414,6 +1417,12 @@
     else if(itypehpa(ihpa) == 2) then
       numcof=numcoe(ihpa)
 
+! originally called
+!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
+!              xlospl(1,ihpa),radspl(1,ihpa), &
+!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+
+! making sure array bounds
       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
               nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
@@ -1848,7 +1857,7 @@
 !
   real(kind=4) WK1(LMAX+1),WK2(LMAX+1),WK3(LMAX+1)
   real(kind=4) XLAT,XLON
-  real(kind=4) Y(1) !! Y should go at least from 1 to fac(LMAX)
+  real(kind=4),dimension((maxl+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
 
   real(kind=4), parameter :: RADIAN = 57.2957795
 
@@ -1907,7 +1916,6 @@
   real(kind=4) :: THETA,DSFL3,COSEC,SFL3
 
   real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1) !! X, XP, XCOSEC should go from 1 to M+1
-
 
 !!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
 

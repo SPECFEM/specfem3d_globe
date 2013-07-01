@@ -129,7 +129,17 @@
   integer iproc_xi,iproc_eta
 
 ! attenuation
-  integer nspec_att
+  integer :: nspec_att
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS)                  :: tau_s
@@ -264,8 +274,8 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
+                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
+                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
                          xigll,yigll,zigll,ispec_is_tiso)
 
         ! boundary mesh

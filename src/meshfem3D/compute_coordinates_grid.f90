@@ -60,9 +60,6 @@
   double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, &
                       fact_xi_,fact_eta_
 
-  double precision, parameter :: PI_OVER_TWO = PI / 2.d0
-
-
 ! this to avoid compilation warnings
   x_=0
   y_=0
@@ -297,7 +294,6 @@
 ! local variables
   double precision :: ratio_x,ratio_y,ratio_z
   double precision :: fact_x,fact_y,fact_z,xi,eta,gamma
-  double precision, parameter :: PI_OVER_TWO = PI / 2.d0
 
 ! the slice extends to the entire cube along Z
 ! but only to current block along X and Y

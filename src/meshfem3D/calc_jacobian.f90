@@ -76,10 +76,9 @@
   double precision,dimension(NGLLY):: hetar,hpetar
   double precision,dimension(NGLLZ):: hgammar,hpgammar
   double precision:: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
-  double precision:: jacobian
+  double precision:: jacobian,jacobian_inv
   double precision:: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
   double precision:: r,theta,phi
-
 
   ! test parameters which can be deleted
   double precision:: xmesh,ymesh,zmesh
@@ -118,83 +117,87 @@
         ymesh = ZERO
         zmesh = ZERO
 
+        do k1 = 1,NGLLZ
+          do j1 = 1,NGLLY
+            do i1 = 1,NGLLX
+              hlagrange = hxir(i1)*hetar(j1)*hgammar(k1)
+              hlagrange_xi = hpxir(i1)*hetar(j1)*hgammar(k1)
+              hlagrange_eta = hxir(i1)*hpetar(j1)*hgammar(k1)
+              hlagrange_gamma = hxir(i1)*hetar(j1)*hpgammar(k1)
 
-            do k1 = 1,NGLLZ
-               do j1 = 1,NGLLY
-                  do i1 = 1,NGLLX
-                     hlagrange = hxir(i1)*hetar(j1)*hgammar(k1)
-                     hlagrange_xi = hpxir(i1)*hetar(j1)*hgammar(k1)
-                     hlagrange_eta = hxir(i1)*hpetar(j1)*hgammar(k1)
-                     hlagrange_gamma = hxir(i1)*hetar(j1)*hpgammar(k1)
+              xxi = xxi + xstore(i1,j1,k1,ispec)*hlagrange_xi
+              xeta = xeta + xstore(i1,j1,k1,ispec)*hlagrange_eta
+              xgamma = xgamma + xstore(i1,j1,k1,ispec)*hlagrange_gamma
 
+              yxi = yxi + ystore(i1,j1,k1,ispec)*hlagrange_xi
+              yeta = yeta + ystore(i1,j1,k1,ispec)*hlagrange_eta
+              ygamma = ygamma + ystore(i1,j1,k1,ispec)*hlagrange_gamma
 
-                     xxi = xxi + xstore(i1,j1,k1,ispec)*hlagrange_xi
-                     xeta = xeta + xstore(i1,j1,k1,ispec)*hlagrange_eta
-                     xgamma = xgamma + xstore(i1,j1,k1,ispec)*hlagrange_gamma
+              zxi = zxi + zstore(i1,j1,k1,ispec)*hlagrange_xi
+              zeta = zeta + zstore(i1,j1,k1,ispec)*hlagrange_eta
+              zgamma = zgamma + zstore(i1,j1,k1,ispec)*hlagrange_gamma
 
-                     yxi = yxi + ystore(i1,j1,k1,ispec)*hlagrange_xi
-                     yeta = yeta + ystore(i1,j1,k1,ispec)*hlagrange_eta
-                     ygamma = ygamma + ystore(i1,j1,k1,ispec)*hlagrange_gamma
+              ! test the lagrange polynomial and its derivate
+              xmesh = xmesh + xstore(i1,j1,k1,ispec)*hlagrange
+              ymesh = ymesh + ystore(i1,j1,k1,ispec)*hlagrange
+              zmesh = zmesh + zstore(i1,j1,k1,ispec)*hlagrange
+              sumshape = sumshape + hlagrange
+              sumdershapexi = sumdershapexi + hlagrange_xi
+              sumdershapeeta = sumdershapeeta + hlagrange_eta
+              sumdershapegamma = sumdershapegamma + hlagrange_gamma
 
-                     zxi = zxi + zstore(i1,j1,k1,ispec)*hlagrange_xi
-                     zeta = zeta + zstore(i1,j1,k1,ispec)*hlagrange_eta
-                     zgamma = zgamma + zstore(i1,j1,k1,ispec)*hlagrange_gamma
-
-                     ! test the lagrange polynomial and its derivate
-                     xmesh = xmesh + xstore(i1,j1,k1,ispec)*hlagrange
-                     ymesh = ymesh + ystore(i1,j1,k1,ispec)*hlagrange
-                     zmesh = zmesh + zstore(i1,j1,k1,ispec)*hlagrange
-                     sumshape = sumshape + hlagrange
-                     sumdershapexi = sumdershapexi + hlagrange_xi
-                     sumdershapeeta = sumdershapeeta + hlagrange_eta
-                     sumdershapegamma = sumdershapegamma + hlagrange_gamma
-
-                  enddo
-               enddo
             enddo
+          enddo
+        enddo
 
-            ! Check the lagrange polynomial and its derivative
-            if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
-              .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
-              .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
-                    call exit_MPI(myrank,'new mesh are wrong in recalc_jacobian_gall3D.f90')
-            endif
-            if(abs(sumshape-one) >  TINYVAL) then
-                    call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll3D.f90')
-            endif
-            if(abs(sumdershapexi) >  TINYVAL) then
-                    call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll3D.f90')
-            endif
-            if(abs(sumdershapeeta) >  TINYVAL) then
-                    call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll3D.f90')
-            endif
-            if(abs(sumdershapegamma) >  TINYVAL) then
-                    call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
-            endif
+        ! Check the lagrange polynomial and its derivative
+        if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
+          .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
+          .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
+          call exit_MPI(myrank,'new mesh is wrong in recalc_jacobian_gll3D.f90')
+        endif
+        if(abs(sumshape-one) >  TINYVAL) then
+          call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll3D.f90')
+        endif
+        if(abs(sumdershapexi) >  TINYVAL) then
+          call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll3D.f90')
+        endif
+        if(abs(sumdershapeeta) >  TINYVAL) then
+          call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll3D.f90')
+        endif
+        if(abs(sumdershapegamma) >  TINYVAL) then
+          call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
+        endif
 
+        ! jacobian calculation
+        jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
+                   xeta*(yxi*zgamma-ygamma*zxi) + &
+                   xgamma*(yxi*zeta-yeta*zxi)
 
-            jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
-                 xeta*(yxi*zgamma-ygamma*zxi) + &
-                 xgamma*(yxi*zeta-yeta*zxi)
+        ! Check the jacobian
+        ! note: when honoring the moho, we squeeze and stretch elements
+        !          thus, it can happen that with a coarse mesh resolution, the jacobian encounters problems
+        if(jacobian <= VERYSMALLVAL) then
+          call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+          print*,'error jacobian rank:',myrank
+          print*,'  location r/lat/lon: ',r*R_EARTH_KM, &
+            (PI_OVER_TWO-theta)*RADIANS_TO_DEGREES,phi*RADIANS_TO_DEGREES
+          print*,'  jacobian: ',jacobian
+          call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
+        endif
 
-            ! Check the jacobian
-            if(jacobian <= ZERO) then
-              call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-              print*,'r/lat/lon:',r*R_EARTH_KM,90.0-theta*180./PI,phi*180./PI
-              call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
-            endif
+        !     invert the relation (Fletcher p. 50 vol. 2)
+        jacobian_inv = ONE / jacobian
 
-            !     invert the relation (Fletcher p. 50 vol. 2)
-            xix = (yeta*zgamma-ygamma*zeta) / jacobian
-            xiy = (xgamma*zeta-xeta*zgamma) / jacobian
-            xiz = (xeta*ygamma-xgamma*yeta) / jacobian
-            etax = (ygamma*zxi-yxi*zgamma) / jacobian
-            etay = (xxi*zgamma-xgamma*zxi) / jacobian
-            etaz = (xgamma*yxi-xxi*ygamma) / jacobian
-            gammax = (yxi*zeta-yeta*zxi) / jacobian
-            gammay = (xeta*zxi-xxi*zeta) / jacobian
-            gammaz = (xxi*yeta-xeta*yxi) / jacobian
-
+        xix = (yeta*zgamma-ygamma*zeta) * jacobian_inv
+        xiy = (xgamma*zeta-xeta*zgamma) * jacobian_inv
+        xiz = (xeta*ygamma-xgamma*yeta) * jacobian_inv
+        etax = (ygamma*zxi-yxi*zgamma) * jacobian_inv
+        etay = (xxi*zgamma-xgamma*zxi) * jacobian_inv
+        etaz = (xgamma*yxi-xxi*ygamma) * jacobian_inv
+        gammax = (yxi*zeta-yeta*zxi) * jacobian_inv
+        gammay = (xeta*zxi-xxi*zeta) * jacobian_inv
+        gammaz = (xxi*yeta-xeta*yxi) * jacobian_inv
 
             ! resave the derivatives and the jacobian
             ! distinguish between single and double precision for reals
@@ -261,12 +264,11 @@
   real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB)::jacobian2D
   real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB)::normal
 
-
   ! local parameters in this subroutine
   integer::i,j,i1,j1
   double precision::xxi,xeta,yxi,yeta,zxi,zeta,&
-                xi,eta,xmesh,ymesh,zmesh,hlagrange,hlagrange_xi,hlagrange_eta,&
-                sumshape,sumdershapexi,sumdershapeeta,unx,uny,unz,jacobian
+    xi,eta,xmesh,ymesh,zmesh,hlagrange,hlagrange_xi,hlagrange_eta,&
+    sumshape,sumdershapexi,sumdershapeeta,unx,uny,unz,jacobian,jacobian_inv
   double precision,dimension(NGLLA)::hxir,hpxir
   double precision,dimension(NGLLB)::hetar,hpetar
 
@@ -285,13 +287,13 @@
         call lagrange_any(xi,NGLLA,xigll,hxir,hpxir)
         call lagrange_any(eta,NGLLB,yigll,hetar,hpetar)
 
+        xmesh = ZERO
+        ymesh = ZERO
+        zmesh = ZERO
+        sumshape = ZERO
+        sumdershapexi = ZERO
+        sumdershapeeta = ZERO
 
-        xmesh = 0.0
-        ymesh = 0.0
-        zmesh = 0.0
-        sumshape = 0.0
-        sumdershapexi = 0.0
-        sumdershapeeta = 0.0
         do j1 = 1,NGLLB
            do i1 = 1,NGLLA
               hlagrange = hxir(i1)*hetar(j1)
@@ -334,22 +336,29 @@
            call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll2D')
         endif
 
+        ! calculates j2D acobian
         unx = yxi*zeta - yeta*zxi
         uny = zxi*xeta - zeta*xxi
         unz = xxi*yeta - xeta*yxi
-        jacobian = dsqrt(unx**2+uny**2+unz**2)
-        if (abs(jacobian) < TINYVAL ) call exit_MPI(myrank,'2D Jacobian undefined in recalc_jacobian_gll2D')
+        jacobian = dsqrt(unx*unx + uny*uny + unz*unz)
+
+        ! checks
+        if (abs(jacobian) < TINYVAL ) &
+          call exit_MPI(myrank,'2D Jacobian undefined in recalc_jacobian_gll2D')
+
+        ! inverts jacobian
+        jacobian_inv = ONE / jacobian
 
         if (CUSTOM_REAL == SIZE_REAL) then
-           jacobian2D(i,j,ispecb)=sngl(jacobian)
-           normal(1,i,j,ispecb)=sngl(unx/jacobian)
-           normal(2,i,j,ispecb)=sngl(uny/jacobian)
-           normal(3,i,j,ispecb)=sngl(unz/jacobian)
+           jacobian2D(i,j,ispecb) = sngl(jacobian)
+           normal(1,i,j,ispecb) = sngl(unx * jacobian_inv)
+           normal(2,i,j,ispecb) = sngl(uny * jacobian_inv)
+           normal(3,i,j,ispecb) = sngl(unz * jacobian_inv)
         else
-           jacobian2D(i,j,ispecb)=jacobian
-           normal(1,i,j,ispecb)=unx/jacobian
-           normal(2,i,j,ispecb)=uny/jacobian
-           normal(3,i,j,ispecb)=unz/jacobian
+           jacobian2D(i,j,ispecb) = jacobian
+           normal(1,i,j,ispecb) = unx * jacobian_inv
+           normal(2,i,j,ispecb) = uny * jacobian_inv
+           normal(3,i,j,ispecb) = unz * jacobian_inv
         endif
      enddo
   enddo

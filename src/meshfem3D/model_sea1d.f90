@@ -31,7 +31,6 @@
 ! used as 1-D reference model for SEA 99, Vs model by Lebedev & Nolet 2003
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_sea1d_broadcast(CRUSTAL, SEA1DM_V)
 
 ! standard routine to setup model
@@ -93,13 +92,12 @@
 ! compressional wave speed vp: km/s
 ! shear wave speed vs: km/s
 
-  integer iregion_code
+  double precision :: x,rho,vp,vs,Qmu,Qkappa
+  integer :: iregion_code
 
-  double precision x,rho,vp,vs,Qmu,Qkappa
-
-  integer i
-
-  double precision r,frac,scaleval
+  ! local parameters
+  double precision :: r,frac,scaleval
+  integer :: i
 
 !! DK DK implementation of model sea1d below and its radii in
 !! DK DK subroutine read_parameter_file.f90 has not been thoroughly
@@ -177,9 +175,10 @@
   type (model_sea1d_variables) SEA1DM_V
 ! model_sea1d_variables
 
-  logical USE_EXTERNAL_CRUSTAL_MODEL
+  logical :: USE_EXTERNAL_CRUSTAL_MODEL
 
-  integer i
+  ! local parameters
+  integer :: i
 
 ! define all the values in the model
 

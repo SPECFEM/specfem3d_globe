@@ -39,14 +39,15 @@
 
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
-  integer nimin(2,NSPEC2DMAX_YMIN_YMAX),nimax(2,NSPEC2DMAX_YMIN_YMAX)
-  integer njmin(2,NSPEC2DMAX_XMIN_XMAX),njmax(2,NSPEC2DMAX_XMIN_XMAX)
-  integer nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX),nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX)
+  integer,dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nimin,nimax
+  integer,dimension(2,NSPEC2DMAX_XMIN_XMAX) :: njmin,njmax
+  integer,dimension(2,NSPEC2DMAX_XMIN_XMAX) :: nkmin_xi
+  integer,dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nkmin_eta
 
   logical :: iboun(6,nspec)
 
-! global element numbering
-  integer ispecg
+  ! global element numbering
+  integer :: ispec
 
   ! counters to keep track of the number of elements on each of the
   ! five absorbing boundaries
@@ -63,11 +64,11 @@
   ispecb4=0
   ispecb5=0
 
-  do ispecg=1,nspec
+  do ispec=1,nspec
 
     ! determine if the element falls on an absorbing boundary
 
-  if(iboun(1,ispecg)) then
+    if(iboun(1,ispec)) then
 
       !   on boundary 1: xmin
       ispecb1=ispecb1+1
@@ -76,12 +77,12 @@
       njmin(1,ispecb1)=1
       njmax(1,ispecb1)=NGLLY
 
-!   check for ovelap with other boundaries
-    nkmin_xi(1,ispecb1)=1
-    if(iboun(5,ispecg)) nkmin_xi(1,ispecb1)=2
-  endif
+      !   check for ovelap with other boundaries
+      nkmin_xi(1,ispecb1)=1
+      if(iboun(5,ispec)) nkmin_xi(1,ispecb1)=2
+    endif
 
-  if(iboun(2,ispecg)) then
+    if(iboun(2,ispec)) then
 
       !   on boundary 2: xmax
       ispecb2=ispecb2+1
@@ -90,41 +91,41 @@
       njmin(2,ispecb2)=1
       njmax(2,ispecb2)=NGLLY
 
-!   check for ovelap with other boundaries
-    nkmin_xi(2,ispecb2)=1
-    if(iboun(5,ispecg)) nkmin_xi(2,ispecb2)=2
-  endif
+      !   check for ovelap with other boundaries
+      nkmin_xi(2,ispecb2)=1
+      if(iboun(5,ispec)) nkmin_xi(2,ispecb2)=2
+    endif
 
-  if(iboun(3,ispecg)) then
+    if(iboun(3,ispec)) then
 
       !   on boundary 3: ymin
       ispecb3=ispecb3+1
 
-!   check for ovelap with other boundaries
-    nimin(1,ispecb3)=1
-    if(iboun(1,ispecg)) nimin(1,ispecb3)=2
-    nimax(1,ispecb3)=NGLLX
-    if(iboun(2,ispecg)) nimax(1,ispecb3)=NGLLX-1
-    nkmin_eta(1,ispecb3)=1
-    if(iboun(5,ispecg)) nkmin_eta(1,ispecb3)=2
-  endif
+      !   check for ovelap with other boundaries
+      nimin(1,ispecb3)=1
+      if(iboun(1,ispec)) nimin(1,ispecb3)=2
+      nimax(1,ispecb3)=NGLLX
+      if(iboun(2,ispec)) nimax(1,ispecb3)=NGLLX-1
+      nkmin_eta(1,ispecb3)=1
+      if(iboun(5,ispec)) nkmin_eta(1,ispecb3)=2
+    endif
 
-  if(iboun(4,ispecg)) then
+    if(iboun(4,ispec)) then
 
       !   on boundary 4: ymax
       ispecb4=ispecb4+1
 
-!   check for ovelap with other boundaries
-    nimin(2,ispecb4)=1
-    if(iboun(1,ispecg)) nimin(2,ispecb4)=2
-    nimax(2,ispecb4)=NGLLX
-    if(iboun(2,ispecg)) nimax(2,ispecb4)=NGLLX-1
-    nkmin_eta(2,ispecb4)=1
-    if(iboun(5,ispecg)) nkmin_eta(2,ispecb4)=2
-  endif
+      !   check for ovelap with other boundaries
+      nimin(2,ispecb4)=1
+      if(iboun(1,ispec)) nimin(2,ispecb4)=2
+      nimax(2,ispecb4)=NGLLX
+      if(iboun(2,ispec)) nimax(2,ispecb4)=NGLLX-1
+      nkmin_eta(2,ispecb4)=1
+      if(iboun(5,ispec)) nkmin_eta(2,ispecb4)=2
+    endif
 
-! on boundary 5: bottom
-  if(iboun(5,ispecg)) ispecb5=ispecb5+1
+    ! on boundary 5: bottom
+    if(iboun(5,ispec)) ispecb5=ispecb5+1
 
   enddo
 
@@ -132,7 +133,7 @@
   if(ispecb5 /= NSPEC2D_BOTTOM) &
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
 
-! save these temporary arrays for the solver for Stacey conditions
+  ! save these temporary arrays for the solver for Stacey conditions
       open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted',action='write')
       write(27) nimin
       write(27) nimax

@@ -25,15 +25,13 @@
 !
 !=====================================================================
 
-
 ! define sets of colors that contain disconnected elements for the CUDA solver.
 ! also split the elements into two subsets: inner and outer elements, in order
 ! to be able to compute the outer elements first in the solver and then
 ! start non-blocking MPI calls and overlap them with the calculation of the inner elements
 ! (which works fine because there are always far more inner elements than outer elements)
 
-!*********************************************************************************************************
-! Mila
+
 subroutine get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
      nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,first_elem_number_in_this_color,myrank)
 
@@ -41,12 +39,10 @@ subroutine get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
 
   include "constants.h"
 
-! local variables
-  integer nspec, nglob
+  integer, intent(in) :: nspec, nglob
+  logical, dimension(nspec), intent(in) :: is_on_a_slice_edge
 
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(in) :: ibool
   integer, dimension(nspec) :: perm
   integer, dimension(nspec) :: color
   integer, dimension(MAX_NUMBER_OF_COLORS) :: first_elem_number_in_this_color

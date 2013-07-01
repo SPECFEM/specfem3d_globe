@@ -105,10 +105,7 @@
 
   ! reads in GAP-P2 model from Obayashi
   open(unit=10,file=GAPP2,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(GAPP2), '": ', ier
-    call exit_MPI(0, 'error model GAPP2')
-  endif
+  if( ier /= 0 ) call exit_MPI(0,'error opening file for GAPP2 model')
 
   read(10,*) no,na,nnr,dela,delo
 
@@ -197,8 +194,8 @@
     drho = ZERO_
 
     ! increments in latitude/longitude (in rad)
-    dtheta = dela * PI / 180.0
-    dphi = delo * PI / 180.0
+    dtheta = dela * DEGREES_TO_RADIANS
+    dphi = delo * DEGREES_TO_RADIANS
 
     ! depth given in km
     d=R_EARTH_-radius*R_EARTH_

@@ -61,6 +61,8 @@
 ! model_s20rts_variables
 
   integer :: myrank
+
+  ! local parameters
   integer :: ier
 
   ! the variables read are declared and stored in structure S20RTS_V
@@ -76,6 +78,7 @@
   call MPI_BCAST(S20RTS_V%qq,3*(NK_20+1)*(NK_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine model_s20rts_broadcast
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -101,19 +104,18 @@
   type (model_s20rts_variables) S20RTS_V
 ! model_s20rts_variables
 
-  integer k,l,m,ier
+  ! local parameters
+  integer :: k,l,m,ier
 
   character(len=150) S20RTS, P12
 
   call get_value_string(S20RTS, 'model.S20RTS', 'DATA/s20rts/S20RTS.dat')
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')
 
-! S20RTS degree 20 S model from Ritsema
+  ! S20RTS degree 20 S model from Ritsema
   open(unit=10,file=S20RTS,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(S20RTS), '": ', ier
-    call exit_MPI(0, 'error model s20rts')
-  endif
+  if( ier /= 0 ) call exit_MPI(0,'error opening file S20RTS.dat')
+
   do k=0,NK_20
     do l=0,NS_20
       read(10,*) S20RTS_V%dvs_a(k,l,0),(S20RTS_V%dvs_a(k,l,m),S20RTS_V%dvs_b(k,l,m),m=1,l)
@@ -121,12 +123,10 @@
   enddo
   close(10)
 
-! P12 degree 12 P model from Ritsema
+  ! P12 degree 12 P model from Ritsema
   open(unit=10,file=P12,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
-    call exit_MPI(0, 'error model s20rts')
-  endif
+  if( ier /= 0 ) call exit_MPI(0,'error opening file P12.dat')
+
   do k=0,NK_20
     do l=0,12
       read(10,*) S20RTS_V%dvp_a(k,l,0),(S20RTS_V%dvp_a(k,l,m),S20RTS_V%dvp_b(k,l,m),m=1,l)
@@ -141,7 +141,7 @@
   enddo
   close(10)
 
-! set up the splines used as radial basis functions by Ritsema
+  ! set up the splines used as radial basis functions by Ritsema
   call s20rts_splhsetup(S20RTS_V)
 
   end subroutine read_model_s20rts
@@ -169,22 +169,23 @@
   type (model_s20rts_variables) S20RTS_V
 ! model_s20rts_variables
 
-! factor to convert perturbations in shear speed to perturbations in density
-  double precision, parameter :: SCALE_RHO = 0.40d0
+  double precision :: radius,theta,phi,dvs,dvp,drho
 
-  double precision radius,theta,phi,dvs,dvp,drho
+  ! local parameters
+  ! factor to convert perturbations in shear speed to perturbations in density
+  double precision, parameter :: SCALE_RHO = 0.40d0
 
   double precision, parameter :: RMOHO_ = 6346600.d0
   double precision, parameter :: RCMB_ = 3480000.d0
   double precision, parameter :: R_EARTH_ = 6371000.d0
   double precision, parameter :: ZERO_ = 0.d0
 
-  integer l,m,k
-  double precision r_moho,r_cmb,xr
-  double precision dvs_alm,dvs_blm
-  double precision dvp_alm,dvp_blm
-  double precision s20rts_rsple,radial_basis(0:NK_20)
-  double precision sint,cost,x(2*NS_20+1),dx(2*NS_20+1)
+  integer :: l,m,k
+  double precision :: r_moho,r_cmb,xr
+  double precision :: dvs_alm,dvs_blm
+  double precision :: dvp_alm,dvp_blm
+  double precision :: s20rts_rsple,radial_basis(0:NK_20)
+  double precision :: sint,cost,x(2*NS_20+1),dx(2*NS_20+1)
 
   dvs = ZERO_
   dvp = ZERO_
@@ -234,14 +235,14 @@
 
   end subroutine mantle_s20rts
 
+!
 !----------------------------------
+!
 
   subroutine s20rts_splhsetup(S20RTS_V)!!!!!!!!!!!!!!(spknt,qq0,qq)
 
   implicit none
   include "constants.h"
-
-!!!!!!!!!!!!!!!!!!!  double precision spknt(NK_20+1),qq0(NK_20+1,NK_20+1),qq(3,NK_20+1,NK_20+1)
 
 ! model_s20rts_variables
   type model_s20rts_variables
@@ -299,7 +300,9 @@
 
   end subroutine s20rts_splhsetup
 
+!
 !----------------------------------
+!
 
 ! changed the obsolecent f77 features in the two routines below
 ! now still awful Fortran, but at least conforms to f90 standard
@@ -378,7 +381,9 @@
 
       end function s20rts_rsple
 
+!
 !----------------------------------
+!
 
   subroutine s20rts_rspln(I1,I2,X,Y,Q,F)
 

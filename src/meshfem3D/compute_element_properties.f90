@@ -56,12 +56,10 @@
     R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER
 
 ! arrays with the mesh in double precision
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
 ! code for the four regions of the mesh
-  integer iregion_code
+  integer :: iregion_code
 
 ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
@@ -70,42 +68,52 @@
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
-  integer idoubling(nspec)
-  double precision rmin,rmax
+  integer,dimension(nspec) :: idoubling
+  double precision :: rmin,rmax
 
 ! for model density and anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore, &
     kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
-  integer nspec_ani
+  integer :: nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
 ! arrays with mesh parameters
-  integer nspec_actually
+  integer :: nspec_actually
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! proc numbers for MPI
-  integer myrank
+  integer :: myrank
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
 ! attenuation
-  integer nspec_att
+  integer :: nspec_att
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS)                  :: tau_s
-  double precision  T_c_source
+  double precision :: T_c_source
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
-  double precision:: xigll(NGLLX)
-  double precision:: yigll(NGLLY)
-  double precision:: zigll(NGLLZ)
+  double precision :: xigll(NGLLX)
+  double precision :: yigll(NGLLY)
+  double precision :: zigll(NGLLZ)
 
   logical, dimension(nspec) :: ispec_is_tiso
 
@@ -114,7 +122,7 @@
   ! flag for transverse isotropic elements
   logical:: elem_is_tiso
 
-  ! add topography of the Moho *before* adding the 3D crustal velocity model so that the streched
+  ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
   elem_in_crust = .false.
   elem_in_mantle = .false.
@@ -129,13 +137,11 @@
 
         ! differentiate between regional and global meshing
         if( REGIONAL_MOHO_MESH ) then
-          call moho_stretching_honor_crust_reg(myrank, &
-                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+          call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER, &
+                                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
         else
-          call moho_stretching_honor_crust(myrank, &
-                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+          call moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER, &
+                                          R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
         endif
       else
         ! element below 220km
@@ -215,8 +221,9 @@
   !           problems with the jacobian. using the anchors is therefore more robust.
   ! adds surface topography
   if( TOPOGRAPHY ) then
-    if (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
-        .or. idoubling(ispec)==IFLAG_80_MOHO) then
+    if(idoubling(ispec) == IFLAG_CRUST .or. &
+       idoubling(ispec) == IFLAG_220_80 .or. &
+       idoubling(ispec) == IFLAG_80_MOHO) then
       ! stretches mesh between surface and R220 accordingly
       if( USE_GLL ) then
         ! stretches every gll point accordingly
@@ -304,21 +311,17 @@
 
   include "constants.h"
 
-  integer ispec,nspec
+  integer :: ispec,nspec
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision,dimension(NGNOD) :: xelm,yelm,zelm
 
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
+  double precision,dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
 
   ! local parameters
-  double precision xmesh,ymesh,zmesh
-  integer i,j,k,ia
+  double precision :: xmesh,ymesh,zmesh
+  integer :: i,j,k,ia
 
   do k=1,NGLLZ
     do j=1,NGLLY

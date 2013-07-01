@@ -62,6 +62,7 @@
   double precision,parameter:: radtodeg = 180.0d0/PI
 
   ! ----------------------
+
   ! scale perturbations in shear speed to perturbations in density and vp
   logical,parameter:: SCALE_MODEL = .false.
 
@@ -140,7 +141,6 @@
 
   end subroutine model_ppm_broadcast
 
-
 !
 !--------------------------------------------------------------------------------------------------
 !
@@ -173,9 +173,9 @@
   ! counts entries
   counter=0
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
-    call exit_mpi(0, "error opening model ppm")
+  if( ier /= 0 ) then
+    write(IMAIN,*) ' error opening: ',trim(filename)
+    call exit_mpi(0,"error opening model ppm")
   endif
 
   ! first line is text and will be ignored
@@ -214,7 +214,7 @@
   ! vs values
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
-    write(IMAIN,*) ' error opening "', trim(filename), '": ', ier
+    write(IMAIN,*) ' error opening: ',trim(filename)
     call exit_mpi(0,"error opening model ppm")
   endif
   read(10,'(a150)') line   ! first line is text
@@ -242,7 +242,6 @@
     write(IMAIN,*) '  got: ',counter
     call exit_mpi(0,' error model PPM ')
   endif
-
 
   ! gets depths (in km) of upper and lower limit
   PPM_V%minlat = minval( PPM_V%lat(1:PPM_V%num_v) )
@@ -345,7 +344,7 @@
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
-  double precision radius,theta,phi,dvs,dvp,drho
+  double precision :: radius,theta,phi,dvs,dvp,drho
 
   ! local parameters
   integer:: i,j,k
@@ -363,10 +362,10 @@
   r_depth = R_EARTH_KM*(1.0 - radius)  ! radius is normalized between [0,1]
   if(r_depth>PPM_V%maxdepth .or. r_depth < PPM_V%mindepth) return
 
-  lat=(pi_by2-theta)*radtodeg
+  lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
   if( lat < PPM_V%minlat .or. lat > PPM_V%maxlat ) return
 
-  lon=phi*radtodeg
+  lon=phi*RADIANS_TO_DEGREES
   if(lon>180.0d0) lon=lon-360.0d0
   if( lon < PPM_V%minlon .or. lon > PPM_V%maxlon ) return
 
@@ -391,12 +390,12 @@
         call get_PPMmodel_value(g_lat,g_lon,g_depth,PPM_V,g_dvs)
 
         ! horizontal weighting
-        x = (g_lat-lat)*degtokm
+        x = (g_lat-lat)*DEGREES_TO_RADIANS*R_EARTH_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = g_weight
 
-        x = (g_lon-lon)*degtokm
+        x = (g_lon-lon)*DEGREES_TO_RADIANS*R_EARTH_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = weight_prod * g_weight
@@ -534,14 +533,14 @@
 !
 
   subroutine smooth_model(myrank, nproc_xi,nproc_eta,&
-            rho_vp,rho_vs,nspec_stacey, &
-            iregion_code,xixstore,xiystore,xizstore, &
-            etaxstore,etaystore,etazstore, &
-            gammaxstore,gammaystore,gammazstore, &
-            xstore,ystore,zstore,rhostore,dvpstore, &
-            kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
-            nspec,HETEROGEN_3D_MANTLE, &
-            NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
+                          rho_vp,rho_vs,nspec_stacey, &
+                          iregion_code,xixstore,xiystore,xizstore, &
+                          etaxstore,etaystore,etazstore, &
+                          gammaxstore,gammaystore,gammazstore, &
+                          xstore,ystore,zstore,rhostore,dvpstore, &
+                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+                          nspec,HETEROGEN_3D_MANTLE, &
+                          NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
 
 ! smooth model parameters
 

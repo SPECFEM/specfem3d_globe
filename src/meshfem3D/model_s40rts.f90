@@ -40,7 +40,6 @@
 !     Geophys. J. Int., DOI: 10.1111/j.1365-246X.2010.04884.x
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_s40rts_broadcast(myrank,S40RTS_V)
 
 ! standard routine to setup model
@@ -127,7 +126,7 @@
   enddo
   close(10)
 
-! P12 degree 12 P model from Ritsema
+  ! P12 degree 12 P model from Ritsema
   open(unit=10,file=P12,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
@@ -147,7 +146,7 @@
   enddo
   close(10)
 
-! set up the splines used as radial basis functions by Ritsema
+  ! set up the splines used as radial basis functions by Ritsema
   call s40rts_splhsetup(S40RTS_V)
 
   end subroutine read_model_s40rts
@@ -159,6 +158,8 @@
   implicit none
 
   include "constants.h"
+
+  double precision :: radius,theta,phi,dvs,dvp,drho
 
 ! model_s40rts_variables
   type model_s40rts_variables
@@ -175,10 +176,9 @@
   type (model_s40rts_variables) S40RTS_V
 ! model_s40rts_variables
 
-! factor to convert perturbations in shear speed to perturbations in density
+  ! local parameters
+  ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
-
-  double precision radius,theta,phi,dvs,dvp,drho
 
   double precision, parameter :: RMOHO_ = 6346600.d0
   double precision, parameter :: RCMB_ = 3480000.d0
@@ -249,8 +249,6 @@
   implicit none
   include "constants.h"
 
-!!!!!!!!!!!!!!!!!!!  double precision spknt(NK_20+1),qq0(NK_20+1,NK_20+1),qq(3,NK_20+1,NK_20+1)
-
 ! model_s40rts_variables
   type model_s40rts_variables
     sequence
@@ -266,9 +264,9 @@
   type (model_s40rts_variables) S40RTS_V
 ! model_s40rts_variables
 
-
-  integer i,j
-  double precision qqwk(3,NK_20+1)
+  ! local parameters
+  integer :: i,j
+  double precision :: qqwk(3,NK_20+1)
 
   S40RTS_V%spknt(1) = -1.00000d0
   S40RTS_V%spknt(2) = -0.78631d0

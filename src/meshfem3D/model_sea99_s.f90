@@ -71,8 +71,10 @@
   ! model_sea99_s_variables
 
   integer :: myrank
+
   integer :: ier
 
+  ! master proc reads in values
   if(myrank == 0) call read_sea99_s_model(SEA99M_V)
 
   ! broadcast the information read on the master to the nodes
@@ -126,10 +128,7 @@
 
 
   open(1,file='DATA/Lebedev_sea99/sea99_dvsvs',status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "DATA/Lebedev_sea99/sea99_dvsvs": ', ier
-    call exit_MPI(0, 'error model sea99_s')
-  endif
+  if( ier /= 0 ) call exit_MPI(0,'error opening file sea99_dvsvs')
 
 !----------------------- read input file:  ------------------
 
