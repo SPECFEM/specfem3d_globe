@@ -68,6 +68,8 @@
 ! I/O unit for source and receiver vtk file
   integer, parameter :: IOVTK = 98
 
+! I/O Bluegene serial access
+  logical, parameter :: IO_BLUEGENE_SERIAL = .false.
 
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
@@ -192,8 +194,9 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
-! maximum number of sources to locate simultaneously
+! maximum number of sources and receivers to locate simultaneously
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
+  integer, parameter :: NREC_SUBSET_MAX = 200
 
 ! use a force source located exactly at a grid point instead of a CMTSOLUTION source
 ! this can be useful e.g. for asteroid impact simulations
@@ -271,10 +274,19 @@
 ! (default is to use transverse isotropy only between MOHO and 220 )
   logical, parameter :: USE_FULL_TISO_MANTLE = .false.
 
+! regular kernel parameters
+  character(len=*), parameter :: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt'
+  integer, parameter :: NM_KL_REG_LAYER = 100
+  integer, parameter :: NM_KL_REG_PTS = 300000
+  real, parameter :: KL_REG_MIN_LON = 0.0
+  real, parameter :: KL_REG_MAX_LON = 360.0
+  real, parameter :: KL_REG_MIN_LAT = -90.0
+  real, parameter :: KL_REG_MAX_LAT = +90.0
+
 ! forces attenuation arrays to be fully 3D and defined on all GLL points
 ! (useful for more accurate attenuation profiles and adjoint inversions)
 ! (if set to .false., 3D attenuation is only used for models with 3D attenuation distributions)
-  logical, parameter :: USE_3D_ATTENUATION_ARRAYS = .true.
+  logical, parameter :: USE_3D_ATTENUATION_ARRAYS = .false.
 
 
 !!-----------------------------------------------------------
@@ -655,4 +667,30 @@
 ! this for the geometry of the basic doubling brick
   integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
+
+! this for LDDRK
+  logical, parameter :: USE_LDDRK = .false. ! .true.
+
+! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+! depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+! (for instance for models with a large range of Poisson's ratio values).
+! Since the SPECFEM3D_GLOBE code computes the time step using the Newmark scheme, for LDDRK we will simply
+! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+  logical, parameter :: INCREASE_CFL_FOR_LDDRK = .true.
+  double precision, parameter :: RATIO_BY_WHICH_TO_INCREASE_IT = 1.5d0
+
+  integer, parameter :: NSTAGE = 6
+  real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &
+    (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
+      -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)
+
+  real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: BETA_LDDRK = &
+    (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL,&
+      0.200092213184_CUSTOM_REAL,1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/)
+
+  real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: C_LDDRK = &
+    (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL,&
+      0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
 
