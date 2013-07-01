@@ -70,13 +70,14 @@
 
   include "constants.h"
 
-  character(len=150) topo_bathy_file
-
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
   integer :: itopo_x,itopo_y,ier
+  character(len=150) :: topo_bathy_file
+  integer,parameter :: TOPO_MINIMUM = - 10000 ! (depth in m )
+  integer,parameter :: TOPO_MAXIMUM = + 10000 ! (height in m )
 
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
@@ -125,6 +126,93 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
+  character(len=150) :: prname
+  integer :: ier
+
+  ! create the name for the database of the current slide and region
+  ! only master needs to save this
+  call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+  ! saves topography and bathymetry file for solver
+  open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) then
+    ! inform about missing database topo file
+    print*,'TOPOGRAPHY problem:'
+    print*,'error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    print*,'please check if path exists and rerun mesher'
+    call exit_mpi(0,'error opening file for database topo')
+  endif
+
+  write(27) ibathy_topo
+  close(27)
+
+  end subroutine save_topo_bathy_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
+  character(len=150) :: prname
+  integer :: ier
+
+  ! create the name for the database of the current slide and region
+  ! only master needs to save this
+  call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+  ! reads topography and bathymetry file from saved database file
+  open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
+        status='unknown',form='unformatted',action='read',iostat=ier)
+  if( ier /= 0 ) then
+    ! inform user
+    print*,'TOPOGRAPHY problem:'
+    print*,'error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    !print*,'please check if file exists and rerun solver'
+    !call exit_mpi(0,'error opening file for database topo')
+
+    ! read by original file
+    print*,'trying original topography file...'
+    call read_topo_bathy_file(ibathy_topo)
+
+    ! saves database topo file for next time
+    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+  else
+    ! database topo file exists
+    read(27) ibathy_topo
+    close(27)
+
+    ! user output
+    write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+  endif
+
+  end subroutine read_topo_bathy_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine get_topo_bathy(xlat,xlon,value,ibathy_topo)
 
 !
@@ -155,7 +243,8 @@
 
   ! longitude within range [0,360] degrees
   xlo = xlon
-  if(xlon < 0.d0) xlo = xlo + 360.d0
+  if(xlo < 0.d0) xlo = xlo + 360.d0
+  if(xlo > 360.d0) xlo = xlo - 360.d0
 
   ! compute number of samples per degree
   samples_per_degree_topo = dble(RESOLUTION_TOPO_FILE) / 60.d0

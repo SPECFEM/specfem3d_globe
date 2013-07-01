@@ -122,6 +122,8 @@
   ! layers in the case of 3D models. The purpose of this stretching is to squeeze more
   ! GLL points per km in the upper part of the crust than in the lower part.
   !
+  ! CRUSTAL : flag set to .true. if a 3D crustal model (e.g. Crust-2.0) will be used or
+  !  to .false. for a 1D crustal model.
 
   ! extract ending of model name
   ending = ' '
@@ -156,19 +158,28 @@
 !
 !---
 
+  ! default values
 
   ! uses PREM as the 1D reference model by default
-  ! uses no mantle heterogeneities by default
-  ! uses no 3D model by default
+  REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+
+  ! uses no anisotropic 3D model by default
   ANISOTROPIC_3D_MANTLE = .false.
+
+  ! uses 1D attenuation model by default
   ATTENUATION_3D = .false.
+
+  ! no crustal mesh stretching and 3D crust models by default
   CASE_3D = .false.
   CRUSTAL = .false.
-  HETEROGEN_3D_MANTLE = .false.
-  HONOR_1D_SPHERICAL_MOHO = .false.
-  ISOTROPIC_3D_MANTLE = .false.
   ONE_CRUST = .false.
-  REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+
+  ! uses no 3D heterogeneity mantle by default
+  HETEROGEN_3D_MANTLE = .false.
+  ISOTROPIC_3D_MANTLE = .false.
+  HONOR_1D_SPHERICAL_MOHO = .false.
+
+  ! no 3D model by default
   THREE_D_MODEL = 0
   TRANSVERSE_ISOTROPY = .false.
 
@@ -441,6 +452,10 @@
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
+  ! checks that 3D attenuation models use 3D arrays
+  if( ATTENUATION_3D .and. ( .not. USE_3D_ATTENUATION_ARRAYS )) then
+    stop '3D attenuation models need 3D attenuation arrays'
+  endif
 
   end subroutine get_model_parameters_flags
 

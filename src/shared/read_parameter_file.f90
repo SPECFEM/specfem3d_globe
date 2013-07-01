@@ -33,7 +33,8 @@
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT
 
-  subroutine read_parameter_file(OUTPUT_FILES,LOCAL_PATH,MODEL, &
+  subroutine read_parameter_file(OUTPUT_FILES, &
+                                LOCAL_PATH,MODEL, &
                                 NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
                                 NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
                                 NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
@@ -56,7 +57,7 @@
 
   include "constants.h"
 
-! parameters read from parameter file
+  ! parameters read from parameter file
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
@@ -135,19 +136,14 @@
   ! define the velocity model
   call read_value_string(MODEL, 'model.MODEL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MODEL'
-
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
-
   call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'solver.PARTIAL_PHYS_DISPERSION_ONLY', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: PARTIAL_PHYS_DISPERSION_ONLY'
-
   call read_value_logical(UNDO_ATTENUATION, 'solver.UNDO_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: UNDO_ATTENUATION'
-
   call read_value_integer(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP_ATTENUATION'
-
   call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MOVIE_SURFACE'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME', ierr)
@@ -215,4 +211,67 @@
   call close_parameter_file()
 
   end subroutine read_parameter_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_gpu_mode(GPU_MODE)
+
+  implicit none
+  include "constants.h"
+
+  logical :: GPU_MODE
+
+  ! initializes flags
+  GPU_MODE = .false.
+
+  ! opens file Par_file
+  call open_parameter_file()
+
+  call read_value_logical(GPU_MODE, 'solver.GPU_MODE')
+
+  ! close parameter file
+  call close_parameter_file()
+
+  end subroutine read_gpu_mode
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+  subroutine read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
+      ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
+      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
+
+  implicit none
+  include "constants.h"
+
+  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
+      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
+
+  ! initializes flags
+  ADIOS_ENABLED = .false.
+  ADIOS_FOR_FORWARD_ARRAYS = .false.
+  ADIOS_FOR_MPI_ARRAYS = .false.
+  ADIOS_FOR_ARRAYS_SOLVER = .false.
+  ADIOS_FOR_SOLVER_MESHFILES = .false.
+  ADIOS_FOR_AVS_DX = .false.
+  ! opens file Par_file
+  call open_parameter_file()
+  call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
+  if (ADIOS_ENABLED) then
+    call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, &
+        'solver.ADIOS_FOR_FORWARD_ARRAYS')
+    call read_value_logical(ADIOS_FOR_MPI_ARRAYS, &
+        'solver.ADIOS_FOR_MPI_ARRAYS')
+    call read_value_logical(ADIOS_FOR_ARRAYS_SOLVER, &
+        'solver.ADIOS_FOR_ARRAYS_SOLVER')
+    call read_value_logical(ADIOS_FOR_SOLVER_MESHFILES, &
+        'solver.ADIOS_FOR_ARRAYS_SOLVER')
+    call read_value_logical(ADIOS_FOR_AVS_DX, &
+        'solver.ADIOS_FOR_AVS_DX')
+  endif
+  call close_parameter_file()
+
+  end subroutine read_adios_parameters
 

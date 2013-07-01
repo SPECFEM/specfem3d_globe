@@ -29,12 +29,14 @@
 
   subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D, &
+                        ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY, &
+                        OCEANS,ATTENUATION,ATTENUATION_3D, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
                         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
                         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-                        static_memory_size,NGLOB1D_RADIAL, &
-                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                        static_memory_size, &
+                        NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                        NSPEC2D_TOP,NSPEC2D_BOTTOM, &
                         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
                         NPROC_XI,NPROC_ETA, &
                         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
@@ -65,29 +67,13 @@
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
-  double precision :: subtract_central_cube_elems,subtract_central_cube_points
-
-  character(len=150) HEADER_FILE
-
-! for regional code
-  double precision x,y,gamma,rgt,xi,eta
-  double precision x_top,y_top,z_top
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-
-! rotation matrix from Euler angles
-  integer i,j,ix,iy,icorner
-  double precision rotation_matrix(3,3)
-  double precision vector_ori(3),vector_rotated(3)
-  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-
-! static memory size needed by the solver
+  ! static memory size needed by the solver
   double precision :: static_memory_size
 
-  integer :: att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
-
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                                    NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
+        NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
   integer :: NPROC_XI,NPROC_ETA
+  integer :: NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
@@ -106,10 +92,26 @@
   integer :: SIMULATION_TYPE
   logical :: SAVE_FORWARD,MOVIE_VOLUME
 
+  ! local parameters
+  double precision :: subtract_central_cube_elems,subtract_central_cube_points
+  ! for regional code
+  double precision x,y,gamma,rgt,xi,eta
+  double precision x_top,y_top,z_top
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  ! rotation matrix from Euler angles
+  integer i,j,ix,iy,icorner
+  double precision rotation_matrix(3,3)
+  double precision vector_ori(3),vector_rotated(3)
+  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
+  integer :: att1,att2,att3,att4,att5
+  integer :: ier
+  character(len=150) HEADER_FILE
 
-! copy number of elements and points in an include file for the solver
+  ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
-  open(unit=IOUT,file=HEADER_FILE,status='unknown')
+  open(unit=IOUT,file=HEADER_FILE,status='unknown',iostat=ier)
+  if( ier /= 0 ) stop 'error opening OUTPUT_FILES/values_from_mesher.h'
+
   write(IOUT,*)
 
   write(IOUT,*) '!'
@@ -440,6 +442,7 @@
   write(IOUT,*) 'integer, parameter :: NPROC_ETA_VAL = ',NPROC_ETA
   write(IOUT,*) 'integer, parameter :: NCHUNKS_VAL = ',NCHUNKS
   write(IOUT,*) 'integer, parameter :: NPROCTOT_VAL = ',NPROCTOT
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_CM_VAL = ', &
             max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
@@ -474,11 +477,11 @@
     att4     = NSPEC(IREGION_CRUST_MANTLE)
     att5     = NSPEC(IREGION_INNER_CORE)
   else
-    att1     = 1
-    att2     = 1
-    att3     = 1
-    att4     = 1
-    att5     = 1
+     att1 = 1
+     att2 = 1
+     att3 = 1
+     att4 = 1
+     att5 = 1
   endif
 
   write(IOUT,*) 'integer, parameter :: ATT1 = ',att1
