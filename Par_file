@@ -49,7 +49,7 @@ ROTATION                        = .true.
 ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
-ABSORBING_CONDITIONS            = .false.
+ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 15.0d0
@@ -62,8 +62,6 @@ UNDO_ATTENUATION                = .false.
 NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
 
 # save AVS or OpenDX movies
-#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
-#MOVIE_COARSE does not work with create_movie_AVS_DX
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
 MOVIE_COARSE                    = .false.
@@ -94,6 +92,7 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
+# mesh files
 LOCAL_PATH                      = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
