@@ -37,7 +37,7 @@
 
   integer nspec,myrank
 
-  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
+  integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
   integer nimin(2,NSPEC2DMAX_YMIN_YMAX),nimax(2,NSPEC2DMAX_YMIN_YMAX)
   integer njmin(2,NSPEC2DMAX_XMIN_XMAX),njmax(2,NSPEC2DMAX_XMIN_XMAX)
@@ -55,6 +55,7 @@
 ! processor identification
   character(len=150) prname
 
+  ! initializes
   ispecb1=0
   ispecb2=0
   ispecb3=0

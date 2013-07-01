@@ -134,7 +134,7 @@
   endif
 
   write(IOUT,*) '!'
-  write(IOUT,*) '! number of processors = ',NPROCTOT
+  write(IOUT,*) '! number of processors = ',NPROCTOT ! should be = NPROC
   write(IOUT,*) '!'
   write(IOUT,*) '! maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
@@ -147,16 +147,16 @@
   write(IOUT,*) '! total points per slice = ',sum(nglob)
   write(IOUT,*) '!'
 
-  write(IOUT,*) '! total for full 6-chunk mesh:'
+  write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
   write(IOUT,*) '! ---------------------------'
   write(IOUT,*) '!'
   write(IOUT,*) '! exact total number of spectral elements in entire mesh = '
-  write(IOUT,*) '! ',6.d0*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
-  write(IOUT,*) '! ',2.d0*dble(NPROC)*(3.d0*dble(sum(nglob))) - subtract_central_cube_points
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(nglob)) - subtract_central_cube_points
 ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
   write(IOUT,*) '! approximate total number of degrees of freedom in entire mesh = '
-  write(IOUT,*) '! ',6.d0*dble(NPROC)*(3.d0*(dble(sum(nglob))) &
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(nglob))) &
     - 2.d0*dble(nglob(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
@@ -222,12 +222,12 @@
     call reduce(theta_corner,phi_corner)
 
 ! convert geocentric to geographic colatitude
-    colat_corner=PI/2.0d0-datan(1.006760466d0*dcos(theta_corner)/dmax1(TINYVAL,dsin(theta_corner)))
+    colat_corner=PI_OVER_TWO-datan(1.006760466d0*dcos(theta_corner)/dmax1(TINYVAL,dsin(theta_corner)))
     if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
 
 ! compute real position of the source
-    lat = (PI/2.0d0-colat_corner)*180.0d0/PI
-    long = phi_corner*180.0d0/PI
+    lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
+    long = phi_corner*RADIANS_TO_DEGREES
 
     write(IOUT,*) '!'
     write(IOUT,*) '! corner ',icorner
@@ -486,6 +486,7 @@
   write(IOUT,*) 'integer, parameter :: ATT3 = ',att3
   write(IOUT,*) 'integer, parameter :: ATT4 = ',att4
   write(IOUT,*) 'integer, parameter :: ATT5 = ',att5
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM = ',NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
@@ -523,6 +524,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_670 = ',NSPEC2D_670
   write(IOUT,*) 'integer, parameter :: NSPEC2D_CMB = ',NSPEC2D_CMB
   write(IOUT,*) 'integer, parameter :: NSPEC2D_ICB = ',NSPEC2D_ICB
+  write(IOUT,*)
 
   ! deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
   if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
@@ -538,6 +540,7 @@
   else
     write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
   endif
+  write(IOUT,*)
 
   if (MOVIE_VOLUME) then
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'

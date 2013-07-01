@@ -141,6 +141,7 @@ program combine_vol_data
 
   ! resolution
   read(arg(6),*) ires
+  di = 0; dj = 0; dk = 0
   if (ires == 0) then
     HIGH_RESOLUTION_MESH = .false.
     di = NGLLX-1; dj = NGLLY-1; dk = NGLLZ-1
@@ -195,6 +196,7 @@ program combine_vol_data
       read(27,*) nspec(it)
       read(27,*) nglob(it)
       close(27)
+
       if (HIGH_RESOLUTION_MESH) then
         npoint(it) = nglob(it)
         nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1)

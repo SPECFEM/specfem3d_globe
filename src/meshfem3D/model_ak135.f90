@@ -41,6 +41,7 @@
 ! Constraints on seismic velocities in the Earth from traveltimes,
 ! Geophysical Journal International, volume 122, issue 1, pages 108-124 (1995),
 ! DOI: 10.1111/j.1365-246X.1995.tb03540.x
+!--------------------------------------------------------------------------------------------------
 
 ! J. P. Montagner and B. L. N. Kennett,
 ! How to reconcile body-wave and normal-mode reference Earth models?,

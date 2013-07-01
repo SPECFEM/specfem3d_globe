@@ -918,7 +918,7 @@ if(undo_att_sim_type_3)then
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
       endif
-    elseif(SIMULATION_TYPE == 2)then ! case of SIMULATION_TYPE == 2
+    else if(SIMULATION_TYPE == 2)then ! case of SIMULATION_TYPE == 2
       if( nrec_local > 0 ) &
         call write_adj_seismograms(seismograms,number_receiver_global, &
                                   nrec_local,it,nit_written,DT, &

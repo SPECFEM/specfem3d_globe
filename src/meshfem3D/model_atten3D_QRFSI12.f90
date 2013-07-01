@@ -37,8 +37,14 @@
 !   Last edit: Colleen Dalton, March 25, 2008
 !
 ! Q1: what are theta and phi?
+! A1: input theta is colatitude in degrees, phi is longitude in degrees
+!
 ! Q2: units for radius?
+! A2: radius is given in km
+!
 ! Q3: what to do about core?
+! A3: more research :)
+!
 !--------------------------------------------------------------------------------------------------
 
 
@@ -165,8 +171,9 @@
 
   end subroutine read_atten_model_3D_QRFSI12
 
+!
 !----------------------------------
-!----------------------------------
+!
 
   subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,QRFSI12_Q,idoubling)
 
@@ -196,14 +203,18 @@
   double precision, parameter :: rmoho_prem = 6371.0-24.4
   double precision, parameter :: rcmb = 3480.0
 
- !in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
- !to agree with the rest of specfem
-!  print *,'entering QRFSI12 subroutine'
+  ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
+  ! to agree with the rest of specfem
+
+  ! debug
+  !  print *,'entering QRFSI12 subroutine'
 
   ylat=90.0d0-theta
   xlon=phi
 
-! only checks radius for crust, idoubling is missleading for oceanic crust when we want to expand mantle up to surface...
+  ! only checks radius for crust, idoubling is missleading for oceanic crust
+  ! when we want to expand mantle up to surface...
+
 !  !if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
   if( radius >= rmoho_prem ) then
   !   print *,'QRFSI12: we are in the crust'
@@ -211,8 +222,13 @@
   else if(idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
        idoubling == IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling == IFLAG_TOP_CENTRAL_CUBE .or. &
        idoubling == IFLAG_IN_FICTITIOUS_CUBE) then
-  !   print *,'QRFSI12: we are in the inner core'
-     Qmu = 84.6d0
+    ! we are in the inner core
+
+    !debug
+    !   print *,'QRFSI12: we are in the inner core'
+
+    Qmu = 84.6d0
+
   else if(idoubling == IFLAG_OUTER_CORE_NORMAL) then
   !   print *,'QRFSI12: we are in the outer core'
      Qmu = 0.0d0
@@ -254,6 +270,7 @@
     endif
  ! if smallq is small and negative (due to numerical error), Qmu is very large:
     if(smallq < 0.0d0) smallq = 1.0d0/ATTENUATION_COMP_MAXIMUM
+
     Qmu = 1/smallq
  ! Qmu is larger than MAX_ATTENUATION_VALUE, set it to ATTENUATION_COMP_MAXIMUM.  This assumes that this
  ! value is high enough that at this point there is almost no attenuation at all.
@@ -263,8 +280,9 @@
 
   end subroutine model_atten3D_QRFSI12
 
+!
 !----------------------------------
-!----------------------------------
+!
 
 !!$  subroutine vbspl(x,np,xarr,splcon,splcond)
 !!$!

@@ -67,6 +67,8 @@
 ! model_s40rts_variables
 
   integer :: myrank
+
+  ! local parameters
   integer :: ier
   ! the variables read are declared and stored in structure S40RTS_V
   if(myrank == 0) call read_model_s40rts(S40RTS_V)
@@ -112,7 +114,7 @@
   call get_value_string(S40RTS, 'model.S40RTS', 'DATA/s40rts/S40RTS.dat')
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')    !model P12 is in s20rts data directory
 
-! S40RTS degree 20 S model from Ritsema
+  ! S40RTS degree 40 S model from Ritsema
   open(unit=10,file=S40RTS,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(S40RTS), '": ', ier
@@ -183,12 +185,13 @@
   double precision, parameter :: R_EARTH_ = 6371000.d0
   double precision, parameter :: ZERO_ = 0.d0
 
-  integer l,m,k
-  double precision r_moho,r_cmb,xr
-  double precision dvs_alm,dvs_blm
-  double precision dvp_alm,dvp_blm
-  double precision s40rts_rsple,radial_basis(0:NK_20)
-  double precision sint,cost,x(2*NS_40+1),dx(2*NS_40+1)
+  integer :: l,m,k
+  double precision :: r_moho,r_cmb,xr
+  double precision :: dvs_alm,dvs_blm
+  double precision :: dvp_alm,dvp_blm
+  double precision :: s40rts_rsple,radial_basis(0:NK_20)
+  double precision :: sint,cost,x(2*NS_40+1),dx(2*NS_40+1)
+
   dvs = ZERO_
   dvp = ZERO_
   drho = ZERO_

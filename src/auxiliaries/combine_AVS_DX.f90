@@ -1031,8 +1031,8 @@
 
 !   convert geographic latitude lat (degrees)
 !   to geocentric colatitude theta (radians)
-    theta=PI/2.0d0-atan(0.99329534d0*tan(dble(lat(1))*PI/180.0d0))
-    phi=dble(long(1))*PI/180.0d0
+    theta=PI_OVER_TWO-atan(0.99329534d0*tan(dble(lat(1))*DEGREES_TO_RADIANS))
+    phi=dble(long(1))*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
 !   compute Cartesian position of the source (ignore ellipticity for AVS_DX)
@@ -1045,7 +1045,7 @@
 
 ! save triangle for AVS or DX representation of epicenter
     r_target_source = 1.05d0
-    delta_trgl = 1.8 * pi / 180.
+    delta_trgl = 1.8 * DEGREES_TO_RADIANS
     x_source_trgl1 = r_target_source*sin(theta+delta_trgl)*cos(phi-delta_trgl)
     y_source_trgl1 = r_target_source*sin(theta+delta_trgl)*sin(phi-delta_trgl)
     z_source_trgl1 = r_target_source*cos(theta+delta_trgl)
@@ -1095,8 +1095,8 @@
 
 ! convert geographic latitude stlat (degrees)
 ! to geocentric colatitude theta (radians)
-      theta=PI/2.0d0-atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
-      phi=stlon(irec)*PI/180.0d0
+      theta=PI_OVER_TWO-atan(0.99329534d0*dtan(stlat(irec)*DEGREES_TO_RADIANS))
+      phi=stlon(irec)*DEGREES_TO_RADIANS
       call reduce(theta,phi)
 
 ! compute the Cartesian position of the receiver (ignore ellipticity for AVS_DX)

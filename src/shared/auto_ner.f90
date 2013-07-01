@@ -58,6 +58,8 @@
 
   integer NEX_MAX
   double precision DT, WIDTH
+
+  ! local parameters
   double precision RADIAL_LEN_RATIO_CENTRAL_CUBE
   double precision RADIUS_INNER_CORE
   double precision DOUBLING_INNER_CORE
@@ -334,8 +336,10 @@
      max_aspect_ratio = 0.0d0
      call compute_nex(nex_xi, rcube_test, alpha, nex_eta)
      npts = (4 * nex_xi * nex_eta * NBNODE) + (nex_xi * nex_xi * NBNODE)
+
      allocate(points(npts, 2))
      call compute_IC_mesh(rcube_test, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
+
      nspec = nspec_cube + nspec_chunks
      do ispec = 1,nspec
         call get_element(points, ispec, npts, elem)
@@ -349,6 +353,7 @@
 !       xi = abs(rcube_test - 981.0d0) / 45.0d0
 !       write(*,'(a,5(f14.4,2x))')'rcube, xi, ximin:-',rcube_test, xi, min_edgemin,max_edgemax,max_aspect_ratio
      deallocate(points)
+
      if(xi < ximin) then
         ximin      = xi
         rcube      = rcube_test
@@ -428,6 +433,7 @@
   subroutine get_size_min_max(pts, edgemax, edgemin)
 
   implicit none
+
   integer ie, ix1,ix2,ix3
   integer, parameter :: NBNODE = 8
   double precision edgemax, edgemin, edge

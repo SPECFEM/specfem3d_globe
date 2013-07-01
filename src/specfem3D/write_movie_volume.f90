@@ -64,11 +64,13 @@
   else
     NIT = 1
   endif
+
   ipoints_3dmovie=0
   num_ibool_3dmovie(:) = -99
   ispecel_3dmovie = 0
   mask_ibool_3dmovie(:)=.false.
   mask_3dmovie(:,:,:,:)=.false.
+
   ! create name of database
   open(unit=IOUT,file=trim(prname)//'movie3D_info.txt',status='unknown')
 
@@ -351,9 +353,11 @@
        eps_loc(3,1)=eps_loc(1,3)
        eps_loc(3,2)=eps_loc(2,3)
 
-  ! rotate eps_loc to spherical coordinates
-    eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
+       ! rotate eps_loc to spherical coordinates
+       eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), &
+                                  transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
        if(MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
+
        store_val3d_NN(ipoints_3dmovie)=eps_loc_new(1,1)
        store_val3d_EE(ipoints_3dmovie)=eps_loc_new(2,2)
        store_val3d_ZZ(ipoints_3dmovie)=eps_loc_new(3,3)
@@ -404,6 +408,9 @@
   subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
                                       MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
                                       scalingval,mask_3dmovie,nu_3dmovie)
+
+! outputs displacement/velocity: MOVIE_VOLUME_TYPE == 5 / 6
+
   implicit none
 
   include "constants.h"
@@ -427,6 +434,7 @@
   character(len=150) outputname
   character(len=2) movie_prefix
 
+  ! check
   if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
   allocate(store_val3d_N(npoints_3dmovie))
@@ -438,6 +446,7 @@
   else if(MOVIE_VOLUME_TYPE == 6) then
       movie_prefix='VE' ! velocity
   endif
+
   if(MOVIE_COARSE) then
    NIT = NGLLX-1
   else
@@ -461,7 +470,7 @@
        iglob = ibool_crust_mantle(i,j,k,ispec)
        vector_local(:) = vector_crust_mantle(:,iglob) * scalingval_to_use
 
-  ! rotate eps_loc to spherical coordinates
+       ! rotate eps_loc to spherical coordinates
        vector_local_new(:) = matmul(nu_3dmovie(:,:,ipoints_3dmovie), vector_local(:))
        store_val3d_N(ipoints_3dmovie)=vector_local_new(1)
        store_val3d_E(ipoints_3dmovie)=vector_local_new(2)
@@ -492,7 +501,9 @@
 
   end subroutine write_movie_volume_vector
 
-!--------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
  subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
                         div_displ_outer_core, &
