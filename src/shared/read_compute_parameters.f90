@@ -65,7 +65,6 @@
 
   include "constants.h"
 
-
 ! parameters read from parameter file
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
@@ -167,7 +166,7 @@
                           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
                           SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,SAVE_FORWARD, &
                           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
+                          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
                           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
 
   ! converts values to radians
@@ -211,11 +210,9 @@
                         RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
                         R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
 
-
-  NEX_MAX = max(NEX_XI,NEX_ETA)
-
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
+  NEX_MAX = max(NEX_XI,NEX_ETA)
   call get_timestep_and_layers(DT,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
                           NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,&
                           NER_600_400,NER_670_600,NER_771_670, &
@@ -229,12 +226,25 @@
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+
+! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
+  if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
+
+!<YANGL
+  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1   ! time steps needs to be doubled, due to +/- branches
+!>YANGL
+
+  ! subsets used to save seismograms must not be larger than the whole time series,
+  ! otherwise we waste memory
+  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <= TINYVAL) &
     HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
-
 
   ! checks parameters
   call rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
@@ -339,10 +349,7 @@
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
 
-
-
   end subroutine read_compute_parameters
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -422,12 +429,12 @@
     stop 'need six chunks to include central cube'
 
   ! check that sphere can be cut into slices without getting negative Jacobian
-!  if(NCHUNKS == 6 ) then
-!    if(NEX_XI < 48) &
-!      stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
-!    if(NEX_ETA < 48) &
-!      stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
-!  endif
+  if(NCHUNKS == 6 ) then
+    if(NEX_XI < 48) &
+      stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
+    if(NEX_ETA < 48) &
+      stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
+  endif
 
   ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) &
