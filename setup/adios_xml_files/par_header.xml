@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<adios-config host-language="Fortran">
+  <adios-group name="SPECFEM3D_GLOBE_HEADER" coordination-communicator="comm">
+    <!--************************************************************-->
+    <!--*** Solver information ***-->
+    <attribute name="code_name"       path="/solver_info" value="SPECFEM3D_GLOBE" type="string"/>
+    <attribute name="version_name"    path="/solver_info" value="SUNFLOWER"       type="string"/>
+    <attribute name="version_number"  path="/solver_info" value="5.1"             type="string"/>
+    <!--************************************************************-->
+    <!--*** Values read from DATA/Par_file ***-->
+    <!-- double precision variables -->
+    <var name="ANGULAR_WIDTH_XI_IN_DEGREES"   path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="ANGULAR_WIDTH_ETA_IN_DEGREES"  path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="CENTER_LONGITUDE_IN_DEGREES"   path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="CENTER_LATITUDE_IN_DEGREES"    path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="GAMMA_ROTATION_AZIMUTH"        path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="HDUR_MOVIE"                    path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MOVIE_TOP_KM"                  path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MOVIE_BOTTOM_KM"               path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MOVIE_EAST_DEG"                path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MOVIE_WEST_DEG"                path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MOVIE_NORTH_DEG"               path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MOVIE_SOUTH_DEG"               path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="RECORD_LENGTH_IN_MINUTES"      path="/specfem3D_globe_parameter_file" type="double"/>
+    <!-- integer variables -->
+    <var name="NTSTEP_BETWEEN_OUTPUT_SEISMOS" path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NTSTEP_BETWEEN_READ_ADJSRC"    path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NTSTEP_BETWEEN_FRAMES"         path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NTSTEP_BETWEEN_OUTPUT_INFO"    path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NUMBER_OF_RUNS"                path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NUMBER_OF_THIS_RUN"            path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NCHUNKS"                       path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="SIMULATION_TYPE"               path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="MOVIE_VOLUME_TYPE"             path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="MOVIE_START"                   path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="MOVIE_STOP"                    path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NEX_XI"                        path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NEX_ETA"                       path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NPROC_XI"                      path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NPROC_ETA"                     path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NOISE_TOMOGRAPHY"              path="/specfem3D_globe_parameter_file" type="integer"/>
+    <!-- logical variables -->
+    <var name="ELLIPTICITY"                  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="GRAVITY"                      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ROTATION"                     path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="TOPOGRAPHY"                   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OCEANS"                       path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="MOVIE_SURFACE"                path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="MOVIE_VOLUME"                 path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="MOVIE_COARSE"                 path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="RECEIVERS_CAN_BE_BURIED"      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="PRINT_SOURCE_TIME_FUNCTION"   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_MESH_FILES"              path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ATTENUATION"                  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ATTENUATION_NEW"              path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ABSORBING_CONDITIONS"         path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_FORWARD"                 path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OUTPUT_SEISMOS_ASCII_TEXT"    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OUTPUT_SEISMOS_SAC_ALPHANUM"  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OUTPUT_SEISMOS_SAC_BINARY"    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ROTATE_SEISMOGRAMS_RT"        path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="WRITE_SEISMOGRAMS_BY_MASTER"  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_ALL_SEISMOS_IN_ONE_FILE" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="USE_BINARY_FOR_LARGE_FILE"    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <!--************************************************************-->
+    <!--*** Values read from DATA/CMTSOLUTION ***-->
+    <!-- Number of SOURCES inside the CMTSOLUTION file -->
+    <var name="NSOURCES" path="/CMTSOLUTION" type="integer"/>
+    <!--var name="datasources_length" path="/CMTSOLUTION" type="integer"/-->
+    <!-- integer arrays -->
+    <var name="year"   gwrite="yr" path="/CMTSOLUTION" type="integer" dimensions="NSOURCES"/>
+    <var name="month"  gwrite="mo" path="/CMTSOLUTION" type="integer" dimensions="NSOURCES"/>
+    <var name="day"    gwrite="da" path="/CMTSOLUTION" type="integer" dimensions="NSOURCES"/>
+    <var name="hour"   gwrite="ho" path="/CMTSOLUTION" type="integer" dimensions="NSOURCES"/>
+    <var name="minute" gwrite="mi" path="/CMTSOLUTION" type="integer" dimensions="NSOURCES"/>
+    <!-- double precision arrays -->
+    <var name="second"        gwrite="sec"     path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="time_shift"    gwrite="t_shift" path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="half_duration" gwrite="hdur"    path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="latitude"      gwrite="lat"     path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="longitude"     gwrite="long"    path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="depth"                          path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="mrr"                            path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="mtt"                            path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="mpp"                            path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="mrt"                            path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="mrp"                            path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <var name="mtp"                            path="/CMTSOLUTION" type="double" dimensions="NSOURCES"/>
+    <!-- string arrays -->
+    <var name="datasource" path="/CMTSOLUTION" type="string"/>
+    <!--var name="datasource" path="/CMTSOLUTION" type="string" dimensions="datasources_length"/-->
+    <!--var name="datasource" path="/CMTSOLUTION" type="string" dimensions="5,NSOURCES"/-->
+    <!--var name="event_name" path="/CMTSOLUTION" type="string" dimensions="NSOURCES"/-->
+    <!--************************************************************-->
+    <!--*** Values read from DATA/STATIONS ***-->
+    <!-- Number of STATIONS inside the STATIONS file -->
+    <!--
+    -->
+    <var name="NSTATIONS" path="/STATIONS" type="integer"/>
+    <!--
+    -->
+    <!-- double precision arrays -->
+    <var name="station_latitude"  gwrite="stlat" path="/STATIONS" type="double" dimensions="NSTATIONS"/>
+    <var name="station_longitude" gwrite="stlon" path="/STATIONS" type="double" dimensions="NSTATIONS"/>
+    <var name="station_elevation" gwrite="stele" path="/STATIONS" type="double" dimensions="NSTATIONS"/>
+    <var name="station_burial"    gwrite="stbur" path="/STATIONS" type="double" dimensions="NSTATIONS"/>
+    <!-- string arrays -->
+    <var name="station_name" path="/STATIONS" type="string"/>
+    <var name="network_name" path="/STATIONS" type="string"/>
+  </adios-group>
+
+  <method group="SPECFEM3D_GLOBE_HEADER" method="MPI"/>
+  <buffer size-MB="200" allocate-time="now"/>
+</adios-config>
