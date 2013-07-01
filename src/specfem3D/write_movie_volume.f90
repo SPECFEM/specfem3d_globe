@@ -25,10 +25,6 @@
 !
 !=====================================================================
 
-! create file OUTPUT_FILES/values_from_mesher.h based upon DATA/Par_file
-! in order to compile the solver with the right array sizes
-
-!---------------------------------------------------------------------------------
 ! this subroutine counts the number of points and elements within the movie volume
 ! in this processor slice, and returns arrays that keep track of them, both in global and local indexing schemes
 
@@ -110,7 +106,10 @@
 
   end subroutine count_points_movie_volume
 
-! -----------------------------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 ! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
 ! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
@@ -255,7 +254,10 @@
 
  end subroutine write_movie_volume_mesh
 
-! ---------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie,&
                     hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
@@ -263,6 +265,7 @@
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle)
 
+! outputs strains: MOVIE_VOLUME_TYPE == 1 / 2 / 3
 
   implicit none
 
@@ -309,14 +312,15 @@
   allocate(store_val3d_NZ(npoints_3dmovie))
   allocate(store_val3d_EZ(npoints_3dmovie))
 
+  ! check
   if(NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
 
   if(MOVIE_VOLUME_TYPE == 1) then
-      movie_prefix='E' ! strain
+    movie_prefix='E' ! strain
   else if(MOVIE_VOLUME_TYPE == 2) then
-      movie_prefix='S' ! time integral of strain
+    movie_prefix='S' ! time integral of strain
   else if(MOVIE_VOLUME_TYPE == 3) then
-      movie_prefix='P' ! potency, or integral of strain x \mu
+    movie_prefix='P' ! potency, or integral of strain x \mu
   endif
   if(MOVIE_COARSE) then
    NIT = NGLLX-1
@@ -404,7 +408,10 @@
 
   end subroutine write_movie_volume_strains
 
-! ---------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
                                       MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
                                       scalingval,mask_3dmovie,nu_3dmovie)
@@ -421,6 +428,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+
   double precision :: scalingval
   real(kind=CUSTOM_REAL) :: scalingval_to_use
   real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
@@ -437,14 +445,15 @@
   ! check
   if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
+  ! allocates arrays
   allocate(store_val3d_N(npoints_3dmovie))
   allocate(store_val3d_E(npoints_3dmovie))
   allocate(store_val3d_Z(npoints_3dmovie))
 
   if(MOVIE_VOLUME_TYPE == 5) then
-      movie_prefix='DI' ! displacement
+    movie_prefix='DI' ! displacement
   else if(MOVIE_VOLUME_TYPE == 6) then
-      movie_prefix='VE' ! velocity
+    movie_prefix='VE' ! velocity
   endif
 
   if(MOVIE_COARSE) then
@@ -506,15 +515,17 @@
 !
 
  subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
-                        div_displ_outer_core, &
-                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
-                        eps_trace_over_3_inner_core, &
-                        epsilondev_crust_mantle,epsilondev_inner_core, &
-                        LOCAL_PATH, &
-                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                        accel_crust_mantle,accel_inner_core, &
-                        ibool_crust_mantle,ibool_inner_core)
+                                      div_displ_outer_core, &
+                                      accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
+                                      eps_trace_over_3_inner_core, &
+                                      epsilondev_crust_mantle,epsilondev_inner_core, &
+                                      LOCAL_PATH, &
+                                      displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                                      veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+                                      accel_crust_mantle,accel_inner_core, &
+                                      ibool_crust_mantle,ibool_inner_core)
+
+! outputs divergence and curl: MOVIE_VOLUME_TYPE == 4
 
   implicit none
   include "constants.h"
@@ -558,7 +569,7 @@
   ! output parameters
   logical,parameter :: MOVIE_OUTPUT_DIV = .true.          ! divergence
   logical,parameter :: MOVIE_OUTPUT_CURL = .false.        ! curl
-  logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! frobenius norm of curl
+  logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! Frobenius norm of curl
   logical,parameter :: MOVIE_OUTPUT_DISPLNORM = .false.   ! norm of displacement
   logical,parameter :: MOVIE_OUTPUT_VELOCNORM = .false.   ! norm of velocity
   logical,parameter :: MOVIE_OUTPUT_ACCELNORM = .false.   ! norm of acceleration
@@ -911,7 +922,6 @@
 
 
 !-------------------------------------------------------------------------------------------------
-
 ! external mesh routine for saving vtk files for custom_real values on global points
 
   subroutine write_VTK_data_cr(idoubling,nspec,nglob, &

@@ -31,50 +31,50 @@
 
   include "constants.h"
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  integer :: myrank
 
-  integer myrank
+  double precision,dimension(NGNOD) :: xelm,yelm,zelm
 
-! use integer array to store values
+  ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer ia
+  ! local parameters
+  double precision :: lat,lon,elevation
+  double precision :: r,theta,phi,colat
+  double precision :: gamma
+  integer :: ia
 
-  double precision lat,lon,elevation,R220
-  double precision r,theta,phi,colat
-  double precision gamma
+  double precision R220
 
-! we loop on all the points of the element
+  ! we loop on all the points of the element
   do ia = 1,NGNOD
 
-! convert to r theta phi
-! slightly move points to avoid roundoff problem when exactly on the polar axis
+    ! gets elevation of point
+    ! convert to r theta phi
+    ! slightly move points to avoid roundoff problem when exactly on the polar axis
     call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
     theta = theta + 0.0000001d0
     phi = phi + 0.0000001d0
     call reduce(theta,phi)
 
-! convert the geocentric colatitude to a geographic colatitude
-    colat = PI/2.0d0 - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+    ! convert the geocentric colatitude to a geographic colatitude
+    colat = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
 
-! get geographic latitude and longitude in degrees
-    lat = 90.0d0 - colat*180.0d0/PI
-    lon = phi*180.0d0/PI
-    elevation = 0.d0
+    ! get geographic latitude and longitude in degrees
+    lat = (PI_OVER_TWO - colat) * RADIANS_TO_DEGREES
+    lon = phi * RADIANS_TO_DEGREES
 
-! compute elevation at current point
+    ! compute elevation at current point
     call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
-! non-dimensionalize the elevation, which is in meters
+    ! non-dimensionalize the elevation, which is in meters
     elevation = elevation / R_EARTH
 
-! stretching topography between d220 and the surface
+    ! stretching topography between d220 and the surface
     gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
 
-! add elevation to all the points of that element
-! also make sure gamma makes sense
+    ! add elevation to all the points of that element
+    ! also make sure gamma makes sense
     if(gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
 
     xelm(ia) = xelm(ia)*(ONE + gamma * elevation / r)
@@ -110,7 +110,9 @@
   ! input parameters
   integer:: myrank
   integer:: ispec,nspec
+
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
+
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
   double precision:: R220
 
@@ -133,12 +135,11 @@
 
 
            ! convert the geocentric colatitude to a geographic colatitude
-           colat = PI/2.0d0 - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+           colat = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
 
            ! get geographic latitude and longitude in degrees
-           lat = 90.0d0 - colat*180.0d0/PI
-           lon = phi*180.0d0/PI
-           elevation = 0.d0
+           lat = (PI_OVER_TWO - colat) * RADIANS_TO_DEGREES
+           lon = phi * RADIANS_TO_DEGREES
 
            ! compute elevation at current point
            call get_topo_bathy(lat,lon,elevation,ibathy_topo)
