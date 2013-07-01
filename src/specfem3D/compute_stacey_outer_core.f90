@@ -112,6 +112,7 @@
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
+  ! outer core
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
@@ -188,21 +189,21 @@
 
   do ispec2D=1,nspec2D_ymin_outer_core
 
-    ispec=ibelm_ymin_outer_core(ispec2D)
+      ispec=ibelm_ymin_outer_core(ispec2D)
 
-    ! exclude elements that are not on absorbing edges
-    if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
 
-    j=1
-    do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
-      do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
-        iglob=ibool_outer_core(i,j,k,ispec)
+      j=1
+      do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
+        do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
+          iglob=ibool_outer_core(i,j,k,ispec)
 
-        sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
+          sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
-        weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
+          weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
 
-        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
+          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
         if (SAVE_FORWARD) then
           absorb_ymin_outer_core(i,k,ispec2D) = weight*sn

@@ -117,7 +117,7 @@
   enddo
   enddo
 
-! assign global node numbers (now sorted lexicographically)
+  ! assign global node numbers (now sorted lexicographically)
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
@@ -138,12 +138,13 @@
 !
   implicit none
 
-  integer n
-  double precision A(n)
-  integer IND(n)
+  integer :: n
+  double precision,dimension(n) :: A
+  integer,dimension(n) :: IND
 
-  integer i,j,l,ir,indx
-  double precision q
+  ! local parameters
+  integer :: i,j,l,ir,indx
+  double precision :: q
 
   do j=1,n
     IND(j)=j
@@ -164,7 +165,7 @@
       ind(ir)=ind(1)
       ir=ir-1
       if (ir == 1) then
-         ind(1)=indx
+         ind(1) = indx
          return
       endif
    ENDIF
@@ -196,13 +197,13 @@
 !
   implicit none
 
-  integer n
+  integer :: n
+  integer,dimension(n) :: IND
+  integer,dimension(n) :: IA,IB,IW
+  double precision,dimension(n) :: A,B,C,W
 
-  integer IND(n)
-  integer IA(n),IB(n),IW(n)
-  double precision A(n),B(n),C(n),W(n)
-
-  integer i
+  ! local parameter
+  integer :: i
 
   do i=1,n
     W(i)=A(i)

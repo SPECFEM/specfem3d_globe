@@ -218,7 +218,7 @@
     if (SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
       call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
 
-  endif
+  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
 
   !   ymin
 

@@ -277,7 +277,9 @@
 
   end subroutine write_seismograms
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,stbur,nrec, &
@@ -350,6 +352,7 @@
   !----------------------------------------------------------------
 
   call band_instrument_code(DT,bic)
+
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T
     ior_start=3    ! starting from Z
     ior_end  =5    ! ending with T => ZRT
@@ -358,8 +361,6 @@
     ior_end  =3    ! ending with Z => NEZ
   endif
 
-    !do iorientation = 1,NDIM
-    !do iorientation = 1,5                   ! BS BS changed from 3 (NEZ) to 5 (NEZRT) components
   do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
 
     if(iorientation == 1) then
@@ -397,8 +398,8 @@
          phi = backaz
       endif
 
-      cphi=cos(phi*pi/180)
-      sphi=sin(phi*pi/180)
+      cphi=cos(phi*DEGREES_TO_RADIANS)
+      sphi=sin(phi*DEGREES_TO_RADIANS)
 
       ! BS BS do the rotation of the components and put result in
       ! new variable seismogram_tmp
@@ -443,7 +444,6 @@
 
     ! SAC output format
     if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then
-
       call write_output_SAC(seismogram_tmp,irec, &
               station_name,network_name,stlat,stlon,stele,stbur,nrec, &
               ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
@@ -453,125 +453,123 @@
               OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,MODEL, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
               iorientation,phi,chn,sisname)
-
     endif ! OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY
 
     ! ASCII output format
     if(OUTPUT_SEISMOS_ASCII_TEXT) then
-
       call write_output_ASCII(seismogram_tmp, &
               DT,hdur,OUTPUT_FILES, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
               SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank, &
               iorientation,sisname,sisname_big_file)
-
     endif  ! OUTPUT_SEISMOS_ASCII_TEXT
 
   enddo ! do iorientation
 
   end subroutine write_one_seismogram
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! write adjoint seismograms to text files
 
- subroutine write_adj_seismograms(seismograms,number_receiver_global, &
+  subroutine write_adj_seismograms(seismograms,number_receiver_global, &
               nrec_local,it,nit_written,DT,NSTEP, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,hdur,LOCAL_PATH)
 
- implicit none
+  implicit none
 
- include "constants.h"
+  include "constants.h"
 
- integer nrec_local,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,it,nit_written
- integer, dimension(nrec_local) :: number_receiver_global
- real(kind=CUSTOM_REAL), dimension(9,nrec_local,NSTEP) :: seismograms
- double precision hdur,DT
- character(len=150) LOCAL_PATH
+  integer :: nrec_local,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,it,nit_written
+  integer, dimension(nrec_local) :: number_receiver_global
+  real(kind=CUSTOM_REAL), dimension(9,nrec_local,NSTEP) :: seismograms
+  double precision :: hdur,DT
+  character(len=150) :: LOCAL_PATH
 
- integer irec,irec_local
- integer iorientation,isample
+  integer :: irec,irec_local
+  integer :: iorientation,isample
 
- character(len=4) chn
- character(len=150) clean_LOCAL_PATH,final_LOCAL_PATH
- character(len=256) sisname
- character(len=2) bic
+  character(len=4) :: chn
+  character(len=150) :: clean_LOCAL_PATH,final_LOCAL_PATH
+  character(len=256) :: sisname
+  character(len=2) :: bic
 
- call band_instrument_code(DT,bic)
+  call band_instrument_code(DT,bic)
 
- do irec_local = 1,nrec_local
+  do irec_local = 1,nrec_local
 
-! get global number of that receiver
-   irec = number_receiver_global(irec_local)
+    ! get global number of that receiver
+    irec = number_receiver_global(irec_local)
 
-   do iorientation = 1,9
-
-     if(iorientation == 1) then
+    do iorientation = 1,9
+      if(iorientation == 1) then
        chn = 'SNN'
-     else if(iorientation == 2) then
+      else if(iorientation == 2) then
        chn = 'SEE'
-     else if(iorientation == 3) then
+      else if(iorientation == 3) then
        chn = 'SZZ'
-     else if(iorientation == 4) then
+      else if(iorientation == 4) then
        chn = 'SNE'
-     else if(iorientation == 5) then
+      else if(iorientation == 5) then
        chn = 'SNZ'
-     else if(iorientation == 6) then
+      else if(iorientation == 6) then
        chn = 'SEZ'
-     else if(iorientation == 7) then
+      else if(iorientation == 7) then
        !chn = 'LHN'
        chn = bic(1:2)//'N'
-     else if(iorientation == 8) then
+      else if(iorientation == 8) then
        chn = bic(1:2)//'E'
-     else if(iorientation == 9) then
+      else if(iorientation == 9) then
        chn = bic(1:2)//'Z'
-     endif
+      endif
 
 
-! create the name of the seismogram file for each slice
-! file name includes the name of the station, the network and the component
-     write(sisname,"(a,i6.6,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
+      ! create the name of the seismogram file for each slice
+      ! file name includes the name of the station, the network and the component
+      write(sisname,"(a,i6.6,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
 
-! suppress white spaces if any
-   clean_LOCAL_PATH = adjustl(LOCAL_PATH)
+      ! suppress white spaces if any
+      clean_LOCAL_PATH = adjustl(LOCAL_PATH)
 
-! create full final local path
-   final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
+      ! create full final local path
+      final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
 
-! save seismograms in text format with no subsampling.
-! Because we do not subsample the output, this can result in large files
-! if the simulation uses many time steps. However, subsampling the output
-! here would result in a loss of accuracy when one later convolves
-! the results with the source time function
-   if(it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
-      !open new file
-      open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
-           status='unknown',action='write')
-   else if(it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
-      !append to existing file
-      open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
-           status='old',position='append',action='write')
-   endif
-! make sure we never write more than the maximum number of time steps
-! subtract half duration of the source to make sure travel time is correct
-     do isample = nit_written+1,min(it,NSTEP)
-! distinguish between single and double precision for reals
-       if(CUSTOM_REAL == SIZE_REAL) then
-         write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',seismograms(iorientation,irec_local,isample-nit_written)
-       else
-         write(IOUT,*) dble(isample-1)*DT - hdur,' ',seismograms(iorientation,irec_local,isample-nit_written)
-       endif
-     enddo
+      ! save seismograms in text format with no subsampling.
+      ! Because we do not subsample the output, this can result in large files
+      ! if the simulation uses many time steps. However, subsampling the output
+      ! here would result in a loss of accuracy when one later convolves
+      ! the results with the source time function
+      if(it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+        !open new file
+        open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
+              status='unknown',action='write')
+      else if(it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+        !append to existing file
+        open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
+              status='old',position='append',action='write')
+      endif
+      ! make sure we never write more than the maximum number of time steps
+      ! subtract half duration of the source to make sure travel time is correct
+      do isample = nit_written+1,min(it,NSTEP)
+        ! distinguish between single and double precision for reals
+        if(CUSTOM_REAL == SIZE_REAL) then
+          write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',seismograms(iorientation,irec_local,isample-nit_written)
+        else
+          write(IOUT,*) dble(isample-1)*DT - hdur,' ',seismograms(iorientation,irec_local,isample-nit_written)
+        endif
+      enddo
 
-     close(IOUT)
+      close(IOUT)
+    enddo
+  enddo
 
-     enddo
+  end subroutine write_adj_seismograms
 
- enddo
-
- end subroutine write_adj_seismograms
-
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
  subroutine band_instrument_code(DT,bic)
   ! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms

@@ -465,7 +465,7 @@ program combine_vol_data
     print *, ' '
     print *, 'cat mesh files: '
     print *, trim(command_name)
-    !call system(trim(command_name))
+    call system(trim(command_name))
 
   enddo
 

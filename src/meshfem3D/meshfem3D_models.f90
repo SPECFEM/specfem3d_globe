@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   module meshfem3D_models_par
 
 !---
@@ -632,6 +631,7 @@
 
 
   end subroutine meshfem3D_crust_broadcast
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -773,7 +773,7 @@
   double precision xmesh,ymesh,zmesh,r
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! local parameters
@@ -1049,17 +1049,17 @@
 
   implicit none
 
-  integer iregion_code
+  integer :: iregion_code
   ! note: r is the exact radius (and not r_prem with tolerance)
-  double precision xmesh,ymesh,zmesh,r
-  double precision vpv,vph,vsv,vsh,rho,eta_aniso,dvp
+  double precision :: xmesh,ymesh,zmesh,r
+  double precision :: vpv,vph,vsv,vsh,rho,eta_aniso,dvp
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  logical elem_in_crust
-  double precision moho
+  logical :: elem_in_crust
+  double precision :: moho
 
   ! local parameters
   double precision :: r_dummy,theta,phi
@@ -1075,9 +1075,10 @@
   ! gets point's position theta/phi, lat/lon
   call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
   call reduce(theta,phi)
-  lat = (PI/2.0d0-theta)*180.0d0/PI
-  lon = phi*180.0d0/PI
-  if(lon>180.0d0) lon = lon-360.0d0
+
+  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+  lon = phi * RADIANS_TO_DEGREES
+  if( lon > 180.0d0 ) lon = lon - 360.0d0
 
 !---
 !
@@ -1247,16 +1248,16 @@
   double precision moho
 
   ! attenuation values
-  double precision Qkappa,Qmu
+  double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_s, tau_e
-  double precision  T_c_source
+  double precision  :: T_c_source
 
   logical elem_in_crust
 
   ! local parameters
   double precision r_dummy,theta,phi,theta_degrees,phi_degrees
-  double precision, parameter :: rmoho_prem = 6371.0-24.4
   double precision r_used
+  double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
 
   ! initializes
   tau_e(:)   = 0.0d0

@@ -116,12 +116,13 @@
   double precision etax,etay,etaz
   double precision gammax,gammay,gammaz
 
-! timer MPI
+  ! timer MPI
   double precision time_start,tCPU
 
-! use dynamic allocation
+  ! use dynamic allocation
   double precision, dimension(:), allocatable :: final_distance
   double precision, dimension(:,:), allocatable :: final_distance_all
+
   double precision distmin,final_distance_max
 
 ! receiver information
@@ -171,7 +172,7 @@
     write(IMAIN,*)
   endif
 
-! define topology of the control element
+  ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
 
   if(myrank == 0) then
@@ -182,7 +183,7 @@
     write(IMAIN,*)
   endif
 
-! allocate memory for arrays using number of stations
+  ! allocate memory for arrays using number of stations
   allocate(epidist(nrec), &
           ix_initial_guess(nrec), &
           iy_initial_guess(nrec), &
@@ -242,9 +243,7 @@
 
   endif
 
-
-
-! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the master to the nodes
   call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
@@ -253,44 +252,44 @@
   call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-! loop on all the stations to locate them in the mesh
+  ! loop on all the stations to locate them in the mesh
   do irec=1,nrec
 
-! set distance to huge initial value
+    ! set distance to huge initial value
     distmin = HUGEVAL
 
-! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
+    ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
     if(ASSUME_PERFECT_SPHERE) then
-      theta = PI/2.0d0 - stlat(irec)*PI/180.0d0
+      theta = PI_OVER_TWO - stlat(irec)*DEGREES_TO_RADIANS
     else
-      theta = PI/2.0d0 - atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
+      theta = PI_OVER_TWO - atan(0.99329534d0*dtan(stlat(irec)*DEGREES_TO_RADIANS))
     endif
 
-    phi = stlon(irec)*PI/180.0d0
+    phi = stlon(irec)*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
-! compute epicentral distance
+    ! compute epicentral distance
     epidist(irec) = acos(cos(theta)*cos(theta_source) + &
-              sin(theta)*sin(theta_source)*cos(phi-phi_source))*180.0d0/PI
+              sin(theta)*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
 
-! print some information about stations
+    ! print some information about stations
     if(myrank == 0) &
       write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
                        '.',network_name(irec)(1:len_trim(network_name(irec))), &
                        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
 
-! record three components for each station
+    ! record three components for each station
     do iorientation = 1,3
 
-!     North
+      !     North
       if(iorientation == 1) then
         stazi = 0.d0
         stdip = 0.d0
-!     East
+      !     East
       else if(iorientation == 2) then
         stazi = 90.d0
         stdip = 0.d0
-!     Vertical
+      !     Vertical
       else if(iorientation == 3) then
         stazi = 0.d0
         stdip = - 90.d0
@@ -298,20 +297,20 @@
         call exit_MPI(myrank,'incorrect orientation')
       endif
 
-!     get the orientation of the seismometer
-      thetan=(90.0d0+stdip)*PI/180.0d0
-      phin=stazi*PI/180.0d0
+      !     get the orientation of the seismometer
+      thetan=(90.0d0+stdip)*DEGREES_TO_RADIANS
+      phin=stazi*DEGREES_TO_RADIANS
 
-! we use the same convention as in Harvard normal modes for the orientation
+      ! we use the same convention as in Harvard normal modes for the orientation
 
-!     vertical component
+      !     vertical component
       n(1) = cos(thetan)
-!     N-S component
+      !     N-S component
       n(2) = - sin(thetan)*cos(phin)
-!     E-W component
+      !     E-W component
       n(3) = sin(thetan)*sin(phin)
 
-!     get the Cartesian components of n in the model: nu
+      !     get the Cartesian components of n in the model: nu
       sint = sin(theta)
       cost = cos(theta)
       sinp = sin(phi)
@@ -362,7 +361,7 @@
                         +(y_target(irec)-dble(ystore(iglob)))**2 &
                         +(z_target(irec)-dble(zstore(iglob)))**2)
 
-!           keep this point if it is closer to the receiver
+            !  keep this point if it is closer to the receiver
             if(dist < distmin) then
               distmin = dist
               ispec_selected_rec(irec) = ispec
@@ -375,13 +374,13 @@
         enddo
       enddo
 
-! end of loop on all the spectral elements in current slice
+    ! end of loop on all the spectral elements in current slice
     enddo
 
 ! end of loop on all the stations
   enddo
 
-! create RECORDHEADER file with usual format for normal-mode codes
+  ! create RECORDHEADER file with usual format for normal-mode codes
   if(myrank == 0) then
 
     ! get the base pathname for output files
@@ -552,13 +551,13 @@ islice_selected_rec(:) = -1
       dy = - (y - y_target(irec))
       dz = - (z - z_target(irec))
 
-! compute increments
-! gamma does not change since we know the receiver is exactly on the surface
+      ! compute increments
+      ! gamma does not change since we know the receiver is exactly on the surface
       dxi  = xix*dx + xiy*dy + xiz*dz
       deta = etax*dx + etay*dy + etaz*dz
       if(RECEIVERS_CAN_BE_BURIED) dgamma = gammax*dx + gammay*dy + gammaz*dz
 
-! update values
+      ! update values
       xi = xi + dxi
       eta = eta + deta
       if(RECEIVERS_CAN_BE_BURIED) gamma = gamma + dgamma
@@ -575,15 +574,15 @@ islice_selected_rec(:) = -1
       if (gamma > 1.10d0) gamma = 1.10d0
       if (gamma < -1.10d0) gamma = -1.10d0
 
-! end of non linear iterations
+    ! end of non linear iterations
     enddo
 
-! impose receiver exactly at the surface after final iteration
+    ! impose receiver exactly at the surface after final iteration
     if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
-! compute final coordinates of point found
+    ! compute final coordinates of point found
     call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 ! store xi,eta and x,y,z of point found
     xi_receiver_subset(irec_in_this_subset) = xi
@@ -625,7 +624,7 @@ islice_selected_rec(:) = -1
   call MPI_GATHER(z_found_subset,nrec_SUBSET_current_size,MPI_DOUBLE_PRECISION,z_found_all,nrec_SUBSET_current_size, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-! this is executed by main process only
+  ! this is executed by main process only
   if(myrank == 0) then
 
     ! check that the gather operation went well
@@ -727,7 +726,6 @@ islice_selected_rec(:) = -1
         ! writes out actual receiver location to vtk file
         write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
-
     enddo
 
     ! compute maximal distance for all the receivers
@@ -764,7 +762,9 @@ islice_selected_rec(:) = -1
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
-    open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
+    open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
+          status='unknown',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file output_list_stations.txt')
     write(27,*)
     write(27,*) 'total number of stations: ',nrec
     write(27,*)
@@ -777,7 +777,9 @@ islice_selected_rec(:) = -1
 
     ! write out a filtered station list
     if( NCHUNKS /= 6 ) then
-      open(unit=27,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED',status='unknown')
+      open(unit=27,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
+            status='unknown',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
         write(27,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&

@@ -131,9 +131,9 @@
         gammazl = gammaz(i,j,k,ispec)
 
         ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+        jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                                     + xizl*(etaxl*gammayl-etayl*gammaxl))
 
         duxdxl = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
         duxdyl = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
@@ -465,7 +465,7 @@
         gammazl = gammaz(i,j,k,ispec)
 
         ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+        jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                       - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                       + xizl*(etaxl*gammayl-etayl*gammaxl))
 
@@ -569,31 +569,31 @@
         cosphifour = cosphisq * cosphisq
         sinphifour = sinphisq * sinphisq
 
-        costwotheta = cos(2.0*theta)
-        sintwotheta = sin(2.0*theta)
-        costwophi = cos(2.0*phi)
-        sintwophi = sin(2.0*phi)
+        costwotheta = cos(2.0_CUSTOM_REAL*theta)
+        sintwotheta = sin(2.0_CUSTOM_REAL*theta)
+        costwophi = cos(2.0_CUSTOM_REAL*phi)
+        sintwophi = sin(2.0_CUSTOM_REAL*phi)
 
-        cosfourtheta = cos(4.0*theta)
-        cosfourphi = cos(4.0*phi)
+        cosfourtheta = cos(4.0_CUSTOM_REAL*theta)
+        cosfourphi = cos(4.0_CUSTOM_REAL*phi)
 
         costwothetasq = costwotheta * costwotheta
 
         costwophisq = costwophi * costwophi
         sintwophisq = sintwophi * sintwophi
 
-        etaminone = eta_aniso - 1.0
-        twoetaminone = 2.0 * eta_aniso - 1.0
+        etaminone = eta_aniso - 1.0_CUSTOM_REAL
+        twoetaminone = 2.0_CUSTOM_REAL * eta_aniso - 1.0_CUSTOM_REAL
 
         ! precompute some products to reduce the CPU time
-        two_eta_aniso = 2.0*eta_aniso
-        four_eta_aniso = 4.0*eta_aniso
-        six_eta_aniso = 6.0*eta_aniso
+        two_eta_aniso = 2.0_CUSTOM_REAL*eta_aniso
+        four_eta_aniso = 4.0_CUSTOM_REAL*eta_aniso
+        six_eta_aniso = 6.0_CUSTOM_REAL*eta_aniso
 
-        two_rhovsvsq = 2.0*rhovsvsq
-        two_rhovshsq = 2.0*rhovshsq
-        four_rhovsvsq = 4.0*rhovsvsq
-        four_rhovshsq = 4.0*rhovshsq
+        two_rhovsvsq = 2.0_CUSTOM_REAL*rhovsvsq
+        two_rhovshsq = 2.0_CUSTOM_REAL*rhovshsq
+        four_rhovsvsq = 4.0_CUSTOM_REAL*rhovsvsq
+        four_rhovshsq = 4.0_CUSTOM_REAL*rhovshsq
 
 
         ! way 2: pre-compute temporary values
@@ -983,7 +983,7 @@
         gammazl = gammaz(i,j,k,ispec)
 
         ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+        jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                       - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                       + xizl*(etaxl*gammayl-etayl*gammaxl))
 

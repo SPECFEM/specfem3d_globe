@@ -84,7 +84,7 @@
 ! nb of global points shared with the other slice
   npoin2D_eta = 0
 
-! nb of elements in this cut-plane
+  ! nb of elements in this cut-plane
   ispecc1=0
 
   do ispec=1,nspec
@@ -131,7 +131,7 @@
 ! nb of global points shared with the other slice
   npoin2D_eta = 0
 
-! nb of elements in this cut-plane
+  ! nb of elements in this cut-plane
   ispecc2=0
 
   do ispec=1,nspec

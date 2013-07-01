@@ -89,7 +89,8 @@
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-  ! corner detection here
+
+    ! corner detection here
     if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
       ispeccount=ispeccount+1
       ! loop on all the points
@@ -198,13 +199,12 @@
 ! corner detection here
   if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
 
-    ispeccount=ispeccount+1
+      ispeccount=ispeccount+1
 
-! loop on all the points
-  ix = 1
-  iy = NGLLY
-  do iz=1,NGLLZ
-
+      ! loop on all the points
+      ix = 1
+      iy = NGLLY
+      do iz=1,NGLLZ
         ! select point, if not already selected
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.

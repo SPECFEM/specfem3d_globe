@@ -187,9 +187,12 @@
 ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
 
-    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) write(27) muvstore
+    ! note: muvstore needed for Q_mu shear attenuation in inner core
+    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
+      write(27) muvstore
+    endif
 
-!   save anisotropy in the mantle only
+    !   save anisotropy in the mantle only
     if(TRANSVERSE_ISOTROPY) then
       if(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
         write(27) kappahstore
@@ -198,7 +201,7 @@
       endif
     endif
 
-!   save anisotropy in the inner core only
+    !   save anisotropy in the inner core only
     if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
       write(27) c11store
       write(27) c33store
@@ -206,8 +209,6 @@
       write(27) c13store
       write(27) c44store
     endif
-
-
 
     if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
         write(27) c11store
@@ -235,7 +236,7 @@
 
   endif
 
-! Stacey
+  ! Stacey
   if(ABSORBING_CONDITIONS) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -247,14 +248,14 @@
 
   endif
 
-! mass matrices
-!
-! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
-! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-!
-! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! mass matrices
+  !
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
      write(27) rmassx
      write(27) rmassy
@@ -262,10 +263,10 @@
 
   write(27) rmassz
 
-! additional ocean load mass matrix if oceans and if we are in the crust
+  ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
 
-  close(27)
+  close(27) ! solver_data.bin
 
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted',action='write')
 
