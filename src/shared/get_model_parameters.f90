@@ -397,7 +397,7 @@
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
-    ! note: after call to this routines read_compute_parameters() we will set
+    ! note: after call to this routine read_compute_parameters() we will set
     ! mgll_v%model_gll flag and reset
     ! THREE_D_MODEL = THREE_D_MODEL_S29EA
     ! (not done here because we will use mgll_v%model_gll flag to identify this
@@ -555,15 +555,13 @@
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-    ! our implementation of AK135 has not been checked carefully yet
-    ! therefore let us doublecheck it carefully one day
 
-    ! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
-    ! AK135 without the 300 meters of mud layer
+!! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
+
     ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6361000.d0
-    RMOHO  = 6353000.d0
-    R80    = 6291000.d0
+    RMIDDLE_CRUST = 6351000.d0
+    RMOHO  = 6336000.d0
+    R80    = 6293500.d0
     R220   = 6161000.d0
     R400   = 5961000.d0
     R670   = 5711000.d0
@@ -571,9 +569,9 @@
     RCMB   = 3479500.d0
     RICB   = 1217500.d0
 
-    ! values for AK135 that are not discontinuities
+    ! values for AK135F that are not discontinuities
     R600 = 5771000.d0
-    R771 = 5611000.d0
+    R771 = 5600000.d0
 
     RHO_TOP_OC = 9914.5000 / RHOAV
     RHO_BOTTOM_OC = 12139.1000 / RHOAV

@@ -162,7 +162,6 @@
     NSPEC_INNER_CORE_STR_AND_ATT = 1
   endif
 
-
   if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     NSPEC_CRUST_MANTLE_STRAIN_ONLY = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_STRAIN_ONLY = NSPEC(IREGION_INNER_CORE)
@@ -492,7 +491,6 @@
   ! b_A_array_rotation,b_B_array_rotation
   static_memory_size = static_memory_size + &
     2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROT_ADJOINT*dble(CUSTOM_REAL)
-
 
   end subroutine memory_eval
 

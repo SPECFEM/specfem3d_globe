@@ -426,12 +426,17 @@
 
   implicit none
 
-  integer npts, ispec
+  integer :: npts,ispec,istart_left,istart_right,i
   integer, parameter :: NBNODE = 8
-  double precision pts(NBNODE+1,2), points(npts,2)
+  double precision pts(NBNODE+1,2),points(npts,2)
 
-  pts(1:8,:) = points( ( (ispec-1) * NBNODE)+1 : ( (ispec) * NBNODE ), : )
-  pts(NBNODE+1,:) = pts(1,:)  ! Use first point as the last point
+    istart_left = 1
+    istart_right = (ispec-1)*NBNODE + 1
+    do i = 0,NBNODE-1
+      pts(istart_left + i,1) = points(istart_right + i,1)
+      pts(istart_left + i,2) = points(istart_right + i,2)
+    enddo
+    pts(NBNODE+1,:) = pts(1,:)  ! use first point as the last point
 
   end subroutine get_element
 
