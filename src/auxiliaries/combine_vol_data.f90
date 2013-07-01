@@ -209,6 +209,7 @@ program combine_vol_data
 
     print *, 'nspec(it) = ', nspec(1:num_node)
     print *, 'nglob(it) = ', nglob(1:num_node)
+    print *, 'nelement(it) = ', nelement(1:num_node)
 
     call write_integer_fd(efd,sum(nelement(1:num_node)))
 

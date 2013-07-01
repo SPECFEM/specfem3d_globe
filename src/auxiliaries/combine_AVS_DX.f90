@@ -1006,12 +1006,14 @@
   if(ivalue == 3) then
     print *
     print *,'elevation min, max = ',minval(elevation_sphere),maxval(elevation_sphere)
-    if(TOPOGRAPHY .or. CRUSTAL) print *,'elevation has been normalized for topography'
-    print *
+    if(TOPOGRAPHY .or. CRUSTAL) then
+      print *,'elevation has been normalized for topography'
+      print *
 
 ! print percentage of oceans at surface of the globe
-    print *
-    print *,'the oceans represent ',100. * below_zero / (above_zero + below_zero),' % of the surface of the mesh'
+      print *
+      print *,'the oceans represent ',100. * below_zero / (above_zero + below_zero),' % of the surface of the mesh'
+    endif
     print *
 
   endif
