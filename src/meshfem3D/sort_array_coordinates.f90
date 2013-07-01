@@ -147,7 +147,7 @@
 
   if(n == 1) return
 
-  L = floor(n/2.0) + 1
+  L = n/2 + 1
   ir = n
 
   do while( .true. )

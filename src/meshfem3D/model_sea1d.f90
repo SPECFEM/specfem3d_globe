@@ -103,9 +103,9 @@
   double precision :: r,frac,scaleval
   integer :: i
 
-!! DK DK UGLY implementation of model sea1d below and its radii in
-!! DK DK UGLY subroutine read_parameter_file.f90 has not been thoroughly
-!! DK DK UGLY checked yet
+!! DK DK implementation of model sea1d below and its radii in
+!! DK DK subroutine read_parameter_file.f90 has not been thoroughly
+!! DK DK checked yet
 
 ! compute real physical radius in meters
   r = x * R_EARTH

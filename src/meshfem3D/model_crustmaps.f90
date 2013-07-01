@@ -140,7 +140,7 @@
                         eucrustp3,eucrustp4,eucrustp5,eucrustp6,eucrustp7,&
                         eucrusts3,eucrusts4,eucrusts5,eucrusts6,eucrusts7
 
-!Matthias Meschede
+! Matthias Meschede
   call get_value_string(eucrustt3, 'model.eucrustt3','DATA/crustmap/eucrustt3.cmap')
   call get_value_string(eucrustt4, 'model.eucrustt4','DATA/crustmap/eucrustt4.cmap')
   call get_value_string(eucrustt5, 'model.eucrustt5','DATA/crustmap/eucrustt5.cmap')
@@ -164,8 +164,6 @@
   call get_value_string(eucrusts5, 'model.eucrusts5','DATA/crustmap/eucrusts5.cmap')
   call get_value_string(eucrusts6, 'model.eucrusts6','DATA/crustmap/eucrusts6.cmap')
   call get_value_string(eucrusts7, 'model.eucrusts7','DATA/crustmap/eucrusts7.cmap')
-
-
 
   open(unit=1,file=eucrustt3,status='old',action='read')
   do ila=1,180*CRUSTMAP_RESOLUTION
@@ -196,8 +194,6 @@
     read(1,*) (thickness(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
   enddo
   close(1)
-
-
 
  open(unit=1,file=eucrustr3,status='old',action='read')
   do ila=1,180*CRUSTMAP_RESOLUTION
@@ -260,8 +256,6 @@
     read(1,*) (velocp(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
   enddo
   close(1)
-
-
 
   open(unit=1,file=eucrusts3,status='old',action='read')
   do ila=1,180*CRUSTMAP_RESOLUTION
@@ -656,4 +650,3 @@
   if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
   end subroutine ibilinearmap
-

@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
 ! define sets of colors that contain disconnected elements for the CUDA solver.
 ! also split the elements into two subsets: inner and outer elements, in order
 ! to be able to compute the outer elements first in the solver and then

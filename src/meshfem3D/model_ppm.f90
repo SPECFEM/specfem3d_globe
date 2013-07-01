@@ -133,7 +133,6 @@
 
   end subroutine model_ppm_broadcast
 
-
 !
 !--------------------------------------------------------------------------------------------------
 !
@@ -158,8 +157,8 @@
   counter=0
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
-    write(IMAIN,*) ' error count opening: ',trim(filename)
-    call exit_mpi(0,"error count opening model ppm")
+    write(IMAIN,*) ' error opening: ',trim(filename)
+    call exit_mpi(0,"error opening model ppm")
   endif
 
   ! first line is text and will be ignored
@@ -226,7 +225,6 @@
     write(IMAIN,*) '  got: ',counter
     call exit_mpi(0,' error model PPM ')
   endif
-
 
   ! gets depths (in km) of upper and lower limit
   PPM_minlat = minval( PPM_lat(1:PPM_num_v) )

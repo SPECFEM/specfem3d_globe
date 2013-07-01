@@ -40,7 +40,6 @@
 !     Geophys. J. Int., DOI: 10.1111/j.1365-246X.2010.04884.x
 !--------------------------------------------------------------------------------------------------
 
-
   module model_s40rts_par
 
   ! three_d_mantle_model_constants
@@ -63,7 +62,6 @@
 !
 !--------------------------------------------------------------------------------------------------
 !
-
 
   subroutine model_s40rts_broadcast(myrank)
 
@@ -173,6 +171,7 @@
   ! local parameters
   ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
+
   double precision, parameter :: RMOHO_ = 6346600.d0
   double precision, parameter :: RCMB_ = 3480000.d0
   double precision, parameter :: R_EARTH_ = 6371000.d0
@@ -243,8 +242,6 @@
 
   implicit none
   include "constants.h"
-
-!!!!!!!!!!!!!!!!!!!  double precision spknt(NK_20+1),qq0(NK_20+1,NK_20+1),qq(3,NK_20+1,NK_20+1)
 
   ! local parameters
   integer :: i,j

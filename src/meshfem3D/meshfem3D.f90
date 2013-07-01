@@ -61,6 +61,20 @@
 ! pages = {1-32},
 ! number = {1}}
 !
+! @ARTICLE{PeKoLuMaLeCaLeMaLiBlNiBaTr11,
+! author = {Daniel Peter and Dimitri Komatitsch and Yang Luo and Roland Martin
+!     and Nicolas {Le Goff} and Emanuele Casarotti and Pieyre {Le Loher}
+!     and Federica Magnoni and Qinya Liu and C\'eline Blitz and Tarje Nissen-Meyer
+!     and Piero Basini and Jeroen Tromp},
+! title = {Forward and adjoint simulations of seismic wave propagation on fully
+!     unstructured hexahedral meshes},
+! journal={Geophys. J. Int.},
+! year = {2011},
+! volume = {186},
+! pages = {721-739},
+! number = {2},
+! doi = {10.1111/j.1365-246X.2011.05044.x}}
+!
 ! or
 !
 ! @INCOLLECTION{ChKoViCaVaFe07,
@@ -139,7 +153,19 @@
 ! pages = {1-32},
 ! number = {1}}
 !
-! or
+! @ARTICLE{PeKoLuMaLeCaLeMaLiBlNiBaTr11,
+! author = {Daniel Peter and Dimitri Komatitsch and Yang Luo and Roland Martin
+!     and Nicolas {Le Goff} and Emanuele Casarotti and Pieyre {Le Loher}
+!     and Federica Magnoni and Qinya Liu and C\'eline Blitz and Tarje Nissen-Meyer
+!     and Piero Basini and Jeroen Tromp},
+! title = {Forward and adjoint simulations of seismic wave propagation on fully
+!     unstructured hexahedral meshes},
+! journal={Geophys. J. Int.},
+! year = {2011},
+! volume = {186},
+! pages = {721-739},
+! number = {2},
+! doi = {10.1111/j.1365-246X.2011.05044.x}}
 !
 ! @ARTICLE{LiTr06,
 ! author={Qinya Liu and Jeroen Tromp},
@@ -197,7 +223,7 @@
 !     new convention for the name of seismograms, to conform to the IRIS standard;
 !     new directory structure
 !
-! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
+! v. 5.0, many developers, February 2010:
 !     new moho mesh stretching honoring crust2.0 moho depths,
 !     new attenuation assignment, new SAC headers, new general crustal models,
 !     faster performance due to Deville routines and enhanced loop unrolling,
@@ -216,7 +242,7 @@
 !      added AK135 and 1066a, fixed topography/bathymetry routine,
 !      new attenuation routines, faster and better I/Os on very large
 !      systems, many small improvements and bug fixes, new "configure"
-!      script, new Pyre version, new user's manual etc.
+!      script, new user's manual etc.
 !
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
 !      any size of chunk, 3D attenuation, case of two chunks,
@@ -280,6 +306,7 @@
 
 
 ! ************** PROGRAM STARTS HERE **************
+
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------

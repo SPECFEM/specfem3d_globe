@@ -93,6 +93,10 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
+
+          weight = wxgll(i)*wygll(j)*wzgll(k)
+          iglob = ibool(i,j,k,ispec)
+
           ! compute the jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
@@ -107,10 +111,6 @@
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                           - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                           + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-
-          iglob = ibool(i,j,k,ispec)
-          weight = wxgll(i)*wygll(j)*wzgll(k)
 
           ! definition depends if region is fluid or solid
           select case( iregion_code)
@@ -161,7 +161,7 @@
       ! gets spectral element index
       ispec = ibelm_top(ispec2D)
 
-      ! assumes elements are order such that k == NGLLZ is top surface
+      ! assumes elements are ordered such that k == NGLLZ is the top surface
       k = NGLLZ
 
       ! loops over surface points
@@ -185,8 +185,11 @@
             ! map to latitude and longitude for bathymetry routine
             ! slightly move points to avoid roundoff problem when exactly on the polar axis
             call xyz_2_rthetaphi_dble(xval,yval,zval,rval,theta,phi)
-            theta = theta + 0.0000001d0
-            phi = phi + 0.0000001d0
+!! DK DK Jul 2013: added a test to only do this if we are on the axis
+            if(abs(theta) > 89.99d0) then
+              theta = theta + 0.0000001d0
+              phi = phi + 0.0000001d0
+            endif
             call reduce(theta,phi)
 
             ! convert the geocentric colatitude to a geographic colatitude

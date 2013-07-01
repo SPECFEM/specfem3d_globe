@@ -164,7 +164,6 @@
   integer numvar
   integer ierror
 
-
   lu=1                    ! --- log unit: input 3-D model
   if(THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI) then
     modeldef='DATA/s362ani/S362ANI'
@@ -966,9 +965,10 @@
 
   integer :: ncoef,i,ihor,ifst,ilst,ifst1,ios,lstr,nmodkern,idummy,nhorpar,lmax
 
-  open(lu,file=filename,iostat=ios)
-  if(ios /= 0) then
-  stop 'error opening 3-d model'
+  open(lu,file=filename,status='old',action='read',iostat=ios)
+  if ( ios /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(filename), '": ', ios
+    call exit_MPI(0, 'error model s362ani')
   endif
   do while (ios == 0)
   read(lu,"(a)",iostat=ios) string
@@ -1084,7 +1084,7 @@
 
   integer :: ncon,nver
 
-! originally define
+! Daniel Peter: original define
 !
 !  real(kind=4) verlat(1)
 !  real(kind=4) verlon(1)
@@ -1093,7 +1093,7 @@
 !  integer icon(1)
 !  real(kind=4) con(1)
 
-! avoiding out-of-bounds errors
+! Daniel Peter: avoiding out-of-bounds errors
   real(kind=4) verlat(nver)
   real(kind=4) verlon(nver)
   real(kind=4) verrad(nver)
@@ -1831,7 +1831,6 @@
   real(kind=4) :: THETA,DSFL3,COSEC,SFL3
 
   real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1) !! X, XP, XCOSEC should go from 1 to M+1
-
 
 !!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
 

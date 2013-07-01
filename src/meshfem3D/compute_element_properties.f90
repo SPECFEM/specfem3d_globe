@@ -91,6 +91,16 @@
 
 ! attenuation
   integer :: vx,vy,vz,nspec_att
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   double precision, dimension(vx,vy,vz,nspec_att) :: Qmu_store
   double precision, dimension(N_SLS,vx,vy,vz,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS) :: tau_s
@@ -209,7 +219,7 @@
   !           problems with the jacobian. using the anchors is therefore more robust.
   ! adds surface topography
   if( TOPOGRAPHY ) then
-    if( idoubling(ispec) == IFLAG_CRUST .or. &
+    if(idoubling(ispec) == IFLAG_CRUST .or. &
        idoubling(ispec) == IFLAG_220_80 .or. &
        idoubling(ispec) == IFLAG_80_MOHO) then
       ! stretches mesh between surface and R220 accordingly
@@ -274,7 +284,7 @@
   ! updates jacobian
   ! (only needed for second meshing phase)
   if( ipass == 2 ) then
-    call calc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
+    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
                                 ispec,nspec,&
                                 xixstore,xiystore,xizstore,&
                                 etaxstore,etaystore,etazstore,&

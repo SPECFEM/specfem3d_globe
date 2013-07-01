@@ -190,7 +190,8 @@
   enddo
 
   ! cleanup
-  deallocate(copy_ibool_ori,mask_ibool)
+  deallocate(copy_ibool_ori,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(mask_ibool,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
   end subroutine get_global_indirect_addressing
 
@@ -220,7 +221,7 @@
 
   if (n == 1) return
 
-  L = floor(n/2.0) + 1
+  L = n/2 + 1
   ir = n
 
   do while( .true. )
@@ -235,7 +236,7 @@
       ind(ir) = ind(1)
       ir = ir-1
 
-      ! checks exit criteria
+      ! checks exit criterion
       if (ir == 1) then
          ind(1) = indx
          return

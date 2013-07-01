@@ -76,6 +76,7 @@
   integer :: nglob
   integer :: NGLOB1D_RADIAL
   character(len=150) :: OUTPUT_FILES,ERR_MSG
+
   ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
 
@@ -127,6 +128,7 @@
   ! this to avoid problem at compile time if less than six chunks
   integer :: addressing_big(NCHUNKS_MAX,0:NPROC_XI-1,0:NPROC_ETA-1)
 
+! number of faces between chunks
   integer :: NUM_FACES
   integer :: NPROC_ONE_DIRECTION
   integer :: ier
@@ -209,7 +211,6 @@
       write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
       write(IMAIN,*)
     endif
-
     ! exit routine
     return
   endif
