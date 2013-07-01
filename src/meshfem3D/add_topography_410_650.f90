@@ -91,8 +91,8 @@
     call reduce(theta,phi)
 
 ! get colatitude and longitude in degrees
-    xcolat = sngl(theta*180.0d0/PI)
-    xlon = sngl(phi*180.0d0/PI)
+    xcolat = sngl(theta*RADIANS_TO_DEGREES)
+    xlon = sngl(phi*RADIANS_TO_DEGREES)
 
 ! compute topography on 410 and 650 at current point
     call subtopo(xcolat,xlon,topo410out,topo650out, &
@@ -205,8 +205,8 @@
         call reduce(theta,phi)
 
         ! get colatitude and longitude in degrees
-        xcolat = sngl(theta*180.0d0/PI)
-        xlon = sngl(phi*180.0d0/PI)
+        xcolat = sngl(theta*RADIANS_TO_DEGREES)
+        xlon = sngl(phi*RADIANS_TO_DEGREES)
 
         ! compute topography on 410 and 650 at current point
         call subtopo(xcolat,xlon,topo410out,topo650out, &

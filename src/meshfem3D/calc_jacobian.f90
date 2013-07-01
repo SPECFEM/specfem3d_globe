@@ -87,8 +87,8 @@
 
   ! first go over all 125 GLL points
   do k=1,NGLLZ
-     do j=1,NGLLY
-        do i=1,NGLLX
+    do j=1,NGLLY
+      do i=1,NGLLX
 
         xxi = ZERO
         xeta = ZERO
@@ -100,14 +100,14 @@
         zeta = ZERO
         zgamma = ZERO
 
-            xi = xigll(i)
-            eta = yigll(j)
-            gamma = zigll(k)
+        xi = xigll(i)
+        eta = yigll(j)
+        gamma = zigll(k)
 
-            ! calculate lagrange polynomial and its derivative
-            call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
-            call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
-            call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
+        ! calculate lagrange polynomial and its derivative
+        call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
+        call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
+        call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
 
         ! test parameters
         sumshape = ZERO
@@ -246,10 +246,14 @@
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
   implicit none
+
   include "constants.h"
+
   ! input parameters
   integer::myrank,ispecb,NSPEC2DMAX_AB,NGLLA,NGLLB
+
   double precision,dimension(NGLLA,NGLLB)::xelm2D,yelm2D,zelm2D
+
   double precision,dimension(NGLLA)::xigll
   double precision,dimension(NGLLB)::yigll
 

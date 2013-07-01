@@ -75,7 +75,7 @@
 
   ! get coordinates of surface mesh and surface displacement
   ipoin = 0
-  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+  do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
 
     ! in case of global, NCHUNKS_VAL == 6 simulations, be aware that for
@@ -121,7 +121,10 @@
   ! save movie data to disk in home directory
   if(myrank == 0) then
     write(outputname,"('/moviedata',i6.6)") it
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',action='write')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname, &
+         status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening moviedata file')
+
     write(IOUT) store_val_x_all
     write(IOUT) store_val_y_all
     write(IOUT) store_val_z_all

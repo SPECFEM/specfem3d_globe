@@ -74,13 +74,13 @@
 ! global point number and coordinates left MPI 1D buffer
   open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin1D = 0
 
-! nb of elements in this 1D buffer
+  ! nb of elements in this 1D buffer
   ispeccount=0
 
   do ispec=1,nspec
@@ -124,13 +124,13 @@
 ! global point number and coordinates right MPI 1D buffer
   open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin1D = 0
 
-! nb of elements in this 1D buffer
+  ! nb of elements in this 1D buffer
   ispeccount=0
   do ispec=1,nspec
     ! remove central cube for chunk buffers
@@ -138,7 +138,8 @@
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-  ! corner detection here
+
+    ! corner detection here
     if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
       ispeccount=ispeccount+1
       ! loop on all the points
@@ -177,13 +178,13 @@
 ! global point number and coordinates left MPI 1D buffer
   open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin1D = 0
 
-! nb of elements in this 1D buffer
+  ! nb of elements in this 1D buffer
   ispeccount=0
 
   do ispec=1,nspec
@@ -232,13 +233,13 @@
 ! global point number and coordinates right MPI 1D buffer
   open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! nb of global points shared with the other slice
+  ! nb of global points shared with the other slice
   npoin1D = 0
 
-! nb of elements in this 1D buffer
+  ! nb of elements in this 1D buffer
   ispeccount=0
 
   do ispec=1,nspec
