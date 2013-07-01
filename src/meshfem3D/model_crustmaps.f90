@@ -121,7 +121,7 @@
   implicit none
   include "constants.h"
 
-!Matthias Meschede
+! Matthias Meschede
  !model_crustmaps_variables
   type model_crustmaps_variables
     sequence
@@ -273,11 +273,11 @@
   !model_crustmaps_variables
 
 
-  double precision lat,lon,x,vp,vs,rho,moho
-  logical found_crust,elem_in_crust
-  double precision h_sed,h_uc
-  double precision x3,x4,x5,x6,x7,scaleval
-  double precision vps(NLAYERS_CRUSTMAP),vss(NLAYERS_CRUSTMAP),rhos(NLAYERS_CRUSTMAP),thicks(NLAYERS_CRUSTMAP)
+  double precision :: lat,lon,x,vp,vs,rho,moho
+  logical :: found_crust,elem_in_crust
+  double precision :: h_sed,h_uc
+  double precision :: x3,x4,x5,x6,x7,scaleval
+  double precision,dimension(NLAYERS_CRUSTMAP) :: vps,vss,rhos,thicks
 
   call read_crustmaps(lat,lon,vps,vss,rhos,thicks,GC_V)
 
@@ -346,13 +346,15 @@
 ! crustal vp and vs in km/s, layer thickness in km
 
   implicit none
+
   include "constants.h"
 
 
-! argument variables
+  ! argument variables
   double precision lat,lon
   double precision rhos(5),thicks(5),velp(5),vels(5)
-!Matthias Meschede
+
+! Matthias Meschede
  !model_crustmaps_variables
   type model_crustmaps_variables
     sequence
@@ -569,10 +571,10 @@
   subroutine ibilinearmap(lat,lng,iupcolat,ileftlng,weightup,weightleft)
 
   implicit none
+
   include "constants.h"
 
-
-! argument variables
+  ! argument variables
   double precision weightup,weightleft
   double precision lat,lng, xlng
   double precision buffer
@@ -603,42 +605,4 @@
   if(ileftlng<1) ileftlng=360*CRUSTMAP_RESOLUTION
   if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
-
-
   end subroutine ibilinearmap
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-!
-!  subroutine ilatlng(lat,lng,icolat,ilng)
-!
-!  implicit none
-!  include "constants.h"
-!
-!
-!  ! argument variables
-!  double precision lat,lng, xlng
-!  integer icolat,ilng
-!
-!  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
-!    stop 'error in latitude/longitude range in icolat_ilon'
-!
-!  if(lng<0) then
-!    xlng=lng+360.0
-!  else
-!    xlng=lng
-!  endif
-!
-!  icolat=int(1+((90.0-lat)*CRUSTMAP_RESOLUTION))
-!  !  icolat=10
-!  if(icolat == 180*CRUSTMAP_RESOLUTION+1) icolat=180*CRUSTMAP_RESOLUTION
-!  ilng=int(1+(xlng*CRUSTMAP_RESOLUTION))
-!  !  ilng=10
-!  if(ilng == 360*CRUSTMAP_RESOLUTION+1) ilng=360*CRUSTMAP_RESOLUTION
-!
-!  if(icolat>180*CRUSTMAP_RESOLUTION .or. icolat<1) stop 'error in routine icolat_ilon'
-!  if(ilng<1 .or. ilng>360*CRUSTMAP_RESOLUTION) stop 'error in routine icolat_ilon'
-!
-!  end subroutine ilatlng
-

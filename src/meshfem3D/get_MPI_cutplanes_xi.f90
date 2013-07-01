@@ -38,31 +38,38 @@
 
   include "constants.h"
 
-  integer :: nspec,myrank,iregion
+  integer :: nspec,myrank
+
+  logical,dimension(2,nspec) :: iMPIcut_xi
+
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+
+  ! logical mask used to create arrays iboolleft_xi and iboolright_xi
+  integer :: npointot
+  logical,dimension(npointot) :: mask_ibool
+
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_ETA_FACE
 
-  logical iMPIcut_xi(2,nspec)
+  integer :: iregion
+  integer :: npoin2D_xi
 
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  ! processor identification
+  character(len=150) :: prname
 
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-! logical mask used to create arrays iboolleft_xi and iboolright_xi
-  integer npointot
-  logical mask_ibool(npointot)
-
-! global element numbering
+  ! local parameters
+  ! global element numbering
   integer :: ispec
+  ! MPI cut-plane element numbering
+  integer :: ispecc1,ispecc2,ix,iy,iz
+  integer :: nspec2Dtheor
+  integer :: ier
 
-! MPI cut-plane element numbering
-  integer ispecc1,ispecc2,npoin2D_xi,ix,iy,iz
-  integer nspec2Dtheor
-  integer ier
+  character(len=150) :: errmsg
 
-! processor identification
-  character(len=150) prname,errmsg
+  ! debug: file output
+  logical,parameter :: DEBUG = .false.
 
   ! theoretical number of surface elements in the buffers
   ! cut planes along xi=constant correspond to ETA faces
@@ -107,8 +114,8 @@
           do iz=1,NGLLZ
             ! select point, if not already selected
             if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-                mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-                npoin2D_xi = npoin2D_xi + 1
+              mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+              npoin2D_xi = npoin2D_xi + 1
                 write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                       ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
@@ -157,8 +164,8 @@
         do iz=1,NGLLZ
           ! select point, if not already selected
           if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-              mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-              npoin2D_xi = npoin2D_xi + 1
+            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+            npoin2D_xi = npoin2D_xi + 1
               write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                     ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif

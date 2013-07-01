@@ -25,9 +25,9 @@
 !
 !=====================================================================
 
-  subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-                        idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion)
+  subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta, &
+                                ibool,idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
+                                NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion)
 
 ! routine to create the MPI 1D chunk buffers for edges
 
@@ -35,32 +35,33 @@
 
   include "constants.h"
 
-  integer nspec,myrank,iregion
+  integer :: nspec,myrank
+
+  logical,dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
+
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(nspec) :: idoubling
+
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+
+  ! logical mask used to create arrays ibool1D
+  integer :: npointot
+  logical,dimension(npointot) :: mask_ibool
+
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
+  integer :: iregion
 
-  logical iMPIcut_xi(2,nspec)
-  logical iMPIcut_eta(2,nspec)
+  ! processor identification
+  character(len=150) :: prname
 
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  ! local parameters
+  ! global element numbering
+  integer :: ispec
+  ! MPI 1D buffer element numbering
+  integer :: ispeccount,npoin1D,ix,iy,iz
 
-  integer idoubling(nspec)
-
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-! logical mask used to create arrays ibool1D
-  integer npointot
-  logical mask_ibool(npointot)
-
-! global element numbering
-  integer ispec
-
-! MPI 1D buffer element numbering
-  integer ispeccount,npoin1D,ix,iy,iz
-
-! processor identification
-  character(len=150) prname
+  ! debug file output
+  logical,parameter :: DEBUG = .false.
 
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
@@ -99,8 +100,9 @@
       do iz=1,NGLLZ
         ! select point, if not already selected
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-            npoin1D = npoin1D + 1
+          ! adds this point
+          mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+          npoin1D = npoin1D + 1
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                   ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
         endif
@@ -149,8 +151,8 @@
       do iz=1,NGLLZ
         ! select point, if not already selected
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-            npoin1D = npoin1D + 1
+          mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+          npoin1D = npoin1D + 1
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                   ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
         endif
@@ -190,14 +192,14 @@
 
   do ispec=1,nspec
 
-! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    ! remove central cube for chunk buffers
+    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-! corner detection here
-  if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
+    ! corner detection here
+    if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
 
       ispeccount=ispeccount+1
 
@@ -207,8 +209,8 @@
       do iz=1,NGLLZ
         ! select point, if not already selected
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-            npoin1D = npoin1D + 1
+          mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+          npoin1D = npoin1D + 1
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                   ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
         endif
@@ -244,26 +246,26 @@
 
   do ispec=1,nspec
 
-! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    ! remove central cube for chunk buffers
+    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-! corner detection here
-  if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(2,ispec)) then
+    ! corner detection here
+    if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(2,ispec)) then
 
-    ispeccount=ispeccount+1
+      ispeccount=ispeccount+1
 
-! loop on all the points
-  ix = NGLLX
-  iy = NGLLY
-  do iz=1,NGLLZ
+      ! loop on all the points
+      ix = NGLLX
+      iy = NGLLY
+      do iz=1,NGLLZ
 
         ! select point, if not already selected
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-            npoin1D = npoin1D + 1
+          mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+          npoin1D = npoin1D + 1
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                   ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
         endif
@@ -279,7 +281,7 @@
 
   close(10)
 
-! compare number of edge elements and points detected to analytical value
+  ! compare number of edge elements and points detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,3) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,3)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 

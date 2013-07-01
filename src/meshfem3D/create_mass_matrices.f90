@@ -73,9 +73,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob_oceans) :: rmass_ocean_load
 
   ! arrays with the mesh in double precision
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ystore
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   double precision :: RHO_OCEANS
 
@@ -263,10 +261,13 @@
     ! for surface elements exactly at the top of the crust (ocean bottom)
     do ispec2D_top_crust = 1,NSPEC2D_TOP
 
+      ! gets spectral element index
       ispec_oceans = ibelm_top(ispec2D_top_crust)
 
+      ! assumes elements are ordered such that k == NGLLZ is the top surface
       iz_oceans = NGLLZ
 
+      ! loops over surface points
       do ix_oceans = 1,NGLLX
         do iy_oceans = 1,NGLLY
 
@@ -293,7 +294,6 @@
             ! get geographic latitude and longitude in degrees
             lat = 90.0d0 - colat*180.0d0/PI
             lon = phival*180.0d0/PI
-            elevation = 0.d0
 
             ! compute elevation at current point
             call get_topo_bathy(lat,lon,elevation,ibathy_topo)

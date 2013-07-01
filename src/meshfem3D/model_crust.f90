@@ -35,7 +35,6 @@
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_crust_broadcast(myrank,CM_V)
 
 ! standard routine to setup model
@@ -107,14 +106,14 @@
   logical found_crust,elem_in_crust
 
   ! local parameters
-  double precision h_sed,h_uc
-  double precision x3,x4,x5,x6,x7,scaleval
-  double precision vps(NLAYERS_CRUST),vss(NLAYERS_CRUST),rhos(NLAYERS_CRUST),thicks(NLAYERS_CRUST)
+  double precision :: h_sed,h_uc
+  double precision :: x3,x4,x5,x6,x7,scaleval
+  double precision,dimension(NLAYERS_CRUST):: vps,vss,rhos,thicks
 
   ! initializes
-  vp = 0.d0
-  vs = 0.d0
-  rho = 0.d0
+  vp = ZERO
+  vs = ZERO
+  rho = ZERO
 
   ! gets smoothed crust2.0 structure
   call crust_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,CM_V%abbreviation, &
@@ -129,6 +128,13 @@
   x7 = (R_EARTH-(h_uc+thicks(6)+thicks(7))*1000.0d0)/R_EARTH
 
   found_crust = .true.
+
+  ! checks moho value
+  !moho = h_uc + thicks(6) + thicks(7)
+  !if( moho /= thicks(NLAYERS_CRUST) ) then
+  ! print*,'moho:',moho,thicks(NLAYERS_CRUST)
+  ! print*,'  lat/lon/x:',lat,lon,x
+  !endif
 
 !  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
 !   .and. h_sed >= MINIMUM_SEDIMENT_THICKNESS) then
@@ -190,6 +196,7 @@
   subroutine read_crust_model(CM_V)
 
   implicit none
+
   include "constants.h"
 
 ! model_crust_variables
@@ -207,14 +214,12 @@
   type (model_crust_variables) CM_V
 ! model_crust_variables
 
-! local variables
-  integer i,ier
-  integer ila,icolat
-  integer ikey
+  ! local variables
+  integer :: i,ila,icolat,ikey,ier
 
-  double precision h_moho_min,h_moho_max
+  double precision :: h_moho_min,h_moho_max
 
-  character(len=150) CNtype2, CNtype2_key_modif
+  character(len=150) :: CNtype2, CNtype2_key_modif
 
   call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
   call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
@@ -266,6 +271,7 @@
 ! The cap is rotated to the North Pole.
 
   implicit none
+
   include "constants.h"
 
   ! sampling rate for CAP points
@@ -273,11 +279,12 @@
   integer, parameter :: NPHI = 20
 
   ! argument variables
-  double precision lat,lon
-  double precision rho(NLAYERS_CRUST),thick(NLAYERS_CRUST),velp(NLAYERS_CRUST),vels(NLAYERS_CRUST)
-  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
-  character(len=2) code(NKEYS_CRUST),abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+  double precision :: lat,lon
+  double precision,dimension(NLAYERS_CRUST) :: rho,thick,velp,vels
+  double precision,dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr,velocp,velocs,dens
+
+  character(len=2) :: code(NKEYS_CRUST)
+  character(len=2) :: abbreviation(NCAP_CRUST/2,NCAP_CRUST)
 
   !-------------------------------
   ! work-around to avoid jacobian problems when stretching mesh elements;
@@ -318,9 +325,9 @@
     if( dist < CRITICAL_RANGE ) then
       ! increases cap smoothing degree
       ! scales between -1 at center and 0 at border
-      dist = dist / CRITICAL_RANGE - 1.0d0
+      dist = dist / CRITICAL_RANGE - ONE
       ! shifts value to 1 at center and 0 to the border with exponential decay
-      dist = 1.0d0 - exp( - dist*dist*10.0d0 )
+      dist = ONE - exp( - dist*dist*10.0d0 )
       ! increases smoothing degree inside of critical region to 2 degree
       cap_degree = cap_degree + dist
     endif
@@ -330,10 +337,10 @@
   call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
 
   ! initializes
-  velp(:) = 0.0d0
-  vels(:) = 0.0d0
-  rho(:) = 0.0d0
-  thick(:) = 0.0d0
+  velp(:) = ZERO
+  vels(:) = ZERO
+  rho(:) = ZERO
+  thick(:) = ZERO
 
   ! loops over weight points
   do i=1,NTHETA*NPHI
@@ -378,14 +385,14 @@
 
 
 ! argument variables
-  double precision xlat,xlon
-  integer icolat,ilon
+  double precision :: xlat,xlon
+  integer :: icolat,ilon
 
   if(xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
     stop 'error in latitude/longitude range in icolat_ilon'
-  icolat=int(1+((90.d0-xlat)/2.d0))
+  icolat=int(1+( (90.d0-xlat)*0.5d0 ))
   if(icolat == 91) icolat=90
-  ilon=int(1+((180.d0+xlon)/2.d0))
+  ilon=int(1+( (180.d0+xlon)*0.5d0 ))
   if(ilon == 181) ilon=1
 
   if(icolat>90 .or. icolat<1) stop 'error in routine icolat_ilon'
@@ -401,8 +408,7 @@
   implicit none
   include "constants.h"
 
-
-! argument variables
+  ! argument variables
   integer ierr
   double precision rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)
   double precision vptyp(NLAYERS_CRUST),vstyp(NLAYERS_CRUST)
@@ -410,7 +416,7 @@
   double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
   double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
 
-! local variables
+  ! local variables
   integer i,ikey
 
   ierr=1
@@ -450,29 +456,26 @@
   ! sampling rate
   integer :: NTHETA
   integer :: NPHI
+
   ! smoothing size (in degrees)
   double precision :: CAP_DEGREE
 
   ! argument variables
-  double precision lat,lon
-  double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
+  double precision :: lat,lon
+  double precision,dimension(NTHETA*NPHI) :: xlon,xlat,weight
 
   ! local variables
-  double precision CAP
-  double precision theta,phi,sint,cost,sinp,cosp,wght,total
-  double precision r_rot,theta_rot,phi_rot
-  double precision rotation_matrix(3,3),x(3),xc(3)
-  double precision dtheta,dphi,cap_area,dweight,pi_over_nphi
-  integer i,j,k
-  integer itheta,iphi
-
-  double precision, parameter :: RADIANS_TO_DEGREES = 180.d0 / PI
-  double precision, parameter :: PI_OVER_TWO = PI / 2.0d0
+  double precision :: CAP
+  double precision :: theta,phi,sint,cost,sinp,cosp,wght,total
+  double precision :: r_rot,theta_rot,phi_rot
+  double precision :: rotation_matrix(3,3),x(3),xc(3)
+  double precision :: dtheta,dphi,cap_area,dweight,pi_over_nphi
+  integer :: i,j,k,itheta,iphi
 
   ! initializes
-  xlon(:) = 0.d0
-  xlat(:) = 0.d0
-  weight(:) = 0.d0
+  xlon(:) = ZERO
+  xlat(:) = ZERO
+  weight(:) = ZERO
 
   ! checks cap degree size
   if( CAP_DEGREE < TINYVAL ) then
@@ -483,10 +486,11 @@
   endif
 
   ! pre-compute parameters
-  CAP = CAP_DEGREE * PI/180.0d0
+  CAP = CAP_DEGREE * DEGREES_TO_RADIANS
   dtheta = 0.5d0 * CAP / dble(NTHETA)
   dphi = TWO_PI / dble(NPHI)
-  cap_area = TWO_PI * (1.0d0 - dcos(CAP))
+
+  cap_area = TWO_PI * ( ONE - dcos(CAP) )
   dweight = CAP / dble(NTHETA) * dphi / cap_area
   pi_over_nphi = PI/dble(NPHI)
 
@@ -508,12 +512,12 @@
   rotation_matrix(2,2) = cosp
   rotation_matrix(2,3) = sinp*sint
   rotation_matrix(3,1) = -sint
-  rotation_matrix(3,2) = 0.0d0
+  rotation_matrix(3,2) = ZERO
   rotation_matrix(3,3) = cost
 
   ! calculates points over a cap at the North pole and rotates them to specified lat/lon point
   i = 0
-  total = 0.0d0
+  total = ZERO
   do itheta = 1,NTHETA
 
     theta = dble(2*itheta-1)*dtheta
@@ -540,7 +544,7 @@
 
       ! get x,y,z coordinates in cap around point of interest
       do j=1,3
-        x(j) = 0.0d0
+        x(j) = ZERO
         do k=1,3
           x(j) = x(j)+rotation_matrix(j,k)*xc(k)
         enddo
@@ -556,197 +560,9 @@
     enddo
 
   enddo
-  if(abs(total-1.0d0) > 0.001d0) then
+  if(abs(total - ONE) > 0.001d0) then
     print*,'error cap:',total,CAP_DEGREE
     stop 'error in cap integration for variable degree'
   endif
 
-  end subroutine
-
-
-!---------------------------
-! unused routines...
-!
-!  subroutine crust_singlevalue(lat,lon,velp,vels,rho,thick,abbreviation,&
-!                              code,thlr,velocp,velocs,dens)
-!
-!! crustal vp and vs in km/s, layer thickness in km
-!
-!!  uses crust2.0 as is, without smoothing
-!
-!  implicit none
-!  include "constants.h"
-!
-!! argument variables
-!  double precision lat,lon
-!  double precision rho(NLAYERS_CRUST),thick(NLAYERS_CRUST),velp(NLAYERS_CRUST),vels(NLAYERS_CRUST)
-!  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-!  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
-!  character(len=2) code(NKEYS_CRUST),abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-!
-!! local variables
-!  integer icolat,ilon,ierr
-!  character(len=2) crustaltype
-!
-!
-!! get integer colatitude and longitude of crustal cap
-!! -90<lat<90 -180<lon<180
-!  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
-!    stop 'error in latitude/longitude range in crust'
-!  if(lat==90.0d0) lat=89.9999d0
-!  if(lat==-90.0d0) lat=-89.9999d0
-!  if(lon==180.0d0) lon=179.9999d0
-!  if(lon==-180.0d0) lon=-179.9999d0
-!
-!  call icolat_ilon(lat,lon,icolat,ilon)
-!  crustaltype = abbreviation(icolat,ilon)
-!  call get_crust_structure(crustaltype,velp,vels,rho,thick, &
-!                          code,thlr,velocp,velocs,dens,ierr)
-!  if( ierr /= 0 ) stop 'error in routine get_crust_structure'
-!
-!  end subroutine crust_singlevalue
-!
-!---------------------------
-!
-!
-!  subroutine crust_org(lat,lon,velp,vels,rho,thick,abbreviation,code,thlr,velocp,velocs,dens)
-!
-!! crustal vp and vs in km/s, layer thickness in km
-!! crust2.0 is smoothed with a cap of size CAP using NTHETA points
-!! in the theta direction and NPHI in the phi direction.
-!! The cap is rotated to the North Pole.
-!
-!  implicit none
-!  include "constants.h"
-!! Change the CAP function to smooth crustal model
-!  integer, parameter :: NTHETA = 4         !2
-!  integer, parameter :: NPHI = 20          !10
-!  double precision, parameter :: CAP = 1.0d0*PI/180.0d0   ! 2.0d0*PI/180.0d0
-!
-!! argument variables
-!  double precision lat,lon
-!  double precision rho(NLAYERS_CRUST),thick(NLAYERS_CRUST),velp(NLAYERS_CRUST),vels(NLAYERS_CRUST)
-!  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-!  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
-!  character(len=2) code(NKEYS_CRUST),abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-!
-!! local variables
-!  integer i,j,k,icolat,ilon,ierr
-!  integer itheta,iphi,npoints
-!  double precision theta,phi,sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total
-!  double precision r_rot,theta_rot,phi_rot
-!  double precision rotation_matrix(3,3),x(3),xc(3)
-!  double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
-!  double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
-!  character(len=2) crustaltype
-!
-!! get integer colatitude and longitude of crustal cap
-!! -90<lat<90 -180<lon<180
-!  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
-!    stop 'error in latitude/longitude range in crust'
-!  if(lat==90.0d0) lat=89.9999d0
-!  if(lat==-90.0d0) lat=-89.9999d0
-!  if(lon==180.0d0) lon=179.9999d0
-!  if(lon==-180.0d0) lon=-179.9999d0
-!
-!  call icolat_ilon(lat,lon,icolat,ilon)
-!  crustaltype=abbreviation(icolat,ilon)
-!  call get_crust_structure(crustaltype,velp,vels,rho,thick, &
-!                    code,thlr,velocp,velocs,dens,ierr)
-!
-!!  uncomment the following line to use crust2.0 as is, without smoothing
-!!
-!!  return
-!
-!  theta = (90.0-lat)*PI/180.0
-!  phi = lon*PI/180.0
-!
-!  sint = sin(theta)
-!  cost = cos(theta)
-!  sinp = sin(phi)
-!  cosp = cos(phi)
-!
-!! set up rotation matrix to go from cap at North pole
-!! to cap around point of interest
-!  rotation_matrix(1,1) = cosp*cost
-!  rotation_matrix(1,2) = -sinp
-!  rotation_matrix(1,3) = cosp*sint
-!  rotation_matrix(2,1) = sinp*cost
-!  rotation_matrix(2,2) = cosp
-!  rotation_matrix(2,3) = sinp*sint
-!  rotation_matrix(3,1) = -sint
-!  rotation_matrix(3,2) = 0.0
-!  rotation_matrix(3,3) = cost
-!
-!  dtheta = CAP/dble(NTHETA)
-!  dphi = 2.0*PI/dble(NPHI)
-!  cap_area = 2.0*PI*(1.0-cos(CAP))
-!
-!! integrate over a cap at the North pole
-!  i = 0
-!  total = 0.0
-!  do itheta = 1,NTHETA
-!
-!    theta = 0.5*dble(2*itheta-1)*CAP/dble(NTHETA)
-!    cost = cos(theta)
-!    sint = sin(theta)
-!    wght = sint*dtheta*dphi/cap_area
-!
-!    do iphi = 1,NPHI
-!
-!      i = i+1
-!!     get the weight associated with this integration point (same for all phi)
-!      weight(i) = wght
-!      total = total + weight(i)
-!      phi = dble(2*iphi-1)*PI/dble(NPHI)
-!      cosp = cos(phi)
-!      sinp = sin(phi)
-!!     x,y,z coordinates of integration point in cap at North pole
-!      xc(1) = sint*cosp
-!      xc(2) = sint*sinp
-!      xc(3) = cost
-!!     get x,y,z coordinates in cap around point of interest
-!      do j=1,3
-!        x(j) = 0.0
-!        do k=1,3
-!          x(j) = x(j)+rotation_matrix(j,k)*xc(k)
-!        enddo
-!      enddo
-!!     get latitude and longitude (degrees) of integration point
-!      call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
-!      call reduce(theta_rot,phi_rot)
-!      xlat(i) = (PI/2.0-theta_rot)*180.0/PI
-!      xlon(i) = phi_rot*180.0/PI
-!      if(xlon(i) > 180.0) xlon(i) = xlon(i)-360.0
-!
-!    enddo
-!
-!  enddo
-!
-!  if(abs(total-1.0) > 0.001) stop 'error in cap integration for crust2.0'
-!
-!  npoints = i
-!
-!  do j=1,NLAYERS_CRUST
-!    rho(j)=0.0d0
-!    thick(j)=0.0d0
-!    velp(j)=0.0d0
-!    vels(j)=0.0d0
-!  enddo
-!
-!  do i=1,npoints
-!    call icolat_ilon(xlat(i),xlon(i),icolat,ilon)
-!    crustaltype=abbreviation(icolat,ilon)
-!    call get_crust_structure(crustaltype,velpl,velsl,rhol,thickl, &
-!                    code,thlr,velocp,velocs,dens,ierr)
-!    if(ierr /= 0) stop 'error in routine get_crust_structure'
-!    do j=1,NLAYERS_CRUST
-!      rho(j)=rho(j)+weight(i)*rhol(j)
-!      thick(j)=thick(j)+weight(i)*thickl(j)
-!      velp(j)=velp(j)+weight(i)*velpl(j)
-!      vels(j)=vels(j)+weight(i)*velsl(j)
-!    enddo
-!  enddo
-!
-!  end subroutine crust_org
-
+  end subroutine CAP_vardegree

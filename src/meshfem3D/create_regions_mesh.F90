@@ -50,14 +50,9 @@
 
   implicit none
 
-!****************************************************************************************************
-! Mila
-
 !  include "constants.h"
 ! standard include of the MPI library
   include 'mpif.h'
-
-!****************************************************************************************************
 
   ! this to cut the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
@@ -227,9 +222,6 @@
 
   logical :: ACTUALLY_STORE_ARRAYS
 
-!****************************************************************************************************
-! Mila
-
 ! added for color permutation
   integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
   integer, dimension(:), allocatable :: perm
@@ -239,19 +231,11 @@
   integer :: icolor,ispec_counter
   integer :: nspec_outer_min_global,nspec_outer_max_global
 
-!****************************************************************************************************
-
-!///////////////////////////////////////////////////////////////////////////////
-!   Manh Ha - 18-11-2011
-!   Adding new variables
-
   integer :: NSTEP
   integer, save :: npoin2D_xi,npoin2D_eta
   double precision :: DT
 
-!///////////////////////////////////////////////////////////////////////////////
-
-  ! Boundary Mesh
+  ! boundary mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot
@@ -272,8 +256,8 @@
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-  ! New Attenuation definition on all GLL points
-  ! Attenuation
+  ! new Attenuation definition on all GLL points
+  ! attenuation
   if (ATTENUATION) then
     T_c_source = AM_V%QT_c_source
     tau_s(:)   = AM_V%Qtau_s(:)
@@ -511,7 +495,6 @@
     ! note: stretch_tab uses (dimensionalized) radii from r_top and r_bottom
     !(with stretch_tab( index_radius(1=top,2=bottom), index_layer( 1=first layer, 2=second layer, 3= ...) )
     RMIDDLE_CRUST = stretch_tab(2,1)
-
   endif
 
 !----
@@ -640,9 +623,9 @@
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
 
-! if any of these flags is true, the element is on a communication edge
-! this is not enough because it can also be in contact by an edge or a corner but not a full face
-! therefore we will have to fix array "is_on_a_slice_edge" later in the solver to take this into account
+  ! if any of these flags is true, the element is on a communication edge
+  ! this is not enough because it can also be in contact by an edge or a corner but not a full face
+  ! therefore we will have to fix array "is_on_a_slice_edge" later in the solver to take this into account
   is_on_a_slice_edge(:) = &
       iMPIcut_xi(1,:) .or. iMPIcut_xi(2,:) .or. &
       iMPIcut_eta(1,:) .or. iMPIcut_eta(2,:) .or. &
@@ -650,8 +633,8 @@
       iboun(3,:) .or. iboun(4,:) .or. &
       iboun(5,:) .or. iboun(6,:)
 
-! no need to count fictitious elements on the edges
-! for which communications cannot be overlapped with calculations
+  ! no need to count fictitious elements on the edges
+  ! for which communications cannot be overlapped with calculations
   where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) is_on_a_slice_edge = .false.
 
   ! only create global addressing and the MPI buffers in the first pass
@@ -786,9 +769,6 @@
     ! (used only for checks in meshfem3D() routine)
     !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
-
-!****************************************************************************************************
-! Mila
 
   if(SORT_MESH_INNER_OUTER) then
 
@@ -1190,7 +1170,7 @@
   end subroutine create_regions_mesh
 
 !
-!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !
 
 

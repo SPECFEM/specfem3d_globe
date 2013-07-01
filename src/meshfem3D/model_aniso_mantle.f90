@@ -83,7 +83,8 @@
 
 
   subroutine model_aniso_mantle(r,theta,phi,rho, &
-    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,&
+                               c11,c12,c13,c14,c15,c16, &
+                               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
     AMM_V)
 
   implicit none
@@ -102,15 +103,16 @@
   type (model_aniso_mantle_variables) AMM_V
 ! model_aniso_mantle_variables
 
-  double precision r,theta,phi
-  double precision rho
-  double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+  double precision :: r,theta,phi
+  double precision :: rho
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  double precision d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+  ! local parameters
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                    d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
 
-  double precision colat,lon
+  double precision :: colat,lon
 
   lon = phi / DEGREES_TO_RADIANS
   colat = theta / DEGREES_TO_RADIANS
@@ -142,17 +144,24 @@
 
   include "constants.h"
 
-  integer npar1,ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
-          ict0,ict1,icp0,icp1,icz1
+  double precision :: pro(47)
+  integer :: npar1
 
-  double precision d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+  double precision :: rho
+  double precision :: beta(14,34,37,73)
+
+  double precision :: r,theta,phi
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                    d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
-  double precision r,theta,phi,rho,depth,tei,tet,ph,fi,x0,y0,pxy0
-  double precision d1,d2,d3,d4,sd,thickness,dprof1,dprof2,eps,pc1,pc2,pc3,pc4,&
+
+  ! local parameters
+  double precision :: depth,tei,tet,ph,fi,x0,y0,pxy0
+  double precision :: d1,d2,d3,d4,sd,thickness,dprof1,dprof2,eps,pc1,pc2,pc3,pc4,&
                    dpr1,dpr2,param,scale_GPa,scaleval
-  double precision A,C,F,AL,AN,BC,BS,GC,GS,HC,HS,EC,ES,C1p,C1sv,C1sh,C3,S1p,S1sv,S1sh,S3
-  double precision beta(14,34,37,73),pro(47)
-  double precision anispara(14,2,4),elpar(14)
+  double precision :: A,C,F,AL,AN,BC,BS,GC,GS,HC,HS,EC,ES,C1p,C1sv,C1sh,C3,S1p,S1sv,S1sh,S3
+  double precision :: anispara(14,2,4),elpar(14)
+  integer :: ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
+          ict0,ict1,icp0,icp1,icz1
 
   ndepth = npar1
   pxy0 = 5.
@@ -363,7 +372,9 @@
 
   end subroutine build_cij
 
-!--------------------------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine read_aniso_mantle_model(AMM_V)
 
@@ -539,9 +550,11 @@
     enddo
   enddo
 
- end subroutine read_aniso_mantle_model
+  end subroutine read_aniso_mantle_model
 
+!
 !--------------------------------------------------------------------
+!
 
   subroutine lecmod(nri,pari,ra)
 
@@ -562,8 +575,8 @@
   character(len=80) null
   character(len=150) Adrem119
 
-  ifanis = 1
-  nri = 47
+     ifanis = 1
+     nri = 47
 
   call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
   open(unit=13,file=Adrem119,status='old',action='read',iostat=ier)
@@ -943,7 +956,5 @@ c66 = -((sintwophi/2.)*sinphisq*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + &
       (cosphifour + sinphifour)*(d66*costhetasq + &
       d44*sinthetasq + d46*sintwotheta)
 
-
 end subroutine rotate_aniso_tensor
-!--------------------------------------------------------------------
 

@@ -79,6 +79,7 @@
   subroutine read_epcrust_model(EPCRUST)
 
   implicit none
+
   include "constants.h"
 
   type model_epcrust_variables
@@ -94,7 +95,7 @@
   character(len=150) EPCRUST_FNM
   character(len=150),dimension(15) :: header
   double precision,dimension(15) :: tmp
-  integer:: ier, ilon, jlat
+  integer:: ilon,jlat,ier
 
   call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
 
@@ -158,9 +159,9 @@
   !        stop 'incorrect enter EPCRUST model, check lat and lon'
   !endif
 
-  vp=0.0d0
-  vs=0.0d0
-  rho=0.0d0
+  vp = ZERO
+  vs = ZERO
+  rho = ZERO
 
   if ( .not. flag_smooth_epcrust) then
     call ilon_jlat(lon,lat,ilon,jlat)
@@ -171,11 +172,11 @@
     rhosmooth(:)=EPCRUST%rho_ep(ilon,jlat,:)
   else
     call epcrust_smooth_base(lon,lat,x1,y1,weight)
-    z0=0.d0
-    zsmooth(:)=0.0d0
-    vpsmooth(:)=0.0d0
-    vssmooth(:)=0.0d0
-    rhosmooth(:)=0.0d0
+    z0 = ZERO
+    zsmooth(:) = ZERO
+    vpsmooth(:) = ZERO
+    vssmooth(:) = ZERO
+    rhosmooth(:) = ZERO
 
     do k = 1,NTHETA_EP*NPHI_EP
       call ilon_jlat(x1(k),y1(k),ilon,jlat)
@@ -258,12 +259,10 @@
   double precision,dimension(3,3):: rotation_matrix
   double precision,dimension(3):: xx,xc
   integer:: i,j,k,itheta,iphi
-  double precision:: RADIANS_TO_DEGREES = 180.d0/PI
-  double precision:: PI_OVER_TWO = PI/2.0d0
 
-  x1(:)=0.0d0
-  y1(:)=0.0d0
-  weight(:)=0.0d0
+  x1(:)=ZERO
+  y1(:)=ZERO
+  weight(:)=ZERO
 
   if (cap_degree_EP < TINYVAL ) then
           print*, 'error cap:', cap_degree_EP
@@ -271,9 +270,10 @@
           stop 'error cap_degree too small'
   endif
 
-  CAP=cap_degree_EP*PI/180.0d0
+  CAP=cap_degree_EP * DEGREES_TO_RADIANS
   dtheta=0.5d0*CAP/dble(NTHETA_EP)
   dphi=TWO_PI/dble(NPHI_EP)
+
   cap_area=TWO_PI*(1.0d0-dcos(CAP))
   dweight=CAP/dble(NTHETA_EP)*dphi/cap_area
   pi_over_nphi=PI/dble(NPHI_EP)
@@ -293,7 +293,7 @@
   rotation_matrix(2,2)=cosp
   rotation_matrix(2,3)=sinp*sint
   rotation_matrix(3,1)=-sint
-  rotation_matrix(3,2)=0.0d0
+  rotation_matrix(3,2)=ZERO
   rotation_matrix(3,3)=cost
 
   i=0
@@ -343,6 +343,7 @@
   subroutine ilon_jlat(lon,lat,ilon,jlat)
 
   implicit none
+
   include "constants.h"
 
   double precision:: lon,lat

@@ -51,6 +51,8 @@
   ! model_heterogen_m_variables
 
   integer :: myrank
+
+  ! local parameters
   integer :: ier
 
   if(myrank == 0) then
@@ -85,7 +87,8 @@
 
   include "constants.h"
 
-  integer i,j,ier
+  ! local parameters
+  integer :: i,j,ier
 
 ! model_heterogen_m_variables
   type model_heterogen_m_variables
@@ -97,13 +100,10 @@
 ! model_heterogen_m_variables
 
 
-! open heterogen.dat
+  ! open heterogen.dat
   open(unit=10,file='./DATA/heterogen/heterogen.dat',access='direct',&
        form='formatted',recl=20,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "./DATA/heterogen/heterogen.dat": ', ier
-    call exit_MPI(0, 'error model heterogen')
-  endif
+  if( ier /= 0 ) call exit_MPI(0,'error opening model file heterogen.dat')
 
   j = N_R*N_THETA*N_PHI
 
@@ -115,7 +115,9 @@
 
   end subroutine read_heterogen_mantle_model
 
-!====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine model_heterogen_mantle(radius,theta,phi,dvs,dvp,drho,HMM)
 
@@ -124,18 +126,19 @@
   include "constants.h"
 
   ! variable declaration
-  double precision radius,theta,phi            ! input coordinates
-  double precision x,y,z                       ! input converted to cartesian
-  double precision drho,dvp,dvs                ! output anomaly values
-  double precision x_low,x_high                ! x values used to interpolate
-  double precision y_low,y_high                ! y values used to interpolate
-  double precision z_low,z_high                ! z values used to interpolate
-  double precision delta,delta2                ! weigts in record# and in interpolation
-  double precision rho1,rho2,rho3,rho4,rho5,rho6,rho7,rho8 ! rho values at the interpolation points
-  double precision r_inner,r_outer             ! lower and upper domain bounds for r
-  integer rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
-  double precision a,b,c                       ! substitutions in interpolation algorithm (weights)
+  double precision :: radius,theta,phi            ! input coordinates
+  double precision :: drho,dvp,dvs                ! output anomaly values
 
+  ! local parameters
+  double precision :: x,y,z                       ! input converted to cartesian
+  double precision :: x_low,x_high                ! x values used to interpolate
+  double precision :: y_low,y_high                ! y values used to interpolate
+  double precision :: z_low,z_high                ! z values used to interpolate
+  double precision :: delta,delta2                ! weigts in record# and in interpolation
+  double precision :: rho1,rho2,rho3,rho4,rho5,rho6,rho7,rho8 ! rho values at the interpolation points
+  double precision :: r_inner,r_outer             ! lower and upper domain bounds for r
+  integer :: rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
+  double precision :: a,b,c                       ! substitutions in interpolation algorithm (weights)
 
 ! model_heterogen_m_variables
   type model_heterogen_m_variables

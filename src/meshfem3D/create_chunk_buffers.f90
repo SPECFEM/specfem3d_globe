@@ -44,24 +44,32 @@
   include "constants.h"
   include "precision.h"
 
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
+  integer :: iregion_code
+  integer :: nspec
 
-  integer nglob,nglob_ori
-  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
-  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX,NGLOB1D_RADIAL
-  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-  integer nspec
-  integer myrank,NCHUNKS
+  ! array with the local to global mapping per slice
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(nspec) :: idoubling
 
   ! arrays with the mesh
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,ERR_MSG
+  integer :: nglob_ori
+  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT
+  integer myrank,NCHUNKS
 
-! array with the local to global mapping per slice
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  character(len=150) LOCAL_PATH
 
-  integer idoubling(nspec)
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
+
+  integer :: NGLOB1D_RADIAL_MAX
+  integer :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+
+  ! local parameters
+  integer :: nglob
+  integer :: NGLOB1D_RADIAL
+  character(len=150) :: OUTPUT_FILES,ERR_MSG
 
   ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
@@ -80,19 +88,17 @@
   ! pairs generated theoretically
 
   ! four sides for each of the three types of messages
-  integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
+  integer, dimension(:), allocatable :: npoin2D_send,npoin2D_receive,iproc_sender,iproc_receiver
+  integer :: ibool1D(NGLOB1D_RADIAL_MAX)
+  double precision,dimension(NGLOB1D_RADIAL_MAX) :: xread1D,yread1D,zread1D
 
 ! 1D buffers to remove points belonging to corners
   integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX)
-  integer ibool1D(NGLOB1D_RADIAL_MAX)
-  double precision xread1D(NGLOB1D_RADIAL_MAX)
-  double precision yread1D(NGLOB1D_RADIAL_MAX)
-  double precision zread1D(NGLOB1D_RADIAL_MAX)
   double precision xdummy,ydummy,zdummy
-  integer ipoin1D
+  integer :: ipoin1D
 
   ! arrays to assemble the corners (3 processors for each corner)
   integer, dimension(:,:), allocatable :: iprocscorners,itypecorner
@@ -103,39 +109,40 @@
   integer :: iproc_xi_loop_inv,iproc_eta_loop_inv
   integer :: imember_corner
 
-  integer iregion_code
-
-  integer iproc_edge_send,iproc_edge_receive
-  integer imsg_type,iside,imode_comm,iedge
+  integer :: iproc_edge_send,iproc_edge_receive
+  integer :: iside,imode_comm,iedge,itype
 
 ! boundary parameters per slice
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, njunk
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
 
-  integer npoin2D,npoin2D_send_local,npoin2D_receive_local
+  integer :: npoin2D,npoin2D_send_local,npoin2D_receive_local
 
-  integer i,j,k,ispec,ispec2D,ipoin2D,ier
+  integer :: i,j,k,ispec,ispec2D,ipoin2D
 
   ! current message number
-  integer imsg
+  integer :: imsg
 
-! names of the data files for all the processors in MPI
-  character(len=150) prname,filename_in,filename_out
+  ! names of the data files for all the processors in MPI
+  character(len=150) :: prname,filename_in,filename_out
 
-! for addressing of the slices
-  integer ichunk,iproc_xi,iproc_eta,iproc
+  ! for addressing of the slices
+  integer :: ichunk,iproc_xi,iproc_eta,iproc
+
+  ! this to avoid problem at compile time if less than six chunks
+  integer :: addressing_big(NCHUNKS_MAX,0:NPROC_XI-1,0:NPROC_ETA-1)
+
   integer addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1)
   integer ichunk_slice(0:NPROCTOT-1)
   integer iproc_xi_slice(0:NPROCTOT-1)
-
   integer iproc_eta_slice(0:NPROCTOT-1)
 
-! this to avoid problem at compile time if less than six chunks
-  integer addressing_big(NCHUNKS_MAX,0:NPROC_XI-1,0:NPROC_ETA-1)
-
 ! number of faces between chunks
-  integer NUM_FACES,NUMMSGS_FACES
+  integer :: NUM_FACES
+  integer :: NPROC_ONE_DIRECTION
+  integer :: NUMMSGS_FACES
+  integer :: ier
 
 ! number of corners between chunks
   integer NCORNERSCHUNKS
@@ -143,10 +150,9 @@
 ! number of message types
   integer NUM_MSG_TYPES
 
-  integer NPROC_ONE_DIRECTION
+  logical,parameter :: DEBUG = .false.
 
-! ************** subroutine starts here **************
-
+  ! user output
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '----- creating chunk buffers -----'
@@ -195,8 +201,11 @@
   ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
-! check that there is more than one chunk, otherwise nothing to do
-  if(NCHUNKS == 1) return
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
+    write(IMAIN,*)
+  endif
 
 ! same number of GLL points in each direction for several chunks
   if(NGLLY /= NGLLX) call exit_MPI(myrank,'must have NGLLY = NGLLX for several chunks')
@@ -219,9 +228,16 @@
   iprocscorners(:,:) = 0
   itypecorner(:,:) = 0
 
-  if(myrank == 0) then
-    write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
-    write(IMAIN,*)
+  ! checks that there is more than one chunk, otherwise nothing to do
+  if(NCHUNKS == 1) then
+    ! user output
+    if(myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
+      write(IMAIN,*)
+    endif
+    ! exit routine
+    return
   endif
 
 ! define maximum size for message buffers
@@ -257,7 +273,7 @@
   endif
 
 ! create theoretical communication pattern
-  do imsg_type = 1,NUM_MSG_TYPES
+  do itype = 1,NUM_MSG_TYPES
     do iside = 1,NUM_FACES
       do iproc_loop = 0,NPROC_ONE_DIRECTION-1
 
@@ -283,7 +299,7 @@
         ! define the 12 different messages
 
         ! message type M1
-        if(imsg_type == 1) then
+        if(itype == 1) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AB
@@ -332,7 +348,7 @@
         endif
 
         ! message type M2
-        if(imsg_type == 2) then
+        if(itype == 2) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AB
@@ -381,7 +397,7 @@
         endif
 
         ! message type M3
-        if(imsg_type == 3) then
+        if(itype == 3) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AC
@@ -429,16 +445,16 @@
 
         endif
 
-
-! store addressing generated
+        ! store addressing generated
         iproc_sender(imsg) = addressing(ichunk_send,iproc_xi_send,iproc_eta_send)
         iproc_receiver(imsg) = addressing(ichunk_receive,iproc_xi_receive,iproc_eta_receive)
 
-! check that sender/receiver pair is ordered
-        if(iproc_sender(imsg) > iproc_receiver(imsg)) call exit_MPI(myrank,'incorrect order in sender/receiver pair')
+        ! check that sender/receiver pair is ordered
+        if(iproc_sender(imsg) > iproc_receiver(imsg)) &
+          call exit_MPI(myrank,'incorrect order in sender/receiver pair')
 
-! save message type and pair of processors in list of messages
-        if(myrank == 0) write(IOUT,*) imsg_type,iproc_sender(imsg),iproc_receiver(imsg)
+        ! save message type and pair of processors in list of messages
+        if(myrank == 0) write(IOUT,*) itype,iproc_sender(imsg),iproc_receiver(imsg)
 
         ! loop on sender/receiver (1=sender 2=receiver)
         do imode_comm=1,2
@@ -722,13 +738,21 @@
 
             ! write list of selected points to output buffer
 
-            write(IOUT_BUFFERS,*) npoin2D
+            ! debug file output
+            if( DEBUG ) then
+              write(IOUT_BUFFERS,*) npoin2D
+            endif
+
+            ! stores face infos
             do ipoin2D = 1,npoin2D
                 write(IOUT_BUFFERS,*) ibool_selected(ipoin2D), &
                   xstore_selected(ipoin2D),ystore_selected(ipoin2D),zstore_selected(ipoin2D)
             enddo
 
-            close(IOUT_BUFFERS)
+            ! debug file output
+            if( DEBUG ) then
+              close(IOUT_BUFFERS)
+            endif
 
             ! store result to compare number of points for sender and for receiver
             if(imode_comm == 1) then
@@ -748,7 +772,10 @@
     enddo
   enddo
 
-  if(myrank == 0) close(IOUT)
+  ! debug file output
+  if( DEBUG ) then
+    if(myrank == 0) close(IOUT)
+  endif
 
   ! check that total number of messages is correct
   if(imsg /= NUMMSGS_FACES) call exit_MPI(myrank,'incorrect total number of messages')
@@ -878,8 +905,12 @@
 
   endif
 
-! file to store the list of processors for each message for corners
-  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
+  ! debug file output
+  if( DEBUG ) then
+    ! file to store the list of processors for each message for corners
+    if(myrank == 0) &
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
+  endif
 
   ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
@@ -954,7 +985,10 @@
 
   enddo
 
-  if(myrank == 0) close(IOUT)
+  ! debug file output
+  if( DEBUG ) then
+    if(myrank == 0) close(IOUT)
+  endif
 
   ! deallocate arrays
   deallocate(iproc_sender)

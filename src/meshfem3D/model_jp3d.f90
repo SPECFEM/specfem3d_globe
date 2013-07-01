@@ -143,6 +143,7 @@
   integer :: myrank
   integer :: ier
 
+  ! master reads in values
   if(myrank == 0) call read_jp3d_iso_zhao_model(JP3DM_V)
 
   ! JP3DM_V
@@ -200,7 +201,6 @@
   call MPI_BCAST(JP3DM_V%VS,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(JP3DM_V%RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(JP3DM_V%DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
 
   end subroutine model_jp3d_broadcast
 
@@ -294,7 +294,7 @@
   end subroutine read_jp3d_iso_zhao_model
 
 !
-!==========================================================================
+!-------------------------------------------------------------------------------------------------
 !
 
   subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
@@ -434,13 +434,15 @@
   END subroutine model_jp3d_iso_zhao
 
 !
-!---------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
 !
 
   SUBROUTINE INPUT1(JP3DM_V)
+
    implicit none
 
    include "constants.h"
+
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
@@ -630,15 +632,17 @@
       DO 3  I = NP,1,-1
       READ(3,130) (JP3DM_V%DEPC(I,J),J=1,NNR)
 3     CONTINUE
+
 100   FORMAT(2I6)
 110   FORMAT(5(10F7.2/),F7.2)
 120   FORMAT(6(10F7.2/),3F7.2)
 130   FORMAT(6(10F7.1/),3F7.1)
-      RETURN
-      END
+
+  RETURN
+  END
 
 !
-!-----------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
 !
 
   SUBROUTINE BLDMAP(JP3DM_V)
@@ -723,6 +727,9 @@
       RETURN
       END
 
+!
+!-------------------------------------------------------------------------------------------------
+!
       SUBROUTINE LOCX(PNX,RNX,HNX,NPX,NRX,NHX,MKX, &
                  PLX,RLX,HLX,IPLOCX,IRLOCX,IHLOCX)
      integer ::  NPX,NRX,NHX,MKX,IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
@@ -881,7 +888,6 @@
 
   include "constants.h"
 
-
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
@@ -962,13 +968,21 @@
       RETURN
       END
 
-      SUBROUTINE INTMAP(R,IRLOC,NNR,RL,IR)
-      integer :: NNR,IRLOC(NNR),IS,IR
-      double precision :: R,RL
-      IS      = IDNINT(R+RL)
-      IR      = IRLOC(IS)
-      RETURN
-      END
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  SUBROUTINE INTMAP(R,IRLOC,NNR,RL,IR)
+
+  implicit none
+  integer :: NNR,IRLOC(NNR),IS,IR
+  double precision :: R,RL
+
+  IS      = IDNINT(R+RL)
+  IR      = IRLOC(IS)
+
+  RETURN
+  END
 
 !
 !------------------------------------------------------------------------------------------------
@@ -1189,19 +1203,27 @@
                       + WV3*JP3DM_V%DEPC(I,J1) + WV4*JP3DM_V%DEPC(I1,J1)
               ELSE
               endif
-              RETURN
-            END SUBROUTINE HLAY
-
-      SUBROUTINE LIMIT(C1,C2,C)
-      double precision :: A1,A2,C1,C2,C
-      A1    = dmin1(C1,C2)
-      A2    = dmax1(C1,C2)
-      IF(C<A1)   C = A1
-      IF(C>A2)   C = A2
-    END SUBROUTINE LIMIT
+  RETURN
+  END SUBROUTINE HLAY
 
 !
-!-----------------------------
+!-------------------------------------------------------------------------------------------------
+!
+
+  SUBROUTINE LIMIT(C1,C2,C)
+
+  implicit none
+  double precision :: A1,A2,C1,C2,C
+
+  A1    = dmin1(C1,C2)
+  A2    = dmax1(C1,C2)
+  IF(C<A1)   C = A1
+  IF(C>A2)   C = A2
+
+  END SUBROUTINE LIMIT
+
+!
+!-------------------------------------------------------------------------------------------------
 !
   SUBROUTINE VEL1D(HE,V,LAY,IPS,JP3DM_V)
   implicit none
@@ -1296,8 +1318,13 @@
         endif
       ELSE
       endif
-      RETURN
-      END
+
+  RETURN
+  END
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
       SUBROUTINE INPUTJP(JP3DM_V)
   implicit none
@@ -1393,11 +1420,12 @@
       JP3DM_V%RA(L)   = RA1(L)
       JP3DM_V%DEPJ(L) = 40.0+6325.59*(1.0-RA1(L))
 1     CONTINUE
-      RETURN
-      END
+
+  RETURN
+  END
 
 !
-!---------------------------------------------
+!-------------------------------------------------------------------------------------------------
 !
   SUBROUTINE JPMODEL(IPS,H,V,JP3DM_V)
   implicit none

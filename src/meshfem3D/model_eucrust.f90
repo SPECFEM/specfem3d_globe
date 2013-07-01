@@ -63,6 +63,7 @@
   ! broadcast the information read on the master to the nodes
   call MPI_BCAST(EUCM_V%num_eucrust,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
+  ! allocates on all other processes
   if( myrank /= 0 ) then
     allocate(EUCM_V%eucrust_vp_uppercrust(EUCM_V%num_eucrust),EUCM_V%eucrust_vp_lowercrust(EUCM_V%num_eucrust),&
             EUCM_V%eucrust_mohodepth(EUCM_V%num_eucrust),EUCM_V%eucrust_basement(EUCM_V%num_eucrust),&
@@ -98,11 +99,10 @@
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
-
   ! local variables
   character(len=80):: line
   character(len=150):: filename
-  integer:: i,ierror
+  integer:: i,ier
   double precision:: vp_uppercrust,vp_lowercrust,vp_avg,topo,basement
   double precision:: upper_lower_depth,moho_depth,lat,lon
 
@@ -122,9 +122,9 @@
 
   ! opens data file
   call get_value_string(filename, 'model.eu', 'DATA/eucrust-07/ds01.txt')
-  open(unit=11,file=filename,status='old',action='read',iostat=ierror)
-  if ( ierror /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(filename), '": ', ierror
+  open(unit=11,file=filename,status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
     call exit_MPI(0, 'error model eucrust')
   endif
 
@@ -134,8 +134,8 @@
   ! data
   do i=1,36058
 
-    read(11,'(a80)',iostat=ierror) line
-    if(ierror /= 0 ) stop
+    read(11,'(a80)',iostat=ier) line
+    if( ier /= 0 ) stop 'error reading EUcrust file'
 
     read(line,*)lon,lat,vp_uppercrust,vp_lowercrust,vp_avg,topo,basement,upper_lower_depth,moho_depth
 
@@ -297,6 +297,7 @@
 ! The cap is rotated to the North Pole.
 
   implicit none
+
   include "constants.h"
 
   ! argument variables
@@ -316,7 +317,7 @@
 
   integer, parameter :: NTHETA = 4
   integer, parameter :: NPHI = 10
-  double precision, parameter :: CAP = 1.0d0*PI/180.0d0   ! 1 degree smoothing
+  double precision, parameter :: CAP = 1.0d0 * DEGREES_TO_RADIANS  ! 1 degree smoothing
 
   double precision,external :: crust_eu
 
@@ -345,8 +346,8 @@
   !  value = func(lat,lon,x,value,found,EUCM_V)
   !  return
 
-  theta = (90.0-lat)*PI/180.0
-  phi = lon*PI/180.0
+  theta = (90.0-lat)*DEGREES_TO_RADIANS
+  phi = lon*DEGREES_TO_RADIANS
 
   sint = sin(theta)
   cost = cos(theta)
@@ -366,8 +367,8 @@
   rotation_matrix(3,3) = cost
 
   dtheta = CAP/dble(NTHETA)
-  dphi = 2.0*PI/dble(NPHI)
-  cap_area = 2.0*PI*(1.0-cos(CAP))
+  dphi = TWO_PI/dble(NPHI)
+  cap_area = TWO_PI*(1.0-cos(CAP))
 
   ! integrate over a cap at the North pole
   i = 0
@@ -402,8 +403,8 @@
       !     get latitude and longitude (degrees) of integration point
       call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
       call reduce(theta_rot,phi_rot)
-      xlat(i) = (PI/2.0-theta_rot)*180.0/PI
-      xlon(i) = phi_rot*180.0/PI
+      xlat(i) = (PI_OVER_TWO-theta_rot)*RADIANS_TO_DEGREES
+      xlon(i) = phi_rot*RADIANS_TO_DEGREES
       if(xlon(i) > 180.0) xlon(i) = xlon(i)-360.0
 
     enddo
