@@ -44,13 +44,8 @@
 
   integer :: myrank,iregion_code,ispec,nspec,idoubling
 
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) dvpstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore, &
+    muvstore,muhstore,eta_anisostore,rhostore,dvpstore
 
   integer :: nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
@@ -64,7 +59,7 @@
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision rmin,rmax,RCMB,RICB,R670,RMOHO, &
+  double precision :: rmin,rmax,RCMB,RICB,R670,RMOHO, &
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
   ! attenuation values
@@ -72,10 +67,10 @@
   double precision, dimension(N_SLS)                     :: tau_s
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec)        :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
-  double precision  T_c_source
+  double precision :: T_c_source
 
   logical ABSORBING_CONDITIONS
-  logical elem_in_crust,elem_in_mantle
+  logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
   double precision :: xmesh,ymesh,zmesh

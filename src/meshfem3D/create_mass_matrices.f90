@@ -333,7 +333,7 @@
 
   endif
 
-  ! add C*delta/2 contribution to the mass matrices on the Stacey edges
+  ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
 
      ! read arrays for Stacey conditions
