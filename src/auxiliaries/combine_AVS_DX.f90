@@ -170,13 +170,11 @@
 
   integer proc_p1,proc_p2
 
-! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
 
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL

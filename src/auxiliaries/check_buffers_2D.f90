@@ -84,7 +84,6 @@
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top

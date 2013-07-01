@@ -73,6 +73,7 @@
 
 
   ! crust & mantle
+
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then

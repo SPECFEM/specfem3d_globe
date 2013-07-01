@@ -276,6 +276,7 @@
     else
       write(IMAIN,*) '  no general mantle anisotropy'
     endif
+
     write(IMAIN,*)
     write(IMAIN,*)
 

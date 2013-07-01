@@ -103,6 +103,7 @@
 
   ! nb of elements in this cut-plane
   ispecc1=0
+
   do ispec=1,nspec
     if(iMPIcut_eta(1,ispec)) then
       ispecc1=ispecc1+1
@@ -169,6 +170,7 @@
 
   ! nb of elements in this cut-plane
   ispecc2=0
+
   do ispec=1,nspec
     if(iMPIcut_eta(2,ispec)) then
       ispecc2=ispecc2+1

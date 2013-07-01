@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine get_global(nspec,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
 
 ! this routine MUST be in double precision to avoid sensitivity

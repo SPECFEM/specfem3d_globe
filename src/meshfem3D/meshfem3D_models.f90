@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
                         MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
                         R80,R220,R670,RCMB,RICB, &
@@ -660,7 +659,6 @@
   lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
   lon = phi * RADIANS_TO_DEGREES
   if( lon > 180.0d0 ) lon = lon - 360.0d0
-
 
 !---
 !

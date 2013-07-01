@@ -50,6 +50,7 @@
 
   ! standard include of the MPI library
   include 'mpif.h'
+
   include "precision.h"
 
   integer nspec,nglob

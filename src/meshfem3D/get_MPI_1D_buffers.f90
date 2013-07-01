@@ -230,6 +230,7 @@
 
   ! nb of elements in this 1D buffer
   ispeccount=0
+
   do ispec=1,nspec
 
     ! remove central cube for chunk buffers

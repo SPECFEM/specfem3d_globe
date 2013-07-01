@@ -621,7 +621,6 @@
 
                     endif
 
-
                  enddo !i
               enddo  !j
 
@@ -707,7 +706,6 @@
                       ! close to south pole
                       if( thetaval <= 0.01 ) istamp2 = ieoff
                     endif
-
 
                  enddo !i
               enddo  !j
@@ -940,7 +938,6 @@
         enddo !iproc
         close(11)
         if(iframe == 1) close(12)
-
 
 ! end of loop and test on all the time steps for all the movie images
      endif
