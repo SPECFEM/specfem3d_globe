@@ -348,7 +348,7 @@
 !> Broadcast the parameters relative to ADIOS output settings.
 !! \param myrank The rank of the MPI process in COMM_WORLD
 !! \param ADIOS_ENABLED Flag to indicate ADIOS output for seismograms.
-!! \param ADIOS_FOR_FORWARD_ARRAYS Flag to indicate that intermediate and 
+!! \param ADIOS_FOR_FORWARD_ARRAYS Flag to indicate that intermediate and
 !1        forward arrays are stored with the help of ADIOS.
 subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
     ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
@@ -361,7 +361,7 @@ subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
   include 'mpif.h'
   include "constants.h"
   include "precision.h"
-  
+
   integer:: myrank
   logical:: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
       ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX

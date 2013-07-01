@@ -747,7 +747,7 @@
   ! reads in attenuation values
   if (ADIOS_FOR_ARRAYS_SOLVER) then
     call create_name_database_adios(prnamel, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  else 
+  else
     call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
   endif
   call get_attenuation_model_3D_or_1D(myrank, prnamel, &
@@ -857,7 +857,7 @@
         enddo
       enddo
     enddo
-  enddo ! END DO CRUST MANTLE
+  enddo ! enddo CRUST MANTLE
 
   ! rescale in inner core
   do ispec = 1,NSPEC_INNER_CORE
@@ -891,7 +891,7 @@
         enddo
       enddo
     enddo
-  enddo ! END DO INNER CORE
+  enddo ! enddo INNER CORE
 
   ! precompute Runge-Kutta coefficients
   call get_attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)

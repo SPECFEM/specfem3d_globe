@@ -496,7 +496,7 @@
     nspec_att = 1
     allocate(Qmu_store(1,1,1,nspec_att), &
             tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
-  end if
+  endif
   if(ier /= 0) stop 'error in allocate 1'
 
   ! array with model density
@@ -1216,7 +1216,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
           stat=ier)
   if(ier /= 0) stop 'error in allocate 21'
 
-  if (ADIOS_FOR_AVS_DX) then 
+  if (ADIOS_FOR_AVS_DX) then
     call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
         num_ibool_AVS_DX, mask_ibool)
   else

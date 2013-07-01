@@ -138,8 +138,8 @@
       vp_ep(ilon,jlat,1:3) = tmp(7:9)
       vs_ep(ilon,jlat,1:3) = tmp(10:12)
       rho_ep(ilon,jlat,1:3) = tmp(13:15)
-    end do
-  end do
+    enddo
+  enddo
   close(1001)
 
   end subroutine read_epcrust_model
@@ -171,7 +171,7 @@
   !if ( lat < EPCRUST_LAT_MIN .or. lat > EPCRUST_LAT_MAX &
   !        .or. lon < EPCRUST_LON_MIN .or. lon > EPCRUST_LON_MAX ) then
   !        stop 'incorrect enter EPCRUST model, check lat and lon'
-  !end if
+  !endif
 
   vp = ZERO
   vs = ZERO
@@ -201,8 +201,8 @@
       vpsmooth(:)=vpsmooth(:)+weightl*vp_ep(ilon,jlat,:)
       vssmooth(:)=vssmooth(:)+weightl*vs_ep(ilon,jlat,:)
       rhosmooth(:)=rhosmooth(:)+weightl*rho_ep(ilon,jlat,:)
-    end do
-  end if
+    enddo
+  endif
 
   !topo=(R_EARTH_KM+z0)/R_EARTH_KM
   !basement=(R_EARTH_KM+z0-zsmooth(1))/R_EARTH_KM
@@ -232,14 +232,14 @@
     rho=rhosmooth(3)
   else
     found_crust=.false.
-  end if
+  endif
 
   if (found_crust ) then
     scaleval=dsqrt(PI*GRAV*RHOAV)
     vp=vp*1000.d0/(R_EARTH*scaleval)
     vs=vs*1000.d0/(R_EARTH*scaleval)
     rho=rho*1000.d0/RHOAV
-  end if
+  endif
 
   !moho = -(z0-zsmooth(1)-zsmooth(2)-zsmooth(3))/R_EARTH_KM
   moho = (zsmooth(1)+zsmooth(2)+zsmooth(3))/R_EARTH_KM
@@ -248,7 +248,7 @@
   cut=7.0/R_EARTH_KM
   if ( moho < cut ) then
     moho = cut
-  end if
+  endif
 
   end subroutine model_epcrust
 
@@ -284,7 +284,7 @@
           print*, 'error cap:', cap_degree_EP
           print*, 'lat/lon:', x,y
           stop 'error cap_degree too small'
-  end if
+  endif
 
   CAP=cap_degree_EP * DEGREES_TO_RADIANS
   dtheta=0.5d0*CAP/dble(NTHETA_EP)
@@ -335,20 +335,20 @@
               xx(j)=0.0d0
               do k = 1,3
                       xx(j)=xx(j)+rotation_matrix(j,k)*xc(k)
-              end do
-      end do
+              enddo
+      enddo
       call xyz_2_rthetaphi_dble(xx(1),xx(2),xx(3),r_rot,theta_rot,phi_rot)
       call reduce(theta_rot,phi_rot)
       x1(i)=phi_rot*RADIANS_TO_DEGREES
       y1(i)=(PI_OVER_TWO-theta_rot)*RADIANS_TO_DEGREES
       if (x1(i) > 180.d0) x1(i)=x1(i)-360.d0
-    end do
-  end do
+    enddo
+  enddo
 
   if (abs(total-1.0d0) > 0.001d0) then
     print*,'error cap:',total,cap_degree_EP
     stop
-  end if
+  endif
 
   end subroutine epcrust_smooth_base
 

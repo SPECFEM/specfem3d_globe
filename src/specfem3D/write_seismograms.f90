@@ -422,9 +422,9 @@
       phi = backaz
       if (phi>180.) then
          phi = phi-180.
-      elseif (phi<180.) then
+      else if (phi<180.) then
          phi = phi+180.
-      elseif (phi==180.) then
+      else if (phi==180.) then
          phi = backaz
       endif
 
@@ -438,7 +438,7 @@
             seismogram_tmp(iorientation,isample) = &
                cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
          enddo
-      elseif (iorientation == 5) then ! transverse component
+      else if (iorientation == 5) then ! transverse component
          do isample = 1,seismo_current
             seismogram_tmp(iorientation,isample) = &
             -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
@@ -615,11 +615,11 @@
   double precision DT
   character(len=2) bic
 
-  if (DT .ge. 1.0d0)  bic = 'LX'
-  if (DT .lt. 1.0d0 .and. DT .gt. 0.1d0) bic = 'MX'
-  if (DT .le. 0.1d0 .and. DT .gt. 0.0125d0) bic = 'BX'
-  if (DT .le. 0.0125d0 .and. DT .gt. 0.004d0) bic = 'HX'
-  if (DT .le. 0.004d0 .and. DT .gt. 0.001d0) bic = 'CX'
-  if (DT .le. 0.001d0) bic = 'FX'
+  if (DT >= 1.0d0)  bic = 'LX'
+  if (DT < 1.0d0 .and. DT > 0.1d0) bic = 'MX'
+  if (DT <= 0.1d0 .and. DT > 0.0125d0) bic = 'BX'
+  if (DT <= 0.0125d0 .and. DT > 0.004d0) bic = 'HX'
+  if (DT <= 0.004d0 .and. DT > 0.001d0) bic = 'CX'
+  if (DT <= 0.001d0) bic = 'FX'
 
  end subroutine band_instrument_code

@@ -267,17 +267,17 @@
 !   when LAY = 2, the focus is in the lower crust;
 !   when LAY = 3, the focus is in the mantle wedge;
 !   when LAY = 4, the focus is beneath the plate boundary.
-  IF(HE.LE.H1)                   THEN
+  IF(HE<=H1)                   THEN
      LAY = 1
      found_crust = .true.
-  ELSE IF(HE.GT.H1.AND.HE.LE.H2) THEN
+  ELSE IF(HE>H1.AND.HE<=H2) THEN
      LAY = 2
      found_crust = .true.
-  ELSE IF(HE.GT.H2.AND.HE.LE.H3) THEN
+  ELSE IF(HE>H2.AND.HE<=H3) THEN
      LAY = 3
   ELSE
      LAY = 4
-  END IF
+  endif
 
   CALL VEL1D(HE,vp,LAY,1)
   CALL VEL1D(HE,vs,LAY,2)
@@ -289,13 +289,13 @@
   vs = vs*(1.0d0+dvs)
 
 ! determine rho
-  if(LAY .eq. 1) then
+  if(LAY == 1) then
      rho=2.6
   endif
-  if(LAY .eq. 2) then
+  if(LAY == 2) then
      rho=2.9
   endif
-  if(LAY .GT. 2) then
+  if(LAY > 2) then
      rho=3.3+(vs-4.4)*0.66667
   endif
 ! non-dimensionalize
@@ -426,7 +426,7 @@
       DO 10 I  = 1,IPMAX
       IP1      = IP+1
       PNOW     = (FLOAT(I)-PLX)/100.0
-      IF(PNOW.GE.PNX(IP1))   IP = IP1
+      IF(PNOW>=PNX(IP1))   IP = IP1
       IPLOCX(I)= IP
 10    CONTINUE
       RLX      = 1.0-RNX(1)*100.0
@@ -435,7 +435,7 @@
       DO 20 I  = 1,IRMAX
       IR1      = IR+1
       RNOW     = (FLOAT(I)-RLX)/100.0
-      IF(RNOW.GE.RNX(IR1))   IR = IR1
+      IF(RNOW>=RNX(IR1))   IR = IR1
       IRLOCX(I)= IR
 20    CONTINUE
       HLX      = 1.0-HNX(1)
@@ -444,7 +444,7 @@
       DO 30 I  = 1,IHMAX
       IH1      = IH+1
       HNOW     = FLOAT(I)-HLX
-      IF(HNOW.GE.HNX(IH1))   IH = IH1
+      IF(HNOW>=HNX(IH1))   IH = IH1
       IHLOCX(I)= IH
 30    CONTINUE
       RETURN
@@ -469,14 +469,14 @@
   JP3DM_P     = 90.0-PE/DEGREES_TO_RADIANS
   JP3DM_R     = RE/DEGREES_TO_RADIANS
   JP3DM_H     = HE
-  IF(LAY.LE.3)       THEN
+  IF(LAY<=3)       THEN
      CALL PRHF(JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA,JP3DM_PLA,JP3DM_RLA,JP3DM_HLA, &
           JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,MPA,MRA,MHA,MKA)
-  ELSE IF(LAY.EQ.4)  THEN
+  ELSE IF(LAY==4)  THEN
      CALL PRHF(JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB,JP3DM_PLB,JP3DM_RLB,JP3DM_HLB, &
           JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,MPB,MRB,MHB,MKB)
   ELSE
-  END IF
+  endif
 
   JP3DM_WV(1) = JP3DM_PF1*JP3DM_RF1*JP3DM_HF1
   JP3DM_WV(2) = JP3DM_PF*JP3DM_RF1*JP3DM_HF1
@@ -488,12 +488,12 @@
   JP3DM_WV(8) = JP3DM_PF*JP3DM_RF*JP3DM_HF
 
   !   calculate velocity
-  IF(LAY.LE.3)      THEN
+  IF(LAY<=3)      THEN
      CALL VABPS(MPA,MRA,MHA,JP3DM_VELAP,V)
-  ELSE IF(LAY.EQ.4) THEN
+  ELSE IF(LAY==4) THEN
      CALL VABPS(MPB,MRB,MHB,JP3DM_VELBP,V)
   ELSE
-  END IF
+  endif
 
   RETURN
   END SUBROUTINE VEL3
@@ -600,12 +600,12 @@
 
         DO 1 I = 1,50
            I1     = I+1
-           IF(P.GE.JP3DM_PN(I).AND.P.LT.JP3DM_PN(I1)) GO TO 11
+           IF(P>=JP3DM_PN(I).AND.P<JP3DM_PN(I1)) GO TO 11
 1          CONTINUE
 11         CONTINUE
            DO 2 J = 1,62
               J1     = J+1
-              IF(R.GE.JP3DM_RRN(J).AND.R.LT.JP3DM_RRN(J1)) GO TO 22
+              IF(R>=JP3DM_RRN(J).AND.R<JP3DM_RRN(J1)) GO TO 22
 2             CONTINUE
 22            CONTINUE
               PF    = (P-JP3DM_PN(I))/(JP3DM_PN(I1)-JP3DM_PN(I))
@@ -616,17 +616,17 @@
               WV2   = PF*RF1
               WV3   = PF1*RF
               WV4   = PF*RF
-              IF(IJK.EQ.1)       THEN
+              IF(IJK==1)       THEN
                  HE  = WV1*JP3DM_DEPA(I,J)  + WV2*JP3DM_DEPA(I1,J) &
                       + WV3*JP3DM_DEPA(I,J1) + WV4*JP3DM_DEPA(I1,J1)
-              ELSE IF(IJK.EQ.2)  THEN
+              ELSE IF(IJK==2)  THEN
                  HE  = WV1*JP3DM_DEPB(I,J)  + WV2*JP3DM_DEPB(I1,J) &
                       + WV3*JP3DM_DEPB(I,J1) + WV4*JP3DM_DEPB(I1,J1)
-              ELSE IF(IJK.EQ.3)  THEN
+              ELSE IF(IJK==3)  THEN
                  HE  = WV1*JP3DM_DEPC(I,J)  + WV2*JP3DM_DEPC(I1,J) &
                       + WV3*JP3DM_DEPC(I,J1) + WV4*JP3DM_DEPC(I1,J1)
               ELSE
-              END IF
+              endif
   RETURN
   END SUBROUTINE HLAY
 
@@ -641,8 +641,8 @@
 
   A1    = dmin1(C1,C2)
   A2    = dmax1(C1,C2)
-  IF(C.LT.A1)   C = A1
-  IF(C.GT.A2)   C = A2
+  IF(C<A1)   C = A1
+  IF(C>A2)   C = A2
 
   END SUBROUTINE LIMIT
 
@@ -661,22 +661,22 @@
   integer :: IPS,LAY
   double precision :: HE,V,VM,HM
 
-  IF(LAY.EQ.1)      THEN
+  IF(LAY==1)      THEN
     V    = 6.0
-    IF(IPS.EQ.2)    V = 3.5
-  ELSE IF(LAY.EQ.2) THEN
+    IF(IPS==2)    V = 3.5
+  ELSE IF(LAY==2) THEN
     V    = 6.7
-    IF(IPS.EQ.2)    V = 3.8
-  ELSE IF(LAY.GE.3) THEN
+    IF(IPS==2)    V = 3.8
+  ELSE IF(LAY>=3) THEN
     HM   = 40.0
-    IF(HE.LT.HM)    THEN
+    IF(HE<HM)    THEN
       CALL JPMODEL(IPS,HM,VM)
       V  = VM-(HM-HE)*0.003
     ELSE
       CALL JPMODEL(IPS,HE,V)
-    END IF
+    endif
   ELSE
-  END IF
+  endif
 
   RETURN
   END
@@ -738,16 +738,16 @@
       K1     = K+1
       H1     = JP3DM_DEPJ(K)
       H2     = JP3DM_DEPJ(K1)
-      IF(H.GE.H1.AND.H.LT.H2) GO TO 3
+      IF(H>=H1.AND.H<H2) GO TO 3
 2     CONTINUE
 3     CONTINUE
 
   H12    = (H-H1)/(H2-H1)
-  IF(IPS.EQ.1)  THEN
+  IF(IPS==1)  THEN
      V   = (JP3DM_VP(K1)-JP3DM_VP(K))*H12+JP3DM_VP(K)
   ELSE
      V   = (JP3DM_VS(K1)-JP3DM_VS(K))*H12+JP3DM_VS(K)
-  END IF
+  endif
 
   RETURN
   END

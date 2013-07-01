@@ -41,7 +41,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
               READ_KAPPA_MU,READ_TISO, &
               ABSORBING_CONDITIONS,LOCAL_PATH)
 
-  use mpi 
+  use mpi
   use adios_read_mod
   implicit none
 
@@ -98,7 +98,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   integer(kind=8)         :: adios_group, adios_handle, varid
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names 
+  character(len=128), dimension(:), allocatable :: adios_names
   integer(kind=8), dimension(1) :: start, count
 
   integer(kind=8), dimension(256),target :: selections
@@ -111,7 +111,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call create_name_database_adios(prname, iregion_code, LOCAL_PATH)
 
   ! Postpend the actual file name.
-  file_name= trim(prname) // "solver_data.bp" 
+  file_name= trim(prname) // "solver_data.bp"
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
   ! Setup the ADIOS library to read the file
@@ -136,7 +136,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
 
   ! mesh coordinates
-  local_dim = nglob 
+  local_dim = nglob
   start(1) = local_dim*myrank; count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
@@ -168,7 +168,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call adios_schedule_read(adios_handle, sel, "kappavstore/array", 0, 1, &
       kappavstore, adios_err)
   call check_adios_err(myrank,adios_err)
-  if(READ_KAPPA_MU) then 
+  if(READ_KAPPA_MU) then
     call adios_schedule_read(adios_handle, sel, "muvstore/array", 0, 1, &
         muvstore, adios_err)
     call check_adios_err(myrank,adios_err)
@@ -253,7 +253,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
 
   if(ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani 
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
@@ -277,7 +277,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   endif
 
   if(ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani 
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
@@ -378,7 +378,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! in the case of stacey boundary conditions, add C*deltat/2 contribution to
   ! the mass matrix on Stacey edges for the crust_mantle and outer_core regions
   ! but not for the inner_core region thus the mass matrix must be replaced by
-  ! three mass matrices including the "C" damping matrix 
+  ! three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix
   ! is needed for the sake of performance, only "rmassz" array will be filled

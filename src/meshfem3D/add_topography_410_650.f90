@@ -74,13 +74,13 @@
       xelm(ia) = xelm(ia)*(ONE + gamma * topo410 / r)
       yelm(ia) = yelm(ia)*(ONE + gamma * topo410 / r)
       zelm(ia) = zelm(ia)*(ONE + gamma * topo410 / r)
-    elseif(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
 ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
       xelm(ia) = xelm(ia)*(ONE + gamma * topo650 / r)
       yelm(ia) = yelm(ia)*(ONE + gamma * topo650 / r)
       zelm(ia) = zelm(ia)*(ONE + gamma * topo650 / r)
-    elseif(r > R670/R_EARTH .and. r < R400/R_EARTH) then
+    else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
 ! stretching between R670 and R400
       gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
       xelm(ia) = xelm(ia)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
@@ -149,13 +149,13 @@
                 xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * topo410 / r)
                 ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * topo410 / r)
                 zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * topo410 / r)
-        elseif(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+        else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
         ! stretching between R771 and R670
                 gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
                 xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * topo650 / r)
                 ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * topo650 / r)
                 zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * topo650 / r)
-        elseif(r > R670/R_EARTH .and. r < R400/R_EARTH) then
+        else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
         ! stretching between R670 and R400
                 gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
                 xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
@@ -165,7 +165,7 @@
         if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
         enddo
-     end do
-  end do
+     enddo
+  enddo
 
   end subroutine add_topography_410_650_gll

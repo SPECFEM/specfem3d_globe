@@ -143,28 +143,28 @@
               sumdershapeeta = sumdershapeeta + hlagrange_eta
               sumdershapegamma = sumdershapegamma + hlagrange_gamma
 
-            end do
-          end do
-        end do
+            enddo
+          enddo
+        enddo
 
         ! Check the lagrange polynomial and its derivative
         if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
           .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
           .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
           call exit_MPI(myrank,'new mesh are wrong in recalc_jacobian_gall3D.f90')
-        end if
+        endif
         if(abs(sumshape-one) >  TINYVAL) then
           call exit_MPI(myrank,'error shape functions in calc_jacobian_gll3D.f90')
-        end if
+        endif
         if(abs(sumdershapexi) >  TINYVAL) then
           call exit_MPI(myrank,'error derivative xi in calc_jacobian_gll3D.f90')
-        end if
+        endif
         if(abs(sumdershapeeta) >  TINYVAL) then
           call exit_MPI(myrank,'error derivative eta in calc_jacobian_gll3D.f90')
-        end if
+        endif
         if(abs(sumdershapegamma) >  TINYVAL) then
           call exit_MPI(myrank,'error derivative gamma in calc_jacobian_gll3D.f90')
-        end if
+        endif
 
         ! jacobian calculation
         jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
@@ -181,7 +181,7 @@
             (PI_OVER_TWO-theta)*RADIANS_TO_DEGREES,phi*RADIANS_TO_DEGREES
           print*,'  jacobian: ',jacobian
           call exit_MPI(myrank,'3D Jacobian undefined in calc_jacobian_gll3D.f90')
-        end if
+        endif
 
         !     invert the relation (Fletcher p. 50 vol. 2)
         jacobian_inv = ONE / jacobian
@@ -319,16 +319,16 @@
             .or. abs(ymesh - yelm2D(i,j)) > TINYVAL &
             .or. abs(zmesh - zelm2D(i,j)) > TINYVAL ) then
            call exit_MPI(myrank,'new boundary mesh is wrong in calc_jacobian_gll2D')
-        end if
+        endif
         if (abs(sumshape-one) >  TINYVAL) then
            call exit_MPI(myrank,'error shape functions in calc_jacobian_gll2D')
-        end if
+        endif
         if (abs(sumdershapexi) >  TINYVAL) then
            call exit_MPI(myrank,'error derivative xi in calc_jacobian_gll2D')
-        end if
+        endif
         if (abs(sumdershapeeta) >  TINYVAL) then
            call exit_MPI(myrank,'error derivative eta in calc_jacobian_gll2D')
-        end if
+        endif
 
         ! calculates j2D acobian
         unx = yxi*zeta - yeta*zxi
@@ -354,8 +354,8 @@
            normal(2,i,j,ispecb) = uny * jacobian_inv
            normal(3,i,j,ispecb) = unz * jacobian_inv
         endif
-     end do
-  end do
+     enddo
+  enddo
 
   end subroutine calc_jacobian_gll2D
 

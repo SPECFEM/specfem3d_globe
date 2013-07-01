@@ -33,7 +33,7 @@
 
 !-------------------------------------------------------------------------------
 !> \brief Write intermediate forward arrays in an ADIOS file.
-!! 
+!!
 !! This subroutine is only used when NUMBER_OF_RUNS > 1 and
 !! NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS.
 subroutine save_intermediate_forward_arrays_adios()
@@ -57,7 +57,7 @@ subroutine save_intermediate_forward_arrays_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid
   integer(kind=8)         :: adios_groupsize, adios_totalsize
 
-  outputname = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp" 
+  outputname = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
   call world_size(sizeprocs) ! TODO keep it in parameters
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
   group_size_inc = 0
@@ -95,9 +95,9 @@ end subroutine save_intermediate_forward_arrays_adios
 
 !-------------------------------------------------------------------------------
 !> \brief Write selected forward arrays in an ADIOS file.
-!! 
+!!
 !! This subroutine is only used for forward simualtions when
-!! SAVE_FORWARD is set to .true. It dumps the same arrays than 
+!! SAVE_FORWARD is set to .true. It dumps the same arrays than
 !! save_intermediate_forward_arrays_adios() execpt than some arrays
 !! are only dumped if ROTATION and ATTENUATION are set to .true.
 subroutine save_forward_arrays_adios()
@@ -116,7 +116,7 @@ subroutine save_forward_arrays_adios()
   character(len=150) :: outputname
   integer(kind=8) :: group_size_inc
   integer :: local_dim, global_dim, offset
-!  integer, parameter :: num_arrays = 9 ! TODO correct number 
+!  integer, parameter :: num_arrays = 9 ! TODO correct number
 !  character(len=256), dimension(num_arrays) :: local_dims1, local_dims2, &
 !      global_dims1, global_dims2, offsets1, offsets2, array_name
   ! ADIOS variables
@@ -124,7 +124,7 @@ subroutine save_forward_arrays_adios()
   integer(kind=8)         :: adios_group, adios_handle, varid
   integer(kind=8)         :: adios_groupsize, adios_totalsize
 
-  outputname = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp" 
+  outputname = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
   call world_size(sizeprocs)
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
   group_size_inc = 0
@@ -137,7 +137,7 @@ subroutine save_forward_arrays_adios()
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
-  ! conditional definition of vars seem to mess with the group size, 
+  ! conditional definition of vars seem to mess with the group size,
   ! even if the variables are conditionnaly written.
 !  if (ROTATION_VAL) then
     call define_rotation_forward_arrays_adios(adios_group, group_size_inc)
@@ -190,7 +190,7 @@ subroutine define_common_forward_arrays_adios(adios_group, group_size_inc)
 
   integer :: local_dim
 
-  local_dim = NDIM * NGLOB_CRUST_MANTLE 
+  local_dim = NDIM * NGLOB_CRUST_MANTLE
   call define_adios_global_real_1d_array(adios_group, "displ_crust_mantle", &
       local_dim, group_size_inc)
   call define_adios_global_real_1d_array(adios_group, "veloc_crust_mantle", &
@@ -312,7 +312,7 @@ end subroutine define_attenuation_forward_arrays_adios
 !-------------------------------------------------------------------------------
 !>  Schedule writes of ADIOS forward arrays that are always dumped.
 !! \param adios_handle The handle to the adios bp file
-!! \param group_size_inc The number of MPI processes involved in the writting 
+!! \param group_size_inc The number of MPI processes involved in the writting
 subroutine write_common_forward_arrays_adios(adios_handle, sizeprocs)
   use adios_write_mod
   use specfem_par
@@ -323,11 +323,11 @@ subroutine write_common_forward_arrays_adios(adios_handle, sizeprocs)
   implicit none
 
   integer(kind=8), intent(in) :: adios_handle
-  integer, intent(in) :: sizeprocs 
+  integer, intent(in) :: sizeprocs
 
   integer :: local_dim, adios_err
 
-  local_dim = NDIM * NGLOB_CRUST_MANTLE 
+  local_dim = NDIM * NGLOB_CRUST_MANTLE
   call adios_set_path (adios_handle, "displ_crust_mantle", adios_err)
   call check_adios_err(myrank,adios_err)
   call write_1D_global_array_adios_dims(adios_handle, local_dim, sizeprocs)
@@ -452,7 +452,7 @@ end subroutine write_common_forward_arrays_adios
 !-------------------------------------------------------------------------------
 !>  Schedule writes of ADIOS forward arrays that are dumped if ROTATION is true.
 !! \param adios_handle The handle to the adios bp file
-!! \param group_size_inc The number of MPI processes involved in the writting 
+!! \param group_size_inc The number of MPI processes involved in the writting
 subroutine write_rotation_forward_arrays_adios(adios_handle, sizeprocs)
   use adios_write_mod
   use specfem_par
@@ -463,7 +463,7 @@ subroutine write_rotation_forward_arrays_adios(adios_handle, sizeprocs)
   implicit none
 
   integer(kind=8), intent(in) :: adios_handle
-  integer, intent(in) :: sizeprocs 
+  integer, intent(in) :: sizeprocs
 
   integer :: local_dim, adios_err
 
@@ -482,10 +482,10 @@ subroutine write_rotation_forward_arrays_adios(adios_handle, sizeprocs)
 end subroutine write_rotation_forward_arrays_adios
 
 !-------------------------------------------------------------------------------
-!>  Schedule writes of ADIOS forward arrays that are dumped if ATTENUATION 
+!>  Schedule writes of ADIOS forward arrays that are dumped if ATTENUATION
 !!  is true.
 !! \param adios_handle The handle to the adios bp file
-!! \param group_size_inc The number of MPI processes involved in the writting 
+!! \param group_size_inc The number of MPI processes involved in the writting
 subroutine write_attenuation_forward_arrays_adios(adios_handle, sizeprocs)
   use adios_write_mod
   use specfem_par
@@ -496,7 +496,7 @@ subroutine write_attenuation_forward_arrays_adios(adios_handle, sizeprocs)
   implicit none
 
   integer(kind=8), intent(in) :: adios_handle
-  integer, intent(in) :: sizeprocs 
+  integer, intent(in) :: sizeprocs
 
   integer :: local_dim, adios_err
 
@@ -564,7 +564,7 @@ subroutine write_attenuation_forward_arrays_adios(adios_handle, sizeprocs)
 end subroutine write_attenuation_forward_arrays_adios
 
 !-------------------------------------------------------------------------------
-!> Write local, global and offset dimensions to ADIOS 
+!> Write local, global and offset dimensions to ADIOS
 !! \param adios_handle Handle to the adios file
 !! \param local_dim Number of elements to be written by one process
 !! \param sizeprocs Number of MPI processes

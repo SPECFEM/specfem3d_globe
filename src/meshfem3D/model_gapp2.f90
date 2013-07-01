@@ -201,21 +201,21 @@
     d=R_EARTH_-radius*R_EARTH_
 
     call d2id(d,nnr,dep,id,icon)
-    if(icon.ne.0) then
+    if(icon/=0) then
        write(6,*)icon
        write(6,*) radius,theta,phi,dvp,dvs,drho
     endif
 
     ! latitude
-    if(theta.ge.PI) then
+    if(theta>=PI) then
        ia = na
     else
        ia = theta / dtheta + 1
     endif
     ! longitude
-    if(phi .lt. 0.0d0) phi = phi + 2.*PI
+    if(phi < 0.0d0) phi = phi + 2.*PI
     io=phi / dphi + 1
-    if(io.gt.no) io=io-no
+    if(io>no) io=io-no
 
     ! velocity and density perturbations
     dvp = vp3(ia,io,id)/100.d0
@@ -246,20 +246,20 @@
     icon=0
     dmax=di(mr)
     dmin=di(0)
-    if(d.gt.dmax) then
+    if(d>dmax) then
        icon=99
-    else if(d.lt.dmin) then
+    else if(d<dmin) then
        icon=-99
-    else if(d.eq.dmax) then
+    else if(d==dmax) then
        id=mr+1
     else
        do i = 0, mr
-          if(d.lt.di(i)) then
+          if(d<di(i)) then
              id=i
              goto 900
           endif
        enddo
-    end if
+    endif
 900 continue
 
 !..................................................................

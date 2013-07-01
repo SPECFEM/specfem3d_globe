@@ -37,7 +37,7 @@ module AVS_DX_global_chunks_mod
     real(kind=4), dimension(:), allocatable :: x_adios, y_adios, z_adios
     integer(kind=4), dimension(:), allocatable :: idoubling, iglob1, iglob2, &
         iglob3, iglob4
-    real, dimension(:), allocatable :: vmin, vmax 
+    real, dimension(:), allocatable :: vmin, vmax
     real, dimension(:), allocatable :: dvp, dvs
   endtype
 
@@ -183,7 +183,7 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating y_adios.")
   allocate(avs_dx_adios%z_adios(npoin), stat=ierr)
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating z_adios.")
-  
+
   allocate(avs_dx_adios%vmin(npoin), stat=ierr)
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating vmin.")
   allocate(avs_dx_adios%vmax(npoin), stat=ierr)
@@ -214,7 +214,7 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
   call define_adios_global_real_1d_array(adios_group, &
       "points_chunks_stability/vmax", npoin, group_size_inc)
   !--- Variables for AVS_DXelementschunks.txt
-  call define_adios_global_real_1d_array(adios_group, & 
+  call define_adios_global_real_1d_array(adios_group, &
       "elements_chunks/idoubling", nspecface, group_size_inc)
   call define_adios_global_real_1d_array(adios_group, &
       "elements_chunks/num_ibool_AVS_DX_iglob1", nspecface, group_size_inc)
@@ -226,7 +226,7 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
       "elements_chunks/num_ibool_AVS_DX_iglob4", nspecface, group_size_inc)
 
   !--- Variables for AVS_DXelementschunks_dvp_dvs.txt
-  if(ISOTROPIC_3D_MANTLE) then 
+  if(ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
@@ -415,7 +415,7 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
         if(.not. mask_ibool(iglobval(4))) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglobval(4)) = numpoin
-          avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec)) 
+          avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,NGLLY,1,ispec))
 
@@ -504,7 +504,7 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,1,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,1,1,ispec))
 
-          vmax = sqrt((kappavstore(NGLLX,1,1,ispec) & 
+          vmax = sqrt((kappavstore(NGLLX,1,1,ispec) &
               +4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
           vmin = sqrt(muvstore(NGLLX,1,1,ispec)/rhostore(NGLLX,1,1,ispec))
           ! particular case of the outer core (muvstore contains 1/rho)
@@ -524,7 +524,7 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
         if(.not. mask_ibool(iglobval(3))) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglobval(3)) = numpoin
-          avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec)) 
+          avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,1,ispec))
 
@@ -810,7 +810,7 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
           vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec) &
               + 4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.) &
               / rhostore(1,NGLLY,NGLLZ,ispec))
-          vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec) & 
+          vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec) &
               / rhostore(1,NGLLY,NGLLZ,ispec))
           ! particular case of the outer core (muvstore contains 1/rho)
           if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
@@ -1014,7 +1014,7 @@ subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
   !--- Variables
   integer :: npoin, nspec
   integer :: ierr
-  
+
   npoin = avs_dx_adios%npoin
   nspec = avs_dx_adios%nspecface
 
@@ -1056,27 +1056,27 @@ subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob1, ierr)
-  
+
   call adios_set_path(adios_handle, &
       "elements_chunks/num_ibool_AVS_DX_iglob2", ierr)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob2, ierr)
-  
+
   call adios_set_path(adios_handle, &
       "elements_chunks/num_ibool_AVS_DX_iglob3", ierr)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob3, ierr)
-  
+
   call adios_set_path(adios_handle, &
       "elements_chunks/num_ibool_AVS_DX_iglob4", ierr)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob4, ierr)
-  
 
-  if(ISOTROPIC_3D_MANTLE) then 
+
+  if(ISOTROPIC_3D_MANTLE) then
     call adios_set_path(adios_handle, "elements_chunks/dvp", ierr)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         nspec, sizeprocs)
@@ -1129,7 +1129,7 @@ subroutine free_AVS_DX_global_chunks_data_adios(myrank, avs_dx_adios, &
   if (ierr /= 0) call exit_MPI(myrank, &
       "Error deallocating num_ibool_AVS_DX_iglob4.")
 
-  if(ISOTROPIC_3D_MANTLE) then 
+  if(ISOTROPIC_3D_MANTLE) then
     deallocate(avs_dx_adios%dvp, stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, &
         "Error deallocating dvp.")
@@ -1138,7 +1138,7 @@ subroutine free_AVS_DX_global_chunks_data_adios(myrank, avs_dx_adios, &
         "Error deallocating dvs.")
   endif
 
-  avs_dx_adios%npoin = 0 
+  avs_dx_adios%npoin = 0
   avs_dx_adios%nspecface = 0
 end subroutine free_AVS_DX_global_chunks_data_adios
 

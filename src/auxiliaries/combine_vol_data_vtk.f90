@@ -413,7 +413,7 @@ program combine_vol_data_vtk
       if (HIGH_RESOLUTION_MESH ) then
         if( ir==3 ) then
           npoint(it) = numpoin
-        elseif( numpoin /= npoint(it)) then
+        else if( numpoin /= npoint(it)) then
           print*,'region:',ir
           print*,'error number of points:',numpoin,npoint(it)
           stop 'different number of points (high-res)'

@@ -150,13 +150,13 @@
                 xelm2D(j,k) = xstore(1,j,k,ispec)
                 yelm2D(j,k) = ystore(1,j,k,ispec)
                 zelm2D(j,k) = zstore(1,j,k,ispec)
-             end do
-          end do
+             enddo
+          enddo
           ! recalculate jacobian according to 2D GLL points
           call calc_jacobian_gll2D(myrank,ispecb1,xelm2D,yelm2D,zelm2D, &
                           yigll,zigll,jacobian2D_xmin,normal_xmin,&
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-     end if
+     endif
     endif
 
   ! on boundary: xmax
@@ -206,13 +206,13 @@
                 xelm2D(j,k) = xstore(NGLLX,j,k,ispec)
                 yelm2D(j,k) = ystore(NGLLX,j,k,ispec)
                 zelm2D(j,k) = zstore(NGLLX,j,k,ispec)
-             end do
-          end do
+             enddo
+          enddo
           ! recalculate jacobian according to 2D GLL points
           call calc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D,&
                           yigll,zigll,jacobian2D_xmax,normal_xmax,&
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-       end if
+       endif
     endif
 
   ! on boundary: ymin
@@ -262,13 +262,13 @@
                 xelm2D(i,k) = xstore(i,1,k,ispec)
                 yelm2D(i,k) = ystore(i,1,k,ispec)
                 zelm2D(i,k) = zstore(i,1,k,ispec)
-             end do
-          end do
+             enddo
+          enddo
           ! recalcualte 2D jacobian according to GLL points
           call calc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D,&
                           xigll,zigll,jacobian2D_ymin,normal_ymin,&
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-     end if
+     endif
     endif
 
   ! on boundary: ymax
@@ -318,13 +318,13 @@
                 xelm2D(i,k) = xstore(i,NGLLY,k,ispec)
                 yelm2D(i,k) = ystore(i,NGLLY,k,ispec)
                 zelm2D(i,k) = zstore(i,NGLLY,k,ispec)
-             end do
-          end do
+             enddo
+          enddo
           ! recalculate jacobian for 2D GLL points
           call calc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D,&
                           xigll,zigll,jacobian2D_ymax,normal_ymax,&
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-      end if
+      endif
     endif
 
   ! on boundary: bottom
@@ -373,13 +373,13 @@
                 xelm2D(i,j) = xstore(i,j,1,ispec)
                 yelm2D(i,j) = ystore(i,j,1,ispec)
                 zelm2D(i,j) = zstore(i,j,1,ispec)
-             end do
-          end do
+             enddo
+          enddo
           ! recalcuate 2D jacobian according to GLL points
           call calc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D,&
                           xigll,yigll,jacobian2D_bottom,normal_bottom,&
                           NGLLX,NGLLY,NSPEC2D_BOTTOM)
-     end if
+     endif
 
     endif
 
@@ -428,14 +428,14 @@
                 xelm2D(i,j) = xstore(i,j,NGLLZ,ispec)
                 yelm2D(i,j) = ystore(i,j,NGLLZ,ispec)
                 zelm2D(i,j) = zstore(i,j,NGLLZ,ispec)
-             end do
-          end do
+             enddo
+          enddo
           ! recalcuate jacobian according to 2D gll points
           call calc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D,&
                                   xigll,yigll,jacobian2D_top,normal_top,&
                                   NGLLX,NGLLY,NSPEC2D_TOP)
 
-      end if
+      endif
 
     endif
 

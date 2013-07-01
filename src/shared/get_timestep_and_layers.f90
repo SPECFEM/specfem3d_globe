@@ -284,7 +284,7 @@
   ! the 670-discontinuity is moved up to 650 km depth.
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     NER_771_670 = NER_771_670 + 1
-  end if
+  endif
 
   !----
   !----  change some values in the case of regular PREM with two crustal layers or of 3D models
