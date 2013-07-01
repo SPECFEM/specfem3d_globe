@@ -53,7 +53,9 @@
 
   ! input parameter
   integer::myrank,ispec,nspec
+
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+
   double precision, dimension(NGLLX):: xigll
   double precision, dimension(NGLLY):: yigll
   double precision, dimension(NGLLZ):: zigll
@@ -62,9 +64,8 @@
 
   ! output results
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-                        xixstore,xiystore,xizstore,&
-                        etaxstore,etaystore,etazstore,&
-                        gammaxstore,gammaystore,gammazstore
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
+    gammaxstore,gammaystore,gammazstore
 
 
   ! local parameters for this subroutine
@@ -89,15 +90,15 @@
      do j=1,NGLLY
         do i=1,NGLLX
 
-            xxi = 0.0
-            xeta = 0.0
-            xgamma = 0.0
-            yxi = 0.0
-            yeta = 0.0
-            ygamma = 0.0
-            zxi = 0.0
-            zeta = 0.0
-            zgamma = 0.0
+        xxi = ZERO
+        xeta = ZERO
+        xgamma = ZERO
+        yxi = ZERO
+        yeta = ZERO
+        ygamma = ZERO
+        zxi = ZERO
+        zeta = ZERO
+        zgamma = ZERO
 
             xi = xigll(i)
             eta = yigll(j)
@@ -108,14 +109,14 @@
             call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
             call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
 
-            ! test parameters
-            sumshape = 0.0
-            sumdershapexi = 0.0
-            sumdershapeeta = 0.0
-            sumdershapegamma = 0.0
-            xmesh = 0.0
-            ymesh = 0.0
-            zmesh = 0.0
+        ! test parameters
+        sumshape = ZERO
+        sumdershapexi = ZERO
+        sumdershapeeta = ZERO
+        sumdershapegamma = ZERO
+        xmesh = ZERO
+        ymesh = ZERO
+        zmesh = ZERO
 
 
             do k1 = 1,NGLLZ
@@ -267,12 +268,12 @@
 
   do j = 1,NGLLB
      do i = 1,NGLLA
-        xxi = 0.0
-        xeta = 0.0
-        yxi = 0.0
-        yeta = 0.0
-        zxi = 0.0
-        zeta = 0.0
+        xxi = ZERO
+        xeta = ZERO
+        yxi = ZERO
+        yeta = ZERO
+        zxi = ZERO
+        zeta = ZERO
 
         xi=xigll(i)
         eta = yigll(j)
