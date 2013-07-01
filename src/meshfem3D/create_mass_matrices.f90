@@ -29,7 +29,7 @@
                           iregion_code,xstore,ystore,zstore, &
                           NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
-! creates rmassx, rmassy, rmassz and rmass_ocean_load
+  ! creates rmassx, rmassy, rmassz and rmass_ocean_load
 
   use constants
 
@@ -74,8 +74,13 @@
 
   ! initializes matrices
   !
+  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
   rmassx(:) = 0._CUSTOM_REAL
   rmassy(:) = 0._CUSTOM_REAL
   rmassz(:) = 0._CUSTOM_REAL
@@ -109,6 +114,7 @@
 
           ! definition depends if region is fluid or solid
           select case( iregion_code)
+
           case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
             ! distinguish between single and double precision for reals
             if(CUSTOM_REAL == SIZE_REAL) then
@@ -234,7 +240,7 @@
 
   endif
 
-  ! adds C*deltat/2 contribution to the mass matrices on Stacey edges
+  ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
     call create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code, &
                                     NSPEC2D_BOTTOM)

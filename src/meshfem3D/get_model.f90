@@ -37,7 +37,6 @@
                       tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
                       elem_in_crust,elem_in_mantle)
 
-
   use meshfem3D_par,only: &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
     R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
