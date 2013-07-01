@@ -40,7 +40,7 @@
 !         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate jacobian
 
 
-  subroutine calc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
+  subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
                                 ispec,nspec,&
                                 xixstore,xiystore,xizstore, &
                                 etaxstore,etaystore,etazstore, &
@@ -151,19 +151,19 @@
         if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
           .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
           .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
-          call exit_MPI(myrank,'new mesh are wrong in recalc_jacobian_gall3D.f90')
+          call exit_MPI(myrank,'new mesh is wrong in recalc_jacobian_gll3D.f90')
         endif
         if(abs(sumshape-one) >  TINYVAL) then
-          call exit_MPI(myrank,'error shape functions in calc_jacobian_gll3D.f90')
+          call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll3D.f90')
         endif
         if(abs(sumdershapexi) >  TINYVAL) then
-          call exit_MPI(myrank,'error derivative xi in calc_jacobian_gll3D.f90')
+          call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll3D.f90')
         endif
         if(abs(sumdershapeeta) >  TINYVAL) then
-          call exit_MPI(myrank,'error derivative eta in calc_jacobian_gll3D.f90')
+          call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll3D.f90')
         endif
         if(abs(sumdershapegamma) >  TINYVAL) then
-          call exit_MPI(myrank,'error derivative gamma in calc_jacobian_gll3D.f90')
+          call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
         endif
 
         ! jacobian calculation
@@ -180,7 +180,7 @@
           print*,'  location r/lat/lon: ',r*R_EARTH_KM, &
             (PI_OVER_TWO-theta)*RADIANS_TO_DEGREES,phi*RADIANS_TO_DEGREES
           print*,'  jacobian: ',jacobian
-          call exit_MPI(myrank,'3D Jacobian undefined in calc_jacobian_gll3D.f90')
+          call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 
         !     invert the relation (Fletcher p. 50 vol. 2)
@@ -223,7 +223,7 @@
     enddo
   enddo
 
-  end subroutine calc_jacobian_gll3D
+  end subroutine recalc_jacobian_gll3D
 
 
 !
@@ -239,7 +239,7 @@
   !                     xigll,yigll,NSPEC2DMAX_AB,NGLLA,NGLLB
 
   ! output results:     jacobian2D,normal
-  subroutine calc_jacobian_gll2D(myrank,ispecb, &
+  subroutine recalc_jacobian_gll2D(myrank,ispecb, &
                                 xelm2D,yelm2D,zelm2D,xigll,yigll,&
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
@@ -318,16 +318,17 @@
         if ( abs(xmesh - xelm2D(i,j)) > TINYVAL &
             .or. abs(ymesh - yelm2D(i,j)) > TINYVAL &
             .or. abs(zmesh - zelm2D(i,j)) > TINYVAL ) then
-           call exit_MPI(myrank,'new boundary mesh is wrong in calc_jacobian_gll2D')
+           call exit_MPI(myrank,'new boundary mesh is wrong in recalc_jacobian_gll2D')
         endif
+
         if (abs(sumshape-one) >  TINYVAL) then
-           call exit_MPI(myrank,'error shape functions in calc_jacobian_gll2D')
+           call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll2D')
         endif
         if (abs(sumdershapexi) >  TINYVAL) then
-           call exit_MPI(myrank,'error derivative xi in calc_jacobian_gll2D')
+           call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll2D')
         endif
         if (abs(sumdershapeeta) >  TINYVAL) then
-           call exit_MPI(myrank,'error derivative eta in calc_jacobian_gll2D')
+           call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll2D')
         endif
 
         ! calculates j2D acobian
@@ -338,7 +339,7 @@
 
         ! checks
         if (abs(jacobian) < TINYVAL ) &
-          call exit_MPI(myrank,'2D Jacobian undefined in calc_jacobian_gll2D')
+          call exit_MPI(myrank,'2D Jacobian undefined in recalc_jacobian_gll2D')
 
         ! inverts jacobian
         jacobian_inv = ONE / jacobian
@@ -357,5 +358,5 @@
      enddo
   enddo
 
-  end subroutine calc_jacobian_gll2D
+  end subroutine recalc_jacobian_gll2D
 

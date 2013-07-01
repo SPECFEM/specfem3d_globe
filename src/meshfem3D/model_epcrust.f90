@@ -59,7 +59,6 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-
   subroutine model_epcrust_broadcast(myrank)
 
   use model_epcrust_par
@@ -118,7 +117,7 @@
   character(len=150) EPCRUST_FNM
   character(len=150),dimension(15) :: header
   double precision,dimension(15) :: tmp
-  integer:: ilon, jlat,ier
+  integer:: ilon,jlat,ier
 
   call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
 

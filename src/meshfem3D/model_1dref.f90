@@ -7427,6 +7427,5 @@
     Mref_V_Qkappa_ref(718:750) = Mref_V_Qkappa_ref(717)
   endif
 
-
   end subroutine define_model_1dref
 

@@ -92,8 +92,8 @@
 
 
   subroutine model_aniso_mantle(r,theta,phi,rho, &
-                              c11,c12,c13,c14,c15,c16, &
-                              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                               c11,c12,c13,c14,c15,c16, &
+                               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   use model_aniso_mantle_par
 
@@ -109,6 +109,7 @@
   ! local parameters
   double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                    d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+
   double precision :: colat,lon
 
   lon = phi / DEGREES_TO_RADIANS
@@ -177,8 +178,11 @@
 ! dimensionalize
   depth = R_EARTH_KM*(R_UNIT_SPHERE - r)
   if(depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
-  itheta = int(theta + pxy0)/pxy0
-  ilon = int(phi + pxy0)/pxy0
+!! DK DK  itheta = int(theta + pxy0)/pxy0
+!! DK DK  ilon = int(phi + pxy0)/pxy0
+!! DK DK fixed that because the above contained an automatic conversion from real to int
+  itheta = int(int(theta + pxy0)/pxy0)
+  ilon = int(int(phi + pxy0)/pxy0)
   tet = theta
   ph = phi
 
@@ -911,7 +915,5 @@ c66 = -((sintwophi/2.)*sinphisq*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + &
       (cosphifour + sinphifour)*(d66*costhetasq + &
       d44*sinthetasq + d46*sintwotheta)
 
-
 end subroutine rotate_aniso_tensor
-!--------------------------------------------------------------------
 

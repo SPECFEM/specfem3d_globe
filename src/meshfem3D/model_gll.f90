@@ -33,7 +33,6 @@
 ! used for iterative inversion procedures
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_gll_broadcast(myrank,MGLL_V,NSPEC)
 
 ! standard routine to setup model

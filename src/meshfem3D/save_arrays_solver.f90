@@ -255,7 +255,6 @@
 
   close(27) ! solver_data.bin
 
-
   ! absorbing boundary parameters
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
@@ -311,7 +310,6 @@
     write(27) dvpstore
     close(27)
   endif
-
 
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then

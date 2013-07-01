@@ -211,7 +211,6 @@
   call MPI_BCAST(JP3DM_RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(JP3DM_DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-
   end subroutine model_jp3d_broadcast
 
 !

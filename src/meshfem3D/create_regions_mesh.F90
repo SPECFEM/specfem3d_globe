@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine create_regions_mesh(iregion_code, &
                           nspec,nglob_theor,npointot, &
                           NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -472,8 +471,8 @@
   ! local parameters
   integer :: ier
 
-  ! New Attenuation definition on all GLL points
-  ! Attenuation
+  ! new Attenuation definition on all GLL points
+  ! attenuation
   if (ATTENUATION) then
     T_c_source = AM_V%QT_c_source
     tau_s(:)   = AM_V%Qtau_s(:)

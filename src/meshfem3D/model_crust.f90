@@ -546,4 +546,3 @@
   endif
 
   end subroutine CAP_vardegree
-

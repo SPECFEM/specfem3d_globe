@@ -26,8 +26,7 @@
 !=====================================================================
 
   subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta, &
-                                ibool,idoubling, &
-                                xstore,ystore,zstore,mask_ibool,npointot, &
+                                ibool,idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
                                 NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion, &
                                 ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
                                 ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
@@ -299,6 +298,7 @@
   ispeccount=0
 
   do ispec=1,nspec
+
     ! remove central cube for chunk buffers
     if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
@@ -314,6 +314,7 @@
       ix = NGLLX
       iy = NGLLY
       do iz=1,NGLLZ
+
         ! select point, if not already selected
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
           mask_ibool(ibool(ix,iy,iz,ispec)) = .true.

@@ -36,7 +36,7 @@
 
   include "constants.h"
 
-  integer :: nspec,myrank, iregion
+  integer :: nspec,myrank,iregion
 
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
