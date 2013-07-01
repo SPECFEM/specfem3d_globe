@@ -44,7 +44,9 @@
                         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
                         PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
                         ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-                        INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
+                        INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
+                        LOCAL_PATH,MODEL, &
+                        SIMULATION_TYPE,SAVE_FORWARD, &
                         NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                         NSPEC,NSPEC2D_XI,NSPEC2D_ETA,NSPEC2DMAX_XMIN_XMAX, &
                         NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -150,7 +152,8 @@
   integer :: NT_DUMP_ATTENUATION
 
   ! reads in Par_file values
-  call read_parameter_file(OUTPUT_FILES,LOCAL_PATH,MODEL, &
+  call read_parameter_file(OUTPUT_FILES, &
+                          LOCAL_PATH,MODEL, &
                           NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
                           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
                           NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
@@ -165,8 +168,8 @@
                           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
                           SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
                           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-                          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
+                          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
+                          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY, &
                           SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 
   ! converts values to radians
@@ -210,7 +213,6 @@
                         RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
                         R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
 
-
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
@@ -224,7 +226,7 @@
                           ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
                           ANISOTROPIC_INNER_CORE)
 
-  ! compute total number of time steps, rounded to next multiple of 100
+  ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
@@ -246,7 +248,6 @@
   if(HDUR_MOVIE <= TINYVAL) &
     HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
-
 
   ! checks parameters
   call rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
@@ -868,10 +869,12 @@
     stop 'need six chunks to include central cube'
 
   ! check that sphere can be cut into slices without getting negative Jacobian
-  if(NEX_XI < 48) &
-    stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
-  if(NEX_ETA < 48) &
-    stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
+  if(NCHUNKS == 6 ) then
+    if(NEX_XI < 48) &
+      stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
+    if(NEX_ETA < 48) &
+      stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
+  endif
 
   ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) &
@@ -880,9 +883,13 @@
   if(NCHUNKS > 2 .and. NPROC_XI /= NPROC_ETA) &
     stop 'must have NPROC_XI = NPROC_ETA for more than two chunks'
 
-  ! support for only one slice per chunk has been discontinued when there is more than one chunk
-  ! because it induces topological problems, and we are not interested in using small meshes
-  if(NCHUNKS > 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1)) stop 'support for only one slice per chunk has been discontinued'
+  ! small meshes useful for testing, also for GPU version
+  if(NCHUNKS > 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1) ) then
+    if( NUMFACES_SHARED < 4 ) &
+      stop 'NPROC_XI,NPROC_ETA==1: please set in constants.h NUMFACES_SHARED and NUMCORNERS_SHARED equal to 4 and recompile'
+    if( NUMCORNERS_SHARED < 4 ) &
+      stop 'NPROC_XI,NPROC_ETA==1: please set in constants.h NUMFACES_SHARED and NUMCORNERS_SHARED equal to 4 and recompile'
+  endif
 
   end subroutine rcp_check_parameters
 
