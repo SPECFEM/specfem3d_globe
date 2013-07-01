@@ -25,11 +25,10 @@
 !
 !=====================================================================
 
-
-  subroutine movie_volume_count_points()
-
 ! this subroutine counts the number of points and elements within the movie volume
 ! in this processor slice, and returns arrays that keep track of them, both in global and local indexing schemes
+
+  subroutine movie_volume_count_points()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -282,7 +281,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine write_movie_volume_strains(myrank,npoints_3dmovie, &
                                         LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                                         it,eps_trace_over_3_crust_mantle, &
@@ -290,7 +288,6 @@
                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                         muvstore_crust_mantle_3dmovie, &
                                         mask_3dmovie,nu_3dmovie)
-
 
 ! outputs strains: MOVIE_VOLUME_TYPE == 1 / 2 / 3
 
@@ -504,7 +501,8 @@
     vector_scaled = vector_crust_mantle*scalingval
   endif
 
-  ipoints_3dmovie=0
+  ipoints_3dmovie = 0
+
   do ispec=1,NSPEC_CRUST_MANTLE
    do k=1,NGLLZ,iNIT
     do j=1,NGLLY,iNIT
@@ -542,8 +540,7 @@
   write(27) store_val3d_Z(1:npoints_3dmovie)
   close(27)
 
-  deallocate(store_val3d_N,store_val3d_E,store_val3d_Z, &
-            vector_scaled)
+  deallocate(store_val3d_N,store_val3d_E,store_val3d_Z,vector_scaled)
 
   end subroutine write_movie_volume_vector
 
@@ -596,8 +593,8 @@
 
   ! output parameters
   logical,parameter :: MOVIE_OUTPUT_DIV = .true.          ! divergence
-  logical,parameter :: MOVIE_OUTPUT_CURL = .true.        ! curl
-  logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! frobenius norm of curl
+  logical,parameter :: MOVIE_OUTPUT_CURL = .true.         ! curl
+  logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! Frobenius norm of curl
 
   ! outputs divergence
   if( MOVIE_OUTPUT_DIV ) then

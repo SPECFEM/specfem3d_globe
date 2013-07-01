@@ -110,6 +110,7 @@
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
   integer, dimension(NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_SPEC_THIS
   integer, dimension(NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_SPEC_OTHER
+
 ! ************** PROGRAM STARTS HERE **************
 
   print *

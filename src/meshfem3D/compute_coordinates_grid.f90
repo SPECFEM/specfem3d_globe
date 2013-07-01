@@ -312,13 +312,13 @@
   fact_y = 2.d0*ratio_y-1.d0
   fact_z = 2.d0*ratio_z-1.d0
 
-  xi = PI_OVER_TWO*fact_x;
-  eta = PI_OVER_TWO*fact_y;
-  gamma = PI_OVER_TWO*fact_z;
+  xi = PI_OVER_TWO*fact_x
+  eta = PI_OVER_TWO*fact_y
+  gamma = PI_OVER_TWO*fact_z
 
-  xgrid_central_cube = radius_cube * fact_x * (1 + (cos(eta)+cos(gamma))*CENTRAL_CUBE_INFLATE_FACTOR / PI);
-  ygrid_central_cube = radius_cube * fact_y * (1 + (cos(xi)+cos(gamma))*CENTRAL_CUBE_INFLATE_FACTOR / PI);
-  zgrid_central_cube = radius_cube * fact_z * (1 + (cos(xi)+cos(eta))*CENTRAL_CUBE_INFLATE_FACTOR / PI);
+  xgrid_central_cube = radius_cube * fact_x * (1 + (cos(eta)+cos(gamma))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
+  ygrid_central_cube = radius_cube * fact_y * (1 + (cos(xi)+cos(gamma))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
+  zgrid_central_cube = radius_cube * fact_z * (1 + (cos(xi)+cos(eta))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
 
   end subroutine compute_coord_central_cube
 
