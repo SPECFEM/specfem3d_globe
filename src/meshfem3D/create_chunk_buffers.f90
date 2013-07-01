@@ -28,8 +28,7 @@
 ! subroutine to create MPI buffers to assemble between chunks
 
   subroutine create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
-                                  xstore,ystore,zstore, &
-                                  nglob_ori, &
+                                  xstore,ystore,zstore,nglob_ori, &
                                   NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                                   NPROC_XI,NPROC_ETA,NPROC,NPROCTOT, &
                                   NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
@@ -54,10 +53,8 @@
   integer nspec
   integer myrank,NCHUNKS
 
-! arrays with the mesh
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  ! arrays with the mesh
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,ERR_MSG
 
@@ -66,22 +63,23 @@
 
   integer idoubling(nspec)
 
-! mask for ibool to mark points already found
+  ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
 
-! array to store points selected for the chunk face buffer
-  integer NGLOB2DMAX_XY
+  ! array to store points selected for the chunk face buffer
+  integer :: NGLOB2DMAX_XY
   integer, dimension(:), allocatable :: ibool_selected
 
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
 
-! arrays for sorting routine
+  ! arrays for sorting routine
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: work
 
-! pairs generated theoretically
-! four sides for each of the three types of messages
+  ! pairs generated theoretically
+
+  ! four sides for each of the three types of messages
   integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
 
 ! 1D buffers to remove points belonging to corners
@@ -96,14 +94,14 @@
   double precision xdummy,ydummy,zdummy
   integer ipoin1D
 
-! arrays to assemble the corners (3 processors for each corner)
+  ! arrays to assemble the corners (3 processors for each corner)
   integer, dimension(:,:), allocatable :: iprocscorners,itypecorner
 
-  integer ichunk_send,iproc_xi_send,iproc_eta_send
-  integer ichunk_receive,iproc_xi_receive,iproc_eta_receive
-  integer iproc_loop,iproc_xi_loop,iproc_eta_loop
-  integer iproc_xi_loop_inv,iproc_eta_loop_inv
-  integer imember_corner
+  integer :: ichunk_send,iproc_xi_send,iproc_eta_send
+  integer :: ichunk_receive,iproc_xi_receive,iproc_eta_receive
+  integer :: iproc_loop,iproc_xi_loop,iproc_eta_loop
+  integer :: iproc_xi_loop_inv,iproc_eta_loop_inv
+  integer :: imember_corner
 
   integer iregion_code
 
@@ -119,7 +117,7 @@
 
   integer i,j,k,ispec,ispec2D,ipoin2D,ier
 
-! current message number
+  ! current message number
   integer imsg
 
 ! names of the data files for all the processors in MPI
@@ -174,7 +172,7 @@
   ichunk_receive = 0
   ichunk_send = 0
 
-! number of corners and faces shared between chunks and number of message types
+  ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1
     NUM_FACES = 1
@@ -191,10 +189,10 @@
     call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
   endif
 
-! if more than one chunk then same number of processors in each direction
+  ! if more than one chunk then same number of processors in each direction
   NPROC_ONE_DIRECTION = NPROC_XI
 
-! total number of messages corresponding to these common faces
+  ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
 ! check that there is more than one chunk, otherwise nothing to do
@@ -209,7 +207,7 @@
   allocate(npoin2D_send(NUMMSGS_FACES))
   allocate(npoin2D_receive(NUMMSGS_FACES))
 
-! allocate array for corners
+  ! allocate array for corners
   allocate(iprocscorners(3,NCORNERSCHUNKS))
   allocate(itypecorner(3,NCORNERSCHUNKS))
 
@@ -263,28 +261,28 @@
     do iside = 1,NUM_FACES
       do iproc_loop = 0,NPROC_ONE_DIRECTION-1
 
-! create a new message
-! we know there can be no deadlock with this scheme
-! because the three types of messages are independent
+        ! create a new message
+        ! we know there can be no deadlock with this scheme
+        ! because the three types of messages are independent
         imsg = imsg + 1
 
-! check that current message number is correct
+        ! check that current message number is correct
         if(imsg > NUMMSGS_FACES) call exit_MPI(myrank,'incorrect message number')
 
         if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for faces out of ',NUMMSGS_FACES
 
-! we know there is the same number of slices in both directions
+        ! we know there is the same number of slices in both directions
         iproc_xi_loop = iproc_loop
         iproc_eta_loop = iproc_loop
 
-! take care of local frame inversions between chunks
+        ! take care of local frame inversions between chunks
         iproc_xi_loop_inv = NPROC_ONE_DIRECTION - iproc_loop - 1
         iproc_eta_loop_inv = NPROC_ONE_DIRECTION - iproc_loop - 1
 
 
-! define the 12 different messages
+        ! define the 12 different messages
 
-! message type M1
+        ! message type M1
         if(imsg_type == 1) then
 
           if(iside == 1) then
@@ -333,7 +331,7 @@
 
         endif
 
-! message type M2
+        ! message type M2
         if(imsg_type == 2) then
 
           if(iside == 1) then
@@ -382,7 +380,7 @@
 
         endif
 
-! message type M3
+        ! message type M3
         if(imsg_type == 3) then
 
           if(iside == 1) then
@@ -442,7 +440,7 @@
 ! save message type and pair of processors in list of messages
         if(myrank == 0) write(IOUT,*) imsg_type,iproc_sender(imsg),iproc_receiver(imsg)
 
-! loop on sender/receiver (1=sender 2=receiver)
+        ! loop on sender/receiver (1=sender 2=receiver)
         do imode_comm=1,2
 
           if(imode_comm == 1) then
@@ -457,7 +455,7 @@
             call exit_MPI(myrank,'incorrect communication mode')
           endif
 
-! only do this if current processor is the right one for MPI version
+          ! only do this if current processor is the right one for MPI version
           if(iproc == myrank) then
 
 ! create the name of the database for each slice
@@ -466,18 +464,19 @@
 ! open file for 2D buffer
             open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
 
-! determine chunk number and local slice coordinates using addressing
+            ! determine chunk number and local slice coordinates using addressing
             ichunk = ichunk_slice(iproc)
             iproc_xi = iproc_xi_slice(iproc)
             iproc_eta = iproc_eta_slice(iproc)
 
-! problem if not on edges
+            ! problem if not on edges
             if(iproc_xi /= 0 .and. iproc_xi /= NPROC_XI-1 .and. &
-              iproc_eta /= 0 .and. iproc_eta /= NPROC_ETA-1) call exit_MPI(myrank,'slice not on any edge')
+              iproc_eta /= 0 .and. iproc_eta /= NPROC_ETA-1) &
+              call exit_MPI(myrank,'slice not on any edge')
 
             nglob=nglob_ori
-! check that iboolmax=nglob
 
+            ! check that iboolmax=nglob
             if(minval(ibool(:,:,:,1:nspec)) /= 1 .or. maxval(ibool(:,:,:,1:nspec)) /= nglob) &
               call exit_MPI(myrank,ERR_MSG)
 
@@ -524,17 +523,16 @@
             enddo
             close(IIN)
 
-! erase logical mask
+            ! erase logical mask
             mask_ibool(:) = .false.
 
             npoin2D = 0
 
-! create all the points on each face (no duplicates, but not sorted)
+            ! create all the points on each face (no duplicates, but not sorted)
 
-! xmin
+            ! xmin
             if(iedge == XI_MIN) then
-
-! mark corner points to remove them if needed
+              ! mark corner points to remove them if needed
               if(iproc_eta == 0) then
                 do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
                   mask_ibool(ibool1D_leftxi_lefteta(ipoin1D)) = .true.
@@ -550,7 +548,7 @@
               do ispec2D=1,nspec2D_xmin
                 ispec=ibelm_xmin(ispec2D)
 
-! remove central cube for chunk buffers
+                ! remove central cube for chunk buffers
                 if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
@@ -560,10 +558,12 @@
                 do k=1,NGLLZ
                   do j=1,NGLLY
                     if(.not. mask_ibool(ibool(i,j,k,ispec))) then
-! mask and store points found
+                      ! mask and store points found
                       mask_ibool(ibool(i,j,k,ispec)) = .true.
                       npoin2D = npoin2D + 1
-                      if(npoin2D > NGLOB2DMAX_XMIN_XMAX) call exit_MPI(myrank,'incorrect 2D point number in xmin')
+                      if(npoin2D > NGLOB2DMAX_XMIN_XMAX) &
+                        call exit_MPI(myrank,'incorrect 2D point number in xmin')
+
                       ibool_selected(npoin2D) = ibool(i,j,k,ispec)
 
                       xstore_selected(npoin2D) = xstore(i,j,k,ispec)
@@ -574,11 +574,9 @@
                 enddo
               enddo
 
-! xmax
+            ! xmax
             else if(iedge == XI_MAX) then
-
-! mark corner points to remove them if needed
-
+              ! mark corner points to remove them if needed
               if(iproc_eta == 0) then
                 do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
                   mask_ibool(ibool1D_rightxi_lefteta(ipoin1D)) = .true.
@@ -594,7 +592,7 @@
               do ispec2D=1,nspec2D_xmax
                 ispec=ibelm_xmax(ispec2D)
 
-! remove central cube for chunk buffers
+                ! remove central cube for chunk buffers
                 if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
@@ -604,10 +602,12 @@
                 do k=1,NGLLZ
                   do j=1,NGLLY
                     if(.not. mask_ibool(ibool(i,j,k,ispec))) then
-! mask and store points found
+                      ! mask and store points found
                       mask_ibool(ibool(i,j,k,ispec)) = .true.
                       npoin2D = npoin2D + 1
-                      if(npoin2D > NGLOB2DMAX_XMIN_XMAX) call exit_MPI(myrank,'incorrect 2D point number in xmax')
+                      if(npoin2D > NGLOB2DMAX_XMIN_XMAX) &
+                        call exit_MPI(myrank,'incorrect 2D point number in xmax')
+
                       ibool_selected(npoin2D) = ibool(i,j,k,ispec)
 
                       xstore_selected(npoin2D) = xstore(i,j,k,ispec)
@@ -618,11 +618,9 @@
                 enddo
               enddo
 
-! ymin
+            ! ymin
             else if(iedge == ETA_MIN) then
-
-! mark corner points to remove them if needed
-
+              ! mark corner points to remove them if needed
               if(iproc_xi == 0) then
                 do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
                   mask_ibool(ibool1D_leftxi_lefteta(ipoin1D)) = .true.
@@ -638,7 +636,7 @@
               do ispec2D=1,nspec2D_ymin
                 ispec=ibelm_ymin(ispec2D)
 
-! remove central cube for chunk buffers
+                ! remove central cube for chunk buffers
                 if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
@@ -648,10 +646,12 @@
                 do k=1,NGLLZ
                   do i=1,NGLLX
                     if(.not. mask_ibool(ibool(i,j,k,ispec))) then
-! mask and store points found
+                      ! mask and store points found
                       mask_ibool(ibool(i,j,k,ispec)) = .true.
                       npoin2D = npoin2D + 1
-                      if(npoin2D > NGLOB2DMAX_YMIN_YMAX) call exit_MPI(myrank,'incorrect 2D point number in ymin')
+                      if(npoin2D > NGLOB2DMAX_YMIN_YMAX) &
+                        call exit_MPI(myrank,'incorrect 2D point number in ymin')
+
                       ibool_selected(npoin2D) = ibool(i,j,k,ispec)
 
                       xstore_selected(npoin2D) = xstore(i,j,k,ispec)
@@ -662,11 +662,9 @@
                 enddo
               enddo
 
-! ymax
+            ! ymax
             else if(iedge == ETA_MAX) then
-
-! mark corner points to remove them if needed
-
+              ! mark corner points to remove them if needed
               if(iproc_xi == 0) then
                 do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
                   mask_ibool(ibool1D_leftxi_righteta(ipoin1D)) = .true.
@@ -682,7 +680,7 @@
               do ispec2D=1,nspec2D_ymax
                 ispec=ibelm_ymax(ispec2D)
 
-! remove central cube for chunk buffers
+                ! remove central cube for chunk buffers
                 if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
@@ -692,10 +690,12 @@
                 do k=1,NGLLZ
                   do i=1,NGLLX
                     if(.not. mask_ibool(ibool(i,j,k,ispec))) then
-! mask and store points found
+                      ! mask and store points found
                       mask_ibool(ibool(i,j,k,ispec)) = .true.
                       npoin2D = npoin2D + 1
-                      if(npoin2D > NGLOB2DMAX_YMIN_YMAX) call exit_MPI(myrank,'incorrect 2D point number in ymax')
+                      if(npoin2D > NGLOB2DMAX_YMIN_YMAX) &
+                        call exit_MPI(myrank,'incorrect 2D point number in ymax')
+
                       ibool_selected(npoin2D) = ibool(i,j,k,ispec)
 
                       xstore_selected(npoin2D) = xstore(i,j,k,ispec)
@@ -711,16 +711,17 @@
               call exit_MPI(myrank,'incorrect edge code')
             endif
 
-! sort buffer obtained to be conforming with neighbor in other chunk
-! sort on x, y and z, the other arrays will be swapped as well
+            ! sort buffer obtained to be conforming with neighbor in other chunk
+            ! sort on x, y and z, the other arrays will be swapped as well
 
             call sort_array_coordinates(npoin2D,xstore_selected,ystore_selected,zstore_selected, &
               ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
 
-! check that no duplicate has been detected
+            ! check that no duplicate has been detected
             if(nglob /= npoin2D) call exit_MPI(myrank,'duplicates detected in buffer')
 
-! write list of selected points to output buffer
+            ! write list of selected points to output buffer
+
             write(IOUT_BUFFERS,*) npoin2D
             do ipoin2D = 1,npoin2D
                 write(IOUT_BUFFERS,*) ibool_selected(ipoin2D), &
@@ -729,56 +730,57 @@
 
             close(IOUT_BUFFERS)
 
-! store result to compare number of points for sender and for receiver
+            ! store result to compare number of points for sender and for receiver
             if(imode_comm == 1) then
               npoin2D_send(imsg) = npoin2D
             else
               npoin2D_receive(imsg) = npoin2D
             endif
 
-! end of section done only if right processor for MPI
+          ! end of section done only if right processor for MPI
           endif
 
-! end of loop on sender/receiver
+        ! end of loop on sender/receiver
         enddo
 
-! end of loops on all the messages
+      ! end of loops on all the messages
       enddo
     enddo
   enddo
 
   if(myrank == 0) close(IOUT)
 
-! check that total number of messages is correct
+  ! check that total number of messages is correct
   if(imsg /= NUMMSGS_FACES) call exit_MPI(myrank,'incorrect total number of messages')
 
 !
 !---- check that number of points detected is the same for sender and receiver
 !
 
-! synchronize all the processes to make sure all the buffers are ready
+  ! synchronize all the processes to make sure all the buffers are ready
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
-! gather information about all the messages on all processes
+  ! gather information about all the messages on all processes
   do imsg = 1,NUMMSGS_FACES
-
-!     gather number of points for sender
+      !     gather number of points for sender
       npoin2D_send_local = npoin2D_send(imsg)
       call MPI_BCAST(npoin2D_send_local,1,MPI_INTEGER,iproc_sender(imsg),MPI_COMM_WORLD,ier)
       if(myrank /= iproc_sender(imsg)) npoin2D_send(imsg) = npoin2D_send_local
 
-!     gather number of points for receiver
+      !     gather number of points for receiver
       npoin2D_receive_local = npoin2D_receive(imsg)
       call MPI_BCAST(npoin2D_receive_local,1,MPI_INTEGER,iproc_receiver(imsg),MPI_COMM_WORLD,ier)
       if(myrank /= iproc_receiver(imsg)) npoin2D_receive(imsg) = npoin2D_receive_local
 
   enddo
 
-! check the number of points
+  ! check the number of points
   do imsg = 1,NUMMSGS_FACES
     if(npoin2D_send(imsg) /= npoin2D_receive(imsg)) &
         call exit_MPI(myrank,'incorrect number of points for sender/receiver pair detected')
   enddo
+
+  ! user output
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'all the messages for chunk faces have the right size'
@@ -789,14 +791,14 @@
 !---- generate the 8 message patterns sharing a corner of valence 3
 !
 
-! to avoid problem at compile time, use bigger array with fixed dimension
+  ! to avoid problem at compile time, use bigger array with fixed dimension
   addressing_big(:,:,:) = 0
   addressing_big(1:NCHUNKS,:,:) = addressing(1:NCHUNKS,:,:)
 
   ichunk = 1
   iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,0,NPROC_ETA-1)
   iprocscorners(2,ichunk) = addressing_big(CHUNK_AC,NPROC_XI-1,NPROC_ETA-1)
-! this line is ok even for NCHUNKS = 2
+  ! this line is ok even for NCHUNKS = 2
   iprocscorners(3,ichunk) = addressing_big(CHUNK_BC,NPROC_XI-1,0)
 
   itypecorner(1,ichunk) = ILOWERUPPER
@@ -808,83 +810,83 @@
 !! DK DK UGLY formally this is incorrect and should be changed in the future
 !! DK DK UGLY in practice this trick works fine
 
-! this only if more than 3 chunks
+  ! this only if more than 3 chunks
   if(NCHUNKS > 3) then
 
-  ichunk = 2
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,0)
+    ichunk = 2
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,0)
 
-  itypecorner(1,ichunk) = IUPPERLOWER
-  itypecorner(2,ichunk) = ILOWERLOWER
-  itypecorner(3,ichunk) = IUPPERLOWER
+    itypecorner(1,ichunk) = IUPPERLOWER
+    itypecorner(2,ichunk) = ILOWERLOWER
+    itypecorner(3,ichunk) = IUPPERLOWER
 
-  ichunk = 3
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,0,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_AC,NPROC_XI-1,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
+    ichunk = 3
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,0,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_AC,NPROC_XI-1,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = ILOWERLOWER
-  itypecorner(2,ichunk) = IUPPERLOWER
-  itypecorner(3,ichunk) = IUPPERUPPER
+    itypecorner(1,ichunk) = ILOWERLOWER
+    itypecorner(2,ichunk) = IUPPERLOWER
+    itypecorner(3,ichunk) = IUPPERUPPER
 
-  ichunk = 4
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,NPROC_ETA-1)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,NPROC_XI-1,NPROC_ETA-1)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,NPROC_ETA-1)
+    ichunk = 4
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,NPROC_XI-1,NPROC_ETA-1)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,NPROC_XI-1,NPROC_ETA-1)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,0,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = IUPPERUPPER
-  itypecorner(2,ichunk) = IUPPERUPPER
-  itypecorner(3,ichunk) = ILOWERUPPER
+    itypecorner(1,ichunk) = IUPPERUPPER
+    itypecorner(2,ichunk) = IUPPERUPPER
+    itypecorner(3,ichunk) = ILOWERUPPER
 
-  ichunk = 5
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,NPROC_ETA-1)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,0)
+    ichunk = 5
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,NPROC_ETA-1)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,0)
 
-  itypecorner(1,ichunk) = ILOWERLOWER
-  itypecorner(2,ichunk) = ILOWERUPPER
-  itypecorner(3,ichunk) = IUPPERLOWER
+    itypecorner(1,ichunk) = ILOWERLOWER
+    itypecorner(2,ichunk) = ILOWERUPPER
+    itypecorner(3,ichunk) = IUPPERLOWER
 
-  ichunk = 6
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,0)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,0)
+    ichunk = 6
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,0)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC_ANTIPODE,0,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,0)
 
-  itypecorner(1,ichunk) = IUPPERLOWER
-  itypecorner(2,ichunk) = ILOWERLOWER
-  itypecorner(3,ichunk) = ILOWERLOWER
+    itypecorner(1,ichunk) = IUPPERLOWER
+    itypecorner(2,ichunk) = ILOWERLOWER
+    itypecorner(3,ichunk) = ILOWERLOWER
 
-  ichunk = 7
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,NPROC_ETA-1)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,0,0)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
+    ichunk = 7
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_AC,0,NPROC_ETA-1)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_BC,0,0)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = ILOWERUPPER
-  itypecorner(2,ichunk) = ILOWERLOWER
-  itypecorner(3,ichunk) = IUPPERUPPER
+    itypecorner(1,ichunk) = ILOWERUPPER
+    itypecorner(2,ichunk) = ILOWERLOWER
+    itypecorner(3,ichunk) = IUPPERUPPER
 
-  ichunk = 8
-  iprocscorners(1,ichunk) = addressing_big(CHUNK_BC,0,NPROC_ETA-1)
-  iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
-  iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,NPROC_ETA-1)
+    ichunk = 8
+    iprocscorners(1,ichunk) = addressing_big(CHUNK_BC,0,NPROC_ETA-1)
+    iprocscorners(2,ichunk) = addressing_big(CHUNK_AC_ANTIPODE,NPROC_XI-1,NPROC_ETA-1)
+    iprocscorners(3,ichunk) = addressing_big(CHUNK_AB_ANTIPODE,0,NPROC_ETA-1)
 
-  itypecorner(1,ichunk) = ILOWERUPPER
-  itypecorner(2,ichunk) = IUPPERUPPER
-  itypecorner(3,ichunk) = ILOWERUPPER
+    itypecorner(1,ichunk) = ILOWERUPPER
+    itypecorner(2,ichunk) = IUPPERUPPER
+    itypecorner(3,ichunk) = ILOWERUPPER
 
   endif
 
 ! file to store the list of processors for each message for corners
   if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
 
-! loop over all the messages to create the addressing
+  ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
 
-  if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
+    if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
 
-! save triplet of processors in list of messages
+    ! save triplet of processors in list of messages
   if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
 
 ! loop on the three processors of a given corner
@@ -954,7 +956,7 @@
 
   if(myrank == 0) close(IOUT)
 
-! deallocate arrays
+  ! deallocate arrays
   deallocate(iproc_sender)
   deallocate(iproc_receiver)
   deallocate(npoin2D_send)

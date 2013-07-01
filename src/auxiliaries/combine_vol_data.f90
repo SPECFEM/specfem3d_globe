@@ -192,7 +192,6 @@ program combine_vol_data
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
-
       read(27,*) nspec(it)
       read(27,*) nglob(it)
       close(27)
@@ -266,7 +265,6 @@ program combine_vol_data
 
       print *, trim(topo_file)
 
-
       !average data on global points
       ibool_count(:) = 0
       ibool_dat(:) = 0.0
@@ -302,7 +300,6 @@ program combine_vol_data
       mask_ibool(:) = .false.
       num_ibool(:) = 0
       numpoin = 0
-
 
       ! write point file
       do ispec=1,nspec(it)
@@ -621,7 +618,6 @@ end program combine_vol_data
     r(i) = r_ocean+(r_0-r_ocean)*dble(i-634)/dble(6)
   enddo
 
-
 ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
   do i=1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -762,8 +758,6 @@ end program combine_vol_data
   integer i,j,n,kdis(28)
   integer ndis,nir1
 
-
-
   data kdis/163,323,336,517,530,540,565,590,609,619,626,633,16*0/
 
   ndis = 12
@@ -792,12 +786,12 @@ end program combine_vol_data
 
   implicit none
 
-! Argument variables
+! argument variables
   integer kdis(28),n,ndis
   double precision r(n),s1(n),s2(n),s3(n)
   double precision y(n),yprime(n)
 
-! Local variables
+! local variables
   integer i,j,j1,j2
   integer k,nd,ndp
   double precision a0,b0,b1
@@ -1012,7 +1006,6 @@ end program combine_vol_data
          (coef2**3 - coef2)*spline_coefficients(index_higher))*((xpoint(index_higher) - xpoint(index_lower))**2)/6.d0
 
   end subroutine spline_evaluation
-
 
 !
 ! ------------------------------------------------------------------------------------------------

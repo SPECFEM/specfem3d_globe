@@ -33,7 +33,6 @@
 ! by default (constants.h), it uses a smoothed ETOPO 4 dataset
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_topo_bathy_broadcast(myrank,ibathy_topo)
 
 ! standard routine to setup model
@@ -44,10 +43,12 @@
   ! standard include of the MPI library
   include 'mpif.h'
 
+  integer :: myrank
+
   ! bathymetry and topography: use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer :: myrank
+  ! local parameters
   integer :: ier
 
   if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
@@ -71,10 +72,11 @@
 
   character(len=150) topo_bathy_file
 
-! use integer array to store values
+  ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer itopo_x,itopo_y,ier
+  ! local parameters
+  integer :: itopo_x,itopo_y,ier
 
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
@@ -84,6 +86,7 @@
     print*,'error opening:',trim(topo_bathy_file)
     call exit_mpi(0,'error opening topography data file')
   endif
+
   ! reads in topography array
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
@@ -91,7 +94,6 @@
     enddo
   enddo
   close(13)
-
 
   ! note: we check the limits after reading in the data. this seems to perform sligthly faster
   !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
@@ -114,8 +116,10 @@
 
   endif
 
-  end subroutine read_topo_bathy_file
+  ! user output
+  write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
 
+  end subroutine read_topo_bathy_file
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -131,23 +135,32 @@
 
   include "constants.h"
 
-! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  ! location latitude/longitude (in degree)
+  double precision,intent(in):: xlat,xlon
 
-  double precision xlat,xlon,value
+  ! returns elevation (in meters)
+  double precision,intent(out):: value
 
-  integer iadd1,iel1
-  double precision samples_per_degree_topo
-  double precision xlo
-  double precision:: lon_corner,lat_corner,ratio_lon,ratio_lat
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
 
+  ! local parameters
+  integer :: iadd1,iel1
+  double precision :: samples_per_degree_topo
+  double precision :: xlo
+  double precision :: lon_corner,lat_corner,ratio_lon,ratio_lat
+
+  ! initializes elevation
+  value = ZERO
+
+  ! longitude within range [0,360] degrees
   xlo = xlon
   if(xlon < 0.d0) xlo = xlo + 360.d0
 
-! compute number of samples per degree
+  ! compute number of samples per degree
   samples_per_degree_topo = dble(RESOLUTION_TOPO_FILE) / 60.d0
 
-! compute offset in data file and avoid edge effects
+  ! compute offset in data file and avoid edge effects
   iadd1 = 1 + int((90.d0-xlat)/samples_per_degree_topo)
   if(iadd1 < 1) iadd1 = 1
   if(iadd1 > NY_BATHY) iadd1 = NY_BATHY
@@ -156,7 +169,8 @@
   if(iel1 <= 0 .or. iel1 > NX_BATHY) iel1 = NX_BATHY
 
 ! Use bilinear interpolation rather nearest point interpolation
-! convert integer value to double precision
+
+  ! convert integer value to double precision
   !  value = dble(ibathy_topo(iel1,iadd1))
 
   lon_corner=iel1*samples_per_degree_topo
@@ -170,7 +184,7 @@
   if(ratio_lat<0.0) ratio_lat=0.0
   if(ratio_lat>1.0) ratio_lat=1.0
 
-! convert integer value to double precision
+  ! convert integer value to double precision
   if( iadd1 <= NY_BATHY-1 .and. iel1 <= NX_BATHY-1 ) then
     ! interpolates for points within boundaries
     value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &

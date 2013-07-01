@@ -85,7 +85,7 @@
 
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-! doubling mesh flag
+  ! doubling mesh flag
   integer, dimension(nspec) :: idoubling
 
 ! this for non blocking MPI
@@ -165,6 +165,7 @@
 
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin',status='unknown',form='unformatted',action='write')
 
+  ! local GLL points
   write(27) xixstore
   write(27) xiystore
   write(27) xizstore
@@ -184,7 +185,7 @@
      close(29)
   endif
 
-! other terms needed in the solid regions only
+  ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
 
     ! note: muvstore needed for Q_mu shear attenuation in inner core
@@ -341,8 +342,10 @@
 
   close(27)
 
-! absorbing boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted',action='write')
+  ! absorbing boundary parameters
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
 
   write(27) nspec2D_xmin
   write(27) nspec2D_xmax
@@ -377,12 +380,15 @@
 !> Hejun
 ! No matter 1D or 3D Attenuation, we save value for gll points
   if(ATTENUATION) then
-     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', status='unknown', form='unformatted',action='write')
-     write(27) tau_s
-     write(27) tau_e_store
-     write(27) Qmu_store
-     write(27) T_c_source
-     close(27)
+    open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
+          status='unknown', form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
+
+    write(27) tau_s
+    write(27) tau_e_store
+    write(27) Qmu_store
+    write(27) T_c_source
+    close(27)
   endif
 
   ! uncomment for vp & vs model storage
@@ -400,7 +406,10 @@
     write(27) sqrt( muvstore/rhostore )*scaleval1
     close(27)
     ! rho
-    open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted',action='write')
+    open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+
     write(27) rhostore*scaleval2
     close(27)
 
