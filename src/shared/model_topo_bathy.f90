@@ -33,7 +33,6 @@
 ! by default (constants.h), it uses a smoothed ETOPO 4 dataset
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
 ! standard routine to setup model
@@ -156,7 +155,6 @@
 
   end subroutine read_topo_bathy_file
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -268,10 +266,10 @@
   integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
 
   ! local parameters
-  integer:: iadd1,iel1
-  double precision:: samples_per_degree_topo
-  double precision:: xlo
-  double precision:: lon_corner,lat_corner,ratio_lon,ratio_lat
+  integer :: iadd1,iel1
+  double precision :: samples_per_degree_topo
+  double precision :: xlo
+  double precision :: lon_corner,lat_corner,ratio_lon,ratio_lat
 
   ! initializes elevation
   value = ZERO
@@ -327,3 +325,7 @@
   endif
 
   end subroutine get_topo_bathy
+
+! -------------------------------------------
+
+

@@ -78,14 +78,18 @@
   character(len=150) :: OUTPUT_FILES,ERR_MSG
   ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
+
   ! array to store points selected for the chunk face buffer
   integer :: NGLOB2DMAX_XY
   integer, dimension(:), allocatable :: ibool_selected
+
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
+
   ! arrays for sorting routine
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: work
+
   ! pairs generated theoretically
 
   ! four sides for each of the three types of messages
