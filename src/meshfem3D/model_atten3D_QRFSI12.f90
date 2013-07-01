@@ -141,7 +141,7 @@
     j=0
     do l=0,MAXL_Q
       do m=0,l
-        if(m.eq.0)then
+        if(m==0)then
           j=j+1
           read(10,*)ll,mm,v1
           QRFSI12_Q_dqmu(k,j)=v1
@@ -728,15 +728,15 @@
 !!$       XCOSEC(I)=0.
 !!$       XP(I)=0.
 !!$      enddo
-!!$      IF(L.GT.1.AND.ABS(THETA).GT.1.E-5) GO TO 3
+!!$      IF(L>1.AND.ABS(THETA)>1.E-5) GO TO 3
 !!$      X(1)=FCT
-!!$      IF(L.EQ.0) RETURN
+!!$      IF(L==0) RETURN
 !!$      X(1)=CT*FCT
 !!$      X(2)=-ST*FCT/DSFL3
 !!$      XP(1)=-ST*FCT
 !!$      XP(2)=-.5D0*CT*FCT*DSFL3
-!!$      IF(ABS(THETA).LT.1.E-5) XCOSEC(2)=XP(2)
-!!$      IF(ABS(THETA).GE.1.E-5) XCOSEC(2)=X(2)/ST
+!!$      IF(ABS(THETA)<1.E-5) XCOSEC(2)=XP(2)
+!!$      IF(ABS(THETA)>=1.E-5) XCOSEC(2)=X(2)/ST
 !!$      RETURN
 !!$    3 X1=1.D0
 !!$      X2=CT
@@ -758,7 +758,7 @@
 !!$      XCOSEC(2)=X(2)*COSEC
 !!$      XP(2)=-XP(2)/SFL3
 !!$      SUM=SUM+2.D0*X(2)*X(2)
-!!$      IF(SUM-COMPAR.GT.SMALL) RETURN
+!!$      IF(SUM-COMPAR>SMALL) RETURN
 !!$      X1=X3
 !!$      X2=-X2/DSQRT(dble(FLOAT(L*(L+1))))
 !!$      DO  I=3,MP1
@@ -768,7 +768,7 @@
 !!$       XM=K
 !!$       X3=-(2.D0*COT*(XM-1.D0)*X2+F2*X1)/F1
 !!$       SUM=SUM+2.D0*X3*X3
-!!$       IF(SUM-COMPAR.GT.SMALL.AND.I.NE.LP1) RETURN
+!!$       IF(SUM-COMPAR>SMALL.AND.I/=LP1) RETURN
 !!$       X(I)=X3
 !!$       XCOSEC(I)=X(I)*COSEC
 !!$       X1=X2

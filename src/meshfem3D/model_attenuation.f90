@@ -298,12 +298,12 @@
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
      AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
      AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
-  end if
+  endif
 
   do i = 1, AM_V%Qn
     call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
     AM_V%Qtau_e(:,i) = tau_e(:)
-  end do
+  enddo
 
   ! re-defines 1D models with crustal modification if necessary
   if( CRUSTAL ) then
@@ -780,7 +780,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
-     end do
+     enddo
 !     write(*,*)A(i),B(i),10**f(i)
   enddo
 
@@ -1102,7 +1102,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
      itercount = itercount + 1
      if (prnt == 3) then
         write(*,*)itercount, func_evals, fv(1), how
-     elseif (prnt == 4) then
+     else if (prnt == 4) then
         write(*,*)
         write(*,*)'How: ',how
         write(*,*)'v: ',v

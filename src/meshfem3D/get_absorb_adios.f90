@@ -28,11 +28,11 @@
 !-------------------------------------------------------------------------------
 !> \file get_absorb_adios.f90
 !! \brief Function to write stacey boundary condition to disk with ADIOS.
-!! \author MPBL      
+!! \author MPBL
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-!> \brief Write stacey boundary conditions to a single file using ADIOS 
+!> \brief Write stacey boundary conditions to a single file using ADIOS
 !!
 !! \param myrank The MPI rank of the current process
 !! \param iregion The region the absorbing conditon is written for. Check
@@ -47,7 +47,7 @@
 !!                             in argument
 !! \param NSPEC2DMAX_YMIN_YMAX Integer to compute the size of the arrays
 !!                             in argument
-!! 
+!!
 !! \note This routine only call adios to write the file to disk, Note that he
 !!       necessary data preparation is done by the get_absorb() routine.
 subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
@@ -82,14 +82,14 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
   call create_name_database_adios(reg_name,iregion,LOCAL_PATH)
 
   ! Postpend the actual file name.
-  outputname = trim(reg_name) // "stacey.bp" 
+  outputname = trim(reg_name) // "stacey.bp"
 
   ! save these temporary arrays for the solver for Stacey conditions
   write(group_name,"('SPECFEM3D_GLOBE_STACEY_reg',i1)") iregion
   call world_size(sizeprocs) ! TODO keep it in parameters
   ! Alias COMM_WORLD to use ADIOS
   call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
-  ! set the adios group size to 0 before incremented by calls to 
+  ! set the adios group size to 0 before incremented by calls to
   ! helpers functions.
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, &
@@ -99,7 +99,7 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
   call adios_select_method(adios_group, "MPI", "", "", adios_err)
 
   !--- Define ADIOS variables -----------------------------
-  local_dim = 2*NSPEC2DMAX_XMIN_XMAX 
+  local_dim = 2*NSPEC2DMAX_XMIN_XMAX
   call define_adios_global_integer_1d_array(adios_group, "njmin", &
       local_dim, group_size_inc)
   call define_adios_global_integer_1d_array(adios_group, "njmax", &
@@ -121,7 +121,7 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
                          adios_totalsize, adios_err)
 
   !--- Schedule writes for the previously defined ADIOS variables
-  local_dim = 2*NSPEC2DMAX_XMIN_XMAX 
+  local_dim = 2*NSPEC2DMAX_XMIN_XMAX
   call adios_set_path (adios_handle, "njmin", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)
@@ -137,7 +137,7 @@ subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", nkmin_xi, adios_err)
 
-  local_dim = 2*NSPEC2DMAX_YMIN_YMAX 
+  local_dim = 2*NSPEC2DMAX_YMIN_YMAX
   call adios_set_path (adios_handle, "nimin", adios_err)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       local_dim, sizeprocs)

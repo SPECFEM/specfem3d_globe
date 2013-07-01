@@ -58,7 +58,7 @@
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
   if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_attenuation_adios(myrank, prname, & 
+    call read_attenuation_adios(myrank, prname, &
        factor_common, scale_factor, tau_s, vx, vy, vz, vnspec, T_c_source)
   else
     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
@@ -495,7 +495,7 @@
 !        steps(r) = i-1
 !        r = r + 1
 !     endif
-!  end do
+!  enddo
 !  steps(r) = n
 !
 !  ! Run spline for each piece

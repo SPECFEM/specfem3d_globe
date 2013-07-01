@@ -395,7 +395,7 @@
 
              displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
-          elseif(USE_COMPONENT == 2) then
+          else if(USE_COMPONENT == 2) then
 
              ! compute unit tangent vector to the surface (N-S)
              RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
@@ -413,7 +413,7 @@
 
              displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
 
-          elseif(USE_COMPONENT == 3) then
+          else if(USE_COMPONENT == 3) then
 
              ! compute unit tangent to the surface (E-W)
              rhoval = sqrt(xcoord**2 + ycoord**2)
@@ -445,12 +445,12 @@
               yp(ieoff+ilocnum) = dble(y(i,j))
               zp(ieoff+ilocnum) = dble(z(i,j))
               field_display(ieoff+ilocnum) = dble(displn(i,j))
-            elseif(ilocnum == 2) then
+            else if(ilocnum == 2) then
               xp(ieoff+ilocnum) = dble(x(i+1,j))
               yp(ieoff+ilocnum) = dble(y(i+1,j))
               zp(ieoff+ilocnum) = dble(z(i+1,j))
               field_display(ieoff+ilocnum) = dble(displn(i+1,j))
-            elseif(ilocnum == 3) then
+            else if(ilocnum == 3) then
               xp(ieoff+ilocnum) = dble(x(i+1,j+1))
               yp(ieoff+ilocnum) = dble(y(i+1,j+1))
               zp(ieoff+ilocnum) = dble(z(i+1,j+1))
@@ -554,9 +554,9 @@
   if(USE_OPENDX) then
     if( USE_COMPONENT == 1) then
       write(outputname,"('/DX_movie_',i6.6,'.Z.dx')") it
-    elseif( USE_COMPONENT == 2) then
+    else if( USE_COMPONENT == 2) then
       write(outputname,"('/DX_movie_',i6.6,'.N.dx')") it
-    elseif( USE_COMPONENT == 3) then
+    else if( USE_COMPONENT == 3) then
       write(outputname,"('/DX_movie_',i6.6,'.E.dx')") it
     endif
     open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
@@ -565,9 +565,9 @@
     if(UNIQUE_FILE .and. iframe == 1) then
       if( USE_COMPONENT == 1) then
         outputname = '/AVS_movie_all.Z.inp'
-      elseif( USE_COMPONENT == 2) then
+      else if( USE_COMPONENT == 2) then
         outputname = '/AVS_movie_all.N.inp'
-      elseif( USE_COMPONENT == 3) then
+      else if( USE_COMPONENT == 3) then
         outputname = '/AVS_movie_all.E.inp'
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
@@ -578,9 +578,9 @@
     else if(.not. UNIQUE_FILE) then
       if( USE_COMPONENT == 1) then
         write(outputname,"('/AVS_movie_',i6.6,'.Z.inp')") it
-      elseif( USE_COMPONENT == 2) then
+      else if( USE_COMPONENT == 2) then
         write(outputname,"('/AVS_movie_',i6.6,'.N.inp')") it
-      elseif( USE_COMPONENT == 3) then
+      else if( USE_COMPONENT == 3) then
         write(outputname,"('/AVS_movie_',i6.6,'.E.inp')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
@@ -589,9 +589,9 @@
   else if(USE_GMT) then
     if( USE_COMPONENT == 1) then
       write(outputname,"('/gmt_movie_',i6.6,'.Z.xyz')") it
-    elseif( USE_COMPONENT == 2) then
+    else if( USE_COMPONENT == 2) then
       write(outputname,"('/gmt_movie_',i6.6,'.N.xyz')") it
-    elseif( USE_COMPONENT == 3) then
+    else if( USE_COMPONENT == 3) then
       write(outputname,"('/gmt_movie_',i6.6,'.E.xyz')") it
     endif
     open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')

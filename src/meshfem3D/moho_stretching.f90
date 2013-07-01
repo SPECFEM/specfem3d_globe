@@ -137,8 +137,8 @@
           ! tolerance for R220 detection, fix R220
           if (abs(gamma) < SMALLVAL) then
             gamma = 0.0d0
-          end if
-        end if
+          endif
+        endif
 
         if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
           call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
@@ -164,15 +164,15 @@
           ! tolerance for R220 detection, fix R220
           if (abs(gamma) < SMALLVAL) then
             gamma = 0.0d0
-          end if
-        end if
+          endif
+        endif
 
         if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
           call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
 
         call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
-      end if
+      endif
 
     endif ! TOPOGRAPHY
 
@@ -187,16 +187,16 @@
       count_mantle = count_mantle + 1
     endif
 
-  end do
+  enddo
 
   ! sets flag when all corners are above moho
   if( count_crust == NGNOD) then
     elem_in_crust = .true.
-  end if
+  endif
   ! sets flag when all corners are below moho
   if( count_mantle == NGNOD) then
     elem_in_mantle = .true.
-  end if
+  endif
 
   ! small stretch check: stretching should affect only points above R220
   if( r*R_EARTH < R220 ) then
@@ -297,16 +297,16 @@
       count_mantle = count_mantle + 1
     endif
 
-  end do
+  enddo
 
   ! sets flag when all corners are above moho
   if( count_crust == NGNOD) then
     elem_in_crust = .true.
-  end if
+  endif
   ! sets flag when all corners are below moho
   if( count_mantle == NGNOD) then
     elem_in_mantle = .true.
-  end if
+  endif
 
   ! small stretch check: stretching should affect only points above R220
   if( r*R_EARTH < R220 ) then
@@ -376,10 +376,10 @@
       gamma = (( r - R60)/( R35 - R60)) ! keeps r60 fixed
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if
+      endif
     else
       gamma=0.0d0
-    end if
+    endif
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -396,10 +396,10 @@
       gamma=((r-R60)/(R35-R60)) ! keeps r60 fixed
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if
+      endif
     else
       gamma=0.0d0
-    end if
+    endif
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -417,13 +417,13 @@
         gamma=(r-R220/R_EARTH)/(R60-R220/R_EARTH)
         if (abs(gamma)<SMALLVAL) then
           gamma=0.0d0
-        end if
+        endif
       else
         gamma=0.0d0
-      end if
+      endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-    end if
+    endif
 
   else if (moho > R25) then
     ! moho above r25
@@ -436,10 +436,10 @@
       gamma=(r-R60)/(R35-R60) ! keeps r60 fixed
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if
+      endif
     else
       gamma=0.0d0
-    end if
+    endif
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -457,14 +457,14 @@
         gamma=(r-R25)/(R15-R25) ! keeps mesh at r25 fixed
         if (abs(gamma)<SMALLVAL) then
           gamma=0.0d0
-        end if
+        endif
       else
         gamma=0.0d0
-      end if
+      endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-    end if
-  end if
+    endif
+  endif
 
   end subroutine stretch_deep_moho
 
@@ -524,10 +524,10 @@
       gamma = ((r-R220/R_EARTH)/(R35-R220/R_EARTH))
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if
+      endif
     else
       gamma=0.0d0
-    end if
+    endif
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -544,10 +544,10 @@
       gamma=((r-R220/R_EARTH)/(R35-R220/R_EARTH))
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if
+      endif
     else
       gamma=0.0d0
-    end if
+    endif
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -564,10 +564,10 @@
       gamma=(r-R220/R_EARTH)/(R35-R220/R_EARTH)
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if
+      endif
     else
       gamma=0.0d0
-    end if
+    endif
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -582,13 +582,13 @@
         gamma=(r-R25)/(R15-R25)
         if (abs(gamma)<SMALLVAL) then
           gamma=0.0d0
-        end if
+        endif
       else
         gamma=0.0d0
-      end if
+      endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-    end if
+    endif
   endif
 
   end subroutine stretch_moho
@@ -699,7 +699,7 @@
 !    if(r >= RMOHO/R_EARTH) then
 !! stretching above the Moho
 !      gamma = (1.0d0 - r) / (1.0d0 - RMOHO/R_EARTH)
-!    elseif(r>= R220/R_EARTH .and. r< RMOHO/R_EARTH) then
+!    else if(r>= R220/R_EARTH .and. r< RMOHO/R_EARTH) then
 !! stretching between R220 and RMOHO
 !      gamma = (r - R220/R_EARTH) / (RMOHO/R_EARTH - R220/R_EARTH)
 !    endif

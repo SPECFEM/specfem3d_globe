@@ -38,7 +38,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_integer
@@ -56,7 +56,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_double_precision
@@ -74,7 +74,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_logical
@@ -92,7 +92,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr);
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   value_to_read = string_read
 
   end subroutine read_value_string
@@ -107,7 +107,7 @@
   filename = 'DATA/Par_file'
 
   call param_open(filename, len(filename), ierr);
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
 
   end subroutine open_parameter_file
 

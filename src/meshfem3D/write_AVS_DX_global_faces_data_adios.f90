@@ -174,7 +174,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   enddo
   ! count global number of AVS or DX points
   npoin = count(mask_ibool(:))
-  
+
   avs_dx_adios%npoin = npoin
   avs_dx_adios%nspecface = nspecface
 
@@ -205,7 +205,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   call define_adios_global_real_1d_array(adios_group, "points_faces/z_value", &
       npoin, group_size_inc)
   !--- Variables for AVS_DXelementsfaces.txt
-  call define_adios_global_real_1d_array(adios_group, & 
+  call define_adios_global_real_1d_array(adios_group, &
       "elements_faces/idoubling", nspecface, group_size_inc)
   call define_adios_global_real_1d_array(adios_group, &
       "elements_faces/num_ibool_AVS_DX_iglob1", nspecface, group_size_inc)
@@ -216,7 +216,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   call define_adios_global_real_1d_array(adios_group, &
       "elements_faces/num_ibool_AVS_DX_iglob4", nspecface, group_size_inc)
 
-  if(ISOTROPIC_3D_MANTLE) then 
+  if(ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
@@ -383,7 +383,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
         if(.not. mask_ibool(iglob4)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob4) = numpoin
-          avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec)) 
+          avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,NGLLY,1,ispec))
         endif
@@ -419,7 +419,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
         if(.not. mask_ibool(iglob3)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob3) = numpoin
-          avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec)) 
+          avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,1,ispec))
         endif
@@ -590,7 +590,7 @@ if (iglob8 < 0) print *, myrank, "problem with iglob8", iglob8, npointot
                 ! gets reference model values:rho,vpv,vph,vsv,vsh and eta_aniso
                 call meshfem3D_models_get1D_val(myrank, iregion_code, &
                     idoubling(ispec), r, rho, vpv, vph, vsv, vsh, eta_aniso, &
-                    Qkappa, Qmu, RICB, RCMB, RTOPDDOUBLEPRIME, R80, R120, & 
+                    Qkappa, Qmu, RICB, RCMB, RTOPDDOUBLEPRIME, R80, R120, &
                     R220, R400, R600, R670, R771, RMOHO, RMIDDLE_CRUST, ROCEAN)
 
                  ! calculates isotropic values
@@ -710,7 +710,7 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
   !--- Variables
   integer :: npoin, nspec
   integer :: ierr
-  
+
   npoin = avs_dx_adios%npoin
   nspec = avs_dx_adios%nspecface
 
@@ -741,27 +741,27 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob1, ierr)
-  
+
   call adios_set_path(adios_handle, &
       "elements_faces/num_ibool_AVS_DX_iglob2", ierr)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob2, ierr)
-  
+
   call adios_set_path(adios_handle, &
       "elements_faces/num_ibool_AVS_DX_iglob3", ierr)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob3, ierr)
-  
+
   call adios_set_path(adios_handle, &
       "elements_faces/num_ibool_AVS_DX_iglob4", ierr)
   call write_1D_global_array_adios_dims(adios_handle, myrank, &
       nspec, sizeprocs)
   call adios_write(adios_handle, "array", avs_dx_adios%iglob4, ierr)
-  
 
-  if(ISOTROPIC_3D_MANTLE) then 
+
+  if(ISOTROPIC_3D_MANTLE) then
     call adios_set_path(adios_handle, "elements_faces/dvp", ierr)
     call write_1D_global_array_adios_dims(adios_handle, myrank, &
         nspec, sizeprocs)
@@ -809,7 +809,7 @@ subroutine free_AVS_DX_global_faces_data_adios(myrank, avs_dx_adios, &
   if (ierr /= 0) call exit_MPI(myrank, &
       "Error deallocating num_ibool_AVS_DX_iglob4.")
 
-  if(ISOTROPIC_3D_MANTLE) then 
+  if(ISOTROPIC_3D_MANTLE) then
     deallocate(avs_dx_adios%dvp, stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, &
         "Error deallocating dvp.")
@@ -818,7 +818,7 @@ subroutine free_AVS_DX_global_faces_data_adios(myrank, avs_dx_adios, &
         "Error deallocating dvs.")
   endif
 
-  avs_dx_adios%npoin = 0 
+  avs_dx_adios%npoin = 0
   avs_dx_adios%nspecface = 0
 end subroutine free_AVS_DX_global_faces_data_adios
 
