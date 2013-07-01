@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,7 @@
 
   ! nb of elements in this 1D buffer
   ispeccount=0
+
   do ispec=1,nspec
     ! remove central cube for chunk buffers
     if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -295,6 +296,7 @@
 
   ! nb of elements in this 1D buffer
   ispeccount=0
+
   do ispec=1,nspec
     ! remove central cube for chunk buffers
     if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &

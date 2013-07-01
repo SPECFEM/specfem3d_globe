@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -758,50 +758,6 @@
 !
 !=====================================================================
 !
-!
-!  subroutine read_params_and_create_movie
-!
-!!
-!! This routine is called by the Pyrized version.
-!!
-!
-!  implicit none
-!
-!  integer it1,it2
-!  integer iformat
-!
-!! parameters read from parameter file
-!  integer NEX_XI,NEX_ETA
-!  integer NSTEP,NTSTEP_BETWEEN_FRAMES,NCHUNKS
-!  integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-!  logical MOVIE_SURFACE
-!
-!  integer, external :: err_occurred
-!
-!  call read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
-!           NSTEP,NTSTEP_BETWEEN_FRAMES, &
-!           NCHUNKS,MOVIE_SURFACE, &
-!           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
-!
-!! read additional parameters for making movies
-!  call read_value_integer(iformat, 'format')
-!  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-!  call read_value_integer(it1, 'beginning')
-!  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-!  call read_value_integer(it2, 'end')
-!  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-!
-!! run the main program
-!  call create_movie_AVS_DX(iformat,it1,it2, &
-!           NEX_XI,NEX_ETA, &
-!           NSTEP,NTSTEP_BETWEEN_FRAMES, &
-!           NCHUNKS, &
-!           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-!           USE_COMPONENT)
-!
-!  end subroutine read_params_and_create_movie
-
-! ------------------------------------------------------------------
 
   subroutine read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
           NSTEP,NTSTEP_BETWEEN_FRAMES, &
@@ -866,7 +822,6 @@
   print *
 
 ! read the parameter file and compute additional parameters
-
   call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &

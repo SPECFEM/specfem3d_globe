@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -58,8 +58,8 @@ program combine_surf_data
 ! ------------------ program starts here -------------------
 
   do i = 1, 7
-    call getarg(i,arg(i))
-    if (i < 7 .and. trim(arg(i)) == '') then
+    call get_command_argument(i,arg(i))
+    if (i < 7 .and. len_trim(arg(i)) == 0) then
       write(*,*) ' '
       write(*,*) ' Usage: xcombine_surf_data slice_list filename surfname input_dir output_dir high/low-resolution 2D/3D'
       write(*,*) ' filename.bin can be either'

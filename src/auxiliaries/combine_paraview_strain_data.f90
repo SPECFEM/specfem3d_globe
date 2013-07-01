@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -50,8 +50,8 @@ program combine_paraview_movie_data
   logical :: MOVIE_COARSE
 
   do i = 1,6
-    call getarg(i,arg(i))
-    if (i < 7 .and. trim(arg(i)) == '') then
+    call get_command_argument(i,arg(i))
+    if (i < 7 .and. len_trim(arg(i)) == 0) then
       print *, ' '
       print *, ' Usage: xcombine_data nnodes dt_movie itstart itstop comp MOVIE_COARSE'
       print *, '   component can be SEE, SNE,SEZ,SNN,SNZ,SZZ,I1 or I2'
