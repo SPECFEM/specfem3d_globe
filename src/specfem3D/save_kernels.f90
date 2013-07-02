@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine save_kernels_crust_mantle()
 
   use specfem_par
@@ -439,6 +438,7 @@
 
   use specfem_par
   use specfem_par_outercore
+
   implicit none
 
   ! local parameters
@@ -499,6 +499,7 @@
 
   use specfem_par
   use specfem_par_innercore
+
   implicit none
 
   ! local parameters
@@ -552,6 +553,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
+
   implicit none
 
   ! local parameters
@@ -604,6 +606,7 @@
   subroutine save_kernels_source_derivatives()
 
   use specfem_par
+
   implicit none
 
   ! local parameters
@@ -664,6 +667,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   ! local parameters
@@ -724,7 +728,6 @@
   double precision :: costhetafour,sinthetafour,cosphifour,sinphifour
   double precision :: sintwophisq,sintwothetasq
   double precision :: costhreetheta,sinthreetheta,costhreephi,sinthreephi
-
 
    if (CUSTOM_REAL == SIZE_REAL) then
       theta = dble(theta_in)
