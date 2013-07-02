@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_boundary_kernels()
 
 ! kernel calculations
@@ -550,8 +549,7 @@
 
 ! ==========================================================================================
 
-
-subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
+  subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
            kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -593,7 +591,6 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
   real(kind=CUSTOM_REAL) two_eta_aniso,four_eta_aniso,six_eta_aniso
 
   integer :: iglob
-
 
   ! --- precompute sum ---
 
@@ -952,7 +949,5 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
   sigma(2,1) = sigma(1,2)
   sigma(3,1) = sigma(1,3)
   sigma(3,2) = sigma(2,3)
-
-
 
 end subroutine compute_stress_from_strain

@@ -29,7 +29,6 @@
 !---- assemble the contributions between slices and chunks using MPI
 !----
 
-
   subroutine assemble_MPI_scalar(NPROC,nglob,array_val, &
                         num_interfaces,max_nibool_interfaces, &
                         nibool_interfaces,ibool_interfaces, &

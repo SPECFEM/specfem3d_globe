@@ -204,7 +204,6 @@
             do i=1,NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
 
-
               ! adds adjoint source acting at this time step (it):
               !
               ! note: we use index iadj_vec(it) which is the corresponding time step

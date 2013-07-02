@@ -145,7 +145,6 @@
     enddo
   endif
 
-
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
     ! smaller hdur_movie will do
@@ -619,11 +618,9 @@
 
   end subroutine setup_sources_receivers_srcarr
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
                       NTSTEP_BETWEEN_READ_ADJSRC, &
@@ -638,7 +635,6 @@
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc ! to read input in chunks
   integer, dimension(NSTEP_SUB_ADJ) :: iadjsrc_len
   integer, dimension(NSTEP) :: iadj_vec
-
 
   ! local parameters
   integer :: iadj_block,it,it_sub_adj
@@ -695,7 +691,6 @@
   enddo
 
   end subroutine setup_sources_receivers_adjindx
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -777,7 +772,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine setup_sources_receivers_intp(NSOURCES,myrank, &
                       islice_selected_source, &

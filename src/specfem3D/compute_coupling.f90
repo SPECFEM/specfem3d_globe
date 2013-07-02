@@ -62,7 +62,6 @@
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,ispec_selected
 
-
   ! for surface elements exactly on the CMB
   do ispec2D = 1,nspec2D_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
 
@@ -71,6 +70,7 @@
 
     ! only for DOFs exactly on the CMB (top of these elements)
     k = NGLLZ
+
     ! get displacement on the solid side using pointwise matching
     k_corresp = 1
 
@@ -225,7 +225,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_coupling_CMB_fluid(displ_crust_mantle,b_displ_crust_mantle, &
                             accel_crust_mantle,b_accel_crust_mantle, &
                             ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
@@ -277,7 +276,7 @@
 
     ! only for DOFs exactly on the CMB (bottom of these elements)
     k = 1
-    ! get velocity potential on the fluid side using pointwise matching
+    ! get potential on the fluid side using pointwise matching
     k_corresp = NGLLZ
 
     do j = 1,NGLLY
@@ -450,15 +449,13 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_accel_crust_mantle
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed

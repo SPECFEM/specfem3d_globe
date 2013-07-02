@@ -28,8 +28,7 @@
   subroutine get_attenuation_model_3D_or_1D(myrank, prname, &
                                            one_minus_sum_beta, &
                                            factor_common, &
-                                           scale_factor, tau_s, &
-                                           vx, vy, vz, vnspec)
+                                           scale_factor, tau_s, vx, vy, vz, vnspec)
 
   use specfem_par,only: ATTENUATION_VAL, ADIOS_FOR_ARRAYS_SOLVER
 

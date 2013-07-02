@@ -210,6 +210,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   ! local parameters
@@ -397,6 +398,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   ! local parameters
@@ -445,6 +447,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   ! local parameters
@@ -453,7 +456,7 @@
   ! get coordinates of surface mesh and surface displacement
   if( .not. GPU_MODE ) then
     ! on CPU
-    do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
       ispec = ibelm_top_crust_mantle(ispec2D)
       k = NGLLZ
       do j = 1,NGLLY
@@ -469,10 +472,9 @@
   endif
 
   ! save surface motion to disk
-  call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP,it)
+  call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
 
   end subroutine noise_save_surface_movie
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -496,6 +498,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   integer :: NGLOB
@@ -507,7 +510,6 @@
   integer :: ipoin,ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL) :: eta
 
-
   ! read surface movie
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP,it_index)
 
@@ -515,7 +517,7 @@
   if( .not. GPU_MODE ) then
     ! on CPU
     ipoin = 0
-    do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
       ispec = ibelm_top_crust_mantle(ispec2D)
 
       k = NGLLZ
@@ -552,7 +554,6 @@
 
   end subroutine noise_read_add_surface_movie
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -580,7 +581,7 @@
   real(kind=CUSTOM_REAL) :: eta
 
   ! read surface movie, needed for Sigma_kl_crust_mantle
-  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP,it)
+  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
 
   ! noise source strength kernel
   ! to keep similar structure to other kernels, the source strength kernel is saved as a volumetric kernel
@@ -629,6 +630,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   ! local parameters

@@ -30,7 +30,7 @@
 !----
 
   subroutine locate_receivers(nspec,nglob,ibool, &
-                             xstore,ystore,zstore,  &
+                             xstore,ystore,zstore, &
                              yr,jda,ho,mi,sec, &
                              theta_source,phi_source,NCHUNKS,ELLIPTICITY)
 
@@ -139,10 +139,6 @@
   character(len=150) OUTPUT_FILES
   character(len=2) bic
 
-  integer,parameter :: MIDX = (NGLLX+1)/2
-  integer,parameter :: MIDY = (NGLLY+1)/2
-  integer,parameter :: MIDZ = (NGLLZ+1)/2
-
   ! timing
   double precision, external :: wtime
 
@@ -219,6 +215,30 @@
     enddo
     ! close receiver file
     close(1)
+
+! BS BS begin
+! In case that the same station and network name appear twice (or more times) in the STATIONS
+! file, problems occur, as two (or more) seismograms are written (with mode
+! "append") to a file with same name. The philosophy here is to accept multiple
+! appearences and to just add a count to the station name in this case.
+    allocate(station_duplet(nrec))
+    station_duplet=0
+    do irec = 1,nrec
+      do i=1,irec-1
+        if ((station_name(irec)==station_name(i)) .and. &
+            (network_name(irec)==network_name(i))) then
+
+            station_duplet(i)=station_duplet(i)+1
+            if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
+              write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
+            else
+              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at lease 3')
+            endif
+
+        endif
+      enddo
+    enddo
+! BS BS end
 
     ! if receivers can not be buried, sets depth to zero
     if( .not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0
