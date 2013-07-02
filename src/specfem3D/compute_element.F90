@@ -411,8 +411,6 @@
 
   end subroutine compute_element_iso
 
-
-
 !
 !--------------------------------------------------------------------------------------------------
 !
@@ -478,7 +476,6 @@
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
-
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -838,7 +835,6 @@
               + rhovpvsq*cosphisq*sinphisq*sinthetafour &
               - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
 
-
         ! general expression of stress tensor for full Cijkl with 21 coefficients
         sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
                  c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
@@ -1012,7 +1008,6 @@
     enddo ! NGLLY
   enddo ! NGLLZ
 
-
   end subroutine compute_element_tiso
 
 !
@@ -1037,7 +1032,6 @@
                     tempy1_att,tempy2_att,tempy3_att, &
                     tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
-
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -1636,7 +1630,6 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-
 #ifdef _HANDOPT_ATT
 ! way 2:
   do i_SLS = 1,N_SLS
@@ -1724,237 +1717,11 @@
 
   enddo ! i_SLS
 
-!daniel: att - debug
-!  if( .not. is_backward_field ) then
-!
-!  do i_SLS = 1,N_SLS
-!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-!    if( USE_3D_ATTENUATION_ARRAYS ) then
-!      if(ANISOTROPIC_3D_MANTLE_VAL) then
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
-!      else
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-!      endif
-!    else
-!      if(ANISOTROPIC_3D_MANTLE_VAL) then
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
-!      else
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-!      endif
-!    endif
-!
-!!daniel: att - debug original
-!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-!
-!!daniel: att - debug runge-kutta
-!    if( .false. ) then
-!    ! classical RK4:  R'(t) = - 1/tau * R(t)
-!    kappa = - dble(deltat)/tau_sigma_dble(i_SLS)
-!
-!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    endif
-!    if( .false. ) then
-! Butcher RK5:
-! 0     |
-! 1/4   | 1/4
-! 1/4   | 1/8   1/8
-! 1/2   | 0     -1/2    1
-! 3/4   | 3/16  0       0     9/16
-! 1     | -3/7  2/7     12/7  -12/7   8/7
-! -----------------------------------------------------------------------------
-!          7/90  0     32/90   12/90  32/90   7/90
-!
-!    k1 = dt * ( -1.0/tau * R_n )
-!    k2 = dt * ( -1.0/tau * (R_n + 1./4.*k1) )
-!    k3 = dt * ( -1.0/tau * (R_n + 1./8.*k1  + 1./8.*k2) )
-!    k4 = dt * ( -1.0/tau * (R_n + 0.*k1     - 1./2.*k2   + 1.* k3) )
-!    k5 = dt * ( -1.0/tau * (R_n + 3./16.*k1 + 0.*k2      + 0.*k3     + 9./16.*k4) )
-!    k6 = dt * ( -1.0/tau * (R_n - 3./7.*k1  + 2./7.*k2   + 12./7.*k3 - 12./7.*k4 + 8./7.*k5) )
-!
-!    R_nplus1 = R_n + 7./90.*k1 + 0.*k2 + 32./90.*k3 + 12./90.*k4 + 32./90.*k5 + 7./90.*k6
-!
-!    or:
-!    k = - dt/tau
-!    R_nplus1 = R_n*(1.0 + k*(1.0 + 0.5*k*(1.0 + 1./6.*k*(1.0 + 1./24.*k*(1.0 + 1./120.*k*(1.0 + 1./640.*k))))))
-!
-!    kappa = - dble(deltat)/tau_sigma_dble(i_SLS)
-!
-!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    endif
-!
-!  enddo ! i_SLS
-!
-!  else
-!
-!  ! backward/reconstruction, re-constructs previous memory variables, note strain arrays are now switched
-!
-!  do i_SLS = 1,N_SLS
-!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-!    if( USE_3D_ATTENUATION_ARRAYS ) then
-!      if(ANISOTROPIC_3D_MANTLE_VAL) then
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
-!      else
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-!      endif
-!    else
-!      if(ANISOTROPIC_3D_MANTLE_VAL) then
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
-!      else
-!        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-!      endif
-!    endif
-!
-!!daniel: att - debug original
-!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-!          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-!
-!!daniel: att - debug runge-kutta
-!    if( .false. ) then
-! classical RK 4:       R'(t) =  - 1/tau * R(t)
-!
-! Butcher RK5:
-! 0     |
-! 1/2   | 1/2
-! 1/2   | 0    1/2
-! 1     | 0          1
-! -----------------------------------------------------------------------------
-!         1/6  1/3   1/3   1/6
-!
-!    kappa = - dble(b_deltat)/tau_sigma_dble(i_SLS)
-!
-!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
-!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-!
-!    endif
-!
-!!daniel: att - debug
-!    if( .false. ) then
-! Butcher RK5:
-! 0     |
-! 1/4   | 1/4
-! 1/4   | 1/8   1/8
-! 1/2   | 0     -1/2    1
-! 3/4   | 3/16  0       0     9/16
-! 1     | -3/7  2/7     12/7  -12/7   8/7
-! -----------------------------------------------------------------------------
-!          7/90  0     32/90   12/90  32/90   7/90
-!
-!    k1 = dt * ( -1.0/tau * R_n )
-!    k2 = dt * ( -1.0/tau * (R_n + 1./4.*k1) )
-!    k3 = dt * ( -1.0/tau * (R_n + 1./8.*k1  + 1./8.*k2) )
-!    k4 = dt * ( -1.0/tau * (R_n + 0.*k1     - 1./2.*k2   + 1.* k3) )
-!    k5 = dt * ( -1.0/tau * (R_n + 3./16.*k1 + 0.*k2      + 0.*k3     + 9./16.*k4) )
-!    k6 = dt * ( -1.0/tau * (R_n - 3./7.*k1  + 2./7.*k2   + 12./7.*k3 - 12./7.*k4 + 8./7.*k5) )
-!
-!    R_nplus1 = R_n + 7./90.*k1 + 0.*k2 + 32./90.*k3 + 12./90.*k4 + 32./90.*k5 + 7./90.*k6
-!
-!    or:
-!    k = - dt/tau
-!    R_nplus1 = R_n*(1.0 + k*(1.0 + 0.5*k*(1.0 + 1./6.*k*(1.0 + 1./24.*k*(1.0 + 1./120.*k*(1.0 + 1./640.*k))))))
-!    kappa = - dble(b_deltat)/tau_sigma_dble(i_SLS)
-!
-!    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) * &
-!      (1.d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.d0/6.d0*kappa*(1.d0 + &
-!                    1.d0/24.d0*kappa*(1.d0 + 1.d0/120.d0*kappa*(1.d0 + 1.d0/640.d0*kappa))))))
-!
-!    endif
-!
-!  enddo ! i_SLS
-!
-!  endif ! is_backward_field
 ! dummy to avoid compiler warning
   if( is_backward_field ) then
   endif
 
-
 #endif
-
 
   end subroutine compute_element_att_memory_cm
 
@@ -2106,100 +1873,11 @@
 
   enddo
 
-!daniel: att - debug
-!  if( .not. is_backward_field ) then
-!  do i_SLS = 1,N_SLS
-!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-!    if( USE_3D_ATTENUATION_ARRAYS ) then
-!      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-!    else
-!      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-!    endif
-!
-!    do i_memory = 1,5
-!       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-!            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-!            (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-!    enddo
-!
-!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-!
-!  enddo
-!
-!  else
-!
-!  ! backward/reconstruction, strain arrays are not switched
-!  do i_SLS = 1,N_SLS
-!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-!    if( USE_3D_ATTENUATION_ARRAYS ) then
-!      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-!    else
-!      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-!    endif
-!
-!daniel: att - debug original
-!    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-!         (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-!
-!daniel: att - debug switched
-!    if( .false.) then
-!    R_xx(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
-!         (gammaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(1,:,:,:))
-!
-!    R_yy(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
-!         (gammaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(2,:,:,:))
-!
-!    R_xy(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
-!         (gammaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(3,:,:,:))
-!
-!    R_xz(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
-!         (gammaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(4,:,:,:))
-!
-!    R_yz(i_SLS,:,:,:,ispec) = 1.0_CUSTOM_REAL/alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) - factor_common_use(:,:,:) * &
-!         (gammaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + betaval(i_SLS) * epsilondev_loc(5,:,:,:))
-!    endif
-!
-!  enddo
-!
-!  endif ! is_backward_field
 ! dummy to avoid compiler warning
   if( is_backward_field ) then
   endif
 
 #endif
-
-
-!daniel: att - debug no att
-!  R_xx = 0.0
-!  R_yy = 0.0
-!  R_xy = 0.0
-!  R_xz = 0.0
-!  R_yz = 0.0
 
   end subroutine compute_element_att_memory_ic
 
@@ -2219,7 +1897,6 @@
   use specfem_par,only: tau_sigma_dble,deltat,b_deltat
 
   use specfem_par_crustmantle,only: factor_common=>factor_common_crust_mantle
-
 
   implicit none
 
@@ -2252,14 +1929,6 @@
 ! local parameters
   real(kind=CUSTOM_REAL) :: factor_common_c44_muv
   integer :: i_SLS
-
-  ! R'(t) = - 1/tau * R(t) + 1/tau * dc:grad(s)
-  !
-  ! here we add integral contribution for: 1/tau * dc:grad(s)
-  !
-  ! R_n+1 = R_n+1  + dt * ( 1/tau * dc:grad(s_n+1)
-  !
-  ! note: s at this point is known at: s(t+dt)
 
   if( .not. is_backward_field ) then
     dt = dble(deltat)
@@ -2295,7 +1964,6 @@
       (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
     endif
 
-
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( USE_3D_ATTENUATION_ARRAYS ) then
       factor_common_c44_muv = factor_common(i_SLS,i,j,k,ispec) * c44_muv
@@ -2309,7 +1977,6 @@
     R_xy_loc(i_SLS) = R_xy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(3))
     R_xz_loc(i_SLS) = R_xz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(4))
     R_yz_loc(i_SLS) = R_yz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(5))
-
 
   enddo ! i_SLS
 
