@@ -37,7 +37,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! time step
-  integer it,it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,NSTEP,myrank
+  integer it,NSTEP,myrank,it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS
 
   ! displacement
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
@@ -109,7 +109,7 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',Ufluidnorm_all
     endif
 
-!! DK DK UNDO_ATTENUATION
+!! DK DK for UNDO_ATTENUATION
 
     ! information about the current run only
     SHOW_SEPARATE_RUN_INFORMATION = NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS
@@ -140,6 +140,7 @@
     iminutes_total = (int_t_total - 3600*ihours_total) / 60
     iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
 
+    ! this is in the case of restart files, when a given run consists of several partial runs
     ! calculate times for the *current* run
     if (SHOW_SEPARATE_RUN_INFORMATION) then
       ! compute estimated remaining simulation time
