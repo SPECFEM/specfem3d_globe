@@ -418,7 +418,6 @@
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
 
-
   end subroutine prepare_timerun_constants
 
 !
@@ -529,7 +528,6 @@
 
   end subroutine prepare_timerun_gravity
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -580,7 +578,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
         muvstore_inner_core
-
 
   integer SIMULATION_TYPE
   logical MOVIE_VOLUME
@@ -641,7 +638,8 @@
           scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
 
           if(ANISOTROPIC_3D_MANTLE_VAL) then
-            scale_factor_minus_one = scale_factor - 1.
+            scale_factor_minus_one = scale_factor - 1.d0
+
             mul = c44store_crust_mantle(i,j,k,ispec)
             c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
                     + FOUR_THIRDS * scale_factor_minus_one * mul
@@ -666,6 +664,7 @@
               ! store the original value of \mu to comput \mu*\eps
               muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
             endif
+
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
 
             ! scales transverse isotropic values for mu_h

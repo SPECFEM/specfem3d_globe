@@ -43,66 +43,57 @@
   implicit none
 
   include "constants.h"
-
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer iregion_code,myrank
+  integer :: iregion_code,myrank
+  integer :: nspec,nglob,nglob_xy
+  integer :: nspec_iso,nspec_tiso,nspec_ani
 
-! flags to know if we should read Vs and anisotropy arrays
-  logical READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,OCEANS,ABSORBING_CONDITIONS
-
-  character(len=150) LOCAL_PATH
-
-  integer nspec,nglob,nglob_xy
-
-  integer nspec_iso,nspec_tiso,nspec_ani
+  ! Stacey
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec):: rho_vp,rho_vs
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-! material properties
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec_iso)
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
+  ! material properties
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_iso) :: &
+    rhostore,kappavstore,muvstore
 
-! additional arrays for anisotropy stored only where needed to save memory
-  real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
-  real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
-  real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
+  ! additional arrays for anisotropy stored only where needed to save memory
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_tiso) :: &
+    kappahstore,muhstore,eta_anisostore
 
-! additional arrays for full anisotropy
+  ! additional arrays for full anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-! Stacey
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
-
-! mass matrices and additional ocean load mass matrix
-  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass_ocean_load
-
-  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
-  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
-
-! global addressing
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
-
+  ! global addressing
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: idoubling
-
-! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
   logical, dimension(nspec) :: ispec_is_tiso
 
-! processor identification
-  character(len=150) prname
+  ! mass matrices and additional ocean load mass matrix
+  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass_ocean_load
 
-! create the name for the database of the current slide and region
+  ! flags to know if we should read Vs and anisotropy arrays
+  logical :: READ_KAPPA_MU,READ_TISO,ABSORBING_CONDITIONS,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
+  ! processor identification
+  character(len=150) :: prname
+
+  ! this for non blocking MPI
+  logical, dimension(nspec) :: is_on_a_slice_edge
+
+  ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
@@ -118,13 +109,13 @@
   read(IIN) gammay
   read(IIN) gammaz
 
-! model arrays
+  ! model arrays
   read(IIN) rhostore
   read(IIN) kappavstore
 
   if(READ_KAPPA_MU) read(IIN) muvstore
 
-! for anisotropy, gravity and rotation
+  ! for anisotropy, gravity and rotation
 
   if(TRANSVERSE_ISOTROPY .and. READ_TISO) then
     read(IIN) kappahstore
@@ -164,7 +155,7 @@
     read(IIN) c66store
   endif
 
-! Stacey
+  ! Stacey
   if(ABSORBING_CONDITIONS) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -176,14 +167,14 @@
 
   endif
 
-! mass matrices
-!
-! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
-! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-!
-! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! mass matrices
+  !
+  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
      read(IIN) rmassx
      read(IIN) rmassy
@@ -191,10 +182,10 @@
 
   read(IIN) rmassz
 
-! read additional ocean load mass matrix
+  ! read additional ocean load mass matrix
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
-  close(IIN)
+  close(IIN) ! solver_data.bin
 
 ! read coordinates of the mesh
 

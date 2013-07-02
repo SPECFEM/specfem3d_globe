@@ -127,32 +127,25 @@
 
 !--- arguments of the subroutine below
 
+  integer, intent(in) :: NSOURCES
+
   integer, intent(out) :: yr,jda,ho,mi
-
+  double precision, intent(out) :: sec
+  double precision, intent(out) :: tshift_cmt,t_shift
+  double precision, intent(out) :: elat_pde,elon_pde,depth_pde
   real, intent(out) :: mb
-
-  double precision, intent(out) :: sec,tshift_cmt,t_shift
-  double precision, intent(out) :: elat_pde,elon_pde,depth_pde,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
-
-  !integer, intent(in) :: LENGTH_REGION_NAME
-  !character(len=LENGTH_REGION_NAME), intent(out) :: region ! event name for SAC header
+  double precision, intent(out) :: cmt_lat,cmt_lon,cmt_depth,cmt_hdur
 
   character(len=20), intent(out) :: event_name ! event name for SAC header
 
-  integer, intent(in) :: NSOURCES
-
-!--- local variables here
-
-  integer ios,mo,da,julian_day
-  integer isource
-
+  ! local parameters
+  integer :: ios,mo,da,julian_day
+  integer :: isource
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
-
-  real ms
-
-  character(len=5) datasource
-  character(len=150) string,CMTSOLUTION
+  real :: ms
+  character(len=5) :: datasource
+  character(len=150) :: string,CMTSOLUTION
 
 !
 !---- read hypocenter info

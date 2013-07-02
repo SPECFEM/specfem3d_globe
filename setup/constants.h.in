@@ -380,6 +380,11 @@
 ! Deville routines optimized for NGLLX = NGLLY = NGLLZ = 5
   integer, parameter :: m1 = NGLLX, m2 = NGLLX * NGLLY
 
+! mid-points inside a GLL element
+  integer, parameter :: MIDX = (NGLLX+1)/2
+  integer, parameter :: MIDY = (NGLLY+1)/2
+  integer, parameter :: MIDZ = (NGLLZ+1)/2
+
 ! gravitational constant
   double precision, parameter :: GRAV = 6.6723d-11
 

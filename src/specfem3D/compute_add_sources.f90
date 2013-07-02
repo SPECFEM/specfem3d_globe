@@ -61,11 +61,12 @@
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   integer :: isource,i,j,k,iglob,ispec
-  double precision, external :: comp_source_time_function
   double precision :: f0
+
+  double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
-!for LDDRK
+! for LDDRK
   integer :: istage
 
   do isource = 1,NSOURCES
@@ -253,71 +254,70 @@
             do i=1,NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
 
+              ! adds adjoint source acting at this time step (it):
+              !
+              ! note: we use index iadj_vec(it) which is the corresponding time step
+              !          for the adjoint source acting at this time step (it)
+              !
+              ! see routine: setup_sources_receivers_adjindx() how this adjoint index array is set up
+              !
+              !           e.g. total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000
+              !           then for it=1,..1000, first block has iadjsrc(1,1) with start = 2001 and end = 3000;
+              !           corresponding iadj_vec(it) goes from
+              !           iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1,
+              !           that is, originally the idea was
+              !           adj_sourcearrays(.. iadj_vec(1) ) corresponds to adjoint source trace at time index 3000
+              !           adj_sourcearrays(.. iadj_vec(2) ) corresponds to adjoint source trace at time index 2999
+              !           ..
+              !           adj_sourcearrays(.. iadj_vec(1000) ) corresponds to adjoint source trace at time index 2001
+              !           then a new block will be read, etc, and it is going down till to adjoint source trace at time index 1
+              !
+              ! now comes the tricky part:
+              !           adjoint source traces are based on the seismograms from the forward run;
+              !           such seismograms have a time step index 1 which corresponds to time -t0
+              !           then time step index 2 which corresponds to -t0 + DT, and
+              !           the last time step in the file at time step NSTEP corresponds to time -t0 + (NSTEP-1)*DT
+              !           (see how we add the sources to the simulation in compute_add_sources() and
+              !             how we write/save the seismograms and wavefields at the end of the time loop).
+              !
+              !           then you use that seismogram and take e.g. the velocity of it for a travetime adjoint source
+              !
+              !           now we read it in again, and remember the last time step in
+              !           the file at NSTEP corresponds to -t0 + (NSTEP-1)*DT
+              !
+              !           the same time step is saved for the forward wavefields to reconstruct them;
+              !           however, the Newmark time scheme acts at the very beginning of this time loop
+              !           such that we have the backward/reconstructed wavefield updated by
+              !           a single time step into the direction -DT and b_displ(it=1) would  corresponds to -t0 + (NSTEP-1)*DT - DT
+              !           after the Newmark (predictor) time step update.
+              !           however, we will read the backward/reconstructed wavefield at the end of the first time loop,
+              !           such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT (which is the one saved in the files).
+              !
+              !           for the kernel calculations, we want:
+              !             adjoint wavefield at time t, starting from 0 to T
+              !             and forward wavefield at time T-t, starting from T down to 0
+              !           let's say time 0 corresponds to -t0 = -t0 + (it - 1)*DT at it=1
+              !             and time T corresponds to -t0 + (NSTEP-1)*DT  at it = NSTEP
+              !
+              !           as seen before, the time for the forward wavefield b_displ(it=1) would then
+              !           correspond to time -t0 + (NSTEP-1)*DT - DT, which is T - DT.
+              !           the corresponding time for the adjoint wavefield thus would be 0 + DT
+              !           and the adjoint source index would be iadj_vec(it+1)
+              !           however, iadj_vec(it+1) which would go from 999 down to 0. 0 is out of bounds.
+              !           we thus would have to read in the adjoint source trace beginning from 2999 down to 0.
+              !           index 0 is not defined in the adjoint source trace, and would be set to zero.
+              !
+              !           however, since this complicates things, we read the backward/reconstructed
+              !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
+              !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
+              !           have a zero contribution to adjoint kernels.
+              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+                            + adj_sourcearrays(:,i,j,k,irec_local,iadj_vec(it))
 
-            ! adds adjoint source acting at this time step (it):
-            !
-            ! note: we use index iadj_vec(it) which is the corresponding time step
-            !          for the adjoint source acting at this time step (it)
-            !
-            ! see routine: setup_sources_receivers_adjindx() how this adjoint index array is set up
-            !
-            !           e.g. total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000
-            !           then for it=1,..1000, first block has iadjsrc(1,1) with start = 2001 and end = 3000;
-            !           corresponding iadj_vec(it) goes from
-            !           iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1,
-            !           that is, originally the idea was
-            !           adj_sourcearrays(.. iadj_vec(1) ) corresponds to adjoint source trace at time index 3000
-            !           adj_sourcearrays(.. iadj_vec(2) ) corresponds to adjoint source trace at time index 2999
-            !           ..
-            !           adj_sourcearrays(.. iadj_vec(1000) ) corresponds to adjoint source trace at time index 2001
-            !           then a new block will be read, etc, and it is going down till to adjoint source trace at time index 1
-            !
-            ! now comes the tricky part:
-            !           adjoint source traces are based on the seismograms from the forward run;
-            !           such seismograms have a time step index 1 which corresponds to time -t0
-            !           then time step index 2 which corresponds to -t0 + DT, and
-            !           the last time step in the file at time step NSTEP corresponds to time -t0 + (NSTEP-1)*DT
-            !           (see how we add the sources to the simulation in compute_add_sources() and
-            !             how we write/save the seismograms and wavefields at the end of the time loop).
-            !
-            !           then you use that seismogram and take e.g. the velocity of it for a travetime adjoint source
-            !
-            !           now we read it in again, and remember the last time step in
-            !           the file at NSTEP corresponds to -t0 + (NSTEP-1)*DT
-            !
-            !           the same time step is saved for the forward wavefields to reconstruct them;
-            !           however, the Newark time scheme acts at the very beginning of this time loop
-            !           such that we have the backward/reconstructed wavefield updated by
-            !           a single time step into the direction -DT and b_displ(it=1) would  corresponds to -t0 + (NSTEP-1)*DT - DT
-            !           after the Newark (predictor) time step update.
-            !           however, we will read the backward/reconstructed wavefield at the end of the first time loop,
-            !           such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT (which is the one saved in the files).
-            !
-            !           for the kernel calculations, we want:
-            !             adjoint wavefield at time t, starting from 0 to T
-            !             and forward wavefield at time T-t, starting from T down to 0
-            !           let's say time 0 corresponds to -t0 = -t0 + (it - 1)*DT at it=1
-            !             and time T corresponds to -t0 + (NSTEP-1)*DT  at it = NSTEP
-            !
-            !           as seen before, the time for the forward wavefield b_displ(it=1) would then
-            !           correspond to time -t0 + (NSTEP-1)*DT - DT, which is T - DT.
-            !           the corresponding time for the adjoint wavefield thus would be 0 + DT
-            !           and the adjoint source index would be iadj_vec(it+1)
-            !           however, iadj_vec(it+1) which would go from 999 down to 0. 0 is out of bounds.
-            !           we thus would have to read in the adjoint source trace beginning from 2999 down to 0.
-            !           index 0 is not defined in the adjoint source trace, and would be set to zero.
-            !
-            !           however, since this complicates things, we read the backward/reconstructed
-            !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
-            !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
-            !           have a zero contribution to adjoint kernels.
-            accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                          + adj_sourcearrays(:,i,j,k,irec_local,iadj_vec(it))
-
+            enddo
           enddo
         enddo
-      enddo
-    endif
+      endif
 
     enddo
 
@@ -363,8 +363,9 @@
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   integer :: isource,i,j,k,iglob,ispec
-  double precision, external :: comp_source_time_function
   double precision :: f0
+
+  double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
   do isource = 1,NSOURCES
@@ -441,5 +442,4 @@
     enddo
 
   end subroutine compute_add_sources_backward
-
 

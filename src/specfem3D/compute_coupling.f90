@@ -26,11 +26,11 @@
 !=====================================================================
 
   subroutine compute_coupling_fluid_CMB(displ_crust_mantle, &
-                            ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                            accel_outer_core, &
-                            normal_top_outer_core,jacobian2D_top_outer_core, &
-                            wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                            nspec_top)
+                                       ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                       accel_outer_core, &
+                                       normal_top_outer_core,jacobian2D_top_outer_core, &
+                                       wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                       nspec_top)
 
   implicit none
 
@@ -58,21 +58,20 @@
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,ispec_selected
 
-
   ! for surface elements exactly on the CMB
   do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
     ispec = ibelm_top_outer_core(ispec2D)
+    ispec_selected = ibelm_bottom_crust_mantle(ispec2D)
 
     ! only for DOFs exactly on the CMB (top of these elements)
     k = NGLLZ
+
+    ! get displacement on the solid side using pointwise matching
+    k_corresp = 1
+
     do j = 1,NGLLY
       do i = 1,NGLLX
-
-        ! get displacement on the solid side using pointwise matching
-        ispec_selected = ibelm_bottom_crust_mantle(ispec2D)
-
         ! corresponding points are located at the bottom of the mantle
-        k_corresp = 1
         iglob_cm = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
 
         displ_x = displ_crust_mantle(1,iglob_cm)
@@ -142,18 +141,19 @@
 
   ! for surface elements exactly on the ICB
   do ispec2D = 1, nspec_bottom ! NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
     ispec = ibelm_bottom_outer_core(ispec2D)
+    ispec_selected = ibelm_top_inner_core(ispec2D)
 
     ! only for DOFs exactly on the ICB (bottom of these elements)
     k = 1
+    ! get displacement on the solid side using pointwise matching
+    k_corresp = NGLLZ
+
     do j = 1,NGLLY
       do i = 1,NGLLX
 
-        ! get displacement on the solid side using pointwise matching
-        ispec_selected = ibelm_top_inner_core(ispec2D)
-
         ! corresponding points are located at the bottom of the mantle
-        k_corresp = NGLLZ
         iglob_ic = ibool_inner_core(i,j,k_corresp,ispec_selected)
 
         displ_x = displ_inner_core(1,iglob_ic)
@@ -230,16 +230,15 @@
   do ispec2D = 1,nspec_bottom ! NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
     ispec = ibelm_bottom_crust_mantle(ispec2D)
+    ispec_selected = ibelm_top_outer_core(ispec2D)
 
     ! only for DOFs exactly on the CMB (bottom of these elements)
     k = 1
+    ! get potential on the fluid side using pointwise matching
+    k_corresp = NGLLZ
+
     do j = 1,NGLLY
       do i = 1,NGLLX
-
-        ! get velocity potential on the fluid side using pointwise matching
-        ispec_selected = ibelm_top_outer_core(ispec2D)
-        k_corresp = NGLLZ
-
         ! get normal at the CMB
         nx = normal_top_outer_core(1,i,j,ispec2D)
         ny = normal_top_outer_core(2,i,j,ispec2D)
@@ -247,14 +246,15 @@
 
         ! get global point number
         ! corresponding points are located at the top of the outer core
-        iglob_oc = ibool_outer_core(i,j,NGLLZ,ispec_selected)
+        iglob_oc = ibool_outer_core(i,j,k_corresp,ispec_selected)
         iglob_mantle = ibool_crust_mantle(i,j,k,ispec)
 
         ! compute pressure, taking gravity into account
         if(GRAVITY_VAL) then
           pressure = RHO_TOP_OC * (- accel_outer_core(iglob_oc) &
              + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
-             + displ_crust_mantle(2,iglob_mantle)*ny + displ_crust_mantle(3,iglob_mantle)*nz))
+                            + displ_crust_mantle(2,iglob_mantle)*ny &
+                            + displ_crust_mantle(3,iglob_mantle)*nz))
         else
           pressure = - RHO_TOP_OC * accel_outer_core(iglob_oc)
         endif
@@ -319,16 +319,15 @@
   do ispec2D = 1,nspec_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
 
     ispec = ibelm_top_inner_core(ispec2D)
+    ispec_selected = ibelm_bottom_outer_core(ispec2D)
 
     ! only for DOFs exactly on the ICB (top of these elements)
     k = NGLLZ
+    ! get velocity potential on the fluid side using pointwise matching
+    k_corresp = 1
+
     do j = 1,NGLLY
       do i = 1,NGLLX
-
-        ! get velocity potential on the fluid side using pointwise matching
-        ispec_selected = ibelm_bottom_outer_core(ispec2D)
-        k_corresp = 1
-
         ! get normal at the ICB
         nx = normal_bottom_outer_core(1,i,j,ispec2D)
         ny = normal_bottom_outer_core(2,i,j,ispec2D)
@@ -343,7 +342,7 @@
         if(GRAVITY_VAL) then
           pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
-             + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
+                           + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
         else
           pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
         endif
@@ -384,7 +383,7 @@
 
   ! mass matrices
   !
-  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -442,7 +441,6 @@
                  ! make updated component of right-hand side
                  ! we divide by rmass_crust_mantle() which is 1 / M
                  ! we use the total force which includes the Coriolis term above
-
                  force_normal_comp = accel_crust_mantle(1,iglob)*nx / rmassx_crust_mantle(iglob) + &
                       accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) + &
                       accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)

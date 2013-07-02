@@ -160,12 +160,12 @@
 
     if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
-    write_time = MPI_WTIME() - write_time_begin
-
+    ! user output
     if(myrank == 0) then
-     write(IMAIN,*)
-     write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
-     write(IMAIN,*)
+      write_time = MPI_WTIME() - write_time_begin
+      write(IMAIN,*)
+      write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
+      write(IMAIN,*)
     endif
 
   ! now only the master process does the writing of seismograms and
@@ -176,13 +176,13 @@
 
     if(myrank == 0) then ! on the master, gather all the seismograms
 
-       ! create one large file instead of one small file per station to avoid file system overload
-       if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
-           write(sisname,'(A)') '/all_seismograms'
+      ! create one large file instead of one small file per station to avoid file system overload
+      if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+         write(sisname,'(A)') '/all_seismograms'
 
-         if(USE_BINARY_FOR_LARGE_FILE) then
-           if (seismo_offset==0) then
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
+       if(USE_BINARY_FOR_LARGE_FILE) then
+         if (seismo_offset==0) then
+           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
            else
              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
                   form='unformatted',position='append',action='write')

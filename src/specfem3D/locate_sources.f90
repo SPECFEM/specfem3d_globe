@@ -30,14 +30,14 @@
 !----
 
   subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool,&
-                 xstore,ystore,zstore,xigll,yigll,zigll, &
-                 NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
-                 sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
-                 NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                 islice_selected_source,ispec_selected_source, &
-                 xi_source,eta_source,gamma_source, nu_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
-                 LOCAL_PATH,SIMULATION_TYPE)
+                            xstore,ystore,zstore,xigll,yigll,zigll, &
+                            NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
+                            sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
+                            NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                            islice_selected_source,ispec_selected_source, &
+                            xi_source,eta_source,gamma_source, nu_source, &
+                            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
+                            LOCAL_PATH,SIMULATION_TYPE)
 
   implicit none
 
@@ -89,7 +89,7 @@
   character(len=150) :: LOCAL_PATH
   integer :: SIMULATION_TYPE
 
-! local parameters
+  ! local parameters
   integer isource
   integer iprocloop
   integer i,j,k,ispec,iglob
@@ -174,19 +174,21 @@
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
 
-! **************
+  ! get MPI starting time for all sources
+  time_start = MPI_WTIME()
 
-! make sure we clean the future final array
+  ! make sure we clean the future final array
   ispec_selected_source(:) = 0
+  final_distance_source(:) = HUGEVAL
 
-! get the base pathname for output files
+  ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
-! read all the sources
+  ! read all the sources
   if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                               DT,NSOURCES,min_tshift_cmt_original)
 
-! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the master to the nodes
   call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -206,14 +208,12 @@
   ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
 
-! initializes source mask
+  ! initializes source mask
   if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
-    allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC) )
+    allocate(mask_source(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating mask source array')
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
-
-! get MPI starting time for all sources
-  time_start = MPI_WTIME()
 
   ! loop on all the sources
   ! gather source information in subsets to reduce memory requirements
@@ -225,24 +225,24 @@
     ! or if there are fewer sources than the maximum size of a subset)
     NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
 
-! allocate arrays specific to each subset
-  allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size), &
-    ispec_selected_source_subset(NSOURCES_SUBSET_current_size), &
-    ispec_selected_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
-    xi_source_subset(NSOURCES_SUBSET_current_size), &
-    eta_source_subset(NSOURCES_SUBSET_current_size), &
-    gamma_source_subset(NSOURCES_SUBSET_current_size), &
-    x_found_source(NSOURCES_SUBSET_current_size), &
-    y_found_source(NSOURCES_SUBSET_current_size), &
-    z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary source arrays')
+    ! allocate arrays specific to each subset
+    allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size), &
+            ispec_selected_source_subset(NSOURCES_SUBSET_current_size), &
+            ispec_selected_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+            xi_source_subset(NSOURCES_SUBSET_current_size), &
+            eta_source_subset(NSOURCES_SUBSET_current_size), &
+            gamma_source_subset(NSOURCES_SUBSET_current_size), &
+            x_found_source(NSOURCES_SUBSET_current_size), &
+            y_found_source(NSOURCES_SUBSET_current_size), &
+            z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary source arrays')
 
     ! make sure we clean the subset array before the gather
     ispec_selected_source_subset(:) = 0
@@ -331,29 +331,33 @@
       ! normalized source radius
       r0 = R_UNIT_SPHERE
 
-  if(ELLIPTICITY) then
-    if(TOPOGRAPHY) then
-      call get_topo_bathy(lat(isource),long(isource),elevation,ibathy_topo)
-      r0 = r0 + elevation/R_EARTH
-    endif
-    dcost = dcos(theta)
-    p20 = 0.5d0*(3.0d0*dcost*dcost-1.0d0)
-    radius = r0 - depth(isource)*1000.0d0/R_EARTH
-    call spline_evaluation(rspl,espl,espl2,nspl,radius,ell)
-    r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
-  endif
+      ! finds elevation of position
+      if(TOPOGRAPHY) then
+        call get_topo_bathy(lat(isource),long(isource),elevation,ibathy_topo)
+        r0 = r0 + elevation/R_EARTH
+      endif
+      if(ELLIPTICITY) then
+        dcost = dcos(theta)
+        p20 = 0.5d0*(3.0d0*dcost*dcost-1.0d0)
+        radius = r0 - depth(isource)*1000.0d0/R_EARTH
+        call spline_evaluation(rspl,espl,espl2,nspl,radius,ell)
+        r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
+      endif
 
-! compute the Cartesian position of the source
-  r_target_source = r0 - depth(isource)*1000.0d0/R_EARTH
-  x_target_source = r_target_source*dsin(theta)*dcos(phi)
-  y_target_source = r_target_source*dsin(theta)*dsin(phi)
-  z_target_source = r_target_source*dcos(theta)
+      ! subtracts source depth (given in km)
+      r_target_source = r0 - depth(isource)*1000.0d0/R_EARTH
 
-  ! would only output desired target locations
-  !if(myrank == 0) write(IOVTK,*) sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
+      ! compute the Cartesian position of the source
+      x_target_source = r_target_source*dsin(theta)*dcos(phi)
+      y_target_source = r_target_source*dsin(theta)*dsin(phi)
+      z_target_source = r_target_source*dcos(theta)
 
-! set distance to huge initial value
-  distmin = HUGEVAL
+      ! debug
+      ! would only output desired target locations
+      !if(myrank == 0) write(IOVTK,*) sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
+
+      ! set distance to huge initial value
+      distmin = HUGEVAL
 
 ! compute typical size of elements at the surface
   typical_size = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI)
@@ -361,65 +365,70 @@
 ! use 10 times the distance as a criterion for source detection
   typical_size = 10. * typical_size
 
-! flag to check that we located at least one target element
-  located_target = .false.
+      ! flag to check that we located at least one target element
+      located_target = .false.
+      ix_initial_guess_source = 0
+      iy_initial_guess_source = 0
+      iz_initial_guess_source = 0
 
-  do ispec = 1,nspec
+      do ispec = 1,nspec
 
-    ! exclude elements that are too far from target
-    iglob = ibool(1,1,1,ispec)
-    dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
-               + (y_target_source - dble(ystore(iglob)))**2 &
-               + (z_target_source - dble(zstore(iglob)))**2)
-    if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
-
+        ! exclude elements that are too far from target
+        if( USE_DISTANCE_CRITERION ) then
+          iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+          dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
+                     + (y_target_source - dble(ystore(iglob)))**2 &
+                     + (z_target_source - dble(zstore(iglob)))**2)
+          if(dist > typical_size) cycle
+        endif
     located_target = .true.
 
-    ! define the interval in which we look for points
-    if(USE_FORCE_POINT_SOURCE) then
-      ! force sources will be put on an exact GLL point
-      imin = 1
-      imax = NGLLX
+        ! define the interval in which we look for points
+        if(USE_FORCE_POINT_SOURCE) then
+          ! force sources will be put on an exact GLL point
+          imin = 1
+          imax = NGLLX
 
-      jmin = 1
-      jmax = NGLLY
+          jmin = 1
+          jmax = NGLLY
 
-      kmin = 1
-      kmax = NGLLZ
+          kmin = 1
+          kmax = NGLLZ
 
-    else
-      ! double-couple CMTSOLUTION
-      ! loop only on points inside the element
-      ! exclude edges to ensure this point is not shared with other elements
-      imin = 2
-      imax = NGLLX - 1
+        else
+          ! double-couple CMTSOLUTION
+          ! loop only on points inside the element
+          ! exclude edges to ensure this point is not shared with other elements
+          imin = 2
+          imax = NGLLX - 1
 
-      jmin = 2
-      jmax = NGLLY - 1
+          jmin = 2
+          jmax = NGLLY - 1
 
-      kmin = 2
-      kmax = NGLLZ - 1
-    endif
-    do k = kmin,kmax
-      do j = jmin,jmax
-        do i = imin,imax
+          kmin = 2
+          kmax = NGLLZ - 1
+        endif
 
-          ! keep this point if it is closer to the receiver
-          iglob = ibool(i,j,k,ispec)
-          dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
-                      +(y_target_source - dble(ystore(iglob)))**2 &
-                      +(z_target_source - dble(zstore(iglob)))**2)
-          if(dist < distmin) then
-            distmin = dist
-            ispec_selected_source_subset(isource_in_this_subset) = ispec
-            ix_initial_guess_source = i
-            iy_initial_guess_source = j
-            iz_initial_guess_source = k
-          endif
+        do k = kmin,kmax
+          do j = jmin,jmax
+            do i = imin,imax
 
+              ! keep this point if it is closer to the receiver
+              iglob = ibool(i,j,k,ispec)
+              dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
+                          +(y_target_source - dble(ystore(iglob)))**2 &
+                          +(z_target_source - dble(zstore(iglob)))**2)
+              if(dist < distmin) then
+                distmin = dist
+                ispec_selected_source_subset(isource_in_this_subset) = ispec
+                ix_initial_guess_source = i
+                iy_initial_guess_source = j
+                iz_initial_guess_source = k
+              endif
+
+            enddo
+          enddo
         enddo
-      enddo
-    enddo
 
         ! calculates a gaussian mask around source point
         if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
@@ -435,14 +444,14 @@
       ! find the best (xi,eta,gamma) for the source
       ! *******************************************
 
-  ! if we have not located a target element, the source is not in this slice
-  ! therefore use first element only for fictitious iterative search
-  if(.not. located_target) then
-    ispec_selected_source_subset(isource_in_this_subset)=1
-    ix_initial_guess_source = 2
-    iy_initial_guess_source = 2
-    iz_initial_guess_source = 2
-  endif
+      ! if we have not located a target element, the source is not in this slice
+      ! therefore use first element only for fictitious iterative search
+      if(.not. located_target) then
+        ispec_selected_source_subset(isource_in_this_subset)=1
+        ix_initial_guess_source = MIDX
+        iy_initial_guess_source = MIDY
+        iz_initial_guess_source = MIDZ
+      endif
 
       ! for point sources, the location will be exactly at a GLL point
       ! otherwise this tries to find best location
@@ -473,45 +482,48 @@
     eta = yigll(iy_initial_guess_source)
     gamma = zigll(iz_initial_guess_source)
 
-    ! define coordinates of the control points of the element
-    do ia=1,NGNOD
+        ! define coordinates of the control points of the element
+        do ia=1,NGNOD
 
-      if(iaddx(ia) == 0) then
-        iax = 1
-      else if(iaddx(ia) == 1) then
-        iax = (NGLLX+1)/2
-      else if(iaddx(ia) == 2) then
-        iax = NGLLX
-      else
-        call exit_MPI(myrank,'incorrect value of iaddx')
-      endif
+          iax = 0
+          if(iaddx(ia) == 0) then
+            iax = 1
+          else if(iaddx(ia) == 1) then
+            iax = MIDX
+          else if(iaddx(ia) == 2) then
+            iax = NGLLX
+          else
+            call exit_MPI(myrank,'incorrect value of iaddx')
+          endif
 
-      if(iaddy(ia) == 0) then
-        iay = 1
-      else if(iaddy(ia) == 1) then
-        iay = (NGLLY+1)/2
-      else if(iaddy(ia) == 2) then
-        iay = NGLLY
-      else
-        call exit_MPI(myrank,'incorrect value of iaddy')
-      endif
+          iay = 0
+          if(iaddy(ia) == 0) then
+            iay = 1
+          else if(iaddy(ia) == 1) then
+            iay = MIDY
+          else if(iaddy(ia) == 2) then
+            iay = NGLLY
+          else
+            call exit_MPI(myrank,'incorrect value of iaddy')
+          endif
 
-      if(iaddr(ia) == 0) then
-        iaz = 1
-      else if(iaddr(ia) == 1) then
-        iaz = (NGLLZ+1)/2
-      else if(iaddr(ia) == 2) then
-        iaz = NGLLZ
-      else
-        call exit_MPI(myrank,'incorrect value of iaddr')
-      endif
+          iaz = 0
+          if(iaddr(ia) == 0) then
+            iaz = 1
+          else if(iaddr(ia) == 1) then
+            iaz = MIDZ
+          else if(iaddr(ia) == 2) then
+            iaz = NGLLZ
+          else
+            call exit_MPI(myrank,'incorrect value of iaddr')
+          endif
 
-      iglob = ibool(iax,iay,iaz,ispec_selected_source_subset(isource_in_this_subset))
-      xelm(ia) = dble(xstore(iglob))
-      yelm(ia) = dble(ystore(iglob))
-      zelm(ia) = dble(zstore(iglob))
+          iglob = ibool(iax,iay,iaz,ispec_selected_source_subset(isource_in_this_subset))
+          xelm(ia) = dble(xstore(iglob))
+          yelm(ia) = dble(ystore(iglob))
+          zelm(ia) = dble(zstore(iglob))
 
-    enddo
+        enddo
 
         ! iterate to solve the non linear system
         do iter_loop = 1,NUM_ITER
@@ -681,35 +693,35 @@
           - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
         if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
-      write(IMAIN,*)
-      write(IMAIN,*) 'original (requested) position of the source:'
-      write(IMAIN,*)
-      write(IMAIN,*) '      latitude: ',lat(isource)
-      write(IMAIN,*) '     longitude: ',long(isource)
-      write(IMAIN,*) '         depth: ',depth(isource),' km'
-      write(IMAIN,*)
-
-      ! compute real position of the source
-      write(IMAIN,*) 'position of the source that will be used:'
-      write(IMAIN,*)
-      write(IMAIN,*) '      latitude: ',(PI/2.0d0-colat_source)*180.0d0/PI
-      write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
-      write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
-      write(IMAIN,*)
-
-      ! display error in location estimate
-      write(IMAIN,*) 'error in location of the source: ',sngl(final_distance_source(isource)),' km'
-
-      ! add warning if estimate is poor
-      ! (usually means source outside the mesh given by the user)
-      if(final_distance_source(isource) > 50.d0) then
         write(IMAIN,*)
-        write(IMAIN,*) '*****************************************************'
-        write(IMAIN,*) '*****************************************************'
-        write(IMAIN,*) '***** WARNING: source location estimate is poor *****'
-        write(IMAIN,*) '*****************************************************'
-        write(IMAIN,*) '*****************************************************'
-      endif
+        write(IMAIN,*) 'original (requested) position of the source:'
+        write(IMAIN,*)
+        write(IMAIN,*) '      latitude: ',lat(isource)
+        write(IMAIN,*) '     longitude: ',long(isource)
+        write(IMAIN,*) '         depth: ',depth(isource),' km'
+        write(IMAIN,*)
+
+        ! compute real position of the source
+        write(IMAIN,*) 'position of the source that will be used:'
+        write(IMAIN,*)
+        write(IMAIN,*) '      latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
+        write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
+        write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
+        write(IMAIN,*)
+
+        ! display error in location estimate
+        write(IMAIN,*) 'error in location of the source: ',sngl(final_distance_source(isource)),' km'
+
+        ! add warning if estimate is poor
+        ! (usually means source outside the mesh given by the user)
+        if(final_distance_source(isource) > 50.d0) then
+          write(IMAIN,*)
+          write(IMAIN,*) '*****************************************************'
+          write(IMAIN,*) '*****************************************************'
+          write(IMAIN,*) '***** WARNING: source location estimate is poor *****'
+          write(IMAIN,*) '*****************************************************'
+          write(IMAIN,*) '*****************************************************'
+        endif
 
       ! print source time function and spectrum
       if(PRINT_SOURCE_TIME_FUNCTION) then
@@ -796,18 +808,18 @@
 
       endif !PRINT_SOURCE_TIME_FUNCTION
 
-    enddo ! end of loop on all the sources within current source subset
+      enddo ! end of loop on all the sources within current source subset
 
-  endif ! end of section executed by main process only
+    endif ! end of section executed by main process only
 
-! deallocate arrays specific to each subset
-  deallocate(final_distance_source_subset)
-  deallocate(ispec_selected_source_subset)
-  deallocate(ispec_selected_source_all)
-  deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all)
-  deallocate(x_found_source_all,y_found_source_all,z_found_source_all)
-  deallocate(xi_source_subset,eta_source_subset,gamma_source_subset)
-  deallocate(x_found_source,y_found_source,z_found_source)
+    ! deallocate arrays specific to each subset
+    deallocate(final_distance_source_subset)
+    deallocate(ispec_selected_source_subset)
+    deallocate(ispec_selected_source_all)
+    deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all)
+    deallocate(x_found_source_all,y_found_source_all,z_found_source_all)
+    deallocate(xi_source_subset,eta_source_subset,gamma_source_subset)
+    deallocate(x_found_source,y_found_source,z_found_source)
 
   enddo ! end of loop over all source subsets
 
@@ -847,7 +859,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
                             x_target_source,y_target_source,z_target_source, &
@@ -918,12 +929,148 @@
   character(len=150) :: LOCAL_PATH
 
   ! local parameters
+  integer :: ier
   character(len=150) :: prname
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-  open(unit=27,file=trim(prname)//'mask_source.bin',status='unknown',form='unformatted',action='write')
+  open(unit=27,file=trim(prname)//'mask_source.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening mask_source.bin file')
   write(27) mask_source
   close(27)
 
   end subroutine save_mask_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                      tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)
+
+! prints source time function
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: NSOURCES,isource
+
+  double precision,dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  double precision,dimension(NSOURCES) :: tshift_cmt,hdur
+
+  double precision :: min_tshift_cmt_original
+  integer :: NSTEP
+  double precision :: DT
+
+
+  ! local parameters
+  integer :: it,iom,ier
+  double precision :: scalar_moment
+  double precision :: t0, hdur_gaussian(NSOURCES)
+  double precision :: t_cmt_used(NSOURCES)
+  double precision time_source,om
+  double precision :: f0
+
+  double precision, external :: comp_source_time_function,comp_source_spectrum
+  double precision, external :: comp_source_time_function_rickr
+
+  character(len=150) :: OUTPUT_FILES
+  character(len=150) :: plot_file
+
+  ! number of points to plot the source time function and spectrum
+  integer, parameter :: NSAMP_PLOT_SOURCE = 1000
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'printing the source-time function'
+
+  ! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
+  ! print the source-time function
+  if(NSOURCES == 1) then
+    plot_file = '/plot_source_time_function.txt'
+  else
+   if(isource < 10) then
+      write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
+    else if(isource < 100) then
+      write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
+    else
+      write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
+    endif
+  endif
+
+  ! output file
+  open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
+        status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_time_function file')
+
+  scalar_moment = Mxx(isource)**2 + Myy(isource)**2 + Mzz(isource)**2 &
+                + Mxy(isource)**2 + Mxz(isource)**2 + Myz(isource)**2
+  scalar_moment = dsqrt(scalar_moment/2.0d0)
+
+  ! define t0 as the earliest start time
+  ! note: this calculation here is only used for outputting the plot_source_time_function file
+  !          (see setup_sources_receivers.f90)
+  t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+  if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+
+  t_cmt_used(:) = tshift_cmt(:)
+  if( USER_T0 > 0.d0 ) then
+    if( t0 <= USER_T0 + min_tshift_cmt_original ) then
+      t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
+      t0 = USER_T0
+    endif
+  endif
+  ! convert the half duration for triangle STF to the one for gaussian STF
+  ! note: this calculation here is only used for outputting the plot_source_time_function file
+  !          (see setup_sources_receivers.f90)
+  hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
+
+  ! writes out source time function to file
+  do it=1,NSTEP
+    time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
+    if( USE_FORCE_POINT_SOURCE ) then
+      ! Ricker source time function
+      f0 = hdur(isource)
+      write(27,*) sngl(dble(it-1)*DT-t0), &
+        sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+    else
+      ! Gaussian source time function
+      write(27,*) sngl(dble(it-1)*DT-t0), &
+        sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
+    endif
+  enddo
+  close(27)
+
+  write(IMAIN,*)
+  write(IMAIN,*) 'printing the source spectrum'
+
+  ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
+  if(NSOURCES == 1) then
+    plot_file = '/plot_source_spectrum.txt'
+  else
+   if(isource < 10) then
+      write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
+    else if(isource < 100) then
+      write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
+    else
+      write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
+    endif
+  endif
+
+  open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
+        status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_spectrum file')
+
+  do iom=1,NSAMP_PLOT_SOURCE
+    om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
+    write(27,*) sngl(om/TWO_PI), &
+      sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
+  enddo
+  close(27)
+
+  end subroutine print_stf

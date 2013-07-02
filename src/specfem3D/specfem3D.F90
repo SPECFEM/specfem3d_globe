@@ -27,14 +27,11 @@
 !
 ! United States and French Government Sponsorship Acknowledged.
 
-!! DK DK to turn OpenMP on
-!#define USE_OPENMP
-
   program xspecfem3D
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   include "constants.h"
@@ -965,11 +962,6 @@
   integer :: iteration_on_subset,it_of_this_subset,j,irec_local,k
   integer :: it_temp,seismo_current_temp
   real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
-  logical :: undo_att_sim_type_3
-
-  undo_att_sim_type_3 = .false.
-
-
 
 ! *************************************************
 ! ************** PROGRAM STARTS HERE **************
@@ -1007,7 +999,7 @@
 !             passing them along as arguments to the routine makes the code slower.
 !             it seems that this stack/heap criterion is more complicated.
 !
-!             another reason why modules are avoided is to make the code thread safe.
+!             another reason why the use of modules is restricted is to make the code thread safe.
 !             having different threads access the same data structure and modifying it at the same time
 !             would lead to problems. passing arguments is a way to avoid such complications.
 !
@@ -1034,16 +1026,7 @@
 !-------------------------------------------------------------------------------------------------
 !
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
-!! DK DK when turning OpenMP on, use this instead:
-!! DK DK from http://mpi.deino.net/mpi_functions/MPI_Init_thread.html
-!! DK DK MPI_THREAD_FUNNELED: the process may be multi-threaded, but only the main thread will make MPI calls
-!! DK DK (all MPI calls are funneled to the main thread).
-#ifdef USE_OPENMP
-  integer :: iprovided
-  call MPI_INIT_THREAD(MPI_THREAD_FUNNELED,iprovided,ier)
-#else
   call MPI_INIT(ier)
-#endif
 
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()
@@ -2347,8 +2330,6 @@ else ! if UNDO_ATTENUATION
   endif
 
   if(SIMULATION_TYPE == 3)then
-
-    undo_att_sim_type_3 = .true.
 
     allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')

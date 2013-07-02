@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+subroutine save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
@@ -64,7 +64,6 @@
 
   ! local parameters
   character(len=150) outputname
-
 
   ! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
@@ -110,11 +109,11 @@
     close(55)
   endif
 
-  end subroutine save_forward_arrays
-!
+end subroutine save_forward_arrays
+
 !=====================================================================
 
-  subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
+subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
                     displ_outer_core,veloc_outer_core,accel_outer_core, &
@@ -183,5 +182,5 @@
     close(55)
   endif
 
-  end subroutine save_forward_arrays_undoatt
+end subroutine save_forward_arrays_undoatt
 

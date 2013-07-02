@@ -75,7 +75,7 @@
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -1092,8 +1092,8 @@
         if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
+                                          sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -1643,7 +1643,7 @@
   enddo
 
 
- end subroutine compute_element_strain_undo_att_Dev
+  end subroutine compute_element_strain_undo_att_Dev
 
 !
 !--------------------------------------------------------------------------------------------
@@ -1825,9 +1825,8 @@
     enddo
   enddo
 
-
-
  end subroutine compute_element_strain_att_Dev
+
 !=====================================================================
 
   subroutine compute_element_strain_undo_att_noDev(ispec,nglob,nspec,displ,hprime_xx,hprime_yy,hprime_zz,ibool,&
@@ -1968,6 +1967,7 @@
     enddo ! NGLLZ
 
   end subroutine compute_element_strain_undo_att_noDev
+
 !=====================================================================
 
   subroutine compute_element_strain_att_noDev(ispec,nglob,nspec,displ,veloc,deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
@@ -2016,8 +2016,6 @@
 
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-
-
 
     do k=1,NGLLZ
       do j=1,NGLLY
