@@ -43,6 +43,8 @@
             NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
             NGLOB2DMAX_XY,NCHUNKS,iphase)
 
+! blocking send/receive
+
   implicit none
 
 ! standard include of the MPI library
@@ -51,9 +53,10 @@
   include "constants.h"
   include "precision.h"
 
-  integer myrank,nglob,NCHUNKS,iphase
+  integer myrank,NCHUNKS,iphase
+  integer :: nglob
 
-! array to assemble
+  ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val
 
   integer, intent(in) :: iproc_xi,iproc_eta,ichunk
