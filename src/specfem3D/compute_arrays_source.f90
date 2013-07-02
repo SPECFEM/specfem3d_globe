@@ -127,7 +127,6 @@
 
 !================================================================
 
-
   subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
       xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
       xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &

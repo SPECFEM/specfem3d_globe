@@ -25,15 +25,6 @@
 !
 !=====================================================================
 
-! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                                         #undef _HANDOPT :  turns hand-optimized code off
-! or compile with: -D_HANDOPT
-!#define _HANDOPT
-
-! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
-
   subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                             deltat, &
                                             displ_inner_core, &
@@ -205,15 +196,12 @@
   integer :: num_elements,ispec_p
   integer :: iphase
 
-#ifdef _HANDOPT
-  integer, dimension(5) :: iglobv5
-#endif
-
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
 !  computed_elements = 0
+
   if( .not. phase_is_inner ) then
     iphase = 1
     num_elements = nspec_outer
@@ -237,41 +225,12 @@
 
       do k=1,NGLLZ
         do j=1,NGLLY
-
-#ifdef _HANDOPT
-! way 2:
-        ! since we know that NGLLX = 5, this should help pipelining
-        iglobv5(:) = ibool(:,j,k,ispec)
-
-        dummyx_loc(1,j,k) = displ_inner_core(1,iglobv5(1))
-        dummyy_loc(1,j,k) = displ_inner_core(2,iglobv5(1))
-        dummyz_loc(1,j,k) = displ_inner_core(3,iglobv5(1))
-
-        dummyx_loc(2,j,k) = displ_inner_core(1,iglobv5(2))
-        dummyy_loc(2,j,k) = displ_inner_core(2,iglobv5(2))
-        dummyz_loc(2,j,k) = displ_inner_core(3,iglobv5(2))
-
-        dummyx_loc(3,j,k) = displ_inner_core(1,iglobv5(3))
-        dummyy_loc(3,j,k) = displ_inner_core(2,iglobv5(3))
-        dummyz_loc(3,j,k) = displ_inner_core(3,iglobv5(3))
-
-        dummyx_loc(4,j,k) = displ_inner_core(1,iglobv5(4))
-        dummyy_loc(4,j,k) = displ_inner_core(2,iglobv5(4))
-        dummyz_loc(4,j,k) = displ_inner_core(3,iglobv5(4))
-
-        dummyx_loc(5,j,k) = displ_inner_core(1,iglobv5(5))
-        dummyy_loc(5,j,k) = displ_inner_core(2,iglobv5(5))
-        dummyz_loc(5,j,k) = displ_inner_core(3,iglobv5(5))
-
-#else
-! way 1:
           do i=1,NGLLX
             iglob1 = ibool(i,j,k,ispec)
             dummyx_loc(i,j,k) = displ_inner_core(1,iglob1)
             dummyy_loc(i,j,k) = displ_inner_core(2,iglob1)
             dummyz_loc(i,j,k) = displ_inner_core(3,iglob1)
           enddo
-#endif
         enddo
       enddo
 
@@ -283,75 +242,23 @@
 
             do k=1,NGLLZ
                do j=1,NGLLY
-
-#ifdef _HANDOPT
-                  ! way 2:
-                  ! since we know that NGLLX = 5, this should help pipelining
-                  iglobv5(:) = ibool(:,j,k,ispec)
-
-                  dummyx_loc_att(1,j,k) = deltat*veloc_inner_core(1,iglobv5(1))
-                  dummyy_loc_att(1,j,k) = deltat*veloc_inner_core(2,iglobv5(1))
-                  dummyz_loc_att(1,j,k) = deltat*veloc_inner_core(3,iglobv5(1))
-
-                  dummyx_loc_att(2,j,k) = deltat*veloc_inner_core(1,iglobv5(2))
-                  dummyy_loc_att(2,j,k) = deltat*veloc_inner_core(2,iglobv5(2))
-                  dummyz_loc_att(2,j,k) = deltat*veloc_inner_core(3,iglobv5(2))
-
-                  dummyx_loc_att(3,j,k) = deltat*veloc_inner_core(1,iglobv5(3))
-                  dummyy_loc_att(3,j,k) = deltat*veloc_inner_core(2,iglobv5(3))
-                  dummyz_loc_att(3,j,k) = deltat*veloc_inner_core(3,iglobv5(3))
-
-                  dummyx_loc_att(4,j,k) = deltat*veloc_inner_core(1,iglobv5(4))
-                  dummyy_loc_att(4,j,k) = deltat*veloc_inner_core(2,iglobv5(4))
-                  dummyz_loc_att(4,j,k) = deltat*veloc_inner_core(3,iglobv5(4))
-
-                  dummyx_loc_att(5,j,k) = deltat*veloc_inner_core(1,iglobv5(5))
-                  dummyy_loc_att(5,j,k) = deltat*veloc_inner_core(2,iglobv5(5))
-                  dummyz_loc_att(5,j,k) = deltat*veloc_inner_core(3,iglobv5(5))
-
-#else
-                  ! way 1:
                   do i=1,NGLLX
                      iglob1 = ibool(i,j,k,ispec)
                      dummyx_loc_att(i,j,k) = deltat*veloc_inner_core(1,iglob1)
                      dummyy_loc_att(i,j,k) = deltat*veloc_inner_core(2,iglob1)
                      dummyz_loc_att(i,j,k) = deltat*veloc_inner_core(3,iglob1)
                   enddo
-
-#endif
                enddo
             enddo
          else
             ! takes old routines
             do k=1,NGLLZ
                do j=1,NGLLY
-#ifdef _HANDOPT
-                  dummyx_loc_att(1,j,k) = 0._CUSTOM_REAL
-                  dummyy_loc_att(1,j,k) = 0._CUSTOM_REAL
-                  dummyz_loc_att(1,j,k) = 0._CUSTOM_REAL
-
-                  dummyx_loc_att(2,j,k) = 0._CUSTOM_REAL
-                  dummyy_loc_att(2,j,k) = 0._CUSTOM_REAL
-                  dummyz_loc_att(2,j,k) = 0._CUSTOM_REAL
-
-                  dummyx_loc_att(3,j,k) = 0._CUSTOM_REAL
-                  dummyy_loc_att(3,j,k) = 0._CUSTOM_REAL
-                  dummyz_loc_att(3,j,k) = 0._CUSTOM_REAL
-
-                  dummyx_loc_att(4,j,k) = 0._CUSTOM_REAL
-                  dummyy_loc_att(4,j,k) = 0._CUSTOM_REAL
-                  dummyz_loc_att(4,j,k) = 0._CUSTOM_REAL
-
-                  dummyx_loc_att(5,j,k) = 0._CUSTOM_REAL
-                  dummyy_loc_att(5,j,k) = 0._CUSTOM_REAL
-                  dummyz_loc_att(5,j,k) = 0._CUSTOM_REAL
-#else
                   do i=1,NGLLX
                      dummyx_loc_att(i,j,k) = 0._CUSTOM_REAL
                      dummyy_loc_att(i,j,k) = 0._CUSTOM_REAL
                      dummyz_loc_att(i,j,k) = 0._CUSTOM_REAL
                   enddo
-#endif
                enddo
             enddo
          endif
@@ -822,17 +729,17 @@
             endif  ! end of section with gravity terms
 
             ! form dot product with test vector, non-symmetric form
-            tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl)
-            tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl)
-            tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl)
+            tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) ! this goes to accel_x
+            tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) ! this goes to accel_y
+            tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) ! this goes to accel_z
 
-            tempx2(i,j,k) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl)
-            tempy2(i,j,k) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl)
-            tempz2(i,j,k) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl)
+            tempx2(i,j,k) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl) ! this goes to accel_x
+            tempy2(i,j,k) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl) ! this goes to accel_y
+            tempz2(i,j,k) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl) ! this goes to accel_z
 
-            tempx3(i,j,k) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl)
-            tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl)
-            tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl)
+            tempx3(i,j,k) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl) ! this goes to accel_x
+            tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
+            tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
 
           enddo
         enddo
@@ -862,6 +769,7 @@
                                 hprimewgll_xxT(i,5)*C3_m1_m2_5points(5,j)
         enddo
       enddo
+
       do i=1,m1
         do j=1,m1
           ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
@@ -886,6 +794,7 @@
           enddo
         enddo
       enddo
+
       do j=1,m1
         do i=1,m2
           E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
@@ -929,23 +838,10 @@
       ! sum contributions from each element to the global mesh and add gravity terms
       do k=1,NGLLZ
         do j=1,NGLLY
-#ifdef _HANDOPT
-! way 2:
-          iglobv5(:) = ibool(:,j,k,ispec)
-
-          accel_inner_core(:,iglobv5(1)) = accel_inner_core(:,iglobv5(1)) + sum_terms(:,1,j,k)
-          accel_inner_core(:,iglobv5(2)) = accel_inner_core(:,iglobv5(2)) + sum_terms(:,2,j,k)
-          accel_inner_core(:,iglobv5(3)) = accel_inner_core(:,iglobv5(3)) + sum_terms(:,3,j,k)
-          accel_inner_core(:,iglobv5(4)) = accel_inner_core(:,iglobv5(4)) + sum_terms(:,4,j,k)
-          accel_inner_core(:,iglobv5(5)) = accel_inner_core(:,iglobv5(5)) + sum_terms(:,5,j,k)
-
-#else
-! way 1:
           do i=1,NGLLX
             iglob1 = ibool(i,j,k,ispec)
             accel_inner_core(:,iglob1) = accel_inner_core(:,iglob1) + sum_terms(:,i,j,k)
           enddo
-#endif
         enddo
       enddo
 

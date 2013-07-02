@@ -25,15 +25,6 @@
 !
 !=====================================================================
 
-! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                                         #undef _HANDOPT :  turns hand-optimized code off
-! or compile with: -D_HANDOPT
-!#define _HANDOPT
-
-! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
-
   subroutine compute_forces_crust_mantle_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_crust_mantle, &
@@ -187,13 +178,9 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
   integer :: ispec,i,j,k,iglob1
-!  integer :: computed_elements
+
   integer :: num_elements,ispec_p
   integer :: iphase
-
-#ifdef _HANDOPT
-  integer, dimension(5) :: iglobv5
-#endif
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -219,42 +206,12 @@
     ! pages 386 and 389 and Figure 8.3.1
     do k=1,NGLLZ
       do j=1,NGLLY
-
-#ifdef _HANDOPT
-! way 2:
-        ! since we know that NGLLX = 5, this should help pipelining
-        iglobv5(:) = ibool(:,j,k,ispec)
-
-        dummyx_loc(1,j,k) = displ_crust_mantle(1,iglobv5(1))
-        dummyy_loc(1,j,k) = displ_crust_mantle(2,iglobv5(1))
-        dummyz_loc(1,j,k) = displ_crust_mantle(3,iglobv5(1))
-
-        dummyx_loc(2,j,k) = displ_crust_mantle(1,iglobv5(2))
-        dummyy_loc(2,j,k) = displ_crust_mantle(2,iglobv5(2))
-        dummyz_loc(2,j,k) = displ_crust_mantle(3,iglobv5(2))
-
-        dummyx_loc(3,j,k) = displ_crust_mantle(1,iglobv5(3))
-        dummyy_loc(3,j,k) = displ_crust_mantle(2,iglobv5(3))
-        dummyz_loc(3,j,k) = displ_crust_mantle(3,iglobv5(3))
-
-        dummyx_loc(4,j,k) = displ_crust_mantle(1,iglobv5(4))
-        dummyy_loc(4,j,k) = displ_crust_mantle(2,iglobv5(4))
-        dummyz_loc(4,j,k) = displ_crust_mantle(3,iglobv5(4))
-
-        dummyx_loc(5,j,k) = displ_crust_mantle(1,iglobv5(5))
-        dummyy_loc(5,j,k) = displ_crust_mantle(2,iglobv5(5))
-        dummyz_loc(5,j,k) = displ_crust_mantle(3,iglobv5(5))
-
-#else
-! way 1:
         do i=1,NGLLX
           iglob1 = ibool(i,j,k,ispec)
           dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob1)
           dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob1)
           dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob1)
         enddo
-
-#endif
       enddo
     enddo
 
@@ -267,78 +224,26 @@
 
           do k=1,NGLLZ
              do j=1,NGLLY
-
-#ifdef _HANDOPT
-                ! way 2:
-                ! since we know that NGLLX = 5, this should help pipelining
-                iglobv5(:) = ibool(:,j,k,ispec)
-
-                dummyx_loc_att(1,j,k) = dummyx_loc(1,j,k) + deltat*veloc_crust_mantle(1,iglobv5(1))
-                dummyy_loc_att(1,j,k) = dummyy_loc(1,j,k) + deltat*veloc_crust_mantle(2,iglobv5(1))
-                dummyz_loc_att(1,j,k) = dummyz_loc(1,j,k) + deltat*veloc_crust_mantle(3,iglobv5(1))
-
-                dummyx_loc_att(2,j,k) = dummyx_loc(2,j,k) + deltat*veloc_crust_mantle(1,iglobv5(2))
-                dummyy_loc_att(2,j,k) = dummyy_loc(2,j,k) + deltat*veloc_crust_mantle(2,iglobv5(2))
-                dummyz_loc_att(2,j,k) = dummyz_loc(2,j,k) + deltat*veloc_crust_mantle(3,iglobv5(2))
-
-                dummyx_loc_att(3,j,k) = dummyx_loc(3,j,k) + deltat*veloc_crust_mantle(1,iglobv5(3))
-                dummyy_loc_att(3,j,k) = dummyy_loc(3,j,k) + deltat*veloc_crust_mantle(2,iglobv5(3))
-                dummyz_loc_att(3,j,k) = dummyz_loc(3,j,k) + deltat*veloc_crust_mantle(3,iglobv5(3))
-
-                dummyx_loc_att(4,j,k) = dummyx_loc(4,j,k) + deltat*veloc_crust_mantle(1,iglobv5(4))
-                dummyy_loc_att(4,j,k) = dummyy_loc(4,j,k) + deltat*veloc_crust_mantle(2,iglobv5(4))
-                dummyz_loc_att(4,j,k) = dummyz_loc(4,j,k) + deltat*veloc_crust_mantle(3,iglobv5(4))
-
-                dummyx_loc_att(5,j,k) = dummyx_loc(5,j,k) + deltat*veloc_crust_mantle(1,iglobv5(5))
-                dummyy_loc_att(5,j,k) = dummyy_loc(5,j,k) + deltat*veloc_crust_mantle(2,iglobv5(5))
-                dummyz_loc_att(5,j,k) = dummyz_loc(5,j,k) + deltat*veloc_crust_mantle(3,iglobv5(5))
-
-#else
-                ! way 1:
                 do i=1,NGLLX
                   iglob1 = ibool(i,j,k,ispec)
                   dummyx_loc_att(i,j,k) = dummyx_loc(i,j,k) + deltat*veloc_crust_mantle(1,iglob1)
                   dummyy_loc_att(i,j,k) = dummyy_loc(i,j,k) + deltat*veloc_crust_mantle(2,iglob1)
                   dummyz_loc_att(i,j,k) = dummyz_loc(i,j,k) + deltat*veloc_crust_mantle(3,iglob1)
                 enddo
-
-#endif
              enddo
           enddo
        else
           ! takes old routines
           do k=1,NGLLZ
              do j=1,NGLLY
-#ifdef _HANDOPT
-                dummyx_loc_att(1,j,k) = dummyx_loc(1,j,k)
-                dummyx_loc_att(2,j,k) = dummyx_loc(2,j,k)
-                dummyx_loc_att(3,j,k) = dummyx_loc(3,j,k)
-                dummyx_loc_att(4,j,k) = dummyx_loc(4,j,k)
-                dummyx_loc_att(5,j,k) = dummyx_loc(5,j,k)
-
-                dummyy_loc_att(1,j,k) = dummyy_loc(1,j,k)
-                dummyy_loc_att(2,j,k) = dummyy_loc(2,j,k)
-                dummyy_loc_att(3,j,k) = dummyy_loc(3,j,k)
-                dummyy_loc_att(4,j,k) = dummyy_loc(4,j,k)
-                dummyy_loc_att(5,j,k) = dummyy_loc(5,j,k)
-
-                dummyz_loc_att(1,j,k) = dummyz_loc(1,j,k)
-                dummyz_loc_att(2,j,k) = dummyz_loc(2,j,k)
-                dummyz_loc_att(3,j,k) = dummyz_loc(3,j,k)
-                dummyz_loc_att(4,j,k) = dummyz_loc(4,j,k)
-                dummyz_loc_att(5,j,k) = dummyz_loc(5,j,k)
-#else
                 !do i=1,NGLLX
                 !  dummyx_loc_att(i,j,k) = dummyx_loc(i,j,k)
                 !  dummyy_loc_att(i,j,k) = dummyy_loc(i,j,k)
                 !  dummyz_loc_att(i,j,k) = dummyz_loc(i,j,k)
                 !enddo
-
                 dummyx_loc_att(:,j,k) = dummyx_loc(:,j,k)
                 dummyy_loc_att(:,j,k) = dummyy_loc(:,j,k)
                 dummyz_loc_att(:,j,k) = dummyz_loc(:,j,k)
-
-#endif
              enddo
           enddo
        endif
@@ -576,6 +481,7 @@
                                 hprimewgll_xxT(i,5)*C3_m1_m2_5points(5,j)
       enddo
     enddo
+
     do i=1,m1
       do j=1,m1
         ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
@@ -600,6 +506,7 @@
         enddo
       enddo
     enddo
+
     do j=1,m1
       do i=1,m2
         E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
@@ -637,31 +544,16 @@
           if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
 
         enddo ! NGLLX
-
       enddo ! NGLLY
     enddo ! NGLLZ
 
     ! sum contributions from each element to the global mesh and add gravity terms
     do k=1,NGLLZ
       do j=1,NGLLY
-
-#ifdef _HANDOPT
-! way 2:
-        iglobv5(:) = ibool(:,j,k,ispec)
-
-        accel_crust_mantle(:,iglobv5(1)) = accel_crust_mantle(:,iglobv5(1)) + sum_terms(:,1,j,k)
-        accel_crust_mantle(:,iglobv5(2)) = accel_crust_mantle(:,iglobv5(2)) + sum_terms(:,2,j,k)
-        accel_crust_mantle(:,iglobv5(3)) = accel_crust_mantle(:,iglobv5(3)) + sum_terms(:,3,j,k)
-        accel_crust_mantle(:,iglobv5(4)) = accel_crust_mantle(:,iglobv5(4)) + sum_terms(:,4,j,k)
-        accel_crust_mantle(:,iglobv5(5)) = accel_crust_mantle(:,iglobv5(5)) + sum_terms(:,5,j,k)
-
-#else
-! way 1:
         do i=1,NGLLX
           iglob1 = ibool(i,j,k,ispec)
           accel_crust_mantle(:,iglob1) = accel_crust_mantle(:,iglob1) + sum_terms(:,i,j,k)
         enddo
-#endif
       enddo
     enddo
 
@@ -693,8 +585,6 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                          epsilondev_xz,epsilondev_yz, &
                                          epsilondev_loc,is_backward_field)
-
-!      endif
 
     endif
 

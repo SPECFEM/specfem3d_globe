@@ -134,10 +134,6 @@
   integer :: yr,jda,ho,mi
   double precision :: sec
 
-  integer,parameter :: MIDX = (NGLLX+1)/2
-  integer,parameter :: MIDY = (NGLLY+1)/2
-  integer,parameter :: MIDZ = (NGLLZ+1)/2
-
   ! timer MPI
   double precision time_start,tCPU
   double precision, external :: wtime
@@ -176,7 +172,7 @@
 
   ! initializes source mask
   if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
-    allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier )
+    allocate(mask_source(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating mask source array')
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
@@ -314,7 +310,6 @@
         call get_topo_bathy(lat(isource),long(isource),elevation,ibathy_topo)
         r0 = r0 + elevation/R_EARTH
       endif
-
       if(ELLIPTICITY) then
         dcost = dcos(theta)
         p20 = 0.5d0*(3.0d0*dcost*dcost-1.0d0)
@@ -333,7 +328,7 @@
 
       ! debug
       ! would only output desired target locations
-      !if(myrank == 0) print*,sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
+      !if(myrank == 0) print *,sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
 
       ! set distance to huge initial value
       distmin = HUGEVAL
@@ -352,7 +347,7 @@
           dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
                      + (y_target_source - dble(ystore(iglob)))**2 &
                      + (z_target_source - dble(zstore(iglob)))**2)
-          if( dist > typical_size ) cycle
+          if(dist > typical_size) cycle
         endif
 
         ! define the interval in which we look for points
@@ -773,7 +768,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
                             x_target_source,y_target_source,z_target_source, &
                             ibool,xstore,ystore,zstore,NGLOB)
@@ -848,11 +842,9 @@
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
-
   open(unit=27,file=trim(prname)//'mask_source.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening mask_source.bin file')
-
   write(27) mask_source
   close(27)
 

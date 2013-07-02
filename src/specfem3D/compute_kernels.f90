@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_kernels()
 
 ! kernel calculations
@@ -436,11 +435,9 @@
 
   end subroutine compute_kernels_outer_core
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine compute_kernels_inner_core()
 
@@ -514,12 +511,11 @@
 !
 
 ! Subroutines to compute the kernels for the 21 elastic coefficients
-! Last modified 19/04/2007
 
   subroutine compute_strain_product(prod,eps_trace_over_3,epsdev,&
                                     b_eps_trace_over_3,b_epsdev)
 
-  ! Purpose : compute the 21 strain products at a grid point
+  ! Purpose: compute the 21 strain products at a grid point
   ! (ispec,i,j,k fixed) and at a time t to compute then the kernels cij_kl (Voigt notation)
   ! (eq. 15 of Tromp et al., 2005)
   ! prod(1)=eps11*eps11 -> c11, prod(2)=eps11eps22 -> c12, prod(3)=eps11eps33 -> c13, ...
@@ -527,8 +523,6 @@
   ! prod(19)=eps13*eps13 -> c55, prod(20)=eps13eps12 -> c56, prod(21)=eps12eps12 -> c66
   ! This then gives how the 21 kernels are organized
   ! For crust_mantle
-
-  ! Modif 09/11/2005
 
   implicit none
   include  "constants.h"

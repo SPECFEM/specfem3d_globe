@@ -222,6 +222,7 @@
 
   use specfem_par
   use specfem_par_outercore
+
   implicit none
 
   ! local parameters
@@ -1122,4 +1123,3 @@
   close(27)
 
   end subroutine read_mesh_databases_stacey
-

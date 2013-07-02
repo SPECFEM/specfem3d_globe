@@ -67,7 +67,7 @@
     thetaval = ystore_crust_mantle(iglob)
     phival   = zstore_crust_mantle(iglob)
 
-    ! we alread changed xyz back to rthetaphi
+    ! we already changed xyz back to rthetaphi
     if( (rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
        (thetaval > MOVIE_NORTH .and. thetaval < MOVIE_SOUTH) .and. &
        ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
@@ -111,6 +111,7 @@
                                     Iepsilondev_yz)
 
   use constants_solver
+
   implicit none
 
   real(kind=CUSTOM_REAL) :: deltat
@@ -160,8 +161,6 @@
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval,st,ct,sp,cp
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_x,store_val3D_y, store_val3D_z
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_mu
-
-!  character(len=150) :: prname
 
   if(NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
@@ -299,8 +298,7 @@
   ! input
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
-    eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: eps_trace_over_3_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -316,7 +314,7 @@
   character(len=150) LOCAL_TMP_PATH,outputname
 
   ! variables
-  !character(len=150) prname
+  ! character(len=150) prname
   real(kind=CUSTOM_REAL) :: muv_3dmovie
   real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
@@ -351,7 +349,7 @@
    iNIT = 1
   endif
 
-  !write(prname,"('proc',i6.6)") myrank
+  ! write(prname,"('proc',i6.6)") myrank
 
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE
@@ -456,10 +454,10 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle
 
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
+
   double precision :: scalingval
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
 
   character(len=150) LOCAL_TMP_PATH
 
@@ -476,6 +474,14 @@
   if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
   ! allocates arrays
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK (it does not appear in the trunk version of the same routine)
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK (it does not appear in the trunk version of the same routine)
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK (it does not appear in the trunk version of the same routine)
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK (it does not appear in the trunk version of the same routine)
   allocate(store_val3d_N(npoints_3dmovie), &
           store_val3d_E(npoints_3dmovie), &
           store_val3d_Z(npoints_3dmovie), &

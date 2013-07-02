@@ -80,7 +80,6 @@
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
        ux_rotation,uy_rotation,dpotentialdx_with_rot,dpotentialdy_with_rot
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
   integer :: ispec,iglob
@@ -112,7 +111,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     displ_times_grad_x_ln_rho,displ_times_grad_y_ln_rho,displ_times_grad_z_ln_rho
 
-!  integer :: computed_elements
+! integer :: computed_elements
   integer :: num_elements,ispec_p
   integer :: iphase
 
@@ -122,7 +121,7 @@
 
   if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. (.not. phase_is_inner) ) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
-!  computed_elements = 0
+! computed_elements = 0
   if( .not. phase_is_inner ) then
     iphase = 1
     num_elements = nspec_outer
@@ -191,6 +190,7 @@
                                 hprime_xx(i,5)*B1_m1_m2_5points(5,j)
       enddo
     enddo
+
     do k = 1,NGLLX
       do j=1,m1
         do i=1,m1
@@ -202,6 +202,7 @@
         enddo
       enddo
     enddo
+
     do j=1,m1
       do i=1,m2
         C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
@@ -211,7 +212,6 @@
                                     A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
       enddo
     enddo
-
 
 
     do k=1,NGLLZ
@@ -369,6 +369,7 @@
                                 hprimewgll_xxT(i,5)*C1_m1_m2_5points(5,j)
       enddo
     enddo
+
     do k = 1,NGLLX
       do j=1,m1
         do i=1,m1
@@ -380,6 +381,7 @@
         enddo
       enddo
     enddo
+
     do j=1,m1
       do i=1,m2
         E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &

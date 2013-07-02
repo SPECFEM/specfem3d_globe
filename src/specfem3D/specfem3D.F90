@@ -27,17 +27,6 @@
 !
 ! United States and French Government Sponsorship Acknowledged.
 
-! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                           #undef  _HANDOPT :  turns hand-optimized code off
-! or compile with: -D_HANDOPT
-! (with the IBM xlf compiler, change this to -WF,-D_HANDOPT )
-!
-!#define _HANDOPT
-
-! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
-
   program xspecfem3D
 
   use specfem_par
@@ -72,6 +61,20 @@
 ! volume = {3},
 ! pages = {1-32},
 ! number = {1}}
+!
+! @ARTICLE{PeKoLuMaLeCaLeMaLiBlNiBaTr11,
+! author = {Daniel Peter and Dimitri Komatitsch and Yang Luo and Roland Martin
+!     and Nicolas {Le Goff} and Emanuele Casarotti and Pieyre {Le Loher}
+!     and Federica Magnoni and Qinya Liu and C\'eline Blitz and Tarje Nissen-Meyer
+!     and Piero Basini and Jeroen Tromp},
+! title = {Forward and adjoint simulations of seismic wave propagation on fully
+!     unstructured hexahedral meshes},
+! journal={Geophys. J. Int.},
+! year = {2011},
+! volume = {186},
+! pages = {721-739},
+! number = {2},
+! doi = {10.1111/j.1365-246X.2011.05044.x}}
 !
 ! or
 !
@@ -233,7 +236,19 @@
 ! pages = {1-32},
 ! number = {1}}
 !
-! or
+! @ARTICLE{PeKoLuMaLeCaLeMaLiBlNiBaTr11,
+! author = {Daniel Peter and Dimitri Komatitsch and Yang Luo and Roland Martin
+!     and Nicolas {Le Goff} and Emanuele Casarotti and Pieyre {Le Loher}
+!     and Federica Magnoni and Qinya Liu and C\'eline Blitz and Tarje Nissen-Meyer
+!     and Piero Basini and Jeroen Tromp},
+! title = {Forward and adjoint simulations of seismic wave propagation on fully
+!     unstructured hexahedral meshes},
+! journal={Geophys. J. Int.},
+! year = {2011},
+! volume = {186},
+! pages = {721-739},
+! number = {2},
+! doi = {10.1111/j.1365-246X.2011.05044.x}}
 !
 ! @ARTICLE{LiTr06,
 ! author={Qinya Liu and Jeroen Tromp},
@@ -291,7 +306,7 @@
 !     new convention for the name of seismograms, to conform to the IRIS standard;
 !     new directory structure
 !
-! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
+! v. 5.0, many developers, February 2010:
 !     new moho mesh stretching honoring crust2.0 moho depths,
 !     new attenuation assignment, new SAC headers, new general crustal models,
 !     faster performance due to Deville routines and enhanced loop unrolling,
@@ -310,7 +325,7 @@
 !      added AK135 and 1066a, fixed topography/bathymetry routine,
 !      new attenuation routines, faster and better I/Os on very large
 !      systems, many small improvements and bug fixes, new "configure"
-!      script, new Pyre version, new user's manual etc.
+!      script, new user's manual etc.
 !
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
 !      any size of chunk, 3D attenuation, case of two chunks,
@@ -371,8 +386,9 @@
 ! Its first time derivative is called veloc_outer_core.
 ! Its second time derivative is called accel_outer_core.
 
-
+! *************************************************
 ! ************** PROGRAM STARTS HERE **************
+! *************************************************
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -422,11 +438,7 @@
 !             required to perform matrix-matrix products at the spectral element level.
 !             For most compilers and hardware, will result in a significant speedup (> 30% or more, sometimes twice faster).
 !
-! note 5: a common technique to help compilers enhance pipelining is loop unrolling. We do this here in a simple
-!             and straigthforward way, so don't be confused about the do-loop writing. For this to take effect,
-!             you have to turn the hand-optimization flag on: compile with additional flag -D_HANDOPT
-!
-! note 6: whenever adding some new code, please make sure to use
+! note 5: whenever adding some new code, please make sure to use
 !             spaces rather than tabs. Tabulators are in principle not allowed in Fortran95.
 !
 !-------------------------------------------------------------------------------------------------

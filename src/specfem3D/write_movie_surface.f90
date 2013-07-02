@@ -30,6 +30,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_movie
+
   implicit none
 
   include 'mpif.h'

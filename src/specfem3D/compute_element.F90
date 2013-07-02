@@ -210,9 +210,7 @@
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
-                 !$OMP CRITICAL
                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-                 !$OMP END CRITICAL
               else
                  ispec_strain = ispec
                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
@@ -616,9 +614,7 @@
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
-                 !$OMP CRITICAL
                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-                 !$OMP END CRITICAL
               else
                  ispec_strain = ispec
                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
@@ -1095,7 +1091,7 @@
   logical :: is_backward_field
 
 ! local parameters
-  !real(kind=CUSTOM_REAL) one_minus_sum_beta_use
+  ! real(kind=CUSTOM_REAL) one_minus_sum_beta_use
   real(kind=CUSTOM_REAL) minus_sum_beta,mul
   ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
@@ -1206,9 +1202,7 @@
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
-                 !$OMP CRITICAL
                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-                 !$OMP END CRITICAL
               else
                  ispec_strain = ispec
                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
@@ -1472,80 +1466,17 @@
 ! local parameters
   real(kind=CUSTOM_REAL) R_xx_val1,R_yy_val1
   integer :: i_SLS
-#ifdef _HANDOPT_ATT
-  real(kind=CUSTOM_REAL) R_xx_val2,R_yy_val2,R_xx_val3,R_yy_val3
-  integer :: imodulo_N_SLS
-  integer :: i_SLS1,i_SLS2
-#endif
-
-#ifdef _HANDOPT_ATT
-! way 2:
-! note: this should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          by default, N_SLS = 3, therefore we take steps of 3
-  imodulo_N_SLS = mod(N_SLS,3)
-
-  if(imodulo_N_SLS >= 1) then
-     do i_SLS = 1,imodulo_N_SLS
-        R_xx_val1 = R_xx_loc(i_SLS)
-        R_yy_val1 = R_yy_loc(i_SLS)
-        sigma_xx = sigma_xx - R_xx_val1
-        sigma_yy = sigma_yy - R_yy_val1
-        sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-        sigma_xy = sigma_xy - R_xy_loc(i_SLS)
-        sigma_xz = sigma_xz - R_xz_loc(i_SLS)
-        sigma_yz = sigma_yz - R_yz_loc(i_SLS)
-     enddo
-  endif
-  if(N_SLS >= imodulo_N_SLS+1) then
-     ! note: another possibility would be using a reduction example for this loop; was tested but it does not improve,
-     ! probably since N_SLS == 3 is too small for a loop benefit
-     do i_SLS = imodulo_N_SLS+1,N_SLS,3
-        R_xx_val1 = R_xx_loc(i_SLS)
-        R_yy_val1 = R_yy_loc(i_SLS)
-
-        i_SLS1=i_SLS+1
-        R_xx_val2 = R_xx_loc(i_SLS1)
-        R_yy_val2 = R_yy_loc(i_SLS1)
-
-        i_SLS2 =i_SLS+2
-        R_xx_val3 = R_xx_loc(i_SLS2)
-        R_yy_val3 = R_yy_loc(i_SLS2)
-
-        sigma_xx = sigma_xx - R_xx_val1 - R_xx_val2 - R_xx_val3
-        sigma_yy = sigma_yy - R_yy_val1 - R_yy_val2 - R_yy_val3
-        sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1 &
-                            + R_xx_val2 + R_yy_val2 &
-                            + R_xx_val3 + R_yy_val3
-
-        sigma_xy = sigma_xy - R_xy_loc(i_SLS)
-        sigma_xz = sigma_xz - R_xz_loc(i_SLS)
-        sigma_yz = sigma_yz - R_yz_loc(i_SLS)
-
-        sigma_xy = sigma_xy - R_xy_loc(i_SLS1)
-        sigma_xz = sigma_xz - R_xz_loc(i_SLS1)
-        sigma_yz = sigma_yz - R_yz_loc(i_SLS1)
-
-        sigma_xy = sigma_xy - R_xy_loc(i_SLS2)
-        sigma_xz = sigma_xz - R_xz_loc(i_SLS2)
-        sigma_yz = sigma_yz - R_yz_loc(i_SLS2)
-     enddo
-  endif
-#else
-! way 1:
 
   do i_SLS = 1,N_SLS
-     R_xx_val1 = R_xx_loc(i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
-     R_yy_val1 = R_yy_loc(i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
-     sigma_xx = sigma_xx - R_xx_val1
-     sigma_yy = sigma_yy - R_yy_val1
-     sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-     sigma_xy = sigma_xy - R_xy_loc(i_SLS) ! R_memory(3,i_SLS,i,j,k,ispec)
-     sigma_xz = sigma_xz - R_xz_loc(i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
-     sigma_yz = sigma_yz - R_yz_loc(i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
+    R_xx_val1 = R_xx_loc(i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
+    R_yy_val1 = R_yy_loc(i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
+    sigma_xx = sigma_xx - R_xx_val1
+    sigma_yy = sigma_yy - R_yy_val1
+    sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
+    sigma_xy = sigma_xy - R_xy_loc(i_SLS) ! R_memory(3,i_SLS,i,j,k,ispec)
+    sigma_xz = sigma_xz - R_xz_loc(i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
+    sigma_yz = sigma_yz - R_yz_loc(i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
   enddo
-
-#endif
 
   end subroutine compute_element_att_stress
 
@@ -1557,8 +1488,7 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
-                                        epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                        epsilondev_xz,epsilondev_yz, &
+                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                         epsilondev_loc,is_backward_field)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
@@ -1617,71 +1547,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
-!  double precision :: kappa
-
-#ifdef _HANDOPT_ATT
-  real(kind=CUSTOM_REAL) :: alphal,betal,gammal
-  integer :: i,j,k
-#endif
-
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
-
-#ifdef _HANDOPT_ATT
-! way 2:
-  do i_SLS = 1,N_SLS
-
-    alphal = alphaval(i_SLS)
-    betal = betaval(i_SLS)
-    gammal = gammaval(i_SLS)
-
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( USE_3D_ATTENUATION_ARRAYS ) then
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
-      else
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-      endif
-    else
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
-      else
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-      endif
-    endif
-
-    ! this helps to vectorize the inner most loop
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          !          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
-          !                  + factor_common_c44_muv(i,j,k) &
-          !                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
-
-          R_xx(i_SLS,i,j,k,ispec) = alphal * R_xx(i_SLS,i,j,k,ispec) + factor_common_c44_muv(i,j,k) * &
-                  (betal * epsilondev_xx(i,j,k,ispec) + gammal * epsilondev_loc(1,i,j,k))
-
-          R_yy(i_SLS,i,j,k,ispec) = alphal * R_yy(i_SLS,i,j,k,ispec) + factor_common_c44_muv(i,j,k) * &
-                  (betal * epsilondev_yy(i,j,k,ispec) + gammal * epsilondev_loc(2,i,j,k))
-
-          R_xy(i_SLS,i,j,k,ispec) = alphal * R_xy(i_SLS,i,j,k,ispec) + factor_common_c44_muv(i,j,k) * &
-                  (betal * epsilondev_xy(i,j,k,ispec) + gammal * epsilondev_loc(3,i,j,k))
-
-          R_xz(i_SLS,i,j,k,ispec) = alphal * R_xz(i_SLS,i,j,k,ispec) + factor_common_c44_muv(i,j,k) * &
-                  (betal * epsilondev_xz(i,j,k,ispec) + gammal * epsilondev_loc(4,i,j,k))
-
-          R_yz(i_SLS,i,j,k,ispec) = alphal * R_yz(i_SLS,i,j,k,ispec) + factor_common_c44_muv(i,j,k) * &
-                  (betal * epsilondev_yz(i,j,k,ispec) + gammal * epsilondev_loc(5,i,j,k))
-
-        enddo
-      enddo
-    enddo
-  enddo ! i_SLS
-#else
-! way 1:
 
 !daniel: att - debug original
   do i_SLS = 1,N_SLS
@@ -1721,8 +1591,6 @@
   if( is_backward_field ) then
   endif
 
-#endif
-
   end subroutine compute_element_att_memory_cm
 
 !
@@ -1733,8 +1601,7 @@
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
-                                        epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                        epsilondev_xz,epsilondev_yz, &
+                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                         epsilondev_loc,is_backward_field)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
@@ -1788,61 +1655,13 @@
 
   integer :: i_SLS
 
-#ifdef _HANDOPT_ATT
-  real(kind=CUSTOM_REAL) :: alphal,betal,gammal
-  integer :: i,j,k
-#endif
-
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef _HANDOPT_ATT
-! way 2:
   do i_SLS = 1,N_SLS
-
-    alphal = alphaval(i_SLS)
-    betal = betaval(i_SLS)
-    gammal = gammaval(i_SLS)
-
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( USE_3D_ATTENUATION_ARRAYS ) then
-      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-    else
-      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-    endif
-
-    ! this helps to vectorize the inner most loop
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          !          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
-          !                  + factor_common_use(i,j,k) &
-          !                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
-
-          R_xx(i_SLS,i,j,k,ispec) = alphal * R_xx(i_SLS,i,j,k,ispec) + factor_common_use(i,j,k) * &
-                  (betal * epsilondev_xx(i,j,k,ispec) + gammal * epsilondev_loc(1,i,j,k))
-          R_yy(i_SLS,i,j,k,ispec) = alphal * R_yy(i_SLS,i,j,k,ispec) + factor_common_use(i,j,k) * &
-                  (betal * epsilondev_yy(i,j,k,ispec) + gammal * epsilondev_loc(2,i,j,k))
-          R_xy(i_SLS,i,j,k,ispec) = alphal * R_xy(i_SLS,i,j,k,ispec) + factor_common_use(i,j,k) * &
-                  (betal * epsilondev_xy(i,j,k,ispec) + gammal * epsilondev_loc(3,i,j,k))
-          R_xz(i_SLS,i,j,k,ispec) = alphal * R_xz(i_SLS,i,j,k,ispec) + factor_common_use(i,j,k) * &
-                  (betal * epsilondev_xz(i,j,k,ispec) + gammal * epsilondev_loc(4,i,j,k))
-          R_yz(i_SLS,i,j,k,ispec) = alphal * R_yz(i_SLS,i,j,k,ispec) + factor_common_use(i,j,k) * &
-                  (betal * epsilondev_yz(i,j,k,ispec) + gammal * epsilondev_loc(5,i,j,k))
-
-        enddo
-      enddo
-    enddo
-
-  enddo ! i_SLS
-#else
-! way 1:
-
-  do i_SLS = 1,N_SLS
-
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( USE_3D_ATTENUATION_ARRAYS ) then
       factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
@@ -1877,10 +1696,7 @@
   if( is_backward_field ) then
   endif
 
-#endif
-
   end subroutine compute_element_att_memory_ic
-
 
 !
 !--------------------------------------------------------------------------------------------

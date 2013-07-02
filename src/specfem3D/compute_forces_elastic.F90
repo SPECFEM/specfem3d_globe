@@ -608,10 +608,6 @@
 
   use constants_solver,only: CUSTOM_REAL,NDIM
 
-#ifdef _HANDOPT
-  use specfem_par,only: imodulo_NGLOB_CRUST_MANTLE4
-#endif
-
   implicit none
 
   integer :: NGLOB,NGLOB_XY,NCHUNKS_VAL
@@ -643,44 +639,6 @@
 
   if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
 
-#ifdef _HANDOPT_NEWMARK
-     ! way 2:
-     if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
-        do i=1,imodulo_NGLOB_CRUST_MANTLE4
-           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-                + two_omega_earth*veloc_crust_mantle(2,i)
-           accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-                - two_omega_earth*veloc_crust_mantle(1,i)
-           accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-        enddo
-     endif
-     do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB,4
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-             + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-             - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-
-        accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmassx_crust_mantle(i+1) &
-             + two_omega_earth*veloc_crust_mantle(2,i+1)
-        accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmassy_crust_mantle(i+1) &
-             - two_omega_earth*veloc_crust_mantle(1,i+1)
-        accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
-
-        accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmassx_crust_mantle(i+2) &
-             + two_omega_earth*veloc_crust_mantle(2,i+2)
-        accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmassy_crust_mantle(i+2) &
-             - two_omega_earth*veloc_crust_mantle(1,i+2)
-        accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
-
-        accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmassx_crust_mantle(i+3) &
-             + two_omega_earth*veloc_crust_mantle(2,i+3)
-        accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmassy_crust_mantle(i+3) &
-             - two_omega_earth*veloc_crust_mantle(1,i+3)
-        accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
-     enddo
-#else
-     ! way 1:
      do i=1,NGLOB
         accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
              + two_omega_earth*veloc_crust_mantle(2,i)
@@ -688,48 +646,9 @@
              - two_omega_earth*veloc_crust_mantle(1,i)
         accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
      enddo
-#endif
 
   else
 
-#ifdef _HANDOPT_NEWMARK
-     ! way 2:
-     if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
-        do i=1,imodulo_NGLOB_CRUST_MANTLE4
-           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-                + two_omega_earth*veloc_crust_mantle(2,i)
-           accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-                - two_omega_earth*veloc_crust_mantle(1,i)
-           accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-        enddo
-     endif
-     do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB,4
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-             + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-             - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-
-        accel_crust_mantle(1,i+1) = accel_crust_mantle(1,i+1)*rmassz_crust_mantle(i+1) &
-             + two_omega_earth*veloc_crust_mantle(2,i+1)
-        accel_crust_mantle(2,i+1) = accel_crust_mantle(2,i+1)*rmassz_crust_mantle(i+1) &
-             - two_omega_earth*veloc_crust_mantle(1,i+1)
-        accel_crust_mantle(3,i+1) = accel_crust_mantle(3,i+1)*rmassz_crust_mantle(i+1)
-
-        accel_crust_mantle(1,i+2) = accel_crust_mantle(1,i+2)*rmassz_crust_mantle(i+2) &
-             + two_omega_earth*veloc_crust_mantle(2,i+2)
-        accel_crust_mantle(2,i+2) = accel_crust_mantle(2,i+2)*rmassz_crust_mantle(i+2) &
-             - two_omega_earth*veloc_crust_mantle(1,i+2)
-        accel_crust_mantle(3,i+2) = accel_crust_mantle(3,i+2)*rmassz_crust_mantle(i+2)
-
-        accel_crust_mantle(1,i+3) = accel_crust_mantle(1,i+3)*rmassz_crust_mantle(i+3) &
-             + two_omega_earth*veloc_crust_mantle(2,i+3)
-        accel_crust_mantle(2,i+3) = accel_crust_mantle(2,i+3)*rmassz_crust_mantle(i+3) &
-             - two_omega_earth*veloc_crust_mantle(1,i+3)
-        accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmassz_crust_mantle(i+3)
-     enddo
-#else
-     ! way 1:
      do i=1,NGLOB
         accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
              + two_omega_earth*veloc_crust_mantle(2,i)
@@ -737,7 +656,6 @@
              - two_omega_earth*veloc_crust_mantle(1,i)
         accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
      enddo
-#endif
 
   endif
 
@@ -751,10 +669,6 @@
                                             deltatover2,two_omega_earth,rmass_inner_core)
 
   use constants_solver,only: CUSTOM_REAL,NDIM
-
-#ifdef _HANDOPT
-  use specfem_par,only: imodulo_NGLOB_CRUST_MANTLE4,imodulo_NGLOB_INNER_CORE
-#endif
 
   implicit none
 
@@ -783,60 +697,6 @@
   !   - inner core region
   !         needs both, acceleration update & velocity corrector terms
 
-#ifdef _HANDOPT_NEWMARK
-! way 2:
-  ! crust/mantle region
-  if( imodulo_NGLOB_CRUST_MANTLE4 >= 1 ) then
-    do i=1,imodulo_NGLOB_CRUST_MANTLE4
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    enddo
-  endif
-  do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CM,4
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) + deltatover2*accel_crust_mantle(:,i+1)
-    veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) + deltatover2*accel_crust_mantle(:,i+2)
-    veloc_crust_mantle(:,i+3) = veloc_crust_mantle(:,i+3) + deltatover2*accel_crust_mantle(:,i+3)
-  enddo
-
-  ! inner core region
-  if(imodulo_NGLOB_INNER_CORE >= 1) then
-    do i=1,imodulo_NGLOB_INNER_CORE
-      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
-      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-    enddo
-  endif
-  do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_IC,3
-    accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-           + two_omega_earth*veloc_inner_core(2,i)
-    accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-           - two_omega_earth*veloc_inner_core(1,i)
-    accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-
-    accel_inner_core(1,i+1) = accel_inner_core(1,i+1)*rmass_inner_core(i+1) &
-           + two_omega_earth*veloc_inner_core(2,i+1)
-    accel_inner_core(2,i+1) = accel_inner_core(2,i+1)*rmass_inner_core(i+1) &
-           - two_omega_earth*veloc_inner_core(1,i+1)
-    accel_inner_core(3,i+1) = accel_inner_core(3,i+1)*rmass_inner_core(i+1)
-
-    veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) + deltatover2*accel_inner_core(:,i+1)
-
-    accel_inner_core(1,i+2) = accel_inner_core(1,i+2)*rmass_inner_core(i+2) &
-           + two_omega_earth*veloc_inner_core(2,i+2)
-    accel_inner_core(2,i+2) = accel_inner_core(2,i+2)*rmass_inner_core(i+2) &
-           - two_omega_earth*veloc_inner_core(1,i+2)
-    accel_inner_core(3,i+2) = accel_inner_core(3,i+2)*rmass_inner_core(i+2)
-
-    veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) + deltatover2*accel_inner_core(:,i+2)
-  enddo
-#else
-! way 1:
   ! mantle
   do i=1,NGLOB_CM
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
@@ -851,6 +711,5 @@
 
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
-#endif
 
   end subroutine compute_forces_el_update_veloc

@@ -294,10 +294,6 @@
 
   use constants_solver,only: CUSTOM_REAL
 
-#ifdef _HANDOPT
-  use specfem_par,only: imodulo_NGLOB_OUTER_CORE
-#endif
-
   implicit none
 
   integer :: NGLOB
@@ -316,32 +312,10 @@
   ! Newmark time scheme
   ! multiply by the inverse of the mass matrix and update velocity
 
-#ifdef _HANDOPT_NEWMARK
-! way 2:
-  ! outer core
-  if(imodulo_NGLOB_OUTER_CORE >= 1) then
-    do i=1,imodulo_NGLOB_OUTER_CORE
-      accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-      veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-    enddo
-  endif
-  do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB,3
-    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-
-    accel_outer_core(i+1) = accel_outer_core(i+1)*rmass_outer_core(i+1)
-    veloc_outer_core(i+1) = veloc_outer_core(i+1) + deltatover2*accel_outer_core(i+1)
-
-    accel_outer_core(i+2) = accel_outer_core(i+2)*rmass_outer_core(i+2)
-    veloc_outer_core(i+2) = veloc_outer_core(i+2) + deltatover2*accel_outer_core(i+2)
-  enddo
-#else
-! way 1:
   do i=1,NGLOB
     accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
   enddo
-#endif
 
   end subroutine compute_forces_ac_update_veloc
 

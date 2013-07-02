@@ -322,11 +322,6 @@ module specfem_par
   ! ADJOINT
   real(kind=CUSTOM_REAL) :: b_deltat,b_deltatover2,b_deltatsqover2
 
-#ifdef _HANDOPT
-  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_CRUST_MANTLE4, &
-            imodulo_NGLOB_INNER_CORE,imodulo_NGLOB_OUTER_CORE
-#endif
-
 end module specfem_par
 
 
