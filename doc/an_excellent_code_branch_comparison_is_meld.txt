@@ -1,0 +1,3 @@
+
+An excellent SVN code branch comparison is Meld, better than tkdiff:  http://meldmerge.org
+
