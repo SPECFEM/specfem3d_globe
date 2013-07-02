@@ -334,10 +334,10 @@
       r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
     endif
 
-! subtract station burial depth (in meters)
+    ! subtract station burial depth (in meters)
     r0 = r0 - stbur(irec)/R_EARTH
 
-! compute the Cartesian position of the receiver
+    ! compute the Cartesian position of the receiver
     x_target(irec) = r0*sin(theta)*cos(phi)
     y_target(irec) = r0*sin(theta)*sin(phi)
     z_target(irec) = r0*cos(theta)
@@ -350,8 +350,8 @@
 
     do ispec=1,nspec
 
-! loop only on points inside the element
-! exclude edges to ensure this point is not shared with other elements
+      ! loop only on points inside the element
+      ! exclude edges to ensure this point is not shared with other elements
       do k=2,NGLLZ-1
         do j=2,NGLLY-1
           do i=2,NGLLX-1
@@ -377,7 +377,7 @@
     ! end of loop on all the spectral elements in current slice
     enddo
 
-! end of loop on all the stations
+  ! end of loop on all the stations
   enddo
 
   ! create RECORDHEADER file with usual format for normal-mode codes
@@ -393,62 +393,47 @@
     ! compute total number of samples for normal modes with 1 sample per second
     open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
     nsamp = nint(dble(NSTEP-1)*DT)
+
     do irec = 1,nrec
 
       if(stele(irec) >= -999.9999) then
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHN',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-!          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHE',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-!          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHZ',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-!          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'N',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'E',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'Z',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-
+        write(1,500) station_name(irec),bic(1:2)//'N', &
+                     stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+                     0.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,500) station_name(irec),bic(1:2)//'E', &
+                     stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+                     90.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,500) station_name(irec),bic(1:2)//'Z', &
+                     stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+                     0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
       else
         ! very deep ocean-bottom stations such as H2O are not compatible
         ! with the standard RECORDHEADERS format because of the f6.1 format
         ! therefore suppress decimals for depth in that case
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHN',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-!          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHE',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-!          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHZ',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-!          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'N',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'E',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'Z',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-
+        write(1,600) station_name(irec),bic(1:2)//'N', &
+                     stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+                     0.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,600) station_name(irec),bic(1:2)//'E', &
+                     stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+                     90.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,600) station_name(irec),bic(1:2)//'Z', &
+                     stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+                     0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
       endif
     enddo
     close(1)
 
   endif
 
+500 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,f6.1,1x,f6.1,1x,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
+600 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
+
+
 ! ****************************************
 ! find the best (xi,eta) for each receiver
 ! ****************************************
 
-!! loop on all the receivers to iterate in that slice
+!  ! loop on all the receivers to iterate in that slice
 !  do irec = 1,nrec
 
 ! loop on all the receivers
@@ -495,8 +480,7 @@ islice_selected_rec(:) = -1
     eta = yigll(iy_initial_guess(irec))
     gamma = zigll(iz_initial_guess(irec))
 
-! define coordinates of the control points of the element
-
+    ! define coordinates of the control points of the element
     do ia=1,NGNOD
 
       if(iaddx(ia) == 0) then
@@ -536,17 +520,17 @@ islice_selected_rec(:) = -1
 
     enddo
 
-! iterate to solve the non linear system
+    ! iterate to solve the non linear system
     do iter_loop = 1,NUM_ITER
 
-! impose receiver exactly at the surface
+      ! impose receiver exactly at the surface
       if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
-! recompute jacobian for the new point
+      ! recompute jacobian for the new point
       call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-! compute distance to target location
+      ! compute distance to target location
       dx = - (x - x_target(irec))
       dy = - (y - y_target(irec))
       dz = - (z - z_target(irec))
@@ -562,11 +546,11 @@ islice_selected_rec(:) = -1
       eta = eta + deta
       if(RECEIVERS_CAN_BE_BURIED) gamma = gamma + dgamma
 
-! impose that we stay in that element
-! (useful if user gives a receiver outside the mesh for instance)
-! we can go slightly outside the [1,1] segment since with finite elements
-! the polynomial solution is defined everywhere
-! can be useful for convergence of iterative scheme with distorted elements
+      ! impose that we stay in that element
+      ! (useful if user gives a receiver outside the mesh for instance)
+      ! we can go slightly outside the [1,1] segment since with finite elements
+      ! the polynomial solution is defined everywhere
+      ! can be useful for convergence of iterative scheme with distorted elements
       if (xi > 1.10d0) xi = 1.10d0
       if (xi < -1.10d0) xi = -1.10d0
       if (eta > 1.10d0) eta = 1.10d0
@@ -584,7 +568,7 @@ islice_selected_rec(:) = -1
     call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-! store xi,eta and x,y,z of point found
+    ! store xi,eta and x,y,z of point found
     xi_receiver_subset(irec_in_this_subset) = xi
     eta_receiver_subset(irec_in_this_subset) = eta
     gamma_receiver_subset(irec_in_this_subset) = gamma
@@ -595,7 +579,7 @@ islice_selected_rec(:) = -1
     y_found_subset(irec_in_this_subset) = y_found(irec)
     z_found_subset(irec_in_this_subset) = z_found(irec)
 
-! compute final distance between asked and found (converted to km)
+    ! compute final distance between asked and found (converted to km)
     final_distance(irec) = dsqrt((x_target(irec)-x_found(irec))**2 + &
         (y_target(irec)-y_found(irec))**2 + (z_target(irec)-z_found(irec))**2)*R_EARTH/1000.d0
 
@@ -603,7 +587,7 @@ islice_selected_rec(:) = -1
 
   enddo ! end of loop on all stations within current subset
 
-! for MPI version, gather information from all the nodes
+  ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
 
   call MPI_GATHER(ispec_selected_rec_subset,nrec_SUBSET_current_size,MPI_INTEGER,ispec_selected_rec_all,nrec_SUBSET_current_size, &

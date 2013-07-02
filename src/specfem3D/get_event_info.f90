@@ -48,26 +48,18 @@
 !--- input or output arguments of the subroutine below
 
   integer, intent(in) :: myrank
+  integer, intent(in) :: NSOURCES ! must be given
 
   integer, intent(out) :: yr,jda,ho,mi
+  double precision, intent(out) :: sec
   real, intent(out) :: mb
-  double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,sec
-
-  !character(len=12), intent(out) :: ename
-
-  integer, intent(in) :: NSOURCES ! must be given
+  double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
   double precision, intent(out) :: t_shift
 
   character(len=20), intent(out) :: event_name
 
-
-
-!--- local variables below
-
-  integer ier
-
-  !integer, parameter :: LENGTH_REGION_NAME = 150
-  !character(len=LENGTH_REGION_NAME) region
+  ! local parameters
+  integer :: ier
 
   ! get event information for SAC header on the master
   if(myrank == 0) then
@@ -161,8 +153,6 @@
 
   character(len=5) datasource
   character(len=150) string,CMTSOLUTION
-  !character(len=150) string,dummystring,CMTSOLUTION
-
 
 !
 !---- read hypocenter info

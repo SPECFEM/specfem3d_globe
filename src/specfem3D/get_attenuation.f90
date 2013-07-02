@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, &
                                 factor_common, scale_factor, tau_s, vnspec)
 
@@ -33,16 +32,31 @@
 
   include 'constants.h'
 
-  integer myrank, vnspec
-  character(len=150) prname
+  integer :: myrank
+
+  integer :: vnspec
+
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec)       :: one_minus_sum_beta, scale_factor
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,vnspec) :: factor_common
-  double precision, dimension(N_SLS)                          :: tau_s
 
-  integer i,j,k,ispec
+  double precision, dimension(N_SLS)                 :: tau_s
 
+  character(len=150) :: prname
+
+  ! local parameters
+  integer :: i,j,k,ispec
   double precision, dimension(N_SLS) :: tau_e, fc
-  double precision  omsb, Q_mu, sf, T_c_source, scale_t
+  double precision :: omsb, Q_mu, sf, T_c_source, scale_t
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
@@ -93,10 +107,11 @@
 
   include 'constants.h'
 
-  double precision, dimension(N_SLS) :: tau_s, tau_e, beta, factor_common
-  double precision  one_minus_sum_beta
+  double precision, dimension(N_SLS),intent(in) :: tau_s, tau_e
+  double precision, dimension(N_SLS),intent(out) :: factor_common
+  double precision,intent(out) ::  one_minus_sum_beta
 
-  double precision, dimension(N_SLS) :: tauinv
+  double precision, dimension(N_SLS) :: tauinv,beta
   integer i
 
   tauinv(:) = -1.0d0 / tau_s(:)
@@ -184,31 +199,29 @@
 
   end subroutine get_attenuation_scale_factor
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-
-  subroutine get_attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
+  subroutine get_attenuation_memory_values(tau_s,deltat, alphaval,betaval,gammaval)
 
   implicit none
 
   include 'constants.h'
 
-  double precision, dimension(N_SLS) :: tau_s, alphaval, betaval,gammaval
-  real(kind=CUSTOM_REAL) deltat
+  double precision, dimension(N_SLS), intent(in) :: tau_s
+  double precision, dimension(N_SLS), intent(out) :: alphaval, betaval,gammaval
+  real(kind=CUSTOM_REAL), intent(in) :: deltat
 
   double precision, dimension(N_SLS) :: tauinv
 
-  tauinv(:) = - 1.0 / tau_s(:)
+  tauinv(:) = - 1.d0 / tau_s(:)
 
-  alphaval(:)  = 1 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2. + &
-                    deltat**3*tauinv(:)**3 / 6. + deltat**4*tauinv(:)**4 / 24.
-  betaval(:)   = deltat / 2. + deltat**2*tauinv(:) / 3. &
-                + deltat**3*tauinv(:)**2 / 8. + deltat**4*tauinv(:)**3 / 24.
-  gammaval(:)  = deltat / 2. + deltat**2*tauinv(:) / 6. &
-                + deltat**3*tauinv(:)**2 / 24.0
+  alphaval(:)  = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 + &
+                    deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
+  betaval(:)   = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
+                + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
+  gammaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
+                + deltat**3*tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
-

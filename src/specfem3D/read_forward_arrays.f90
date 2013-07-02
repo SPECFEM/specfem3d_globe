@@ -122,21 +122,26 @@
     close(55)
   endif
 
+  ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then
-    ! initializes
+    ! initializes wavefields
     b_displ_crust_mantle = 0._CUSTOM_REAL
     b_veloc_crust_mantle = 0._CUSTOM_REAL
     b_accel_crust_mantle = 0._CUSTOM_REAL
+
     b_displ_inner_core = 0._CUSTOM_REAL
     b_veloc_inner_core = 0._CUSTOM_REAL
     b_accel_inner_core = 0._CUSTOM_REAL
+
     b_displ_outer_core = 0._CUSTOM_REAL
     b_veloc_outer_core = 0._CUSTOM_REAL
     b_accel_outer_core = 0._CUSTOM_REAL
+
     if (ROTATION_VAL) then
       b_A_array_rotation = 0._CUSTOM_REAL
       b_B_array_rotation = 0._CUSTOM_REAL
     endif
+
     if (ATTENUATION_VAL) then
       b_R_memory_crust_mantle = 0._CUSTOM_REAL
       b_R_memory_inner_core = 0._CUSTOM_REAL
@@ -156,7 +161,7 @@
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
 
-! reads in saved wavefields
+! reads in saved wavefields to reconstruct/backward wavefield
 
   implicit none
 
@@ -184,7 +189,7 @@
 
   character(len=150) LOCAL_PATH
 
-  !local parameters
+  ! local parameters
   character(len=150) outputname
 
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'

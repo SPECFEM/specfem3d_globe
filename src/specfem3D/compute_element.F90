@@ -66,13 +66,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         kappavstore,muvstore
 
+  ! variable sized array variables
+  integer :: vx,vy,vz,vnspec
+
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
-  integer :: vx,vy,vz,vnspec
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
   ! gravity
@@ -187,7 +189,7 @@
         if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
 
         lambdalplus2mul = kappal + FOUR_THIRDS * mul
-        lambdal = lambdalplus2mul - 2.0*mul
+        lambdal = lambdalplus2mul - 2.0_CUSTOM_REAL*mul
 
         ! compute stress sigma
         sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
@@ -337,8 +339,6 @@
 
   end subroutine compute_element_iso
 
-
-
 !
 !--------------------------------------------------------------------------------------------------
 !
@@ -392,10 +392,11 @@
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
-  integer vx,vy,vz,vnspec
+  ! variable sized array variables
+  integer :: vx,vy,vz,vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -607,87 +608,87 @@
 
         ! way 2: reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
         c11 = rhovphsq*sinphifour &
-              + 2.0*cosphisq*sinphisq* &
+              + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
               ( rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) ) &
               + cosphifour*(rhovphsq*costhetafour &
-                + 2.0*costhetasq*sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) &
+                + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) &
                 + rhovpvsq*sinthetafour)
 
-        c12 = 0.25*costhetasq*(rhovphsq - two_rhovshsq)*(3.0 + cosfourphi) &
+        c12 = 0.25_CUSTOM_REAL*costhetasq*(rhovphsq - two_rhovshsq)*(3.0_CUSTOM_REAL + cosfourphi) &
               - four_rhovshsq*cosphisq*costhetasq*sinphisq &
-              + 0.03125*rhovphsq*sintwophisq*(11.0 + cosfourtheta + 4.0*costwotheta) &
+              + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + cosfourtheta + 4.0*costwotheta) &
               + eta_aniso*sinthetasq*(rhovphsq - two_rhovsvsq) &
-                         *(cosphifour + sinphifour + 2.0*cosphisq*costhetasq*sinphisq) &
+                         *(cosphifour + sinphifour + 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq) &
               + rhovpvsq*cosphisq*sinphisq*sinthetafour &
               - rhovsvsq*sintwophisq*sinthetafour
 
-        c13 = 0.125*cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq &
-                    - 12.0*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
+        c13 = 0.125_CUSTOM_REAL*cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq &
+                    - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
               + sinphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
 
         ! uses temporary templ1 from c13
         c15 = cosphi*costheta*sintheta* &
-              ( 0.5*cosphisq* (rhovpvsq - rhovphsq + costwotheta*templ1) &
+              ( 0.5_CUSTOM_REAL*cosphisq* (rhovpvsq - rhovphsq + costwotheta*templ1) &
                 + etaminone*sinphisq*(rhovphsq - two_rhovsvsq))
 
         c14 = costheta*sinphi*sintheta* &
-              ( 0.5*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
-                + sinphisq*(etaminone*rhovphsq + 2.0*(rhovshsq - eta_aniso*rhovsvsq)) )
+              ( 0.5_CUSTOM_REAL*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
+                + sinphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) )
 
         ! uses temporary templ2_cos from c14
-        c16 = 0.5*cosphi*sinphi*sinthetasq* &
+        c16 = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
               ( cosphisq*templ2_cos &
-                + 2.0*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
+                + 2.0_CUSTOM_REAL*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
 
-        c22 = rhovphsq*cosphifour + 2.0*cosphisq*sinphisq* &
+        c22 = rhovphsq*cosphifour + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
               (rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)) &
               + sinphifour* &
-              (rhovphsq*costhetafour + 2.0*costhetasq*sinthetasq*(eta_aniso*rhovphsq  &
+              (rhovphsq*costhetafour + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq  &
                     + two_rhovsvsq - two_eta_aniso*rhovsvsq) + rhovpvsq*sinthetafour)
 
         ! uses temporary templ1 from c13
-        c23 = 0.125*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
-                + rhovpvsq - four_rhovsvsq - 12.0*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
+        c23 = 0.125_CUSTOM_REAL*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
+                + rhovpvsq - four_rhovsvsq - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
               + cosphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
 
         ! uses temporary templ1 from c13
         c24 = costheta*sinphi*sintheta* &
               ( etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                + 0.5*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
+                + 0.5_CUSTOM_REAL*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
 
         ! uses temporary templ2_cos from c14
         c25 = cosphi*costheta*sintheta* &
-              ( cosphisq*(etaminone*rhovphsq + 2.0*(rhovshsq - eta_aniso*rhovsvsq)) &
-                + 0.5*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
+              ( cosphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) &
+                + 0.5_CUSTOM_REAL*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
 
         ! uses temporary templ2_cos from c14
-        c26 = 0.5*cosphi*sinphi*sinthetasq* &
-              ( 2.0*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
+        c26 = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
+              ( 2.0_CUSTOM_REAL*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
                 + sinphisq*templ2_cos )
 
         c33 = rhovpvsq*costhetafour &
-              + 2.0*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
+              + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
               + rhovphsq*sinthetafour
 
         ! uses temporary templ1_cos from c13
-        c34 = - 0.25*sinphi*sintwotheta*templ1_cos
+        c34 = - 0.25_CUSTOM_REAL*sinphi*sintwotheta*templ1_cos
 
         ! uses temporary templ1_cos from c34
-        c35 = - 0.25*cosphi*sintwotheta*templ1_cos
+        c35 = - 0.25_CUSTOM_REAL*cosphi*sintwotheta*templ1_cos
 
         ! uses temporary templ1_cos from c34
-        c36 = - 0.25*sintwophi*sinthetasq*(templ1_cos - four_rhovshsq + four_rhovsvsq)
+        c36 = - 0.25_CUSTOM_REAL*sintwophi*sinthetasq*(templ1_cos - four_rhovshsq + four_rhovsvsq)
 
         c44 = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
               + sinphisq*(rhovsvsq*costwothetasq + costhetasq*sinthetasq*templ3)
 
         ! uses temporary templ3 from c44
         c46 = - cosphi*costheta*sintheta* &
-                ( cosphisq*(rhovshsq - rhovsvsq) - 0.5*sinphisq*templ3_cos  )
+                ( cosphisq*(rhovshsq - rhovsvsq) - 0.5_CUSTOM_REAL*sinphisq*templ3_cos  )
 
         ! uses templ3 from c46
-        c45 = 0.25*sintwophi*sinthetasq* &
-              (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0*etaminone*rhovsvsq))
+        c45 = 0.25_CUSTOM_REAL*sintwophi*sinthetasq* &
+              (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0_CUSTOM_REAL*etaminone*rhovsvsq))
 
         c55 = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
               + cosphisq*(rhovsvsq*costwothetasq &
@@ -695,16 +696,17 @@
 
         ! uses temporary templ3_cos from c46
         c56 = costheta*sinphi*sintheta* &
-              ( 0.5*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
+              ( 0.5_CUSTOM_REAL*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
 
         c66 = rhovshsq*costwophisq*costhetasq &
-              - 2.0*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
-              + 0.03125*rhovphsq*sintwophisq*(11.0 + 4.0*costwotheta + cosfourtheta) &
-              - 0.125*rhovsvsq*sinthetasq*( -6.0 - 2.0*costwotheta - 2.0*cosfourphi &
-                        + cos(4.0*phi - 2.0*theta) + cos(2.0*(2.0*phi + theta)) ) &
+              - 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
+              + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + 4.0_CUSTOM_REAL*costwotheta + cosfourtheta) &
+              - 0.125_CUSTOM_REAL*rhovsvsq*sinthetasq* &
+              ( -6.0_CUSTOM_REAL - 2.0_CUSTOM_REAL*costwotheta - 2.0_CUSTOM_REAL*cosfourphi &
+                        + cos(4.0_CUSTOM_REAL*phi - 2.0_CUSTOM_REAL*theta) &
+                        + cos(2.0_CUSTOM_REAL*(2.0_CUSTOM_REAL*phi + theta)) ) &
               + rhovpvsq*cosphisq*sinphisq*sinthetafour &
-              - 0.5*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
-
+              - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
 
         ! general expression of stress tensor for full Cijkl with 21 coefficients
         sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
@@ -863,7 +865,6 @@
     enddo ! NGLLY
   enddo ! NGLLZ
 
-
   end subroutine compute_element_tiso
 
 !
@@ -921,10 +922,11 @@
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
-  integer vx,vy,vz,vnspec
+  ! variable sized array variables
+  integer :: vx,vy,vz,vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -1229,8 +1231,8 @@
 !
 
 
-  subroutine compute_element_att_stress( R_memory_loc, &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  subroutine compute_element_att_stress(R_memory_loc, &
+                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
   implicit none
 
@@ -1304,8 +1306,10 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
+  ! variable sized array variables
   integer :: vx,vy,vz,vnspec
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+
+  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
@@ -1315,7 +1319,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
 ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
   integer :: i_memory
@@ -1401,8 +1405,10 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
 
+  ! variable sized array variables
   integer :: vx,vy,vz,vnspec
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+
+  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
@@ -1411,7 +1417,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
 
 ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
 
   integer :: i_SLS
 
@@ -1831,17 +1837,19 @@
 
   include "constants.h"
 
-! include values created by the mesher
-! done for performance only using static allocation to allow for loop unrolling
+  ! include values created by the mesher
+  ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer ispec,NSPEC,NGLOB
+  ! element id
+  integer :: ispec,i,j,k
+
+  integer NSPEC,NGLOB
 
 ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: ibool
@@ -1852,9 +1860,9 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
 
-!local parameters
+! local parameters
   integer iglob
-  integer i,j,k,l
+  integer l
 
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
@@ -1868,9 +1876,6 @@
 
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-
-
-
 
     do k=1,NGLLZ
       do j=1,NGLLY

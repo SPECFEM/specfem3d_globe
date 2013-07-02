@@ -47,7 +47,6 @@
                               absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
                               absorb_ymin_crust_mantle,absorb_ymax_crust_mantle)
 
-
   implicit none
 
   include "constants.h"
