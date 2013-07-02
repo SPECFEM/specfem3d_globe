@@ -155,9 +155,6 @@
 
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
-              !if( .not. (TRANSVERSE_ISOTROPY_VAL .and. &
-              !    (idoubling_crust_mantle(ispec) == IFLAG_80_MOHO .or. &
-              !     idoubling_crust_mantle(ispec) == IFLAG_220_80))) then
               if( .not. ispec_is_tiso_crust_mantle(ispec) ) then
 
                 ! layer with no transverse isotropy
@@ -536,6 +533,7 @@
   enddo
 
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+
   open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) rho_kl_outer_core
   close(27)
@@ -543,7 +541,7 @@
   write(27) alpha_kl_outer_core
   close(27)
 
-  !deviatoric kernel check
+  ! deviatoric kernel check
   if( deviatoric_outercore ) then
     open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) beta_kl_outer_core
@@ -608,6 +606,7 @@
   enddo
 
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+
   open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) rho_kl_inner_core
   close(27)
@@ -687,9 +686,7 @@
   write(27) icb_kl
   close(27)
 
-
   end subroutine save_kernels_boundary_kl
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -759,7 +756,6 @@
     close(27)
   enddo
 
-
   end subroutine save_kernels_source_derivatives
 
 !
@@ -795,6 +791,7 @@
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
   open(unit=27,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) hess_kl_crust_mantle
   close(27)

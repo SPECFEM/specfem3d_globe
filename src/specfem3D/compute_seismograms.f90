@@ -376,7 +376,6 @@
 
     shdur_der(irec_local) = shdur_der(irec_local) + eps_m_s * Hp_deltat
 
-
   enddo
 
   end subroutine compute_seismograms_adjoint

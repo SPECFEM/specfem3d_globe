@@ -176,6 +176,7 @@
   call sync_all()
 
   ! crust and mantle
+
   if(ANISOTROPIC_3D_MANTLE_VAL) then
     READ_KAPPA_MU = .false.
     READ_TISO = .false.
@@ -308,7 +309,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine read_mesh_databases_addressing(myrank, &
                     iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
@@ -772,7 +772,9 @@
 
   ! read info for vertical edges for central cube matching in inner core
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read')
+        status='old',form='unformatted',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening inner_core boundary.bin file')
+
   read(27) nspec2D_xmin_inner_core
   read(27) nspec2D_xmax_inner_core
   read(27) nspec2D_ymin_inner_core
@@ -798,7 +800,9 @@
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
-          status='old',form='unformatted',action='read')
+          status='old',form='unformatted',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+
     read(27) njunk1,njunk2,njunk3
     if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
                call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')

@@ -40,7 +40,6 @@
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
                       HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH)
 
-
   implicit none
 
   include 'mpif.h'
@@ -129,8 +128,8 @@
 
   ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-            xigll,yigll,zigll,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
+                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                     xigll,yigll,zigll,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
             sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
             NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
             islice_selected_source,ispec_selected_source, &
@@ -138,7 +137,8 @@
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
             LOCAL_PATH,SIMULATION_TYPE)
 
-  if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
+  if(abs(minval(tshift_cmt)) > TINYVAL) &
+    call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
@@ -260,6 +260,9 @@
     enddo
   endif
 
+  ! counter for adjoint receiver stations in local slice, used to allocate adjoint source arrays
+  nadj_rec_local = 0
+
   ! counts receivers for adjoint simulations
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! by Ebru
@@ -268,8 +271,6 @@
     comp(2) = bic(1:2)//'E'
     comp(3) = bic(1:2)//'Z'
 
-    ! counter for adjoint receiver stations in local slice, used to allocate adjoint source arrays
-    nadj_rec_local = 0
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
     do irec = 1,nrec
@@ -349,33 +350,25 @@
     write(system_command, &
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
-!! DK DK removed call to "system", which is not portable: we impose to conform strictly to the Fortran2003 standard;
-!! DK DK the developer who wrote this command should find another way (in Fortran, without a system call)
-!   call system(system_command)
+    call system(system_command)
 
     ! only extract receiver locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
     write(system_command, &
   "('awk ',a1,'{if(NR<5) print $0;if(NR==6)print ',a1,'POINTS',i6,' float',a1,';if(NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
-!! DK DK removed call to "system", which is not portable: we impose to conform strictly to the Fortran2003 standard;
-!! DK DK the developer who wrote this command should find another way (in Fortran, without a system call)
-!   call system(system_command)
+    call system(system_command)
 
     ! only extract source locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/source.vtk'
     write(system_command, &
   "('awk ',a1,'{if(NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
-!! DK DK removed call to "system", which is not portable: we impose to conform strictly to the Fortran2003 standard;
-!! DK DK the developer who wrote this command should find another way (in Fortran, without a system call)
-!   call system(system_command)
-
+    call system(system_command)
 
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
     write(IMAIN,*)
-
 
     if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
   endif
@@ -385,7 +378,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine setup_sources_receivers_srcarr(NSOURCES,myrank, &
                       ispec_selected_source,islice_selected_source, &
@@ -418,7 +410,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
 
-
   ! local parameters
   integer :: isource
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
@@ -446,11 +437,9 @@
 
   end subroutine setup_sources_receivers_srcarr
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
                       NTSTEP_BETWEEN_READ_ADJSRC, &
@@ -465,7 +454,6 @@
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc ! to read input in chunks
   integer, dimension(NSTEP_SUB_ADJ) :: iadjsrc_len
   integer, dimension(NSTEP) :: iadj_vec
-
 
   ! local parameters
   integer :: iadj_block,it,it_sub_adj
@@ -516,7 +504,7 @@
     ! e.g.: first block 1 has iadjsrc_len = 1000 with start at 2001 and end at 3000
     !         so iadj_vec(1) = 1000 - 0, iadj_vec(2) = 1000 - 1, ..., to iadj_vec(1000) = 1000 - 999 = 1
     !         then for block 2, iadjsrc_len = 1000 with start at 1001 and end at 2000
-    !         so iadj_vec(1001) = 1000 - 0, iad_vec(1002) = 1000 - 1, .. and so on again down to 1
+    !         so iadj_vec(1001) = 1000 - 0, iadj_vec(1002) = 1000 - 1, .. and so on again down to 1
     !         then block 3 and your guess is right now... iadj_vec(2001) to iadj_vec(3000) is 1000 down to 1. :)
     iadj_vec(it) = iadjsrc_len(it_sub_adj) - mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC)
   enddo
@@ -526,7 +514,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine setup_sources_receivers_intp(NSOURCES,myrank, &
                       islice_selected_source, &

@@ -40,7 +40,7 @@
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   include "constants.h"
@@ -55,26 +55,31 @@
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
 
-  integer nspec,nglob,nrec,myrank,nrec_found
+  integer nrec,myrank
+  integer nspec,nglob
+
+  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+
+  ! arrays containing coordinates of the points
+  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
   integer yr,jda,ho,mi
   double precision sec
+  double precision theta_source,phi_source
 
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
   integer NSTEP
   double precision DT
-
-! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
 ! Gauss-Lobatto-Legendre points of integration
   double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
 
-  character(len=*)  rec_filename
+  character(len=*) rec_filename
 
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
+  ! local parameters
+  integer :: nrec_found
   integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
 
   integer iorientation
@@ -97,7 +102,6 @@
   double precision sint,cost,sinp,cosp
   double precision r0,p20
   double precision theta,phi
-  double precision theta_source,phi_source
   double precision dist
   double precision xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
 
@@ -156,14 +160,13 @@
   double precision, allocatable, dimension(:) :: final_distance_subset
   integer, allocatable, dimension(:) :: ispec_selected_rec_subset
 
-! **************
-
-! make sure we clean the array before the gather
-  ispec_selected_rec(:) = 0
-
-! get MPI starting time
+  ! get MPI starting time
   time_start = MPI_WTIME()
 
+  ! make sure we clean the array before the gather
+  ispec_selected_rec(:) = 0
+
+  ! user output
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '********************'
@@ -199,7 +202,7 @@
 
   ! read that STATIONS file on the master
   if(myrank == 0) then
-    call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+    call get_value_string(STATIONS, 'solver.STATIONS', trim(rec_filename))
     open(unit=1,file=STATIONS,status='old',action='read',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
 
@@ -321,13 +324,17 @@
 
     enddo
 
-!     ellipticity
-    r0=1.0d0
+    ! normalized receiver radius
+    r0 = R_UNIT_SPHERE
+
+    ! finds elevation of receiver
+    if(TOPOGRAPHY) then
+       call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
+       r0 = r0 + elevation/R_EARTH
+    endif
+
+    !     ellipticity
     if(ELLIPTICITY) then
-      if(TOPOGRAPHY) then
-         call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
-         r0 = r0 + elevation/R_EARTH
-      endif
       cost=cos(theta)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)
       call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
@@ -391,7 +398,10 @@
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
+    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
+          status='unknown',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file RECORDHEADERS')
+
     nsamp = nint(dble(NSTEP-1)*DT)
 
     do irec = 1,nrec
@@ -483,30 +493,33 @@ islice_selected_rec(:) = -1
     ! define coordinates of the control points of the element
     do ia=1,NGNOD
 
+      iax = 0
       if(iaddx(ia) == 0) then
         iax = 1
       else if(iaddx(ia) == 1) then
-        iax = (NGLLX+1)/2
+        iax = MIDX
       else if(iaddx(ia) == 2) then
         iax = NGLLX
       else
         call exit_MPI(myrank,'incorrect value of iaddx')
       endif
 
+      iay = 0
       if(iaddy(ia) == 0) then
         iay = 1
       else if(iaddy(ia) == 1) then
-        iay = (NGLLY+1)/2
+        iay = MIDY
       else if(iaddy(ia) == 2) then
         iay = NGLLY
       else
         call exit_MPI(myrank,'incorrect value of iaddy')
       endif
 
+      iaz = 0
       if(iaddr(ia) == 0) then
         iaz = 1
       else if(iaddr(ia) == 1) then
-        iaz = (NGLLZ+1)/2
+        iaz = MIDZ
       else if(iaddr(ia) == 2) then
         iaz = NGLLZ
       else
@@ -539,12 +552,16 @@ islice_selected_rec(:) = -1
       ! gamma does not change since we know the receiver is exactly on the surface
       dxi  = xix*dx + xiy*dy + xiz*dz
       deta = etax*dx + etay*dy + etaz*dz
-      if(RECEIVERS_CAN_BE_BURIED) dgamma = gammax*dx + gammay*dy + gammaz*dz
 
       ! update values
       xi = xi + dxi
       eta = eta + deta
-      if(RECEIVERS_CAN_BE_BURIED) gamma = gamma + dgamma
+
+      ! buried receivers vary in z depth
+      if(RECEIVERS_CAN_BE_BURIED) then
+        dgamma = gammax*dx + gammay*dy + gammaz*dz
+        gamma = gamma + dgamma
+      endif
 
       ! impose that we stay in that element
       ! (useful if user gives a receiver outside the mesh for instance)
@@ -581,7 +598,8 @@ islice_selected_rec(:) = -1
 
     ! compute final distance between asked and found (converted to km)
     final_distance(irec) = dsqrt((x_target(irec)-x_found(irec))**2 + &
-        (y_target(irec)-y_found(irec))**2 + (z_target(irec)-z_found(irec))**2)*R_EARTH/1000.d0
+                                 (y_target(irec)-y_found(irec))**2 + &
+                                 (z_target(irec)-z_found(irec))**2)*R_EARTH/1000.d0
 
     final_distance_subset(irec_in_this_subset) = final_distance(irec)
 
@@ -621,7 +639,7 @@ islice_selected_rec(:) = -1
      ! mapping from station number in current subset to real station number in all the subsets
      irec = irec_in_this_subset + irec_already_done
 
-     distmin = HUGEVAL
+      distmin = HUGEVAL
       do iprocloop = 0,NPROCTOT-1
         if(final_distance_all(irec_in_this_subset,iprocloop) < distmin) then
           distmin = final_distance_all(irec_in_this_subset,iprocloop)
@@ -668,7 +686,7 @@ islice_selected_rec(:) = -1
 
       if(final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'error locating receiver')
 
-      if(DISPLAY_DETAILS_STATIONS) then
+      if(DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0 ) then
         write(IMAIN,*)
         write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
         write(IMAIN,*) '     original latitude: ',sngl(stlat(irec))

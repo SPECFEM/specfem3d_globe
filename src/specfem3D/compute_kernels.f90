@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_kernels_crust_mantle(ibool_crust_mantle, &
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
@@ -46,7 +45,6 @@
   real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     cijkl_kl_crust_mantle
 
-
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
      accel_crust_mantle,displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
@@ -58,7 +56,7 @@
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   ! local parameters
-  real(kind=CUSTOM_REAL),dimension(21) :: prod !, cijkl_kl_local
+  real(kind=CUSTOM_REAL),dimension(21) :: prod
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_matrix,b_epsilondev_loc_matrix
@@ -280,8 +278,7 @@
               tempz3l = tempz3l +  b_vector_displ_outer_core(3,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
 
-
-            !deviatoric strain
+            ! deviatoric strain
             b_epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l  &
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
@@ -310,8 +307,7 @@
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                               + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-          endif !deviatoric kernel check
-
+          endif ! deviatoric kernel check
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
@@ -353,8 +349,7 @@
           vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
           vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
-
-          !deviatoric kernel check
+          ! deviatoric kernel check
           if( deviatoric_outercore ) then
 
             tempx1l = 0._CUSTOM_REAL
@@ -384,8 +379,7 @@
               tempz3l = tempz3l + vector_displ_outer_core(3,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
 
-
-            !deviatoric strain
+            ! deviatoric strain
             epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l  &
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
@@ -420,9 +414,7 @@
                + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
                 epsilondev_loc(5)*b_epsilondev_loc(5)) )
 
-          endif !deviatoric kernel check
-
-
+          endif ! deviatoric kernel check
 
           rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
              + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
@@ -434,7 +426,6 @@
 
           alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
              + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
-
 
         enddo
       enddo
@@ -448,14 +439,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_kernels_inner_core(ibool_inner_core, &
                           rho_kl_inner_core,beta_kl_inner_core, &
                           alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
                           deltat,displ_inner_core,hprime_xx,hprime_xxT,&
                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
-
 
   implicit none
 
@@ -533,13 +522,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 ! Subroutines to compute the kernels for the 21 elastic coefficients
-! Last modified 19/04/2007
 
-!-------------------------------------------------------------------
   subroutine compute_strain_product(prod,eps_trace_over_3,epsdev,&
-                          b_eps_trace_over_3,b_epsdev)
+                                    b_eps_trace_over_3,b_epsdev)
 
-  ! Purpose : compute the 21 strain products at a grid point
+  ! Purpose: compute the 21 strain products at a grid point
   ! (ispec,i,j,k fixed) and at a time t to compute then the kernels cij_kl (Voigt notation)
   ! (eq. 15 of Tromp et al., 2005)
   ! prod(1)=eps11*eps11 -> c11, prod(2)=eps11eps22 -> c12, prod(3)=eps11eps33 -> c13, ...
@@ -547,8 +534,6 @@
   ! prod(19)=eps13*eps13 -> c55, prod(20)=eps13eps12 -> c56, prod(21)=eps12eps12 -> c66
   ! This then gives how the 21 kernels are organized
   ! For crust_mantle
-
-  ! Modif 09/11/2005
 
   implicit none
   include  "constants.h"
@@ -577,15 +562,15 @@
   ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
   p=1
   do i=1,6
-       do j=i,6
-       prod(p)=eps(i)*b_eps(j)
-       if(j>i) then
-            prod(p)=prod(p)+eps(j)*b_eps(i)
-            if(j>3 .and. i<4) prod(p)=prod(p)*2
-       endif
-       if(i>3) prod(p)=prod(p)*4
-       p=p+1
-       enddo
+    do j=i,6
+      prod(p)=eps(i)*b_eps(j)
+      if(j>i) then
+        prod(p)=prod(p)+eps(j)*b_eps(i)
+        if(j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
+      endif
+      if(i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
+      p=p+1
+    enddo
   enddo
 
   end subroutine compute_strain_product
@@ -995,19 +980,19 @@
   ! local parameters
   integer :: i,j,k,ispec,iglob
 
-  ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec)
+    ! crust_mantle
+    do ispec = 1, NSPEC_CRUST_MANTLE
+      do k = 1, NGLLZ
+        do j = 1, NGLLY
+          do i = 1, NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          ! approximates hessian
-          ! term with adjoint acceleration and backward/reconstructed acceleration
-          hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
-             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
-             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
-             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
+            ! approximates hessian
+            ! term with adjoint acceleration and backward/reconstructed acceleration
+            hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
+               + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
+               + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
+               + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
 
         enddo
       enddo

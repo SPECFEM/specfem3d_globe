@@ -46,6 +46,9 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
+  ! local parameters
+  character(len=150) outputname
+
   integer myrank,NSTEP
 
   integer SIMULATION_TYPE
@@ -84,9 +87,6 @@
     b_A_array_rotation,b_B_array_rotation
 
   character(len=150) LOCAL_PATH
-
-  !local parameters
-  character(len=150) outputname
 
   ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &

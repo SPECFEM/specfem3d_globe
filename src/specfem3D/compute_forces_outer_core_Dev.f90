@@ -78,20 +78,22 @@
 
   logical MOVIE_VOLUME
 
+  ! local parameters
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
 
-! for gravity
-  integer int_radius
-  double precision radius,theta,phi,gxl,gyl,gzl
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
+  ! for gravity
+  integer :: int_radius
+  double precision :: radius,theta,phi,gxl,gyl,gzl
+  double precision :: cos_theta,sin_theta,cos_phi,sin_phi
   double precision, dimension(NRAD_GRAVITY) :: minus_rho_g_over_kappa_fluid
   double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: xstore,ystore,zstore
 
-! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
+  ! for the Euler scheme for rotation
+  real(kind=CUSTOM_REAL) :: time,deltat,two_omega_earth
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
     A_array_rotation,B_array_rotation
 
@@ -99,12 +101,11 @@
        ux_rotation,uy_rotation,dpotentialdx_with_rot,dpotentialdy_with_rot
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
-  integer ispec,iglob
-  integer i,j,k
-
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  real(kind=CUSTOM_REAL) dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) sum_terms
+  integer :: ispec,iglob
+  integer :: i,j,k
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
+  real(kind=CUSTOM_REAL) :: sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
@@ -283,7 +284,6 @@
     enddo
 
 
-
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -403,17 +403,17 @@
             endif
 
             if(istage == 1)then
-              ! divergence of displacement field with gravity on
-              ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
-              !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
-              !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-              if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
-                div_displfluid(i,j,k,ispec) =  &
-                          minus_rho_g_over_kappa_fluid(int_radius) &
-                          * (dpotentialdx_with_rot * gxl &
-                          + dpotentialdy_with_rot * gyl &
-                          + dpotentialdzl * gzl)
-              endif
+            ! divergence of displacement field with gravity on
+            ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
+            !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
+            !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
+            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
+              div_displfluid(i,j,k,ispec) =  &
+                        minus_rho_g_over_kappa_fluid(int_radius) &
+                        * (dpotentialdx_with_rot * gxl &
+                         + dpotentialdy_with_rot * gyl &
+                         + dpotentialdzl * gzl)
+            endif
             endif
 
           endif

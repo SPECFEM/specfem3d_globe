@@ -31,7 +31,7 @@
   subroutine count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
                       zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
                       MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie, &
-                      mask_ibool_3dmovie,mask_3dmovie)
+                      mask_ibool,mask_3dmovie)
 
   implicit none
 
@@ -48,61 +48,62 @@
 ! output
   integer :: npoints_3dmovie,nspecel_3dmovie
   integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
+  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
 
 ! variables
-  integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,NIT
+  integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,iNIT
   real(kind=custom_real) :: rval,thetaval,phival
 
   if(MOVIE_COARSE) then
-    NIT = NGLLX-1
+    iNIT = NGLLX-1
   else
-    NIT = 1
+    iNIT = 1
   endif
 
   ipoints_3dmovie=0
   num_ibool_3dmovie(:) = -99
   ispecel_3dmovie = 0
-  mask_ibool_3dmovie(:)=.false.
+  mask_ibool(:)=.false.
   mask_3dmovie(:,:,:,:)=.false.
 
   ! create name of database
   open(unit=IOUT,file=trim(prname)//'movie3D_info.txt',status='unknown')
 
   !find and count points within given region for storing movie
-      do ispec = 1,NSPEC_CRUST_MANTLE
-        !output element if center of element is in the given region
-        iglob    = ibool_crust_mantle((NGLLX+1)/2,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-        rval     = xstore_crust_mantle(iglob)
-        thetaval = ystore_crust_mantle(iglob)
-        phival   = zstore_crust_mantle(iglob)
-      ! we alread changed xyz back to rthetaphi
-        if( (rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
-            (thetaval > MOVIE_NORTH .and. thetaval < MOVIE_SOUTH) .and. &
-            ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
-              ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) ) ) then
-            ispecel_3dmovie=ispecel_3dmovie+1
-              do k=1,NGLLZ,NIT
-               do j=1,NGLLY,NIT
-                do i=1,NGLLX,NIT
-                 iglob    = ibool_crust_mantle(i,j,k,ispec)
-                 if(.not. mask_ibool_3dmovie(iglob)) then
-                  ipoints_3dmovie = ipoints_3dmovie + 1
-                  mask_ibool_3dmovie(iglob)=.true.
-                  mask_3dmovie(i,j,k,ispec)=.true.
-                  num_ibool_3dmovie(iglob)= ipoints_3dmovie
-                 endif
-                enddo !i
-               enddo !j
-              enddo !k
-        endif !in region
-      enddo !ispec
-   npoints_3dmovie=ipoints_3dmovie
-   nspecel_3dmovie=ispecel_3dmovie
+  do ispec = 1,NSPEC_CRUST_MANTLE
+    !output element if center of element is in the given region
+    iglob    = ibool_crust_mantle((NGLLX+1)/2,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+    rval     = xstore_crust_mantle(iglob)
+    thetaval = ystore_crust_mantle(iglob)
+    phival   = zstore_crust_mantle(iglob)
 
-   write(IOUT,*) npoints_3dmovie, nspecel_3dmovie
-   close(IOUT)
+    ! we already changed xyz back to rthetaphi
+    if( (rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
+       (thetaval > MOVIE_NORTH .and. thetaval < MOVIE_SOUTH) .and. &
+       ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
+       ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) ) ) then
+      ispecel_3dmovie=ispecel_3dmovie+1
+      do k=1,NGLLZ,iNIT
+        do j=1,NGLLY,iNIT
+          do i=1,NGLLX,iNIT
+            iglob    = ibool_crust_mantle(i,j,k,ispec)
+            if(.not. mask_ibool(iglob)) then
+              ipoints_3dmovie = ipoints_3dmovie + 1
+              mask_ibool(iglob)=.true.
+              mask_3dmovie(i,j,k,ispec)=.true.
+              num_ibool_3dmovie(iglob)= ipoints_3dmovie
+            endif
+          enddo !i
+        enddo !j
+      enddo !k
+    endif !in region
+  enddo !ispec
+  npoints_3dmovie=ipoints_3dmovie
+  nspecel_3dmovie=ispecel_3dmovie
+
+  write(IOUT,*) npoints_3dmovie, nspecel_3dmovie
+  close(IOUT)
 
   end subroutine count_points_movie_volume
 
@@ -115,7 +116,7 @@
 
   subroutine write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
                          ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-                         mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
+                         mask_3dmovie,mask_ibool,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
 
   implicit none
 
@@ -129,7 +130,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
   character(len=150) :: prname
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
+  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
   logical :: MOVIE_COARSE
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
@@ -139,23 +140,23 @@
 
   !variables
   integer :: ipoints_3dmovie,ispecele,ispec,i,j,k,iglob,iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
-  integer :: n1,n2,n3,n4,n5,n6,n7,n8,NIT
+  integer :: n1,n2,n3,n4,n5,n6,n7,n8,iNIT
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval,st,ct,sp,cp
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_x,store_val3D_y, store_val3D_z
 
   if(NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
   if(MOVIE_COARSE) then
-    NIT = NGLLX-1
+    iNIT = NGLLX-1
   else
-    NIT = 1
+    iNIT = 1
   endif
 
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE
-    do k=1,NGLLZ,NIT
-      do j=1,NGLLY,NIT
-        do i=1,NGLLX,NIT
+    do k=1,NGLLZ,iNIT
+      do j=1,NGLLY,iNIT
+        do i=1,NGLLX,iNIT
           if(mask_3dmovie(i,j,k,ispec)) then
             ipoints_3dmovie=ipoints_3dmovie+1
             iglob= ibool_crust_mantle(i,j,k,ispec)
@@ -219,20 +220,20 @@
     else
       iglob=ibool_crust_mantle(3,3,3,ispec)
     endif
-    if(mask_ibool_3dmovie(iglob)) then  !this element is in the region
+    if(mask_ibool(iglob)) then  !this element is in the region
       ispecele  = ispecele+1
-      do k=1,NGLLZ-1,NIT
-        do j=1,NGLLY-1,NIT
-          do i=1,NGLLX-1,NIT
+      do k=1,NGLLZ-1,iNIT
+        do j=1,NGLLY-1,iNIT
+          do i=1,NGLLX-1,iNIT
             ! if(mask_3dmovie(i,j,k,ispec)) then
             iglob1 = ibool_crust_mantle(i,j,k,ispec)
-            iglob2 = ibool_crust_mantle(i+NIT,j,k,ispec)
-            iglob3 = ibool_crust_mantle(i+NIT,j+NIT,k,ispec)
-            iglob4 = ibool_crust_mantle(i,j+NIT,k,ispec)
-            iglob5 = ibool_crust_mantle(i,j,k+NIT,ispec)
-            iglob6 = ibool_crust_mantle(i+NIT,j,k+NIT,ispec)
-            iglob7 = ibool_crust_mantle(i+NIT,j+NIT,k+NIT,ispec)
-            iglob8 = ibool_crust_mantle(i,j+NIT,k+NIT,ispec)
+            iglob2 = ibool_crust_mantle(i+iNIT,j,k,ispec)
+            iglob3 = ibool_crust_mantle(i+iNIT,j+iNIT,k,ispec)
+            iglob4 = ibool_crust_mantle(i,j+iNIT,k,ispec)
+            iglob5 = ibool_crust_mantle(i,j,k+iNIT,ispec)
+            iglob6 = ibool_crust_mantle(i+iNIT,j,k+iNIT,ispec)
+            iglob7 = ibool_crust_mantle(i+iNIT,j+iNIT,k+iNIT,ispec)
+            iglob8 = ibool_crust_mantle(i,j+iNIT,k+iNIT,ispec)
             n1 = num_ibool_3dmovie(iglob1)-1
             n2 = num_ibool_3dmovie(iglob2)-1
             n3 = num_ibool_3dmovie(iglob3)-1
@@ -258,7 +259,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
+  subroutine write_movie_volume_strains(myrank,npoints_3dmovie, &
+                                        LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie,&
                     hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle,&
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
@@ -297,7 +299,7 @@
 
   ! variables
   character(len=150) prname
-  integer :: ipoints_3dmovie,i,j,k,ispec,NIT
+  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT
   real(kind=CUSTOM_REAL) :: muv_3dmovie
   real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
@@ -305,15 +307,18 @@
 
   character(len=1) movie_prefix
 
-  allocate(store_val3d_NN(npoints_3dmovie))
-  allocate(store_val3d_EE(npoints_3dmovie))
-  allocate(store_val3d_ZZ(npoints_3dmovie))
-  allocate(store_val3d_NE(npoints_3dmovie))
-  allocate(store_val3d_NZ(npoints_3dmovie))
-  allocate(store_val3d_EZ(npoints_3dmovie))
-
   ! check
   if(NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
+
+  ! allocates arrays
+  allocate(store_val3d_NN(npoints_3dmovie), &
+          store_val3d_EE(npoints_3dmovie), &
+          store_val3d_ZZ(npoints_3dmovie), &
+          store_val3d_NE(npoints_3dmovie), &
+          store_val3d_NZ(npoints_3dmovie), &
+          store_val3d_EZ(npoints_3dmovie), &
+          stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating store_val3d_ .. arrays')
 
   if(MOVIE_VOLUME_TYPE == 1) then
     movie_prefix='E' ! strain
@@ -323,12 +328,13 @@
     movie_prefix='P' ! potency, or integral of strain x \mu
   endif
   if(MOVIE_COARSE) then
-   NIT = NGLLX-1
+   iNIT = NGLLX-1
   else
-   NIT = 1
+   iNIT = 1
   endif
 
   write(prname,"('proc',i6.6)") myrank
+
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE
    call compute_element_strain_undo_att_noDev(ispec,nglob_crust_mantle,NSPEC_CRUST_MANTLE,&
@@ -338,9 +344,9 @@
                                               gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
                                               epsilondev_loc_crust_mantle,eps_trace_over_3_loc_crust_mantle)
 
-   do k=1,NGLLZ,NIT
-    do j=1,NGLLY,NIT
-     do i=1,NGLLX,NIT
+   do k=1,NGLLZ,iNIT
+    do j=1,NGLLY,iNIT
+     do i=1,NGLLX,iNIT
       if(mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
@@ -406,6 +412,9 @@
   write(27) store_val3d_EZ(1:npoints_3dmovie)
   close(27)
 
+  deallocate(store_val3d_NN,store_val3d_EE,store_val3d_ZZ, &
+            store_val3d_NE,store_val3d_NZ,store_val3d_EZ)
+
   end subroutine write_movie_volume_strains
 
 !
@@ -424,21 +433,28 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! input
-  integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
+  integer :: myrank,it
+  integer :: npoints_3dmovie
+  integer :: MOVIE_VOLUME_TYPE
+  logical :: MOVIE_COARSE
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
 
   double precision :: scalingval
-  real(kind=CUSTOM_REAL) :: scalingval_to_use
-  real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
-  logical :: MOVIE_COARSE
+  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+
   character(len=150) LOCAL_PATH
 
-  ! variables
-  integer :: ipoints_3dmovie,i,j,k,ispec,NIT,iglob
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
+  real(kind=CUSTOM_REAL) :: scalingval_to_use
+
+  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
+  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,iglob
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
+
   character(len=150) outputname
   character(len=2) movie_prefix
 
@@ -446,9 +462,11 @@
   if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
   ! allocates arrays
-  allocate(store_val3d_N(npoints_3dmovie))
-  allocate(store_val3d_E(npoints_3dmovie))
-  allocate(store_val3d_Z(npoints_3dmovie))
+  allocate(store_val3d_N(npoints_3dmovie), &
+          store_val3d_E(npoints_3dmovie), &
+          store_val3d_Z(npoints_3dmovie), &
+          stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating store_val3d_N,.. movie arrays')
 
   if(MOVIE_VOLUME_TYPE == 5) then
     movie_prefix='DI' ! displacement
@@ -457,9 +475,9 @@
   endif
 
   if(MOVIE_COARSE) then
-   NIT = NGLLX-1
+   iNIT = NGLLX-1
   else
-   NIT = 1
+   iNIT = 1
   endif
 
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -471,9 +489,9 @@
   ipoints_3dmovie = 0
 
   do ispec=1,NSPEC_CRUST_MANTLE
-   do k=1,NGLLZ,NIT
-    do j=1,NGLLY,NIT
-     do i=1,NGLLX,NIT
+   do k=1,NGLLZ,iNIT
+    do j=1,NGLLY,iNIT
+     do i=1,NGLLX,iNIT
       if(mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        iglob = ibool_crust_mantle(i,j,k,ispec)
@@ -507,6 +525,7 @@
   write(27) store_val3d_Z(1:npoints_3dmovie)
   close(27)
 
+  deallocate(store_val3d_N,store_val3d_E,store_val3d_Z)
 
   end subroutine write_movie_volume_vector
 

@@ -257,6 +257,7 @@
     CMPAZ = sngl(modulo(phi_dble,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   else if(iorientation == 5) then !T
+    phi_dble = phi
     CMPAZ = sngl(modulo(phi_dble+90.d0,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   endif
