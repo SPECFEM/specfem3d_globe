@@ -33,6 +33,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+
   implicit none
 
   ! local parameters
@@ -150,7 +151,7 @@
       b_B_array_rotation = 0._CUSTOM_REAL
     endif
 
-    if(ATTENUATION_VAL) then
+    if (ATTENUATION_VAL) then
       b_R_xx_crust_mantle = 0._CUSTOM_REAL
       b_R_yy_crust_mantle = 0._CUSTOM_REAL
       b_R_xy_crust_mantle = 0._CUSTOM_REAL
@@ -179,9 +180,10 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+
   implicit none
 
-  !local parameters
+  ! local parameters
   integer :: ier
   character(len=150) outputname
 

@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine get_attenuation_model_3D_or_1D(myrank, prname, &
                                            one_minus_sum_beta, &
                                            factor_common, &
@@ -41,8 +40,20 @@
   integer :: myrank
 
   integer :: vx,vy,vz,vnspec
+
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013
   double precision, dimension(vx,vy,vz,vnspec)       :: one_minus_sum_beta, scale_factor
   double precision, dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+
   double precision, dimension(N_SLS)                 :: tau_s
 
   character(len=150) :: prname
@@ -141,10 +152,16 @@
   beta(:) = 1.0d0 - tau_e(:) / tau_s(:)
   one_minus_sum_beta = 1.0d0
 
-  do i = 1, N_SLS
+  do i = 1,N_SLS
      one_minus_sum_beta = one_minus_sum_beta - beta(i)
   enddo
 
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we have put the 1/2 factor there we need to remove it
+!ZN from the expression in which we use the strain here in the code.
+!ZN This is why here Brian Savage multiplies beta(:) * tauinv(:) by 2.0 to compensate for the 1/2 factor used before
   factor_common(:) = 2.0d0 * beta(:) * tauinv(:)
 
   end subroutine get_attenuation_property_values
@@ -215,13 +232,11 @@
 
   end subroutine get_attenuation_scale_factor
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-
-  subroutine get_attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
+  subroutine get_attenuation_memory_values(tau_s,deltat, alphaval,betaval,gammaval)
 
   implicit none
 
@@ -243,517 +258,3 @@
                 + deltat**3*tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-!  subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_minus_sum_beta, &
-!                                    factor_common, scale_factor, vn,vx,vy,vz, AM_V)
-!
-!  implicit none
-!
-!  include 'mpif.h'
-!  include 'constants.h'
-!
-!! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer                                   :: Qn                 ! Number of points
-!    integer dummy_pad ! padding 4 bytes to align the structure
-!  end type model_attenuation_variables
-!
-!  type (model_attenuation_variables) AM_V
-!! model_attenuation_variables
-!
-!  integer myrank, iregion_code
-!  character(len=150) prname
-!  integer vn, vx,vy,vz
-!  double precision, dimension(N_SLS)              :: tau_s
-!  double precision, dimension(vx,vy,vz,vn)        :: scale_factor, one_minus_sum_beta
-!  double precision, dimension(N_SLS, vx,vy,vz,vn) :: factor_common
-!
-!  integer i,j,ier,rmax
-!  double precision scale_t
-!  double precision Qp1, Qpn, radius, fctmp
-!  double precision, dimension(:), allocatable :: Qfctmp, Qfc2tmp
-!
-!  integer, save :: first_time_called = 1
-!
-!  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
-!     first_time_called = 0
-!     open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
-!     read(27) AM_V%QT_c_source
-!     read(27) tau_s
-!     read(27) AM_V%Qn
-!
-!     allocate(AM_V%Qr(AM_V%Qn))
-!     allocate(AM_V%Qmu(AM_V%Qn))
-!     allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
-!
-!     read(27) AM_V%Qr
-!     read(27) AM_V%Qmu
-!     read(27) AM_V%Qtau_e
-!     close(27)
-!  endif
-!
-!  ! Synch up after the Read
-!  call MPI_BCAST(AM_V%QT_c_source,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-!  call MPI_BCAST(tau_s,N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-!  call MPI_BCAST(AM_V%Qn,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-!
-!  if(myrank /= 0) then
-!     allocate(AM_V%Qr(AM_V%Qn))
-!     allocate(AM_V%Qmu(AM_V%Qn))
-!     allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
-!  endif
-!
-!  call MPI_BCAST(AM_V%Qr,AM_V%Qn,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-!  call MPI_BCAST(AM_V%Qmu,AM_V%Qn,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-!  call MPI_BCAST(AM_V%Qtau_e,AM_V%Qn*N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-!
-!  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-!
-!  ! Scale the Attenuation Values
-!  tau_s(:) = tau_s(:) / scale_t
-!  AM_V%Qtau_e(:,:) = AM_V%Qtau_e(:,:) / scale_t
-!  AM_V%QT_c_source = 1000.0d0 / AM_V%QT_c_source / scale_t
-!  AM_V%Qr(:) = AM_V%Qr(:) / R_EARTH
-!
-!  allocate(AM_V%Qsf(AM_V%Qn))
-!  allocate(AM_V%Qomsb(AM_V%Qn))
-!  allocate(AM_V%Qfc(N_SLS,AM_V%Qn))
-!
-!  allocate(AM_V%Qsf2(AM_V%Qn))
-!  allocate(AM_V%Qomsb2(AM_V%Qn))
-!  allocate(AM_V%Qfc2(N_SLS,AM_V%Qn))
-!
-!  allocate(AM_V%interval_Q(AM_V%Qn))
-!
-!  allocate(Qfctmp(AM_V%Qn))
-!  allocate(Qfc2tmp(AM_V%Qn))
-!
-!  do i = 1,AM_V%Qn
-!     if(AM_V%Qmu(i) == 0.0d0) then
-!        AM_V%Qomsb(i) = 0.0d0
-!        AM_V%Qfc(:,i) = 0.0d0
-!        AM_V%Qsf(i)   = 0.0d0
-!     else
-!        call attenuation_property_values(tau_s, AM_V%Qtau_e(:,i), AM_V%Qfc(:,i), AM_V%Qomsb(i))
-!        call attenuation_scale_factor(myrank, AM_V%QT_c_source, AM_V%Qtau_e(:,i), tau_s, AM_V%Qmu(i), AM_V%Qsf(i))
-!     endif
-!  enddo
-!
-!  ! Determine the Spline Coefficients or Second Derivatives
-!  call pspline_construction(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%interval_Q)
-!  call pspline_construction(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%interval_Q)
-!  do i = 1,N_SLS
-!! copy the sub-arrays to temporary arrays to avoid a warning by some compilers
-!! about temporary arrays being created automatically when using this expression
-!! directly in the call to the subroutine
-!     Qfctmp(:) = AM_V%Qfc(i,:)
-!     Qfc2tmp(:) = AM_V%Qfc2(i,:)
-!     call pspline_construction(AM_V%Qr, Qfctmp, AM_V%Qn, Qp1, Qpn, Qfc2tmp, AM_V%interval_Q)
-!! copy the arrays back to the sub-arrays, since these sub-arrays are used
-!! as input and output
-!     AM_V%Qfc(i,:) = Qfctmp(:)
-!     AM_V%Qfc2(i,:) = Qfc2tmp(:)
-!  enddo
-!
-!  radius = 0.0d0
-!  rmax = nint(TABLE_ATTENUATION)
-!  do i = 1,rmax
-!     call attenuation_lookup_value(i, radius)
-!     call pspline_evaluation(AM_V%Qr, AM_V%Qsf,   AM_V%Qsf2,   AM_V%Qn, radius, scale_factor(1,1,1,i),       AM_V%interval_Q)
-!     call pspline_evaluation(AM_V%Qr, AM_V%Qomsb, AM_V%Qomsb2, AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%interval_Q)
-!     do j = 1,N_SLS
-!        Qfctmp  = AM_V%Qfc(j,:)
-!        Qfc2tmp = AM_V%Qfc2(j,:)
-!        call pspline_evaluation(AM_V%Qr, Qfctmp, Qfc2tmp, AM_V%Qn, radius, fctmp, AM_V%interval_Q)
-!        factor_common(j,1,1,1,i) = fctmp
-!     enddo
-!  enddo
-!  do i = rmax+1,NRAD_ATTENUATION
-!     scale_factor(1,1,1,i)       = scale_factor(1,1,1,rmax)
-!     one_minus_sum_beta(1,1,1,i) = one_minus_sum_beta(1,1,1,rmax)
-!     factor_common(1,1,1,1,i)    = factor_common(1,1,1,1,rmax)
-!     factor_common(2,1,1,1,i)    = factor_common(2,1,1,1,rmax)
-!     factor_common(3,1,1,1,i)    = factor_common(3,1,1,1,rmax)
-!  enddo
-!
-!  deallocate(AM_V%Qfc2)
-!  deallocate(AM_V%Qsf2)
-!  deallocate(AM_V%Qomsb2)
-!  deallocate(AM_V%Qfc)
-!  deallocate(AM_V%Qsf)
-!  deallocate(AM_V%Qomsb)
-!  deallocate(AM_V%Qtau_e)
-!  deallocate(Qfctmp)
-!  deallocate(Qfc2tmp)
-!
-!  call MPI_BARRIER(MPI_COMM_WORLD, ier)
-!
-!  end subroutine get_attenuation_model_1D
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-! Piecewise Continuous Splines
-!   - Added Steps which describes the discontinuities
-!   - Steps must be repeats in the dependent variable, X
-!   - Derivates at the steps are computed using the point
-!     at the derivate and the closest point within that piece
-!   - A point lying directly on the discontinuity will recieve the
-!     value of the first or smallest piece in terms of X
-!   - Beginning and Ending points of the Function become beginning
-!     and ending points of the first and last splines
-!   - A Step with a value of zero is undefined
-!   - Works with functions with steps or no steps
-! See the comment below about the ScS bug
-!  subroutine pspline_evaluation(xa, ya, y2a, n, x, y, steps)
-!
-!  implicit none
-!
-!  integer n
-!  double precision xa(n),ya(n),y2a(n)
-!  integer steps(n)
-!  double precision x, y
-!
-!  integer i, l, n1, n2
-!
-!  do i = 1,n-1,1
-!     if(steps(i+1) == 0) return
-!     if(x >= xa(steps(i)) .and. x <= xa(steps(i+1))) then
-!        call pspline_piece(i,n1,n2,l,n,steps)
-!        call spline_evaluation(xa(n1), ya(n1), y2a(n1), l, x, y)
-!!        return <-- Commented out to fix ScS bug
-!     endif
-!  enddo
-!
-!  end subroutine pspline_evaluation
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-!  subroutine pspline_piece(i,n1,n2,l,n,s)
-!
-!  implicit none
-!
-!  integer i, n1, n2, l, n, s(n)
-!  n1 = s(i)+1
-!  if(i == 1) n1 = s(i)
-!  n2 = s(i+1)
-!  l = n2 - n1 + 1
-!
-!  end subroutine pspline_piece
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-!  subroutine pspline_construction(x, y, n, yp1, ypn, y2, steps)
-!
-!  implicit none
-!
-!  integer n
-!  double precision x(n),y(n),y2(n)
-!  double precision yp1, ypn
-!  integer steps(n)
-!
-!  integer i,r, l, n1,n2
-!
-!  steps(:) = 0
-!
-!  ! Find steps in x, defining pieces
-!  steps(1) = 1
-!  r = 2
-!  do i = 2,n
-!     if(x(i) == x(i-1)) then
-!        steps(r) = i-1
-!        r = r + 1
-!     endif
-!  enddo
-!  steps(r) = n
-!
-!  ! Run spline for each piece
-!  do i = 1,r-1
-!     call pspline_piece(i,n1,n2,l,n,steps)
-!     ! Determine the First Derivates at Begin/End Points
-!     yp1 = ( y(n1+1) - y(n1) ) / ( x(n1+1) - x(n1))
-!     ypn = ( y(n2) - y(n2-1) ) / ( x(n2) - x(n2-1))
-!     call spline_construction(x(n1),y(n1),l,yp1,ypn,y2(n1))
-!  enddo
-!
-!  end subroutine pspline_construction
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-!
-! not used anymore...
-!
-!  subroutine attenuation_lookup_value(i, r)
-!
-!  implicit none
-!
-!  include 'constants.h'
-!
-!  integer i
-!  double precision r
-!
-!  r = dble(i) / TABLE_ATTENUATION
-!
-!  end subroutine attenuation_lookup_value
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-!  subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
-!
-!  implicit none
-!
-!  include 'mpif.h'
-!  include 'constants.h'
-!
-!! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer                                   :: Qn                 ! Number of points
-!  end type model_attenuation_variables
-!
-!  type (model_attenuation_variables) AM_V
-!! model_attenuation_variables
-!
-!  integer iregion_code
-!  character(len=150) prname
-!  integer ier
-!  integer myrank
-!  integer, save :: first_time_called = 1
-!
-!  call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-!  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
-!    first_time_called = 0
-!    open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin',status='unknown',form='unformatted')
-!    write(27) AM_V%QT_c_source
-!    write(27) AM_V%Qtau_s
-!    write(27) AM_V%Qn
-!    write(27) AM_V%Qr
-!    write(27) AM_V%Qmu
-!    write(27) AM_V%Qtau_e
-!    close(27)
-!  endif
-!
-!  end subroutine attenuation_save_arrays
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-!  subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
-!
-!  implicit none
-!
-!  include 'constants.h'
-!
-!! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer                                   :: Qn                 ! Number of points
-!  end type model_attenuation_variables
-!
-!  type (model_attenuation_variables) AM_V
-!! model_attenuation_variables
-!
-!  integer iflag, iregion, index
-!  double precision radius
-!
-!  ! Inner Core or not
-!  logical inner_core
-!
-!  index = nint(radius * TABLE_ATTENUATION)
-!
-!!! DK DK this seems incorrect and is difficult to read anyway
-!!! DK DK therefore let me rewrite it better
-!! if(inner_core) then
-!!   if(iflag >= IFLAG_INNER_CORE_NORMAL) then
-!!     iregion = IREGION_ATTENUATION_INNER_CORE
-!!   else if(iflag >= IFLAG_OUTER_CORE_NORMAL) then
-!!     iregion = 6
-!!   endif
-!! else
-!!   if(iflag >= IFLAG_MANTLE_NORMAL) then
-!!     iregion = IREGION_ATTENUATION_CMB_670
-!!   else if(iflag == IFLAG_670_220) then
-!!     iregion = IREGION_ATTENUATION_670_220
-!!   else if(iflag <= IFLAG_220_80) then
-!!     iregion = IREGION_ATTENUATION_220_80
-!!   else
-!!     iregion = IREGION_ATTENUATION_80_SURFACE
-!!   endif
-!! endif
-!  if(inner_core) then
-!
-!    if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-!       iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
-!       iflag == IFLAG_IN_FICTITIOUS_CUBE) then
-!      iregion = IREGION_ATTENUATION_INNER_CORE
-!    else
-!! this is fictitious for the outer core, which has no Qmu attenuation since it is fluid
-!!      iregion = IREGION_ATTENUATION_80_SURFACE + 1
-!       iregion = IREGION_ATTENUATION_UNDEFINED
-!    endif
-!
-!  else
-!
-!    if(iflag == IFLAG_MANTLE_NORMAL) then
-!      iregion = IREGION_ATTENUATION_CMB_670
-!    else if(iflag == IFLAG_670_220) then
-!      iregion = IREGION_ATTENUATION_670_220
-!    else if(iflag == IFLAG_220_80) then
-!      iregion = IREGION_ATTENUATION_220_80
-!    else if(iflag == IFLAG_CRUST .or. iflag == IFLAG_80_MOHO) then
-!      iregion = IREGION_ATTENUATION_80_SURFACE
-!    else
-!! this is fictitious for the outer core, which has no Qmu attenuation since it is fluid
-!!      iregion = IREGION_ATTENUATION_80_SURFACE + 1
-!       iregion = IREGION_ATTENUATION_UNDEFINED
-!    endif
-!
-!  endif
-!
-!! Clamp regions
-!  if(index < AM_V%Qrmin(iregion)) index = AM_V%Qrmin(iregion)
-!  if(index > AM_V%Qrmax(iregion)) index = AM_V%Qrmax(iregion)
-!
-!  end subroutine get_attenuation_index
-!
-!
-!-------------------------------------------------------------------------------------------------
-!
-! not used anymore...
-!
-!  subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
-!
-!  implicit none
-!
-!  include 'constants.h'
-!
-!! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer                                   :: Qn                 ! Number of points
-!  end type model_attenuation_variables
-!
-!  type (model_attenuation_variables) AM_V
-!! model_attenuation_variables
-!
-!  double precision RICB, RCMB, R670, R220, R80
-!  integer i
-!
-!  allocate(AM_V%Qrmin(6))
-!  allocate(AM_V%Qrmax(6))
-!  allocate(AM_V%QrDisc(5))
-!
-!  AM_V%QrDisc(1) = RICB
-!  AM_V%QrDisc(2) = RCMB
-!  AM_V%QrDisc(3) = R670
-!  AM_V%QrDisc(4) = R220
-!  AM_V%QrDisc(5) = R80
-!
-!   ! INNER CORE
-!  AM_V%Qrmin(IREGION_ATTENUATION_INNER_CORE) = 1      ! Center of the Earth
-!     i = nint(RICB / 100.d0)   ! === BOUNDARY === INNER CORE / OUTER CORE
-!  AM_V%Qrmax(IREGION_ATTENUATION_INNER_CORE) = i - 1  ! Inner Core Boundary (Inner)
-!
-!  ! OUTER_CORE
-!  AM_V%Qrmin(6) = i ! Inner Core Boundary (Outer)
-!      i = nint(RCMB / 100.d0)  ! === BOUNDARY === INNER CORE / OUTER CORE
-!  AM_V%Qrmax(6) = i - 1
-!
-!  ! LOWER MANTLE
-!  AM_V%Qrmin(IREGION_ATTENUATION_CMB_670) = i
-!       i = nint(R670 / 100.d0) ! === BOUNDARY === 670 km
-!  AM_V%Qrmax(IREGION_ATTENUATION_CMB_670) = i - 1
-!
-!  ! UPPER MANTLE
-!  AM_V%Qrmin(IREGION_ATTENUATION_670_220) = i
-!       i = nint(R220 / 100.d0) ! === BOUNDARY === 220 km
-!  AM_V%Qrmax(IREGION_ATTENUATION_670_220) = i - 1
-!
-!  ! MANTLE ISH LITHOSPHERE
-!  AM_V%Qrmin(IREGION_ATTENUATION_220_80) = i
-!       i = nint(R80 / 100.d0) ! === BOUNDARY === 80 km
-!  AM_V%Qrmax(IREGION_ATTENUATION_220_80) = i - 1
-!
-!  ! CRUST ISH LITHOSPHERE
-!  AM_V%Qrmin(IREGION_ATTENUATION_80_SURFACE) = i
-!  AM_V%Qrmax(IREGION_ATTENUATION_80_SURFACE) = NRAD_ATTENUATION
-!
-!  end subroutine set_attenuation_regions_1D
-!
-
