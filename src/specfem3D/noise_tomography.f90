@@ -25,10 +25,6 @@
 !
 !=====================================================================
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
-
 ! subroutine for NOISE TOMOGRAPHY
 ! chracterize noise statistics
 ! for a given point (xcoord,ycoord,zcoord), specify the noise direction "normal_x/y/z_noise"
@@ -76,6 +72,7 @@
 
 ! subroutine for NOISE TOMOGRAPHY
 ! read parameters
+
   subroutine read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
                                    islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
                                    noise_sourcearray,xigll,yigll,zigll,nspec_top, &
@@ -83,6 +80,7 @@
                                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                    irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
   implicit none
+
   include 'mpif.h'
   include "precision.h"
   include "constants.h"
@@ -418,6 +416,7 @@
                                 ibool_crust_mantle,islice_selected_rec,ispec_selected_rec, &
                                 it,irec_master_noise)
   implicit none
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
@@ -427,13 +426,14 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle  ! both input and output
   ! output parameters
+
   ! local parameters
   integer :: i,j,k,iglob,it
 
 
   ! adds noise source (only if this proc carries the noise)
   if(myrank == islice_selected_rec(irec_master_noise)) then
-    ! adds nosie source contributions
+    ! adds noise source contributions
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -468,6 +468,7 @@
                     ibelm_top_crust_mantle,ibool_crust_mantle, &
                     nspec_top,noise_surface_movie,it)
   implicit none
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
@@ -476,6 +477,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) ::  displ_crust_mantle
   ! output parameters
+
   ! local parameters
   integer :: ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
@@ -610,17 +612,17 @@
   do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
 
-    k = NGLLZ
+      k = NGLLZ
 
-    ! loop on all the points inside the element
-    do j = 1,NGLLY
-      do i = 1,NGLLX
-        ipoin = ipoin + 1
-        iglob = ibool_crust_mantle(i,j,k,ispec)
+      ! loop on all the points inside the element
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ipoin = ipoin + 1
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-        eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
-              noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
-              noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
+          eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
+                noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
+                noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
 
 
         accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
