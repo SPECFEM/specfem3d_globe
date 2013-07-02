@@ -1857,6 +1857,7 @@
 !
   real(kind=4) WK1(LMAX+1),WK2(LMAX+1),WK3(LMAX+1)
   real(kind=4) XLAT,XLON
+  integer, parameter :: maxl=72
   real(kind=4),dimension((maxl+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
 
   real(kind=4), parameter :: RADIAN = 57.2957795

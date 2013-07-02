@@ -52,7 +52,6 @@
   ! counters to keep track of the number of elements on each of the
   ! five absorbing boundaries
   integer :: ispecb1,ispecb2,ispecb3,ispecb4,ispecb5
-  integer :: ier
 
   ! processor identification
   character(len=150) :: prname

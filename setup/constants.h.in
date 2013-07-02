@@ -51,18 +51,6 @@
   integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 
 !*********************************************************************************************************
-! added these parameters for the future GPU version of the solver with mesh coloring
-
-! sort outer elements first and then inner elements
-! in order to use non blocking MPI to overlap communications
-  logical, parameter :: SORT_MESH_INNER_OUTER = .true.
-
-! add mesh coloring for the GPU + MPI implementation
-  logical, parameter :: USE_MESH_COLORING_GPU = .false.
-  integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
-  integer, parameter :: NGNOD_HEXAHEDRA = 8
-
-!*********************************************************************************************************
 
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
@@ -252,7 +240,14 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
-! mesh coloring:
+!*********************************************************************************************************
+! added these parameters for the GPU version of the solver with mesh coloring
+
+! sort outer elements first and then inner elements
+! in order to use non blocking MPI to overlap communications
+  logical, parameter :: SORT_MESH_INNER_OUTER = .true.
+  integer, parameter :: NGNOD_HEXAHEDRA = 8
+
 ! add mesh coloring for the GPU + MPI implementation
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
   integer, parameter :: MAX_NUMBER_OF_COLORS = 1000

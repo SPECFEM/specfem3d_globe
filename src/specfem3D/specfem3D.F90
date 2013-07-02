@@ -963,6 +963,10 @@
   integer :: it_temp,seismo_current_temp
   real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
 
+! to switch between simulation type 1 mode and simulation type 3 mode
+! in exact undoing of attenuation
+  logical :: undo_att_sim_type_3
+
 ! *************************************************
 ! ************** PROGRAM STARTS HERE **************
 ! *************************************************
@@ -1063,6 +1067,11 @@
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
                 PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
+
+! to switch between simulation type 1 mode and simulation type 3 mode
+! in exact undoing of attenuation
+  undo_att_sim_type_3 = .false.
+
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -2330,6 +2339,10 @@ else ! if UNDO_ATTENUATION
   endif
 
   if(SIMULATION_TYPE == 3)then
+
+! to switch between simulation type 1 mode and simulation type 3 mode
+! in exact undoing of attenuation
+    undo_att_sim_type_3 = .true.
 
     allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')
