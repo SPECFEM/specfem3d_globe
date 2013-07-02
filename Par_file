@@ -49,7 +49,7 @@ ROTATION                        = .true.
 ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
-ABSORBING_CONDITIONS            = .true.
+ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 15.0d0
