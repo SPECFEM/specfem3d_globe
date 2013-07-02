@@ -31,7 +31,7 @@
 
 ! non-blocking routines
 
-  subroutine assemble_MPI_vector_s(NPROC,NGLOB_AB, &
+  subroutine assemble_MPI_vector_s(NPROC,nglob, &
                                            array_val, &
                                            buffer_send_vector,buffer_recv_vector, &
                                            num_interfaces,max_nibool_interfaces, &
@@ -46,10 +46,10 @@
   include "constants.h"
 
   integer :: NPROC
-  integer :: NGLOB_AB
+  integer :: nglob
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_AB) :: array_val
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: array_val
 
   integer :: num_interfaces,max_nibool_interfaces
 
@@ -170,7 +170,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_vector_w(NPROC,NGLOB_AB, &
+  subroutine assemble_MPI_vector_w(NPROC,nglob, &
                                            array_val, &
                                            buffer_recv_vector, &
                                            num_interfaces,max_nibool_interfaces, &
@@ -184,10 +184,10 @@
   include "constants.h"
 
   integer :: NPROC
-  integer :: NGLOB_AB
+  integer :: nglob
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_AB) :: array_val
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: array_val
 
   integer :: num_interfaces,max_nibool_interfaces
 

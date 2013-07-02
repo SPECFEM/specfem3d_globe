@@ -30,7 +30,7 @@
 !----
 
 
-  subroutine assemble_MPI_scalar(NPROC,NGLOB_AB,array_val, &
+  subroutine assemble_MPI_scalar(NPROC,nglob,array_val, &
                         num_interfaces,max_nibool_interfaces, &
                         nibool_interfaces,ibool_interfaces, &
                         my_neighbours)
@@ -42,10 +42,10 @@
   include "constants.h"
 
   integer :: NPROC
-  integer :: NGLOB_AB
+  integer :: nglob
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val
 
   integer :: num_interfaces,max_nibool_interfaces
   integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
@@ -56,7 +56,6 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar
   integer, dimension(:), allocatable :: request_send_scalar
   integer, dimension(:), allocatable :: request_recv_scalar
-
 
   integer ipoin,iinterface,ier
 
@@ -124,9 +123,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-
-  subroutine assemble_MPI_scalar_s(NPROC,NGLOB_AB,array_val, &
+  subroutine assemble_MPI_scalar_s(NPROC,nglob,array_val, &
                         buffer_send_scalar,buffer_recv_scalar, &
                         num_interfaces,max_nibool_interfaces, &
                         nibool_interfaces,ibool_interfaces, &
@@ -140,11 +137,11 @@
   include "constants.h"
 
   integer :: NPROC
-  integer :: NGLOB_AB
+  integer :: nglob
   integer :: num_interfaces,max_nibool_interfaces
 
 ! array to send
-  real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
+  real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
 
 
   real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
@@ -188,7 +185,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_scalar_w(NPROC,NGLOB_AB,array_val, &
+  subroutine assemble_MPI_scalar_w(NPROC,nglob,array_val, &
                         buffer_recv_scalar,num_interfaces, &
                         max_nibool_interfaces, &
                         nibool_interfaces,ibool_interfaces, &
@@ -201,10 +198,10 @@
   include "constants.h"
 
   integer :: NPROC
-  integer :: NGLOB_AB
+  integer :: nglob
   integer :: num_interfaces,max_nibool_interfaces
 ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
+  real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
 
 
   real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
