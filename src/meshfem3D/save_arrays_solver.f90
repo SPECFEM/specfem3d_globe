@@ -44,7 +44,7 @@
                     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                     ANISOTROPIC_INNER_CORE,OCEANS, &
                     tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,vx,vy,vz,vnspec, &
-                    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
+                    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank)
 
   implicit none
 
@@ -55,7 +55,7 @@
   character(len=150) prname
   integer iregion_code,NCHUNKS
 
-  integer nspec,nglob_xy,nglob,nspec_stacey
+  integer nspec,nglob_xy,nglob,nspec_stacey,myrank
   integer npointot_oceans
 
 ! Stacey
@@ -138,7 +138,7 @@
   logical, dimension(nspec) :: ispec_is_tiso
 
   ! local parameters
-  integer i,j,k,ispec,iglob,nspec1, nglob1
+  integer i,j,k,ispec,iglob,nspec1, nglob1,ier
   real(kind=CUSTOM_REAL) scaleval1,scaleval2
 
 ! save nspec and nglob, to be used in combine_paraview_data

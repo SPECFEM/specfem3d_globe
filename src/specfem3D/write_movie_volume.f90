@@ -299,7 +299,7 @@
 
   ! variables
   character(len=150) prname
-  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT
+  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,ier
   real(kind=CUSTOM_REAL) :: muv_3dmovie
   real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
@@ -452,7 +452,7 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
-  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,iglob
+  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,iglob,ier
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
 
   character(len=150) outputname
