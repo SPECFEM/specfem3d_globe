@@ -737,11 +737,7 @@
             if(nglob /= npoin2D) call exit_MPI(myrank,'duplicates detected in buffer')
 
             ! write list of selected points to output buffer
-
-            ! debug file output
-            if( DEBUG ) then
-              write(IOUT_BUFFERS,*) npoin2D
-            endif
+            write(IOUT_BUFFERS,*) npoin2D
 
             ! stores face infos
             do ipoin2D = 1,npoin2D
@@ -749,10 +745,7 @@
                   xstore_selected(ipoin2D),ystore_selected(ipoin2D),zstore_selected(ipoin2D)
             enddo
 
-            ! debug file output
-            if( DEBUG ) then
-              close(IOUT_BUFFERS)
-            endif
+            close(IOUT_BUFFERS)
 
             ! store result to compare number of points for sender and for receiver
             if(imode_comm == 1) then
@@ -772,10 +765,7 @@
     enddo
   enddo
 
-  ! debug file output
-  if( DEBUG ) then
-    if(myrank == 0) close(IOUT)
-  endif
+  if(myrank == 0) close(IOUT)
 
   ! check that total number of messages is correct
   if(imsg /= NUMMSGS_FACES) call exit_MPI(myrank,'incorrect total number of messages')
@@ -905,12 +895,9 @@
 
   endif
 
-  ! debug file output
-  if( DEBUG ) then
     ! file to store the list of processors for each message for corners
     if(myrank == 0) &
       open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
-  endif
 
   ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
@@ -985,10 +972,7 @@
 
   enddo
 
-  ! debug file output
-  if( DEBUG ) then
-    if(myrank == 0) close(IOUT)
-  endif
+  if(myrank == 0) close(IOUT)
 
   ! deallocate arrays
   deallocate(iproc_sender)

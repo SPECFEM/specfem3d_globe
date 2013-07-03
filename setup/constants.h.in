@@ -490,16 +490,6 @@
   integer, parameter :: THREE_D_MODEL_S40RTS = 11
   integer, parameter :: THREE_D_MODEL_GAPP2  = 12
 
-! define flag for regions of the global Earth for attenuation
-  integer, parameter :: NUM_REGIONS_ATTENUATION = 5
-
-  integer, parameter :: IREGION_ATTENUATION_INNER_CORE = 1
-  integer, parameter :: IREGION_ATTENUATION_CMB_670 = 2
-  integer, parameter :: IREGION_ATTENUATION_670_220 = 3
-  integer, parameter :: IREGION_ATTENUATION_220_80 = 4
-  integer, parameter :: IREGION_ATTENUATION_80_SURFACE = 5
-  integer, parameter :: IREGION_ATTENUATION_UNDEFINED = 6
-
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3
 
@@ -508,10 +498,6 @@
 ! ATTENUATION_COMP_MAXIMUM:    Maximum Q Value
   integer, parameter :: ATTENUATION_COMP_RESOLUTION = 1
   integer, parameter :: ATTENUATION_COMP_MAXIMUM    = 5000
-
-! for lookup table for attenuation every 100 m in radial direction of Earth model
-  integer, parameter          :: NRAD_ATTENUATION  = 70000
-  double precision, parameter :: TABLE_ATTENUATION = R_EARTH_KM * 10.0d0
 
 ! for determination of the attenuation period range
 ! if this is set to .true. then the hardcoded values will be used
