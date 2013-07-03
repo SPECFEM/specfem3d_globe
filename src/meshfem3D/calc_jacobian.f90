@@ -331,7 +331,7 @@
            call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll2D')
         endif
 
-        ! calculates j2D acobian
+        ! calculates 2D Jacobian
         unx = yxi*zeta - yeta*zxi
         uny = zxi*xeta - zeta*xxi
         unz = xxi*yeta - xeta*yxi
