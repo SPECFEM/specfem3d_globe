@@ -396,6 +396,10 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
 
+! to save a significant amount of memory space, we equivalence these two arrays that are never used simultaneously
+! (ibathy_topo is only used before the beginning of the time loop, while R_memory_crust_mantle is only used inside the time loop)
+  equivalence(R_memory_crust_mantle,ibathy_topo)
+
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
 
@@ -936,7 +940,7 @@
   logical :: you_can_start_doing_IOs
 #endif
 
-!this is for LDDRK
+! this is for LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
             displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
