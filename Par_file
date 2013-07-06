@@ -61,6 +61,19 @@ PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
 NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
 
+# this for LDDRK high-order time scheme instead of Newmark
+USE_LDDRK                       = .false.
+
+# the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+# in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+# and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+# depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+# (for instance for models with a large range of Poisson's ratio values).
+# Since the code computes the time step using the Newmark scheme, for LDDRK we will simply
+# multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+INCREASE_CFL_FOR_LDDRK          = .true.
+RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
+
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
@@ -124,6 +137,43 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 # print source time function
 PRINT_SOURCE_TIME_FUNCTION      = .false.
 
-# output kernels on a regular grid instead of on the mesh points
+#-----------------------------------------------------------
+#
+#  adjoint kernel outputs
+#
+#-----------------------------------------------------------
+
+# this parameter must be set to .true. to compute anisotropic kernels
+# in crust and mantle (related to the 21 Cij in geographical coordinates)
+# default is .false. to compute isotropic kernels (related to alpha and beta)
+ANISOTROPIC_KL                  = .false.
+
+# output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho)
+# rather than fully anisotropic kernels when ANISOTROPIC_KL above is set to .true.
+SAVE_TRANSVERSE_KL              = .false.
+
+# output approximate hessian in crust mantle region
+APPROXIMATE_HESS_KL             = .false.
+
+# forces transverse isotropy for all mantle elements
+# (default is to use transverse isotropy only between MOHO and 220)
+USE_FULL_TISO_MANTLE            = .false.
+
+# output kernel mask to zero out source region
+SAVE_SOURCE_MASK                = .false.
+
+# output kernels on a regular grid instead of on the GLL mesh points (a bit expensive)
 SAVE_REGULAR_KL                 = .false.
+
+#-----------------------------------------------------------
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
+
+# set to true to use the ADIOS library for I/Os
+ADIOS_ENABLED                   = .false.
+ADIOS_FOR_FORWARD_ARRAYS        = .true.
+ADIOS_FOR_MPI_ARRAYS            = .true.
+ADIOS_FOR_ARRAYS_SOLVER         = .true.
+ADIOS_FOR_AVS_DX                = .true.
 
