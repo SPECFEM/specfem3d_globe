@@ -30,10 +30,10 @@
     receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
     ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,vector_assemble,ndim_assemble,iphase_CC)
 
+  use mpi
+
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
   include 'constants.h'
 
 ! include values created by the mesher

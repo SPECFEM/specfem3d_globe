@@ -52,11 +52,11 @@
 
 ! standard routine to setup model
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   ! model_atten3D_QRFSI12_variables
   type model_atten3D_QRFSI12_variables

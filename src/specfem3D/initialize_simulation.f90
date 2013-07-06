@@ -57,9 +57,10 @@
                 rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
                 PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 

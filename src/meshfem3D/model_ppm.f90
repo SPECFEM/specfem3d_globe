@@ -95,11 +95,11 @@
 
 ! standard routine to setup model
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
 ! point profile model_variables
   type model_ppm_variables
@@ -544,9 +544,10 @@
 
 ! smooth model parameters
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
 

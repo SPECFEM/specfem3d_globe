@@ -332,9 +332,10 @@
                     addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
                     ichunk,iproc_xi,iproc_eta)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -590,9 +591,11 @@
               LOCAL_PATH,SIMULATION_TYPE)
 
 ! to couple mantle with outer core
+
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 

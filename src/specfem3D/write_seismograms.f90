@@ -37,16 +37,15 @@
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
 
- implicit none
+  use mpi
 
-! standard include of the MPI library
- include 'mpif.h'
+  implicit none
 
- include "constants.h"
- include "precision.h"
+  include "constants.h"
+  include "precision.h"
 
 ! parameters
- integer nrec,nrec_local,myrank,it_end,NPROCTOT,NEX_XI !,NSOURCES
+ integer nrec,nrec_local,myrank,it_end,NPROCTOT,NEX_XI
  character(len=256) sisname
 
  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS

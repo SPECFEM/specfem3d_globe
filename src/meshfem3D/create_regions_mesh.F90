@@ -48,11 +48,9 @@
 
   use meshfem3D_models_par
 
-  implicit none
+  use mpi
 
-!  include "constants.h"
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   ! this to cut the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER

@@ -63,11 +63,11 @@
 
 ! standard routine to setup model
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
 ! model_jp3d_variables
   type model_jp3d_variables

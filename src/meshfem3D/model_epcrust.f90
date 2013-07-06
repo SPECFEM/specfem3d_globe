@@ -35,10 +35,11 @@
 
   subroutine model_epcrust_broadcast(myrank,EPCRUST)
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  include 'mpif.h'
 
   type model_epcrust_variables
     sequence

@@ -36,10 +36,9 @@
                                   myrank,LOCAL_PATH,addressing, &
                                   ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"

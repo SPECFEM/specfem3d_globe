@@ -45,11 +45,11 @@
 
 ! standard routine to setup model
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   ! model_aniso_mantle_variables
   type model_aniso_mantle_variables

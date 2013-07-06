@@ -59,10 +59,11 @@
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY, &
                 SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
 
+  use mpi
+
   implicit none
 
 ! standard include of the MPI library
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
 
@@ -332,10 +333,10 @@
 !! \param GPU_MODE Flag to indicate that GPU computing is ON or OFF.
   subroutine broadcast_gpu_parameters(myrank,GPU_MODE)
 
+  use mpi
+
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
 
@@ -360,10 +361,10 @@ subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
     ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, &
     ADIOS_FOR_AVS_DX)
 
+  use mpi
+
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
 

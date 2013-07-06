@@ -35,9 +35,10 @@
                     ibelm_top_crust_mantle,ibool_crust_mantle,nspec_top, &
                     NIT,it,OUTPUT_FILES,MOVIE_VOLUME_TYPE)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "precision.h"
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"

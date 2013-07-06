@@ -446,11 +446,9 @@
 ! preparing model parameter coefficients on all processes
 
   use meshfem3D_models_par
+  use mpi
 
   implicit none
-
-! standard include of the MPI library
-  include 'mpif.h'
 
   integer myrank
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
@@ -595,14 +593,11 @@
 ! preparing model parameter coefficients on all processes
 
   use meshfem3D_models_par
+  use mpi
 
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
-
   integer myrank
-
 
 !---
 !
@@ -1166,13 +1161,10 @@
 ! returns velocity/density for default crust
 
   use meshfem3D_models_par
+  use mpi
 
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
-
-  !integer myrank
   double precision,intent(in) :: lat,lon,r
   double precision,intent(out) :: vpc,vsc,rhoc
   double precision,intent(out) :: moho
