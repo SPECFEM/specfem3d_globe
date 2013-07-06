@@ -478,9 +478,17 @@
   write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
   if(ATTENUATION) then
-    att1     = NGLLX
-    att2     = NGLLY
-    att3     = NGLLZ
+!! DK DK July 2013: to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
+!! DK DK July 2013: per spectral element because the Q attenuation factor is then constant per layer of the geological model
+    if(ATTENUATION_3D) then
+      att1     = NGLLX
+      att2     = NGLLY
+      att3     = NGLLZ
+    else
+      att1     = 1
+      att2     = 1
+      att3     = 1
+    endif
     att4     = NSPEC(IREGION_CRUST_MANTLE)
     att5     = NSPEC(IREGION_INNER_CORE)
   else
