@@ -618,7 +618,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise
   ! output parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_NOISE) :: &
     Sigma_kl_crust_mantle
   ! local parameters
   integer :: i,j,k,ispec,iglob,ipoin,ispec2D
@@ -671,7 +671,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
   integer myrank
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: Sigma_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_NOISE) :: Sigma_kl_crust_mantle
   character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
