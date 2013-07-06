@@ -660,11 +660,11 @@
 
   integer isp, npoints_slice
   integer, dimension(:), allocatable :: slice_number
-  integer, dimension(NM_KL_REG_PTS) :: points_slice
-  integer, dimension(NM_KL_REG_PTS) :: ispec_reg
-  real, dimension(NGLLX, NM_KL_REG_PTS) :: hxir_reg
-  real, dimension(NGLLY, NM_KL_REG_PTS) :: hetar_reg
-  real, dimension(NGLLZ, NM_KL_REG_PTS) :: hgammar_reg
+  integer, dimension(NM_KL_REG_PTS_VAL) :: points_slice
+  integer, dimension(NM_KL_REG_PTS_VAL) :: ispec_reg
+  real, dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
+  real, dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
+  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: absorb_xmin_crust_mantle5, &
      absorb_xmax_crust_mantle5, absorb_ymin_crust_mantle5, absorb_ymax_crust_mantle5
