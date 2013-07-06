@@ -1167,7 +1167,7 @@
 !
 
 
-! --- evaluate perturbations in per cent
+! --- evaluate perturbations in percent
 
   subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
     numker,numhpa,numcof,ihpa,lmax,nylm, &
@@ -1334,7 +1334,7 @@
 
   enddo ! --- by ish
 
-! --- evaluate perturbations in per cent
+! --- evaluate perturbations in percent
 
   dvsh=vsh3drel
   dvsv=vsv3drel
@@ -1422,7 +1422,7 @@
 !              xlospl(1,ihpa),radspl(1,ihpa), &
 !              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
-! making sure array bounds
+! making sure of array bounds
       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
               nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
