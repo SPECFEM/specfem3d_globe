@@ -534,7 +534,6 @@
         c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
 ! local to global mapping
-!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
 ! mass matrices
@@ -1382,7 +1381,7 @@
 
     if (myrank==0) then
       write(IMAIN,*) ' '
-      write(IMAIN,*) 'Finish locating kernel output regular grid'
+      write(IMAIN,*) 'Finished locating kernel output regular grid'
       write(IMAIN,*) ' '
     endif
   endif
