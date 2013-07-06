@@ -45,10 +45,10 @@
   integer myrank
 
   integer, intent(in) :: npoints_slice
-  real, dimension(NGLLX, NM_KL_REG_PTS), intent(in) :: hxir_reg
-  real, dimension(NGLLY, NM_KL_REG_PTS), intent(in) :: hetar_reg
-  real, dimension(NGLLZ, NM_KL_REG_PTS), intent(in) :: hgammar_reg
-  integer, dimension(NM_KL_REG_PTS), intent(in) :: ispec_reg
+  real, dimension(NGLLX, NM_KL_REG_PTS_VAL), intent(in) :: hxir_reg
+  real, dimension(NGLLY, NM_KL_REG_PTS_VAL), intent(in) :: hetar_reg
+  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL), intent(in) :: hgammar_reg
+  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: ispec_reg
 
   double precision :: scale_t,scale_displ
 

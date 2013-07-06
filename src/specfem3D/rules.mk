@@ -315,7 +315,7 @@ $O/get_event_info.o: ${SETUP}/constants.h $S/get_event_info.f90
 $O/locate_receivers.o: ${SETUP}/constants.h $S/locate_receivers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/locate_receivers.o ${FCFLAGS_f90} $S/locate_receivers.f90
 
-$O/locate_regular_points.o: ${SETUP}/constants.h $S/locate_regular_points.f90
+$O/locate_regular_points.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/locate_regular_points.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/locate_regular_points.o ${FCFLAGS_f90} $S/locate_regular_points.f90
 
 $O/locate_sources.o: ${SETUP}/constants.h $S/locate_sources.f90
