@@ -42,7 +42,6 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
   real(kind=CUSTOM_REAL), dimension(NDIM,*) :: displ,accel,b_displ
   integer nspec, iregion_code
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-!  integer, dimension(*) :: idoubling
   logical, dimension(*) :: ispec_is_tiso
   real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
 
@@ -129,7 +128,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ystore,zstore,ibool,ispec_is_tiso) !idoubling)
+                     ystore,zstore,ibool,ispec_is_tiso)
 
           ! ----- forward strain -------
           temp1(:) = matmul(b_displl(:,:,j,k), hprime_xx(i,:))
@@ -154,7 +153,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ystore,zstore,ibool,ispec_is_tiso) !-- idoubling)
+                     ystore,zstore,ibool,ispec_is_tiso)
 
           ! ---- precompute K_d for F-S boundaries ----
           if (fluid_solid_boundary) then
@@ -236,8 +235,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-           ystore,zstore,ibool,ispec_is_tiso) !--idoubling)
-
+           ystore,zstore,ibool,ispec_is_tiso)
 
   implicit none
 
@@ -254,7 +252,6 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
         c36store,c44store,c45store,c46store,c55store,c56store,c66store
   real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,*) :: ibool
-!  integer, dimension(*) :: idoubling
   logical, dimension(*) :: ispec_is_tiso
 
 ! --- local variables ---
@@ -333,7 +330,6 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
    else if( .not. ispec_is_tiso(ispec) ) then
-!else if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec) == IFLAG_80_MOHO .or. idoubling(ispec) == IFLAG_220_80))) then
 
      ! isotropic elements
 

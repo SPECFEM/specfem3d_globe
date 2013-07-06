@@ -452,11 +452,6 @@
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
-  ! checks that 3D attenuation models use 3D arrays
-  if( ATTENUATION_3D .and. ( .not. USE_3D_ATTENUATION_ARRAYS )) then
-    stop '3D attenuation models need 3D attenuation arrays'
-  endif
-
   end subroutine get_model_parameters_flags
 
 !

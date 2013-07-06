@@ -767,12 +767,11 @@
     ! count number of anisotropic elements in current region
     ! should be zero in all the regions except in the mantle
     ! (used only for checks in meshfem3D() routine)
-    !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
 
   if(SORT_MESH_INNER_OUTER) then
 
-!!!! David Michea: detection of the edges, coloring and permutation separately
+! detection of the edges, coloring and permutation separately
   allocate(perm(nspec))
 
 ! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
