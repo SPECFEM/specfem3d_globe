@@ -268,25 +268,6 @@
 !!
 !!-----------------------------------------------------------
 
-! this parameter must be set to .true. to compute anisotropic kernels
-! in crust and mantle (related to the 21 Cij in geographical coordinates)
-! default is .false. to compute isotropic kernels (related to alpha and beta)
-  logical, parameter :: ANISOTROPIC_KL = .false.
-
-! output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho)
-! rather than fully anisotropic kernels in case ANISOTROPIC_KL is set to .true.
-  logical, parameter :: SAVE_TRANSVERSE_KL = .false.
-
-! output approximate hessian in crust mantle region
-  logical, parameter :: APPROXIMATE_HESS_KL = .false.
-
-! forces transverse isotropy for all mantle elements
-! (default is to use transverse isotropy only between MOHO and 220 )
-  logical, parameter :: USE_FULL_TISO_MANTLE = .false.
-
-! output kernel mask to zero out source region
-  logical, parameter :: SAVE_SOURCE_MASK = .false.
-
 ! regular kernel parameters
   character(len=*), parameter :: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt'
   integer, parameter :: NM_KL_REG_LAYER = 100
@@ -569,8 +550,6 @@
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
-!!!!!!!!!!!!!! parameters added for the thread-safe version of the code
-
 !!-----------------------------------------------------------
 !!
 !! model constants
@@ -713,20 +692,9 @@
   integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
-! this for LDDRK
-  logical, parameter :: USE_LDDRK = .false. ! .true.
-
-! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
-! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
-! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
-! depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
-! (for instance for models with a large range of Poisson's ratio values).
-! Since the SPECFEM3D_GLOBE code computes the time step using the Newmark scheme, for LDDRK we will simply
-! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
-  logical, parameter :: INCREASE_CFL_FOR_LDDRK = .true.
-  double precision, parameter :: RATIO_BY_WHICH_TO_INCREASE_IT = 1.5d0
-
+! for LDDRK high-order time scheme
   integer, parameter :: NSTAGE = 6
+
   real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)

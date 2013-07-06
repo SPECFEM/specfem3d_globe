@@ -860,7 +860,7 @@
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
           MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-          ANGULAR_WIDTH_XI_IN_DEGREES
+          ANGULAR_WIDTH_XI_IN_DEGREES,RATIO_BY_WHICH_TO_INCREASE_IT
 
   logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
@@ -868,11 +868,12 @@
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
-          PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
+          PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
-
-!  logical COMPUTE_AND_STORE_STRAIN
 
 ! for SAC headers for seismograms
   integer yr_SAC,jda_SAC,ho_SAC,mi_SAC
@@ -888,10 +889,6 @@
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
   character(len=150) prname
-
-!daniel: debugging
-!  character(len=256) :: filename
-!  logical, parameter :: SNAPSHOT_INNER_CORE = .true.
 
 ! lookup table every km for gravity
   real(kind=CUSTOM_REAL) minus_g_cmb,minus_g_icb
@@ -1064,7 +1061,10 @@
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
-                PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
+                PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
 
 ! to switch between simulation type 1 mode and simulation type 3 mode
 ! in exact undoing of attenuation
@@ -1450,7 +1450,7 @@
                       stlat,stlon,stele,stbur,nu, &
                       nrec_local,nadj_rec_local,nrec_simulation, &
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
-                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH)
+                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH,SAVE_SOURCE_MASK)
 
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
@@ -2525,7 +2525,7 @@ endif
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH)
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
     else
     call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
@@ -2534,7 +2534,7 @@ endif
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH)
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
     endif
 
     ! noise strength kernel

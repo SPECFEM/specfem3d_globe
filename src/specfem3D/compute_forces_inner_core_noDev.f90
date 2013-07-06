@@ -51,7 +51,7 @@
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
           vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL)
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
   implicit none
 
@@ -213,6 +213,7 @@
 
 !for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
@@ -663,15 +664,7 @@
 
       do i_SLS = 1,N_SLS
         factor_common_use = factor_common(i_SLS,:,:,:,ispec)
-!        do i_memory = 1,5
-!          R_memory(i_memory,i_SLS,:,:,:,ispec) = &
-!                  alphaval(i_SLS) * &
-!                  R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
-!                  factor_common_use * &
-!                  (betaval(i_SLS) * &
-!                  epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-!        enddo
-        if(USE_LDDRK)then
+        if(USE_LDDRK) then
           do i_memory = 1,5
             R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &
                      deltat * (muvstore(:,:,:,ispec)*factor_common_use*epsilondev_loc(i_memory,:,:,:) - &

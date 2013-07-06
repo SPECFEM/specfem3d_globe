@@ -1275,7 +1275,7 @@
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
                                         epsilondev_loc_nplus1,epsilondev_loc,&
-                                        istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat)
+                                        istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1326,6 +1326,7 @@
 
 ! for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
   real(kind=CUSTOM_REAL) :: deltat
@@ -1374,7 +1375,7 @@
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
                                         epsilondev_loc_nplus1,epsilondev_loc,&
-                                        istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat)
+                                        istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1425,6 +1426,7 @@
 
 ! for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
   real(kind=CUSTOM_REAL) :: deltat
@@ -1437,11 +1439,6 @@
 
   do i_SLS = 1,N_SLS
     factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
-!    do i_memory = 1,5
-!       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-!            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-!            (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-!    enddo
 
     if(USE_LDDRK)then
       do i_memory = 1,5

@@ -54,7 +54,7 @@
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL)
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -225,8 +225,9 @@
   integer NSPEC2D_BOTTOM_INNER_CORE,iend,ispec_glob
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
-!for LDDRK
+! for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
@@ -536,7 +537,7 @@
                                          alphaval,betaval,gammaval, &
                                          c44store,muvstore, &
                                          epsilondev_loc_nplus1,epsilondev_loc,&
-                                         istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat)
+                                         istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
 
     endif
 

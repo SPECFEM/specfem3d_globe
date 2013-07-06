@@ -28,7 +28,7 @@
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT if you add new parameters to DATA/Par_file, remember to also
-!!!!!! VERY IMPORTANT broadcast them with MPI_BCAST in src/shared/broadcast_compute_parameters.f90
+!!!!!! VERY IMPORTANT broadcast them with MPI_BCAST in src/shared/broadcast_computed_parameters.f90
 !!!!!! VERY IMPORTANT otherwise the code will *NOT* work
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT
@@ -51,7 +51,10 @@
                                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
                                 SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
-                                SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
+                                SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
 
   implicit none
 
@@ -67,7 +70,7 @@
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
           HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM, &
           MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,&
-          MOVIE_SOUTH_DEG,RECORD_LENGTH_IN_MINUTES
+          MOVIE_SOUTH_DEG,RECORD_LENGTH_IN_MINUTES,RATIO_BY_WHICH_TO_INCREASE_IT
 
   logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
          MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
@@ -77,7 +80,10 @@
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
-         PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION
+         PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
+         USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+         USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+         ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -144,6 +150,12 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: UNDO_ATTENUATION'
   call read_value_integer(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP_ATTENUATION'
+  call read_value_logical(USE_LDDRK, 'solver.USE_LDDRK', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: USE_LDDRK'
+  call read_value_logical(INCREASE_CFL_FOR_LDDRK, 'solver.INCREASE_CFL_FOR_LDDRK', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: INCREASE_CFL_FOR_LDDRK'
+  call read_value_double_precision(RATIO_BY_WHICH_TO_INCREASE_IT, 'solver.RATIO_BY_WHICH_TO_INCREASE_IT', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: RATIO_BY_WHICH_TO_INCREASE_IT'
   call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MOVIE_SURFACE'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME', ierr)
@@ -204,74 +216,45 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECEIVERS_CAN_BE_BURIED'
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: PRINT_SOURCE_TIME_FUNCTION'
+  call read_value_logical(ANISOTROPIC_KL, 'solver.ANISOTROPIC_KL', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ANISOTROPIC_KL'
+  call read_value_logical(SAVE_TRANSVERSE_KL, 'solver.SAVE_TRANSVERSE_KL', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_TRANSVERSE_KL'
+  call read_value_logical(APPROXIMATE_HESS_KL, 'solver.APPROXIMATE_HESS_KL', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: APPROXIMATE_HESS_KL'
+  call read_value_logical(USE_FULL_TISO_MANTLE, 'solver.USE_FULL_TISO_MANTLE', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: USE_FULL_TISO_MANTLE'
+  call read_value_logical(SAVE_SOURCE_MASK, 'solver.SAVE_SOURCE_MASK', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_SOURCE_MASK'
   call read_value_logical(SAVE_REGULAR_KL, 'solver.SAVE_REGULAR_KL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_REGULAR_KL'
+
+  call read_value_logical(GPU_MODE, 'solver.GPU_MODE', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_MODE'
+
+!! DK DK July 2013: temporary, the time for Daniel Peter to merge his GPU implementation
+  if(GPU_MODE) stop 'GPU_MODE not implemented yet'
+
+  call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_ENABLED'
+
+!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
+  if(ADIOS_ENABLED) stop 'ADIOS support not implemented yet'
+
+  call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, 'solver.ADIOS_FOR_FORWARD_ARRAYS', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_FORWARD_ARRAYS'
+
+  call read_value_logical(ADIOS_FOR_MPI_ARRAYS, 'solver.ADIOS_FOR_MPI_ARRAYS', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_MPI_ARRAYS'
+
+  call read_value_logical(ADIOS_FOR_ARRAYS_SOLVER, 'solver.ADIOS_FOR_ARRAYS_SOLVER', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_ARRAYS_SOLVER'
+
+  call read_value_logical(ADIOS_FOR_AVS_DX, 'solver.ADIOS_FOR_AVS_DX', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_AVS_DX'
 
   ! closes parameter file
   call close_parameter_file()
 
   end subroutine read_parameter_file
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_gpu_mode(GPU_MODE)
-
-  implicit none
-  include "constants.h"
-
-  logical :: GPU_MODE
-
-  ! initializes flags
-  GPU_MODE = .false.
-
-  ! opens file Par_file
-  call open_parameter_file()
-
-  call read_value_logical(GPU_MODE, 'solver.GPU_MODE')
-
-  ! close parameter file
-  call close_parameter_file()
-
-  end subroutine read_gpu_mode
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-  subroutine read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
-      ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
-
-  implicit none
-  include "constants.h"
-
-  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
-
-  ! initializes flags
-  ADIOS_ENABLED = .false.
-  ADIOS_FOR_FORWARD_ARRAYS = .false.
-  ADIOS_FOR_MPI_ARRAYS = .false.
-  ADIOS_FOR_ARRAYS_SOLVER = .false.
-  ADIOS_FOR_SOLVER_MESHFILES = .false.
-  ADIOS_FOR_AVS_DX = .false.
-  ! opens file Par_file
-  call open_parameter_file()
-  call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
-  if (ADIOS_ENABLED) then
-    call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, &
-        'solver.ADIOS_FOR_FORWARD_ARRAYS')
-    call read_value_logical(ADIOS_FOR_MPI_ARRAYS, &
-        'solver.ADIOS_FOR_MPI_ARRAYS')
-    call read_value_logical(ADIOS_FOR_ARRAYS_SOLVER, &
-        'solver.ADIOS_FOR_ARRAYS_SOLVER')
-    call read_value_logical(ADIOS_FOR_SOLVER_MESHFILES, &
-        'solver.ADIOS_FOR_ARRAYS_SOLVER')
-    call read_value_logical(ADIOS_FOR_AVS_DX, &
-        'solver.ADIOS_FOR_AVS_DX')
-  endif
-  call close_parameter_file()
-
-  end subroutine read_adios_parameters
 
