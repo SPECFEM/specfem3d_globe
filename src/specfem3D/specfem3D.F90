@@ -1371,7 +1371,7 @@
     ! this is the core part that takes up most of the computation time,
     ! and presumably the more processors involved the faster.
     if (npoints_slice > 0) then
-      call locate_reg_points(npoints_slice, points_slice, KL_REG_GRID, &
+      call locate_regular_points(npoints_slice, points_slice, KL_REG_GRID, &
                              NEX_XI, NSPEC_CRUST_MANTLE, &
                              xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
                              ibool_crust_mantle, &

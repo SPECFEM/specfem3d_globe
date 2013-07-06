@@ -153,7 +153,7 @@ end subroutine find_regular_grid_slice_number
 !==============================================================
 
 ! how about using single precision for the iterations?
-subroutine locate_reg_points(npoints_slice,points_slice,GRID, &
+subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
                              NEX_XI,nspec,xstore,ystore,zstore,ibool, &
                              xigll,yigll,zigll,ispec_reg, &
                              hxir_reg,hetar_reg,hgammar_reg)
@@ -354,7 +354,7 @@ subroutine locate_reg_points(npoints_slice,points_slice,GRID, &
 ! DEBUG
 !  print *, 'Maximum distance discrepancy ', maxval(dist_final(1:npoints_slice))
 
-end subroutine locate_reg_points
+end subroutine locate_regular_points
 
 !==============================================================
 
