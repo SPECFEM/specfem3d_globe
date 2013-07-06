@@ -53,8 +53,7 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    ispec_is_tiso)
-
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE)
 
 ! adds a regular spectral element to the different regions of the mesh
 
@@ -90,7 +89,7 @@
 ! 2D shape functions and their derivatives
   double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
+  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE
 
   double precision RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
@@ -278,7 +277,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
-                         xigll,yigll,zigll,ispec_is_tiso)
+                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then

@@ -59,7 +59,10 @@
                         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
                         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
                         USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY,NOISE_TOMOGRAPHY,&
-                        SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
+                        SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
 
   implicit none
 
@@ -98,7 +101,8 @@
   double precision DT,ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400, &
           R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
+          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
+          RATIO_BY_WHICH_TO_INCREASE_IT
 
   double precision MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST,&
           MOVIE_NORTH,MOVIE_SOUTH
@@ -106,7 +110,10 @@
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ONE_CRUST,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
           ATTENUATION_3D,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
-          EMULATE_ONLY
+          EMULATE_ONLY, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX
 
   integer NEX_MAX
 
@@ -170,7 +177,10 @@
                           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
                           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY, &
-                          SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
+                          SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
 
   ! converts values to radians
   MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
@@ -224,7 +234,7 @@
                           NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL, &
                           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
                           ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
-                          ANISOTROPIC_INNER_CORE)
+                          ANISOTROPIC_INNER_CORE,USE_LDDRK,INCREASE_CFL_FOR_LDDRK,RATIO_BY_WHICH_TO_INCREASE_IT)
 
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
@@ -366,8 +376,7 @@
                           NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL, &
                           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
                           ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
-                          ANISOTROPIC_INNER_CORE)
-
+                          ANISOTROPIC_INNER_CORE,USE_LDDRK,INCREASE_CFL_FOR_LDDRK,RATIO_BY_WHICH_TO_INCREASE_IT)
 
   implicit none
 
@@ -382,11 +391,11 @@
 
   integer NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL
 
-  double precision DT
+  double precision DT,RATIO_BY_WHICH_TO_INCREASE_IT
   double precision R_CENTRAL_CUBE
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
-  logical ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,ANISOTROPIC_INNER_CORE
+  logical ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,ANISOTROPIC_INNER_CORE,USE_LDDRK,INCREASE_CFL_FOR_LDDRK
 
 ! local variables
   integer multiplication_factor
@@ -672,36 +681,6 @@
 
    call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
 
-    !! DK DK suppressed because this routine should not write anything to the screen
-    !    write(*,*)'##############################################################'
-    !    write(*,*)
-    !    write(*,*)' Auto Radial Meshing Code '
-    !    write(*,*)' Consult read_compute_parameters.f90 and auto_ner.f90 '
-    !    write(*,*)' This should only be invoked for chunks less than 90 degrees'
-    !    write(*,*)' and for chunks greater than 1248 elements wide'
-    !    write(*,*)
-    !    write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES
-    !    write(*,*)'NEX:                      ', NEX_MAX
-    !    write(*,*)'NER_CRUST:                ', NER_CRUST
-    !    write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
-    !    write(*,*)'NER_220_80:               ', NER_220_80
-    !    write(*,*)'NER_400_220:              ', NER_400_220
-    !    write(*,*)'NER_600_400:              ', NER_600_400
-    !    write(*,*)'NER_670_600:              ', NER_670_600
-    !    write(*,*)'NER_771_670:              ', NER_771_670
-    !    write(*,*)'NER_TOPDDOUBLEPRIME_771:  ', NER_TOPDDOUBLEPRIME_771
-    !    write(*,*)'NER_CMB_TOPDDOUBLEPRIME:  ', NER_CMB_TOPDDOUBLEPRIME
-    !    write(*,*)'NER_OUTER_CORE:           ', NER_OUTER_CORE
-    !    write(*,*)'NER_TOP_CENTRAL_CUBE_ICB: ', NER_TOP_CENTRAL_CUBE_ICB
-    !    write(*,*)'R_CENTRAL_CUBE:           ', R_CENTRAL_CUBE
-    !    write(*,*)'multiplication factor:    ', multiplication_factor
-    !    write(*,*)
-    !    write(*,*)'DT:                       ',DT
-    !    write(*,*)'MIN_ATTENUATION_PERIOD    ',MIN_ATTENUATION_PERIOD
-    !    write(*,*)'MAX_ATTENUATION_PERIOD    ',MAX_ATTENUATION_PERIOD
-    !    write(*,*)
-    !    write(*,*)'##############################################################'
-
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
         ! case 1D + two crustal layers
@@ -733,7 +712,7 @@
     ! using inner core anisotropy, simulations might become unstable in solid
     if( ANISOTROPIC_INNER_CORE ) then
       ! DT = DT*(1.d0 - 0.1d0) not working yet...
-      stop 'anisotropic inner core - unstable feature, uncomment this line in read_compute_parameters.f90'
+      stop 'anisotropic inner core - unstable feature, uncomment this line in read_compute_parameters.f90 if you really want to'
     endif
 
   endif

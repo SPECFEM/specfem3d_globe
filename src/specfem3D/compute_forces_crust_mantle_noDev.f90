@@ -54,7 +54,7 @@
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL)
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
   implicit none
 
@@ -237,6 +237,7 @@
 
 !for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
@@ -922,13 +923,7 @@
             factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)
           endif
 
-!          R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * &
-!                    R_memory(i_memory,i_SLS,:,:,:,ispec) + &
-!                    factor_common_c44_muv * &
-!                    (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + &
-!                    gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
-
-         if(USE_LDDRK)then
+         if(USE_LDDRK) then
            R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &
                     deltat * (factor_common_c44_muv(:,:,:)*epsilondev_loc(i_memory,:,:,:) - &
                               R_memory(i_memory,i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))

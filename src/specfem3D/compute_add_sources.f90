@@ -29,7 +29,7 @@
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source,istage)
+                                hdur,xi_source,eta_source,gamma_source,nu_source,istage,USE_LDDRK)
 
   implicit none
 
@@ -68,6 +68,7 @@
 
 ! for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
 
   do isource = 1,NSOURCES
 

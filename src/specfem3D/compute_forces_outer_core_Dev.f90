@@ -45,7 +45,7 @@
                             hprimewgll_xx,hprimewgll_xxT, &
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
                             ibool,MOVIE_VOLUME,&
-                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
+                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -170,6 +170,7 @@
 
 ! for LDDRK
   integer :: istage
+  logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
             A_array_rotation_lddrk,B_array_rotation_lddrk
 

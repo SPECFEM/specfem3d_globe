@@ -35,7 +35,7 @@
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                   eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-                  LOCAL_PATH)
+                  LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
 
   implicit none
 
@@ -88,6 +88,7 @@
   character(len=150) prname
   double precision :: hlagrange
   integer :: ipoint
+  logical :: ANISOTROPIC_KL,SAVE_TRANSVERSE_KL
 
   ! transverse isotropic parameters
   real(kind=CUSTOM_REAL), dimension(21) :: an_kl

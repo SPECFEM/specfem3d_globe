@@ -30,7 +30,7 @@
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
                           deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
-                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,ANISOTROPIC_KL)
 
   implicit none
 
@@ -54,6 +54,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprime_xxT
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+
+  logical :: ANISOTROPIC_KL
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) :: prod

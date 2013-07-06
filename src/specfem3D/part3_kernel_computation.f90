@@ -11,7 +11,7 @@
                           deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle)
+                          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,ANISOTROPIC_KL)
 
     ! outer core
     call compute_kernels_outer_core(ibool_outer_core, &

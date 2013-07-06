@@ -39,7 +39,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
-                         xigll,yigll,zigll,ispec_is_tiso)
+                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
 
   use meshfem3D_models_par
 
@@ -50,7 +50,7 @@
 ! correct number of spectral elements in each block depending on chunk type
   integer ispec,nspec,nspec_stacey
 
-  logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS
+  logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,USE_FULL_TISO_MANTLE
 
   double precision RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,&
     R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER

@@ -37,7 +37,7 @@
                             islice_selected_source,ispec_selected_source, &
                             xi_source,eta_source,gamma_source, nu_source, &
                             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
-                            LOCAL_PATH,SIMULATION_TYPE)
+                            LOCAL_PATH,SIMULATION_TYPE,SAVE_SOURCE_MASK)
 
   use mpi
 
@@ -49,7 +49,7 @@
   integer NPROCTOT
   integer NSTEP,NSOURCES,NEX_XI
 
-  logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCTION
+  logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCTION,SAVE_SOURCE_MASK
 
   double precision DT
 
