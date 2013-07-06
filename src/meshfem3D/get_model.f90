@@ -70,7 +70,9 @@
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
+!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right.
+!! DK DK to Daniel, Jul 2013 I think real custom is better, it works fine in the trunk and these arrays are really huge
+!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
