@@ -38,10 +38,9 @@
                              theta_source,phi_source,rspl,espl,espl2,nspl, &
                              ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"

@@ -30,10 +30,9 @@
 ! version with rank number printed in the error message
   subroutine exit_MPI(myrank,error_msg)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 
@@ -84,10 +83,9 @@
 ! version without rank number printed in the error message
   subroutine exit_MPI_without_rank(error_msg)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 
@@ -140,10 +138,9 @@
 
   subroutine sync_all()
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: ier,rank
 
@@ -162,10 +159,9 @@
 
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
@@ -186,10 +182,9 @@
 
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
@@ -210,10 +205,9 @@
 
   subroutine wait_req(req)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: req
 
@@ -231,10 +225,9 @@
 
   double precision function wtime()
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   wtime = MPI_WTIME()
 
@@ -246,10 +239,9 @@
 
   subroutine min_all_i(sendbuf, recvbuf)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
@@ -268,10 +260,9 @@
 
   subroutine max_all_i(sendbuf, recvbuf)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
@@ -290,10 +281,9 @@
 
   subroutine max_all_cr(sendbuf, recvbuf)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
@@ -312,10 +302,9 @@
 
   subroutine sum_all_i(sendbuf, recvbuf)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: sendbuf, recvbuf
   integer :: ier
@@ -331,10 +320,9 @@
 
   subroutine sum_all_dp(sendbuf, recvbuf)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   double precision sendbuf, recvbuf
   integer ier
@@ -350,10 +338,9 @@
 
   subroutine bcast_iproc_i(buffer,iproc)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: iproc
   integer :: buffer
@@ -370,10 +357,9 @@
 
   subroutine bcast_all_singlei(buffer)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: buffer
 
@@ -390,10 +376,9 @@
 
   subroutine recv_singlei(recvbuf, dest, recvtag)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: dest,recvtag
   integer :: recvbuf
@@ -413,10 +398,9 @@
 
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer :: dest,recvtag
   integer :: recvcount
@@ -436,12 +420,10 @@
 
   subroutine send_i(sendbuf, sendcount, dest, sendtag)
 
+  use mpi
+
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
-
-  !integer sendbuf,sendcount,dest,sendtag
   integer dest,sendtag
   integer sendcount
   integer,dimension(sendcount):: sendbuf
@@ -457,12 +439,10 @@
 
   subroutine send_singlei(sendbuf, dest, sendtag)
 
+  use mpi
+
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
-
-  !integer sendbuf,sendcount,dest,sendtag
   integer :: dest,sendtag
   integer :: sendbuf
   integer :: ier
@@ -477,10 +457,9 @@
 
   subroutine world_size(size)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer size
   integer ier
@@ -495,10 +474,9 @@
 
   subroutine world_rank(rank)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer rank
   integer ier
@@ -513,10 +491,9 @@
 
   subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   integer sendcnt, recvcount, NPROC
   integer, dimension(sendcnt) :: sendbuf
@@ -536,10 +513,9 @@
 
   subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
@@ -563,10 +539,9 @@
 
   subroutine gatherv_all_cr(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"

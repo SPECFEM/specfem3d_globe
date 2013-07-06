@@ -30,13 +30,10 @@
   program xmeshfem3D
 
   use meshfem3D_models_par
+  use mpi
 
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
-
-  !include "constants.h"
   include "precision.h"
 
 !=====================================================================!
@@ -1204,10 +1201,9 @@
                                     RCMB,RICB,R_CENTRAL_CUBE,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)
 
   use meshfem3D_models_par
+  use mpi
 
   implicit none
-
-  include 'mpif.h'
 
   integer :: myrank,NCHUNKS,iregion_code
 

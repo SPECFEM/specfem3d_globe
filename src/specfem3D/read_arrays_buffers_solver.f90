@@ -36,10 +36,9 @@
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA, &
      LOCAL_PATH,NCHUNKS)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 
@@ -158,10 +157,9 @@
      npoin2D_xi,npoin2D_eta, &
      NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,LOCAL_PATH)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 
@@ -313,10 +311,9 @@
      NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROC_XI,NPROC_ETA,LOCAL_PATH)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 

@@ -29,9 +29,10 @@
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           it_begin,it_end,NUMBER_OF_THIS_RUN,NUMBER_OF_RUNS,myrank)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
   include "OUTPUT_FILES/values_from_mesher.h"

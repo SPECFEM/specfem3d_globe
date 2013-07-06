@@ -47,10 +47,9 @@
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL_crust_mantle, &
             NGLOB1D_RADIAL_inner_core,NCHUNKS,iphase)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"

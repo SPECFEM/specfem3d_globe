@@ -47,9 +47,10 @@
                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY,ABSORBING_CONDITIONS, &
                       NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -235,9 +236,10 @@
                       sender_from_slices_to_cube,ibool_central_cube, &
                       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 

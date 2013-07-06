@@ -40,9 +40,10 @@
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
                       HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 

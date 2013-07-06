@@ -65,11 +65,11 @@
 
 ! standard routine to setup model
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -171,9 +171,10 @@
   subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670, &
                     R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
 
+  use mpi
+
   implicit none
 
-  include 'mpif.h'
   include 'constants.h'
 
 ! model_attenuation_variables
@@ -453,8 +454,10 @@
 
   subroutine model_attenuation_storage(Qmu, tau_e, rw, AM_S)
 
+  use mpi
+
   implicit none
-  include 'mpif.h'
+
   include 'constants.h'
 
 ! model_attenuation_storage_var
@@ -597,9 +600,9 @@
 
   subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e, AS_V)
 
-  implicit none
+  use mpi
 
-  include 'mpif.h'
+  implicit none
 
 ! attenuation_simplex_variables
   type attenuation_simplex_variables

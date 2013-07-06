@@ -32,10 +32,10 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 
 ! this version of the routine is based on blocking MPI calls
 
+  use mpi
+
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
   include 'constants.h'
 
 ! for matching with central cube in inner core

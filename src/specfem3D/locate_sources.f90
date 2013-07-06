@@ -39,10 +39,9 @@
                             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
                             LOCAL_PATH,SIMULATION_TYPE)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
