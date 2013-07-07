@@ -73,7 +73,7 @@
         call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -90,12 +90,12 @@
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
       else
         call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -112,7 +112,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
       endif
     endif
 
@@ -206,7 +206,7 @@
           call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -223,13 +223,13 @@
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
         else
           ! div_displ_outer_core is initialized to zero in the following subroutine.
           call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -246,7 +246,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
         endif
 
         do while (b_iphase <= 7) ! make sure the last communications are finished and processed

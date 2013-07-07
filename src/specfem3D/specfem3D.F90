@@ -628,7 +628,7 @@
     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
+  real(kind=CUSTOM_REAL), dimension(1) :: b_div_displ_outer_core_dummy ! dummy array that needs to be there for subroutine calls
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle
@@ -2127,7 +2127,6 @@
     alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
 
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
     ! deviatoric kernel check
     if( deviatoric_outercore) then

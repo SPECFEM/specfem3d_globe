@@ -136,14 +136,11 @@
     enddo
   enddo
 
-
   end subroutine compute_kernels_crust_mantle
-
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine compute_kernels_outer_core(ibool_outer_core, &
                         xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -154,7 +151,7 @@
                         b_displ_outer_core,b_accel_outer_core, &
                         vector_accel_outer_core,vector_displ_outer_core, &
                         b_vector_displ_outer_core, &
-                        div_displ_outer_core,b_div_displ_outer_core, &
+                        div_displ_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
@@ -186,7 +183,6 @@
              vector_displ_outer_core, b_vector_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
         rhostore_outer_core,kappavstore_outer_core
@@ -206,6 +202,7 @@
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) :: tempy1l,tempy2l,tempy3l
   real(kind=CUSTOM_REAL) :: tempz1l,tempz2l,tempz3l
+  real(kind=CUSTOM_REAL) :: b_div_displ_outer_core
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
@@ -424,10 +421,10 @@
           kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
 
           div_displ_outer_core(i,j,k,ispec) =  kappal * accel_outer_core(iglob)
-          b_div_displ_outer_core(i,j,k,ispec) =  kappal * b_accel_outer_core(iglob)
+          b_div_displ_outer_core =  kappal * b_accel_outer_core(iglob)
 
           alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
-             + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
+             + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core
 
         enddo
       enddo

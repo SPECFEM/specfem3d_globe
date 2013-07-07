@@ -45,7 +45,7 @@
                             hprimewgll_xx,hprimewgll_xxT, &
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
                             ibool,MOVIE_VOLUME,&
-                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -76,7 +76,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
-  logical MOVIE_VOLUME
+  integer :: SIMULATION_TYPE
+  logical :: MOVIE_VOLUME
 
   ! local parameters
 
@@ -179,7 +180,7 @@
 ! ****************************************************
 
   if(istage == 1) then
-    if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+    if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
   computed_elements = 0
@@ -408,7 +409,7 @@
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
             !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
             !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
+            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. MOVIE_VOLUME) then
               div_displfluid(i,j,k,ispec) =  &
                         minus_rho_g_over_kappa_fluid(int_radius) &
                         * (dpotentialdx_with_rot * gxl &
