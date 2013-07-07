@@ -52,7 +52,7 @@
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
 
 ! adds doubling elements to the different regions of the mesh
 
@@ -64,7 +64,7 @@
   ! code for the four regions of the mesh
   integer iregion_code
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
+  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS,ATT1,ATT2,ATT3
   integer NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
@@ -129,16 +129,16 @@
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right.
-!! DK DK to Daniel, Jul 2013 I think real custom is better, it works fine in the trunk and these arrays are really huge
+!! DK DK to Daniel, Jul 2013: double precision in branch.
+!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
 !! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS)                  :: tau_s
+  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,nspec_att) :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,nspec_att) :: tau_e_store
+  double precision, dimension(N_SLS) :: tau_s
   double precision  T_c_source
 
 ! rotation matrix from Euler angles
@@ -356,7 +356,7 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
+                         nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
                          xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
 

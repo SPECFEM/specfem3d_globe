@@ -231,7 +231,7 @@ $O/convert_time.o: $S/convert_time.f90
 $O/define_derivation_matrices.o: ${SETUP}/constants.h $S/define_derivation_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_derivation_matrices.o ${FCFLAGS_f90} $S/define_derivation_matrices.f90
 
-$O/get_attenuation.o: ${SETUP}/constants.h $S/get_attenuation.f90
+$O/get_attenuation.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/get_attenuation.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_attenuation.o ${FCFLAGS_f90} $S/get_attenuation.f90
 
 $O/get_backazimuth.o: ${SETUP}/constants.h $S/get_backazimuth.f90

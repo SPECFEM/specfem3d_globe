@@ -50,7 +50,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
   implicit none
@@ -73,13 +73,13 @@
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
 
 ! variable lengths for factor_common and one_minus_sum_beta
-  integer vx, vy, vz, vnspec
+  integer vnspec
 
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1
@@ -359,8 +359,10 @@
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
           endif
 
-          if(ATTENUATION_VAL) then
+          if(ATTENUATION_3D_VAL) then
             minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+          else if(ATTENUATION_VAL) then
+            minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
           endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -412,8 +414,10 @@
             mul = muvstore(i,j,k,ispec)
 
             ! use unrelaxed parameters if attenuation
-            if(ATTENUATION_VAL) then
+            if(ATTENUATION_3D_VAL) then
               mul = mul * one_minus_sum_beta(i,j,k,ispec)
+            else if(ATTENUATION_VAL) then
+              mul = mul * one_minus_sum_beta(1,1,1,ispec)
             endif
 
             lambdalplus2mul = kappal + FOUR_THIRDS * mul
@@ -663,7 +667,25 @@
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
 
       do i_SLS = 1,N_SLS
-        factor_common_use = factor_common(i_SLS,:,:,:,ispec)
+
+    if(ATTENUATION_3D_VAL) then
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_use(i,j,k) = factor_common(i_SLS,i,j,k,ispec)
+          enddo
+        enddo
+      enddo
+    else
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_use(i,j,k) = factor_common(i_SLS,1,1,1,ispec)
+          enddo
+        enddo
+      enddo
+    endif
+
         if(USE_LDDRK) then
           do i_memory = 1,5
             R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &

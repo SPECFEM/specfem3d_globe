@@ -53,7 +53,7 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
   implicit none
@@ -75,10 +75,10 @@
 ! to allow for optimization of cache access by compiler
   integer i_SLS,i_memory
 ! variable sized array variables for one_minus_sum_beta and factor_common
-  integer vx, vy, vz, vnspec
+  integer vnspec
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta,deltat
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
@@ -87,8 +87,8 @@
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
@@ -382,8 +382,11 @@
           endif
 
           ! precompute terms for attenuation if needed
-          if(ATTENUATION_VAL) then
+          if(ATTENUATION_3D_VAL) then
             one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+            minus_sum_beta =  one_minus_sum_beta_use - 1.0
+          else if(ATTENUATION_VAL) then
+            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
             minus_sum_beta =  one_minus_sum_beta_use - 1.0
           endif
 
@@ -916,7 +919,25 @@
 ! IMPROVE we should probably use an average value instead
 
           ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-          factor_common_c44_muv = factor_common(i_SLS,:,:,:,ispec)
+
+    if(ATTENUATION_3D_VAL) then
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_c44_muv(i,j,k) = factor_common(i_SLS,i,j,k,ispec)
+          enddo
+        enddo
+      enddo
+    else
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_c44_muv(i,j,k) = factor_common(i_SLS,1,1,1,ispec)
+          enddo
+        enddo
+      enddo
+    endif
+
           if(ANISOTROPIC_3D_MANTLE_VAL) then
             factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
           else

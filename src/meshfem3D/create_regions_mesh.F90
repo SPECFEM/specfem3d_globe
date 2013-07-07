@@ -42,7 +42,8 @@
                           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
                           this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
-                          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta,USE_FULL_TISO_MANTLE)
+                          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta,USE_FULL_TISO_MANTLE, &
+                          ATT1,ATT2,ATT3)
 
 ! creates the different regions of the mesh
 
@@ -67,7 +68,7 @@
   integer, dimension(:), allocatable :: perm_layer
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_tiso,nspec_stacey,nspec_actually,nspec_att
+  integer nspec,nspec_tiso,nspec_stacey,nspec_actually,nspec_att,ATT1,ATT2,ATT3
 
   integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS
 
@@ -200,9 +201,9 @@
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
   ! attenuation
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),   allocatable :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store
-  double precision, dimension(N_SLS)                  :: tau_s
+  double precision, dimension(N_SLS) :: tau_s
   double precision  T_c_source
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
@@ -263,8 +264,8 @@
   else
     nspec_att = 1
   endif
-  allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
-          tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+  allocate(Qmu_store(ATT1,ATT2,ATT3,nspec_att), &
+          tau_e_store(N_SLS,ATT1,ATT2,ATT3,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
 
   ! Gauss-Lobatto-Legendre points of integration
@@ -282,7 +283,7 @@
   ! 3D shape functions and their derivatives
   allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ), &
           dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocat 4'
+  if(ier /= 0) stop 'error in allocate 4'
 
   ! 2D shape functions and their derivatives
   allocate(shape2D_x(NGNOD2D,NGLLY,NGLLZ), &
@@ -561,7 +562,7 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot,&
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
 
     ! mesh doubling elements
     if( this_region_has_a_doubling(ilayer) ) &
@@ -592,7 +593,7 @@
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
 
   enddo ! of ilayer_loop
 
@@ -614,7 +615,7 @@
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                         rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
-                        ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
 
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
@@ -744,11 +745,6 @@
               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
               RMIDDLE_CRUST,ROCEAN,iregion_code)
 
-      !> Hejun
-      ! Output material information for all GLL points
-      ! Can be use to check the mesh
-      !    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore,&
-      !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
     endif
 
     deallocate(locval,stat=ier); if(ier /= 0) stop 'error in deallocate'
@@ -1054,7 +1050,7 @@
                   TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                   ANISOTROPIC_INNER_CORE,OCEANS, &
                   tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
-                  size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
+                  ATT1,ATT2,ATT3,size(tau_e_store,5),&
                   NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank)
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
     you_can_start_doing_IOs = .true.

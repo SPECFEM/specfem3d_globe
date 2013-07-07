@@ -34,6 +34,9 @@
 
   include 'constants.h'
 
+! include values created by the mesher
+  include "OUTPUT_FILES/values_from_mesher.h"
+
   integer :: myrank
 
   integer :: vnspec
@@ -43,15 +46,15 @@
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right.
-!! DK DK to Daniel, Jul 2013 I think real custom is better, it works fine in the trunk and these arrays are really huge
+!! DK DK to Daniel, Jul 2013: double precision in branch.
+!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
 !! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec)       :: one_minus_sum_beta, scale_factor
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec)       :: one_minus_sum_beta, scale_factor
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
 
   double precision, dimension(N_SLS)                 :: tau_s
 
@@ -80,9 +83,9 @@
   T_c_source               = T_c_source / scale_t
 
     do ispec = 1, vnspec
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
+      do k = 1, ATT3_VAL
+        do j = 1, ATT2_VAL
+          do i = 1, ATT1_VAL
             tau_e(:) = factor_common(:,i,j,k,ispec)
             Q_mu     = scale_factor(i,j,k,ispec)
 

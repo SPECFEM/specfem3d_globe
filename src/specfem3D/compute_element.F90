@@ -33,7 +33,7 @@
                     kappavstore,muvstore, &
                     ibool, &
                     R_memory, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &
+                    one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
@@ -67,7 +67,7 @@
         kappavstore,muvstore
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! attenuation
   ! memory variables for attenuation
@@ -75,7 +75,7 @@
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -173,8 +173,10 @@
         endif
 
        ! precompute terms for attenuation if needed
-        if(ATTENUATION_VAL) then
+        if(ATTENUATION_3D_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+        else if(ATTENUATION_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
         endif
 
         !
@@ -351,7 +353,7 @@
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
                     R_memory, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &
+                    one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
@@ -393,10 +395,10 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -506,8 +508,10 @@
         endif
 
         ! precompute terms for attenuation if needed
-        if(ATTENUATION_VAL) then
+        if(ATTENUATION_3D_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+        else if(ATTENUATION_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
         endif
 
         !
@@ -881,7 +885,7 @@
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                     ibool, &
                     R_memory, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &
+                    one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
@@ -923,10 +927,10 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -1025,8 +1029,11 @@
         endif
 
         ! precompute terms for attenuation if needed
-        if(ATTENUATION_VAL) then
+        if(ATTENUATION_3D_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          minus_sum_beta =  one_minus_sum_beta_use - 1.0
+        else if(ATTENUATION_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
           minus_sum_beta =  one_minus_sum_beta_use - 1.0
         endif
 
@@ -1271,7 +1278,7 @@
 !
 
   subroutine compute_element_att_memory_cr(ispec,R_memory, &
-                                        vx,vy,vz,vnspec,factor_common, &
+                                        vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
                                         epsilondev_loc_nplus1,epsilondev_loc,&
@@ -1307,9 +1314,9 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
@@ -1322,7 +1329,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
-  integer :: i_memory
+  integer :: i_memory,i,j,k
 
 ! for LDDRK
   integer :: istage
@@ -1338,8 +1345,26 @@
   ! IMPROVE we should probably use an average value instead
 
   do i_SLS = 1,N_SLS
+
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
+
+    if(ATTENUATION_3D_VAL) then
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_c44_muv(i,j,k) = factor_common(i_SLS,i,j,k,ispec)
+          enddo
+        enddo
+      enddo
+    else
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_c44_muv(i,j,k) = factor_common(i_SLS,1,1,1,ispec)
+          enddo
+        enddo
+      enddo
+    endif
 
     if(ANISOTROPIC_3D_MANTLE_VAL) then
       factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * c44store(:,:,:,ispec)
@@ -1371,7 +1396,7 @@
 !
 
   subroutine compute_element_att_memory_ic(ispec,R_memory, &
-                                        vx,vy,vz,vnspec,factor_common, &
+                                        vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
                                         epsilondev_loc_nplus1,epsilondev_loc,&
@@ -1407,9 +1432,9 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
@@ -1422,7 +1447,7 @@
 
   integer :: i_SLS
 
-  integer :: i_memory
+  integer :: i_memory,i,j,k
 
 ! for LDDRK
   integer :: istage
@@ -1438,7 +1463,24 @@
   ! IMPROVE we should probably use an average value instead
 
   do i_SLS = 1,N_SLS
-    factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
+
+    if(ATTENUATION_3D_VAL) then
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_use(i,j,k) = factor_common(i_SLS,i,j,k,ispec)
+          enddo
+        enddo
+      enddo
+    else
+      do k = 1,NGLLZ
+        do j = 1,NGLLZ
+          do i = 1,NGLLZ
+            factor_common_use(i,j,k) = factor_common(i_SLS,1,1,1,ispec)
+          enddo
+        enddo
+      enddo
+    endif
 
     if(USE_LDDRK)then
       do i_memory = 1,5

@@ -43,7 +43,7 @@
                     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                     ANISOTROPIC_INNER_CORE,OCEANS, &
-                    tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,vx,vy,vz,vnspec, &
+                    tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,ATT1,ATT2,ATT3,vnspec, &
                     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank)
 
   implicit none
@@ -127,11 +127,11 @@
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
 
 ! attenuation
-  integer vx, vy, vz, vnspec
+  integer ATT1,ATT2,ATT3,vnspec
   double precision  T_c_source
-  double precision, dimension(N_SLS)                     :: tau_s
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec)        :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
+  double precision, dimension(N_SLS) :: tau_s
+  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,vnspec) :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,vnspec) :: tau_e_store
 
   logical ABSORBING_CONDITIONS,SAVE_MESH_FILES
 
@@ -377,13 +377,10 @@
 
   close(27)
 
-!> Hejun
-! No matter 1D or 3D Attenuation, we save value for gll points
   if(ATTENUATION) then
     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
-
     write(27) tau_s
     write(27) tau_e_store
     write(27) Qmu_store

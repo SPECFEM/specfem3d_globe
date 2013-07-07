@@ -559,10 +559,12 @@
   integer myrank
 
   ! memory variables and standard linear solids for attenuation
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: &
+         one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: &
+         one_minus_sum_beta_inner_core, factor_scale_inner_core
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: factor_common_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_common_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
       c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
@@ -635,7 +637,12 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+
+          if(ATTENUATION_3D_VAL) then
+            scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+          else
+            scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
+          endif
 
           if(ANISOTROPIC_3D_MANTLE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0
@@ -684,7 +691,12 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
+
+          if(ATTENUATION_3D_VAL) then
+            scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
+          else
+            scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.0
+          endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
             mul = muvstore_inner_core(i,j,k,ispec)
@@ -700,7 +712,11 @@
                     + scale_factor_minus_one * mul
           endif
 
-          muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+          if(ATTENUATION_3D_VAL) then
+            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+          else
+            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
+          endif
 
         enddo
       enddo

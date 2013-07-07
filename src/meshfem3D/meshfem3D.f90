@@ -350,7 +350,8 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
+          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY, &
+          ATT1,ATT2,ATT3,ATT4,ATT5
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -550,7 +551,8 @@
           PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
+          ATT1,ATT2,ATT3,ATT4,ATT5)
   endif
 
   ! distributes parameters from master to all processes
@@ -589,7 +591,8 @@
                 SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
+          ATT1,ATT2,ATT3,ATT4,ATT5)
 
   ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
@@ -689,7 +692,6 @@
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
-
       call create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
                           xstore,ystore,zstore,rmins,rmaxs, &
                           iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
@@ -708,8 +710,8 @@
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top,&
                           this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                          mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2),USE_FULL_TISO_MANTLE)
-
+                          mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2),USE_FULL_TISO_MANTLE, &
+                          ATT1,ATT2,ATT3)
     enddo
 
     ! checks number of anisotropic elements found in the mantle
@@ -844,7 +846,7 @@
                    NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                    NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                    NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
+                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,ATT1,ATT2,ATT3,static_memory_size)
 
     NGLOB1D_RADIAL_TEMP(:) = &
       (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
@@ -872,7 +874,8 @@
                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY)
+                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
+                    ATT1,ATT2,ATT3,ATT4,ATT5)
 
   endif   ! end of section executed by main process only
 

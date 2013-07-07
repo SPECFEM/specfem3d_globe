@@ -62,7 +62,8 @@
                         SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
+          ATT1,ATT2,ATT3,ATT4,ATT5)
 
   implicit none
 
@@ -72,7 +73,8 @@
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY
+          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY, &
+          ATT1,ATT2,ATT3,ATT4,ATT5
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
@@ -361,6 +363,28 @@
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
+
+  if(ATTENUATION) then
+!! DK DK July 2013: to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
+!! DK DK July 2013: per spectral element because the Q attenuation factor is then constant per layer of the geological model
+    if(ATTENUATION_3D) then
+      ATT1     = NGLLX
+      ATT2     = NGLLY
+      ATT3     = NGLLZ
+    else
+      ATT1     = 1
+      ATT2     = 1
+      ATT3     = 1
+    endif
+    ATT4     = NSPEC(IREGION_CRUST_MANTLE)
+    ATT5     = NSPEC(IREGION_INNER_CORE)
+  else
+     ATT1 = 1
+     ATT2 = 1
+     ATT3 = 1
+     ATT4 = 1
+     ATT5 = 1
+  endif
 
   end subroutine read_compute_parameters
 

@@ -49,7 +49,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
@@ -78,9 +78,9 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common and one_minus_sum_beta
-  integer vx, vy, vz, vnspec
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  integer vnspec
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
@@ -425,8 +425,10 @@
               epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
             endif
 
-            if(ATTENUATION_VAL) then
+            if(ATTENUATION_3D_VAL) then
               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+            else if(ATTENUATION_VAL) then
+              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
             endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -476,8 +478,10 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL) then
+              if(ATTENUATION_3D_VAL) then
                 mul = mul * one_minus_sum_beta(i,j,k,ispec)
+              else if(ATTENUATION_VAL) then
+                mul = mul * one_minus_sum_beta(1,1,1,ispec)
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
@@ -757,7 +761,7 @@
                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
         ! updates R_memory
         call compute_element_att_memory_ic(ispec,R_memory, &
-                                      vx,vy,vz,vnspec,factor_common, &
+                                      vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
                                       epsilondev_loc_nplus1,epsilondev_loc,&

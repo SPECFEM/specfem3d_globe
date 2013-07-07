@@ -35,7 +35,7 @@
                       xstore,ystore,zstore, &
                       rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                      tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
+                      tau_s,tau_e_store,Qmu_store,T_c_source,ATT1,ATT2,ATT3,vnspec, &
                       ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
 
   use meshfem3D_models_par
@@ -63,22 +63,22 @@
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
   ! attenuation values
-  integer :: vx,vy,vz,vnspec
-  double precision, dimension(N_SLS)                     :: tau_s
+  integer :: ATT1,ATT2,ATT3,vnspec
+  double precision, dimension(N_SLS) :: tau_s
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right.
-!! DK DK to Daniel, Jul 2013 I think real custom is better, it works fine in the trunk and these arrays are really huge
+!! DK DK to Daniel, Jul 2013: double precision in branch.
+!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
 !! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec)        :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
+  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,vnspec) :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,vnspec) :: tau_e_store
   double precision :: T_c_source
 
   logical ABSORBING_CONDITIONS
@@ -317,13 +317,16 @@
             c66store(i,j,k,ispec) = c66
           endif
 
-        endif !CUSTOM_REAL
+        endif ! of CUSTOM_REAL
 
-        !> Hejun
-        ! No matter 1D or 3D attenuation, we save all gll point values
         if(ATTENUATION) then
-          tau_e_store(:,i,j,k,ispec) = tau_e(:)
-          Qmu_store(i,j,k,ispec)     = Qmu
+          if(ATTENUATION_3D) then
+            tau_e_store(:,i,j,k,ispec) = tau_e(:)
+            Qmu_store(i,j,k,ispec)     = Qmu
+          else
+            tau_e_store(:,1,1,1,ispec) = tau_e(:)
+            Qmu_store(1,1,1,ispec)     = Qmu
+          endif
         endif
 
       enddo
