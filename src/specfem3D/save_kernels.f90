@@ -473,7 +473,6 @@
   subroutine save_kernels_outer_core(myrank,scale_t,scale_displ, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
                         LOCAL_PATH)
 
   implicit none
@@ -491,16 +490,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
         rhostore_outer_core,kappavstore_outer_core
 
-  integer nspec_beta_kl_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core) :: &
-    beta_kl_outer_core
-  logical deviatoric_outercore
-
   character(len=150) LOCAL_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
-  real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl,beta_kl
+  real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl
   integer :: ispec,i,j,k
   character(len=150) prname
 
@@ -518,14 +512,6 @@
 
           rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
           alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
-
-
-          !deviatoric kernel check
-          if( deviatoric_outercore ) then
-            beta_kl =  - 2 * beta_kl_outer_core(i,j,k,ispec)  ! not using mul, since it's zero for the fluid
-            beta_kl_outer_core(i,j,k,ispec) = beta_kl
-          endif
-
         enddo
       enddo
     enddo
@@ -539,13 +525,6 @@
   open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) alpha_kl_outer_core
   close(27)
-
-  ! deviatoric kernel check
-  if( deviatoric_outercore ) then
-    open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) beta_kl_outer_core
-    close(27)
-  endif
 
   end subroutine save_kernels_outer_core
 

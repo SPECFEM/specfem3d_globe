@@ -645,11 +645,6 @@
   ! approximate hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
 
-  ! check for deviatoric kernel for outer core region
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: beta_kl_outer_core
-  integer :: nspec_beta_kl_outer_core
-  logical,parameter:: deviatoric_outercore = .false.
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
      beta_kl_inner_core, alpha_kl_inner_core
 
@@ -689,7 +684,10 @@
      reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core, &
      reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: vector_accel_outer_core, &
+! real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: vector_accel_outer_core, &
+!            vector_displ_outer_core, b_vector_displ_outer_core
+!! DK DK July 2013: to save a significant amount of memory, no need for these arrays to be global, a local version is sufficient
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: vector_accel_outer_core, &
              vector_displ_outer_core, b_vector_displ_outer_core
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
@@ -2127,16 +2125,6 @@
     alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
 
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-
-    ! deviatoric kernel check
-    if( deviatoric_outercore) then
-      nspec_beta_kl_outer_core = NSPEC_OUTER_CORE_ADJOINT
-    else
-      nspec_beta_kl_outer_core = 1
-    endif
-    allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating beta outercore')
-    beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
@@ -2557,7 +2545,7 @@ endif
     call save_kernels_outer_core(myrank,scale_t,scale_displ, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core,LOCAL_PATH)
+                        LOCAL_PATH)
 
     ! inner core
     call save_kernels_inner_core(myrank,scale_t,scale_displ, &
@@ -2653,7 +2641,6 @@ endif
     if( APPROXIMATE_HESS_KL ) then
       deallocate(hess_kl_crust_mantle)
     endif
-    deallocate(beta_kl_outer_core)
   endif
 
   ! movies

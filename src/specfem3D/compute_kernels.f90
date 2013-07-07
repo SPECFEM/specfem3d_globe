@@ -154,7 +154,6 @@
                         div_displ_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
                         deltat)
 
   implicit none
@@ -179,7 +178,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
     b_displ_outer_core,b_accel_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: vector_accel_outer_core,&
              vector_displ_outer_core, b_vector_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
@@ -190,30 +189,21 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
     rho_kl_outer_core,alpha_kl_outer_core
 
-  integer nspec_beta_kl_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core) :: &
-    beta_kl_outer_core
-  logical deviatoric_outercore
-
   real(kind=CUSTOM_REAL) deltat
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,kappal
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
-  real(kind=CUSTOM_REAL) :: tempy1l,tempy2l,tempy3l
-  real(kind=CUSTOM_REAL) :: tempz1l,tempz2l,tempz3l
   real(kind=CUSTOM_REAL) :: b_div_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   integer :: i,j,k,l,ispec,iglob
 
-  ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
+  ! outer core -- compute the actual displacement and acceleration
   do ispec = 1, NSPEC_OUTER_CORE
+
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
-          iglob = ibool_outer_core(i,j,k,ispec)
 
           xixl = xix_outer_core(i,j,k,ispec)
           xiyl = xiy_outer_core(i,j,k,ispec)
@@ -229,7 +219,6 @@
           tempx2l = 0._CUSTOM_REAL
           tempx3l = 0._CUSTOM_REAL
 
-
           do l=1,NGLLX
             tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
           enddo
@@ -239,74 +228,12 @@
           enddo
 
           do l=1,NGLLZ
-            tempx3l = tempx3l +  b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
+            tempx3l = tempx3l + b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
           enddo
 
-          b_vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          b_vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          b_vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-
-          !deviatoric kernel check
-          if( deviatoric_outercore ) then
-
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-
-            tempy1l = 0._CUSTOM_REAL
-            tempy2l = 0._CUSTOM_REAL
-            tempy3l = 0._CUSTOM_REAL
-
-            tempz1l = 0._CUSTOM_REAL
-            tempz2l = 0._CUSTOM_REAL
-            tempz3l = 0._CUSTOM_REAL
-
-            ! assumes NGLLX = NGLLY = NGLLZ
-            do l=1,NGLLX
-              tempx1l = tempx1l + b_vector_displ_outer_core(1,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-              tempy1l = tempy1l + b_vector_displ_outer_core(2,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-              tempz1l = tempz1l + b_vector_displ_outer_core(3,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-
-              tempx2l = tempx2l + b_vector_displ_outer_core(1,ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-              tempy2l = tempy2l + b_vector_displ_outer_core(2,ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-              tempz2l = tempz2l + b_vector_displ_outer_core(3,ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-
-              tempx3l = tempx3l +  b_vector_displ_outer_core(1,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-              tempy3l = tempy3l +  b_vector_displ_outer_core(2,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-              tempz3l = tempz3l +  b_vector_displ_outer_core(3,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-
-            ! deviatoric strain
-            b_epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l  &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            b_epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l  &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            b_epsilondev_loc(3) = 0.5*( xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l  &
-                                      + xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l ) &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            b_epsilondev_loc(4) = 0.5*( xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l  &
-                                      + xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l ) &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            b_epsilondev_loc(5) = 0.5*( xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l  &
-                                      + xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l ) &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-          endif ! deviatoric kernel check
+          b_vector_displ_outer_core(1,i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          b_vector_displ_outer_core(2,i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          b_vector_displ_outer_core(3,i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
@@ -324,9 +251,9 @@
             tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
           enddo
 
-          vector_accel_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          vector_accel_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          vector_accel_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+          vector_accel_outer_core(1,i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          vector_accel_outer_core(2,i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          vector_accel_outer_core(3,i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
@@ -344,81 +271,16 @@
             tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
           enddo
 
-          vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-          ! deviatoric kernel check
-          if( deviatoric_outercore ) then
-
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-
-            tempy1l = 0._CUSTOM_REAL
-            tempy2l = 0._CUSTOM_REAL
-            tempy3l = 0._CUSTOM_REAL
-
-            tempz1l = 0._CUSTOM_REAL
-            tempz2l = 0._CUSTOM_REAL
-            tempz3l = 0._CUSTOM_REAL
-
-            ! assumes NGLLX = NGLLY = NGLLZ
-            do l=1,NGLLX
-              tempx1l = tempx1l + vector_displ_outer_core(1,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-              tempy1l = tempy1l + vector_displ_outer_core(2,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-              tempz1l = tempz1l + vector_displ_outer_core(3,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-
-              tempx2l = tempx2l + vector_displ_outer_core(1,ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-              tempy2l = tempy2l + vector_displ_outer_core(2,ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-              tempz2l = tempz2l + vector_displ_outer_core(3,ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-
-              tempx3l = tempx3l + vector_displ_outer_core(1,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-              tempy3l = tempy3l + vector_displ_outer_core(2,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-              tempz3l = tempz3l + vector_displ_outer_core(3,ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-
-            ! deviatoric strain
-            epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l  &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l  &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            epsilondev_loc(3) = 0.5*( xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l  &
-                                      + xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l ) &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            epsilondev_loc(4) = 0.5*( xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l  &
-                                      + xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l ) &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            epsilondev_loc(5) = 0.5*( xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l  &
-                                      + xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l ) &
-                - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
-                              + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
-                              + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-
-            beta_kl_outer_core(i,j,k,ispec) =  beta_kl_outer_core(i,j,k,ispec) &
-               + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-               + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-               + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
-                epsilondev_loc(5)*b_epsilondev_loc(5)) )
-
-          endif ! deviatoric kernel check
+          vector_displ_outer_core(1,i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          vector_displ_outer_core(2,i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          vector_displ_outer_core(3,i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
           rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-             + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
+             + deltat * dot_product(vector_accel_outer_core(:,i,j,k), b_vector_displ_outer_core(:,i,j,k))
 
           kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
+
+          iglob = ibool_outer_core(i,j,k,ispec)
 
           div_displ_outer_core(i,j,k,ispec) =  kappal * accel_outer_core(iglob)
           b_div_displ_outer_core =  kappal * b_accel_outer_core(iglob)
@@ -429,6 +291,7 @@
         enddo
       enddo
     enddo
+
   enddo
 
   end subroutine compute_kernels_outer_core
@@ -473,7 +336,6 @@
                                                           b_eps_trace_over_3_loc_matrix
 
   integer :: i,j,k,ispec,iglob
-
 
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
@@ -546,8 +408,8 @@
 
   ! Building of the local matrix of the strain tensor
   ! for the adjoint field and the regular backward field
-  eps(1:2)=epsdev(1:2)+eps_trace_over_3           !eps11 et eps22
-  eps(3)=-(eps(1)+eps(2))+3*eps_trace_over_3     !eps33
+  eps(1:2)=epsdev(1:2)+eps_trace_over_3           !eps11 and eps22
+  eps(3)=-(eps(1)+eps(2))+3*eps_trace_over_3      !eps33
   eps(4)=epsdev(5)                                !eps23
   eps(5)=epsdev(4)                                !eps13
   eps(6)=epsdev(3)                                !eps12
@@ -997,6 +859,5 @@
       enddo
     enddo
   enddo
-
 
   end subroutine compute_kernels_hessian
