@@ -53,7 +53,7 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
@@ -104,11 +104,11 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
   logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   ! array with the local to global mapping per slice
@@ -377,7 +377,7 @@
             c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
             ibool, &
             R_memory, &
-            one_minus_sum_beta,vx,vy,vz,vnspec, &
+            one_minus_sum_beta,vnspec, &
             tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
             dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
     else
@@ -391,7 +391,7 @@
                kappavstore,muvstore, &
                ibool, &
                R_memory, &
-               one_minus_sum_beta,vx,vy,vz,vnspec, &
+               one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
        else
@@ -405,7 +405,7 @@
                kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                ibool, &
                R_memory, &
-               one_minus_sum_beta,vx,vy,vz,vnspec, &
+               one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
        endif ! .not. ispec_is_tiso
@@ -533,7 +533,7 @@
                                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
       ! updates R_memory
       call compute_element_att_memory_cr(ispec,R_memory, &
-                                         vx,vy,vz,vnspec,factor_common, &
+                                         vnspec,factor_common, &
                                          alphaval,betaval,gammaval, &
                                          c44store,muvstore, &
                                          epsilondev_loc_nplus1,epsilondev_loc,&

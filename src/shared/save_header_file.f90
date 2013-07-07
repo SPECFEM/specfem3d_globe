@@ -51,7 +51,8 @@
                         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY)
+                        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
+                        ATT1,ATT2,ATT3,ATT4,ATT5)
 
   implicit none
 
@@ -104,7 +105,7 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: att1,att2,att3,att4,att5
+  integer :: ATT1,ATT2,ATT3,ATT4,ATT5
   integer :: ier
   character(len=150) HEADER_FILE
 
@@ -477,33 +478,11 @@
   write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_VAL = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
   write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
-  if(ATTENUATION) then
-!! DK DK July 2013: to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
-!! DK DK July 2013: per spectral element because the Q attenuation factor is then constant per layer of the geological model
-    if(ATTENUATION_3D) then
-      att1     = NGLLX
-      att2     = NGLLY
-      att3     = NGLLZ
-    else
-      att1     = 1
-      att2     = 1
-      att3     = 1
-    endif
-    att4     = NSPEC(IREGION_CRUST_MANTLE)
-    att5     = NSPEC(IREGION_INNER_CORE)
-  else
-     att1 = 1
-     att2 = 1
-     att3 = 1
-     att4 = 1
-     att5 = 1
-  endif
-
-  write(IOUT,*) 'integer, parameter :: ATT1 = ',att1
-  write(IOUT,*) 'integer, parameter :: ATT2 = ',att2
-  write(IOUT,*) 'integer, parameter :: ATT3 = ',att3
-  write(IOUT,*) 'integer, parameter :: ATT4 = ',att4
-  write(IOUT,*) 'integer, parameter :: ATT5 = ',att5
+  write(IOUT,*) 'integer, parameter :: ATT1_VAL = ',ATT1
+  write(IOUT,*) 'integer, parameter :: ATT2_VAL = ',ATT2
+  write(IOUT,*) 'integer, parameter :: ATT3_VAL = ',ATT3
+  write(IOUT,*) 'integer, parameter :: ATT4_VAL = ',ATT4
+  write(IOUT,*) 'integer, parameter :: ATT5_VAL = ',ATT5
   write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)

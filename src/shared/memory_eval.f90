@@ -45,7 +45,7 @@
                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                         static_memory_size)
+                         ATT1,ATT2,ATT3,static_memory_size)
 
   implicit none
 
@@ -58,7 +58,7 @@
              MOVIE_VOLUME,SAVE_FORWARD
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
 
-  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE
+  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE,ATT1,ATT2,ATT3
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
@@ -224,24 +224,24 @@
     dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
 
 ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  static_memory_size = static_memory_size + 2.d0*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 2.d0*dble(ATT1)* &
+    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
 
 ! factor_common_crust_mantle
-  static_memory_size = static_memory_size + dble(N_SLS)*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + dble(N_SLS)*dble(ATT1)* &
+    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
 
 ! R_memory_inner_core
   static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
     dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! one_minus_sum_beta_inner_core, factor_scale_inner_core
-  static_memory_size = static_memory_size + 2.d0*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 2.d0*dble(ATT1)* &
+    dble(ATT2)*dble(ATT3)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! factor_common_inner_core
-  static_memory_size = static_memory_size + dble(N_SLS)*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + dble(N_SLS)*dble(ATT1)* &
+    dble(ATT2)*dble(ATT3)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
 ! etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,

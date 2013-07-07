@@ -37,7 +37,7 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
+                         nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
                          xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
 
@@ -48,7 +48,7 @@
   !include "constants.h"
 
 ! correct number of spectral elements in each block depending on chunk type
-  integer ispec,nspec,nspec_stacey
+  integer ispec,nspec,nspec_stacey,ATT1,ATT2,ATT3
 
   logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,USE_FULL_TISO_MANTLE
 
@@ -100,15 +100,15 @@
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right.
-!! DK DK to Daniel, Jul 2013 I think real custom is better, it works fine in the trunk and these arrays are really huge
+!! DK DK to Daniel, Jul 2013: double precision in branch.
+!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
 !! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS)                  :: tau_s
+  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,nspec_att) :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,nspec_att) :: tau_e_store
+  double precision, dimension(N_SLS) :: tau_s
   double precision :: T_c_source
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
@@ -199,7 +199,6 @@
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                     xstore,ystore,zstore,shape3D)
 
-
   ! computes model's velocity/density/... values for the chosen Earth model
   call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
                       kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -212,9 +211,8 @@
                       rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                       tau_s,tau_e_store,Qmu_store,T_c_source, &
-                      size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5), &
+                      ATT1,ATT2,ATT3,size(tau_e_store,5), &
                       ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
-
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   ! note:  using gll points to capture them results in a slightly more accurate mesh.

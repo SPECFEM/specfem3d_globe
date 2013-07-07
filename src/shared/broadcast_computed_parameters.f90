@@ -60,7 +60,8 @@
                 SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
+          ATT1,ATT2,ATT3,ATT4,ATT5)
 
   use mpi
 
@@ -80,7 +81,8 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION
+          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION, &
+          ATT1,ATT2,ATT3,ATT4,ATT5
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -134,7 +136,7 @@
 
   ! local parameters
   double precision, dimension(32) :: bcast_double_precision
-  integer, dimension(40) :: bcast_integer
+  integer, dimension(45) :: bcast_integer
   logical, dimension(51) :: bcast_logical
   integer ier
 
@@ -155,7 +157,8 @@
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
             SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
-            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NSOURCES,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION/)
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NSOURCES,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION, &
+            ATT1,ATT2,ATT3,ATT4,ATT5/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
@@ -181,7 +184,7 @@
   endif
 
   ! broadcasts the information read on the master to the nodes
-  call MPI_BCAST(bcast_integer,40,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(bcast_integer,45,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(bcast_double_precision,32,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(bcast_logical,51,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
@@ -257,6 +260,11 @@
     NSOURCES = bcast_integer(38)
     NOISE_TOMOGRAPHY = bcast_integer(39)
     NT_DUMP_ATTENUATION = bcast_integer(40)
+    ATT1 = bcast_integer(41)
+    ATT2 = bcast_integer(42)
+    ATT3 = bcast_integer(43)
+    ATT4 = bcast_integer(44)
+    ATT5 = bcast_integer(45)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -349,69 +357,3 @@
 
   end subroutine broadcast_computed_parameters
 
-
-!-------------------------------------------------------------------------------------------------
-!> Broadcast the parameters relative to GPU computing settings.
-!! \param myrank The rank of the MPI process in COMM_WORLD
-!! \param GPU_MODE Flag to indicate that GPU computing is ON or OFF.
-  subroutine broadcast_gpu_parameters(myrank,GPU_MODE)
-
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-  include "precision.h"
-
-  integer:: myrank
-  logical:: GPU_MODE
-  ! local parameters
-  integer :: ier
-
-  call MPI_BCAST(GPU_MODE,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting GPU_MODE')
-
-  end subroutine broadcast_gpu_parameters
-
-!-------------------------------------------------------------------------------------------------
-!> Broadcast the parameters relative to ADIOS output settings.
-!! \param myrank The rank of the MPI process in COMM_WORLD
-!! \param ADIOS_ENABLED Flag to indicate ADIOS output for seismograms.
-!! \param ADIOS_FOR_FORWARD_ARRAYS Flag to indicate that intermediate and
-!!        forward arrays are stored with the help of ADIOS.
-subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
-    ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-    ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, &
-    ADIOS_FOR_AVS_DX)
-
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-  include "precision.h"
-
-  integer:: myrank
-  logical:: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
-  ! local parameters
-  integer :: ier
-  call MPI_BCAST(ADIOS_ENABLED,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting ADIOS_ENABLED')
-  call MPI_BCAST(ADIOS_FOR_FORWARD_ARRAYS,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_FORWARD_ARRAYS')
-  call MPI_BCAST(ADIOS_FOR_MPI_ARRAYS,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_MPI_ARRAYS')
-  call MPI_BCAST(ADIOS_FOR_ARRAYS_SOLVER,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_ARRAYS_SOLVER')
-  call MPI_BCAST(ADIOS_FOR_SOLVER_MESHFILES,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_SOLVER_MESHFILES')
-  call MPI_BCAST(ADIOS_FOR_AVS_DX,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_AVS_DX')
-
-end subroutine broadcast_adios_parameters

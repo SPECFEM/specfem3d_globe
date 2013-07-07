@@ -348,8 +348,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -389,8 +388,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
     endif
 
@@ -426,8 +424,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -460,8 +457,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
     endif
 
@@ -640,8 +636,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -681,8 +676,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
       endif
 
@@ -718,8 +712,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -752,8 +745,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
       endif
 
