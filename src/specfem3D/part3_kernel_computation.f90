@@ -26,7 +26,6 @@
                         div_displ_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
                         deltat)
 
     ! inner core
