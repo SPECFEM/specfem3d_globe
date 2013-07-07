@@ -633,6 +633,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle
+
+! can equivalence the above arrays to save a significant amount of memory because they are used only once at the end to save
+! the final kernels in save_kernels_crust_mantle(), once the Jacobian matrix elements xix xiy xiz are never needed any more
+  equivalence(mu_kl_crust_mantle,          xix_crust_mantle)
+  equivalence(kappa_kl_crust_mantle,       xiy_crust_mantle)
+  equivalence(rhonotprime_kl_crust_mantle, xiz_crust_mantle)
+
 ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
   real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: cijkl_kl_crust_mantle
 
@@ -2515,7 +2524,7 @@ endif
 
     ! crust mantle
     if (SAVE_REGULAR_KL) then
-    call save_regular_kernels_crust_mantle(myrank, &
+      call save_regular_kernels_crust_mantle(myrank, &
                   npoints_slice, hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
                   scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
@@ -2526,9 +2535,10 @@ endif
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                   eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
     else
-    call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
+      call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
+                  mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
