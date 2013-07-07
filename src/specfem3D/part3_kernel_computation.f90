@@ -23,7 +23,7 @@
                         b_displ_outer_core,b_accel_outer_core, &
                         vector_accel_outer_core,vector_displ_outer_core, &
                         b_vector_displ_outer_core, &
-                        div_displ_outer_core,b_div_displ_outer_core, &
+                        div_displ_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &

@@ -114,7 +114,7 @@
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
     else
       ! div_displ_outer_core is initialized to zero in the following subroutine.
       call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -137,7 +137,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
     endif
 
     ! Stacey absorbing boundaries
@@ -240,7 +240,7 @@
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
         call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -262,7 +262,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
       endif
 
       do while (iphase <= 7) ! make sure the last communications are finished and processed

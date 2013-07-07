@@ -360,10 +360,9 @@
   static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
 
-  ! b_div_displ_outer_core
   ! rho_kl_outer_core,alpha_kl_outer_core
   static_memory_size = static_memory_size + &
-    3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
+    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
 ! b_R_memory_inner_core
 !! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
