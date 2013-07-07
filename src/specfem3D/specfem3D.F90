@@ -652,7 +652,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_NOISE) :: Sigma_kl_crust_mantle
 
   ! approximate hessian
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_HESS) :: hess_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
      beta_kl_inner_core, alpha_kl_inner_core
@@ -2116,13 +2116,6 @@
     alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     if (NOISE_TOMOGRAPHY == 3) Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
 
-    ! approximate hessian
-    if( APPROXIMATE_HESS_KL ) then
-      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating hessian')
-      hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    endif
-
     ! For anisotropic kernels (in crust_mantle only)
     cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
 
@@ -2646,12 +2639,6 @@ endif
     endif
   endif
   deallocate(seismograms)
-
-  if (SIMULATION_TYPE == 3) then
-    if( APPROXIMATE_HESS_KL ) then
-      deallocate(hess_kl_crust_mantle)
-    endif
-  endif
 
   ! movies
   if(MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
