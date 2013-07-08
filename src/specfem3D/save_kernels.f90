@@ -28,7 +28,8 @@
   subroutine save_kernels_crust_mantle_iso(myrank,scale_t,scale_displ, &
                   rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
-                  mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                  mu_kl_crust_mantle,kappa_kl_crust_mantle,rhonotprime_kl_crust_mantle, &
+                  bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle, &
                   LOCAL_PATH)
@@ -45,8 +46,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
 
+! additional kernels computed locally here from the other ones
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle
+  ! bulk parameterization
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
@@ -59,16 +64,8 @@
   integer :: ispec,i,j,k
   character(len=150) prname
 
-  ! bulk parameterization
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
-    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
-
   ! scaling factors
   scale_kl = scale_t/scale_displ * 1.d9
-
-    ! allocates temporary isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
@@ -104,7 +101,7 @@
             ! where bulk wave speed is c = sqrt( kappa / rho)
             ! note: rhoprime is the same as for (rho,alpha,beta) parameterization
             bulk_c_kl_crust_mantle(i,j,k,ispec) = 2._CUSTOM_REAL * alpha_kl * scale_kl
-            bulk_beta_kl_crust_mantle(i,j,k,ispec ) = 2._CUSTOM_REAL * beta_kl * scale_kl
+            bulk_beta_kl_crust_mantle(i,j,k,ispec) = 2._CUSTOM_REAL * beta_kl * scale_kl
 
         enddo
       enddo
@@ -142,9 +139,6 @@
     open(unit=27,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) bulk_beta_kl_crust_mantle
     close(27)
-
-  ! cleans up temporary kernel arrays
-    deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
 
   end subroutine save_kernels_crust_mantle_iso
 
@@ -403,11 +397,11 @@
                 bulk_sq / alphav_sq * alphav_kl_crust_mantle(i,j,k,ispec) + &
                 bulk_sq / alphah_sq * alphah_kl_crust_mantle(i,j,k,ispec)
 
-              bulk_betah_kl_crust_mantle(i,j,k,ispec ) = &
+              bulk_betah_kl_crust_mantle(i,j,k,ispec) = &
                 betah_kl_crust_mantle(i,j,k,ispec) + &
                 FOUR_THIRDS * betah_sq / alphah_sq * alphah_kl_crust_mantle(i,j,k,ispec)
 
-              bulk_betav_kl_crust_mantle(i,j,k,ispec ) = &
+              bulk_betav_kl_crust_mantle(i,j,k,ispec) = &
                 betav_kl_crust_mantle(i,j,k,ispec) + &
                 FOUR_THIRDS * betav_sq / alphav_sq * alphav_kl_crust_mantle(i,j,k,ispec)
               ! the rest, K_eta and K_rho are the same as above
@@ -420,8 +414,8 @@
               !rho_kl_crust_mantle(i,j,k,ispec) = rhonotprime_kl_crust_mantle(i,j,k,ispec) &
               !                                    + alpha_kl_crust_mantle(i,j,k,ispec) &
               !                                    + beta_kl_crust_mantle(i,j,k,ispec)
-              bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec ) &
-                                                    + bulk_betav_kl_crust_mantle(i,j,k,ispec )
+              bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec) &
+                                                    + bulk_betav_kl_crust_mantle(i,j,k,ispec)
 
         enddo
       enddo
