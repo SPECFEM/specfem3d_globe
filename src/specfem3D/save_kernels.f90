@@ -128,7 +128,6 @@
       do j = 1, NGLLY
         do i = 1, NGLLX
 
-
           if (ANISOTROPIC_KL) then
 
             ! For anisotropic kernels
@@ -268,7 +267,7 @@
                                               + N*an_kl(3) + L*an_kl(4) + F*an_kl(5) &
                                               + rhonotprime_kl_crust_mantle(i,j,k,ispec)
 
-              ! write the kernel in physical units (01/05/2006)
+              ! write the kernel in physical units
               rhonotprime_kl_crust_mantle(i,j,k,ispec) = - rhonotprime_kl_crust_mantle(i,j,k,ispec) * scale_kl
 
               alphav_kl_crust_mantle(i,j,k,ispec) = - alphav_kl_crust_mantle(i,j,k,ispec) * scale_kl

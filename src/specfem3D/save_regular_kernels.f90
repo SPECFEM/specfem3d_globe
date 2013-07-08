@@ -397,7 +397,7 @@
     ! do some transforms that are independent of GLL points
     if (ANISOTROPIC_KL) then
       if (SAVE_TRANSVERSE_KL) then
-        ! write the kernel in physical units (01/05/2006)
+        ! write the kernel in physical units
         rhonotprime_kl_crust_mantle(ipoint) = - rhonotprime_kl_crust_mantle(ipoint) * scale_kl
 
         alphav_kl_crust_mantle(ipoint) = - alphav_kl_crust_mantle(ipoint) * scale_kl
