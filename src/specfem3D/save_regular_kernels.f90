@@ -35,7 +35,7 @@
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                   eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-                  LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
+                  LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY)
 
   implicit none
 
@@ -88,7 +88,7 @@
   character(len=150) prname
   double precision :: hlagrange
   integer :: ipoint
-  logical :: ANISOTROPIC_KL,SAVE_TRANSVERSE_KL
+  logical :: ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY
 
   ! transverse isotropic parameters
   real(kind=CUSTOM_REAL), dimension(21) :: an_kl
@@ -119,7 +119,7 @@
            beta_kl_crust_mantle_reg(npoints_slice), &
            alpha_kl_crust_mantle_reg(npoints_slice))
 
-  if( SAVE_TRANSVERSE_KL ) then
+  if( SAVE_TRANSVERSE_KL_ONLY ) then
     ! transverse isotropic kernel arrays for file output
     allocate(alphav_kl_crust_mantle(npoints_slice), &
              alphah_kl_crust_mantle(npoints_slice), &
@@ -144,7 +144,7 @@
   do ipoint = 1, npoints_slice
     ispec = ispec_reg(ipoint)
     if (ANISOTROPIC_KL) then
-      if ( SAVE_TRANSVERSE_KL ) then
+      if ( SAVE_TRANSVERSE_KL_ONLY ) then
         alphav_kl_crust_mantle(ipoint) = 0.0
         alphah_kl_crust_mantle(ipoint) = 0.0
         betav_kl_crust_mantle(ipoint) = 0.0
@@ -193,7 +193,7 @@
             rho_kl = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho * hlagrange
 
             ! transverse isotropic kernel calculations
-            if( SAVE_TRANSVERSE_KL ) then
+            if( SAVE_TRANSVERSE_KL_ONLY ) then
               ! note: transverse isotropic kernels are calculated for all elements
               !
               !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -350,7 +350,7 @@
 
               rho_kl_crust_mantle_reg(ipoint) = rho_kl_crust_mantle_reg(ipoint) + rho_kl
 
-            endif ! SAVE_TRANSVERSE_KL
+            endif ! SAVE_TRANSVERSE_KL_ONLY
 
           else
 
@@ -396,7 +396,7 @@
 
     ! do some transforms that are independent of GLL points
     if (ANISOTROPIC_KL) then
-      if (SAVE_TRANSVERSE_KL) then
+      if (SAVE_TRANSVERSE_KL_ONLY) then
         ! write the kernel in physical units
         rhonotprime_kl_crust_mantle(ipoint) = - rhonotprime_kl_crust_mantle(ipoint) * scale_kl
 
@@ -428,7 +428,7 @@
   if (ANISOTROPIC_KL) then
 
     ! outputs transverse isotropic kernels only
-    if (SAVE_TRANSVERSE_KL) then
+    if (SAVE_TRANSVERSE_KL_ONLY) then
       ! transverse isotropic kernels
       ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
       open(unit=27,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
@@ -525,7 +525,7 @@
   endif
 
   ! cleans up temporary kernel arrays
-  if (SAVE_TRANSVERSE_KL) then
+  if (SAVE_TRANSVERSE_KL_ONLY) then
     deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                betav_kl_crust_mantle,betah_kl_crust_mantle, &
                eta_kl_crust_mantle)

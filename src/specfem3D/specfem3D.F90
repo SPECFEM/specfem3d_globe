@@ -887,7 +887,7 @@
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
           PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
-          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX
 
@@ -1080,7 +1080,7 @@
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY,SAVE_REGULAR_KL, &
                 PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
-          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL,APPROXIMATE_HESS_KL, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
           ATT1,ATT2,ATT3,ATT4,ATT5)
@@ -2526,15 +2526,15 @@ endif
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY)
     else
-      if(ANISOTROPIC_KL .and. .not. SAVE_TRANSVERSE_KL) then
+      if(ANISOTROPIC_KL .and. .not. SAVE_TRANSVERSE_KL_ONLY) then
         call save_kernels_crust_mantle_ani(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   ibool_crust_mantle, &
                   LOCAL_PATH)
-      else if(ANISOTROPIC_KL .and. SAVE_TRANSVERSE_KL) then
+      else if(ANISOTROPIC_KL .and. SAVE_TRANSVERSE_KL_ONLY) then
         call save_kernels_crust_mantle_tiso(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
