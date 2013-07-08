@@ -465,8 +465,10 @@
   implicit none
   include  "constants.h"
 
-  real(kind=CUSTOM_REAL) :: theta_in,phi_in
-  real(kind=CUSTOM_REAL),dimension(21) :: cij_kll,cij_kl
+  real(kind=CUSTOM_REAL), intent(in) :: theta_in,phi_in
+
+  real(kind=CUSTOM_REAL), dimension(21), intent(in) :: cij_kl
+  real(kind=CUSTOM_REAL), dimension(21), intent(out) :: cij_kll
 
   double precision :: theta,phi
   double precision :: costheta,sintheta,cosphi,sinphi
@@ -476,7 +478,6 @@
   double precision :: costhetafour,sinthetafour,cosphifour,sinphifour
   double precision :: sintwophisq,sintwothetasq
   double precision :: costhreetheta,sinthreetheta,costhreephi,sinthreephi
-
 
    if (CUSTOM_REAL == SIZE_REAL) then
       theta = dble(theta_in)
