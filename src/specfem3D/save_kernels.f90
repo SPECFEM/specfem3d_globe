@@ -25,16 +25,143 @@
 !
 !=====================================================================
 
-  subroutine save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
-                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
+  subroutine save_kernels_crust_mantle_iso(myrank,scale_t,scale_displ, &
+                  rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                   mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                  rhostore_crust_mantle,muvstore_crust_mantle, &
+                  kappavstore_crust_mantle, &
+                  LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank
+
+  double precision :: scale_t,scale_displ
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
+        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
+
+  character(len=150) LOCAL_PATH
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: scale_kl
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
+  integer :: ispec,i,j,k
+  character(len=150) prname
+
+  ! bulk parameterization
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
+
+  ! scaling factors
+  scale_kl = scale_t/scale_displ * 1.d9
+
+    ! allocates temporary isotropic kernel arrays for file output
+    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+
+  ! crust_mantle
+  do ispec = 1, NSPEC_CRUST_MANTLE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+
+            ! isotropic kernels
+
+            rhol = rhostore_crust_mantle(i,j,k,ispec)
+            mul = muvstore_crust_mantle(i,j,k,ispec)
+            kappal = kappavstore_crust_mantle(i,j,k,ispec)
+
+            ! kernel values for rho, kappa, mu (primary kernel values)
+            rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
+            alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec) ! note: alpha_kl corresponds to K_kappa
+            beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec) ! note: beta_kl corresponds to K_mu
+
+            ! for a parameterization: (rho,mu,kappa) "primary" kernels
+            rhonotprime_kl_crust_mantle(i,j,k,ispec) = rho_kl * scale_kl
+            mu_kl_crust_mantle(i,j,k,ispec) = beta_kl * scale_kl
+            kappa_kl_crust_mantle(i,j,k,ispec) = alpha_kl * scale_kl
+
+            ! for a parameterization: (rho,alpha,beta)
+            ! kernels rho^prime, beta, alpha
+            rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
+            beta_kl_crust_mantle(i,j,k,ispec) = &
+              2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            alpha_kl_crust_mantle(i,j,k,ispec) = &
+              2._CUSTOM_REAL * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
+
+            ! for a parameterization: (rho,bulk, beta)
+            ! where bulk wave speed is c = sqrt( kappa / rho)
+            ! note: rhoprime is the same as for (rho,alpha,beta) parameterization
+            bulk_c_kl_crust_mantle(i,j,k,ispec) = 2._CUSTOM_REAL * alpha_kl * scale_kl
+            bulk_beta_kl_crust_mantle(i,j,k,ispec ) = 2._CUSTOM_REAL * beta_kl * scale_kl
+
+        enddo
+      enddo
+    enddo
+  enddo
+
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+    ! primary kernels: (rho,kappa,mu) parameterization
+    open(unit=27,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) rhonotprime_kl_crust_mantle
+    close(27)
+    open(unit=27,file=trim(prname)//'kappa_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) kappa_kl_crust_mantle
+    close(27)
+    open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) mu_kl_crust_mantle
+    close(27)
+
+    ! (rho, alpha, beta ) parameterization
+    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) rho_kl_crust_mantle
+    close(27)
+    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) alpha_kl_crust_mantle
+    close(27)
+    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) beta_kl_crust_mantle
+    close(27)
+
+    ! (rho, bulk, beta ) parameterization, K_rho same as above
+    open(unit=27,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) bulk_c_kl_crust_mantle
+    close(27)
+    open(unit=27,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(27) bulk_beta_kl_crust_mantle
+    close(27)
+
+  ! cleans up temporary kernel arrays
+    deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+
+  end subroutine save_kernels_crust_mantle_iso
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_kernels_crust_mantle_tiso(myrank,scale_t,scale_displ, &
+                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
+                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
+                  rhonotprime_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                   eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-                  LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
+                  LOCAL_PATH)
 
   implicit none
 
@@ -52,7 +179,7 @@
     rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle
+    rhonotprime_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
         ystore_crust_mantle,zstore_crust_mantle
@@ -72,10 +199,9 @@
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) ::  cijkl_kl_local
   real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
-  real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
   integer :: ispec,i,j,k,iglob
   character(len=150) prname
-  logical :: ANISOTROPIC_KL,SAVE_TRANSVERSE_KL
 
   ! transverse isotropic parameters
   real(kind=CUSTOM_REAL), dimension(21) :: an_kl
@@ -100,8 +226,6 @@
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
 
-  ! allocates temporary arrays
-  if( SAVE_TRANSVERSE_KL ) then
     ! transverse isotropic kernel arrays for file output
     allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
             alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
@@ -114,21 +238,12 @@
             bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
             bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
             bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
-  endif
-
-  if( .not. ANISOTROPIC_KL ) then
-    ! allocates temporary isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
-  endif
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
-
-          if (ANISOTROPIC_KL) then
 
             ! For anisotropic kernels
             iglob = ibool_crust_mantle(i,j,k,ispec)
@@ -142,7 +257,6 @@
             rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
             ! transverse isotropic kernel calculations
-            if( SAVE_TRANSVERSE_KL ) then
               ! note: transverse isotropic kernels are calculated for all elements
               !
               !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -309,42 +423,6 @@
               bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec ) &
                                                     + bulk_betav_kl_crust_mantle(i,j,k,ispec )
 
-            endif ! SAVE_TRANSVERSE_KL
-
-          else
-
-            ! isotropic kernels
-
-            rhol = rhostore_crust_mantle(i,j,k,ispec)
-            mul = muvstore_crust_mantle(i,j,k,ispec)
-            kappal = kappavstore_crust_mantle(i,j,k,ispec)
-
-            ! kernel values for rho, kappa, mu (primary kernel values)
-            rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
-            alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec) ! note: alpha_kl corresponds to K_kappa
-            beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec) ! note: beta_kl corresponds to K_mu
-
-            ! for a parameterization: (rho,mu,kappa) "primary" kernels
-            rhonotprime_kl_crust_mantle(i,j,k,ispec) = rho_kl * scale_kl
-            mu_kl_crust_mantle(i,j,k,ispec) = beta_kl * scale_kl
-            kappa_kl_crust_mantle(i,j,k,ispec) = alpha_kl * scale_kl
-
-            ! for a parameterization: (rho,alpha,beta)
-            ! kernels rho^prime, beta, alpha
-            rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
-            beta_kl_crust_mantle(i,j,k,ispec) = &
-              2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
-            alpha_kl_crust_mantle(i,j,k,ispec) = &
-              2._CUSTOM_REAL * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
-
-            ! for a parameterization: (rho,bulk, beta)
-            ! where bulk wave speed is c = sqrt( kappa / rho)
-            ! note: rhoprime is the same as for (rho,alpha,beta) parameterization
-            bulk_c_kl_crust_mantle(i,j,k,ispec) = 2._CUSTOM_REAL * alpha_kl * scale_kl
-            bulk_beta_kl_crust_mantle(i,j,k,ispec ) = 2._CUSTOM_REAL * beta_kl * scale_kl
-
-          endif
-
         enddo
       enddo
     enddo
@@ -352,11 +430,7 @@
 
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-  ! For anisotropic kernels
-  if (ANISOTROPIC_KL) then
-
     ! outputs transverse isotropic kernels only
-    if( SAVE_TRANSVERSE_KL ) then
       ! transverse isotropic kernels
       ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
       open(unit=27,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
@@ -405,7 +479,83 @@
       write(27) bulk_beta_kl_crust_mantle
       close(27)
 
-    else
+  ! cleans up temporary kernel arrays
+    deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+        betav_kl_crust_mantle,betah_kl_crust_mantle, &
+        eta_kl_crust_mantle)
+    deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+        bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+
+  end subroutine save_kernels_crust_mantle_tiso
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_kernels_crust_mantle_ani(myrank,scale_t,scale_displ, &
+                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
+                  ystore_crust_mantle,zstore_crust_mantle, &
+                  ibool_crust_mantle, &
+                  LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank
+
+  double precision :: scale_t,scale_displ
+
+  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    cijkl_kl_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    rho_kl_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
+        ystore_crust_mantle,zstore_crust_mantle
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+
+  character(len=150) LOCAL_PATH
+
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(21) ::  cijkl_kl_local
+  real(kind=CUSTOM_REAL) :: scale_kl_ani,scale_kl_rho
+  integer :: ispec,i,j,k,iglob
+  character(len=150) prname
+
+  ! scaling factors
+  ! For anisotropic kernels
+  ! final unit : [s km^(-3) GPa^(-1)]
+  scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+  ! final unit : [s km^(-3) (kg/m^3)^(-1)]
+  scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
+
+  ! crust_mantle
+  do ispec = 1, NSPEC_CRUST_MANTLE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+
+            ! For anisotropic kernels
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            ! The cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+            ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
+            call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
+                 ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
+
+            cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local * scale_kl_ani
+            rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
+
+        enddo
+      enddo
+    enddo
+  enddo
+
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
       ! fully anisotropic kernels
       ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
@@ -417,55 +567,7 @@
       write(27) - cijkl_kl_crust_mantle
       close(27)
 
-    endif
-
-  else
-    ! primary kernels: (rho,kappa,mu) parameterization
-    open(unit=27,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) rhonotprime_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'kappa_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) kappa_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) mu_kl_crust_mantle
-    close(27)
-
-    ! (rho, alpha, beta ) parameterization
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) rho_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) alpha_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) beta_kl_crust_mantle
-    close(27)
-
-    ! (rho, bulk, beta ) parameterization, K_rho same as above
-    open(unit=27,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) bulk_c_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) bulk_beta_kl_crust_mantle
-    close(27)
-
-
-  endif
-
-  ! cleans up temporary kernel arrays
-  if( SAVE_TRANSVERSE_KL ) then
-    deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-        betav_kl_crust_mantle,betah_kl_crust_mantle, &
-        eta_kl_crust_mantle)
-    deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
-        bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-  endif
-  if( .not. ANISOTROPIC_KL ) then
-    deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-  endif
-
-  end subroutine save_kernels_crust_mantle
+  end subroutine save_kernels_crust_mantle_ani
 
 !
 !-------------------------------------------------------------------------------------------------
