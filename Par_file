@@ -150,7 +150,7 @@ ANISOTROPIC_KL                  = .false.
 
 # output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho)
 # rather than fully anisotropic kernels when ANISOTROPIC_KL above is set to .true.
-SAVE_TRANSVERSE_KL              = .false.
+SAVE_TRANSVERSE_KL_ONLY         = .false.
 
 # output approximate hessian in crust mantle region
 APPROXIMATE_HESS_KL             = .false.
