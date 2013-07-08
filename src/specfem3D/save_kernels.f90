@@ -150,6 +150,11 @@
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                   rhonotprime_kl_crust_mantle, &
+                  alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                  betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                  eta_kl_crust_mantle, &
+                  bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+                  bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
@@ -172,8 +177,16 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
 
+! additional kernels computed locally here from the other ones
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    rhonotprime_kl_crust_mantle
+    rhonotprime_kl_crust_mantle, &
+    alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+    betav_kl_crust_mantle,betah_kl_crust_mantle, &
+    eta_kl_crust_mantle
+  ! bulk parameterization
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
         ystore_crust_mantle,zstore_crust_mantle
@@ -199,15 +212,8 @@
 
   ! transverse isotropic parameters
   real(kind=CUSTOM_REAL), dimension(21) :: an_kl
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
-    alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-    betav_kl_crust_mantle,betah_kl_crust_mantle, &
-    eta_kl_crust_mantle
 
   ! bulk parameterization
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
-    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
   real(kind=CUSTOM_REAL) :: A,C,F,L,N,eta
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
@@ -219,19 +225,6 @@
   scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
-
-    ! transverse isotropic kernel arrays for file output
-    allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
-
-    ! isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
@@ -472,13 +465,6 @@
       open(unit=27,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) bulk_beta_kl_crust_mantle
       close(27)
-
-  ! cleans up temporary kernel arrays
-    deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-        betav_kl_crust_mantle,betah_kl_crust_mantle, &
-        eta_kl_crust_mantle)
-    deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
-        bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
 
   end subroutine save_kernels_crust_mantle_tiso
 

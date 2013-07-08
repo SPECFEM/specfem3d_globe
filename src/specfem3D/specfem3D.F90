@@ -640,6 +640,18 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
 
+
+! 3333333333333333333333333333333
+! additional kernels computed locally here from the other ones
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+    betav_kl_crust_mantle,betah_kl_crust_mantle, &
+    eta_kl_crust_mantle
+  ! bulk parameterization
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
+! 3333333333333333333333333333333
+
 ! can equivalence the above arrays to save a significant amount of memory because they are used only once at the end to save
 ! the final kernels in save_kernels_crust_mantle(), once the Jacobian matrix elements xix xiy xiz are never needed any more
   equivalence(mu_kl_crust_mantle,          xix_crust_mantle)
@@ -2546,6 +2558,11 @@ endif
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                   rhonotprime_kl_crust_mantle, &
+                  alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                  betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                  eta_kl_crust_mantle, &
+                  bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+                  bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
