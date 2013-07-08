@@ -45,7 +45,7 @@
                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                         ATT1,ATT2,ATT3,static_memory_size)
+                         ATT1,ATT2,ATT3,APPROXIMATE_HESS_KL,NOISE_TOMOGRAPHY,static_memory_size)
 
   implicit none
 
@@ -55,10 +55,10 @@
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
              ROTATION, &
              ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS, &
-             MOVIE_VOLUME,SAVE_FORWARD
+             MOVIE_VOLUME,SAVE_FORWARD,APPROXIMATE_HESS_KL
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
 
-  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE,ATT1,ATT2,ATT3
+  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE,ATT1,ATT2,ATT3,NOISE_TOMOGRAPHY
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
@@ -80,7 +80,8 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
   ! local variables
-  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso
+  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso, &
+             NSPEC_CRUST_MANTLE_ADJOINT_HESS,NSPEC_CRUST_MANTLE_ADJOINT_NOISE
 
   ! generate the elements in all the regions of the mesh
   ispec_aniso = 0
@@ -359,6 +360,24 @@
 ! static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
   static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
+
+! hess_kl_crust_mantle
+  if(APPROXIMATE_HESS_KL) then
+    NSPEC_CRUST_MANTLE_ADJOINT_HESS = NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    NSPEC_CRUST_MANTLE_ADJOINT_HESS = 1
+  endif
+  static_memory_size = static_memory_size + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_HESS*dble(CUSTOM_REAL)
+
+! Sigma_kl_crust_mantle
+  if(NOISE_TOMOGRAPHY > 0) then
+    NSPEC_CRUST_MANTLE_ADJOINT_NOISE = NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    NSPEC_CRUST_MANTLE_ADJOINT_NOISE = 1
+  endif
+  static_memory_size = static_memory_size + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_NOISE*dble(CUSTOM_REAL)
 
   ! rho_kl_outer_core,alpha_kl_outer_core
   static_memory_size = static_memory_size + &
