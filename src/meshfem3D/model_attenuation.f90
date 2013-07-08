@@ -572,6 +572,8 @@
 
   implicit none
 
+  include "constants.h"
+
   integer n
   double precision tau_s(n)
   double precision min_period, max_period
@@ -579,7 +581,6 @@
   double precision exp1, exp2
   double precision dexp
   integer i
-  double precision, parameter :: PI = 3.14159265358979d0
 
   f1 = 1.0d0 / max_period
   f2 = 1.0d0 / min_period
@@ -603,6 +604,8 @@
   use mpi
 
   implicit none
+
+  include "constants.h"
 
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
@@ -633,7 +636,6 @@
   integer i, iterations, err,prnt
   double precision f1, f2, exp1,exp2,dexp, min_value
   double precision, allocatable, dimension(:) :: f
-  double precision, parameter :: PI = 3.14159265358979d0
   integer, parameter :: nf = 100
   double precision, external :: attenuation_eval
 
@@ -805,6 +807,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   implicit none
 
+  include "constants.h"
+
   ! Input
   integer nf, nsls
   double precision, dimension(nf)   :: f
@@ -813,21 +817,17 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   double precision, dimension(nf)   :: A,B
 
   integer i,j
-  double precision w, pi, demon
-
-  PI = 3.14159265358979d0
+  double precision w, demon
 
   A(:) = 1.0d0 -  nsls*1.0d0
   B(:) = 0.0d0
   do i = 1,nf
      w = 2.0d0 * PI * 10**f(i)
      do j = 1,nsls
-!        write(*,*)j,tau_s(j),tau_e(j)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
      enddo
-!     write(*,*)A(i),B(i),10**f(i)
   enddo
 
   end subroutine attenuation_maxwell
