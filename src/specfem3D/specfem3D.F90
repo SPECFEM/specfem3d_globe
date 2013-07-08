@@ -633,14 +633,21 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle
 
+! additional kernels computed locally here from the other ones
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle
+  ! bulk parameterization
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
 
 ! can equivalence the above arrays to save a significant amount of memory because they are used only once at the end to save
 ! the final kernels in save_kernels_crust_mantle(), once the Jacobian matrix elements xix xiy xiz are never needed any more
   equivalence(mu_kl_crust_mantle,          xix_crust_mantle)
   equivalence(kappa_kl_crust_mantle,       xiy_crust_mantle)
   equivalence(rhonotprime_kl_crust_mantle, xiz_crust_mantle)
+  equivalence(bulk_c_kl_crust_mantle,      etax_crust_mantle)
+  equivalence(bulk_beta_kl_crust_mantle,   etay_crust_mantle)
+!!!!!!!!!!!  equivalence(rhonotprime_kl_crust_mantle, etaz_crust_mantle)
 
 ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
   real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: cijkl_kl_crust_mantle
@@ -2549,7 +2556,8 @@ endif
         call save_kernels_crust_mantle_iso(myrank,scale_t,scale_displ, &
                   rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
-                  mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                  mu_kl_crust_mantle,kappa_kl_crust_mantle,rhonotprime_kl_crust_mantle, &
+                  bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle, &
                   LOCAL_PATH)
