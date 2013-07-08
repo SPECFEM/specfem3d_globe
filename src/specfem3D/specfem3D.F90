@@ -2518,7 +2518,7 @@ endif
     ! crust mantle
     if (SAVE_REGULAR_KL) then
       call save_regular_kernels_crust_mantle(myrank, &
-                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
+                  npoints_slice,hxir_reg,hetar_reg,hgammar_reg,ispec_reg, &
                   scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
@@ -2528,15 +2528,32 @@ endif
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                   eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
     else
-      call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
+      if(ANISOTROPIC_KL .and. .not. SAVE_TRANSVERSE_KL) then
+        call save_kernels_crust_mantle_ani(myrank,scale_t,scale_displ, &
+                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
+                  ystore_crust_mantle,zstore_crust_mantle, &
+                  ibool_crust_mantle, &
+                  LOCAL_PATH)
+      else if(ANISOTROPIC_KL .and. SAVE_TRANSVERSE_KL) then
+        call save_kernels_crust_mantle_tiso(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
                   alpha_kl_crust_mantle,beta_kl_crust_mantle, &
-                  mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                  rhonotprime_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle,LOCAL_PATH,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL)
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
+                  LOCAL_PATH)
+      else
+        call save_kernels_crust_mantle_iso(myrank,scale_t,scale_displ, &
+                  rho_kl_crust_mantle, &
+                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
+                  mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                  rhostore_crust_mantle,muvstore_crust_mantle, &
+                  kappavstore_crust_mantle, &
+                  LOCAL_PATH)
+      endif
     endif
 
     ! noise strength kernel
