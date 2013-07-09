@@ -663,7 +663,7 @@
   equivalence(eta_kl_crust_mantle,                           displ_crust_mantle)
 
 ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
-  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: cijkl_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL) :: cijkl_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core, &
      alpha_kl_outer_core
