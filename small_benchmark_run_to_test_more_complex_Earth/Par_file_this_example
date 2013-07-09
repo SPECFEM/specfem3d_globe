@@ -59,7 +59,7 @@ RECORD_LENGTH_IN_MINUTES        = 55.0d0
 # but requires a significant amount of disk space for temporary storage.
 PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
-NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
+NT_DUMP_ATTENUATION             = 77   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
 
 # this for LDDRK high-order time scheme instead of Newmark
 USE_LDDRK                       = .false.
