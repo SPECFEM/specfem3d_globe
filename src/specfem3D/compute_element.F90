@@ -1993,7 +1993,6 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-
           eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
           epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
@@ -2134,7 +2133,6 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           epsilondev_loc_nplus1(1,i,j,k) = duxdxl - templ
           epsilondev_loc_nplus1(2,i,j,k) = duydyl - templ
@@ -2147,6 +2145,4 @@
     enddo ! NGLLZ
 
   end subroutine compute_element_strain_att_noDev
-
-
 
