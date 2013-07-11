@@ -57,9 +57,22 @@ RECORD_LENGTH_IN_MINUTES        = 55.0d0
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
+RECOMPUTE_STRAIN_DO_NOT_STORE   = .false. # recomputing instead of storing the strain slows down the code but saves memory; set to .false. in most cases
 PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
 NT_DUMP_ATTENUATION             = 77   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
+
+# three mass matrices instead of one are needed to handle rotation very accurately;
+# otherwise rotation is handled slightly less accurately (but still reasonably well);
+# set to .true. if you are interested in precise effects related to rotation;
+# set to .false. if you are solving very large inverse problems at high frequency and also undoing attenuation exactly
+# using the UNDO_ATTENUATION flag above, in which case saving as much memory as possible can be a good idea.
+# You can also safely set it to .false. if you are not in a period range in which rotation matters, e.g. if you are targetting very short-period body waves.
+# if in doubt, set to .true.
+# Set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code will use the three mass matrices anyway
+# and thus there is no additional cost.
+# this flag is of course unused if ROTATION above is set to .false.
+EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
 
 # this for LDDRK high-order time scheme instead of Newmark
 USE_LDDRK                       = .false.
