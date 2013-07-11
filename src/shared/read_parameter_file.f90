@@ -54,7 +54,8 @@
                                 SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT)
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
+          RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION)
 
   implicit none
 
@@ -83,7 +84,8 @@
          PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-         ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX
+         ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX, &
+         RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -144,12 +146,20 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MODEL'
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
+  call read_value_logical(RECOMPUTE_STRAIN_DO_NOT_STORE, 'solver.RECOMPUTE_STRAIN_DO_NOT_STORE', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECOMPUTE_STRAIN_DO_NOT_STORE'
   call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'solver.PARTIAL_PHYS_DISPERSION_ONLY', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: PARTIAL_PHYS_DISPERSION_ONLY'
   call read_value_logical(UNDO_ATTENUATION, 'solver.UNDO_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: UNDO_ATTENUATION'
   call read_value_integer(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP_ATTENUATION'
+
+  call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'solver.EXACT_MASS_MATRIX_FOR_ROTATION', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
+! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
+  if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+
   call read_value_logical(USE_LDDRK, 'solver.USE_LDDRK', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: USE_LDDRK'
   call read_value_logical(INCREASE_CFL_FOR_LDDRK, 'solver.INCREASE_CFL_FOR_LDDRK', ierr)
