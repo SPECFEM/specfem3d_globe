@@ -162,7 +162,7 @@
       ind(ir) = ind(1)
       ir = ir-1
 
-      ! checks exit criteria
+      ! checks exit criterion
       if (ir == 1) then
          ind(1) = indx
          return
