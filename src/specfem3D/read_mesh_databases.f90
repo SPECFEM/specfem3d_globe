@@ -59,14 +59,18 @@
             c33store_inner_core,c44store_inner_core, &
             ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
             is_on_a_slice_edge_inner_core,rmass_inner_core, &
-            ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY)
+            ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY_CM,& 
+            SIMULATION_TYPE,NGLOB_XY_CM_BACKWARD,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+            b_rmassx_crust_mantle,b_rmassy_crust_mantle,& 
+            NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,& 
+            NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core) 
 
   implicit none
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer myrank
+  integer myrank,SIMULATION_TYPE 
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: &
@@ -108,10 +112,12 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  integer :: NGLOB_XY, NGLOB_DUMMY
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassy_crust_mantle
+  integer :: NGLOB_DUMMY,NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD    
+  logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassx_crust_mantle  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassy_crust_mantle  
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
 
   ! additional mass matrix for ocean load
@@ -148,6 +154,11 @@
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
   logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core
 
+  integer :: NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassx_inner_core  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassy_inner_core  
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
 
   logical ABSORBING_CONDITIONS
@@ -209,10 +220,13 @@
             c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,dummy_i,ispec_is_tiso_crust_mantle,NGLOB_XY,NGLOB_CRUST_MANTLE, &
+            ibool_crust_mantle,dummy_i,ispec_is_tiso_crust_mantle,NGLOB_XY_CM,NGLOB_CRUST_MANTLE, &
             rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load,NSPEC_CRUST_MANTLE, &
             is_on_a_slice_edge_crust_mantle,READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
-            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS,& 
+            SIMULATION_TYPE,NGLOB_XY_CM_BACKWARD,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+            b_rmassx_crust_mantle,b_rmassy_crust_mantle) 
+
 
   ! synchronizes processes
   call sync_all()
@@ -244,10 +258,12 @@
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_outer_core,idoubling_outer_core,ispec_is_tiso_outer_core,NGLOB_XY,NGLOB_OUTER_CORE, &
+            ibool_outer_core,idoubling_outer_core,ispec_is_tiso_outer_core,1,NGLOB_OUTER_CORE, & 
             dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load,NSPEC_OUTER_CORE, &
             is_on_a_slice_edge_outer_core,READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
-            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS,& 
+            SIMULATION_TYPE,NGLOB_DUMMY,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+            dummy_rmass,dummy_rmass) 
 
   ! synchronizes processes
   call sync_all()
@@ -280,10 +296,12 @@
             dummy_array,dummy_array,dummy_array, &
             c44store_inner_core,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core,NGLOB_XY,NGLOB_INNER_CORE, &
-            dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load,NSPEC_INNER_CORE, &
+            ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core,NGLOB_XY_IC,NGLOB_INNER_CORE, & 
+            rmassx_inner_core,rmassy_inner_core,rmass_inner_core,rmass_ocean_load,NSPEC_INNER_CORE, &
             is_on_a_slice_edge_inner_core,READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
-            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+            ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS,& 
+            SIMULATION_TYPE,NGLOB_XY_IC_BACKWARD,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+            b_rmassx_inner_core,b_rmassy_inner_core) 
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_crust_mantle(:,:,:,:)) /= 1 .or. &

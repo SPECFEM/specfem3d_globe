@@ -44,26 +44,35 @@
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
                       buffer_send_faces_scalar,buffer_received_faces_scalar, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY,ABSORBING_CONDITIONS, &
-                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC)
+                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY_CM,ABSORBING_CONDITIONS, &
+                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC, &                      
+                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,NGLOB_XY_CM_BACKWARD,&
+                      b_rmassx_crust_mantle,b_rmassy_crust_mantle,& 
+                      NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,& 
+                      NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core) 
 
   use mpi
-
   implicit none
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank,npoin2D_max_all_CM_IC
-  integer NGLOB_XY
+  integer SIMULATION_TYPE,NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD,NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD 
 
-  logical ABSORBING_CONDITIONS
+  logical ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassx_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassy_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
 
   integer ichunk,iproc_xi,iproc_eta
@@ -140,7 +149,9 @@
   endif
 
   ! crust and mantle
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+  if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
+     (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. NGLOB_CRUST_MANTLE > 0 &
+      .and. (.not. USE_LDDRK)) then
      call assemble_MPI_scalar_block(myrank,rmassx_crust_mantle,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -184,6 +195,38 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
 
+ if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+    .and. (.not. USE_LDDRK) .and. NGLOB_XY_CM_BACKWARD > 0)then 
+    if(SIMULATION_TYPE == 3)then 
+       call assemble_MPI_scalar_block(myrank,b_rmassx_crust_mantle,NGLOB_XY_CM_BACKWARD, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+      call assemble_MPI_scalar_block(myrank,b_rmassy_crust_mantle,NGLOB_XY_CM_BACKWARD, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+    endif 
+ endif 
+
   ! outer core
   call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -198,6 +241,70 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL)
+
+  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+     .and. (.not. USE_LDDRK) .and. NGLOB_XY_IC > 0)then 
+    ! inner core
+    call assemble_MPI_scalar_block(myrank,rmassx_inner_core,NGLOB_XY_IC, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
+
+   call assemble_MPI_scalar_block(myrank,rmassy_inner_core,NGLOB_XY_IC, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
+
+    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC_BACKWARD > 0)then 
+      call assemble_MPI_scalar_block(myrank,b_rmassx_inner_core,NGLOB_XY_IC_BACKWARD, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
+
+      call assemble_MPI_scalar_block(myrank,b_rmassy_inner_core,NGLOB_XY_IC_BACKWARD, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
+
+    endif 
+
+  endif 
 
   ! inner core
   call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &

@@ -826,26 +826,44 @@ endif
 
 ! ------------------- new non blocking implementation -------------------
 
-      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+      if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. .not. USE_LDDRK) then 
 
-         do i=1,NGLOB_CRUST_MANTLE
-            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
+         if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+           do i=1,NGLOB_CRUST_MANTLE
+              b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*b_rmassx_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
+              b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*b_rmassy_crust_mantle(i) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-         enddo
+              b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*b_rmassz_crust_mantle(i) 
+           enddo
+         else
+           do i=1,NGLOB_CRUST_MANTLE
+              b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+              b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+              b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i) 
+           enddo
+         endif
 
       else
-
-         do i=1,NGLOB_CRUST_MANTLE
-            b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
+         if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK)then
+           do i=1,NGLOB_CRUST_MANTLE
+              b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*b_rmassx_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-            b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
+              b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*b_rmassy_crust_mantle(i) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-            b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-         enddo
-
+              b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*b_rmassz_crust_mantle(i) 
+           enddo
+         else
+           do i=1,NGLOB_CRUST_MANTLE
+              b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*b_rmassz_crust_mantle(i) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+              b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*b_rmassz_crust_mantle(i) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+              b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*b_rmassz_crust_mantle(i)
+           enddo
+         endif
       endif
 
    endif ! SIMULATION_TYPE == 3
@@ -854,12 +872,12 @@ endif
    if(OCEANS_VAL) then
      if(SIMULATION_TYPE == 3) then
        call compute_coupling_ocean(b_accel_crust_mantle, &
-                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle, &
                                    rmass_ocean_load,normal_top_crust_mantle, &
                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                   updated_dof_ocean_load,NGLOB_XY, &
+                                   updated_dof_ocean_load,NGLOB_XY_CM, &
                                    NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                                   ABSORBING_CONDITIONS)
+                                   ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK)
      endif
    endif
 
@@ -879,11 +897,19 @@ endif
       enddo
       ! inner core
       do i=1,NGLOB_INNER_CORE
-        b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
-         + b_two_omega_earth*b_veloc_inner_core(2,i)
-        b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
-         - b_two_omega_earth*b_veloc_inner_core(1,i)
-        b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
+        if((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. .not. USE_LDDRK) then 
+            b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*b_rmassx_inner_core(i) &
+             + b_two_omega_earth*b_veloc_inner_core(2,i)
+            b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*b_rmassy_inner_core(i) &
+             - b_two_omega_earth*b_veloc_inner_core(1,i)
+            b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*b_rmass_inner_core(i)
+        else
+          b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*b_rmass_inner_core(i) &
+           + b_two_omega_earth*b_veloc_inner_core(2,i)
+          b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*b_rmass_inner_core(i) &
+           - b_two_omega_earth*b_veloc_inner_core(1,i)
+          b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*b_rmass_inner_core(i)
+        endif
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
       enddo
     endif ! SIMULATION_TYPE == 3

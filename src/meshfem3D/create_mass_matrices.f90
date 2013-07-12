@@ -40,7 +40,9 @@
                           normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
                           rho_vp,rho_vs,nspec_stacey, &
                           jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                          jacobian2D_bottom,jacobian2D_top)
+                          jacobian2D_bottom,jacobian2D_top,&
+                          SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,& 
+                          nglob_xy_backward,b_rmassx,b_rmassy) 
 
   ! creates rmassx, rmassy, rmassz and rmass_ocean_load
 
@@ -48,7 +50,7 @@
 
   implicit none
 
-  integer :: myrank,nspec
+  integer :: myrank,nspec,SIMULATION_TYPE 
   integer :: idoubling(nspec)
   integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
   integer :: nspec_actually
@@ -65,6 +67,13 @@
   ! add C delta/2 contribution to the mass matrices on the Stacey edges
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+  real(kind=CUSTOM_REAL) :: two_omega_earth,scale_t_inv 
+
+  ! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true. 
+  integer :: nglob_xy_backward 
+  logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK 
+  real(kind=CUSTOM_REAL), dimension(nglob_xy_backward) :: b_rmassx,b_rmassy 
+  real(kind=CUSTOM_REAL) :: b_two_omega_earth
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore
 
@@ -140,8 +149,33 @@
   rmassy(:) = 0._CUSTOM_REAL
   rmassz(:) = 0._CUSTOM_REAL
 
+  b_rmassx(:) = 0._CUSTOM_REAL 
+  b_rmassy(:) = 0._CUSTOM_REAL 
+
   ! use the non-dimensional time step to make the mass matrix correction
   deltat = DT*dsqrt(PI*GRAV*RHOAV)
+
+  if(ROTATION .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then  
+    ! distinguish between single and double precision for reals
+    scale_t_inv = dsqrt(PI*GRAV*RHOAV)
+    two_omega_earth = 0._CUSTOM_REAL
+    b_two_omega_earth = 0._CUSTOM_REAL
+    if (SIMULATION_TYPE /= 3) then
+      if(CUSTOM_REAL == SIZE_REAL) then
+        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+      else
+        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
+      endif
+    endif
+
+    if (SIMULATION_TYPE == 3) then
+      if(CUSTOM_REAL == SIZE_REAL) then
+        b_two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+      else
+        b_two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
+      endif
+    endif
+  endif 
 
   ! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -225,6 +259,33 @@
                      sngl(dble(rhostore(i,j,k,ispec)) * dble(jacobianl) * weight)
             else
               rmassz(iglob) = rmassz(iglob) + rhostore(i,j,k,ispec) * jacobianl * weight
+            endif
+
+            if(ROTATION .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then  
+              if(SIMULATION_TYPE == 3)then
+                if(CUSTOM_REAL == SIZE_REAL) then
+                  b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                  b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                else
+                  b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight 
+                  b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+                endif
+                if(CUSTOM_REAL == SIZE_REAL) then
+                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                else
+                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight 
+                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+                endif
+              else
+                if(CUSTOM_REAL == SIZE_REAL) then
+                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                else
+                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight 
+                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+                endif
+              endif
             endif
 
           ! fluid in outer core
@@ -334,7 +395,7 @@
   endif
 
   ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then 
 
      ! read arrays for Stacey conditions
      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
@@ -350,9 +411,11 @@
      select case(iregion_code)
 
      case(IREGION_CRUST_MANTLE)
-
-        rmassx(:) = rmassz(:)
-        rmassy(:) = rmassz(:)
+        
+        if(.not. ROTATION)then 
+          rmassx(:) = rmassz(:)
+          rmassy(:) = rmassz(:)
+        endif
 
         !   xmin
         ! if two chunks exclude this face for one of them
@@ -387,10 +450,18 @@
                        rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                        rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                        rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+                       if(SIMULATION_TYPE == 3 .and. ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then 
+                         b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
+                         b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)                          
+                       endif
                     else
                        rmassx(iglob) = rmassx(iglob) + tx*weight
                        rmassy(iglob) = rmassy(iglob) + ty*weight
                        rmassz(iglob) = rmassz(iglob) + tz*weight
+                       if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then 
+                         b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
+                         b_rmassy(iglob) = b_rmassy(iglob) + ty*weight                        
+                       endif
                     endif
                  enddo
               enddo
@@ -431,10 +502,18 @@
                        rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                        rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                        rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+                       if(SIMULATION_TYPE == 3 .and. ROTATION)then 
+                         b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
+                         b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)                          
+                       endif
                     else
                        rmassx(iglob) = rmassx(iglob) + tx*weight
                        rmassy(iglob) = rmassy(iglob) + ty*weight
                        rmassz(iglob) = rmassz(iglob) + tz*weight
+                       if(SIMULATION_TYPE == 3 .and. ROTATION)then 
+                         b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
+                         b_rmassy(iglob) = b_rmassy(iglob) + ty*weight                        
+                       endif
                     endif
                  enddo
               enddo
@@ -472,10 +551,18 @@
                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+                    if(SIMULATION_TYPE == 3 .and. ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then 
+                      b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
+                      b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)                          
+                    endif
                  else
                     rmassx(iglob) = rmassx(iglob) + tx*weight
                     rmassy(iglob) = rmassy(iglob) + ty*weight
                     rmassz(iglob) = rmassz(iglob) + tz*weight
+                    if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then 
+                      b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
+                      b_rmassy(iglob) = b_rmassy(iglob) + ty*weight                        
+                    endif
                  endif
               enddo
            enddo
@@ -511,10 +598,18 @@
                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
+                    if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then 
+                      b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
+                      b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)                          
+                    endif
                  else
                     rmassx(iglob) = rmassx(iglob) + tx*weight
                     rmassy(iglob) = rmassy(iglob) + ty*weight
                     rmassz(iglob) = rmassz(iglob) + tz*weight
+                    if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then 
+                      b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
+                      b_rmassy(iglob) = b_rmassy(iglob) + ty*weight                          
+                    endif
                  endif
               enddo
            enddo

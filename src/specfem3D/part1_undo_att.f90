@@ -7,7 +7,7 @@
     ! Newmark time scheme update
 
 
-  do istage = 1, NSTAGE_TIME_SCHEME !ZN begin loop of istage
+  do istage = 1, NSTAGE_TIME_SCHEME ! begin loop of istage
     if(USE_LDDRK)then
       ! mantle
       accel_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -791,7 +791,8 @@
         enddo
     endif   ! end of assembling forces with the central cube
 
-    if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+    if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
+        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. (.not. USE_LDDRK)) then 
 
        do i=1,NGLOB_CRUST_MANTLE
           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
@@ -820,9 +821,9 @@
                                    rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                    rmass_ocean_load,normal_top_crust_mantle, &
                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                   updated_dof_ocean_load,NGLOB_XY, &
+                                   updated_dof_ocean_load,NGLOB_XY_CM, & 
                                    NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                                   ABSORBING_CONDITIONS)
+                                   ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK)
    endif
 
 !-------------------------------------------------------------------------------------------------
@@ -851,11 +852,19 @@
     endif
     ! inner core
     do i=1,NGLOB_INNER_CORE
-      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
-      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+      if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK)then 
+        accel_inner_core(1,i) = accel_inner_core(1,i)*rmassx_inner_core(i) &
+               + two_omega_earth*veloc_inner_core(2,i)
+        accel_inner_core(2,i) = accel_inner_core(2,i)*rmassy_inner_core(i) &
+               - two_omega_earth*veloc_inner_core(1,i)
+        accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+      else
+        accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
+               + two_omega_earth*veloc_inner_core(2,i)
+        accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
+               - two_omega_earth*veloc_inner_core(1,i)
+        accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+      endif
 
       if(USE_LDDRK)then
         veloc_inner_core_lddrk(:,i) = ALPHA_LDDRK(istage) * veloc_inner_core_lddrk(:,i) &
@@ -868,7 +877,7 @@
         veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
       endif
     enddo
-  enddo !ZN end loop of istage
+  enddo ! end loop of istage
 
 ! write the seismograms with time shift
 

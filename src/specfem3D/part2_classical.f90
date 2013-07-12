@@ -792,7 +792,7 @@
                                    rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                    rmass_ocean_load,normal_top_crust_mantle, &
                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                   updated_dof_ocean_load,NGLOB_XY, &
+                                   updated_dof_ocean_load,NGLOB_XY_CM, & 
                                    NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
                                    ABSORBING_CONDITIONS)
      endif

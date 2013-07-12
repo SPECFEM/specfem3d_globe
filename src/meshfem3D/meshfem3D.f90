@@ -712,7 +712,7 @@
                           this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                           mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2),USE_FULL_TISO_MANTLE, &
-                          ATT1,ATT2,ATT3)
+                          ATT1,ATT2,ATT3,SIMULATION_TYPE,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION) 
     enddo
 
     ! checks number of anisotropic elements found in the mantle
