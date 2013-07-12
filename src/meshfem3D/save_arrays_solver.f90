@@ -44,18 +44,21 @@
                     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                     ANISOTROPIC_INNER_CORE,OCEANS, &
                     tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,ATT1,ATT2,ATT3,vnspec, &
-                    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank)
+                    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank,&
+                    SIMULATION_TYPE,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
+                    nglob_xy_backward,b_rmassx,b_rmassy) 
 
   implicit none
 
   include "constants.h"
 
-  logical ATTENUATION
+  integer SIMULATION_TYPE 
+  logical ATTENUATION,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK 
 
   character(len=150) prname
   integer iregion_code,NCHUNKS
 
-  integer nspec,nglob_xy,nglob,nspec_stacey,myrank
+  integer nspec,nglob_xy,nglob,nspec_stacey,myrank,nglob_xy_backward 
   integer npointot_oceans
 
 ! Stacey
@@ -96,6 +99,9 @@
 ! once it is written to disk and thus not needed any more
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+
+! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true. 
+  real(kind=CUSTOM_REAL), dimension(nglob_xy_backward) :: b_rmassx,b_rmassy
 
 ! additional ocean load mass matrix
   real(kind=CUSTOM_REAL) rmass_ocean_load(npointot_oceans)
@@ -257,12 +263,27 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
-     write(27) rmassx
-     write(27) rmassy
+
+  if(.not. USE_LDDRK)then 
+    if((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+       write(27) rmassx
+       write(27) rmassy
+    endif
   endif
 
   write(27) rmassz
+
+  if(.not. USE_LDDRK)then 
+    if(EXACT_MASS_MATRIX_FOR_ROTATION)then
+      if((SIMULATION_TYPE == 3 .and. (ROTATION .and. iregion_code == IREGION_CRUST_MANTLE)) .or. &
+        (SIMULATION_TYPE == 3 .and. (ROTATION .and. iregion_code == IREGION_INNER_CORE)))then
+         write(27) b_rmassx
+         write(27) b_rmassy     
+       endif
+    endif
+  endif
 
   ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load

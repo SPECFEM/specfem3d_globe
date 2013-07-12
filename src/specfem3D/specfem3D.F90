@@ -555,11 +555,21 @@
 !
 ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
 ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+!
+! in the case of ROTATION, we should add two_omega_earth*deltat/2 contribution to  rmassx & rmassy 
+! thus in this case  rmassx & rmassy will be used  
+! 
+! in the case of ROTAION and SIMULATION_TYPE == 3, we should add b_two_omega_earth*deltat/2 contribution to  &
+! b_rmassx & b_rmassy 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_crust_mantle 
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassy_crust_mantle 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: b_rmassz_crust_mantle
+  equivalence(rmassz_crust_mantle,b_rmassz_crust_mantle) 
 
-  integer :: NGLOB_XY
+  integer :: NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD 
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -614,7 +624,14 @@
   logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core ! only needed for computer_boundary_kernel() routine
 
 ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_inner_core  
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_inner_core  
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_inner_core 
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassy_inner_core 
+  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: b_rmass_inner_core 
+  integer :: NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD  
+  equivalence(rmass_inner_core,b_rmass_inner_core)
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
@@ -1179,16 +1196,53 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     NGLOB_XY = NGLOB_CRUST_MANTLE
+
+  NGLOB_XY_CM = 1 
+  NGLOB_XY_IC = 1  
+  NGLOB_XY_CM_BACKWARD = 1 
+  NGLOB_XY_IC_BACKWARD = 1  
+  
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
+     NGLOB_XY_CM = NGLOB_CRUST_MANTLE
   else
-     NGLOB_XY = 1
+     NGLOB_XY_CM = 1
   endif
 
-  allocate(rmassx_crust_mantle(NGLOB_XY),stat=ier)
+  if(SIMULATION_TYPE /=3  .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then  
+    if(ROTATION_VAL)then
+      NGLOB_XY_CM = NGLOB_CRUST_MANTLE
+      NGLOB_XY_IC = NGLOB_INNER_CORE
+    endif
+  endif
+
+  if(SIMULATION_TYPE ==3  .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION )then 
+    if(ROTATION_VAL)then
+      NGLOB_XY_CM = NGLOB_CRUST_MANTLE 
+      NGLOB_XY_IC = NGLOB_INNER_CORE 
+      NGLOB_XY_CM_BACKWARD = NGLOB_CRUST_MANTLE
+      NGLOB_XY_IC_BACKWARD = NGLOB_INNER_CORE
+    endif
+  endif
+
+  allocate(rmassx_crust_mantle(NGLOB_XY_CM),stat=ier)  
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassx_crust_mantle')
-  allocate(rmassy_crust_mantle(NGLOB_XY),stat=ier)
+  allocate(rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassy_crust_mantle')
+
+  allocate(b_rmassx_crust_mantle(NGLOB_XY_CM_BACKWARD),stat=ier)  
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassx_crust_mantle')
+  allocate(b_rmassy_crust_mantle(NGLOB_XY_CM_BACKWARD),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassy_crust_mantle')
+
+  allocate(rmassx_inner_core(NGLOB_XY_IC),stat=ier)  
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassx_inner_core')
+  allocate(rmassy_inner_core(NGLOB_XY_IC),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassy_inner_core')
+
+  allocate(b_rmassx_inner_core(NGLOB_XY_IC_BACKWARD),stat=ier)  
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassx_inner_core')
+  allocate(b_rmassy_inner_core(NGLOB_XY_IC_BACKWARD),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassy_inner_core')
 
   call read_mesh_databases(myrank,rho_vp_crust_mantle,rho_vs_crust_mantle, &
               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -1224,7 +1278,11 @@
               c33store_inner_core,c44store_inner_core, &
               ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
               is_on_a_slice_edge_inner_core,rmass_inner_core, &
-              ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY)
+              ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY_CM,& 
+              SIMULATION_TYPE,NGLOB_XY_CM_BACKWARD,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+              b_rmassx_crust_mantle,b_rmassy_crust_mantle,& 
+              NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,& 
+              NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core) 
 
   ! read 2-D addressing for summation between slices with MPI
   call read_mesh_databases_addressing(myrank, &
@@ -1744,8 +1802,12 @@
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
                       buffer_send_faces,buffer_received_faces, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY,ABSORBING_CONDITIONS, &
-                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC)
+                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY_CM,ABSORBING_CONDITIONS, & 
+                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC,&
+                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,NGLOB_XY_CM_BACKWARD,&
+                      b_rmassx_crust_mantle,b_rmassy_crust_mantle,& 
+                      NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,& 
+                      NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core) 
 
   ! mass matrix including central cube
   if(INCLUDE_CENTRAL_CUBE) then
@@ -1797,6 +1859,69 @@
                       sender_from_slices_to_cube,ibool_central_cube, &
                       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
+  if(ROTATION_VAL .and. (.not. USE_LDDRK)  .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+     .and. NGLOB_XY_IC > 0)then 
+
+    call prepare_timerun_centralcube(myrank,rmassx_inner_core, &
+                      iproc_xi,iproc_eta,ichunk, &
+                      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM, &
+                      addressing,ibool_inner_core,idoubling_inner_core, &
+                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                      nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                      nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                      ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                      ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                      nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
+                      npoin2D_cube_from_slices,receiver_cube_from_slices, &
+                      sender_from_slices_to_cube,ibool_central_cube, &
+                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+
+    call prepare_timerun_centralcube(myrank,rmassy_inner_core, &
+                      iproc_xi,iproc_eta,ichunk, &
+                      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM, &
+                      addressing,ibool_inner_core,idoubling_inner_core, &
+                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                      nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                      nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                      ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                      ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                      nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
+                      npoin2D_cube_from_slices,receiver_cube_from_slices, &
+                      sender_from_slices_to_cube,ibool_central_cube, &
+                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+
+    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC_BACKWARD > 0)then 
+
+    call prepare_timerun_centralcube(myrank,b_rmassx_inner_core, &
+                      iproc_xi,iproc_eta,ichunk, &
+                      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM, &
+                      addressing,ibool_inner_core,idoubling_inner_core, &
+                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                      nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                      nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                      ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                      ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                      nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
+                      npoin2D_cube_from_slices,receiver_cube_from_slices, &
+                      sender_from_slices_to_cube,ibool_central_cube, &
+                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+
+    call prepare_timerun_centralcube(myrank,b_rmassy_inner_core, &
+                      iproc_xi,iproc_eta,ichunk, &
+                      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM, &
+                      addressing,ibool_inner_core,idoubling_inner_core, &
+                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                      nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                      nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                      ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                      ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                      nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
+                      npoin2D_cube_from_slices,receiver_cube_from_slices, &
+                      sender_from_slices_to_cube,ibool_central_cube, &
+                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+    endif
+  endif
+
     call fix_non_blocking_central_cube(is_on_a_slice_edge_inner_core, &
          ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
          idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
@@ -1824,7 +1949,9 @@
   endif
 
   ! add C*delta/2 contribution to the mass matrices on the Stacey edges
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+  if(((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) &
+      .and. (.not. USE_LDDRK)) then 
      if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
           call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
      if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
@@ -1842,9 +1969,40 @@
   if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
 
  ! add C*delta/2 contribution to the mass matrices on the Stacey edges
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+  if(((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) &
+      .and. (.not. USE_LDDRK)) then 
      rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
      rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+  endif
+
+  if(.not. USE_LDDRK)then 
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. NGLOB_XY_IC > 0) then
+       if(minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
+            call exit_MPI(myrank,'negative mass matrix term for the rmassx_inner_core')
+       if(minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
+            call exit_MPI(myrank,'negative mass matrix term for the rmassy_inner_core')
+       rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
+       rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
+       if(SIMULATION_TYPE == 3 .and. NGLOB_XY_IC_BACKWARD > 0)then  
+         if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
+              call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
+         if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
+              call exit_MPI(myrank,'negative mass matrix term for the b_rmassy_inner_core')
+         b_rmassx_inner_core = 1._CUSTOM_REAL / b_rmassx_inner_core
+         b_rmassy_inner_core = 1._CUSTOM_REAL / b_rmassy_inner_core
+       endif     
+    endif
+
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+      .and. (.not. USE_LDDRK) .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM_BACKWARD > 0)then
+      if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+           call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
+      if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+           call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
+      b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
+      b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
+    endif
   endif
 
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
@@ -2332,7 +2490,7 @@ if(.not. UNDO_ATTENUATION) then
 !! DK DK this first part handles the cases SIMULATION_TYPE == 1 and SIMULATION_TYPE == 2
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
-    if(USE_LDDRK)then
+    if(USE_LDDRK .or. EXACT_MASS_MATRIX_FOR_ROTATION)then
       include "part1_undo_att.f90"
     else
       include "part1_classical.f90"
