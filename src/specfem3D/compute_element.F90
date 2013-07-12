@@ -35,7 +35,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -87,6 +87,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -165,6 +166,7 @@
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -355,7 +357,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -409,6 +411,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -500,6 +503,7 @@
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -887,7 +891,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY) 
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -941,6 +945,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -1021,6 +1026,7 @@
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -1688,7 +1694,8 @@
 !--------------------------------------------------------------------------------------------
 !
  subroutine compute_element_strain_att_Dev(ispec,nglob,nspec,displ,veloc,deltat,ibool,hprime_xx,hprime_xxT,&
-                                       xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
+                                       xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1,&
+                                       eps_trace_over_3_loc_nplus1) 
 
   implicit none
   include "constants.h"
@@ -1702,6 +1709,7 @@
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_nplus1
 
 !  local variable
   integer :: i,j,k,iglob
@@ -1854,6 +1862,7 @@
         duzdyl_plus_duydzl = duzdyl + duydzl
 
         templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+        eps_trace_over_3_loc_nplus1 = templ
         epsilondev_loc_nplus1(1,i,j,k) = duxdxl - templ
         epsilondev_loc_nplus1(2,i,j,k) = duydyl - templ
         epsilondev_loc_nplus1(3,i,j,k) = 0.5 * duxdyl_plus_duydxl

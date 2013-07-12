@@ -393,10 +393,16 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_common_inner_core
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_crust_mantle 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_inner_core 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_inner_core 
 
 ! to save a significant amount of memory space, we equivalence these two arrays that are never used simultaneously
 ! (ibathy_topo is only used before the beginning of the time loop, while R_memory_crust_mantle is only used inside the time loop)
@@ -1109,6 +1115,47 @@
 ! to switch between simulation type 1 mode and simulation type 3 mode
 ! in exact undoing of attenuation
   undo_att_sim_type_3 = .false.
+
+! ZN if we want to storing the strain to acclerate the code but cost more memory then
+  if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then
+    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
+    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_crust_mantle')
+    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_inner_core')
+    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_inner_core')
+    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+    eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    if(FIX_UNDERFLOW_PROBLEM) then
+      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+      eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
+      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
+      eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
+    endif
+  else
+    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
+    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_crust_mantle')
+    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_inner_core')
+    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_inner_core')
+    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+    eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    if(FIX_UNDERFLOW_PROBLEM) then
+      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+      eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
+      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
+      eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
+    endif
+  endif
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -2387,6 +2434,41 @@ else ! if UNDO_ATTENUATION
       it_temp = it
       seismo_current_temp = seismo_current
 
+        if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+          if(.not. USE_DEVILLE_PRODUCTS_VAL) &
+             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE) is .true.'// &
+                           'is not implemented without USE_DEVILLE_PRODUCTS_VAL') 
+          do ispec = 1, NSPEC_INNER_CORE
+            call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,b_displ_inner_core,&
+                                            b_veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
+                                            xix_inner_core,xiy_inner_core,xiz_inner_core,&
+                                            etax_inner_core,etay_inner_core,etaz_inner_core,&
+                                            gammax_inner_core,gammay_inner_core,gammaz_inner_core,&
+                                            epsilondev_loc,eps_trace_over_3_loc)
+            eps_trace_over_3_inner_core(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
+            epsilondev_inner_core(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
+            epsilondev_inner_core(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+            epsilondev_inner_core(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+            epsilondev_inner_core(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+            epsilondev_inner_core(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)          
+          enddo
+
+          do ispec = 1, NSPEC_crust_mantle
+            call compute_element_strain_att_Dev(ispec,NGLOB_crust_mantle,NSPEC_crust_mantle,b_displ_crust_mantle,&
+                                            b_veloc_crust_mantle,0._CUSTOM_REAL,ibool_crust_mantle,hprime_xx,hprime_xxT,&
+                                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+                                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
+                                            epsilondev_loc,eps_trace_over_3_loc)
+            eps_trace_over_3_crust_mantle(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
+            epsilondev_crust_mantle(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
+            epsilondev_crust_mantle(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+            epsilondev_crust_mantle(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+            epsilondev_crust_mantle(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+            epsilondev_crust_mantle(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)          
+          enddo
+        endif
+
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
@@ -2402,6 +2484,41 @@ else ! if UNDO_ATTENUATION
 
       it = it_temp
       seismo_current = seismo_current_temp
+
+      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+        if(.not. USE_DEVILLE_PRODUCTS_VAL) &
+           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE) is .true.'// &
+                         'is not implemented without USE_DEVILLE_PRODUCTS_VAL') 
+        do ispec = 1, NSPEC_INNER_CORE
+          call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
+                                            veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
+                                            xix_inner_core,xiy_inner_core,xiz_inner_core,&
+                                            etax_inner_core,etay_inner_core,etaz_inner_core,&
+                                            gammax_inner_core,gammay_inner_core,gammaz_inner_core,&
+                                            epsilondev_loc,eps_trace_over_3_loc)
+          eps_trace_over_3_inner_core(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
+          epsilondev_inner_core(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
+          epsilondev_inner_core(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+          epsilondev_inner_core(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+          epsilondev_inner_core(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+          epsilondev_inner_core(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)          
+        enddo
+
+        do ispec = 1, NSPEC_crust_mantle
+          call compute_element_strain_att_Dev(ispec,NGLOB_crust_mantle,NSPEC_crust_mantle,displ_crust_mantle,&
+                                          veloc_crust_mantle,0._CUSTOM_REAL,ibool_crust_mantle,hprime_xx,hprime_xxT,&
+                                          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+                                          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
+                                          epsilondev_loc,eps_trace_over_3_loc)
+          eps_trace_over_3_crust_mantle(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
+          epsilondev_crust_mantle(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
+          epsilondev_crust_mantle(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+          epsilondev_crust_mantle(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+          epsilondev_crust_mantle(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+          epsilondev_crust_mantle(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)          
+        enddo
+      endif
 
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
         do i = 1, NDIM
