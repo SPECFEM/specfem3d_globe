@@ -54,7 +54,8 @@
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev,eps_trace_over_3) 
 
   implicit none
 
@@ -83,7 +84,9 @@
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY,RECOMPUTE_STRAIN_DO_NOT_STORE   
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3 
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -92,6 +95,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1 
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -379,6 +383,9 @@
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+            if(.not. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
+              eps_trace_over_3(i,j,k,ispec) = templ
+            endif
           endif
 
           ! precompute terms for attenuation if needed
@@ -906,9 +913,17 @@
 
     if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
 
-       call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
+      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+        epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
+        epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
+        epsilondev_loc_nsub1(3,:,:,:) = epsilondev(3,:,:,:,ispec)
+        epsilondev_loc_nsub1(4,:,:,:) = epsilondev(4,:,:,:,ispec)
+        epsilondev_loc_nsub1(5,:,:,:) = epsilondev(5,:,:,:,ispec)
+      else
+        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
                                              deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
+      endif
 
 ! use Runge-Kutta scheme to march in time
       do i_SLS = 1,N_SLS
@@ -951,13 +966,27 @@
            R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
                                                BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
          else
-           R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+           if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+             R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+                + factor_common_c44_muv(:,:,:) &
+                * (betaval(i_SLS) * epsilondev_loc_nsub1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
+           else
+             R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
                 + factor_common_c44_muv(:,:,:) &
                 * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+           endif
          endif
 
-        enddo
-      enddo
+        enddo ! i_memory = 1,5
+      enddo ! i_SLS = 1,N_SLS
+
+      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+        epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:) 
+        epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+        epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+        epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+        epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:) 
+      endif
 
     endif
 

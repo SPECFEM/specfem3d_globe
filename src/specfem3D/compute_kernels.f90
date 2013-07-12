@@ -30,7 +30,9 @@
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
                           deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
-                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,ANISOTROPIC_KL)
+                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,ANISOTROPIC_KL,&
+                          RECOMPUTE_STRAIN_DO_NOT_STORE,& 
+                          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
 
   implicit none
 
@@ -57,6 +59,10 @@
 
   logical :: ANISOTROPIC_KL
 
+  logical :: RECOMPUTE_STRAIN_DO_NOT_STORE 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev_crust_mantle 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3_crust_mantle 
+
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) :: prod
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
@@ -69,10 +75,19 @@
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
 
-    call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+    if(COMPUTE_AND_STORE_STRAIN .and. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
+        eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
+        epsilondev_loc_matrix(1,:,:,:) = epsilondev_crust_mantle(1,:,:,:,ispec)
+        epsilondev_loc_matrix(2,:,:,:) = epsilondev_crust_mantle(2,:,:,:,ispec)
+        epsilondev_loc_matrix(3,:,:,:) = epsilondev_crust_mantle(3,:,:,:,ispec)
+        epsilondev_loc_matrix(4,:,:,:) = epsilondev_crust_mantle(4,:,:,:,ispec)
+        epsilondev_loc_matrix(5,:,:,:) = epsilondev_crust_mantle(5,:,:,:,ispec)
+    else
+      call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
                                              displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                                              epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
+    endif
 
     call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
                                              b_displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
@@ -306,7 +321,9 @@
                           alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
                           deltat,displ_inner_core,hprime_xx,hprime_xxT,&
-                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
+                          RECOMPUTE_STRAIN_DO_NOT_STORE,& 
+                          epsilondev_inner_core,eps_trace_over_3_inner_core) 
 
   implicit none
 
@@ -328,6 +345,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
+  logical :: RECOMPUTE_STRAIN_DO_NOT_STORE 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev_inner_core 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: eps_trace_over_3_inner_core 
+
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
@@ -340,10 +361,19 @@
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
 
-    call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
+    if(COMPUTE_AND_STORE_STRAIN .and. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
+        eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_inner_core(:,:,:,ispec)
+        epsilondev_loc_matrix(1,:,:,:) = epsilondev_inner_core(1,:,:,:,ispec)
+        epsilondev_loc_matrix(2,:,:,:) = epsilondev_inner_core(2,:,:,:,ispec)
+        epsilondev_loc_matrix(3,:,:,:) = epsilondev_inner_core(3,:,:,:,ispec)
+        epsilondev_loc_matrix(4,:,:,:) = epsilondev_inner_core(4,:,:,:,ispec)
+        epsilondev_loc_matrix(5,:,:,:) = epsilondev_inner_core(5,:,:,:,ispec)
+    else
+      call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
                                              displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                                              epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
+    endif
 
     call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
                                              b_displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&

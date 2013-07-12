@@ -51,7 +51,8 @@
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
           alphaval,betaval,gammaval,factor_common, &
           vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev,eps_trace_over_3) 
 
   implicit none
 
@@ -82,8 +83,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1,epsilondev_loc_nsub1
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY,RECOMPUTE_STRAIN_DO_NOT_STORE   
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3 
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_INNER_CORE) :: idoubling
@@ -357,6 +360,9 @@
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+            if(.not. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
+              eps_trace_over_3(i,j,k,ispec) = templ
+            endif
           endif
 
           if(ATTENUATION_3D_VAL) then
@@ -662,9 +668,17 @@
 
     if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
 
-       call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
+      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+        epsilondev_loc_nsub1(1,i,j,k) = epsilondev(1,i,j,k,ispec)
+        epsilondev_loc_nsub1(2,i,j,k) = epsilondev(2,i,j,k,ispec)
+        epsilondev_loc_nsub1(3,i,j,k) = epsilondev(3,i,j,k,ispec)
+        epsilondev_loc_nsub1(4,i,j,k) = epsilondev(4,i,j,k,ispec)
+        epsilondev_loc_nsub1(5,i,j,k) = epsilondev(5,i,j,k,ispec)
+      else
+        call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
                                              veloc_inner_core,deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
+      endif
 
       do i_SLS = 1,N_SLS
 
@@ -695,17 +709,36 @@
                                                BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
           enddo
         else
-          do i_memory = 1,5
-            R_memory(i_memory,i_SLS,:,:,:,ispec) = &
-                   alphaval(i_SLS) * &
-                   R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
-                   factor_common_use * &
-                   (betaval(i_SLS) * &
-                   epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-          enddo
+          if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+            do i_memory = 1,5
+              R_memory(i_memory,i_SLS,:,:,:,ispec) = &
+                     alphaval(i_SLS) * &
+                     R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
+                     factor_common_use * &
+                     (betaval(i_SLS) * &
+                     epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nsub1(i_memory,:,:,:)) 
+            enddo 
+          else
+            do i_memory = 1,5
+              R_memory(i_memory,i_SLS,:,:,:,ispec) = &
+                     alphaval(i_SLS) * &
+                     R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
+                     factor_common_use * &
+                     (betaval(i_SLS) * &
+                     epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+            enddo
+          endif 
         endif
 
-      enddo
+      enddo !do i_SLS = 1,N_SLS
+
+      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+         epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:) 
+         epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+         epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+         epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+         epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:) 
+      endif
 
     endif
 

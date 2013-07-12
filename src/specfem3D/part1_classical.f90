@@ -320,7 +320,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -360,7 +361,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
     endif
 
     ! Deville routine
@@ -396,7 +398,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_inner_core,eps_trace_over_3_inner_core) 
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -429,7 +432,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_inner_core,eps_trace_over_3_inner_core) 
     endif
 
     ! Stacey
@@ -612,7 +616,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -652,7 +657,8 @@
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
       endif
 
       ! Deville routine
@@ -688,7 +694,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_inner_core,eps_trace_over_3_inner_core) 
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -721,7 +728,8 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK)
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev_inner_core,eps_trace_over_3_inner_core) 
       endif
 
 ! assemble all the contributions between slices using MPI
