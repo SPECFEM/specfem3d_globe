@@ -83,17 +83,22 @@
         epsilondev_loc_matrix(4,:,:,:) = epsilondev_crust_mantle(4,:,:,:,ispec)
         epsilondev_loc_matrix(5,:,:,:) = epsilondev_crust_mantle(5,:,:,:,ispec)
     else
+! in principle there should also probably be a _noDev() call here as well
+! and a "if(USE_DEVILLE_PRODUCTS_VAL) then" test, but for now it is not implemented
+! by lack of time (and nobody uses NGLL /= 5 anyway, thus in practice USE_DEVILLE_PRODUCTS_VAL is always true...)
       call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
                                              displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                                              epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
     endif
 
+! in principle there should also probably be a _noDev() call here as well
+! and a "if(USE_DEVILLE_PRODUCTS_VAL) then" test, but for now it is not implemented
+! by lack of time (and nobody uses NGLL /= 5 anyway, thus in practice USE_DEVILLE_PRODUCTS_VAL is always true...)
     call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
                                              b_displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                                              b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
-
 
     do k = 1, NGLLZ
       do j = 1, NGLLY
@@ -161,7 +166,7 @@
                         xix_outer_core,xiy_outer_core,xiz_outer_core, &
                         etax_outer_core,etay_outer_core,etaz_outer_core, &
                         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-                        hprime_xx,hprime_yy,hprime_zz, &
+                        hprime_xx,hprime_xxT, &
                         displ_outer_core,accel_outer_core, &
                         b_displ_outer_core,b_accel_outer_core, &
                         vector_accel_outer_core,vector_displ_outer_core, &
@@ -183,9 +188,7 @@
         etax_outer_core,etay_outer_core,etaz_outer_core, &
         gammax_outer_core,gammay_outer_core,gammaz_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprime_xxT
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
     displ_outer_core,accel_outer_core
@@ -208,18 +211,111 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,kappal
-  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) :: b_div_displ_outer_core
 
-  integer :: i,j,k,l,ispec,iglob
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
 
-  ! outer core -- compute the actual displacement and acceleration
+  ! manually inline the calls to the Deville et al. (2002) routines
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,m2) :: B1_m1_m2_5points
+  real(kind=CUSTOM_REAL), dimension(m1,m2) :: C1_m1_m2_5points
+
+  equivalence(dummyx_loc,B1_m1_m2_5points)
+  equivalence(tempx1,C1_m1_m2_5points)
+
+  real(kind=CUSTOM_REAL), dimension(m2,NGLLX) :: A1_mxm_m2_m1_5points
+  real(kind=CUSTOM_REAL), dimension(m2,m1) :: C1_mxm_m2_m1_5points
+
+  equivalence(dummyx_loc,A1_mxm_m2_m1_5points)
+  equivalence(tempx3,C1_mxm_m2_m1_5points)
+
+  integer :: i,j,k,ispec,iglob
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
+! in principle there should also probably be a _noDev() call here as well
+! and a "if(USE_DEVILLE_PRODUCTS_VAL) then" test, but for now it is not implemented
+! by lack of time (and nobody uses NGLL /= 5 anyway, thus in practice USE_DEVILLE_PRODUCTS_VAL is always true...)
+
+  ! outer core, compute the actual displacement and acceleration
   do ispec = 1, NSPEC_OUTER_CORE
 
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
+!----------------------------------------------------------------------------------------
 
+    ! store the field locally
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          dummyx_loc(ijk,1,1) = b_displ_outer_core(ibool_outer_core(ijk,1,1,ispec))
+        enddo
+#else
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          dummyx_loc(i,j,k) = b_displ_outer_core(ibool_outer_core(i,j,k,ispec))
+        enddo
+      enddo
+    enddo
+#endif
+
+    ! subroutines adapted from Deville, Fischer and Mund, High-order methods
+    ! for incompressible fluid flow, Cambridge University Press (2002),
+    ! pages 386 and 389 and Figure 8.3.1
+    do j=1,m2
+      do i=1,m1
+        C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
+                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+      enddo
+    enddo
+
+    do k = 1,NGLLX
+      do j=1,m1
+        do i=1,m1
+          tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
+                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
+        enddo
+      enddo
+    enddo
+
+    do j=1,m1
+      do i=1,m2
+        C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
+                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+      enddo
+    enddo
+
+    ! get derivatives of velocity potential with respect to x, y and z
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          xixl = xix_outer_core(ijk,1,1,ispec)
+          xiyl = xiy_outer_core(ijk,1,1,ispec)
+          xizl = xiz_outer_core(ijk,1,1,ispec)
+          etaxl = etax_outer_core(ijk,1,1,ispec)
+          etayl = etay_outer_core(ijk,1,1,ispec)
+          etazl = etaz_outer_core(ijk,1,1,ispec)
+          gammaxl = gammax_outer_core(ijk,1,1,ispec)
+          gammayl = gammay_outer_core(ijk,1,1,ispec)
+          gammazl = gammaz_outer_core(ijk,1,1,ispec)
+
+          b_vector_displ_outer_core(1,ijk,1,1) = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
+          b_vector_displ_outer_core(2,ijk,1,1) = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
+          b_vector_displ_outer_core(3,ijk,1,1) = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+        enddo
+#else
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
           xixl = xix_outer_core(i,j,k,ispec)
           xiyl = xiy_outer_core(i,j,k,ispec)
           xizl = xiz_outer_core(i,j,k,ispec)
@@ -230,70 +326,228 @@
           gammayl = gammay_outer_core(i,j,k,ispec)
           gammazl = gammaz_outer_core(i,j,k,ispec)
 
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
+          b_vector_displ_outer_core(1,i,j,k) = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
+          b_vector_displ_outer_core(2,i,j,k) = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
+          b_vector_displ_outer_core(3,i,j,k) = xizl*tempx1(i,j,k) + etazl*tempx2(i,j,k) + gammazl*tempx3(i,j,k)
+        enddo
+      enddo
+    enddo
+#endif
 
-          do l=1,NGLLX
-            tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-          enddo
+!----------------------------------------------------------------------------------------
 
-          do l=1,NGLLY
-            tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-          enddo
+    ! store the field locally
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          dummyx_loc(ijk,1,1) = accel_outer_core(ibool_outer_core(ijk,1,1,ispec))
+        enddo
+#else
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          dummyx_loc(i,j,k) = accel_outer_core(ibool_outer_core(i,j,k,ispec))
+        enddo
+      enddo
+    enddo
+#endif
 
-          do l=1,NGLLZ
-            tempx3l = tempx3l + b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-          enddo
+    ! subroutines adapted from Deville, Fischer and Mund, High-order methods
+    ! for incompressible fluid flow, Cambridge University Press (2002),
+    ! pages 386 and 389 and Figure 8.3.1
+    do j=1,m2
+      do i=1,m1
+        C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
+                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+      enddo
+    enddo
 
-          b_vector_displ_outer_core(1,i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          b_vector_displ_outer_core(2,i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          b_vector_displ_outer_core(3,i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+    do k = 1,NGLLX
+      do j=1,m1
+        do i=1,m1
+          tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
+                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
+        enddo
+      enddo
+    enddo
 
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
+    do j=1,m1
+      do i=1,m2
+        C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
+                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+      enddo
+    enddo
 
-          do l=1,NGLLX
-            tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-          enddo
+    ! get derivatives of velocity potential with respect to x, y and z
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          xixl = xix_outer_core(ijk,1,1,ispec)
+          xiyl = xiy_outer_core(ijk,1,1,ispec)
+          xizl = xiz_outer_core(ijk,1,1,ispec)
+          etaxl = etax_outer_core(ijk,1,1,ispec)
+          etayl = etay_outer_core(ijk,1,1,ispec)
+          etazl = etaz_outer_core(ijk,1,1,ispec)
+          gammaxl = gammax_outer_core(ijk,1,1,ispec)
+          gammayl = gammay_outer_core(ijk,1,1,ispec)
+          gammazl = gammaz_outer_core(ijk,1,1,ispec)
 
-          do l=1,NGLLY
-            tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-          enddo
+          vector_accel_outer_core(1,ijk,1,1) = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
+          vector_accel_outer_core(2,ijk,1,1) = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
+          vector_accel_outer_core(3,ijk,1,1) = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+        enddo
+#else
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          xixl = xix_outer_core(i,j,k,ispec)
+          xiyl = xiy_outer_core(i,j,k,ispec)
+          xizl = xiz_outer_core(i,j,k,ispec)
+          etaxl = etax_outer_core(i,j,k,ispec)
+          etayl = etay_outer_core(i,j,k,ispec)
+          etazl = etaz_outer_core(i,j,k,ispec)
+          gammaxl = gammax_outer_core(i,j,k,ispec)
+          gammayl = gammay_outer_core(i,j,k,ispec)
+          gammazl = gammaz_outer_core(i,j,k,ispec)
 
-          do l=1,NGLLZ
-            tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-          enddo
+          vector_accel_outer_core(1,i,j,k) = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
+          vector_accel_outer_core(2,i,j,k) = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
+          vector_accel_outer_core(3,i,j,k) = xizl*tempx1(i,j,k) + etazl*tempx2(i,j,k) + gammazl*tempx3(i,j,k)
+        enddo
+      enddo
+    enddo
+#endif
 
-          vector_accel_outer_core(1,i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          vector_accel_outer_core(2,i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          vector_accel_outer_core(3,i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+!----------------------------------------------------------------------------------------
 
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
+    ! store the field locally
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          dummyx_loc(ijk,1,1) = displ_outer_core(ibool_outer_core(ijk,1,1,ispec))
+        enddo
+#else
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          dummyx_loc(i,j,k) = displ_outer_core(ibool_outer_core(i,j,k,ispec))
+        enddo
+      enddo
+    enddo
+#endif
 
-          do l=1,NGLLX
-            tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-          enddo
+    ! subroutines adapted from Deville, Fischer and Mund, High-order methods
+    ! for incompressible fluid flow, Cambridge University Press (2002),
+    ! pages 386 and 389 and Figure 8.3.1
+    do j=1,m2
+      do i=1,m1
+        C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
+                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+      enddo
+    enddo
 
-          do l=1,NGLLY
-            tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-          enddo
+    do k = 1,NGLLX
+      do j=1,m1
+        do i=1,m1
+          tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
+                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
+        enddo
+      enddo
+    enddo
 
-          do l=1,NGLLZ
-            tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-          enddo
+    do j=1,m1
+      do i=1,m2
+        C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
+                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+      enddo
+    enddo
 
-          vector_displ_outer_core(1,i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          vector_displ_outer_core(2,i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          vector_displ_outer_core(3,i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+    ! get derivatives of velocity potential with respect to x, y and z
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          xixl = xix_outer_core(ijk,1,1,ispec)
+          xiyl = xiy_outer_core(ijk,1,1,ispec)
+          xizl = xiz_outer_core(ijk,1,1,ispec)
+          etaxl = etax_outer_core(ijk,1,1,ispec)
+          etayl = etay_outer_core(ijk,1,1,ispec)
+          etazl = etaz_outer_core(ijk,1,1,ispec)
+          gammaxl = gammax_outer_core(ijk,1,1,ispec)
+          gammayl = gammay_outer_core(ijk,1,1,ispec)
+          gammazl = gammaz_outer_core(ijk,1,1,ispec)
 
+          vector_displ_outer_core(1,ijk,1,1) = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
+          vector_displ_outer_core(2,ijk,1,1) = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
+          vector_displ_outer_core(3,ijk,1,1) = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+        enddo
+#else
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          xixl = xix_outer_core(i,j,k,ispec)
+          xiyl = xiy_outer_core(i,j,k,ispec)
+          xizl = xiz_outer_core(i,j,k,ispec)
+          etaxl = etax_outer_core(i,j,k,ispec)
+          etayl = etay_outer_core(i,j,k,ispec)
+          etazl = etaz_outer_core(i,j,k,ispec)
+          gammaxl = gammax_outer_core(i,j,k,ispec)
+          gammayl = gammay_outer_core(i,j,k,ispec)
+          gammazl = gammaz_outer_core(i,j,k,ispec)
+
+          vector_displ_outer_core(1,i,j,k) = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
+          vector_displ_outer_core(2,i,j,k) = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
+          vector_displ_outer_core(3,i,j,k) = xizl*tempx1(i,j,k) + etazl*tempx2(i,j,k) + gammazl*tempx3(i,j,k)
+        enddo
+      enddo
+    enddo
+#endif
+
+!----------------------------------------------------------------------------------------
+
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1, NGLLCUBE
+          rho_kl_outer_core(ijk,1,1,ispec) = rho_kl_outer_core(ijk,1,1,ispec) &
+             + deltat * (vector_accel_outer_core(1,ijk,1,1) * b_vector_displ_outer_core(1,ijk,1,1) + &
+                         vector_accel_outer_core(2,ijk,1,1) * b_vector_displ_outer_core(2,ijk,1,1) + &
+                         vector_accel_outer_core(3,ijk,1,1) * b_vector_displ_outer_core(3,ijk,1,1))
+
+          kappal = rhostore_outer_core(ijk,1,1,ispec) / kappavstore_outer_core(ijk,1,1,ispec)
+
+          iglob = ibool_outer_core(ijk,1,1,ispec)
+
+          div_displ_outer_core(ijk,1,1,ispec) =  kappal * accel_outer_core(iglob)
+          b_div_displ_outer_core =  kappal * b_accel_outer_core(iglob)
+
+          alpha_kl_outer_core(ijk,1,1,ispec) = alpha_kl_outer_core(ijk,1,1,ispec) &
+             + deltat * div_displ_outer_core(ijk,1,1,ispec) * b_div_displ_outer_core
+        enddo
+#else
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
           rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-             + deltat * dot_product(vector_accel_outer_core(:,i,j,k), b_vector_displ_outer_core(:,i,j,k))
+!            + deltat * dot_product(vector_accel_outer_core(:,i,j,k), b_vector_displ_outer_core(:,i,j,k))
+!! DK DK July 2013: replaces dot_product() with an unrolled expression, otherwise most compilers
+!! DK DK July 2013: will try to vectorize this rather than the outer loop, resulting in a much slower code
+             + deltat * (vector_accel_outer_core(1,i,j,k) * b_vector_displ_outer_core(1,i,j,k) + &
+                         vector_accel_outer_core(2,i,j,k) * b_vector_displ_outer_core(2,i,j,k) + &
+                         vector_accel_outer_core(3,i,j,k) * b_vector_displ_outer_core(3,i,j,k))
 
-          kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
+          kappal = rhostore_outer_core(i,j,k,ispec) / kappavstore_outer_core(i,j,k,ispec)
 
           iglob = ibool_outer_core(i,j,k,ispec)
 
@@ -302,10 +556,10 @@
 
           alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
              + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core
-
         enddo
       enddo
     enddo
+#endif
 
   enddo
 

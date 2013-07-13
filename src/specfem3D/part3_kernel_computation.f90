@@ -20,7 +20,7 @@
                         xix_outer_core,xiy_outer_core,xiz_outer_core, &
                         etax_outer_core,etay_outer_core,etaz_outer_core, &
                         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-                        hprime_xx,hprime_yy,hprime_zz, &
+                        hprime_xx,hprime_xxT, &
                         displ_outer_core,accel_outer_core, &
                         b_displ_outer_core,b_accel_outer_core, &
                         vector_accel_outer_core,vector_displ_outer_core, &
