@@ -63,7 +63,6 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) :: prod
-  real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
   integer :: i,j,k,ispec,iglob
@@ -103,11 +102,9 @@
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
              + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
-          b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
-
           ! For anisotropic kernels
-          call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_crust_mantle(1,i,j,k,ispec), &
-                                      b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
+          call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_crust_mantle(:,i,j,k,ispec), &
+                                      b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc_matrix(:,i,j,k))
 
           ! do not use a ":" array syntax for the first index below otherwise
           ! most compilers will not be able to vectorize the outer loop and the code will be slower
@@ -162,25 +159,22 @@
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
              + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
-          b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
-
           ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
           ! note: multiplication with 2*mu(x) will be done after the time loop
           beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-             + deltat * (epsilondev_crust_mantle(1,i,j,k,ispec)*b_epsilondev_loc(1) &
-             + epsilondev_crust_mantle(2,i,j,k,ispec)*b_epsilondev_loc(2) &
+             + deltat * (epsilondev_crust_mantle(1,i,j,k,ispec)*b_epsilondev_loc_matrix(1,i,j,k) &
+             + epsilondev_crust_mantle(2,i,j,k,ispec)*b_epsilondev_loc_matrix(2,i,j,k) &
              + (epsilondev_crust_mantle(1,i,j,k,ispec)+epsilondev_crust_mantle(2,i,j,k,ispec)) &
-             * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-             + 2.d0 * (epsilondev_crust_mantle(3,i,j,k,ispec)*b_epsilondev_loc(3) &
-             + epsilondev_crust_mantle(4,i,j,k,ispec)*b_epsilondev_loc(4) + &
-              epsilondev_crust_mantle(5,i,j,k,ispec)*b_epsilondev_loc(5)))
+             * (b_epsilondev_loc_matrix(1,i,j,k)+b_epsilondev_loc_matrix(2,i,j,k)) &
+             + 2.d0 * (epsilondev_crust_mantle(3,i,j,k,ispec)*b_epsilondev_loc_matrix(3,i,j,k) &
+             + epsilondev_crust_mantle(4,i,j,k,ispec)*b_epsilondev_loc_matrix(4,i,j,k) + &
+              epsilondev_crust_mantle(5,i,j,k,ispec)*b_epsilondev_loc_matrix(5,i,j,k)))
 
           ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
           ! note: multiplication with kappa(x) will be done after the time loop
           alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
              + deltat * (9.d0 * eps_trace_over_3_crust_mantle(i,j,k,ispec) &
                               * b_eps_trace_over_3_loc_matrix(i,j,k))
-
         enddo
       enddo
     enddo
