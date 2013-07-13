@@ -183,8 +183,8 @@ $O/compute_forces_inner_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from
 $O/compute_forces_inner_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_Dev.F90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_Dev.F90
 
-$O/compute_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_kernels.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.f90
+$O/compute_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_kernels.F90
+	${FCCOMPILE_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.F90
 
 $O/compute_seismograms.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_seismograms.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_seismograms.o ${FCFLAGS_f90} $S/compute_seismograms.f90

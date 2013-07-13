@@ -252,6 +252,10 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -300,7 +304,14 @@
       ! subroutines adapted from Deville, Fischer and Mund, High-order methods
       ! for incompressible fluid flow, Cambridge University Press (2002),
       ! pages 386 and 389 and Figure 8.3.1
-
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+            iglob1 = ibool(ijk,1,1,ispec)
+            dummyx_loc(ijk,1,1) = displ_inner_core(1,iglob1)
+            dummyy_loc(ijk,1,1) = displ_inner_core(2,iglob1)
+            dummyz_loc(ijk,1,1) = displ_inner_core(3,iglob1)
+          enddo
+#else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -311,6 +322,7 @@
           enddo
         enddo
       enddo
+#endif
 
       do j=1,m2
          do i=1,m1
