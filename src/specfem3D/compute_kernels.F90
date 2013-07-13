@@ -63,22 +63,13 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) :: prod
-  real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_matrix,b_epsilondev_loc_matrix
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_matrix,&
-                                                          b_eps_trace_over_3_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
   integer :: i,j,k,ispec,iglob
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
-
-    eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
-    epsilondev_loc_matrix(1,:,:,:) = epsilondev_crust_mantle(1,:,:,:,ispec)
-    epsilondev_loc_matrix(2,:,:,:) = epsilondev_crust_mantle(2,:,:,:,ispec)
-    epsilondev_loc_matrix(3,:,:,:) = epsilondev_crust_mantle(3,:,:,:,ispec)
-    epsilondev_loc_matrix(4,:,:,:) = epsilondev_crust_mantle(4,:,:,:,ispec)
-    epsilondev_loc_matrix(5,:,:,:) = epsilondev_crust_mantle(5,:,:,:,ispec)
 
 ! in principle there should also probably be a _noDev() call here as well
 ! and a "if(USE_DEVILLE_PRODUCTS_VAL) then" test, but for now it is not implemented
@@ -112,11 +103,10 @@
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
              + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
-          epsilondev_loc(:) = epsilondev_loc_matrix(:,i,j,k)
           b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
 
           ! For anisotropic kernels
-          call compute_strain_product(prod,eps_trace_over_3_loc_matrix(i,j,k),epsilondev_loc, &
+          call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_crust_mantle(1,i,j,k,ispec), &
                                       b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
 
           ! do not use a ":" array syntax for the first index below otherwise
@@ -172,21 +162,23 @@
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
              + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
-          epsilondev_loc(:) = epsilondev_loc_matrix(:,i,j,k)
           b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
 
           ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
           ! note: multiplication with 2*mu(x) will be done after the time loop
           beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-             + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-             + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-             + 2.d0 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
-              epsilondev_loc(5)*b_epsilondev_loc(5)))
+             + deltat * (epsilondev_crust_mantle(1,i,j,k,ispec)*b_epsilondev_loc(1) &
+             + epsilondev_crust_mantle(2,i,j,k,ispec)*b_epsilondev_loc(2) &
+             + (epsilondev_crust_mantle(1,i,j,k,ispec)+epsilondev_crust_mantle(2,i,j,k,ispec)) &
+             * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
+             + 2.d0 * (epsilondev_crust_mantle(3,i,j,k,ispec)*b_epsilondev_loc(3) &
+             + epsilondev_crust_mantle(4,i,j,k,ispec)*b_epsilondev_loc(4) + &
+              epsilondev_crust_mantle(5,i,j,k,ispec)*b_epsilondev_loc(5)))
 
           ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
           ! note: multiplication with kappa(x) will be done after the time loop
           alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-             + deltat * (9.d0 * eps_trace_over_3_loc_matrix(i,j,k) &
+             + deltat * (9.d0 * eps_trace_over_3_crust_mantle(i,j,k,ispec) &
                               * b_eps_trace_over_3_loc_matrix(i,j,k))
 
         enddo
@@ -642,9 +634,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: eps_trace_over_3_inner_core 
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_matrix,b_epsilondev_loc_matrix
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_matrix,&
-                                                          b_eps_trace_over_3_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
 
   integer :: ispec,iglob
 
@@ -656,13 +647,6 @@
 
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
-
-    eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_inner_core(:,:,:,ispec)
-    epsilondev_loc_matrix(1,:,:,:) = epsilondev_inner_core(1,:,:,:,ispec)
-    epsilondev_loc_matrix(2,:,:,:) = epsilondev_inner_core(2,:,:,:,ispec)
-    epsilondev_loc_matrix(3,:,:,:) = epsilondev_inner_core(3,:,:,:,ispec)
-    epsilondev_loc_matrix(4,:,:,:) = epsilondev_inner_core(4,:,:,:,ispec)
-    epsilondev_loc_matrix(5,:,:,:) = epsilondev_inner_core(5,:,:,:,ispec)
 
     call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
                                              b_displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&
@@ -679,16 +663,16 @@
              + accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob))
 
           beta_kl_inner_core(ijk,1,1,ispec) =  beta_kl_inner_core(ijk,1,1,ispec) &
-             + deltat * (epsilondev_loc_matrix(1,ijk,1,1)*b_epsilondev_loc_matrix(1,ijk,1,1) &
-                + epsilondev_loc_matrix(2,ijk,1,1)*b_epsilondev_loc_matrix(2,ijk,1,1) &
-                + (epsilondev_loc_matrix(1,ijk,1,1)+epsilondev_loc_matrix(2,ijk,1,1)) * &
+             + deltat * (epsilondev_inner_core(1,ijk,1,1,ispec)*b_epsilondev_loc_matrix(1,ijk,1,1) &
+                + epsilondev_inner_core(2,ijk,1,1,ispec)*b_epsilondev_loc_matrix(2,ijk,1,1) &
+                + (epsilondev_inner_core(1,ijk,1,1,ispec)+epsilondev_inner_core(2,ijk,1,1,ispec)) * &
                   (b_epsilondev_loc_matrix(1,ijk,1,1)+b_epsilondev_loc_matrix(2,ijk,1,1)) &
-                + 2.d0 * (epsilondev_loc_matrix(3,ijk,1,1)*b_epsilondev_loc_matrix(3,ijk,1,1) &
-                + epsilondev_loc_matrix(4,ijk,1,1)*b_epsilondev_loc_matrix(4,ijk,1,1) &
-                + epsilondev_loc_matrix(5,ijk,1,1)*b_epsilondev_loc_matrix(5,ijk,1,1)))
+                + 2.d0 * (epsilondev_inner_core(3,ijk,1,1,ispec)*b_epsilondev_loc_matrix(3,ijk,1,1) &
+                + epsilondev_inner_core(4,ijk,1,1,ispec)*b_epsilondev_loc_matrix(4,ijk,1,1) &
+                + epsilondev_inner_core(5,ijk,1,1,ispec)*b_epsilondev_loc_matrix(5,ijk,1,1)))
 
           alpha_kl_inner_core(ijk,1,1,ispec) = alpha_kl_inner_core(ijk,1,1,ispec) &
-                + deltat * (9.d0 * eps_trace_over_3_loc_matrix(ijk,1,1) * b_eps_trace_over_3_loc_matrix(ijk,1,1))
+                + deltat * (9.d0 * eps_trace_over_3_inner_core(ijk,1,1,ispec) * b_eps_trace_over_3_loc_matrix(ijk,1,1))
         enddo
 #else
     do k = 1, NGLLZ
@@ -702,16 +686,16 @@
              + accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob))
 
           beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
-             + deltat * (epsilondev_loc_matrix(1,i,j,k)*b_epsilondev_loc_matrix(1,i,j,k) &
-                + epsilondev_loc_matrix(2,i,j,k)*b_epsilondev_loc_matrix(2,i,j,k) &
-                + (epsilondev_loc_matrix(1,i,j,k)+epsilondev_loc_matrix(2,i,j,k)) * &
+             + deltat * (epsilondev_inner_core(1,i,j,k,ispec)*b_epsilondev_loc_matrix(1,i,j,k) &
+                + epsilondev_inner_core(2,i,j,k,ispec)*b_epsilondev_loc_matrix(2,i,j,k) &
+                + (epsilondev_inner_core(1,i,j,k,ispec)+epsilondev_inner_core(2,i,j,k,ispec)) * &
                   (b_epsilondev_loc_matrix(1,i,j,k)+b_epsilondev_loc_matrix(2,i,j,k)) &
-                + 2.d0 * (epsilondev_loc_matrix(3,i,j,k)*b_epsilondev_loc_matrix(3,i,j,k) &
-                + epsilondev_loc_matrix(4,i,j,k)*b_epsilondev_loc_matrix(4,i,j,k) &
-                + epsilondev_loc_matrix(5,i,j,k)*b_epsilondev_loc_matrix(5,i,j,k)))
+                + 2.d0 * (epsilondev_inner_core(3,i,j,k,ispec)*b_epsilondev_loc_matrix(3,i,j,k) &
+                + epsilondev_inner_core(4,i,j,k,ispec)*b_epsilondev_loc_matrix(4,i,j,k) &
+                + epsilondev_inner_core(5,i,j,k,ispec)*b_epsilondev_loc_matrix(5,i,j,k)))
 
           alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
-                + deltat * (9.d0 * eps_trace_over_3_loc_matrix(i,j,k) * b_eps_trace_over_3_loc_matrix(i,j,k))
+                + deltat * (9.d0 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_loc_matrix(i,j,k))
         enddo
       enddo
     enddo
