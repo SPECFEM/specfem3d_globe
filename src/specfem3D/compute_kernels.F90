@@ -100,6 +100,8 @@
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                                              b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
 
+  if (ANISOTROPIC_KL) then
+
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -126,34 +128,85 @@
           b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
 
           ! For anisotropic kernels
-          if (ANISOTROPIC_KL) then
+          call compute_strain_product(prod,eps_trace_over_3_loc_matrix(i,j,k),epsilondev_loc, &
+                                      b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
 
-            call compute_strain_product(prod,eps_trace_over_3_loc_matrix(i,j,k),epsilondev_loc, &
-                                        b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
-            cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
+          ! do not use a ":" array syntax for the first index below otherwise
+          ! most compilers will not be able to vectorize the outer loop and the code will be slower
+          cijkl_kl_crust_mantle( 1,i,j,k,ispec) = cijkl_kl_crust_mantle( 1,i,j,k,ispec) + deltat * prod( 1)
+          cijkl_kl_crust_mantle( 2,i,j,k,ispec) = cijkl_kl_crust_mantle( 2,i,j,k,ispec) + deltat * prod( 2)
+          cijkl_kl_crust_mantle( 3,i,j,k,ispec) = cijkl_kl_crust_mantle( 3,i,j,k,ispec) + deltat * prod( 3)
+          cijkl_kl_crust_mantle( 4,i,j,k,ispec) = cijkl_kl_crust_mantle( 4,i,j,k,ispec) + deltat * prod( 4)
+          cijkl_kl_crust_mantle( 5,i,j,k,ispec) = cijkl_kl_crust_mantle( 5,i,j,k,ispec) + deltat * prod( 5)
+          cijkl_kl_crust_mantle( 6,i,j,k,ispec) = cijkl_kl_crust_mantle( 6,i,j,k,ispec) + deltat * prod( 6)
+          cijkl_kl_crust_mantle( 7,i,j,k,ispec) = cijkl_kl_crust_mantle( 7,i,j,k,ispec) + deltat * prod( 7)
+          cijkl_kl_crust_mantle( 8,i,j,k,ispec) = cijkl_kl_crust_mantle( 8,i,j,k,ispec) + deltat * prod( 8)
+          cijkl_kl_crust_mantle( 9,i,j,k,ispec) = cijkl_kl_crust_mantle( 9,i,j,k,ispec) + deltat * prod( 9)
 
-          else
+          cijkl_kl_crust_mantle(10,i,j,k,ispec) = cijkl_kl_crust_mantle(10,i,j,k,ispec) + deltat * prod(10)
+          cijkl_kl_crust_mantle(11,i,j,k,ispec) = cijkl_kl_crust_mantle(11,i,j,k,ispec) + deltat * prod(11)
+          cijkl_kl_crust_mantle(12,i,j,k,ispec) = cijkl_kl_crust_mantle(12,i,j,k,ispec) + deltat * prod(12)
+          cijkl_kl_crust_mantle(13,i,j,k,ispec) = cijkl_kl_crust_mantle(13,i,j,k,ispec) + deltat * prod(13)
+          cijkl_kl_crust_mantle(14,i,j,k,ispec) = cijkl_kl_crust_mantle(14,i,j,k,ispec) + deltat * prod(14)
+          cijkl_kl_crust_mantle(15,i,j,k,ispec) = cijkl_kl_crust_mantle(15,i,j,k,ispec) + deltat * prod(15)
+          cijkl_kl_crust_mantle(16,i,j,k,ispec) = cijkl_kl_crust_mantle(16,i,j,k,ispec) + deltat * prod(16)
+          cijkl_kl_crust_mantle(17,i,j,k,ispec) = cijkl_kl_crust_mantle(17,i,j,k,ispec) + deltat * prod(17)
+          cijkl_kl_crust_mantle(18,i,j,k,ispec) = cijkl_kl_crust_mantle(18,i,j,k,ispec) + deltat * prod(18)
+          cijkl_kl_crust_mantle(19,i,j,k,ispec) = cijkl_kl_crust_mantle(19,i,j,k,ispec) + deltat * prod(19)
 
-            ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
-            ! note: multiplication with 2*mu(x) will be done after the time loop
-            beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-               + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-               + 2.d0 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
-                epsilondev_loc(5)*b_epsilondev_loc(5)) )
+          cijkl_kl_crust_mantle(20,i,j,k,ispec) = cijkl_kl_crust_mantle(20,i,j,k,ispec) + deltat * prod(20)
+          cijkl_kl_crust_mantle(21,i,j,k,ispec) = cijkl_kl_crust_mantle(21,i,j,k,ispec) + deltat * prod(21)
+        enddo
+      enddo
+    enddo
 
+  else
 
-            ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
-            ! note: multiplication with kappa(x) will be done after the time loop
-            alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (9.d0 * eps_trace_over_3_loc_matrix(i,j,k) &
-                                * b_eps_trace_over_3_loc_matrix(i,j,k))
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          endif
+          ! density kernel: see e.g. Tromp et al.(2005), equation (14)
+          !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
+          !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
+          !
+          !                         note with respect to eq. (14) the second time derivative is applied to the
+          !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
+          !                         this is a valid operation and the resultant kernel identical to the eq. (14).
+          !
+          !                         reason for this is that the adjoint wavefield is in general smoother
+          !                         since the adjoint sources normally are obtained for filtered traces.
+          !                         numerically, the time derivative by a finite-difference scheme should
+          !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+          rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
+             + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+             + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+
+          epsilondev_loc(:) = epsilondev_loc_matrix(:,i,j,k)
+          b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
+
+          ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
+          ! note: multiplication with 2*mu(x) will be done after the time loop
+          beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
+             + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
+             + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
+             + 2.d0 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
+              epsilondev_loc(5)*b_epsilondev_loc(5)))
+
+          ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
+          ! note: multiplication with kappa(x) will be done after the time loop
+          alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
+             + deltat * (9.d0 * eps_trace_over_3_loc_matrix(i,j,k) &
+                              * b_eps_trace_over_3_loc_matrix(i,j,k))
 
         enddo
       enddo
     enddo
+
+  endif ! of if ANISOTROPIC_KL
+
   enddo
 
   end subroutine compute_kernels_crust_mantle
@@ -689,6 +742,71 @@
 
   end subroutine compute_kernels_inner_core
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_kernels_hessian(ibool_crust_mantle, &
+                                    hess_kl_crust_mantle, &
+                                    accel_crust_mantle,b_accel_crust_mantle, &
+                                    deltat)
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    hess_kl_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
+     accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
+      b_accel_crust_mantle
+
+  real(kind=CUSTOM_REAL) deltat
+
+  ! local parameters
+  integer :: ispec,iglob
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+! approximates Hessian term with adjoint acceleration and backward/reconstructed acceleration
+
+  ! crust_mantle
+  do ispec = 1, NSPEC_CRUST_MANTLE
+
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1,NGLLCUBE
+          iglob = ibool_crust_mantle(ijk,1,1,ispec)
+          hess_kl_crust_mantle(ijk,1,1,ispec) =  hess_kl_crust_mantle(ijk,1,1,ispec) &
+             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
+             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
+             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob))
+        enddo
+#else
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
+             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
+             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
+             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob))
+        enddo
+      enddo
+    enddo
+#endif
+
+  enddo
+
+  end subroutine compute_kernels_hessian
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -770,68 +888,3 @@
 
   end subroutine compute_strain_product
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine compute_kernels_hessian(ibool_crust_mantle, &
-                                    hess_kl_crust_mantle, &
-                                    accel_crust_mantle,b_accel_crust_mantle, &
-                                    deltat)
-
-  implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    hess_kl_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-     accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-      b_accel_crust_mantle
-
-  real(kind=CUSTOM_REAL) deltat
-
-  ! local parameters
-  integer :: ispec,iglob
-
-#ifdef FORCE_VECTORIZATION
-  integer :: ijk
-#else
-  integer :: i,j,k
-#endif
-
-! approximates Hessian term with adjoint acceleration and backward/reconstructed acceleration
-
-  ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
-
-#ifdef FORCE_VECTORIZATION
-        do ijk = 1,NGLLCUBE
-          iglob = ibool_crust_mantle(ijk,1,1,ispec)
-          hess_kl_crust_mantle(ijk,1,1,ispec) =  hess_kl_crust_mantle(ijk,1,1,ispec) &
-             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
-             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
-             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob))
-        enddo
-#else
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-          hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
-             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
-             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
-             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob))
-        enddo
-      enddo
-    enddo
-#endif
-
-  enddo
-
-  end subroutine compute_kernels_hessian
