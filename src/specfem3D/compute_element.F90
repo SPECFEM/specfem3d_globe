@@ -1687,7 +1687,6 @@
     enddo
   enddo
 
-
   end subroutine compute_element_strain_undo_att_Dev
 
 !
@@ -1740,7 +1739,6 @@
   real(kind=CUSTOM_REAL) duxdxl,duydyl,duzdzl,duxdyl,duydxl,duzdxl,duxdzl,duzdyl,duydzl,&
                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&
                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-
 
     do k=1,NGLLZ
       do j=1,NGLLY
