@@ -349,6 +349,7 @@
 
 ! Deville routines optimized for NGLLX = NGLLY = NGLLZ = 5
   integer, parameter :: m1 = NGLLX, m2 = NGLLX * NGLLY
+  integer, parameter :: NGLLCUBE = NGLLX * NGLLY * NGLLZ
 
 ! mid-points inside a GLL element
   integer, parameter :: MIDX = (NGLLX+1)/2
@@ -360,6 +361,7 @@
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
+  double precision, parameter :: ONE_HALF = HALF, ONE_FOURTH = 0.25d0, ONE_EIGHTH = 0.125d0, ONE_SIXTEENTH = 0.0625d0
 
   real(kind=CUSTOM_REAL), parameter :: &
     ONE_THIRD   = 1._CUSTOM_REAL/3._CUSTOM_REAL, &
