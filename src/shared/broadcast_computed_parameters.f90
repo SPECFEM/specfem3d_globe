@@ -61,7 +61,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
-          ATT1,ATT2,ATT3,ATT4,ATT5,RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION)
+          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION)
 
   use mpi
 
@@ -100,7 +100,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,&
-          RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION
+          EXACT_MASS_MATRIX_FOR_ROTATION
 
   character(len=150) LOCAL_PATH,MODEL
 
@@ -138,7 +138,7 @@
   ! local parameters
   double precision, dimension(32) :: bcast_double_precision
   integer, dimension(45) :: bcast_integer
-  logical, dimension(53) :: bcast_logical
+  logical, dimension(52) :: bcast_logical
   integer ier
 
   ! master process prepares broadcasting arrays
@@ -175,7 +175,7 @@
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
             USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,&
-            RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION/)
+            EXACT_MASS_MATRIX_FOR_ROTATION/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -188,7 +188,7 @@
   ! broadcasts the information read on the master to the nodes
   call MPI_BCAST(bcast_integer,45,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(bcast_double_precision,32,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(bcast_logical,53,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(bcast_logical,52,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
   ! broadcasts non-single value parameters
   call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -218,7 +218,7 @@
   call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   ! non-master processes set their parameters
-  if (myrank /=0) then
+  if (myrank /= 0) then
 
     ! please, be careful with ordering and counting here
     ! integers
@@ -320,8 +320,7 @@
     ADIOS_FOR_MPI_ARRAYS = bcast_logical(49)
     ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(50)
     ADIOS_FOR_AVS_DX = bcast_logical(51)
-    RECOMPUTE_STRAIN_DO_NOT_STORE = bcast_logical(52)
-    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(53)
+    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(52)
 
     ! double precisions
     DT = bcast_double_precision(1)

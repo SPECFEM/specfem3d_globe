@@ -55,7 +55,7 @@
           R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
           alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev,eps_trace_over_3) 
+          epsilondev,eps_trace_over_3) 
 
   implicit none
 
@@ -84,7 +84,7 @@
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY,RECOMPUTE_STRAIN_DO_NOT_STORE   
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3 
 
@@ -383,9 +383,7 @@
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-            if(.not. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
-              eps_trace_over_3(i,j,k,ispec) = templ
-            endif
+            eps_trace_over_3(i,j,k,ispec) = templ
           endif
 
           ! precompute terms for attenuation if needed
@@ -911,9 +909,9 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+      if(COMPUTE_AND_STORE_STRAIN)then  
         epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
         epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
         epsilondev_loc_nsub1(3,:,:,:) = epsilondev(3,:,:,:,ispec)
@@ -966,7 +964,7 @@
            R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
                                                BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
          else
-           if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+           if(COMPUTE_AND_STORE_STRAIN)then  
              R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
                 + factor_common_c44_muv(:,:,:) &
                 * (betaval(i_SLS) * epsilondev_loc_nsub1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
@@ -980,7 +978,7 @@
         enddo ! i_memory = 1,5
       enddo ! i_SLS = 1,N_SLS
 
-      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+      if(COMPUTE_AND_STORE_STRAIN)then  
         epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:) 
         epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
         epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)

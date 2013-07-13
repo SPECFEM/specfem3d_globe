@@ -52,7 +52,7 @@
           alphaval,betaval,gammaval,factor_common, &
           vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev,eps_trace_over_3) 
+          epsilondev,eps_trace_over_3) 
 
   implicit none
 
@@ -84,7 +84,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nplus1,epsilondev_loc_nsub1
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY,RECOMPUTE_STRAIN_DO_NOT_STORE   
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3 
 
@@ -360,9 +360,7 @@
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-            if(.not. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
-              eps_trace_over_3(i,j,k,ispec) = templ
-            endif
+            eps_trace_over_3(i,j,k,ispec) = templ
           endif
 
           if(ATTENUATION_3D_VAL) then
@@ -666,9 +664,9 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+      if(COMPUTE_AND_STORE_STRAIN)then  
         epsilondev_loc_nsub1(1,i,j,k) = epsilondev(1,i,j,k,ispec)
         epsilondev_loc_nsub1(2,i,j,k) = epsilondev(2,i,j,k,ispec)
         epsilondev_loc_nsub1(3,i,j,k) = epsilondev(3,i,j,k,ispec)
@@ -709,7 +707,7 @@
                                                BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
           enddo
         else
-          if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+          if(COMPUTE_AND_STORE_STRAIN)then  
             do i_memory = 1,5
               R_memory(i_memory,i_SLS,:,:,:,ispec) = &
                      alphaval(i_SLS) * &
@@ -732,7 +730,7 @@
 
       enddo !do i_SLS = 1,N_SLS
 
-      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+      if(COMPUTE_AND_STORE_STRAIN)then  
          epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:) 
          epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
          epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
