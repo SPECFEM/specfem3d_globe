@@ -459,36 +459,60 @@
   real(kind=CUSTOM_REAL) :: eps_trace_over_3,b_eps_trace_over_3
   real(kind=CUSTOM_REAL),dimension(5) :: epsdev,b_epsdev
 
-  real(kind=CUSTOM_REAL), dimension(6) :: eps,b_eps
-  integer :: p,i,j
+! integer :: p,i,j
+  real(kind=CUSTOM_REAL) :: eps1, eps2, eps3, eps4, eps5, eps6, b_eps1, b_eps2, b_eps3, b_eps4, b_eps5, b_eps6
 
   ! Building of the local matrix of the strain tensor
   ! for the adjoint field and the regular backward field
-  eps(1:2)=epsdev(1:2)+eps_trace_over_3           ! eps11 and eps22
-  eps(3)=-(eps(1)+eps(2))+3*eps_trace_over_3      ! eps33
-  eps(4)=epsdev(5)                                ! eps23
-  eps(5)=epsdev(4)                                ! eps13
-  eps(6)=epsdev(3)                                ! eps12
+  eps1=epsdev(1)+eps_trace_over_3                    ! eps11
+  eps2=epsdev(2)+eps_trace_over_3                    ! eps22
+  eps3=-(eps1+eps2)+3._CUSTOM_REAL*eps_trace_over_3  ! eps33
+  eps4=epsdev(5)                                     ! eps23
+  eps5=epsdev(4)                                     ! eps13
+  eps6=epsdev(3)                                     ! eps12
 
-  b_eps(1:2)=b_epsdev(1:2)+b_eps_trace_over_3
-  b_eps(3)=-(b_eps(1)+b_eps(2))+3*b_eps_trace_over_3
-  b_eps(4)=b_epsdev(5)
-  b_eps(5)=b_epsdev(4)
-  b_eps(6)=b_epsdev(3)
+  b_eps1=b_epsdev(1)+b_eps_trace_over_3
+  b_eps2=b_epsdev(2)+b_eps_trace_over_3
+  b_eps3=-(b_eps1+b_eps2)+3._CUSTOM_REAL*b_eps_trace_over_3
+  b_eps4=b_epsdev(5)
+  b_eps5=b_epsdev(4)
+  b_eps6=b_epsdev(3)
 
   ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
-  p=1
-  do i=1,6
-    do j=i,6
-      prod(p)=eps(i)*b_eps(j)
-      if(j>i) then
-        prod(p)=prod(p)+eps(j)*b_eps(i)
-        if(j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
-      endif
-      if(i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
-      p=p+1
-    enddo
-  enddo
+! p=1
+! do i=1,6
+!   do j=i,6
+!     prod(p)=eps(i)*b_eps(j)
+!     if(j>i) then
+!       prod(p)=prod(p)+eps(j)*b_eps(i)
+!       if(j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
+!     endif
+!     if(i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
+!     p=p+1
+!   enddo
+! enddo
+!! DK DK July 2013: manually unrolled the calculations to speed up the code
+  prod(1) = eps1*b_eps1
+  prod(2) = eps1*b_eps2 + eps2*b_eps1
+  prod(3) = eps1*b_eps3 + eps3*b_eps1
+  prod(4) = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
+  prod(5) = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
+  prod(6) = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
+  prod(7) = eps2*b_eps2
+  prod(8) = eps2*b_eps3 + eps3*b_eps2
+  prod(9) = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
+  prod(10) = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
+  prod(11) = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
+  prod(12) = eps3*b_eps3
+  prod(13) = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
+  prod(14) = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
+  prod(15) = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
+  prod(16) = eps4*b_eps4*4._CUSTOM_REAL
+  prod(17) = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
+  prod(18) = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
+  prod(19) = eps5*b_eps5*4._CUSTOM_REAL
+  prod(20) = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
+  prod(21) = eps6*b_eps6*4._CUSTOM_REAL
 
   end subroutine compute_strain_product
 
