@@ -243,11 +243,11 @@
   print *
   print *,'What percentage of this total do you allow us to use, keeping in mind that you'
   print *,'need to leave some memory available for the GNU/Linux system to run?'
-  print *,'  (a typical value is 90%; 92% to 95% is probably OK too; 85% is very safe)'
+  print *,'  (a typical value is 90%; 92% is probably OK too; 85% is very safe)'
   read(*,*) percentage_to_use_per_core
 
   if(percentage_to_use_per_core < 50.d0) stop 'less than 50% does not seem realistic; exiting...'
-  if(percentage_to_use_per_core > 96.d0) stop 'more than 96% is risky; exiting...'
+  if(percentage_to_use_per_core > 95.d0) stop 'more than 95% is risky; exiting...'
 
   what_we_can_use_in_GB = gigabytes_avail_per_core * percentage_to_use_per_core / 100.d0
 
