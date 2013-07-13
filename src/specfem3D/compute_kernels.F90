@@ -29,7 +29,7 @@
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
-                          deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
+                          deltat,hprime_xx,hprime_xxT,&
                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,ANISOTROPIC_KL,&
                           epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
 
@@ -47,7 +47,7 @@
     cijkl_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-     accel_crust_mantle,displ_crust_mantle
+     accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
     b_displ_crust_mantle
 
@@ -73,22 +73,12 @@
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
 
-    if(COMPUTE_AND_STORE_STRAIN)then  
-        eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
-        epsilondev_loc_matrix(1,:,:,:) = epsilondev_crust_mantle(1,:,:,:,ispec)
-        epsilondev_loc_matrix(2,:,:,:) = epsilondev_crust_mantle(2,:,:,:,ispec)
-        epsilondev_loc_matrix(3,:,:,:) = epsilondev_crust_mantle(3,:,:,:,ispec)
-        epsilondev_loc_matrix(4,:,:,:) = epsilondev_crust_mantle(4,:,:,:,ispec)
-        epsilondev_loc_matrix(5,:,:,:) = epsilondev_crust_mantle(5,:,:,:,ispec)
-    else
-! in principle there should also probably be a _noDev() call here as well
-! and a "if(USE_DEVILLE_PRODUCTS_VAL) then" test, but for now it is not implemented
-! by lack of time (and nobody uses NGLL /= 5 anyway, thus in practice USE_DEVILLE_PRODUCTS_VAL is always true...)
-      call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
-                                             displ_CRUST_MANTLE,ibool_crust_mantle,hprime_xx,hprime_xxT,&
-                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
-                                             epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
-    endif
+    eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
+    epsilondev_loc_matrix(1,:,:,:) = epsilondev_crust_mantle(1,:,:,:,ispec)
+    epsilondev_loc_matrix(2,:,:,:) = epsilondev_crust_mantle(2,:,:,:,ispec)
+    epsilondev_loc_matrix(3,:,:,:) = epsilondev_crust_mantle(3,:,:,:,ispec)
+    epsilondev_loc_matrix(4,:,:,:) = epsilondev_crust_mantle(4,:,:,:,ispec)
+    epsilondev_loc_matrix(5,:,:,:) = epsilondev_crust_mantle(5,:,:,:,ispec)
 
 ! in principle there should also probably be a _noDev() call here as well
 ! and a "if(USE_DEVILLE_PRODUCTS_VAL) then" test, but for now it is not implemented
@@ -624,7 +614,7 @@
                           rho_kl_inner_core,beta_kl_inner_core, &
                           alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
-                          deltat,displ_inner_core,hprime_xx,hprime_xxT,&
+                          deltat,hprime_xx,hprime_xxT,&
                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                           epsilondev_inner_core,eps_trace_over_3_inner_core) 
 
@@ -639,7 +629,7 @@
     rho_kl_inner_core, beta_kl_inner_core, alpha_kl_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-     accel_inner_core,displ_inner_core
+     accel_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
     b_displ_inner_core
 
@@ -667,19 +657,12 @@
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
 
-    if(COMPUTE_AND_STORE_STRAIN) then  
-        eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_inner_core(:,:,:,ispec)
-        epsilondev_loc_matrix(1,:,:,:) = epsilondev_inner_core(1,:,:,:,ispec)
-        epsilondev_loc_matrix(2,:,:,:) = epsilondev_inner_core(2,:,:,:,ispec)
-        epsilondev_loc_matrix(3,:,:,:) = epsilondev_inner_core(3,:,:,:,ispec)
-        epsilondev_loc_matrix(4,:,:,:) = epsilondev_inner_core(4,:,:,:,ispec)
-        epsilondev_loc_matrix(5,:,:,:) = epsilondev_inner_core(5,:,:,:,ispec)
-    else
-      call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
-                                             displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&
-                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
-                                             epsilondev_loc_matrix,eps_trace_over_3_loc_matrix)
-    endif
+    eps_trace_over_3_loc_matrix(:,:,:) = eps_trace_over_3_inner_core(:,:,:,ispec)
+    epsilondev_loc_matrix(1,:,:,:) = epsilondev_inner_core(1,:,:,:,ispec)
+    epsilondev_loc_matrix(2,:,:,:) = epsilondev_inner_core(2,:,:,:,ispec)
+    epsilondev_loc_matrix(3,:,:,:) = epsilondev_inner_core(3,:,:,:,ispec)
+    epsilondev_loc_matrix(4,:,:,:) = epsilondev_inner_core(4,:,:,:,ispec)
+    epsilondev_loc_matrix(5,:,:,:) = epsilondev_inner_core(5,:,:,:,ispec)
 
     call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core,&
                                              b_displ_inner_core,ibool_inner_core,hprime_xx,hprime_xxT,&
