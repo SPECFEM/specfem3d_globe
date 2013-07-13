@@ -62,12 +62,13 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3_crust_mantle 
 
   ! local parameters
-  real(kind=CUSTOM_REAL),dimension(21) :: prod
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
   integer :: i,j,k,ispec,iglob
   real(kind=CUSTOM_REAL) :: eps1, eps2, eps3, eps4, eps5, eps6, b_eps1, b_eps2, b_eps3, b_eps4, b_eps5, b_eps6
   real(kind=CUSTOM_REAL) :: eps_trace_over_3,b_eps_trace_over_3
+  real(kind=CUSTOM_REAL) :: prod1, prod2, prod3, prod4, prod5, prod6, prod7, prod8, prod9, &
+                            prod10, prod11, prod12, prod13, prod14, prod15, prod16, prod17, prod18, prod19, prod20, prod21
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
@@ -140,53 +141,53 @@
 
   ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
 !! DK DK July 2013: manually unrolled the calculations to speed up the code
-  prod(1) = eps1*b_eps1
-  prod(2) = eps1*b_eps2 + eps2*b_eps1
-  prod(3) = eps1*b_eps3 + eps3*b_eps1
-  prod(4) = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
-  prod(5) = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
-  prod(6) = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
-  prod(7) = eps2*b_eps2
-  prod(8) = eps2*b_eps3 + eps3*b_eps2
-  prod(9) = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
-  prod(10) = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
-  prod(11) = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
-  prod(12) = eps3*b_eps3
-  prod(13) = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
-  prod(14) = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
-  prod(15) = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
-  prod(16) = eps4*b_eps4*4._CUSTOM_REAL
-  prod(17) = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
-  prod(18) = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
-  prod(19) = eps5*b_eps5*4._CUSTOM_REAL
-  prod(20) = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
-  prod(21) = eps6*b_eps6*4._CUSTOM_REAL
+  prod1 = eps1*b_eps1
+  prod2 = eps1*b_eps2 + eps2*b_eps1
+  prod3 = eps1*b_eps3 + eps3*b_eps1
+  prod4 = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
+  prod5 = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
+  prod6 = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
+  prod7 = eps2*b_eps2
+  prod8 = eps2*b_eps3 + eps3*b_eps2
+  prod9 = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
+  prod10 = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
+  prod11 = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
+  prod12 = eps3*b_eps3
+  prod13 = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
+  prod14 = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
+  prod15 = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
+  prod16 = eps4*b_eps4*4._CUSTOM_REAL
+  prod17 = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
+  prod18 = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
+  prod19 = eps5*b_eps5*4._CUSTOM_REAL
+  prod20 = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
+  prod21 = eps6*b_eps6*4._CUSTOM_REAL
 
           ! do not use a ":" array syntax for the first index below otherwise
           ! most compilers will not be able to vectorize the outer loop and the code will be slower
-          cijkl_kl_crust_mantle( 1,i,j,k,ispec) = cijkl_kl_crust_mantle( 1,i,j,k,ispec) + deltat * prod( 1)
-          cijkl_kl_crust_mantle( 2,i,j,k,ispec) = cijkl_kl_crust_mantle( 2,i,j,k,ispec) + deltat * prod( 2)
-          cijkl_kl_crust_mantle( 3,i,j,k,ispec) = cijkl_kl_crust_mantle( 3,i,j,k,ispec) + deltat * prod( 3)
-          cijkl_kl_crust_mantle( 4,i,j,k,ispec) = cijkl_kl_crust_mantle( 4,i,j,k,ispec) + deltat * prod( 4)
-          cijkl_kl_crust_mantle( 5,i,j,k,ispec) = cijkl_kl_crust_mantle( 5,i,j,k,ispec) + deltat * prod( 5)
-          cijkl_kl_crust_mantle( 6,i,j,k,ispec) = cijkl_kl_crust_mantle( 6,i,j,k,ispec) + deltat * prod( 6)
-          cijkl_kl_crust_mantle( 7,i,j,k,ispec) = cijkl_kl_crust_mantle( 7,i,j,k,ispec) + deltat * prod( 7)
-          cijkl_kl_crust_mantle( 8,i,j,k,ispec) = cijkl_kl_crust_mantle( 8,i,j,k,ispec) + deltat * prod( 8)
-          cijkl_kl_crust_mantle( 9,i,j,k,ispec) = cijkl_kl_crust_mantle( 9,i,j,k,ispec) + deltat * prod( 9)
+          cijkl_kl_crust_mantle( 1,i,j,k,ispec) = cijkl_kl_crust_mantle( 1,i,j,k,ispec) + deltat * prod1
+          cijkl_kl_crust_mantle( 2,i,j,k,ispec) = cijkl_kl_crust_mantle( 2,i,j,k,ispec) + deltat * prod2
+          cijkl_kl_crust_mantle( 3,i,j,k,ispec) = cijkl_kl_crust_mantle( 3,i,j,k,ispec) + deltat * prod3
+          cijkl_kl_crust_mantle( 4,i,j,k,ispec) = cijkl_kl_crust_mantle( 4,i,j,k,ispec) + deltat * prod4
+          cijkl_kl_crust_mantle( 5,i,j,k,ispec) = cijkl_kl_crust_mantle( 5,i,j,k,ispec) + deltat * prod5
+          cijkl_kl_crust_mantle( 6,i,j,k,ispec) = cijkl_kl_crust_mantle( 6,i,j,k,ispec) + deltat * prod6
+          cijkl_kl_crust_mantle( 7,i,j,k,ispec) = cijkl_kl_crust_mantle( 7,i,j,k,ispec) + deltat * prod7
+          cijkl_kl_crust_mantle( 8,i,j,k,ispec) = cijkl_kl_crust_mantle( 8,i,j,k,ispec) + deltat * prod8
+          cijkl_kl_crust_mantle( 9,i,j,k,ispec) = cijkl_kl_crust_mantle( 9,i,j,k,ispec) + deltat * prod9
 
-          cijkl_kl_crust_mantle(10,i,j,k,ispec) = cijkl_kl_crust_mantle(10,i,j,k,ispec) + deltat * prod(10)
-          cijkl_kl_crust_mantle(11,i,j,k,ispec) = cijkl_kl_crust_mantle(11,i,j,k,ispec) + deltat * prod(11)
-          cijkl_kl_crust_mantle(12,i,j,k,ispec) = cijkl_kl_crust_mantle(12,i,j,k,ispec) + deltat * prod(12)
-          cijkl_kl_crust_mantle(13,i,j,k,ispec) = cijkl_kl_crust_mantle(13,i,j,k,ispec) + deltat * prod(13)
-          cijkl_kl_crust_mantle(14,i,j,k,ispec) = cijkl_kl_crust_mantle(14,i,j,k,ispec) + deltat * prod(14)
-          cijkl_kl_crust_mantle(15,i,j,k,ispec) = cijkl_kl_crust_mantle(15,i,j,k,ispec) + deltat * prod(15)
-          cijkl_kl_crust_mantle(16,i,j,k,ispec) = cijkl_kl_crust_mantle(16,i,j,k,ispec) + deltat * prod(16)
-          cijkl_kl_crust_mantle(17,i,j,k,ispec) = cijkl_kl_crust_mantle(17,i,j,k,ispec) + deltat * prod(17)
-          cijkl_kl_crust_mantle(18,i,j,k,ispec) = cijkl_kl_crust_mantle(18,i,j,k,ispec) + deltat * prod(18)
-          cijkl_kl_crust_mantle(19,i,j,k,ispec) = cijkl_kl_crust_mantle(19,i,j,k,ispec) + deltat * prod(19)
+          cijkl_kl_crust_mantle(10,i,j,k,ispec) = cijkl_kl_crust_mantle(10,i,j,k,ispec) + deltat * prod10
+          cijkl_kl_crust_mantle(11,i,j,k,ispec) = cijkl_kl_crust_mantle(11,i,j,k,ispec) + deltat * prod11
+          cijkl_kl_crust_mantle(12,i,j,k,ispec) = cijkl_kl_crust_mantle(12,i,j,k,ispec) + deltat * prod12
+          cijkl_kl_crust_mantle(13,i,j,k,ispec) = cijkl_kl_crust_mantle(13,i,j,k,ispec) + deltat * prod13
+          cijkl_kl_crust_mantle(14,i,j,k,ispec) = cijkl_kl_crust_mantle(14,i,j,k,ispec) + deltat * prod14
+          cijkl_kl_crust_mantle(15,i,j,k,ispec) = cijkl_kl_crust_mantle(15,i,j,k,ispec) + deltat * prod15
+          cijkl_kl_crust_mantle(16,i,j,k,ispec) = cijkl_kl_crust_mantle(16,i,j,k,ispec) + deltat * prod16
+          cijkl_kl_crust_mantle(17,i,j,k,ispec) = cijkl_kl_crust_mantle(17,i,j,k,ispec) + deltat * prod17
+          cijkl_kl_crust_mantle(18,i,j,k,ispec) = cijkl_kl_crust_mantle(18,i,j,k,ispec) + deltat * prod18
+          cijkl_kl_crust_mantle(19,i,j,k,ispec) = cijkl_kl_crust_mantle(19,i,j,k,ispec) + deltat * prod19
 
-          cijkl_kl_crust_mantle(20,i,j,k,ispec) = cijkl_kl_crust_mantle(20,i,j,k,ispec) + deltat * prod(20)
-          cijkl_kl_crust_mantle(21,i,j,k,ispec) = cijkl_kl_crust_mantle(21,i,j,k,ispec) + deltat * prod(21)
+          cijkl_kl_crust_mantle(20,i,j,k,ispec) = cijkl_kl_crust_mantle(20,i,j,k,ispec) + deltat * prod20
+          cijkl_kl_crust_mantle(21,i,j,k,ispec) = cijkl_kl_crust_mantle(21,i,j,k,ispec) + deltat * prod21
         enddo
       enddo
     enddo
