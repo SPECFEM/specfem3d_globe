@@ -66,6 +66,8 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
   integer :: i,j,k,ispec,iglob
+  real(kind=CUSTOM_REAL) :: eps1, eps2, eps3, eps4, eps5, eps6, b_eps1, b_eps2, b_eps3, b_eps4, b_eps5, b_eps6
+  real(kind=CUSTOM_REAL) :: eps_trace_over_3,b_eps_trace_over_3
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
@@ -78,6 +80,7 @@
                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
                                              b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
 
+  ! For anisotropic kernels
   if (ANISOTROPIC_KL) then
 
     do k = 1, NGLLZ
@@ -102,9 +105,62 @@
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
              + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
-          ! For anisotropic kernels
-          call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_crust_mantle(:,i,j,k,ispec), &
-                                      b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc_matrix(:,i,j,k))
+! compute the 21 strain products
+
+!! DK DK July 2013: inlined the call to this subroutine below to speed up the code, thus the subroutine is now unused
+!       call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_crust_mantle(:,i,j,k,ispec), &
+!                                   b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc_matrix(:,i,j,k))
+
+  ! Purpose: compute the 21 strain products at a grid point
+  ! (ispec,i,j,k fixed) and at a time t to compute then the kernels cij_kl (Voigt notation)
+  ! (eq. 15 of Tromp et al., 2005)
+  ! prod(1)=eps11*eps11 -> c11, prod(2)=eps11eps22 -> c12, prod(3)=eps11eps33 -> c13, ...
+  ! prod(7)=eps22*eps22 -> c22, prod(8)=eps22eps33 -> c23, prod(9)=eps22eps23 -> c24, ...
+  ! prod(19)=eps13*eps13 -> c55, prod(20)=eps13eps12 -> c56, prod(21)=eps12eps12 -> c66
+  ! This then gives how the 21 kernels are organized
+
+  ! Building of the local matrix of the strain tensor
+  ! for the adjoint field and the regular backward field
+  eps_trace_over_3 = eps_trace_over_3_crust_mantle(i,j,k,ispec)
+  b_eps_trace_over_3 = b_eps_trace_over_3_loc_matrix(i,j,k)
+
+  eps1=epsilondev_crust_mantle(1,i,j,k,ispec)+eps_trace_over_3  ! eps11
+  eps2=epsilondev_crust_mantle(2,i,j,k,ispec)+eps_trace_over_3  ! eps22
+  eps3=-(eps1+eps2)+3._CUSTOM_REAL*eps_trace_over_3             ! eps33
+  eps4=epsilondev_crust_mantle(5,i,j,k,ispec)                   ! eps23
+  eps5=epsilondev_crust_mantle(4,i,j,k,ispec)                   ! eps13
+  eps6=epsilondev_crust_mantle(3,i,j,k,ispec)                   ! eps12
+
+  b_eps1=b_epsilondev_loc_matrix(1,i,j,k)+b_eps_trace_over_3
+  b_eps2=b_epsilondev_loc_matrix(2,i,j,k)+b_eps_trace_over_3
+  b_eps3=-(b_eps1+b_eps2)+3._CUSTOM_REAL*b_eps_trace_over_3
+  b_eps4=b_epsilondev_loc_matrix(5,i,j,k)
+  b_eps5=b_epsilondev_loc_matrix(4,i,j,k)
+  b_eps6=b_epsilondev_loc_matrix(3,i,j,k)
+
+  ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
+!! DK DK July 2013: manually unrolled the calculations to speed up the code
+  prod(1) = eps1*b_eps1
+  prod(2) = eps1*b_eps2 + eps2*b_eps1
+  prod(3) = eps1*b_eps3 + eps3*b_eps1
+  prod(4) = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
+  prod(5) = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
+  prod(6) = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
+  prod(7) = eps2*b_eps2
+  prod(8) = eps2*b_eps3 + eps3*b_eps2
+  prod(9) = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
+  prod(10) = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
+  prod(11) = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
+  prod(12) = eps3*b_eps3
+  prod(13) = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
+  prod(14) = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
+  prod(15) = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
+  prod(16) = eps4*b_eps4*4._CUSTOM_REAL
+  prod(17) = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
+  prod(18) = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
+  prod(19) = eps5*b_eps5*4._CUSTOM_REAL
+  prod(20) = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
+  prod(21) = eps6*b_eps6*4._CUSTOM_REAL
 
           ! do not use a ":" array syntax for the first index below otherwise
           ! most compilers will not be able to vectorize the outer loop and the code will be slower
@@ -765,83 +821,85 @@
 
   end subroutine compute_kernels_hessian
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-! Subroutines to compute the kernels for the 21 elastic coefficients
+!!
+!!-------------------------------------------------------------------------------------------------
+!!
+!! compute the 21 strain products
 
-  subroutine compute_strain_product(prod,eps_trace_over_3,epsdev,&
-                                    b_eps_trace_over_3,b_epsdev)
+!! DK DK July 2013: inlined the call to this subroutine above to speed up the code, thus the subroutine is now unused
 
-  ! Purpose: compute the 21 strain products at a grid point
-  ! (ispec,i,j,k fixed) and at a time t to compute then the kernels cij_kl (Voigt notation)
-  ! (eq. 15 of Tromp et al., 2005)
-  ! prod(1)=eps11*eps11 -> c11, prod(2)=eps11eps22 -> c12, prod(3)=eps11eps33 -> c13, ...
-  ! prod(7)=eps22*eps22 -> c22, prod(8)=eps22eps33 -> c23, prod(9)=eps22eps23 -> c24, ...
-  ! prod(19)=eps13*eps13 -> c55, prod(20)=eps13eps12 -> c56, prod(21)=eps12eps12 -> c66
-  ! This then gives how the 21 kernels are organized
+!  subroutine compute_strain_product(prod,eps_trace_over_3,epsdev,&
+!                                    b_eps_trace_over_3,b_epsdev)
 
-  implicit none
-  include  "constants.h"
+!  ! Purpose: compute the 21 strain products at a grid point
+!  ! (ispec,i,j,k fixed) and at a time t to compute then the kernels cij_kl (Voigt notation)
+!  ! (eq. 15 of Tromp et al., 2005)
+!  ! prod(1)=eps11*eps11 -> c11, prod(2)=eps11eps22 -> c12, prod(3)=eps11eps33 -> c13, ...
+!  ! prod(7)=eps22*eps22 -> c22, prod(8)=eps22eps33 -> c23, prod(9)=eps22eps23 -> c24, ...
+!  ! prod(19)=eps13*eps13 -> c55, prod(20)=eps13eps12 -> c56, prod(21)=eps12eps12 -> c66
+!  ! This then gives how the 21 kernels are organized
 
-  real(kind=CUSTOM_REAL),dimension(21) :: prod
-  real(kind=CUSTOM_REAL) :: eps_trace_over_3,b_eps_trace_over_3
-  real(kind=CUSTOM_REAL),dimension(5) :: epsdev,b_epsdev
+!  implicit none
+!  include  "constants.h"
 
-! integer :: p,i,j
-  real(kind=CUSTOM_REAL) :: eps1, eps2, eps3, eps4, eps5, eps6, b_eps1, b_eps2, b_eps3, b_eps4, b_eps5, b_eps6
+!  real(kind=CUSTOM_REAL),dimension(21) :: prod
+!  real(kind=CUSTOM_REAL) :: eps_trace_over_3,b_eps_trace_over_3
+!  real(kind=CUSTOM_REAL),dimension(5) :: epsdev,b_epsdev
 
-  ! Building of the local matrix of the strain tensor
-  ! for the adjoint field and the regular backward field
-  eps1=epsdev(1)+eps_trace_over_3                    ! eps11
-  eps2=epsdev(2)+eps_trace_over_3                    ! eps22
-  eps3=-(eps1+eps2)+3._CUSTOM_REAL*eps_trace_over_3  ! eps33
-  eps4=epsdev(5)                                     ! eps23
-  eps5=epsdev(4)                                     ! eps13
-  eps6=epsdev(3)                                     ! eps12
+!! integer :: p,i,j
+!  real(kind=CUSTOM_REAL) :: eps1, eps2, eps3, eps4, eps5, eps6, b_eps1, b_eps2, b_eps3, b_eps4, b_eps5, b_eps6
 
-  b_eps1=b_epsdev(1)+b_eps_trace_over_3
-  b_eps2=b_epsdev(2)+b_eps_trace_over_3
-  b_eps3=-(b_eps1+b_eps2)+3._CUSTOM_REAL*b_eps_trace_over_3
-  b_eps4=b_epsdev(5)
-  b_eps5=b_epsdev(4)
-  b_eps6=b_epsdev(3)
+!  ! Building of the local matrix of the strain tensor
+!  ! for the adjoint field and the regular backward field
+!  eps1=epsdev(1)+eps_trace_over_3                    ! eps11
+!  eps2=epsdev(2)+eps_trace_over_3                    ! eps22
+!  eps3=-(eps1+eps2)+3._CUSTOM_REAL*eps_trace_over_3  ! eps33
+!  eps4=epsdev(5)                                     ! eps23
+!  eps5=epsdev(4)                                     ! eps13
+!  eps6=epsdev(3)                                     ! eps12
 
-  ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
-! p=1
-! do i=1,6
-!   do j=i,6
-!     prod(p)=eps(i)*b_eps(j)
-!     if(j>i) then
-!       prod(p)=prod(p)+eps(j)*b_eps(i)
-!       if(j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
-!     endif
-!     if(i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
-!     p=p+1
-!   enddo
-! enddo
-!! DK DK July 2013: manually unrolled the calculations to speed up the code
-  prod(1) = eps1*b_eps1
-  prod(2) = eps1*b_eps2 + eps2*b_eps1
-  prod(3) = eps1*b_eps3 + eps3*b_eps1
-  prod(4) = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
-  prod(5) = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
-  prod(6) = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
-  prod(7) = eps2*b_eps2
-  prod(8) = eps2*b_eps3 + eps3*b_eps2
-  prod(9) = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
-  prod(10) = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
-  prod(11) = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
-  prod(12) = eps3*b_eps3
-  prod(13) = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
-  prod(14) = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
-  prod(15) = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
-  prod(16) = eps4*b_eps4*4._CUSTOM_REAL
-  prod(17) = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
-  prod(18) = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
-  prod(19) = eps5*b_eps5*4._CUSTOM_REAL
-  prod(20) = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
-  prod(21) = eps6*b_eps6*4._CUSTOM_REAL
+!  b_eps1=b_epsdev(1)+b_eps_trace_over_3
+!  b_eps2=b_epsdev(2)+b_eps_trace_over_3
+!  b_eps3=-(b_eps1+b_eps2)+3._CUSTOM_REAL*b_eps_trace_over_3
+!  b_eps4=b_epsdev(5)
+!  b_eps5=b_epsdev(4)
+!  b_eps6=b_epsdev(3)
 
-  end subroutine compute_strain_product
+!  ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
+!! p=1
+!! do i=1,6
+!!   do j=i,6
+!!     prod(p)=eps(i)*b_eps(j)
+!!     if(j>i) then
+!!       prod(p)=prod(p)+eps(j)*b_eps(i)
+!!       if(j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
+!!     endif
+!!     if(i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
+!!     p=p+1
+!!   enddo
+!! enddo
+!!! DK DK July 2013: manually unrolled the calculations to speed up the code
+!  prod(1) = eps1*b_eps1
+!  prod(2) = eps1*b_eps2 + eps2*b_eps1
+!  prod(3) = eps1*b_eps3 + eps3*b_eps1
+!  prod(4) = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
+!  prod(5) = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
+!  prod(6) = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
+!  prod(7) = eps2*b_eps2
+!  prod(8) = eps2*b_eps3 + eps3*b_eps2
+!  prod(9) = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
+!  prod(10) = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
+!  prod(11) = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
+!  prod(12) = eps3*b_eps3
+!  prod(13) = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
+!  prod(14) = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
+!  prod(15) = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
+!  prod(16) = eps4*b_eps4*4._CUSTOM_REAL
+!  prod(17) = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
+!  prod(18) = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
+!  prod(19) = eps5*b_eps5*4._CUSTOM_REAL
+!  prod(20) = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
+!  prod(21) = eps6*b_eps6*4._CUSTOM_REAL
+
+!  end subroutine compute_strain_product
 
