@@ -51,7 +51,7 @@
           alphaval,betaval,gammaval,factor_common, &
           vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          RECOMPUTE_STRAIN_DO_NOT_STORE,epsilondev,eps_trace_over_3) 
+          epsilondev,eps_trace_over_3) 
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -86,7 +86,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY,RECOMPUTE_STRAIN_DO_NOT_STORE   
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3 
 
@@ -440,9 +440,7 @@
               epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
               epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
               epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-              if(.not. RECOMPUTE_STRAIN_DO_NOT_STORE)then  
-                eps_trace_over_3(i,j,k,ispec) = templ
-              endif
+              eps_trace_over_3(i,j,k,ispec) = templ
             endif
 
             if(ATTENUATION_3D_VAL) then
@@ -774,9 +772,9 @@
       ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
-      if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
+      if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-        if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+        if(COMPUTE_AND_STORE_STRAIN)then  
           ! updates R_memory
           epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
           epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
@@ -804,7 +802,7 @@
                                       istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
         endif
 
-        if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE)) then 
+        if(COMPUTE_AND_STORE_STRAIN) then 
           epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
           epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
           epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)

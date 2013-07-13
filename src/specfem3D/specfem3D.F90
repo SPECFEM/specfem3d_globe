@@ -933,7 +933,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX, &
-          RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION
+          EXACT_MASS_MATRIX_FOR_ROTATION
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -1127,14 +1127,14 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
-          ATT1,ATT2,ATT3,ATT4,ATT5,RECOMPUTE_STRAIN_DO_NOT_STORE,EXACT_MASS_MATRIX_FOR_ROTATION)
+          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION)
 
 ! to switch between simulation type 1 mode and simulation type 3 mode
 ! in exact undoing of attenuation
   undo_att_sim_type_3 = .false.
 
 ! ZN if we want to storing the strain to acclerate the code but cost more memory then
-  if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then
+  if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN)then
     allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
@@ -2592,10 +2592,9 @@ else ! if UNDO_ATTENUATION
       it_temp = it
       seismo_current_temp = seismo_current
 
-        if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+        if(COMPUTE_AND_STORE_STRAIN) then  
           if(.not. USE_DEVILLE_PRODUCTS_VAL) &
-             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE) is .true.'// &
-                           'is not implemented without USE_DEVILLE_PRODUCTS_VAL') 
+             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN is not implemented without USE_DEVILLE_PRODUCTS_VAL') 
           do ispec = 1, NSPEC_INNER_CORE
             call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,b_displ_inner_core,&
                                             b_veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
@@ -2643,10 +2642,9 @@ else ! if UNDO_ATTENUATION
       it = it_temp
       seismo_current = seismo_current_temp
 
-      if(COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE))then  
+      if(COMPUTE_AND_STORE_STRAIN) then  
         if(.not. USE_DEVILLE_PRODUCTS_VAL) &
-           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN .and. (.not. RECOMPUTE_STRAIN_DO_NOT_STORE) is .true.'// &
-                         'is not implemented without USE_DEVILLE_PRODUCTS_VAL') 
+           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN is not implemented without USE_DEVILLE_PRODUCTS_VAL') 
         do ispec = 1, NSPEC_INNER_CORE
           call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
                                             veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&

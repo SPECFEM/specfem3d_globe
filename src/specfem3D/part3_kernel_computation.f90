@@ -12,7 +12,6 @@
                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,ANISOTROPIC_KL,&
-                          RECOMPUTE_STRAIN_DO_NOT_STORE,& 
                           epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
 
     ! outer core
@@ -39,7 +38,6 @@
                           xix_inner_core,xiy_inner_core,xiz_inner_core,&
                           etax_inner_core,etay_inner_core,etaz_inner_core,&
                           gammax_inner_core,gammay_inner_core,gammaz_inner_core,&
-                          RECOMPUTE_STRAIN_DO_NOT_STORE,& 
                           epsilondev_inner_core,eps_trace_over_3_inner_core) 
 
     ! NOISE TOMOGRAPHY --- source strength kernel
