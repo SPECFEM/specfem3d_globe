@@ -244,6 +244,9 @@
 
   real(kind=CUSTOM_REAL) templ
 
+  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
+  integer :: i_SLS
+
 ! for LDDRK
   integer :: istage
   logical :: USE_LDDRK
@@ -515,11 +518,21 @@
             endif
 
             ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
+            if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-              ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-              call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+!             ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
+!             call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
+!                                             sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+              do i_SLS = 1,N_SLS
+                R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
+                R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
+                sigma_xx = sigma_xx - R_xx_val
+                sigma_yy = sigma_yy - R_yy_val
+                sigma_zz = sigma_zz + R_xx_val + R_yy_val
+                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
+              enddo
 
             endif
 
