@@ -439,7 +439,7 @@
 !-------------------------------------------------------------------------------------------------
 ! trivia about the programming style adopted here
 !
-! note 1: in general, we do not use modules in the fortran codes. this seems to
+! note 1: in general, we do not use modules in the Fortran codes. this seems to
 !             be mainly a performance reason. changing the codes to adopt modules
 !             will have to prove that it performs as fast as it does without now.
 !

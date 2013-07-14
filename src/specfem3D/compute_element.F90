@@ -37,8 +37,6 @@
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
-
   implicit none
 
   include "constants.h"
@@ -111,6 +109,9 @@
   double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
 
+  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
+  integer :: i_SLS
+
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
@@ -159,12 +160,12 @@
         duzdyl_plus_duydzl = duzdyl + duydzl
 
         ! compute deviatoric strain
-        if (COMPUTE_AND_STORE_STRAIN) then
 !ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
 !ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -205,11 +206,21 @@
         sigma_yz = mul*duzdyl_plus_duydzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-          ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+!         ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
+!         call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
+!                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          do i_SLS = 1,N_SLS
+            R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
+            R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
+            sigma_xx = sigma_xx - R_xx_val
+            sigma_yy = sigma_yy - R_yy_val
+            sigma_zz = sigma_zz + R_xx_val + R_yy_val
+            sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+            sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+            sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
+          enddo
 
         endif ! ATTENUATION_VAL
 
@@ -359,8 +370,6 @@
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
-
   implicit none
 
   include "constants.h"
@@ -448,6 +457,9 @@
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
+  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
+  integer :: i_SLS
+
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
@@ -496,12 +508,12 @@
         duzdyl_plus_duydzl = duzdyl + duydzl
 
         ! compute deviatoric strain
-        if (COMPUTE_AND_STORE_STRAIN) then
 !ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
 !ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -526,13 +538,7 @@
 !           thus they are listed first ( see in create_regions_mesh.f90: perm_layer() ordering )
 !           this is therefore still in bounds of 1:NSPECMAX_TISO_MANTLE even if NSPECMAX_TISO is less than NSPEC
 
-        ! uncomment to debug
-        !if ( ispec > NSPECMAX_TISO_MANTLE ) then
-        !  print*,'error tiso: ispec = ',ispec,'max = ',NSPECMAX_TISO_MANTLE
-        !  call exit_mpi(0,'error tiso ispec bounds')
-        !endif
-
-        ! use Kappa and mu from transversely isotropic model
+        ! use kappa and mu from transversely isotropic model
         kappavl = kappavstore(i,j,k,ispec)
         muvl = muvstore(i,j,k,ispec)
 
@@ -604,8 +610,7 @@
         four_rhovsvsq = 4.0_CUSTOM_REAL*rhovsvsq
         four_rhovshsq = 4.0_CUSTOM_REAL*rhovshsq
 
-
-        ! way 2: pre-compute temporary values
+        ! pre-compute temporary values
         templ1 = four_rhovsvsq - rhovpvsq + twoetaminone*rhovphsq - four_eta_aniso*rhovsvsq
         templ1_cos = rhovphsq - rhovpvsq + costwotheta*templ1
         templ2 = four_rhovsvsq - rhovpvsq - rhovphsq + two_eta_aniso*rhovphsq - four_eta_aniso*rhovsvsq
@@ -614,7 +619,7 @@
         templ3_two = templ3 - two_rhovshsq - two_rhovsvsq
         templ3_cos = templ3_two + costwotheta*templ2
 
-        ! way 2: reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
+        ! reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
         c11 = rhovphsq*sinphifour &
               + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
               ( rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) ) &
@@ -736,11 +741,21 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-          ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+!         ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
+!         call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
+!                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          do i_SLS = 1,N_SLS
+            R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
+            R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
+            sigma_xx = sigma_xx - R_xx_val
+            sigma_yy = sigma_yy - R_yy_val
+            sigma_zz = sigma_zz + R_xx_val + R_yy_val
+            sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+            sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+            sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
+          enddo
 
         endif ! ATTENUATION_VAL
 
@@ -893,8 +908,6 @@
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
-
   implicit none
 
   include "constants.h"
@@ -971,6 +984,9 @@
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
+  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
+  integer :: i_SLS
+
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
@@ -1019,12 +1035,12 @@
         duzdyl_plus_duydzl = duzdyl + duydzl
 
         ! compute deviatoric strain
-        if (COMPUTE_AND_STORE_STRAIN) then
 !ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
 !ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -1070,7 +1086,7 @@
         c66 = c66store(i,j,k,ispec)
 
         if(ATTENUATION_VAL) then
-          !mul = c44
+          ! mul = c44
           mul = c44 * minus_sum_beta
           c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
           c12 = c12 - TWO_THIRDS * mul
@@ -1102,11 +1118,21 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-          ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
-                                          sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+!         ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
+!         call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
+!                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          do i_SLS = 1,N_SLS
+            R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
+            R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
+            sigma_xx = sigma_xx - R_xx_val
+            sigma_yy = sigma_yy - R_yy_val
+            sigma_zz = sigma_zz + R_xx_val + R_yy_val
+            sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+            sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+            sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
+          enddo
 
         endif ! ATTENUATION_VAL
 
@@ -1238,46 +1264,6 @@
   enddo ! NGLLZ
 
   end subroutine compute_element_aniso
-
-!
-!--------------------------------------------------------------------------------------------
-!
-
-
-  subroutine compute_element_att_stress(R_memory_loc, &
-                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-
-  implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  ! attenuation
-  ! memory variables for attenuation
-  ! memory variables R_ij are stored at the local rather than global level
-  ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
-  real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
-
-! local parameters
-  real(kind=CUSTOM_REAL) R_xx_val1,R_yy_val1
-  integer :: i_SLS
-
-  do i_SLS = 1,N_SLS
-    R_xx_val1 = R_memory_loc(1,i_SLS)
-    R_yy_val1 = R_memory_loc(2,i_SLS)
-    sigma_xx = sigma_xx - R_xx_val1
-    sigma_yy = sigma_yy - R_yy_val1
-    sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-    sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
-    sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
-    sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
-  enddo
-
-  end subroutine compute_element_att_stress
 
 !
 !--------------------------------------------------------------------------------------------
@@ -1508,7 +1494,6 @@
 
   end subroutine compute_element_att_memory_ic
 
-
 !
 !--------------------------------------------------------------------------------------------
 !
@@ -1692,6 +1677,7 @@
 !
 !--------------------------------------------------------------------------------------------
 !
+
  subroutine compute_element_strain_att_Dev(ispec,nglob,nspec,displ,veloc,deltat,ibool,hprime_xx,hprime_xxT,&
                                        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1,&
                                        eps_trace_over_3_loc_nplus1)
@@ -1963,7 +1949,6 @@
           enddo
 
 !         get derivatives of ux, uy and uz with respect to x, y and z
-
           xixl = xix(i,j,k,ispec)
           xiyl = xiy(i,j,k,ispec)
           xizl = xiz(i,j,k,ispec)
