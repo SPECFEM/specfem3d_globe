@@ -43,7 +43,7 @@
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
                           this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta,USE_FULL_TISO_MANTLE, &
-                          ATT1,ATT2,ATT3,SIMULATION_TYPE,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION) 
+                          ATT1,ATT2,ATT3,SIMULATION_TYPE,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION)
 
 ! creates the different regions of the mesh
 
@@ -163,10 +163,10 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz
   integer :: nglob_xy
 
-  ! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true. 
+  ! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true.
   integer :: SIMULATION_TYPE,nglob_xy_backward
-  logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx,b_rmassy 
+  logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx,b_rmassy
 
   ! mass matrix and bathymetry for ocean load
   integer nglob_oceans
@@ -982,10 +982,10 @@
     !
     ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
     ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-    nglob_xy = 1 
-    nglob_xy_backward = 1 
+    nglob_xy = 1
+    nglob_xy_backward = 1
 
-    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then 
+    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
        select case(iregion_code)
        case( IREGION_CRUST_MANTLE )
           nglob_xy = nglob
@@ -996,7 +996,7 @@
        nglob_xy = 1
     endif
 
-    if(SIMULATION_TYPE /=3  .and. (.not. USE_LDDRK))then  
+    if(SIMULATION_TYPE /=3  .and. (.not. USE_LDDRK))then
       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
         select case(iregion_code)
         case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
@@ -1007,7 +1007,7 @@
       endif
     endif
 
-    if(SIMULATION_TYPE ==3  .and. (.not. USE_LDDRK) )then 
+    if(SIMULATION_TYPE ==3  .and. (.not. USE_LDDRK) )then
       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
         select case(iregion_code)
         case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
@@ -1027,7 +1027,7 @@
     allocate(rmassz(nglob),stat=ier)
     if(ier /= 0) stop 'error in allocate 21'
 
-    allocate(b_rmassx(nglob_xy_backward),stat=ier) 
+    allocate(b_rmassx(nglob_xy_backward),stat=ier)
     if(ier /= 0) stop 'error in allocate b_21'
     allocate(b_rmassy(nglob_xy_backward),stat=ier)
     if(ier /= 0) stop 'error in allocate b_21'
@@ -1059,8 +1059,8 @@
                           rho_vp,rho_vs,nspec_stacey, &
                           jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
                           jacobian2D_bottom,jacobian2D_top,&
-                          SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, & 
-                          nglob_xy_backward,b_rmassx,b_rmassy) 
+                          SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+                          nglob_xy_backward,b_rmassx,b_rmassy)
 
     ! save the binary files
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
@@ -1090,8 +1090,8 @@
                   tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
                   ATT1,ATT2,ATT3,size(tau_e_store,5),&
                   NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank,&
-                  SIMULATION_TYPE,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,& 
-                  nglob_xy_backward,b_rmassx,b_rmassy) 
+                  SIMULATION_TYPE,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
+                  nglob_xy_backward,b_rmassx,b_rmassy)
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
     you_can_start_doing_IOs = .true.
     if (myrank < NPROC_XI*NPROC_ETA-1) call MPI_SEND(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank+1, itag, MPI_COMM_WORLD, ier)
@@ -1100,8 +1100,8 @@
     deallocate(rmassx,stat=ier); if(ier /= 0) stop 'error in deallocate rmassx'
     deallocate(rmassy,stat=ier); if(ier /= 0) stop 'error in deallocate rmassy'
     deallocate(rmassz,stat=ier); if(ier /= 0) stop 'error in deallocate rmassz'
-    deallocate(b_rmassx,stat=ier); if(ier /= 0) stop 'error in deallocate b_rmassx' 
-    deallocate(b_rmassy,stat=ier); if(ier /= 0) stop 'error in deallocate b_rmassy' 
+    deallocate(b_rmassx,stat=ier); if(ier /= 0) stop 'error in deallocate b_rmassx'
+    deallocate(b_rmassy,stat=ier); if(ier /= 0) stop 'error in deallocate b_rmassy'
     deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate rmass_ocean_load'
 
     ! boundary mesh

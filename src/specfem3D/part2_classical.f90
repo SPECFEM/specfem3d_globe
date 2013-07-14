@@ -326,11 +326,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -367,11 +367,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
       endif
     endif
 
@@ -404,12 +404,12 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core) 
+          epsilondev_inner_core,eps_trace_over_3_inner_core)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -438,12 +438,12 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core) 
+          epsilondev_inner_core,eps_trace_over_3_inner_core)
       endif
     endif
 
@@ -606,11 +606,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
         else
           call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -647,11 +647,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
         endif
 
         ! Deville routine
@@ -683,12 +683,12 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core) 
+          epsilondev_inner_core,eps_trace_over_3_inner_core)
         else
           call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -717,12 +717,12 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core) 
+          epsilondev_inner_core,eps_trace_over_3_inner_core)
         endif
 
 ! assemble all the contributions between slices using MPI
@@ -792,7 +792,7 @@
                                    rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                    rmass_ocean_load,normal_top_crust_mantle, &
                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                   updated_dof_ocean_load,NGLOB_XY_CM, & 
+                                   updated_dof_ocean_load,NGLOB_XY_CM, &
                                    NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
                                    ABSORBING_CONDITIONS)
      endif

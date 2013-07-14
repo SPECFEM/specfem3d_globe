@@ -52,10 +52,10 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
+          R_memory,one_minus_sum_beta,deltat, &
           alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3) 
+          epsilondev,eps_trace_over_3)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -69,7 +69,7 @@
 
   ! displacement and acceleration
   real(kind=CUSTOM_REAL) deltat
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle,veloc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
@@ -104,8 +104,8 @@
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
   logical :: PARTIAL_PHYS_DISPERSION_ONLY
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3
 
   integer :: vnspec
 
@@ -161,10 +161,8 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
@@ -397,7 +395,7 @@
             R_memory, &
             one_minus_sum_beta,vnspec, &
             tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-            dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY) 
+            dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
     else
        if( .not. ispec_is_tiso(ispec) ) then
           ! isotropic element
@@ -411,7 +409,7 @@
                R_memory, &
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY) 
+               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
        else
           ! transverse isotropic element
 
@@ -425,7 +423,7 @@
                R_memory, &
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY) 
+               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
        endif ! .not. ispec_is_tiso
     endif
 
@@ -544,43 +542,27 @@
     ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
     ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
-      if(COMPUTE_AND_STORE_STRAIN)then  
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
           ! updates R_memory
           epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
           epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
           epsilondev_loc_nsub1(3,:,:,:) = epsilondev(3,:,:,:,ispec)
           epsilondev_loc_nsub1(4,:,:,:) = epsilondev(4,:,:,:,ispec)
           epsilondev_loc_nsub1(5,:,:,:) = epsilondev(5,:,:,:,ispec)
-          ! updates R_memory
+
           call compute_element_att_memory_cr(ispec,R_memory, &
                                          vnspec,factor_common, &
                                          alphaval,betaval,gammaval, &
                                          c44store,muvstore, &
-                                         epsilondev_loc,epsilondev_loc_nsub1,&  
+                                         epsilondev_loc,epsilondev_loc_nsub1,&
                                          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
-      else
-        call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
-                                          deltat,ibool,hprime_xx,hprime_xxT,&
-                                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1,&
-                                          eps_trace_over_3_loc_nplus1)
-        ! updates R_memory
-        call compute_element_att_memory_cr(ispec,R_memory, &
-                                         vnspec,factor_common, &
-                                         alphaval,betaval,gammaval, &
-                                         c44store,muvstore, &
-                                         epsilondev_loc_nplus1,epsilondev_loc,&
-                                         istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
-      endif
 
-      if(COMPUTE_AND_STORE_STRAIN) then 
         eps_trace_over_3(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
         epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
         epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
         epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
         epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-        epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)  
-      endif
+        epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
     endif
 
 ! end ispec loop

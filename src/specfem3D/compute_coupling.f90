@@ -415,7 +415,7 @@
   updated_dof_ocean_load(:) = .false.
 
   if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. (.not. USE_LDDRK)) then 
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. (.not. USE_LDDRK)) then
 
      ! for surface elements exactly at the top of the crust (ocean bottom)
      do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_CRUST_MANTLE)

@@ -31,7 +31,7 @@
                           accel_crust_mantle,b_displ_crust_mantle, &
                           deltat,hprime_xx,hprime_xxT,&
                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,ANISOTROPIC_KL,&
-                          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle) 
+                          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
 
   implicit none
 
@@ -58,8 +58,8 @@
 
   logical :: ANISOTROPIC_KL
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev_crust_mantle 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3_crust_mantle 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3_crust_mantle
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
@@ -811,7 +811,7 @@
                           accel_inner_core,b_displ_inner_core, &
                           deltat,hprime_xx,hprime_xxT,&
                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,&
-                          epsilondev_inner_core,eps_trace_over_3_inner_core) 
+                          epsilondev_inner_core,eps_trace_over_3_inner_core)
 
   implicit none
 
@@ -833,8 +833,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev_inner_core 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: eps_trace_over_3_inner_core 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: eps_trace_over_3_inner_core
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix

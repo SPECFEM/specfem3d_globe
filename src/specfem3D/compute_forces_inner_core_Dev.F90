@@ -47,11 +47,11 @@
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
+          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat, &
           alphaval,betaval,gammaval,factor_common, &
           vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3) 
+          epsilondev,eps_trace_over_3)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -66,7 +66,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core,veloc_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
@@ -87,8 +87,8 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   logical :: PARTIAL_PHYS_DISPERSION_ONLY
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -149,9 +149,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_nplus1 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
@@ -774,7 +772,6 @@
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-        if(COMPUTE_AND_STORE_STRAIN)then  
           ! updates R_memory
           epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
           epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
@@ -786,29 +783,14 @@
                                       vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
-                                      epsilondev_loc,epsilondev_loc_nsub1,& 
+                                      epsilondev_loc,epsilondev_loc_nsub1,&
                                       istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
-        else
-          call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
-                                              veloc_inner_core,deltat,ibool,hprime_xx,hprime_xxT,&
-                                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1,&
-                                              eps_trace_over_3_loc_nplus1)
-          ! updates R_memory
-          call compute_element_att_memory_ic(ispec,R_memory, &
-                                      vnspec,factor_common, &
-                                      alphaval,betaval,gammaval, &
-                                      muvstore, &
-                                      epsilondev_loc_nplus1,epsilondev_loc,&
-                                      istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
-        endif
 
-        if(COMPUTE_AND_STORE_STRAIN) then 
           epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
           epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
           epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
           epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-          epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)  
-        endif
+          epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
 
       endif
 
