@@ -395,8 +395,7 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
+
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
 
@@ -2601,19 +2600,15 @@ else ! if UNDO_ATTENUATION
         if(COMPUTE_AND_STORE_STRAIN_VAL) then
           if(.not. USE_DEVILLE_PRODUCTS_VAL) &
              call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN_VAL is not implemented without USE_DEVILLE_PRODUCTS_VAL')
+! after reading the restart files of displacement back from disk, recompute the strain from displacement;
+! this is better than storing the strain to disk as well, which would drastically increase I/O volume
           do ispec = 1, NSPEC_INNER_CORE
             call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,b_displ_inner_core,&
                                             b_veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
                                             xix_inner_core,xiy_inner_core,xiz_inner_core,&
                                             etax_inner_core,etay_inner_core,etaz_inner_core,&
                                             gammax_inner_core,gammay_inner_core,gammaz_inner_core,&
-                                            epsilondev_loc,eps_trace_over_3_loc)
-            eps_trace_over_3_inner_core(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
-            epsilondev_inner_core(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-            epsilondev_inner_core(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-            epsilondev_inner_core(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-            epsilondev_inner_core(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-            epsilondev_inner_core(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
+                                            epsilondev_inner_core(1,1,1,1,ispec),eps_trace_over_3_inner_core(1,1,1,ispec))
           enddo
 
           do ispec = 1, NSPEC_crust_mantle
@@ -2622,13 +2617,7 @@ else ! if UNDO_ATTENUATION
                                             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                                             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                                             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
-                                            epsilondev_loc,eps_trace_over_3_loc)
-            eps_trace_over_3_crust_mantle(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
-            epsilondev_crust_mantle(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-            epsilondev_crust_mantle(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-            epsilondev_crust_mantle(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-            epsilondev_crust_mantle(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-            epsilondev_crust_mantle(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
+                                            epsilondev_crust_mantle(1,1,1,1,ispec),eps_trace_over_3_crust_mantle(1,1,1,ispec))
           enddo
         endif
 
@@ -2651,19 +2640,15 @@ else ! if UNDO_ATTENUATION
       if(COMPUTE_AND_STORE_STRAIN_VAL) then
         if(.not. USE_DEVILLE_PRODUCTS_VAL) &
            call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN_VAL is not implemented without USE_DEVILLE_PRODUCTS_VAL')
+! after reading the restart files of displacement back from disk, recompute the strain from displacement;
+! this is better than storing the strain to disk as well, which would drastically increase I/O volume
         do ispec = 1, NSPEC_INNER_CORE
           call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
                                             veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
                                             xix_inner_core,xiy_inner_core,xiz_inner_core,&
                                             etax_inner_core,etay_inner_core,etaz_inner_core,&
                                             gammax_inner_core,gammay_inner_core,gammaz_inner_core,&
-                                            epsilondev_loc,eps_trace_over_3_loc)
-          eps_trace_over_3_inner_core(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
-          epsilondev_inner_core(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-          epsilondev_inner_core(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-          epsilondev_inner_core(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-          epsilondev_inner_core(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-          epsilondev_inner_core(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
+                                            epsilondev_inner_core(1,1,1,1,ispec),eps_trace_over_3_inner_core(1,1,1,ispec))
         enddo
 
         do ispec = 1, NSPEC_crust_mantle
@@ -2672,13 +2657,7 @@ else ! if UNDO_ATTENUATION
                                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                                           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
-                                          epsilondev_loc,eps_trace_over_3_loc)
-          eps_trace_over_3_crust_mantle(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
-          epsilondev_crust_mantle(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-          epsilondev_crust_mantle(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-          epsilondev_crust_mantle(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-          epsilondev_crust_mantle(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-          epsilondev_crust_mantle(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
+                                          epsilondev_crust_mantle(1,1,1,1,ispec),eps_trace_over_3_crust_mantle(1,1,1,ispec))
         enddo
       endif
 
