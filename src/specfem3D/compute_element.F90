@@ -114,7 +114,7 @@
 
   integer :: i,j,k
   integer :: int_radius
-  integer :: iglob1
+  integer :: iglob
 
   ! isotropic element
 
@@ -225,13 +225,12 @@
 
         ! compute non-symmetric terms for gravity
         if(GRAVITY_VAL) then
-
             ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
-            iglob1 = ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
-            dtheta = dble(ystore(iglob1))
-            dphi = dble(zstore(iglob1))
+            dtheta = dble(ystore(iglob))
+            dphi = dble(zstore(iglob))
 
             cos_theta = dcos(dtheta)
             sin_theta = dsin(dtheta)
@@ -246,7 +245,7 @@
             ! get g, rho and dg/dr=dg
             ! spherical components of the gravitational acceleration
             ! for efficiency replace with lookup table every 100 m in radial direction
-            radius = dble(xstore(iglob1))
+            radius = dble(xstore(iglob))
 
             int_radius = nint(10.d0 * radius * R_EARTH_KM )
             minus_g = minus_gravity_table(int_radius)
@@ -270,63 +269,30 @@
             Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
             Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-            ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
+            ! get displacement and multiply by density to compute G tensor
+            sx_l = rho * dummyx_loc(i,j,k)
+            sy_l = rho * dummyy_loc(i,j,k)
+            sz_l = rho * dummyz_loc(i,j,k)
 
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(dummyx_loc(i,j,k)) ! dble(displ_crust_mantle(1,iglob1))
-              sy_l = rho * dble(dummyy_loc(i,j,k)) ! dble(displ_crust_mantle(2,iglob1))
-              sz_l = rho * dble(dummyz_loc(i,j,k)) ! dble(displ_crust_mantle(3,iglob1))
+            ! compute G tensor from s . g and add to sigma (not symmetric)
+            sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
+            sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
+            sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
 
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-              sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-              sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+            sigma_xy = sigma_xy - sx_l * gyl
+            sigma_yx = sigma_yx - sy_l * gxl
 
-              sigma_xy = sigma_xy - sngl(sx_l * gyl)
-              sigma_yx = sigma_yx - sngl(sy_l * gxl)
+            sigma_xz = sigma_xz - sx_l * gzl
+            sigma_zx = sigma_zx - sz_l * gxl
 
-              sigma_xz = sigma_xz - sngl(sx_l * gzl)
-              sigma_zx = sigma_zx - sngl(sz_l * gxl)
+            sigma_yz = sigma_yz - sy_l * gzl
+            sigma_zy = sigma_zy - sz_l * gyl
 
-              sigma_yz = sigma_yz - sngl(sy_l * gzl)
-              sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-              ! precompute vector
-              factor = dble(jacobianl) * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-              rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-              rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-            else
-
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dummyx_loc(i,j,k) ! displ_crust_mantle(1,iglob1)
-              sy_l = rho * dummyy_loc(i,j,k) ! displ_crust_mantle(2,iglob1)
-              sz_l = rho * dummyz_loc(i,j,k) ! displ_crust_mantle(3,iglob1)
-
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-              sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-              sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-              sigma_xy = sigma_xy - sx_l * gyl
-              sigma_yx = sigma_yx - sy_l * gxl
-
-              sigma_xz = sigma_xz - sx_l * gzl
-              sigma_zx = sigma_zx - sz_l * gxl
-
-              sigma_yz = sigma_yz - sy_l * gzl
-              sigma_zy = sigma_zy - sz_l * gyl
-
-              ! precompute vector
-              factor = jacobianl * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-            endif
-
+            ! precompute vector
+            factor = jacobianl * wgll_cube(i,j,k)
+            rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+            rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+            rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
         endif  ! end of section with gravity terms
 
         ! form dot product with test vector, non-symmetric form
@@ -456,7 +422,7 @@
 
   integer :: i,j,k
   integer :: int_radius
-  integer :: iglob1
+  integer :: iglob
 
   ! transverse isotropic element
 
@@ -526,7 +492,7 @@
         ! compute either isotropic or anisotropic elements
         !
 
-! note : mesh is built such that anisotropic elements are created first in anisotropic layers,
+! note: the mesh is built such that anisotropic elements are created first in anisotropic layers,
 !           thus they are listed first ( see in create_regions_mesh.f90: perm_layer() ordering )
 !           this is therefore still in bounds of 1:NSPECMAX_TISO_MANTLE even if NSPECMAX_TISO is less than NSPEC
 
@@ -554,10 +520,10 @@
 
         ! use mesh coordinates to get theta and phi
         ! ystore and zstore contain theta and phi
-        iglob1 = ibool(i,j,k,ispec)
+        iglob = ibool(i,j,k,ispec)
 
-        theta = ystore(iglob1)
-        phi = zstore(iglob1)
+        theta = ystore(iglob)
+        phi = zstore(iglob)
 
          ! precompute some products to reduce the CPU time
 
@@ -754,21 +720,19 @@
 
         ! compute non-symmetric terms for gravity
         if(GRAVITY_VAL) then
-
-             ! use mesh coordinates to get theta and phi
+            ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
-            iglob1 = ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
-            dtheta = dble(ystore(iglob1))
-            dphi = dble(zstore(iglob1))
-            radius = dble(xstore(iglob1))
+            dtheta = dble(ystore(iglob))
+            dphi = dble(zstore(iglob))
+            radius = dble(xstore(iglob))
 
             cos_theta = dcos(dtheta)
             sin_theta = dsin(dtheta)
             cos_phi = dcos(dphi)
             sin_phi = dsin(dphi)
 
-            ! way 2
             cos_theta_sq = cos_theta*cos_theta
             sin_theta_sq = sin_theta*sin_theta
             cos_phi_sq = cos_phi*cos_phi
@@ -799,64 +763,30 @@
             Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
             Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-            ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
+            ! get displacement and multiply by density to compute G tensor
+            sx_l = rho * dummyx_loc(i,j,k)
+            sy_l = rho * dummyy_loc(i,j,k)
+            sz_l = rho * dummyz_loc(i,j,k)
 
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(dummyx_loc(i,j,k))
-              sy_l = rho * dble(dummyy_loc(i,j,k))
-              sz_l = rho * dble(dummyz_loc(i,j,k))
+            ! compute G tensor from s . g and add to sigma (not symmetric)
+            sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
+            sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
+            sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
 
+            sigma_xy = sigma_xy - sx_l * gyl
+            sigma_yx = sigma_yx - sy_l * gxl
 
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-              sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-              sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+            sigma_xz = sigma_xz - sx_l * gzl
+            sigma_zx = sigma_zx - sz_l * gxl
 
-              sigma_xy = sigma_xy - sngl(sx_l * gyl)
-              sigma_yx = sigma_yx - sngl(sy_l * gxl)
+            sigma_yz = sigma_yz - sy_l * gzl
+            sigma_zy = sigma_zy - sz_l * gyl
 
-              sigma_xz = sigma_xz - sngl(sx_l * gzl)
-              sigma_zx = sigma_zx - sngl(sz_l * gxl)
-
-              sigma_yz = sigma_yz - sngl(sy_l * gzl)
-              sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-              ! precompute vector
-              factor = dble(jacobianl) * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-              rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-              rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-            else
-
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dummyx_loc(i,j,k)
-              sy_l = rho * dummyy_loc(i,j,k)
-              sz_l = rho * dummyz_loc(i,j,k)
-
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-              sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-              sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-              sigma_xy = sigma_xy - sx_l * gyl
-              sigma_yx = sigma_yx - sy_l * gxl
-
-              sigma_xz = sigma_xz - sx_l * gzl
-              sigma_zx = sigma_zx - sz_l * gxl
-
-              sigma_yz = sigma_yz - sy_l * gzl
-              sigma_zy = sigma_zy - sz_l * gyl
-
-              ! precompute vector
-              factor = jacobianl * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-            endif
-
+            ! precompute vector
+            factor = jacobianl * wgll_cube(i,j,k)
+            rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+            rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+            rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
         endif  ! end of section with gravity terms
 
         ! form dot product with test vector, non-symmetric form
@@ -977,7 +907,7 @@
 
   integer :: i,j,k
   integer :: int_radius
-  integer :: iglob1
+  integer :: iglob
 
   !  anisotropic elements
 
@@ -1125,14 +1055,13 @@
 
         ! compute non-symmetric terms for gravity
         if(GRAVITY_VAL) then
-
-             ! use mesh coordinates to get theta and phi
+            ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
-            iglob1 = ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
-            dtheta = dble(ystore(iglob1))
-            dphi = dble(zstore(iglob1))
-            radius = dble(xstore(iglob1))
+            dtheta = dble(ystore(iglob))
+            dphi = dble(zstore(iglob))
+            radius = dble(xstore(iglob))
 
             cos_theta = dcos(dtheta)
             sin_theta = dsin(dtheta)
@@ -1169,63 +1098,30 @@
             Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
             Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-            ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
+            ! get displacement and multiply by density to compute G tensor
+            sx_l = rho * dummyx_loc(i,j,k)
+            sy_l = rho * dummyy_loc(i,j,k)
+            sz_l = rho * dummyz_loc(i,j,k)
 
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(dummyx_loc(i,j,k)) ! dble(displ_crust_mantle(1,iglob1))
-              sy_l = rho * dble(dummyy_loc(i,j,k)) ! dble(displ_crust_mantle(2,iglob1))
-              sz_l = rho * dble(dummyz_loc(i,j,k)) !  dble(displ_crust_mantle(3,iglob1))
+            ! compute G tensor from s . g and add to sigma (not symmetric)
+            sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
+            sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
+            sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
 
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-              sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-              sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+            sigma_xy = sigma_xy - sx_l * gyl
+            sigma_yx = sigma_yx - sy_l * gxl
 
-              sigma_xy = sigma_xy - sngl(sx_l * gyl)
-              sigma_yx = sigma_yx - sngl(sy_l * gxl)
+            sigma_xz = sigma_xz - sx_l * gzl
+            sigma_zx = sigma_zx - sz_l * gxl
 
-              sigma_xz = sigma_xz - sngl(sx_l * gzl)
-              sigma_zx = sigma_zx - sngl(sz_l * gxl)
+            sigma_yz = sigma_yz - sy_l * gzl
+            sigma_zy = sigma_zy - sz_l * gyl
 
-              sigma_yz = sigma_yz - sngl(sy_l * gzl)
-              sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-              ! precompute vector
-              factor = dble(jacobianl) * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-              rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-              rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-            else
-
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dummyx_loc(i,j,k)  ! displ_crust_mantle(1,iglob1)
-              sy_l = rho * dummyy_loc(i,j,k)  !  displ_crust_mantle(2,iglob1)
-              sz_l = rho * dummyz_loc(i,j,k)  ! displ_crust_mantle(3,iglob1)
-
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-              sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-              sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-              sigma_xy = sigma_xy - sx_l * gyl
-              sigma_yx = sigma_yx - sy_l * gxl
-
-              sigma_xz = sigma_xz - sx_l * gzl
-              sigma_zx = sigma_zx - sz_l * gxl
-
-              sigma_yz = sigma_yz - sy_l * gzl
-              sigma_zy = sigma_zy - sz_l * gyl
-
-              ! precompute vector
-              factor = jacobianl * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-            endif
-
+            ! precompute vector
+            factor = jacobianl * wgll_cube(i,j,k)
+            rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+            rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+            rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
         endif  ! end of section with gravity terms
 
         ! form dot product with test vector, non-symmetric form
