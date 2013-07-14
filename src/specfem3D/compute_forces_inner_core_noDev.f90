@@ -348,7 +348,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-          if (COMPUTE_AND_STORE_STRAIN) then
+          if (COMPUTE_AND_STORE_STRAIN_VAL) then
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
             epsilondev_loc(1,i,j,k) = duxdxl - templ
             epsilondev_loc(2,i,j,k) = duydyl - templ

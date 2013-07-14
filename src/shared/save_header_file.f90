@@ -545,9 +545,9 @@
   ! attenuation and/or adjoint simulations
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
     .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .true.'
+    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .true.'
   else
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
+    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .false.'
   endif
   write(IOUT,*)
 

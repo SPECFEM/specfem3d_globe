@@ -434,7 +434,7 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            if (COMPUTE_AND_STORE_STRAIN) then
+            if (COMPUTE_AND_STORE_STRAIN_VAL) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
@@ -519,10 +519,7 @@
 
             ! subtract memory variables if attenuation
             if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
-
-!             ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
-!             call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
-!                                             sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
               do i_SLS = 1,N_SLS
                 R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
                 R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -533,7 +530,6 @@
                 sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
                 sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
               enddo
-
             endif
 
             ! define symmetric components of sigma for gravity

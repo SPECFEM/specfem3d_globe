@@ -165,7 +165,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN) then
+        if (COMPUTE_AND_STORE_STRAIN_VAL) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -207,10 +207,7 @@
 
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
-
-!         ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
-!         call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
-!                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
           do i_SLS = 1,N_SLS
             R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
             R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -221,7 +218,6 @@
             sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
             sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
           enddo
-
         endif ! ATTENUATION_VAL
 
         ! define symmetric components of sigma for gravity
@@ -513,7 +509,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN) then
+        if (COMPUTE_AND_STORE_STRAIN_VAL) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -742,10 +738,7 @@
 
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
-
-!         ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
-!         call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
-!                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
           do i_SLS = 1,N_SLS
             R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
             R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -756,7 +749,6 @@
             sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
             sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
           enddo
-
         endif ! ATTENUATION_VAL
 
         ! define symmetric components of sigma for gravity
@@ -1040,7 +1032,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN) then
+        if (COMPUTE_AND_STORE_STRAIN_VAL) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -1119,10 +1111,7 @@
 
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
-
-!         ! note: Fortran passes pointers to array location, thus using R_memory(1,1,...) is fine
-!         call compute_element_att_stress(R_memory(1,1,i,j,k,ispec), &
-!                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
           do i_SLS = 1,N_SLS
             R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
             R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -1133,7 +1122,6 @@
             sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
             sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
           enddo
-
         endif ! ATTENUATION_VAL
 
         ! define symmetric components of sigma for gravity

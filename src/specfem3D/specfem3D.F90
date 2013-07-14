@@ -1134,7 +1134,7 @@
   undo_att_sim_type_3 = .false.
 
 ! ZN if we want to storing the strain to acclerate the code but cost more memory then
-  if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN)then
+  if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL)then
     allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
@@ -2355,7 +2355,7 @@
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
-  if (COMPUTE_AND_STORE_STRAIN) then
+  if (COMPUTE_AND_STORE_STRAIN_VAL) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
       Iepsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
       Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
@@ -2592,9 +2592,9 @@ else ! if UNDO_ATTENUATION
       it_temp = it
       seismo_current_temp = seismo_current
 
-        if(COMPUTE_AND_STORE_STRAIN) then
+        if(COMPUTE_AND_STORE_STRAIN_VAL) then
           if(.not. USE_DEVILLE_PRODUCTS_VAL) &
-             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN is not implemented without USE_DEVILLE_PRODUCTS_VAL')
+             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN_VAL is not implemented without USE_DEVILLE_PRODUCTS_VAL')
           do ispec = 1, NSPEC_INNER_CORE
             call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,b_displ_inner_core,&
                                             b_veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
@@ -2642,9 +2642,9 @@ else ! if UNDO_ATTENUATION
       it = it_temp
       seismo_current = seismo_current_temp
 
-      if(COMPUTE_AND_STORE_STRAIN) then
+      if(COMPUTE_AND_STORE_STRAIN_VAL) then
         if(.not. USE_DEVILLE_PRODUCTS_VAL) &
-           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN is not implemented without USE_DEVILLE_PRODUCTS_VAL')
+           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN_VAL is not implemented without USE_DEVILLE_PRODUCTS_VAL')
         do ispec = 1, NSPEC_INNER_CORE
           call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE,displ_inner_core,&
                                             veloc_inner_core,0._CUSTOM_REAL,ibool_inner_core,hprime_xx,hprime_xxT,&
