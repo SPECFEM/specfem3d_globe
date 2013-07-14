@@ -64,11 +64,17 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
-  integer :: i,j,k,ispec,iglob
+  integer :: ispec,iglob
   real(kind=CUSTOM_REAL) :: eps1, eps2, eps3, eps4, eps5, eps6, b_eps1, b_eps2, b_eps3, b_eps4, b_eps5, b_eps6
   real(kind=CUSTOM_REAL) :: eps_trace_over_3,b_eps_trace_over_3
   real(kind=CUSTOM_REAL) :: prod1, prod2, prod3, prod4, prod5, prod6, prod7, prod8, prod9, &
                             prod10, prod11, prod12, prod13, prod14, prod15, prod16, prod17, prod18, prod19, prod20, prod21
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
@@ -84,6 +90,111 @@
   ! For anisotropic kernels
   if (ANISOTROPIC_KL) then
 
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1, NGLLCUBE
+          iglob = ibool_crust_mantle(ijk,1,1,ispec)
+
+          ! density kernel: see e.g. Tromp et al.(2005), equation (14)
+          !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
+          !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
+          !
+          !                         note with respect to eq. (14) the second time derivative is applied to the
+          !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
+          !                         this is a valid operation and the resultant kernel identical to the eq. (14).
+          !
+          !                         reason for this is that the adjoint wavefield is in general smoother
+          !                         since the adjoint sources normally are obtained for filtered traces.
+          !                         numerically, the time derivative by a finite-difference scheme should
+          !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+          rho_kl_crust_mantle(ijk,1,1,ispec) =  rho_kl_crust_mantle(ijk,1,1,ispec) &
+             + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+             + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob))
+
+! compute the 21 strain products
+
+!! DK DK July 2013: inlined the call to this subroutine below to speed up the code, thus the subroutine is now unused
+!       call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_crust_mantle(:,i,j,k,ispec), &
+!                                   b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc_matrix(:,i,j,k))
+
+  ! Purpose: compute the 21 strain products at a grid point
+  ! (ispec,i,j,k fixed) and at a time t to compute then the kernels cij_kl (Voigt notation)
+  ! (eq. 15 of Tromp et al., 2005)
+  ! prod(1)=eps11*eps11 -> c11, prod(2)=eps11eps22 -> c12, prod(3)=eps11eps33 -> c13, ...
+  ! prod(7)=eps22*eps22 -> c22, prod(8)=eps22eps33 -> c23, prod(9)=eps22eps23 -> c24, ...
+  ! prod(19)=eps13*eps13 -> c55, prod(20)=eps13eps12 -> c56, prod(21)=eps12eps12 -> c66
+  ! This then gives how the 21 kernels are organized
+
+  ! Building of the local matrix of the strain tensor
+  ! for the adjoint field and the regular backward field
+  eps_trace_over_3 = eps_trace_over_3_crust_mantle(ijk,1,1,ispec)
+  b_eps_trace_over_3 = b_eps_trace_over_3_loc_matrix(ijk,1,1)
+
+  eps1=epsilondev_crust_mantle(1,ijk,1,1,ispec)+eps_trace_over_3  ! eps11
+  eps2=epsilondev_crust_mantle(2,ijk,1,1,ispec)+eps_trace_over_3  ! eps22
+  eps3=-(eps1+eps2)+3._CUSTOM_REAL*eps_trace_over_3               ! eps33
+  eps4=epsilondev_crust_mantle(5,ijk,1,1,ispec)                   ! eps23
+  eps5=epsilondev_crust_mantle(4,ijk,1,1,ispec)                   ! eps13
+  eps6=epsilondev_crust_mantle(3,ijk,1,1,ispec)                   ! eps12
+
+  b_eps1=b_epsilondev_loc_matrix(1,ijk,1,1)+b_eps_trace_over_3
+  b_eps2=b_epsilondev_loc_matrix(2,ijk,1,1)+b_eps_trace_over_3
+  b_eps3=-(b_eps1+b_eps2)+3._CUSTOM_REAL*b_eps_trace_over_3
+  b_eps4=b_epsilondev_loc_matrix(5,ijk,1,1)
+  b_eps5=b_epsilondev_loc_matrix(4,ijk,1,1)
+  b_eps6=b_epsilondev_loc_matrix(3,ijk,1,1)
+
+  ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
+!! DK DK July 2013: manually unrolled the calculations to speed up the code
+  prod1 = eps1*b_eps1
+  prod2 = eps1*b_eps2 + eps2*b_eps1
+  prod3 = eps1*b_eps3 + eps3*b_eps1
+  prod4 = (eps1*b_eps4 + eps4*b_eps1)*2._CUSTOM_REAL
+  prod5 = (eps1*b_eps5 + eps5*b_eps1)*2._CUSTOM_REAL
+  prod6 = (eps1*b_eps6 + eps6*b_eps1)*2._CUSTOM_REAL
+  prod7 = eps2*b_eps2
+  prod8 = eps2*b_eps3 + eps3*b_eps2
+  prod9 = (eps2*b_eps4 + eps4*b_eps2)*2._CUSTOM_REAL
+  prod10 = (eps2*b_eps5 + eps5*b_eps2)*2._CUSTOM_REAL
+  prod11 = (eps2*b_eps6 + eps6*b_eps2)*2._CUSTOM_REAL
+  prod12 = eps3*b_eps3
+  prod13 = (eps3*b_eps4 + eps4*b_eps3)*2._CUSTOM_REAL
+  prod14 = (eps3*b_eps5 + eps5*b_eps3)*2._CUSTOM_REAL
+  prod15 = (eps3*b_eps6 + eps6*b_eps3)*2._CUSTOM_REAL
+  prod16 = eps4*b_eps4*4._CUSTOM_REAL
+  prod17 = (eps4*b_eps5 + eps5*b_eps4)*4._CUSTOM_REAL
+  prod18 = (eps4*b_eps6 + eps6*b_eps4)*4._CUSTOM_REAL
+  prod19 = eps5*b_eps5*4._CUSTOM_REAL
+  prod20 = (eps5*b_eps6 + eps6*b_eps5)*4._CUSTOM_REAL
+  prod21 = eps6*b_eps6*4._CUSTOM_REAL
+
+          ! do not use a ":" array syntax for the first index below otherwise
+          ! most compilers will not be able to vectorize the outer loop and the code will be slower
+          cijkl_kl_crust_mantle( 1,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 1,ijk,1,1,ispec) + deltat * prod1
+          cijkl_kl_crust_mantle( 2,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 2,ijk,1,1,ispec) + deltat * prod2
+          cijkl_kl_crust_mantle( 3,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 3,ijk,1,1,ispec) + deltat * prod3
+          cijkl_kl_crust_mantle( 4,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 4,ijk,1,1,ispec) + deltat * prod4
+          cijkl_kl_crust_mantle( 5,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 5,ijk,1,1,ispec) + deltat * prod5
+          cijkl_kl_crust_mantle( 6,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 6,ijk,1,1,ispec) + deltat * prod6
+          cijkl_kl_crust_mantle( 7,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 7,ijk,1,1,ispec) + deltat * prod7
+          cijkl_kl_crust_mantle( 8,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 8,ijk,1,1,ispec) + deltat * prod8
+          cijkl_kl_crust_mantle( 9,ijk,1,1,ispec) = cijkl_kl_crust_mantle( 9,ijk,1,1,ispec) + deltat * prod9
+
+          cijkl_kl_crust_mantle(10,ijk,1,1,ispec) = cijkl_kl_crust_mantle(10,ijk,1,1,ispec) + deltat * prod10
+          cijkl_kl_crust_mantle(11,ijk,1,1,ispec) = cijkl_kl_crust_mantle(11,ijk,1,1,ispec) + deltat * prod11
+          cijkl_kl_crust_mantle(12,ijk,1,1,ispec) = cijkl_kl_crust_mantle(12,ijk,1,1,ispec) + deltat * prod12
+          cijkl_kl_crust_mantle(13,ijk,1,1,ispec) = cijkl_kl_crust_mantle(13,ijk,1,1,ispec) + deltat * prod13
+          cijkl_kl_crust_mantle(14,ijk,1,1,ispec) = cijkl_kl_crust_mantle(14,ijk,1,1,ispec) + deltat * prod14
+          cijkl_kl_crust_mantle(15,ijk,1,1,ispec) = cijkl_kl_crust_mantle(15,ijk,1,1,ispec) + deltat * prod15
+          cijkl_kl_crust_mantle(16,ijk,1,1,ispec) = cijkl_kl_crust_mantle(16,ijk,1,1,ispec) + deltat * prod16
+          cijkl_kl_crust_mantle(17,ijk,1,1,ispec) = cijkl_kl_crust_mantle(17,ijk,1,1,ispec) + deltat * prod17
+          cijkl_kl_crust_mantle(18,ijk,1,1,ispec) = cijkl_kl_crust_mantle(18,ijk,1,1,ispec) + deltat * prod18
+          cijkl_kl_crust_mantle(19,ijk,1,1,ispec) = cijkl_kl_crust_mantle(19,ijk,1,1,ispec) + deltat * prod19
+
+          cijkl_kl_crust_mantle(20,ijk,1,1,ispec) = cijkl_kl_crust_mantle(20,ijk,1,1,ispec) + deltat * prod20
+          cijkl_kl_crust_mantle(21,ijk,1,1,ispec) = cijkl_kl_crust_mantle(21,ijk,1,1,ispec) + deltat * prod21
+        enddo
+#else
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -104,7 +215,7 @@
           rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
              + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
-             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob))
 
 ! compute the 21 strain products
 
@@ -191,9 +302,49 @@
         enddo
       enddo
     enddo
+#endif
 
   else
 
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1, NGLLCUBE
+          iglob = ibool_crust_mantle(ijk,1,1,ispec)
+
+          ! density kernel: see e.g. Tromp et al.(2005), equation (14)
+          !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
+          !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
+          !
+          !                         note with respect to eq. (14) the second time derivative is applied to the
+          !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
+          !                         this is a valid operation and the resultant kernel identical to the eq. (14).
+          !
+          !                         reason for this is that the adjoint wavefield is in general smoother
+          !                         since the adjoint sources normally are obtained for filtered traces.
+          !                         numerically, the time derivative by a finite-difference scheme should
+          !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+          rho_kl_crust_mantle(ijk,1,1,ispec) =  rho_kl_crust_mantle(ijk,1,1,ispec) &
+             + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+             + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob))
+
+          ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
+          ! note: multiplication with 2*mu(x) will be done after the time loop
+          beta_kl_crust_mantle(ijk,1,1,ispec) =  beta_kl_crust_mantle(ijk,1,1,ispec) &
+             + deltat * (epsilondev_crust_mantle(1,ijk,1,1,ispec)*b_epsilondev_loc_matrix(1,ijk,1,1) &
+             + epsilondev_crust_mantle(2,ijk,1,1,ispec)*b_epsilondev_loc_matrix(2,ijk,1,1) &
+             + (epsilondev_crust_mantle(1,ijk,1,1,ispec)+epsilondev_crust_mantle(2,ijk,1,1,ispec)) &
+             * (b_epsilondev_loc_matrix(1,ijk,1,1)+b_epsilondev_loc_matrix(2,ijk,1,1)) &
+             + 2.d0 * (epsilondev_crust_mantle(3,ijk,1,1,ispec)*b_epsilondev_loc_matrix(3,ijk,1,1) &
+             + epsilondev_crust_mantle(4,ijk,1,1,ispec)*b_epsilondev_loc_matrix(4,ijk,1,1) + &
+              epsilondev_crust_mantle(5,ijk,1,1,ispec)*b_epsilondev_loc_matrix(5,ijk,1,1)))
+
+          ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
+          ! note: multiplication with kappa(x) will be done after the time loop
+          alpha_kl_crust_mantle(ijk,1,1,ispec) = alpha_kl_crust_mantle(ijk,1,1,ispec) &
+             + deltat * (9.d0 * eps_trace_over_3_crust_mantle(ijk,1,1,ispec) &
+                              * b_eps_trace_over_3_loc_matrix(ijk,1,1))
+        enddo
+#else
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -214,7 +365,7 @@
           rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
              + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
              + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
-             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+             + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob))
 
           ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
           ! note: multiplication with 2*mu(x) will be done after the time loop
@@ -235,6 +386,7 @@
         enddo
       enddo
     enddo
+#endif
 
   endif ! of if ANISOTROPIC_KL
 
