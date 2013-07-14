@@ -50,7 +50,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat, &
           alphaval,betaval,gammaval,factor_common, &
-          vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          vnspec,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev,eps_trace_over_3)
 
@@ -84,7 +84,6 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc,epsilondev_loc_nsub1
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3
 
@@ -435,7 +434,7 @@
           endif
 
 ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
+          if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
             do i_SLS = 1,N_SLS
               R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
               R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -659,7 +658,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 
         epsilondev_loc_nsub1(1,i,j,k) = epsilondev(1,i,j,k,ispec)
         epsilondev_loc_nsub1(2,i,j,k) = epsilondev(2,i,j,k,ispec)

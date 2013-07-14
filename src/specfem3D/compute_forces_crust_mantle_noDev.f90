@@ -53,7 +53,7 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
           R_memory,one_minus_sum_beta,deltat, &
-          alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
+          alphaval,betaval,gammaval,factor_common,vnspec,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev,eps_trace_over_3)
 
@@ -84,7 +84,6 @@
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3
 
@@ -681,7 +680,7 @@
           endif   ! end of test whether isotropic or anisotropic element
 
         ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
+          if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
             do i_SLS = 1,N_SLS
               R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
               R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -902,7 +901,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 
         epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
         epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
