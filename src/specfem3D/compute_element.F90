@@ -35,7 +35,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
 
   implicit none
 
@@ -115,8 +115,6 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
-
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   ! isotropic element
 
@@ -206,7 +204,7 @@
         sigma_yz = mul*duzdyl_plus_duydzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
           do i_SLS = 1,N_SLS
             R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
@@ -364,7 +362,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
 
   implicit none
 
@@ -459,8 +457,6 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
-
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   ! transverse isotropic element
 
@@ -737,7 +733,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
           do i_SLS = 1,N_SLS
             R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
@@ -898,7 +894,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
 
   implicit none
 
@@ -982,8 +978,6 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
-
-  logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
   !  anisotropic elements
 
@@ -1110,7 +1104,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
           do i_SLS = 1,N_SLS
             R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)

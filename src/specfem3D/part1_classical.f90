@@ -319,7 +319,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
     else
@@ -360,7 +360,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
     endif
@@ -397,7 +397,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_inner_core,eps_trace_over_3_inner_core)
     else
@@ -431,7 +431,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_inner_core,eps_trace_over_3_inner_core)
     endif
@@ -615,7 +615,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
       else
@@ -656,7 +656,7 @@
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
           R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,deltat, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
       endif
@@ -693,7 +693,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_inner_core,eps_trace_over_3_inner_core)
       else
@@ -727,7 +727,7 @@
           R_memory_inner_core,one_minus_sum_beta_inner_core,deltat, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
+          size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
           epsilondev_inner_core,eps_trace_over_3_inner_core)
       endif
