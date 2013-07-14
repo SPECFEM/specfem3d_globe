@@ -38,16 +38,16 @@
               ibool,idoubling,ispec_is_tiso,nglob_xy,nglob, &
               rmassx,rmassy,rmassz,rmass_ocean_load,nspec, &
               is_on_a_slice_edge,READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
-              ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS,& 
+              ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS,&
               SIMULATION_TYPE,nglob_xy_backward,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
-              b_rmassx,b_rmassy) 
+              b_rmassx,b_rmassy)
 
   implicit none
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer :: iregion_code,myrank,SIMULATION_TYPE 
+  integer :: iregion_code,myrank,SIMULATION_TYPE
   integer :: nspec,nglob,nglob_xy,nglob_xy_backward
   integer :: nspec_iso,nspec_tiso,nspec_ani
 
@@ -185,7 +185,7 @@
 !     read(IIN) rmassy
 !  endif
 
-  if(.not. USE_LDDRK)then 
+  if(.not. USE_LDDRK)then
     if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
@@ -196,13 +196,13 @@
 
   read(IIN) rmassz
 
-  if(.not. USE_LDDRK)then 
+  if(.not. USE_LDDRK)then
     if((SIMULATION_TYPE == 3 .and. &
         (ROTATION_VAL  .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE)) .or. &
        (SIMULATION_TYPE == 3 .and. &
         (ROTATION_VAL  .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)))then
        read(IIN) b_rmassx
-       read(IIN) b_rmassy     
+       read(IIN) b_rmassy
     endif
   endif
 

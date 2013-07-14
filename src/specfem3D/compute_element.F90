@@ -891,7 +891,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY) 
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,PARTIAL_PHYS_DISPERSION_ONLY)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -1694,7 +1694,7 @@
 !
  subroutine compute_element_strain_att_Dev(ispec,nglob,nspec,displ,veloc,deltat,ibool,hprime_xx,hprime_xxT,&
                                        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1,&
-                                       eps_trace_over_3_loc_nplus1) 
+                                       eps_trace_over_3_loc_nplus1)
 
   implicit none
   include "constants.h"

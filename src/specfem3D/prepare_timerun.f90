@@ -45,11 +45,11 @@
                       buffer_send_faces_scalar,buffer_received_faces_scalar, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY_CM,ABSORBING_CONDITIONS, &
-                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC, &                      
+                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC, &
                       SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,NGLOB_XY_CM_BACKWARD,&
-                      b_rmassx_crust_mantle,b_rmassy_crust_mantle,& 
-                      NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,& 
-                      NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core) 
+                      b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
+                      NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,&
+                      NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core)
 
   use mpi
   implicit none
@@ -58,7 +58,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank,npoin2D_max_all_CM_IC
-  integer SIMULATION_TYPE,NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD,NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD 
+  integer SIMULATION_TYPE,NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD,NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD
 
   logical ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
@@ -196,8 +196,8 @@
             NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
 
  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-    .and. (.not. USE_LDDRK) .and. NGLOB_XY_CM_BACKWARD > 0)then 
-    if(SIMULATION_TYPE == 3)then 
+    .and. (.not. USE_LDDRK) .and. NGLOB_XY_CM_BACKWARD > 0)then
+    if(SIMULATION_TYPE == 3)then
        call assemble_MPI_scalar_block(myrank,b_rmassx_crust_mantle,NGLOB_XY_CM_BACKWARD, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -224,8 +224,8 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
-    endif 
- endif 
+    endif
+ endif
 
   ! outer core
   call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
@@ -243,7 +243,7 @@
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL)
 
   if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-     .and. (.not. USE_LDDRK) .and. NGLOB_XY_IC > 0)then 
+     .and. (.not. USE_LDDRK) .and. NGLOB_XY_IC > 0)then
     ! inner core
     call assemble_MPI_scalar_block(myrank,rmassx_inner_core,NGLOB_XY_IC, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -273,7 +273,7 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
 
-    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC_BACKWARD > 0)then 
+    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC_BACKWARD > 0)then
       call assemble_MPI_scalar_block(myrank,b_rmassx_inner_core,NGLOB_XY_IC_BACKWARD, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
@@ -302,9 +302,9 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
 
-    endif 
+    endif
 
-  endif 
+  endif
 
   ! inner core
   call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &

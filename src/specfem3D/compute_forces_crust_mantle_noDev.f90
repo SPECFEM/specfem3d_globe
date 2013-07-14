@@ -52,10 +52,10 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,ispec_is_tiso, &
-          R_memory,one_minus_sum_beta,deltat,veloc_crust_mantle, &
+          R_memory,one_minus_sum_beta,deltat, &
           alphaval,betaval,gammaval,factor_common,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3) 
+          epsilondev,eps_trace_over_3)
 
   implicit none
 
@@ -69,7 +69,7 @@
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle,veloc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -85,8 +85,8 @@
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
   logical :: PARTIAL_PHYS_DISPERSION_ONLY
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: eps_trace_over_3
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -94,8 +94,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -129,7 +128,7 @@
         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
         c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-  integer ispec,iglob,ispec_strain
+  integer ispec,iglob
   integer i,j,k,l
   real(kind=CUSTOM_REAL) templ
 
@@ -365,18 +364,12 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-          if (COMPUTE_AND_STORE_STRAIN) then
-            if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              ispec_strain = 1
-            else
-              ispec_strain = ispec
-            endif
-
 !ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
 !ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
+          if (COMPUTE_AND_STORE_STRAIN) then
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
             epsilondev_loc(1,i,j,k) = duxdxl - templ
             epsilondev_loc(2,i,j,k) = duydyl - templ
@@ -911,17 +904,11 @@
 
     if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
 
-      if(COMPUTE_AND_STORE_STRAIN)then  
         epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
         epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
         epsilondev_loc_nsub1(3,:,:,:) = epsilondev(3,:,:,:,ispec)
         epsilondev_loc_nsub1(4,:,:,:) = epsilondev(4,:,:,:,ispec)
         epsilondev_loc_nsub1(5,:,:,:) = epsilondev(5,:,:,:,ispec)
-      else
-        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
-                                             deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
-                                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,epsilondev_loc_nplus1)
-      endif
 
 ! use Runge-Kutta scheme to march in time
       do i_SLS = 1,N_SLS
@@ -964,27 +951,19 @@
            R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
                                                BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
          else
-           if(COMPUTE_AND_STORE_STRAIN)then  
-             R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-                + factor_common_c44_muv(:,:,:) &
-                * (betaval(i_SLS) * epsilondev_loc_nsub1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:)) 
-           else
-             R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-                + factor_common_c44_muv(:,:,:) &
-                * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
-           endif
+           R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+              + factor_common_c44_muv(:,:,:) &
+              * (betaval(i_SLS) * epsilondev_loc_nsub1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
          endif
 
         enddo ! i_memory = 1,5
       enddo ! i_SLS = 1,N_SLS
 
-      if(COMPUTE_AND_STORE_STRAIN)then  
-        epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:) 
+        epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
         epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
         epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
         epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-        epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:) 
-      endif
+        epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
 
     endif
 
