@@ -909,7 +909,7 @@
   integer :: int_radius
   integer :: iglob
 
-  !  anisotropic elements
+  ! anisotropic elements
 
   do k=1,NGLLZ
     do j=1,NGLLY
@@ -1420,6 +1420,18 @@
                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&
                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+            iglob = ibool(ijk,1,1,ispec)
+            dummyx_loc(ijk,1,1) = displ(1,iglob)
+            dummyy_loc(ijk,1,1) = displ(2,iglob)
+            dummyz_loc(ijk,1,1) = displ(3,iglob)
+        enddo
+#else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -1430,26 +1442,27 @@
         enddo
       enddo
     enddo
+#endif
 
     do j=1,m2
       do i=1,m1
         C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
-                              hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
-                              hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
-                              hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
-                              hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
 
         C2_m1_m2_5points(i,j) = hprime_xx(i,1)*B2_m1_m2_5points(1,j) + &
-                              hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
-                              hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
-                              hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
-                              hprime_xx(i,5)*B2_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B2_m1_m2_5points(5,j)
 
         C3_m1_m2_5points(i,j) = hprime_xx(i,1)*B3_m1_m2_5points(1,j) + &
-                              hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
-                              hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
-                              hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
-                              hprime_xx(i,5)*B3_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B3_m1_m2_5points(5,j)
       enddo
     enddo
 
@@ -1458,22 +1471,22 @@
         ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
         do k = 1,NGLLX
           tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
-                        dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
-                        dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
-                        dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
-                        dummyx_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
 
           tempy2(i,j,k) = dummyy_loc(i,1,k)*hprime_xxT(1,j) + &
-                        dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
-                        dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
-                        dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
-                        dummyy_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyy_loc(i,5,k)*hprime_xxT(5,j)
 
           tempz2(i,j,k) = dummyz_loc(i,1,k)*hprime_xxT(1,j) + &
-                        dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
-                        dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
-                        dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
-                        dummyz_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyz_loc(i,5,k)*hprime_xxT(5,j)
         enddo
       enddo
     enddo
@@ -1481,25 +1494,71 @@
     do j=1,m1
       do i=1,m2
         C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                  A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                  A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                  A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                  A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
 
         C2_mxm_m2_m1_5points(i,j) = A2_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                  A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                  A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                  A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                  A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
 
         C3_mxm_m2_m1_5points(i,j) = A3_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                  A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                  A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                  A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                  A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
       enddo
     enddo
 
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        ! get derivatives of ux, uy and uz with respect to x, y and z
+        xixl = xix(ijk,1,1,ispec)
+        xiyl = xiy(ijk,1,1,ispec)
+        xizl = xiz(ijk,1,1,ispec)
+        etaxl = etax(ijk,1,1,ispec)
+        etayl = etay(ijk,1,1,ispec)
+        etazl = etaz(ijk,1,1,ispec)
+        gammaxl = gammax(ijk,1,1,ispec)
+        gammayl = gammay(ijk,1,1,ispec)
+        gammazl = gammaz(ijk,1,1,ispec)
+
+        ! compute the jacobian
+        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+        duxdxl = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
+        duxdyl = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
+        duxdzl = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+
+        duydxl = xixl*tempy1(ijk,1,1) + etaxl*tempy2(ijk,1,1) + gammaxl*tempy3(ijk,1,1)
+        duydyl = xiyl*tempy1(ijk,1,1) + etayl*tempy2(ijk,1,1) + gammayl*tempy3(ijk,1,1)
+        duydzl = xizl*tempy1(ijk,1,1) + etazl*tempy2(ijk,1,1) + gammazl*tempy3(ijk,1,1)
+
+        duzdxl = xixl*tempz1(ijk,1,1) + etaxl*tempz2(ijk,1,1) + gammaxl*tempz3(ijk,1,1)
+        duzdyl = xiyl*tempz1(ijk,1,1) + etayl*tempz2(ijk,1,1) + gammayl*tempz3(ijk,1,1)
+        duzdzl = xizl*tempz1(ijk,1,1) + etazl*tempz2(ijk,1,1) + gammazl*tempz3(ijk,1,1)
+
+        ! precompute some sums to save CPU time
+        duxdxl_plus_duydyl = duxdxl + duydyl
+        duxdxl_plus_duzdzl = duxdxl + duzdzl
+        duydyl_plus_duzdzl = duydyl + duzdzl
+        duxdyl_plus_duydxl = duxdyl + duydxl
+        duzdxl_plus_duxdzl = duzdxl + duxdzl
+        duzdyl_plus_duydzl = duzdyl + duydzl
+
+        eps_trace_over_3_loc(ijk,1,1) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+        epsilondev_loc(1,ijk,1,1) = duxdxl - eps_trace_over_3_loc(ijk,1,1)
+        epsilondev_loc(2,ijk,1,1) = duydyl - eps_trace_over_3_loc(ijk,1,1)
+        epsilondev_loc(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
+        epsilondev_loc(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
+        epsilondev_loc(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+      enddo
+#else
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -1545,10 +1604,10 @@
         epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
         epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
         epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-
       enddo
     enddo
   enddo
+#endif
 
   end subroutine compute_element_strain_undo_att_Dev
 
@@ -1574,7 +1633,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_nplus1
 
-!  local variable
+! local variable
   integer :: i,j,k,iglob
   real(kind=CUSTOM_REAL) :: templ
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
@@ -1604,6 +1663,18 @@
                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,&
                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+            iglob = ibool(ijk,1,1,ispec)
+            dummyx_loc(ijk,1,1) = displ(1,iglob) + deltat * veloc(1,iglob)
+            dummyy_loc(ijk,1,1) = displ(2,iglob) + deltat * veloc(2,iglob)
+            dummyz_loc(ijk,1,1) = displ(3,iglob) + deltat * veloc(3,iglob)
+        enddo
+#else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -1614,26 +1685,27 @@
         enddo
       enddo
     enddo
+#endif
 
     do j=1,m2
       do i=1,m1
         C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
-                              hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
-                              hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
-                              hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
-                              hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
 
         C2_m1_m2_5points(i,j) = hprime_xx(i,1)*B2_m1_m2_5points(1,j) + &
-                              hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
-                              hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
-                              hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
-                              hprime_xx(i,5)*B2_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B2_m1_m2_5points(5,j)
 
         C3_m1_m2_5points(i,j) = hprime_xx(i,1)*B3_m1_m2_5points(1,j) + &
-                              hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
-                              hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
-                              hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
-                              hprime_xx(i,5)*B3_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B3_m1_m2_5points(5,j)
       enddo
     enddo
 
@@ -1642,22 +1714,22 @@
         ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
         do k = 1,NGLLX
           tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
-                        dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
-                        dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
-                        dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
-                        dummyx_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
 
           tempy2(i,j,k) = dummyy_loc(i,1,k)*hprime_xxT(1,j) + &
-                        dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
-                        dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
-                        dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
-                        dummyy_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyy_loc(i,5,k)*hprime_xxT(5,j)
 
           tempz2(i,j,k) = dummyz_loc(i,1,k)*hprime_xxT(1,j) + &
-                        dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
-                        dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
-                        dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
-                        dummyz_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyz_loc(i,5,k)*hprime_xxT(5,j)
         enddo
       enddo
     enddo
@@ -1665,25 +1737,72 @@
     do j=1,m1
       do i=1,m2
         C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                  A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                  A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                  A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                  A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
 
         C2_mxm_m2_m1_5points(i,j) = A2_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                  A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                  A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                  A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                  A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
 
         C3_mxm_m2_m1_5points(i,j) = A3_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                  A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                  A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                  A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                  A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
       enddo
     enddo
 
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        ! get derivatives of ux, uy and uz with respect to x, y and z
+        xixl = xix(ijk,1,1,ispec)
+        xiyl = xiy(ijk,1,1,ispec)
+        xizl = xiz(ijk,1,1,ispec)
+        etaxl = etax(ijk,1,1,ispec)
+        etayl = etay(ijk,1,1,ispec)
+        etazl = etaz(ijk,1,1,ispec)
+        gammaxl = gammax(ijk,1,1,ispec)
+        gammayl = gammay(ijk,1,1,ispec)
+        gammazl = gammaz(ijk,1,1,ispec)
+
+        ! compute the jacobian
+        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+        duxdxl = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
+        duxdyl = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
+        duxdzl = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+
+        duydxl = xixl*tempy1(ijk,1,1) + etaxl*tempy2(ijk,1,1) + gammaxl*tempy3(ijk,1,1)
+        duydyl = xiyl*tempy1(ijk,1,1) + etayl*tempy2(ijk,1,1) + gammayl*tempy3(ijk,1,1)
+        duydzl = xizl*tempy1(ijk,1,1) + etazl*tempy2(ijk,1,1) + gammazl*tempy3(ijk,1,1)
+
+        duzdxl = xixl*tempz1(ijk,1,1) + etaxl*tempz2(ijk,1,1) + gammaxl*tempz3(ijk,1,1)
+        duzdyl = xiyl*tempz1(ijk,1,1) + etayl*tempz2(ijk,1,1) + gammayl*tempz3(ijk,1,1)
+        duzdzl = xizl*tempz1(ijk,1,1) + etazl*tempz2(ijk,1,1) + gammazl*tempz3(ijk,1,1)
+
+        ! precompute some sums to save CPU time
+        duxdxl_plus_duydyl = duxdxl + duydyl
+        duxdxl_plus_duzdzl = duxdxl + duzdzl
+        duydyl_plus_duzdzl = duydyl + duzdzl
+        duxdyl_plus_duydxl = duxdyl + duydxl
+        duzdxl_plus_duxdzl = duzdxl + duxdzl
+        duzdyl_plus_duydzl = duzdyl + duydzl
+
+        templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+        eps_trace_over_3_loc_nplus1 = templ
+        epsilondev_loc_nplus1(1,ijk,1,1) = duxdxl - templ
+        epsilondev_loc_nplus1(2,ijk,1,1) = duydyl - templ
+        epsilondev_loc_nplus1(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
+        epsilondev_loc_nplus1(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
+        epsilondev_loc_nplus1(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+      enddo
+#else
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -1730,10 +1849,10 @@
         epsilondev_loc_nplus1(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
         epsilondev_loc_nplus1(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
         epsilondev_loc_nplus1(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-
       enddo
     enddo
   enddo
+#endif
 
  end subroutine compute_element_strain_att_Dev
 
