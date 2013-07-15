@@ -847,7 +847,7 @@
   ! scaling factors
   scale_kl = scale_t/scale_displ * 1.d9
 
-  ! scales approximate hessian
+  ! scales approximate Hessian
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
 
   ! stores into file

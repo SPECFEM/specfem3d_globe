@@ -34,7 +34,7 @@
                          ratio_sampling_array, &
                          NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+                         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                          NSPEC_INNER_CORE_ATTENUATION, &
                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -67,7 +67,7 @@
   double precision, intent(out) :: static_memory_size
 
   integer, intent(out) :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
          NSPEC_INNER_CORE_ATTENUATION, &
          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -136,10 +136,10 @@
 
   ! if attenuation is off, set dummy size of arrays to one
   if(ATTENUATION) then
-    NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_CRUST_MANTLE_ATTENUATION = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_ATTENUATION = NSPEC(IREGION_INNER_CORE)
   else
-    NSPEC_CRUST_MANTLE_ATTENUAT = 1
+    NSPEC_CRUST_MANTLE_ATTENUATION = 1
     NSPEC_INNER_CORE_ATTENUATION = 1
   endif
 
@@ -222,15 +222,15 @@
 
 ! R_memory_crust_mantle
   static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   static_memory_size = static_memory_size + 2.d0*dble(ATT1)* &
-    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! factor_common_crust_mantle
   static_memory_size = static_memory_size + dble(N_SLS)*dble(ATT1)* &
-    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! R_memory_inner_core
   static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &

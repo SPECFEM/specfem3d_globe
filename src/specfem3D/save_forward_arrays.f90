@@ -52,7 +52,7 @@ subroutine save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
     R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_memory_inner_core
@@ -139,7 +139,7 @@ subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBE
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
     R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_memory_inner_core
