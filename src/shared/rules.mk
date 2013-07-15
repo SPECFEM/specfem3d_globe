@@ -149,8 +149,8 @@ $O/reduce.o: ${SETUP}/constants.h $S/reduce.f90
 $O/rthetaphi_xyz.o: ${SETUP}/constants.h $S/rthetaphi_xyz.f90
 	${FCCOMPILE_CHECK} -c -o $O/rthetaphi_xyz.o ${FCFLAGS_f90} $S/rthetaphi_xyz.f90
 
-$O/save_header_file.o: ${SETUP}/constants.h $S/save_header_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} $S/save_header_file.f90
+$O/save_header_file.o: ${SETUP}/constants.h $S/save_header_file.F90
+	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} $S/save_header_file.F90
 
 $O/spline_routines.o: ${SETUP}/constants.h $S/spline_routines.f90
 	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} $S/spline_routines.f90

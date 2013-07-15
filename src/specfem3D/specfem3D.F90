@@ -2496,16 +2496,16 @@ if(.not. UNDO_ATTENUATION) then
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
     if(USE_LDDRK .or. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      include "part1_undo_att.F90"
+      include "part1_undo_att.f90"
     else
-      include "part1_classical.F90"
+      include "part1_classical.f90"
     endif
 
 !! DK DK
 !! DK DK this first part handles the case SIMULATION_TYPE == 3
 !! DK DK it also handles the case NOISE_TOMOGRAPHY == 3
 !! DK DK
-    include "part2_classical.F90"
+    include "part2_classical.f90"
 
     include "part3_kernel_computation.f90"
 
@@ -2541,7 +2541,7 @@ else ! if UNDO_ATTENUATION
 
         seismo_current = seismo_current + 1
 
-        include "part1_undo_att.F90"
+        include "part1_undo_att.f90"
 
       enddo
     enddo
@@ -2559,7 +2559,7 @@ else ! if UNDO_ATTENUATION
 
         seismo_current = seismo_current + 1
 
-        include "part1_undo_att.F90"
+        include "part1_undo_att.f90"
 
       enddo
     enddo
@@ -2623,7 +2623,7 @@ else ! if UNDO_ATTENUATION
         it = it + 1
         seismo_current = seismo_current + 1
 
-        include "part2_undo_att.F90"
+        include "part2_undo_att.f90"
 
         b_displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
         b_displ_outer_core_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
@@ -2681,7 +2681,7 @@ else ! if UNDO_ATTENUATION
 
         seismo_current = seismo_current + 1
 
-        include "part1_undo_att.F90"
+        include "part1_undo_att.f90"
 
         include "part3_kernel_computation.f90"
 
