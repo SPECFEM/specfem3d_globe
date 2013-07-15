@@ -940,7 +940,8 @@
                     mask_3dmovie,nu_3dmovie)
 
       else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
-!!!!! for undo_att this type of MOVIE is not supported
+        stop 'MOVIE_VOLUME_TYPE == 4 is not implemented for UNDO_ATTENUATION in order to save memory'
+!!!!! for UNDO_ATTENUATION this type of MOVIE is not supported
 !!!        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
 !!!                        div_displ_outer_core, &
 !!!                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
@@ -973,5 +974,4 @@
       endif ! MOVIE_VOLUME_TYPE
     endif
   endif ! MOVIE_VOLUME
-
 
