@@ -571,6 +571,15 @@
   else
     write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = 1'
   endif
+  write(IOUT,*)
+
+!! DK DK Jul 2013: we need that for the part1_*.f90 and part2_*.f90 include files, which some compilers
+!! DK DK Jul 2013: refuse to preprocess even if we rename them *.F90
+#ifdef FORCE_VECTORIZATION
+  write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .true.'
+#else
+  write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .false.'
+#endif
 
   close(IOUT)
 

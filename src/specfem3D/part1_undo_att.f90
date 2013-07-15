@@ -21,7 +21,7 @@
     else
 
       ! mantle
-#ifdef FORCE_VECTORIZATION
+  if(FORCE_VECTORIZATION_VAL) then
       do i=1,NGLOB_CRUST_MANTLE*NDIM
         displ_crust_mantle(i,1) = displ_crust_mantle(i,1) &
           + deltat*veloc_crust_mantle(i,1) + deltatsqover2*accel_crust_mantle(i,1)
@@ -29,7 +29,7 @@
           + deltatover2*accel_crust_mantle(i,1)
         accel_crust_mantle(i,1) = 0._CUSTOM_REAL
       enddo
-#else
+  else
       do i=1,NGLOB_CRUST_MANTLE
         displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
           + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
@@ -37,7 +37,7 @@
           + deltatover2*accel_crust_mantle(:,i)
         accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       enddo
-#endif
+  endif
 
       ! outer core
       do i=1,NGLOB_OUTER_CORE
@@ -49,7 +49,7 @@
       enddo
 
       ! inner core
-#ifdef FORCE_VECTORIZATION
+  if(FORCE_VECTORIZATION_VAL) then
       do i=1,NGLOB_INNER_CORE*NDIM
         displ_inner_core(i,1) = displ_inner_core(i,1) &
           + deltat*veloc_inner_core(i,1) + deltatsqover2*accel_inner_core(i,1)
@@ -57,7 +57,7 @@
           + deltatover2*accel_inner_core(i,1)
         accel_inner_core(i,1) = 0._CUSTOM_REAL
       enddo
-#else
+  else
       do i=1,NGLOB_INNER_CORE
         displ_inner_core(:,i) = displ_inner_core(:,i) &
           + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
@@ -65,7 +65,7 @@
           + deltatover2*accel_inner_core(:,i)
         accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
-#endif
+  endif
 
     endif
 
@@ -870,15 +870,15 @@
         displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + BETA_LDDRK(istage) * displ_crust_mantle_lddrk(:,i)
       enddo
     else
-#ifdef FORCE_VECTORIZATION
+  if(FORCE_VECTORIZATION_VAL) then
       do i=1,NGLOB_CRUST_MANTLE*NDIM
         veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
       enddo
-#else
+  else
       do i=1,NGLOB_CRUST_MANTLE
         veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
       enddo
-#endif
+  endif
     endif
 
     ! inner core
@@ -910,15 +910,15 @@
         displ_inner_core(:,i) = displ_inner_core(:,i) + BETA_LDDRK(istage) * displ_inner_core_lddrk(:,i)
       enddo
     else
-#ifdef FORCE_VECTORIZATION
+  if(FORCE_VECTORIZATION_VAL) then
       do i=1,NGLOB_INNER_CORE*NDIM
         veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
       enddo
-#else
+  else
       do i=1,NGLOB_INNER_CORE
         veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
       enddo
-#endif
+  endif
     endif
 
   enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
