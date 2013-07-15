@@ -2524,11 +2524,10 @@ else ! if UNDO_ATTENUATION
 !-------------------------------------------------------------------------------
 !
 
-! New part of ZN
-  if(SIMULATION_TYPE == 1)then
+  if(SIMULATION_TYPE == 1) then
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
-      if(SAVE_FORWARD)then
+      if(SAVE_FORWARD) then
         call save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                     displ_inner_core,veloc_inner_core,accel_inner_core, &
@@ -2550,8 +2549,7 @@ else ! if UNDO_ATTENUATION
 
   endif
 
-  if(SIMULATION_TYPE == 2)then
-   !!add this part
+  if(SIMULATION_TYPE == 2) then
 
     it = 0
     do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
@@ -2568,7 +2566,7 @@ else ! if UNDO_ATTENUATION
     enddo
   endif
 
-  if(SIMULATION_TYPE == 3)then
+  if(SIMULATION_TYPE == 3) then
 
 ! to switch between simulation type 1 mode and simulation type 3 mode
 ! in exact undoing of attenuation
@@ -2701,8 +2699,6 @@ endif
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 
-  !ZN need to be removed for undoing att
-
   ! synchronize all processes, waits until all processes have written their seismograms
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize after time loop')
@@ -2758,21 +2754,20 @@ endif
 
     ! frees memory
     deallocate(absorb_xmin_crust_mantle5, &
-              absorb_xmax_crust_mantle5, &
-              absorb_ymin_crust_mantle5, &
-              absorb_ymax_crust_mantle5, &
-              absorb_xmin_outer_core, &
-              absorb_xmax_outer_core, &
-              absorb_ymin_outer_core, &
-              absorb_ymax_outer_core, &
-              absorb_zmin_outer_core)
+               absorb_xmax_crust_mantle5, &
+               absorb_ymin_crust_mantle5, &
+               absorb_ymax_crust_mantle5, &
+               absorb_xmin_outer_core, &
+               absorb_xmax_outer_core, &
+               absorb_ymin_outer_core, &
+               absorb_ymax_outer_core, &
+               absorb_zmin_outer_core)
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
   if (NOISE_TOMOGRAPHY/=0) then
     call close_file_abs(9)
   endif
-
 
   ! synchronize all processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
