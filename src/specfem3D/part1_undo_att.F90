@@ -8,15 +8,28 @@
 
 
   do istage = 1, NSTAGE_TIME_SCHEME ! begin loop of istage
+
     if(USE_LDDRK)then
+
       ! mantle
       accel_crust_mantle(:,:) = 0._CUSTOM_REAL
       ! outer core
       accel_outer_core(:) = 0._CUSTOM_REAL
       ! inner core
       accel_inner_core(:,:) = 0._CUSTOM_REAL
+
     else
+
       ! mantle
+#ifdef FORCE_VECTORIZATION
+      do i=1,NGLOB_CRUST_MANTLE*NDIM
+        displ_crust_mantle(i,1) = displ_crust_mantle(i,1) &
+          + deltat*veloc_crust_mantle(i,1) + deltatsqover2*accel_crust_mantle(i,1)
+        veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) &
+          + deltatover2*accel_crust_mantle(i,1)
+        accel_crust_mantle(i,1) = 0._CUSTOM_REAL
+      enddo
+#else
       do i=1,NGLOB_CRUST_MANTLE
         displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
           + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
@@ -24,6 +37,8 @@
           + deltatover2*accel_crust_mantle(:,i)
         accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       enddo
+#endif
+
       ! outer core
       do i=1,NGLOB_OUTER_CORE
         displ_outer_core(i) = displ_outer_core(i) &
@@ -32,7 +47,17 @@
           + deltatover2*accel_outer_core(i)
         accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
+
       ! inner core
+#ifdef FORCE_VECTORIZATION
+      do i=1,NGLOB_INNER_CORE*NDIM
+        displ_inner_core(i,1) = displ_inner_core(i,1) &
+          + deltat*veloc_inner_core(i,1) + deltatsqover2*accel_inner_core(i,1)
+        veloc_inner_core(i,1) = veloc_inner_core(i,1) &
+          + deltatover2*accel_inner_core(i,1)
+        accel_inner_core(i,1) = 0._CUSTOM_REAL
+      enddo
+#else
       do i=1,NGLOB_INNER_CORE
         displ_inner_core(:,i) = displ_inner_core(:,i) &
           + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
@@ -40,6 +65,8 @@
           + deltatover2*accel_inner_core(:,i)
         accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
+#endif
+
     endif
 
     if(istage == 1)then
@@ -297,7 +324,8 @@
       enddo
     endif
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
+
     ! ****************************************************
     !   big loop over all spectral elements in the solid
     ! ****************************************************
@@ -467,7 +495,6 @@
 
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-
       call compute_stacey_crust_mantle_forward(ichunk, &
                               it,SAVE_FORWARD,ibool_crust_mantle, &
                               veloc_crust_mantle,accel_crust_mantle, &
@@ -792,8 +819,7 @@
     endif   ! end of assembling forces with the central cube
 
     if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
-        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. (.not. USE_LDDRK)) then
-
+        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. .not. USE_LDDRK) then
        do i=1,NGLOB_CRUST_MANTLE
           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
@@ -801,9 +827,7 @@
                - two_omega_earth*veloc_crust_mantle(1,i)
           accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
        enddo
-
     else
-
        do i=1,NGLOB_CRUST_MANTLE
           accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
@@ -811,10 +835,10 @@
                - two_omega_earth*veloc_crust_mantle(1,i)
           accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
        enddo
-
     endif
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
+
     ! couples ocean with crust mantle
    if(OCEANS_VAL) then
      call compute_coupling_ocean(accel_crust_mantle, &
@@ -836,7 +860,7 @@
     ! Newmark time scheme - corrector for elastic parts
 
     ! mantle
-    if(USE_LDDRK)then
+    if(USE_LDDRK) then
       do i=1,NGLOB_CRUST_MANTLE
         veloc_crust_mantle_lddrk(:,i) = ALPHA_LDDRK(istage) * veloc_crust_mantle_lddrk(:,i) &
                                         + deltat * accel_crust_mantle(:,i)
@@ -846,38 +870,58 @@
         displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + BETA_LDDRK(istage) * displ_crust_mantle_lddrk(:,i)
       enddo
     else
+#ifdef FORCE_VECTORIZATION
+      do i=1,NGLOB_CRUST_MANTLE*NDIM
+        veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
+      enddo
+#else
       do i=1,NGLOB_CRUST_MANTLE
         veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
       enddo
+#endif
     endif
+
     ! inner core
-    do i=1,NGLOB_INNER_CORE
-      if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK)then
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK) then
+      do i=1,NGLOB_INNER_CORE
         accel_inner_core(1,i) = accel_inner_core(1,i)*rmassx_inner_core(i) &
                + two_omega_earth*veloc_inner_core(2,i)
         accel_inner_core(2,i) = accel_inner_core(2,i)*rmassy_inner_core(i) &
                - two_omega_earth*veloc_inner_core(1,i)
         accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-      else
+      enddo
+    else
+      do i=1,NGLOB_INNER_CORE
         accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
                + two_omega_earth*veloc_inner_core(2,i)
         accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
                - two_omega_earth*veloc_inner_core(1,i)
         accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-      endif
+      enddo
+    endif
 
-      if(USE_LDDRK)then
+    if(USE_LDDRK)then
+      do i=1,NGLOB_INNER_CORE
         veloc_inner_core_lddrk(:,i) = ALPHA_LDDRK(istage) * veloc_inner_core_lddrk(:,i) &
                                         + deltat * accel_inner_core(:,i)
         displ_inner_core_lddrk(:,i) = ALPHA_LDDRK(istage) * displ_inner_core_lddrk(:,i) &
                                         + deltat * veloc_inner_core(:,i)
         veloc_inner_core(:,i) = veloc_inner_core(:,i) + BETA_LDDRK(istage) * veloc_inner_core_lddrk(:,i)
         displ_inner_core(:,i) = displ_inner_core(:,i) + BETA_LDDRK(istage) * displ_inner_core_lddrk(:,i)
-      else
+      enddo
+    else
+#ifdef FORCE_VECTORIZATION
+      do i=1,NGLOB_INNER_CORE*NDIM
+        veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
+      enddo
+#else
+      do i=1,NGLOB_INNER_CORE
         veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-      endif
-    enddo
-  enddo ! end loop of istage
+      enddo
+#endif
+    endif
+
+  enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
 
 ! write the seismograms with time shift
 
@@ -1058,5 +1102,4 @@ endif
       endif ! MOVIE_VOLUME_TYPE
     endif
   endif ! MOVIE_VOLUME
-
 

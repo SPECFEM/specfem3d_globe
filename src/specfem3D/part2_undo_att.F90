@@ -210,7 +210,7 @@ endif
 
     ! assemble all the contributions between slices using MPI
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
     if (SIMULATION_TYPE == 3) then
 
@@ -296,7 +296,7 @@ endif
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,b_iphase)
         enddo
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
       ! Newmark time scheme - corrector for fluid parts
       do i=1,NGLOB_OUTER_CORE
@@ -599,7 +599,7 @@ endif
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
     if (SIMULATION_TYPE == 3) then
 
@@ -824,10 +824,9 @@ endif
           enddo
       endif   ! end of assembling forces with the central cube
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
       if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. .not. USE_LDDRK) then
-
          if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
            do i=1,NGLOB_CRUST_MANTLE
               b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*b_rmassx_crust_mantle(i) &
@@ -845,7 +844,6 @@ endif
               b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
            enddo
          endif
-
       else
          if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK)then
            do i=1,NGLOB_CRUST_MANTLE
