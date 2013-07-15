@@ -392,7 +392,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: factor_common_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_common_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_crust_mantle
 
@@ -693,7 +693,7 @@
 ! for noise kernel
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_NOISE) :: Sigma_kl_crust_mantle
 
-  ! approximate hessian
+  ! approximate Hessian
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_HESS) :: hess_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
@@ -1134,9 +1134,9 @@
 
 ! ZN if we want to storing the strain to acclerate the code but cost more memory then
   if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL)then
-    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
-    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_crust_mantle')
     allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_inner_core')
@@ -2253,9 +2253,9 @@
     A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
     B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
 
-    allocate(R_memory_crust_mantle_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    allocate(R_memory_crust_mantle_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION),stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
-    allocate(R_memory_inner_core_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT),stat=ier)
+    allocate(R_memory_inner_core_lddrk(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
 
     R_memory_crust_mantle_lddrk(:,:,:,:,:,:) = 0._CUSTOM_REAL
@@ -2858,7 +2858,7 @@ endif
                                   moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl,LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if( APPROXIMATE_HESS_KL ) then
       call save_kernels_hessian(myrank,scale_t,scale_displ,hess_kl_crust_mantle,LOCAL_PATH)
     endif
