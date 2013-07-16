@@ -106,7 +106,7 @@
   integer :: i,j,k
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
@@ -213,7 +213,7 @@
         do i=1,NGLLX
           iglob = ibool(i,j,k,ispec)
 
-          ! stores "displacement"
+          ! get a local copy of the potential field
           dummyx_loc(i,j,k) = displfluid(iglob)
 
           ! pre-computes factors
@@ -233,11 +233,11 @@
           if( .not. GRAVITY_VAL ) then
             ! grad(rho)/rho in Cartesian components
             displ_times_grad_x_ln_rho(i,j,k) = dummyx_loc(i,j,k) &
-                  * sngl(sin_theta * cos_phi * d_ln_density_dr_table(int_radius))
+                  * sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
             displ_times_grad_y_ln_rho(i,j,k) = dummyx_loc(i,j,k) &
-                  * sngl(sin_theta * sin_phi * d_ln_density_dr_table(int_radius))
+                  * sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
             displ_times_grad_z_ln_rho(i,j,k) = dummyx_loc(i,j,k) &
-                  * sngl(cos_theta * d_ln_density_dr_table(int_radius))
+                  * cos_theta * d_ln_density_dr_table(int_radius)
           else
             ! Cartesian components of the gravitational acceleration
             ! integrate and multiply by rho / Kappa
@@ -388,34 +388,24 @@
             gyl = temp_gyl(i,j,k)
             gzl = temp_gzl(i,j,k)
 
-            ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              gravity_term(i,j,k) = &
-                      sngl( minus_rho_g_over_kappa_fluid(int_radius) &
-                      * dble(jacobianl) * wgll_cube(i,j,k) &
-                      * (dble(dpotentialdx_with_rot) * gxl  &
-                         + dble(dpotentialdy_with_rot) * gyl &
-                         + dble(dpotentialdzl) * gzl) )
-            else
-              gravity_term(i,j,k) = minus_rho_g_over_kappa_fluid(int_radius) * &
+            gravity_term(i,j,k) = minus_rho_g_over_kappa_fluid(int_radius) * &
                         jacobianl * wgll_cube(i,j,k) &
                         * (dpotentialdx_with_rot * gxl  &
                           + dpotentialdy_with_rot * gyl &
                           + dpotentialdzl * gzl)
-            endif
 
             if(istage == 1)then
             ! divergence of displacement field with gravity on
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
             !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
             !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. MOVIE_VOLUME) then
-              div_displfluid(i,j,k,ispec) =  &
+              if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. MOVIE_VOLUME) then
+                div_displfluid(i,j,k,ispec) =  &
                         minus_rho_g_over_kappa_fluid(int_radius) &
                         * (dpotentialdx_with_rot * gxl &
                          + dpotentialdy_with_rot * gyl &
                          + dpotentialdzl * gzl)
-            endif
+              endif
             endif
 
           endif
@@ -466,27 +456,34 @@
       enddo
     enddo
 
+    ! sum contributions from each element to the global mesh
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
+          sum_terms(i,j,k) = - (wgllwgll_yz(j,k)*newtempx1(i,j,k) &
+                              + wgllwgll_xz(i,k)*newtempx2(i,j,k) &
+                              + wgllwgll_xy(i,j)*newtempx3(i,j,k))
+        enddo
+      enddo
+    enddo
 
-          ! sum contributions from each element to the global mesh and add gravity term
-          sum_terms = - (wgllwgll_yz(j,k)*newtempx1(i,j,k) &
-                       + wgllwgll_xz(i,k)*newtempx2(i,j,k) &
-                       + wgllwgll_xy(i,j)*newtempx3(i,j,k))
+    ! add gravity term
+    if(GRAVITY_VAL) then
+      sum_terms(:,:,:) = sum_terms(:,:,:) + gravity_term(:,:,:)
+    endif
 
-          if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
-
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
           iglob = ibool(i,j,k,ispec)
-          accelfluid(iglob) = accelfluid(iglob) + sum_terms
-
+          accelfluid(iglob) = accelfluid(iglob) + sum_terms(i,j,k)
         enddo
       enddo
     enddo
 
     ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
-      if(USE_LDDRK)then
+      if(USE_LDDRK) then
         ! use the source saved above
         A_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec) + source_euler_A(:,:,:)
         A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec)
@@ -500,7 +497,7 @@
       endif
     endif
 
-  enddo   ! spectral element loop
+  enddo ! of spectral element loop
 
   end subroutine compute_forces_outer_core_Dev
 

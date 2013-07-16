@@ -178,7 +178,7 @@
   integer :: int_radius
   integer :: ispec
   integer :: i,j,k
-  integer :: iglob1
+  integer :: iglob
 
 ! this for non blocking MPI
   integer :: iphase,icall
@@ -301,29 +301,29 @@
 
       endif
 
-      ! subroutines adapted from Deville, Fischer and Mund, High-order methods
-      ! for incompressible fluid flow, Cambridge University Press (2002),
-      ! pages 386 and 389 and Figure 8.3.1
 #ifdef FORCE_VECTORIZATION
         do ijk=1,NGLLCUBE
-            iglob1 = ibool(ijk,1,1,ispec)
-            dummyx_loc(ijk,1,1) = displ_inner_core(1,iglob1)
-            dummyy_loc(ijk,1,1) = displ_inner_core(2,iglob1)
-            dummyz_loc(ijk,1,1) = displ_inner_core(3,iglob1)
+            iglob = ibool(ijk,1,1,ispec)
+            dummyx_loc(ijk,1,1) = displ_inner_core(1,iglob)
+            dummyy_loc(ijk,1,1) = displ_inner_core(2,iglob)
+            dummyz_loc(ijk,1,1) = displ_inner_core(3,iglob)
           enddo
 #else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-            iglob1 = ibool(i,j,k,ispec)
-            dummyx_loc(i,j,k) = displ_inner_core(1,iglob1)
-            dummyy_loc(i,j,k) = displ_inner_core(2,iglob1)
-            dummyz_loc(i,j,k) = displ_inner_core(3,iglob1)
+            iglob = ibool(i,j,k,ispec)
+            dummyx_loc(i,j,k) = displ_inner_core(1,iglob)
+            dummyy_loc(i,j,k) = displ_inner_core(2,iglob)
+            dummyz_loc(i,j,k) = displ_inner_core(3,iglob)
           enddo
         enddo
       enddo
 #endif
 
+      ! subroutines adapted from Deville, Fischer and Mund, High-order methods
+      ! for incompressible fluid flow, Cambridge University Press (2002),
+      ! pages 386 and 389 and Figure 8.3.1
       do j=1,m2
          do i=1,m1
             C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -541,10 +541,10 @@
 
               ! use mesh coordinates to get theta and phi
               ! x y and z contain r theta and phi
-              iglob1 = ibool(i,j,k,ispec)
-              radius = dble(xstore(iglob1))
-              theta = dble(ystore(iglob1))
-              phi = dble(zstore(iglob1))
+              iglob = ibool(i,j,k,ispec)
+              radius = dble(xstore(iglob))
+              theta = dble(ystore(iglob))
+              phi = dble(zstore(iglob))
 
               ! make sure radius is never zero even for points at center of cube
               ! because we later divide by radius
@@ -587,63 +587,32 @@
               Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
               ! for locality principle, we set iglob again, in order to have it in the cache again
-              iglob1 = ibool(i,j,k,ispec)
+              iglob = ibool(i,j,k,ispec)
 
-              ! distinguish between single and double precision for reals
-              if(CUSTOM_REAL == SIZE_REAL) then
-                ! get displacement and multiply by density to compute G tensor
-                sx_l = rho * dble(displ_inner_core(1,iglob1))
-                sy_l = rho * dble(displ_inner_core(2,iglob1))
-                sz_l = rho * dble(displ_inner_core(3,iglob1))
+              ! get displacement and multiply by density to compute G tensor
+              sx_l = rho * displ_inner_core(1,iglob)
+              sy_l = rho * displ_inner_core(2,iglob)
+              sz_l = rho * displ_inner_core(3,iglob)
 
-                ! compute G tensor from s . g and add to sigma (not symmetric)
-                sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-                sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-                sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+              ! compute G tensor from s . g and add to sigma (not symmetric)
+              sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
+              sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
+              sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
 
-                sigma_xy = sigma_xy - sngl(sx_l * gyl)
-                sigma_yx = sigma_yx - sngl(sy_l * gxl)
+              sigma_xy = sigma_xy - sx_l * gyl
+              sigma_yx = sigma_yx - sy_l * gxl
 
-                sigma_xz = sigma_xz - sngl(sx_l * gzl)
-                sigma_zx = sigma_zx - sngl(sz_l * gxl)
+              sigma_xz = sigma_xz - sx_l * gzl
+              sigma_zx = sigma_zx - sz_l * gxl
 
-                sigma_yz = sigma_yz - sngl(sy_l * gzl)
-                sigma_zy = sigma_zy - sngl(sz_l * gyl)
+              sigma_yz = sigma_yz - sy_l * gzl
+              sigma_zy = sigma_zy - sz_l * gyl
 
-                ! precompute vector
-                factor = dble(jacobianl) * wgll_cube(i,j,k)
-                rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-                rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-                rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-              else
-
-                ! get displacement and multiply by density to compute G tensor
-                sx_l = rho * displ_inner_core(1,iglob1)
-                sy_l = rho * displ_inner_core(2,iglob1)
-                sz_l = rho * displ_inner_core(3,iglob1)
-
-                ! compute G tensor from s . g and add to sigma (not symmetric)
-                sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-                sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-                sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-                sigma_xy = sigma_xy - sx_l * gyl
-                sigma_yx = sigma_yx - sy_l * gxl
-
-                sigma_xz = sigma_xz - sx_l * gzl
-                sigma_zx = sigma_zx - sz_l * gxl
-
-                sigma_yz = sigma_yz - sy_l * gzl
-                sigma_zy = sigma_zy - sz_l * gyl
-
-                ! precompute vector
-                factor = jacobianl * wgll_cube(i,j,k)
-                rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-                rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-                rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-              endif
+              ! precompute vector
+              factor = jacobianl * wgll_cube(i,j,k)
+              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
             endif  ! end of section with gravity terms
 
@@ -736,30 +705,34 @@
         enddo
       enddo
 
+      ! sum contributions
       do k=1,NGLLZ
         do j=1,NGLLY
           fac1 = wgllwgll_yz(j,k)
           do i=1,NGLLX
             fac2 = wgllwgll_xz(i,k)
             fac3 = wgllwgll_xy(i,j)
-
-            ! sum contributions
             sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
             sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
             sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
-
-            if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
-
           enddo
         enddo
       enddo
 
-      ! sum contributions from each element to the global mesh and add gravity terms
+      ! add gravity terms
+      if(GRAVITY_VAL) then
+        sum_terms(:,:,:,:) = sum_terms(:,:,:,:) + rho_s_H(:,:,:,:)
+      endif
+
+      ! sum contributions from each element to the global mesh
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-            iglob1 = ibool(i,j,k,ispec)
-            accel_inner_core(:,iglob1) = accel_inner_core(:,iglob1) + sum_terms(:,i,j,k)
+            iglob = ibool(i,j,k,ispec)
+! do NOT use array syntax ":" for the three statements below otherwise most compilers will not be able to vectorize the outer loop
+            accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,i,j,k)
+            accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,i,j,k)
+            accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,i,j,k)
           enddo
         enddo
       enddo
@@ -802,9 +775,9 @@
 
       endif
 
-    endif   ! end test to exclude fictitious elements in central cube
+    endif ! end of test to exclude fictitious elements in central cube
 
-  enddo ! spectral element loop
+  enddo ! of spectral element loop
 
   end subroutine compute_forces_inner_core_Dev
 
