@@ -38,7 +38,7 @@
                       stlat,stlon,stele,stbur,nu, &
                       nrec_local,nadj_rec_local,nrec_simulation, &
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
-                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH,SAVE_SOURCE_MASK)
+                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH,SAVE_SOURCE_MASK,mask_source)
 
   use mpi
 
@@ -58,6 +58,9 @@
   double precision, dimension(NGLLZ) :: zigll
 
   logical TOPOGRAPHY,SAVE_SOURCE_MASK
+
+  ! mask source region (mask values are between 0 and 1, with 0 around sources)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_source
 
   double precision sec,DT,t0,min_tshift_cmt_original
 
@@ -136,7 +139,7 @@
             islice_selected_source,ispec_selected_source, &
             xi_source,eta_source,gamma_source, nu_source, &
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
-            LOCAL_PATH,SIMULATION_TYPE,SAVE_SOURCE_MASK)
+            LOCAL_PATH,SIMULATION_TYPE,SAVE_SOURCE_MASK,mask_source)
 
   if(abs(minval(tshift_cmt)) > TINYVAL) &
     call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
