@@ -1,3 +1,4 @@
+
 !=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
@@ -59,11 +60,11 @@
             c33store_inner_core,c44store_inner_core, &
             ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
             is_on_a_slice_edge_inner_core,rmass_inner_core, &
-            ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY_CM,&
-            SIMULATION_TYPE,NGLOB_XY_CM_BACKWARD,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+            ABSORBING_CONDITIONS,LOCAL_PATH,&
+            SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
             b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
-            NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,&
-            NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core)
+            rmassx_inner_core,rmassy_inner_core,&
+            b_rmassx_inner_core,b_rmassy_inner_core)
 
   implicit none
 
@@ -106,13 +107,13 @@
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  integer :: NGLOB_DUMMY,NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD
+  integer :: NGLOB_DUMMY
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
@@ -154,7 +155,6 @@
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
   logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core
 
-  integer :: NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassx_inner_core

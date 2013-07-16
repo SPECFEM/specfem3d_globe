@@ -138,7 +138,7 @@
 
   ! initializes matrices
   !
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !

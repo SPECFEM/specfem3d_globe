@@ -851,8 +851,8 @@
   if(PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
 
-  if(ROTATION .and. ABSORBING_CONDITIONS .and. .not. EXACT_MASS_MATRIX_FOR_ROTATION) &
-    stop 'set EXACT_MASS_MATRIX_FOR_ROTATION to .true. when ABSORBING_CONDITIONS is on because there is then no additional cost'
+  if(ROTATION .and. ABSORBING_CONDITIONS .and. .not. EXACT_MASS_MATRIX_FOR_ROTATION) stop &
+    'set EXACT_MASS_MATRIX_FOR_ROTATION to .true. when ABSORBING_CONDITIONS is on because there is then almost no additional cost'
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
     stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'

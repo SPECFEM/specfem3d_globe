@@ -27,7 +27,7 @@
 
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
-  subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
+  subroutine save_header_file(NSPEC,NGLOB,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
                         ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY, &
                         OCEANS,ATTENUATION,ATTENUATION_3D, &
@@ -52,19 +52,21 @@
                         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
                         SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
-                        ATT1,ATT2,ATT3,ATT4,ATT5,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY,SAVE_SOURCE_MASK)
+                        ATT1,ATT2,ATT3,ATT4,ATT5,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
+                        SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION)
 
   implicit none
 
   include "constants.h"
 
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC, nglob
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP,NOISE_TOMOGRAPHY
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE, &
-          SAVE_REGULAR_KL,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY,SAVE_SOURCE_MASK
+          SAVE_REGULAR_KL,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
+          SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -89,7 +91,8 @@
          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-         NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
+         NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB, &
+         NGLOB_XY_CM, NGLOB_XY_IC, NGLOB_XY_CM_BACKWARD, NGLOB_XY_IC_BACKWARD
 
   integer :: SIMULATION_TYPE
   logical :: SAVE_FORWARD,MOVIE_VOLUME
@@ -140,15 +143,15 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! number of processors = ',NPROCTOT ! should be = NPROC
   write(IOUT,*) '!'
-  write(IOUT,*) '! maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+  write(IOUT,*) '! maximum number of points per region = ',NGLOB(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
 ! use fused loops on NEC SX
   write(IOUT,*) '! on NEC SX, make sure "loopcnt=" parameter'
-  write(IOUT,*) '! in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
+  write(IOUT,*) '! in Makefile is greater than max vector length = ',NGLOB(IREGION_CRUST_MANTLE)*NDIM
   write(IOUT,*) '!'
 
   write(IOUT,*) '! total elements per slice = ',sum(NSPEC)
-  write(IOUT,*) '! total points per slice = ',sum(nglob)
+  write(IOUT,*) '! total points per slice = ',sum(NGLOB)
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
@@ -157,11 +160,11 @@
   write(IOUT,*) '! exact total number of spectral elements in entire mesh = '
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
-  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(nglob)) - subtract_central_cube_points
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NGLOB)) - subtract_central_cube_points
 ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
   write(IOUT,*) '! approximate total number of degrees of freedom in entire mesh = '
-  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(nglob))) &
-    - 2.d0*dble(nglob(IREGION_OUTER_CORE))) &
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(NGLOB))) &
+    - 2.d0*dble(NGLOB(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
 
@@ -306,9 +309,9 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE = ',NSPEC(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE = ',NSPEC(IREGION_INNER_CORE)
   write(IOUT,*)
-  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE = ',nglob(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE = ',nglob(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',nglob(IREGION_INNER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE = ',NGLOB(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE = ',NGLOB(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',NGLOB(IREGION_INNER_CORE)
   write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = ',NSPECMAX_ANISO_IC
@@ -578,6 +581,46 @@
   else
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
   endif
+  write(IOUT,*)
+
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
+  NGLOB_XY_CM = 1
+  NGLOB_XY_IC = 1
+  NGLOB_XY_CM_BACKWARD = 1
+  NGLOB_XY_IC_BACKWARD = 1
+
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
+     NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+  else
+     NGLOB_XY_CM = 1
+  endif
+
+  if(SIMULATION_TYPE /= 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if(ROTATION) then
+      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
+    endif
+  endif
+
+  if(SIMULATION_TYPE == 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if(ROTATION) then
+      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
+      NGLOB_XY_CM_BACKWARD = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC_BACKWARD = NGLOB(IREGION_INNER_CORE)
+    endif
+  endif
+
+  write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM = ',NGLOB_XY_CM
+  write(IOUT,*) 'integer, parameter :: NGLOB_XY_IC = ',NGLOB_XY_IC
+  write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM_BACKWARD = ',NGLOB_XY_CM_BACKWARD
+  write(IOUT,*) 'integer, parameter :: NGLOB_XY_IC_BACKWARD = ',NGLOB_XY_IC_BACKWARD
   write(IOUT,*)
 
 !! DK DK Jul 2013: we need that for the part1_*.f90 and part2_*.f90 include files, which some compilers
