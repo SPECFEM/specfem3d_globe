@@ -553,21 +553,22 @@
 ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
 ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
 !
-! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed;
+! thus for the sake of performance only rmassz will be filled and rmassx and rmassy will be allocated with a dummy size of 1
 !
-! in the case of ROTATION, we should add two_omega_earth*deltat/2 contribution to  rmassx & rmassy
-! thus in this case  rmassx & rmassy will be used
+! in the case of ROTATION, we should add a +/- two_omega_earth*deltat/2 contribution to rmassx and rmassy
+! thus in this case rmassx and rmassy will be used
 !
-! in the case of ROTAION and SIMULATION_TYPE == 3, we should add b_two_omega_earth*deltat/2 contribution to  &
-! b_rmassx & b_rmassy
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassy_crust_mantle
+! in the case of ROTATION and SIMULATION_TYPE == 3, we should add a +/- b_two_omega_earth*deltat/2 contribution
+! to b_rmassx and b_rmassy
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: b_rmassz_crust_mantle
   equivalence(rmassz_crust_mantle,b_rmassz_crust_mantle)
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassy_crust_mantle
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -622,13 +623,14 @@
   logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core ! only needed for computer_boundary_kernel() routine
 
 ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassy_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: b_rmass_inner_core
   equivalence(rmass_inner_core,b_rmass_inner_core)
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassx_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassy_inner_core
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
@@ -1159,27 +1161,6 @@
     you_can_start_doing_IOs = .false.
     if (myrank > 0) call MPI_RECV(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank-1, itag, MPI_COMM_WORLD, msg_status,ier)
 #endif
-
-  ! allocates mass matrices in this slice (will be fully assembled in the solver)
-  allocate(rmassx_crust_mantle(NGLOB_XY_CM),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassx_crust_mantle')
-  allocate(rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassy_crust_mantle')
-
-  allocate(b_rmassx_crust_mantle(NGLOB_XY_CM_BACKWARD),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassx_crust_mantle')
-  allocate(b_rmassy_crust_mantle(NGLOB_XY_CM_BACKWARD),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassy_crust_mantle')
-
-  allocate(rmassx_inner_core(NGLOB_XY_IC),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassx_inner_core')
-  allocate(rmassy_inner_core(NGLOB_XY_IC),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassy_inner_core')
-
-  allocate(b_rmassx_inner_core(NGLOB_XY_IC_BACKWARD),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassx_inner_core')
-  allocate(b_rmassy_inner_core(NGLOB_XY_IC_BACKWARD),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_rmassy_inner_core')
 
   call read_mesh_databases(myrank,rho_vp_crust_mantle,rho_vs_crust_mantle, &
               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -1932,7 +1913,7 @@
     endif
 
     if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-      .and. (.not. USE_LDDRK) .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM_BACKWARD > 0)then
+      .and. .not. USE_LDDRK .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM_BACKWARD > 0)then
       if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
            call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
       if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
@@ -2905,10 +2886,6 @@ endif
             mask_noise, &
             noise_surface_movie)
   endif
-
-  ! mass matrices
-  deallocate(rmassx_crust_mantle)
-  deallocate(rmassy_crust_mantle)
 
   ! close the main output file
   if(myrank == 0) then
