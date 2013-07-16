@@ -37,7 +37,7 @@
                             islice_selected_source,ispec_selected_source, &
                             xi_source,eta_source,gamma_source, nu_source, &
                             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
-                            LOCAL_PATH,SIMULATION_TYPE,SAVE_SOURCE_MASK)
+                            LOCAL_PATH,SIMULATION_TYPE,SAVE_SOURCE_MASK,mask_source)
 
   use mpi
 
@@ -171,7 +171,7 @@
   double precision t_cmt_used(NSOURCES)
 
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
 
   ! get MPI starting time for all sources
   time_start = MPI_WTIME()
@@ -208,11 +208,7 @@
   call hex_nodes(iaddx,iaddy,iaddr)
 
   ! initializes source mask
-  if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
-    allocate(mask_source(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating mask source array')
-    mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
-  endif
+  if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
 
   ! loop on all the sources
   ! gather source information in subsets to reduce memory requirements
@@ -850,7 +846,6 @@
 ! stores source mask
   if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
     call save_mask_source(myrank,mask_source,NSPEC,LOCAL_PATH)
-    deallocate( mask_source )
   endif
 
   end subroutine locate_sources

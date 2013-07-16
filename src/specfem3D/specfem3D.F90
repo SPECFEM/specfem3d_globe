@@ -943,6 +943,11 @@
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,sec_SAC
   character(len=20) event_name_SAC
 
+  ! mask source region (mask values are between 0 and 1, with 0 around sources)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_MASK_SOURCE) :: mask_source_crust_mantle
+  ! to save memory in the case of very large runs, equivalence these two arrays that are never used simultaneously
+  equivalence(mask_source_crust_mantle,hess_kl_crust_mantle)
+
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -1594,7 +1599,7 @@
                       stlat,stlon,stele,stbur,nu, &
                       nrec_local,nadj_rec_local,nrec_simulation, &
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
-                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH,SAVE_SOURCE_MASK)
+                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH,SAVE_SOURCE_MASK,mask_source_crust_mantle)
 
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
