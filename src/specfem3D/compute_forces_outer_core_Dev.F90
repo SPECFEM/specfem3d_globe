@@ -175,6 +175,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
             A_array_rotation_lddrk,B_array_rotation_lddrk
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
@@ -208,6 +212,44 @@
             NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC, &
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,iphase)
 
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          iglob = ibool(ijk,1,1,ispec)
+
+          ! get a local copy of the potential field
+          dummyx_loc(ijk,1,1) = displfluid(iglob)
+
+          ! pre-computes factors
+          ! use mesh coordinates to get theta and phi
+          ! x y z contain r theta phi
+          radius = dble(xstore(iglob))
+          theta = dble(ystore(iglob))
+          phi = dble(zstore(iglob))
+
+          cos_theta = dcos(theta)
+          sin_theta = dsin(theta)
+          cos_phi = dcos(phi)
+          sin_phi = dsin(phi)
+
+          int_radius = nint(radius * R_EARTH_KM * 10.d0)
+
+          if( .not. GRAVITY_VAL ) then
+            ! grad(rho)/rho in Cartesian components
+            displ_times_grad_x_ln_rho(ijk,1,1) = dummyx_loc(ijk,1,1) &
+                  * sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
+            displ_times_grad_y_ln_rho(ijk,1,1) = dummyx_loc(ijk,1,1) &
+                  * sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
+            displ_times_grad_z_ln_rho(ijk,1,1) = dummyx_loc(ijk,1,1) &
+                  * cos_theta * d_ln_density_dr_table(int_radius)
+          else
+            ! Cartesian components of the gravitational acceleration
+            ! integrate and multiply by rho / Kappa
+            temp_gxl(ijk,1,1) = sin_theta*cos_phi
+            temp_gyl(ijk,1,1) = sin_theta*sin_phi
+            temp_gzl(ijk,1,1) = cos_theta
+          endif
+        enddo
+#else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -245,10 +287,10 @@
             temp_gyl(i,j,k) = sin_theta*sin_phi
             temp_gzl(i,j,k) = cos_theta
           endif
-
         enddo
       enddo
     enddo
+#endif
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -469,9 +511,26 @@
 
     ! add gravity term
     if(GRAVITY_VAL) then
+#ifdef FORCE_VECTORIZATION
+      do ijk = 1,NGLLCUBE
+        sum_terms(ijk,1,1) = sum_terms(ijk,1,1) + gravity_term(ijk,1,1)
+      enddo
+#else
       sum_terms(:,:,:) = sum_terms(:,:,:) + gravity_term(:,:,:)
+#endif
     endif
 
+#ifdef FORCE_VECTORIZATION
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+!IBM* ASSERT (NODEPS)
+!DIR$ IVDEP
+        do ijk = 1,NGLLCUBE
+          iglob = ibool(ijk,1,1,ispec)
+          accelfluid(iglob) = accelfluid(iglob) + sum_terms(ijk,1,1)
+        enddo
+#else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -480,6 +539,7 @@
         enddo
       enddo
     enddo
+#endif
 
     ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
@@ -492,8 +552,15 @@
         B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * B_array_rotation_lddrk(:,:,:,ispec)
       else
         ! use the source saved above
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1,NGLLCUBE
+          A_array_rotation(ijk,1,1,ispec) = A_array_rotation(ijk,1,1,ispec) + source_euler_A(ijk,1,1)
+          B_array_rotation(ijk,1,1,ispec) = B_array_rotation(ijk,1,1,ispec) + source_euler_B(ijk,1,1)
+        enddo
+#else
         A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
         B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
+#endif
       endif
     endif
 

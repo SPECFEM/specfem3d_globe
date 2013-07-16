@@ -174,8 +174,8 @@ $O/compute_forces_crust_mantle_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from
 $O/compute_forces_outer_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_noDev.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_noDev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_noDev.f90
 
-$O/compute_forces_outer_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_Dev.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_Dev.f90
+$O/compute_forces_outer_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_Dev.F90
+	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_Dev.F90
 
 $O/compute_forces_inner_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_noDev.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core_noDev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_noDev.f90

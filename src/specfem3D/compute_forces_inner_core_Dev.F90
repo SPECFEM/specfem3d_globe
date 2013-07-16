@@ -720,10 +720,30 @@
 
       ! add gravity terms
       if(GRAVITY_VAL) then
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1,NDIM*NGLLCUBE
+          sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
+        enddo
+#else
         sum_terms(:,:,:,:) = sum_terms(:,:,:,:) + rho_s_H(:,:,:,:)
+#endif
       endif
 
       ! sum contributions from each element to the global mesh
+#ifdef FORCE_VECTORIZATION
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+!IBM* ASSERT (NODEPS)
+!DIR$ IVDEP
+          do ijk = 1,NGLLCUBE
+            iglob = ibool(ijk,1,1,ispec)
+! do NOT use array syntax ":" for the three statements below otherwise most compilers will not be able to vectorize the outer loop
+            accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,ijk,1,1)
+            accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,ijk,1,1)
+            accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk,1,1)
+          enddo
+#else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -735,6 +755,7 @@
           enddo
         enddo
       enddo
+#endif
 
       ! use Runge-Kutta scheme to march memory variables in time
       ! convention for attenuation
@@ -759,7 +780,13 @@
                                       epsilondev_loc,epsilondev(1,1,1,1,ispec),&
                                       istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
 
+#ifdef FORCE_VECTORIZATION
+        do ijk = 1,5*NGLLCUBE
+          epsilondev(ijk,1,1,1,ispec) = epsilondev_loc(ijk,1,1,1)
+        enddo
+#else
         epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+#endif
       endif
 
     endif ! end of test to exclude fictitious elements in central cube
