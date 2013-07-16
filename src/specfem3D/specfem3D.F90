@@ -549,7 +549,7 @@
 
 ! mass matrices
 !
-! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
 ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
 ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
 !
@@ -568,8 +568,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: b_rmassz_crust_mantle
   equivalence(rmassz_crust_mantle,b_rmassz_crust_mantle)
-
-  integer :: NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -630,7 +628,6 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassy_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: b_rmass_inner_core
-  integer :: NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD
   equivalence(rmass_inner_core,b_rmass_inner_core)
 
 ! displacement, velocity, acceleration
@@ -1164,41 +1161,6 @@
 #endif
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
-  !
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
-  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  !
-  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-
-  NGLOB_XY_CM = 1
-  NGLOB_XY_IC = 1
-  NGLOB_XY_CM_BACKWARD = 1
-  NGLOB_XY_IC_BACKWARD = 1
-
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
-     NGLOB_XY_CM = NGLOB_CRUST_MANTLE
-  else
-     NGLOB_XY_CM = 1
-  endif
-
-  if(SIMULATION_TYPE /=3  .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-    if(ROTATION_VAL)then
-      NGLOB_XY_CM = NGLOB_CRUST_MANTLE
-      NGLOB_XY_IC = NGLOB_INNER_CORE
-    endif
-  endif
-
-  if(SIMULATION_TYPE ==3  .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
-    if(ROTATION_VAL)then
-      NGLOB_XY_CM = NGLOB_CRUST_MANTLE
-      NGLOB_XY_IC = NGLOB_INNER_CORE
-      NGLOB_XY_CM_BACKWARD = NGLOB_CRUST_MANTLE
-      NGLOB_XY_IC_BACKWARD = NGLOB_INNER_CORE
-    endif
-  endif
-
   allocate(rmassx_crust_mantle(NGLOB_XY_CM),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating rmassx_crust_mantle')
   allocate(rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
@@ -1253,11 +1215,11 @@
               c33store_inner_core,c44store_inner_core, &
               ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
               is_on_a_slice_edge_inner_core,rmass_inner_core, &
-              ABSORBING_CONDITIONS,LOCAL_PATH,NGLOB_XY_CM,&
-              SIMULATION_TYPE,NGLOB_XY_CM_BACKWARD,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+              ABSORBING_CONDITIONS,LOCAL_PATH,&
+              SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
               b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
-              NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,&
-              NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core)
+              rmassx_inner_core,rmassy_inner_core,&
+              b_rmassx_inner_core,b_rmassy_inner_core)
 
   ! read 2-D addressing for summation between slices with MPI
   call read_mesh_databases_addressing(myrank, &
@@ -1777,12 +1739,12 @@
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
                       buffer_send_faces,buffer_received_faces, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY_CM,ABSORBING_CONDITIONS, &
+                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,ABSORBING_CONDITIONS, &
                       NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC,&
-                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,NGLOB_XY_CM_BACKWARD,&
+                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
                       b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
-                      NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,&
-                      NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core)
+                      rmassx_inner_core,rmassy_inner_core,&
+                      b_rmassx_inner_core,b_rmassy_inner_core)
 
   ! mass matrix including central cube
   if(INCLUDE_CENTRAL_CUBE) then

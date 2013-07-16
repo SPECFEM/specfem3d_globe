@@ -44,12 +44,12 @@
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
                       buffer_send_faces_scalar,buffer_received_faces_scalar, &
                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,NGLOB_XY_CM,ABSORBING_CONDITIONS, &
+                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,ABSORBING_CONDITIONS, &
                       NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC, &
-                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,NGLOB_XY_CM_BACKWARD,&
+                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
                       b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
-                      NGLOB_XY_IC,rmassx_inner_core,rmassy_inner_core,&
-                      NGLOB_XY_IC_BACKWARD,b_rmassx_inner_core,b_rmassy_inner_core)
+                      rmassx_inner_core,rmassy_inner_core,&
+                      b_rmassx_inner_core,b_rmassy_inner_core)
 
   use mpi
   implicit none
@@ -58,7 +58,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank,npoin2D_max_all_CM_IC
-  integer SIMULATION_TYPE,NGLOB_XY_CM,NGLOB_XY_CM_BACKWARD,NGLOB_XY_IC,NGLOB_XY_IC_BACKWARD
+  integer SIMULATION_TYPE
 
   logical ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
