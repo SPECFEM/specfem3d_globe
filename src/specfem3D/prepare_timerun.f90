@@ -196,7 +196,7 @@
             NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
 
  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-    .and. (.not. USE_LDDRK) .and. NGLOB_XY_CM_BACKWARD > 0)then
+    .and. .not. USE_LDDRK .and. NGLOB_XY_CM_BACKWARD > 0)then
     if(SIMULATION_TYPE == 3)then
        call assemble_MPI_scalar_block(myrank,b_rmassx_crust_mantle,NGLOB_XY_CM_BACKWARD, &
             iproc_xi,iproc_eta,ichunk,addressing, &
