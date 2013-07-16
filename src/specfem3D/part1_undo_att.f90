@@ -4,9 +4,9 @@
 !! DK DK it also handles the cases NOISE_TOMOGRAPHY == 1 and NOISE_TOMOGRAPHY == 2
 !! DK DK
 
-    ! Newmark time scheme update
+    ! Newmark or LDDRK time scheme update
 
-  do istage = 1, NSTAGE_TIME_SCHEME ! begin loop of istage
+  do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
     if(USE_LDDRK)then
 

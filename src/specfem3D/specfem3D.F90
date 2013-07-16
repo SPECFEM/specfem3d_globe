@@ -393,15 +393,16 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_common_inner_core
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: eps_trace_over_3_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3_inner_core
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_inner_core
 
 ! to save a significant amount of memory space, we equivalence these two arrays that are never used simultaneously
 ! (ibathy_topo is only used before the beginning of the time loop, while R_memory_crust_mantle is only used inside the time loop)
@@ -1137,45 +1138,15 @@
 ! in exact undoing of attenuation
   undo_att_sim_type_3 = .false.
 
-! ZN if we want to storing the strain to acclerate the code but cost more memory then
-  if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL)then
-    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
-    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_crust_mantle')
-    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_inner_core')
-    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_inner_core')
-    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-    if(FIX_UNDERFLOW_PROBLEM) then
-      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
-      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
-      eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
-    endif
-  else
-    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_crust_mantle')
-    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_crust_mantle')
-    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating epsilondev_inner_core')
-    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating eps_trace_over_3_inner_core')
-    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-    if(FIX_UNDERFLOW_PROBLEM) then
-      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
-      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
-      eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
-    endif
+  epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+  eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+  epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+  eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+  if(FIX_UNDERFLOW_PROBLEM) then
+    epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+    eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
+    epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
+    eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
   endif
 
 !
