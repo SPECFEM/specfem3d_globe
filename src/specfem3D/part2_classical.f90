@@ -8,7 +8,17 @@
 
     ! backward field
     if (SIMULATION_TYPE == 3) then
+
       ! mantle
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_CRUST_MANTLE*NDIM
+        b_displ_crust_mantle(i,1) = b_displ_crust_mantle(i,1) &
+          + b_deltat*b_veloc_crust_mantle(i,1) + b_deltatsqover2*b_accel_crust_mantle(i,1)
+        b_veloc_crust_mantle(i,1) = b_veloc_crust_mantle(i,1) &
+          + b_deltatover2*b_accel_crust_mantle(i,1)
+        b_accel_crust_mantle(i,1) = 0._CUSTOM_REAL
+      enddo
+  else
       do i=1,NGLOB_CRUST_MANTLE
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
@@ -16,6 +26,8 @@
           + b_deltatover2*b_accel_crust_mantle(:,i)
         b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       enddo
+  endif
+
       ! outer core
       do i=1,NGLOB_OUTER_CORE
         b_displ_outer_core(i) = b_displ_outer_core(i) &
@@ -24,7 +36,17 @@
           + b_deltatover2*b_accel_outer_core(i)
         b_accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
+
       ! inner core
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_INNER_CORE*NDIM
+        b_displ_inner_core(i,1) = b_displ_inner_core(i,1) &
+          + b_deltat*b_veloc_inner_core(i,1) + b_deltatsqover2*b_accel_inner_core(i,1)
+        b_veloc_inner_core(i,1) = b_veloc_inner_core(i,1) &
+          + b_deltatover2*b_accel_inner_core(i,1)
+        b_accel_inner_core(i,1) = 0._CUSTOM_REAL
+      enddo
+  else
       do i=1,NGLOB_INNER_CORE
         b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
           + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
@@ -32,6 +54,8 @@
           + b_deltatover2*b_accel_inner_core(:,i)
         b_accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
+  endif
+
     endif ! SIMULATION_TYPE == 3
 
     ! compute the maximum of the norm of the displacement
@@ -450,7 +474,6 @@
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if(SIMULATION_TYPE == 3) then
-
         call compute_stacey_crust_mantle_backward(ichunk, &
                               NSTEP,it,ibool_crust_mantle, &
                               b_accel_crust_mantle, &
@@ -804,10 +827,18 @@
     ! Newmark time scheme - corrector for elastic parts
 
     if (SIMULATION_TYPE == 3) then
+
       ! mantle
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_CRUST_MANTLE*NDIM
+        b_veloc_crust_mantle(i,1) = b_veloc_crust_mantle(i,1) + b_deltatover2*b_accel_crust_mantle(i,1)
+      enddo
+  else
       do i=1,NGLOB_CRUST_MANTLE
         b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
       enddo
+  endif
+
       ! inner core
       do i=1,NGLOB_INNER_CORE
         b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
@@ -815,8 +846,18 @@
         b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
          - b_two_omega_earth*b_veloc_inner_core(1,i)
         b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
+      enddo
+
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_INNER_CORE*NDIM
+        b_veloc_inner_core(i,1) = b_veloc_inner_core(i,1) + b_deltatover2*b_accel_inner_core(i,1)
+      enddo
+  else
+      do i=1,NGLOB_INNER_CORE
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
       enddo
+  endif
+
     endif ! SIMULATION_TYPE == 3
 
     ! restores last time snapshot saved for backward/reconstruction of wavefields
@@ -869,5 +910,4 @@
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
-
 

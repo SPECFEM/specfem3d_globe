@@ -6,7 +6,6 @@
 
     ! Newmark time scheme update
 
-
   do istage = 1, NSTAGE_TIME_SCHEME ! begin loop of istage
 
     if(USE_LDDRK)then
