@@ -32,7 +32,7 @@
                          ONE_CRUST,doubling_index,this_region_has_a_doubling, &
                          ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                          ratio_sampling_array, &
-                         NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+                         NSPEC,NGLOB,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                          NSPEC_INNER_CORE_ATTENUATION, &
@@ -45,20 +45,21 @@
                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                         ATT1,ATT2,ATT3,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY,static_memory_size)
+                         ATT1,ATT2,ATT3,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
+                         NCHUNKS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,static_memory_size)
 
   implicit none
 
   include "constants.h"
 
   ! input
+  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE,ATT1,ATT2,ATT3,NOISE_TOMOGRAPHY,NCHUNKS
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
              ROTATION, &
              ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS, &
-             MOVIE_VOLUME,SAVE_FORWARD,APPROXIMATE_HESS_KL,ANISOTROPIC_KL
-  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
+             MOVIE_VOLUME,SAVE_FORWARD,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION
+  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, NGLOB
 
-  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE,ATT1,ATT2,ATT3,NOISE_TOMOGRAPHY
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
@@ -81,7 +82,8 @@
 
   ! local variables
   integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso, &
-             NSPEC_CRUST_MANTLE_ADJOINT_HESS,NSPEC_CRUST_MANTLE_ADJOINT_NOISE,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL
+             NSPEC_CRUST_MANTLE_ADJOINT_HESS,NSPEC_CRUST_MANTLE_ADJOINT_NOISE,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL, &
+             NGLOB_XY_CM,NGLOB_XY_IC,NGLOB_XY_CM_BACKWARD,NGLOB_XY_IC_BACKWARD
 
   ! generate the elements in all the regions of the mesh
   ispec_aniso = 0
@@ -205,7 +207,7 @@
 
   ! if oceans are off, set dummy size of arrays to one
   if(OCEANS) then
-    NGLOB_CRUST_MANTLE_OCEANS = nglob(IREGION_CRUST_MANTLE)
+    NGLOB_CRUST_MANTLE_OCEANS = NGLOB(IREGION_CRUST_MANTLE)
   else
     NGLOB_CRUST_MANTLE_OCEANS = 1
   endif
@@ -415,6 +417,52 @@
   ! b_A_array_rotation,b_B_array_rotation
   static_memory_size = static_memory_size + &
     2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROT_ADJOINT*dble(CUSTOM_REAL)
+
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
+  NGLOB_XY_CM = 1
+  NGLOB_XY_IC = 1
+  NGLOB_XY_CM_BACKWARD = 1
+  NGLOB_XY_IC_BACKWARD = 1
+
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
+     NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+  else
+     NGLOB_XY_CM = 1
+  endif
+
+  if(SIMULATION_TYPE /= 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if(ROTATION) then
+      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
+    endif
+  endif
+
+  if(SIMULATION_TYPE == 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if(ROTATION) then
+      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
+      NGLOB_XY_CM_BACKWARD = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC_BACKWARD = NGLOB(IREGION_INNER_CORE)
+    endif
+  endif
+
+! rmassx_crust_mantle,rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION
+  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
+
+! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION
+  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM_BACKWARD*4.d0*dble(CUSTOM_REAL)
+
+! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION
+  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
+
+! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION
+  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC_BACKWARD*4.d0*dble(CUSTOM_REAL)
 
   end subroutine memory_eval
 
