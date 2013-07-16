@@ -160,8 +160,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
@@ -394,7 +392,7 @@
             R_memory, &
             one_minus_sum_beta,vnspec, &
             tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-            dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
+            dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
     else
        if( .not. ispec_is_tiso(ispec) ) then
           ! isotropic element
@@ -408,7 +406,7 @@
                R_memory, &
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
+               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
        else
           ! transverse isotropic element
 
@@ -422,7 +420,7 @@
                R_memory, &
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
+               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
        endif ! .not. ispec_is_tiso
     endif
 
@@ -546,26 +544,15 @@
     ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
     if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-          ! updates R_memory
-          epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
-          epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
-          epsilondev_loc_nsub1(3,:,:,:) = epsilondev(3,:,:,:,ispec)
-          epsilondev_loc_nsub1(4,:,:,:) = epsilondev(4,:,:,:,ispec)
-          epsilondev_loc_nsub1(5,:,:,:) = epsilondev(5,:,:,:,ispec)
-
-          call compute_element_att_memory_cr(ispec,R_memory, &
+      ! updates R_memory
+      call compute_element_att_memory_cr(ispec,R_memory, &
                                          vnspec,factor_common, &
                                          alphaval,betaval,gammaval, &
                                          c44store,muvstore, &
-                                         epsilondev_loc,epsilondev_loc_nsub1,&
+                                         epsilondev_loc,epsilondev(1,1,1,1,ispec),&
                                          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
 
-        eps_trace_over_3(:,:,:,ispec) = eps_trace_over_3_loc(:,:,:)
-        epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-        epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-        epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-        epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-        epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
+      epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
     endif
 
    enddo ! end of ispec loop

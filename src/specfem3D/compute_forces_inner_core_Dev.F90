@@ -148,7 +148,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nsub1
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
@@ -752,27 +751,15 @@
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-
-          ! updates R_memory
-          epsilondev_loc_nsub1(1,:,:,:) = epsilondev(1,:,:,:,ispec)
-          epsilondev_loc_nsub1(2,:,:,:) = epsilondev(2,:,:,:,ispec)
-          epsilondev_loc_nsub1(3,:,:,:) = epsilondev(3,:,:,:,ispec)
-          epsilondev_loc_nsub1(4,:,:,:) = epsilondev(4,:,:,:,ispec)
-          epsilondev_loc_nsub1(5,:,:,:) = epsilondev(5,:,:,:,ispec)
-
-          call compute_element_att_memory_ic(ispec,R_memory, &
+        ! updates R_memory
+        call compute_element_att_memory_ic(ispec,R_memory, &
                                       vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
-                                      epsilondev_loc,epsilondev_loc_nsub1,&
+                                      epsilondev_loc,epsilondev(1,1,1,1,ispec),&
                                       istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
 
-          epsilondev(1,:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-          epsilondev(2,:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-          epsilondev(3,:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-          epsilondev(4,:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-          epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
-
+        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
       endif
 
     endif ! end of test to exclude fictitious elements in central cube
