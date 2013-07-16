@@ -167,7 +167,7 @@
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
-  integer :: ispec,i,j,k,iglob1
+  integer :: ispec,i,j,k,iglob
 
 ! this for non blocking MPI
   integer :: iphase,icall
@@ -278,35 +278,35 @@
 
     iend = min(ispec_glob+ELEMENTS_NONBLOCKING_CM_IC-1,NSPEC_CRUST_MANTLE)
 
-    do ispec=ispec_glob,iend
+    do ispec = ispec_glob,iend
 
 ! hide communications by computing the edges first
     if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
        (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
 
-    ! subroutines adapted from Deville, Fischer and Mund, High-order methods
-    ! for incompressible fluid flow, Cambridge University Press (2002),
-    ! pages 386 and 389 and Figure 8.3.1
 #ifdef FORCE_VECTORIZATION
         do ijk=1,NGLLCUBE
-          iglob1 = ibool(ijk,1,1,ispec)
-          dummyx_loc(ijk,1,1) = displ_crust_mantle(1,iglob1)
-          dummyy_loc(ijk,1,1) = displ_crust_mantle(2,iglob1)
-          dummyz_loc(ijk,1,1) = displ_crust_mantle(3,iglob1)
+          iglob = ibool(ijk,1,1,ispec)
+          dummyx_loc(ijk,1,1) = displ_crust_mantle(1,iglob)
+          dummyy_loc(ijk,1,1) = displ_crust_mantle(2,iglob)
+          dummyz_loc(ijk,1,1) = displ_crust_mantle(3,iglob)
         enddo
 #else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          iglob1 = ibool(i,j,k,ispec)
-          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob1)
-          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob1)
-          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob1)
+          iglob = ibool(i,j,k,ispec)
+          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob)
+          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob)
+          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob)
         enddo
       enddo
     enddo
 #endif
 
+    ! subroutines adapted from Deville, Fischer and Mund, High-order methods
+    ! for incompressible fluid flow, Cambridge University Press (2002),
+    ! pages 386 and 389 and Figure 8.3.1
     do j=1,m2
        do i=1,m1
           C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -498,30 +498,34 @@
       enddo
     enddo
 
+    ! sum contributions
     do k=1,NGLLZ
       do j=1,NGLLY
         fac1 = wgllwgll_yz(j,k)
         do i=1,NGLLX
           fac2 = wgllwgll_xz(i,k)
           fac3 = wgllwgll_xy(i,j)
-
-          ! sum contributions
           sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
           sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
           sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
+        enddo
+      enddo
+    enddo
 
-          if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
+    ! add gravity terms
+    if(GRAVITY_VAL) then
+      sum_terms(:,:,:,:) = sum_terms(:,:,:,:) + rho_s_H(:,:,:,:)
+    endif
 
-        enddo ! NGLLX
-      enddo ! NGLLY
-    enddo ! NGLLZ
-
-    ! sum contributions from each element to the global mesh and add gravity terms
+    ! sum contributions from each element to the global mesh
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          iglob1 = ibool(i,j,k,ispec)
-          accel_crust_mantle(:,iglob1) = accel_crust_mantle(:,iglob1) + sum_terms(:,i,j,k)
+          iglob = ibool(i,j,k,ispec)
+! do NOT use array syntax ":" for the three statements below otherwise most compilers will not be able to vectorize the outer loop
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k)
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k)
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k)
         enddo
       enddo
     enddo
@@ -564,10 +568,9 @@
         epsilondev(5,:,:,:,ispec) = epsilondev_loc(5,:,:,:)
     endif
 
-! end ispec loop
-   enddo
+   enddo ! end of ispec loop
 
-  enddo   ! spectral element loop NSPEC_CRUST_MANTLE
+  enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 
   end subroutine compute_forces_crust_mantle_Dev
 
