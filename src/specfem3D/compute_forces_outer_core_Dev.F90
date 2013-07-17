@@ -327,7 +327,138 @@
       enddo
     enddo
 
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
 
+          ! get derivatives of velocity potential with respect to x, y and z
+          xixl = xix(ijk,1,1,ispec)
+          xiyl = xiy(ijk,1,1,ispec)
+          xizl = xiz(ijk,1,1,ispec)
+          etaxl = etax(ijk,1,1,ispec)
+          etayl = etay(ijk,1,1,ispec)
+          etazl = etaz(ijk,1,1,ispec)
+          gammaxl = gammax(ijk,1,1,ispec)
+          gammayl = gammay(ijk,1,1,ispec)
+          gammazl = gammaz(ijk,1,1,ispec)
+
+          ! compute the jacobian
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+          dpotentialdxl = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
+          dpotentialdyl = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
+          dpotentialdzl = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+
+          ! compute contribution of rotation and add to gradient of potential
+          ! this term has no Z component
+          if(ROTATION_VAL) then
+
+            ! store the source for the Euler scheme for A_rotation and B_rotation
+            two_omega_deltat = deltat * two_omega_earth
+
+            cos_two_omega_t = cos(two_omega_earth*time)
+            sin_two_omega_t = sin(two_omega_earth*time)
+
+            ! time step deltat of Euler scheme is included in the source
+            source_euler_A(ijk,1,1) = two_omega_deltat &
+                  * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
+            source_euler_B(ijk,1,1) = two_omega_deltat &
+                  * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
+
+            A_rotation = A_array_rotation(ijk,1,1,ispec)
+            B_rotation = B_array_rotation(ijk,1,1,ispec)
+
+            ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t
+            uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t
+
+            dpotentialdx_with_rot = dpotentialdxl + ux_rotation
+            dpotentialdy_with_rot = dpotentialdyl + uy_rotation
+
+          else
+
+            dpotentialdx_with_rot = dpotentialdxl
+            dpotentialdy_with_rot = dpotentialdyl
+
+          endif  ! end of section with rotation
+
+          ! add (chi/rho)grad(rho) term in no gravity case
+          if(.not. GRAVITY_VAL) then
+
+            ! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
+            ! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
+            ! is negligible to begin with, as in our GJI 2002a, in which case N does not arise.
+            ! We get:
+            !
+            ! \ddot\chi = \rho^{-1}\kappa\bdel\cdot(\bdel\chi+\chi\bdel\ln\rho)
+            !
+            ! Then the displacement is
+            !
+            ! \bu = \bdel\chi+\chi\bdel\ln\rho = \rho^{-1}\bdel(\rho\chi)
+            !
+            ! and the pressure is
+            !
+            ! p = -\rho\ddot{\chi}
+            !
+            ! Thus in our 2002b GJI paper eqn (21) is wrong, and equation (41)
+            ! in our AGU monograph is incorrect; these equations should be replaced by
+            !
+            ! \ddot\chi = \rho^{-1}\kappa\bdel\cdot(\bdel\chi+\chi\bdel\ln\rho)
+            !
+            ! Note that the fluid potential we use in GJI 2002a differs from the one used here:
+            !
+            ! \chi_GJI2002a = \rho\partial\t\chi
+            !
+            ! such that
+            !
+            ! \bv = \partial_t\bu=\rho^{-1}\bdel\chi_GJI2002a  (GJI 2002a eqn 20)
+            !
+            ! p = - \partial_t\chi_GJI2002a (GJI 2002a eqn 19)
+
+            ! use mesh coordinates to get theta and phi
+            ! x y z contain r theta phi
+            dpotentialdx_with_rot = dpotentialdx_with_rot + displ_times_grad_x_ln_rho(ijk,1,1)
+            dpotentialdy_with_rot = dpotentialdy_with_rot + displ_times_grad_y_ln_rho(ijk,1,1)
+            dpotentialdzl = dpotentialdzl + displ_times_grad_z_ln_rho(ijk,1,1)
+
+         else  ! if gravity is turned on
+
+            ! compute divergence of displacment
+            gxl = temp_gxl(ijk,1,1)
+            gyl = temp_gyl(ijk,1,1)
+            gzl = temp_gzl(ijk,1,1)
+
+            gravity_term(ijk,1,1) = minus_rho_g_over_kappa_fluid(int_radius) * &
+                        jacobianl * wgll_cube(ijk,1,1) &
+                        * (dpotentialdx_with_rot * gxl  &
+                          + dpotentialdy_with_rot * gyl &
+                          + dpotentialdzl * gzl)
+
+            if(istage == 1)then
+            ! divergence of displacement field with gravity on
+            ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
+            !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
+            !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
+              if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. MOVIE_VOLUME) then
+                div_displfluid(ijk,1,1,ispec) =  &
+                        minus_rho_g_over_kappa_fluid(int_radius) &
+                        * (dpotentialdx_with_rot * gxl &
+                         + dpotentialdy_with_rot * gyl &
+                         + dpotentialdzl * gzl)
+              endif
+            endif
+
+          endif
+
+          tempx1(ijk,1,1) = jacobianl*(xixl*dpotentialdx_with_rot &
+                                   + xiyl*dpotentialdy_with_rot + xizl*dpotentialdzl)
+          tempx2(ijk,1,1) = jacobianl*(etaxl*dpotentialdx_with_rot &
+                                   + etayl*dpotentialdy_with_rot + etazl*dpotentialdzl)
+          tempx3(ijk,1,1) = jacobianl*(gammaxl*dpotentialdx_with_rot &
+                                   + gammayl*dpotentialdy_with_rot + gammazl*dpotentialdzl)
+
+        enddo
+#else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -462,6 +593,7 @@
         enddo
       enddo
     enddo
+#endif
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),

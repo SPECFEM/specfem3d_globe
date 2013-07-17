@@ -274,7 +274,7 @@
 
     endif
 
-    iend = min(ispec_glob+ELEMENTS_NONBLOCKING_CM_IC-1,NSPEC_CRUST_MANTLE)
+    iend = min(ispec_glob + ELEMENTS_NONBLOCKING_CM_IC - 1, NSPEC_CRUST_MANTLE)
 
     do ispec = ispec_glob,iend
 
@@ -379,7 +379,6 @@
     !
     if(ANISOTROPIC_3D_MANTLE_VAL) then
        ! anisotropic element
-
        call compute_element_aniso(ispec, &
             minus_gravity_table,density_table,minus_deriv_gravity_table, &
             xstore,ystore,zstore, &
@@ -394,7 +393,7 @@
             tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
             dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
     else
-       if( .not. ispec_is_tiso(ispec) ) then
+       if(.not. ispec_is_tiso(ispec)) then
           ! isotropic element
           call compute_element_iso(ispec, &
                minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -409,7 +408,6 @@
                dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
        else
           ! transverse isotropic element
-
           call compute_element_tiso(ispec, &
                minus_gravity_table,density_table,minus_deriv_gravity_table, &
                xstore,ystore,zstore, &
@@ -421,7 +419,7 @@
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
-       endif ! .not. ispec_is_tiso
+       endif
     endif
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
