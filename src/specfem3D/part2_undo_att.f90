@@ -116,9 +116,10 @@ endif
           b_buffer_send_faces,b_buffer_received_faces,npoin2D_max_all_CM_IC, &
           b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar,b_iphase,b_icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE, &
+           wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
       else
         call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
@@ -276,9 +277,10 @@ endif
           b_buffer_send_faces,b_buffer_received_faces,npoin2D_max_all_CM_IC, &
           b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar,b_iphase,b_icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE, &
+           wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
         else
           ! div_displ_outer_core is initialized to zero in the following subroutine.
           call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
@@ -370,7 +372,7 @@ endif
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
           muhstore_crust_mantle,eta_anisostore_crust_mantle, &
           c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
@@ -385,7 +387,7 @@ endif
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -455,7 +457,7 @@ endif
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
@@ -464,7 +466,7 @@ endif
           factor_common_inner_core, &
           size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core)
+          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -684,7 +686,7 @@ endif
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
           muhstore_crust_mantle,eta_anisostore_crust_mantle, &
           c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
@@ -699,7 +701,7 @@ endif
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
         else
           call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -768,7 +770,7 @@ endif
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
@@ -777,7 +779,7 @@ endif
           factor_common_inner_core, &
           size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core)
+          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
         else
           call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &

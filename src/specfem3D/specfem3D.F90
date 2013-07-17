@@ -871,6 +871,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
 ! Lagrange interpolators at receivers
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
@@ -1132,6 +1133,17 @@
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
           ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION)
+
+! define a 3D extension in order to be able to force vectorization in the compute_forces routines
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        wgllwgll_yz_3D(i,j,k) = wgllwgll_yz(j,k)
+        wgllwgll_xz_3D(i,j,k) = wgllwgll_xz(i,k)
+        wgllwgll_xy_3D(i,j,k) = wgllwgll_xy(i,j)
+      enddo
+    enddo
+  enddo
 
 ! to switch between simulation type 1 mode and simulation type 3 mode
 ! in exact undoing of attenuation
