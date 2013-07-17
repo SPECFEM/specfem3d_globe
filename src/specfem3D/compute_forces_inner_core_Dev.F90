@@ -243,7 +243,6 @@
   real(kind=CUSTOM_REAL) templ
 
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-  integer :: i_SLS
 
 ! for LDDRK
   integer :: istage
@@ -253,6 +252,8 @@
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
+#else
+  integer :: i_SLS
 #endif
 
 ! ****************************************************
@@ -435,16 +436,16 @@
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               epsilondev_loc(1,ijk,1,1) = duxdxl - templ
               epsilondev_loc(2,ijk,1,1) = duydyl - templ
-              epsilondev_loc(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+              epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+              epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+              epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
               eps_trace_over_3(ijk,1,1,ispec) = templ
             endif
 
             if(ATTENUATION_3D_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(ijk,1,1,ispec) - 1.0
+              minus_sum_beta =  one_minus_sum_beta(ijk,1,1,ispec) - 1.0_CUSTOM_REAL
             else if(ATTENUATION_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
+              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
             endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -483,7 +484,7 @@
               sigma_xx = c11l*duxdxl + c12l*duydyl + c13l*duzdzl
               sigma_yy = c12l*duxdxl + c11l*duydyl + c13l*duzdzl
               sigma_zz = c13l*duxdxl + c13l*duydyl + c33l*duzdzl
-              sigma_xy = 0.5*(c11l-c12l)*duxdyl_plus_duydxl
+              sigma_xy = 0.5_CUSTOM_REAL*(c11l-c12l)*duxdyl_plus_duydxl
               sigma_xz = c44l*duzdxl_plus_duxdzl
               sigma_yz = c44l*duzdyl_plus_duydzl
             else
@@ -501,7 +502,7 @@
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
-              lambdal = lambdalplus2mul - 2.*mul
+              lambdal = lambdalplus2mul - 2._CUSTOM_REAL*mul
 
               ! compute stress sigma
               sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
@@ -690,16 +691,16 @@
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
               eps_trace_over_3(i,j,k,ispec) = templ
             endif
 
             if(ATTENUATION_3D_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+              minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
             else if(ATTENUATION_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
+              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
             endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -738,7 +739,7 @@
               sigma_xx = c11l*duxdxl + c12l*duydyl + c13l*duzdzl
               sigma_yy = c12l*duxdxl + c11l*duydyl + c13l*duzdzl
               sigma_zz = c13l*duxdxl + c13l*duydyl + c33l*duzdzl
-              sigma_xy = 0.5*(c11l-c12l)*duxdyl_plus_duydxl
+              sigma_xy = 0.5_CUSTOM_REAL*(c11l-c12l)*duxdyl_plus_duydxl
               sigma_xz = c44l*duzdxl_plus_duxdzl
               sigma_yz = c44l*duzdyl_plus_duydzl
             else
@@ -756,7 +757,7 @@
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
-              lambdal = lambdalplus2mul - 2.*mul
+              lambdal = lambdalplus2mul - 2._CUSTOM_REAL*mul
 
               ! compute stress sigma
               sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
