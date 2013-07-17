@@ -45,13 +45,13 @@
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat, &
           alphaval,betaval,gammaval,factor_common, &
           vnspec,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3)
+          epsilondev,eps_trace_over_3,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -93,9 +93,7 @@
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore,muvstore
 
@@ -961,18 +959,43 @@
       enddo
 
       ! sum contributions
+#ifdef FORCE_VECTORIZATION
+          do ijk=1,NGLLCUBE
+            fac1 = wgllwgll_yz_3D(ijk,1,1)
+            fac2 = wgllwgll_xz_3D(ijk,1,1)
+            fac3 = wgllwgll_xy_3D(ijk,1,1)
+            sum_terms(1,ijk,1,1) = - (fac1*newtempx1(ijk,1,1) + fac2*newtempx2(ijk,1,1) + fac3*newtempx3(ijk,1,1))
+            sum_terms(2,ijk,1,1) = - (fac1*newtempy1(ijk,1,1) + fac2*newtempy2(ijk,1,1) + fac3*newtempy3(ijk,1,1))
+            sum_terms(3,ijk,1,1) = - (fac1*newtempz1(ijk,1,1) + fac2*newtempz2(ijk,1,1) + fac3*newtempz3(ijk,1,1))
+          enddo
+#else
+!     do k=1,NGLLZ
+!       do j=1,NGLLY
+!         fac1 = wgllwgll_yz(j,k)
+!         do i=1,NGLLX
+!           fac2 = wgllwgll_xz(i,k)
+!           fac3 = wgllwgll_xy(i,j)
+!           sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
+!           sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
+!           sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
+!         enddo
+!       enddo
+!     enddo
+! in principle we only need the 2D arrays of weights above, but here we purposely make them 3D
+! in order to be able to efficiently vectorize the loops (see above)
       do k=1,NGLLZ
         do j=1,NGLLY
-          fac1 = wgllwgll_yz(j,k)
           do i=1,NGLLX
-            fac2 = wgllwgll_xz(i,k)
-            fac3 = wgllwgll_xy(i,j)
+            fac1 = wgllwgll_yz_3D(i,j,k)
+            fac2 = wgllwgll_xz_3D(i,j,k)
+            fac3 = wgllwgll_xy_3D(i,j,k)
             sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
             sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
             sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
           enddo
         enddo
       enddo
+#endif
 
       ! add gravity terms
       if(GRAVITY_VAL) then

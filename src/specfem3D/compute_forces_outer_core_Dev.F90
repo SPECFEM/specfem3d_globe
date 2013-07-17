@@ -43,9 +43,10 @@
           buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
                             hprime_xx,hprime_xxT, &
                             hprimewgll_xx,hprimewgll_xxT, &
-                            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+                            wgll_cube, &
                             ibool,MOVIE_VOLUME,&
-                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
+                            istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE, &
+                            wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -71,10 +72,8 @@
 ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
   integer :: SIMULATION_TYPE
   logical :: MOVIE_VOLUME
@@ -106,7 +105,6 @@
   integer :: i,j,k
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
@@ -632,16 +630,35 @@
     enddo
 
     ! sum contributions
-    do k=1,NGLLZ
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          sum_terms(ijk,1,1) = - (wgllwgll_yz_3D(ijk,1,1)*newtempx1(ijk,1,1) + &
+                                  wgllwgll_xz_3D(ijk,1,1)*newtempx2(ijk,1,1) + &
+                                  wgllwgll_xy_3D(ijk,1,1)*newtempx3(ijk,1,1))
+        enddo
+#else
+!   do k=1,NGLLZ
+!     do j=1,NGLLY
+!       fac1 = wgllwgll_yz(j,k)
+!       do i=1,NGLLX
+!         fac2 = wgllwgll_xz(i,k)
+!         fac3 = wgllwgll_xy(i,j)
+!         sum_terms(i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
+!       enddo
+!     enddo
+!   enddo
+! in principle we only need the 2D arrays of weights above, but here we purposely make them 3D
+! in order to be able to efficiently vectorize the loops (see above)
+     do k=1,NGLLZ
       do j=1,NGLLY
-        fac1 = wgllwgll_yz(j,k)
         do i=1,NGLLX
-          fac2 = wgllwgll_xz(i,k)
-          fac3 = wgllwgll_xy(i,j)
-          sum_terms(i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
+          sum_terms(i,j,k) = - (wgllwgll_yz_3D(i,j,k)*newtempx1(i,j,k) + &
+                                wgllwgll_xz_3D(i,j,k)*newtempx2(i,j,k) + &
+                                wgllwgll_xy_3D(i,j,k)*newtempx3(i,j,k))
         enddo
       enddo
     enddo
+#endif
 
     ! add gravity term
     if(GRAVITY_VAL) then
