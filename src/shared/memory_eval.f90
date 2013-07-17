@@ -452,16 +452,16 @@
     endif
   endif
 
-! rmassx_crust_mantle,rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION
+! rmassx_crust_mantle,rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
 
-! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION
+! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM_BACKWARD*4.d0*dble(CUSTOM_REAL)
 
-! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION
+! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
 
-! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION
+! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC_BACKWARD*4.d0*dble(CUSTOM_REAL)
 
   end subroutine memory_eval
