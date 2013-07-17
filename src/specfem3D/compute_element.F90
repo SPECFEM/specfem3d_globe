@@ -2192,6 +2192,10 @@
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
   real(kind=CUSTOM_REAL) :: deltat
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
@@ -2218,6 +2222,13 @@
       enddo
     else
       do i_memory = 1,5
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+         R_memory(i_memory,i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,ijk,1,1,ispec) &
+              + muvstore(ijk,1,1,ispec) * factor_common(i_SLS,ijk,1,1,ispec) * &
+              (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,ijk,1,1) + gammaval(i_SLS) * epsilondev_loc(i_memory,ijk,1,1))
+        enddo
+#else
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
@@ -2227,6 +2238,7 @@
             enddo
           enddo
         enddo
+#endif
       enddo
     endif
 
@@ -2248,6 +2260,13 @@
       enddo
     else
       do i_memory = 1,5
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+         R_memory(i_memory,i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,ijk,1,1,ispec) &
+              + muvstore(ijk,1,1,ispec) * factor_common(i_SLS,1,1,1,ispec) * &
+              (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,ijk,1,1) + gammaval(i_SLS) * epsilondev_loc(i_memory,ijk,1,1))
+        enddo
+#else
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
@@ -2257,6 +2276,7 @@
             enddo
           enddo
         enddo
+#endif
       enddo
     endif
 
