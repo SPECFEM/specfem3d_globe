@@ -106,6 +106,7 @@
   integer :: i,j,k
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
+  real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
@@ -630,13 +631,14 @@
       enddo
     enddo
 
-    ! sum contributions from each element to the global mesh
+    ! sum contributions
     do k=1,NGLLZ
       do j=1,NGLLY
+        fac1 = wgllwgll_yz(j,k)
         do i=1,NGLLX
-          sum_terms(i,j,k) = - (wgllwgll_yz(j,k)*newtempx1(i,j,k) &
-                              + wgllwgll_xz(i,k)*newtempx2(i,j,k) &
-                              + wgllwgll_xy(i,j)*newtempx3(i,j,k))
+          fac2 = wgllwgll_xz(i,k)
+          fac3 = wgllwgll_xy(i,j)
+          sum_terms(i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
         enddo
       enddo
     enddo
