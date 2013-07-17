@@ -175,9 +175,9 @@
           eps_trace_over_3_loc(ijk,1,1) = templ
           epsilondev_loc(1,ijk,1,1) = duxdxl - templ
           epsilondev_loc(2,ijk,1,1) = duydyl - templ
-          epsilondev_loc(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
        ! precompute terms for attenuation if needed
@@ -383,9 +383,9 @@
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
-          epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
        ! precompute terms for attenuation if needed
@@ -699,9 +699,9 @@
           eps_trace_over_3_loc(ijk,1,1) = templ
           epsilondev_loc(1,ijk,1,1) = duxdxl - templ
           epsilondev_loc(2,ijk,1,1) = duydyl - templ
-          epsilondev_loc(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         ! precompute terms for attenuation if needed
@@ -1093,9 +1093,9 @@
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
-          epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         ! precompute terms for attenuation if needed
@@ -1586,18 +1586,18 @@
           eps_trace_over_3_loc(ijk,1,1) = templ
           epsilondev_loc(1,ijk,1,1) = duxdxl - templ
           epsilondev_loc(2,ijk,1,1) = duydyl - templ
-          epsilondev_loc(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         ! precompute terms for attenuation if needed
         if(ATTENUATION_3D_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(ijk,1,1,ispec)
-          minus_sum_beta =  one_minus_sum_beta_use - 1.0
+          minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
         else if(ATTENUATION_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-          minus_sum_beta =  one_minus_sum_beta_use - 1.0
+          minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
         endif
 
         !
@@ -1830,18 +1830,18 @@
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
-          epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         ! precompute terms for attenuation if needed
         if(ATTENUATION_3D_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          minus_sum_beta =  one_minus_sum_beta_use - 1.0
+          minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
         else if(ATTENUATION_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-          minus_sum_beta =  one_minus_sum_beta_use - 1.0
+          minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
         endif
 
         !
@@ -2424,9 +2424,9 @@
         eps_trace_over_3_loc(ijk,1,1) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
         epsilondev_loc(1,ijk,1,1) = duxdxl - eps_trace_over_3_loc(ijk,1,1)
         epsilondev_loc(2,ijk,1,1) = duydyl - eps_trace_over_3_loc(ijk,1,1)
-        epsilondev_loc(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
-        epsilondev_loc(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
-        epsilondev_loc(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+        epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+        epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+        epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
       enddo
 #else
   do k=1,NGLLZ
@@ -2471,9 +2471,9 @@
         eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
         epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
         epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
-        epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-        epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-        epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+        epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+        epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+        epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
       enddo
     enddo
   enddo
@@ -2668,9 +2668,9 @@
         eps_trace_over_3_loc_nplus1 = templ
         epsilondev_loc_nplus1(1,ijk,1,1) = duxdxl - templ
         epsilondev_loc_nplus1(2,ijk,1,1) = duydyl - templ
-        epsilondev_loc_nplus1(3,ijk,1,1) = 0.5 * duxdyl_plus_duydxl
-        epsilondev_loc_nplus1(4,ijk,1,1) = 0.5 * duzdxl_plus_duxdzl
-        epsilondev_loc_nplus1(5,ijk,1,1) = 0.5 * duzdyl_plus_duydzl
+        epsilondev_loc_nplus1(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+        epsilondev_loc_nplus1(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+        epsilondev_loc_nplus1(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
       enddo
 #else
   do k=1,NGLLZ
@@ -2716,9 +2716,9 @@
         eps_trace_over_3_loc_nplus1 = templ
         epsilondev_loc_nplus1(1,i,j,k) = duxdxl - templ
         epsilondev_loc_nplus1(2,i,j,k) = duydyl - templ
-        epsilondev_loc_nplus1(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-        epsilondev_loc_nplus1(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-        epsilondev_loc_nplus1(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+        epsilondev_loc_nplus1(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+        epsilondev_loc_nplus1(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+        epsilondev_loc_nplus1(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
       enddo
     enddo
   enddo
@@ -2855,9 +2855,9 @@
           eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
           epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
-          epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-          epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-          epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
         enddo ! NGLLX
       enddo ! NGLLY
