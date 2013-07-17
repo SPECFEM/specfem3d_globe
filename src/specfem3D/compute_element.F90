@@ -2090,16 +2090,16 @@
 
     if(ATTENUATION_3D_VAL) then
       do k = 1,NGLLZ
-        do j = 1,NGLLZ
-          do i = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             factor_common_c44_muv(i,j,k) = factor_common(i_SLS,i,j,k,ispec)
           enddo
         enddo
       enddo
     else
       do k = 1,NGLLZ
-        do j = 1,NGLLZ
-          do i = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             factor_common_c44_muv(i,j,k) = factor_common(i_SLS,1,1,1,ispec)
           enddo
         enddo
@@ -2183,11 +2183,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_nplus1
 
 ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
-
-  integer :: i_SLS
-
-  integer :: i_memory,i,j,k
+  integer :: i_SLS,i_memory,i,j,k
 
 ! for LDDRK
   integer :: istage
@@ -2205,38 +2201,66 @@
   do i_SLS = 1,N_SLS
 
     if(ATTENUATION_3D_VAL) then
-      do k = 1,NGLLZ
-        do j = 1,NGLLZ
-          do i = 1,NGLLZ
-            factor_common_use(i,j,k) = factor_common(i_SLS,i,j,k,ispec)
+
+    if(USE_LDDRK) then
+      do i_memory = 1,5
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+        R_memory_lddrk(i_memory,i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,i,j,k,ispec) + &
+            deltat * (muvstore(i,j,k,ispec) * factor_common(i_SLS,i,j,k,ispec)*epsilondev_loc(i_memory,i,j,k) - &
+                      R_memory(i_memory,i_SLS,i,j,k,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))
+        R_memory(i_memory,i_SLS,i,j,k,ispec) = R_memory(i_memory,i_SLS,i,j,k,ispec) + &
+                                               BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,i,j,k,ispec)
+            enddo
           enddo
         enddo
       enddo
     else
-      do k = 1,NGLLZ
-        do j = 1,NGLLZ
-          do i = 1,NGLLZ
-            factor_common_use(i,j,k) = factor_common(i_SLS,1,1,1,ispec)
+      do i_memory = 1,5
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+         R_memory(i_memory,i_SLS,i,j,k,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,i,j,k,ispec) &
+              + muvstore(i,j,k,ispec) * factor_common(i_SLS,i,j,k,ispec) * &
+              (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,i,j,k) + gammaval(i_SLS) * epsilondev_loc(i_memory,i,j,k))
+            enddo
           enddo
         enddo
       enddo
     endif
 
-    if(USE_LDDRK)then
+    else ! if .not. ATTENUATION_3D_VAL
+
+    if(USE_LDDRK) then
       do i_memory = 1,5
-        R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec) + &
-            deltat * (muvstore(:,:,:,ispec) * factor_common_use(:,:,:)*epsilondev_loc(i_memory,:,:,:) - &
-                      R_memory(i_memory,i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))
-        R_memory(i_memory,i_SLS,:,:,:,ispec) = R_memory(i_memory,i_SLS,:,:,:,ispec) + &
-                                               BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+        R_memory_lddrk(i_memory,i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,i,j,k,ispec) + &
+            deltat * (muvstore(i,j,k,ispec) * factor_common(i_SLS,1,1,1,ispec)*epsilondev_loc(i_memory,i,j,k) - &
+                      R_memory(i_memory,i_SLS,i,j,k,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)))
+        R_memory(i_memory,i_SLS,i,j,k,ispec) = R_memory(i_memory,i_SLS,i,j,k,ispec) + &
+                                               BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,i,j,k,ispec)
+            enddo
+          enddo
+        enddo
       enddo
     else
       do i_memory = 1,5
-         R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-              + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-              (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+         R_memory(i_memory,i_SLS,i,j,k,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,i,j,k,ispec) &
+              + muvstore(i,j,k,ispec) * factor_common(i_SLS,1,1,1,ispec) * &
+              (betaval(i_SLS) * epsilondev_loc_nplus1(i_memory,i,j,k) + gammaval(i_SLS) * epsilondev_loc(i_memory,i,j,k))
+            enddo
+          enddo
+        enddo
       enddo
     endif
+
+    endif ! of if ATTENUATION_3D_VAL
 
   enddo
 
