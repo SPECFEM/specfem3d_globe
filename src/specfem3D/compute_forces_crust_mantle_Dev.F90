@@ -587,7 +587,7 @@
 
     if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
       ! updates R_memory
-      call compute_element_att_memory_cr(ispec,R_memory, &
+      call compute_element_att_memory_cm(ispec,R_memory, &
                                          vnspec,factor_common, &
                                          alphaval,betaval,gammaval, &
                                          c44store,muvstore, &
