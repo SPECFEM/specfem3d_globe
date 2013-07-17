@@ -2017,7 +2017,7 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_att_memory_cr(ispec,R_memory, &
+  subroutine compute_element_att_memory_cm(ispec,R_memory, &
                                         vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
@@ -2067,9 +2067,7 @@
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
-  integer :: i_SLS
-
-  integer :: i_memory,i,j,k
+  integer :: i_SLS,i_memory
 
 ! for LDDRK
   integer :: istage
@@ -2077,6 +2075,12 @@
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
   real(kind=CUSTOM_REAL) :: deltat
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
 
   ! use Runge-Kutta scheme to march in time
 
@@ -2089,6 +2093,11 @@
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
 
     if(ATTENUATION_3D_VAL) then
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec)
+      enddo
+#else
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -2096,7 +2105,13 @@
           enddo
         enddo
       enddo
+#endif
     else
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec)
+      enddo
+#else
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -2104,12 +2119,25 @@
           enddo
         enddo
       enddo
+#endif
     endif
 
     if(ANISOTROPIC_3D_MANTLE_VAL) then
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        factor_common_c44_muv(ijk,1,1) = factor_common_c44_muv(ijk,1,1) * c44store(ijk,1,1,ispec)
+      enddo
+#else
       factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * c44store(:,:,:,ispec)
+#endif
     else
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        factor_common_c44_muv(ijk,1,1) = factor_common_c44_muv(ijk,1,1) * muvstore(ijk,1,1,ispec)
+      enddo
+#else
       factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * muvstore(:,:,:,ispec)
+#endif
     endif
 
     if(USE_LDDRK)then
@@ -2122,14 +2150,22 @@
       enddo
     else
       do i_memory = 1,5
+#ifdef FORCE_VECTORIZATION
+        do ijk=1,NGLLCUBE
+          R_memory(i_memory,i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,ijk,1,1,ispec) &
+                  + factor_common_c44_muv(ijk,1,1) &
+                  * (betaval(i_SLS) * epsilondev_loc(i_memory,ijk,1,1) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,ijk,1,1))
+        enddo
+#else
         R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
                   + factor_common_c44_muv(:,:,:) &
                   * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+#endif
       enddo
     endif
-  enddo ! i_SLS
+  enddo ! of i_SLS
 
-  end subroutine compute_element_att_memory_cr
+  end subroutine compute_element_att_memory_cm
 
 !
 !--------------------------------------------------------------------------------------------
