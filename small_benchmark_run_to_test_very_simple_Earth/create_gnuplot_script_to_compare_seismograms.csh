@@ -12,7 +12,7 @@ echo "set output '| epstopdf --filter > all_seismograms_comparison.pdf'"
 #echo "set term x11"
 #echo "set term wxt"
 
-echo set xrange \[0:3300\]
+echo set xrange \[0:2200\]
 
 foreach file ( OUTPUT_FILES/*.sem.ascii )
 

@@ -7,7 +7,7 @@ set output 'all_seismograms_comparison.ps'
 #set term pdf color solid
 #set output "all_seismograms_comparison.pdf"
 
-set xrange [0:3300]
+set xrange [0:2200]
 plot "OUTPUT_FILES_reference_OK/AAE.IU.MXE.sem.ascii" w l lc 1, "OUTPUT_FILES/AAE.IU.MXE.sem.ascii" w l lc 3
 plot "OUTPUT_FILES_reference_OK/AAE.IU.MXN.sem.ascii" w l lc 1, "OUTPUT_FILES/AAE.IU.MXN.sem.ascii" w l lc 3
 plot "OUTPUT_FILES_reference_OK/AAE.IU.MXZ.sem.ascii" w l lc 1, "OUTPUT_FILES/AAE.IU.MXZ.sem.ascii" w l lc 3
