@@ -1257,20 +1257,21 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
+
 ! originally called
-!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-!              xlospl(1,ihpa),radspl(1,ihpa), &
-!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+         call splcon(y,x,numcof,xlaspl(1,ihpa), &
+               xlospl(1,ihpa),radspl(1,ihpa), &
+               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
 ! making sure of array bounds
-!! note from DK DK, July 2013: the code below is correct but it seems to be exactly the same as the code
-!! note from DK DK, July 2013: commented out above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
+!! note from DK DK, July 2013: the code below is correct but it is exactly the same as the code
+!! note from DK DK, July 2013: above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
 !! note from DK DK, July 2013: using a pointer to it such as xlaspl(1,ihpa) in the call seems fine as well;
 !! note from DK DK, July 2013: and some compilers could create expensive and useless memory copies for each call
 !! note from DK DK, July 2013: with the new syntax below
-        call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
-              xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+!       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+!             xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
+!             nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
       else
         write(6,"('problem 1')")
@@ -1425,19 +1426,19 @@
       numcof=numcoe(ihpa)
 
 ! originally called
-!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-!              xlospl(1,ihpa),radspl(1,ihpa), &
-!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+         call splcon(y,x,numcof,xlaspl(1,ihpa), &
+               xlospl(1,ihpa),radspl(1,ihpa), &
+               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
 ! making sure of array bounds
-!! note from DK DK, July 2013: the code below is correct but it seems to be exactly the same as the code
-!! note from DK DK, July 2013: commented out above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
+!! note from DK DK, July 2013: the code below is correct but it is exactly the same as the code
+!! note from DK DK, July 2013: above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
 !! note from DK DK, July 2013: using a pointer to it such as xlaspl(1,ihpa) in the call seems fine as well;
 !! note from DK DK, July 2013: and some compilers could create expensive and useless memory copies for each call
 !! note from DK DK, July 2013: with the new syntax below
-      call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
-              xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-              nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
+!       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+!             xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
+!             nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
 
 
     else
