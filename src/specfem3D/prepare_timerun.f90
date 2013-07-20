@@ -745,7 +745,7 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          if(ATTENUATION_3D_VAL) then
+          if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
             scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
           else
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
@@ -799,7 +799,7 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          if(ATTENUATION_3D_VAL) then
+          if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
             scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
           else
             scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.0
@@ -819,7 +819,7 @@
                     + scale_factor_minus_one * mul
           endif
 
-          if(ATTENUATION_3D_VAL) then
+          if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
             muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
           else
             muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
