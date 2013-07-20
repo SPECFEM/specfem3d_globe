@@ -181,7 +181,7 @@
         endif
 
        ! precompute terms for attenuation if needed
-        if(ATTENUATION_3D_VAL) then
+        if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(ijk,1,1,ispec)
         else if(ATTENUATION_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -389,7 +389,7 @@
         endif
 
        ! precompute terms for attenuation if needed
-        if(ATTENUATION_3D_VAL) then
+        if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
         else if(ATTENUATION_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -705,7 +705,7 @@
         endif
 
         ! precompute terms for attenuation if needed
-        if(ATTENUATION_3D_VAL) then
+        if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(ijk,1,1,ispec)
         else if(ATTENUATION_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -1099,7 +1099,7 @@
         endif
 
         ! precompute terms for attenuation if needed
-        if(ATTENUATION_3D_VAL) then
+        if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
         else if(ATTENUATION_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -1592,7 +1592,7 @@
         endif
 
         ! precompute terms for attenuation if needed
-        if(ATTENUATION_3D_VAL) then
+        if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(ijk,1,1,ispec)
           minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
         else if(ATTENUATION_VAL) then
@@ -1836,7 +1836,7 @@
         endif
 
         ! precompute terms for attenuation if needed
-        if(ATTENUATION_3D_VAL) then
+        if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
           one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
           minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
         else if(ATTENUATION_VAL) then
@@ -2092,7 +2092,7 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
 
-    if(ATTENUATION_3D_VAL) then
+    if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
 #ifdef FORCE_VECTORIZATION
       do ijk=1,NGLLCUBE
         factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec)
@@ -2240,7 +2240,7 @@
 
   do i_SLS = 1,N_SLS
 
-    if(ATTENUATION_3D_VAL) then
+    if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
 
     if(USE_LDDRK) then
       do i_memory = 1,5

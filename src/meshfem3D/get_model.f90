@@ -320,7 +320,7 @@
         endif ! of CUSTOM_REAL
 
         if(ATTENUATION) then
-          if(ATTENUATION_3D) then
+          if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
             tau_e_store(:,i,j,k,ispec) = tau_e(:)
             Qmu_store(i,j,k,ispec)     = Qmu
           else
