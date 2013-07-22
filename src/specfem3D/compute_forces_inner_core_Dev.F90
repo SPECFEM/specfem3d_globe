@@ -534,7 +534,7 @@
               sigma_xy = sigma_xy - R_memory(3,2,ijk,1,1,ispec)
               sigma_xz = sigma_xz - R_memory(4,2,ijk,1,1,ispec)
               sigma_yz = sigma_yz - R_memory(5,2,ijk,1,1,ispec)
-              
+
               R_xx_val = R_memory(1,3,ijk,1,1,ispec)
               R_yy_val = R_memory(2,3,ijk,1,1,ispec)
               sigma_xx = sigma_xx - R_xx_val

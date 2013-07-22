@@ -41,7 +41,7 @@
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                         rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
-                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
+                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
 
 ! creates the inner core cube of the mesh
 
@@ -102,7 +102,6 @@
 ! proc numbers for MPI
   integer myrank
 
-
 ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
 
@@ -131,7 +130,7 @@
   double precision, dimension(N_SLS) :: tau_s
   double precision  T_c_source
 
-  logical :: ACTUALLY_STORE_ARRAYS,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE
+  logical :: ACTUALLY_STORE_ARRAYS,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
 
   logical, dimension(nspec) :: ispec_is_tiso
 
@@ -282,7 +281,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
-                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE)
       enddo
     enddo
   enddo
