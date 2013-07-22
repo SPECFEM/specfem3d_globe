@@ -281,7 +281,8 @@
   size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
 
   print *
-  print *,'each time step to store in memory to undo attenuation requires storing ',size_to_store_at_each_time_step,' GB per core'
+  print *,'each time step to store in memory to undo attenuation will require storing ', &
+              size_to_store_at_each_time_step,' GB per core'
 
   print *
   print *,'*******************************************************************************'
@@ -329,18 +330,18 @@
   print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
 
   print *
-  print *,'each dumping on the disk to undo attenuation requires storing ',disk_size_of_each_dumping,' GB per core'
+  print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
 
   print *
-  print *,'each dumping on the disk requires storing ',disk_size_of_each_dumping*NPROCTOT, &
+  print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT, &
                ' GB for all cores'
 
   print *
-  print *,'ALL dumpings on the disk require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+  print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
 
   print *
   print *,'*******************************************************************************'
-  print *,'ALL dumpings on the disk require storing ', &
+  print *,'ALL dumpings on the disk will require storing ', &
                disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
   print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
   print *,'*******************************************************************************'
