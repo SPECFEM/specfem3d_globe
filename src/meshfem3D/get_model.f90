@@ -36,7 +36,7 @@
                       rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                       tau_s,tau_e_store,Qmu_store,T_c_source,ATT1,ATT2,ATT3,vnspec, &
-                      ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
+                      ABSORBING_CONDITIONS,ATTENUATION_1D_WITH_3D_STORAGE,elem_in_crust,elem_in_mantle)
 
   use meshfem3D_models_par
 
@@ -81,7 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,vnspec) :: tau_e_store
   double precision :: T_c_source
 
-  logical ABSORBING_CONDITIONS
+  logical :: ABSORBING_CONDITIONS,ATTENUATION_1D_WITH_3D_STORAGE
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters

@@ -52,7 +52,7 @@
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
 
 ! adds doubling elements to the different regions of the mesh
 
@@ -84,7 +84,7 @@
 ! 2D shape functions and their derivatives
   double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE
+  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
 
   double precision RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
@@ -358,7 +358,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
-                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE)
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then

@@ -43,7 +43,7 @@
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
                           this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta,USE_FULL_TISO_MANTLE, &
-                          ATT1,ATT2,ATT3,SIMULATION_TYPE,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION)
+                          ATT1,ATT2,ATT3,SIMULATION_TYPE,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
 
 ! creates the different regions of the mesh
 
@@ -80,7 +80,7 @@
 
   logical SAVE_MESH_FILES
 
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE
+  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
 
   double precision R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -567,7 +567,7 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot,&
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
 
     ! mesh doubling elements
     if( this_region_has_a_doubling(ilayer) ) &
@@ -598,7 +598,7 @@
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
+                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
 
   enddo ! of ilayer_loop
 
@@ -620,7 +620,7 @@
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                         rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
-                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3)
+                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
 
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')

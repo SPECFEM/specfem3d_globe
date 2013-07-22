@@ -39,7 +39,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
-                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE)
+                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE)
 
   use meshfem3D_models_par
 
@@ -50,7 +50,7 @@
 ! correct number of spectral elements in each block depending on chunk type
   integer ispec,nspec,nspec_stacey,ATT1,ATT2,ATT3
 
-  logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,USE_FULL_TISO_MANTLE
+  logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
 
   double precision RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,&
     R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER
@@ -199,7 +199,7 @@
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                     xstore,ystore,zstore,shape3D)
 
-  ! computes model's velocity/density/... values for the chosen Earth model
+  ! computes velocity/density/... values for the chosen Earth model
   call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
                       kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                       rhostore,dvpstore,nspec_ani, &
@@ -212,7 +212,7 @@
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                       tau_s,tau_e_store,Qmu_store,T_c_source, &
                       ATT1,ATT2,ATT3,size(tau_e_store,5), &
-                      ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
+                      ABSORBING_CONDITIONS,ATTENUATION_1D_WITH_3D_STORAGE,elem_in_crust,elem_in_mantle)
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   ! note:  using gll points to capture them results in a slightly more accurate mesh.
