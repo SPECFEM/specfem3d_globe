@@ -67,7 +67,6 @@
 
   implicit none
 
-! standard include of the MPI library
   include "constants.h"
   include "precision.h"
 

@@ -906,11 +906,9 @@
 
   end subroutine rcp_check_parameters
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine rcp_define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -959,8 +957,6 @@
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
-
 
 ! find element below top of which we should implement the second doubling in the mantle
 ! locate element closest to optimal value
@@ -2239,8 +2235,6 @@
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE
   integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
-
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
