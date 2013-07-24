@@ -96,17 +96,17 @@
 
   ! count anisotropic elements
   do ilayer = 1, NUMBER_OF_MESH_LAYERS
-      if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
-          ner_without_doubling = ner(ilayer)
-          if(this_region_has_a_doubling(ilayer)) then
-              ner_without_doubling = ner_without_doubling - 2
-              ispec_aniso = ispec_aniso + &
-              (NSPEC_DOUBLING_SUPERBRICK*(NEX_PER_PROC_XI/ratio_sampling_array(ilayer)/2)* &
-              (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer)/2))
-          endif
-          ispec_aniso = ispec_aniso + &
-          ((NEX_PER_PROC_XI/ratio_sampling_array(ilayer))*(NEX_PER_PROC_ETA/ratio_sampling_array(ilayer))*ner_without_doubling)
+    if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
+      ner_without_doubling = ner(ilayer)
+      if(this_region_has_a_doubling(ilayer)) then
+        ner_without_doubling = ner_without_doubling - 2
+        ispec_aniso = ispec_aniso + &
+            (NSPEC_DOUBLING_SUPERBRICK*(NEX_PER_PROC_XI/ratio_sampling_array(ilayer)/2)* &
+            (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer)/2))
       endif
+      ispec_aniso = ispec_aniso + &
+        ((NEX_PER_PROC_XI/ratio_sampling_array(ilayer))*(NEX_PER_PROC_ETA/ratio_sampling_array(ilayer))*ner_without_doubling)
+    endif
   enddo
 
   ! define static size of the arrays whose size depends on logical tests
@@ -393,7 +393,7 @@
   static_memory_size = static_memory_size + &
     2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
-! b_R_memory_inner_core
+  ! b_R_memory_inner_core
 !! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
 !!! b_epsilondev_inner_core
 !!! b_eps_trace_over_3_inner_core
