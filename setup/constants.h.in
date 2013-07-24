@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!             and CNRS / INRIA / University of Pau, France
+! (c) Princeton University and CNRS / INRIA / University of Pau
 !                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,12 @@
 ! set to SIZE_REAL to run in single precision
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
+
+! this for non blocking assembly
+  integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
+  integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
+
+!*********************************************************************************************************
 
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
@@ -234,7 +240,14 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
-! mesh coloring:
+!*********************************************************************************************************
+! added these parameters for the GPU version of the solver with mesh coloring
+
+! sort outer elements first and then inner elements
+! in order to use non blocking MPI to overlap communications
+  logical, parameter :: SORT_MESH_INNER_OUTER = .true.
+  integer, parameter :: NGNOD_HEXAHEDRA = 8
+
 ! add mesh coloring for the GPU + MPI implementation
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
   integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
@@ -255,25 +268,6 @@
 !!
 !!-----------------------------------------------------------
 
-! this parameter must be set to .true. to compute anisotropic kernels
-! in crust and mantle (related to the 21 Cij in geographical coordinates)
-! default is .false. to compute isotropic kernels (related to alpha and beta)
-  logical, parameter :: ANISOTROPIC_KL = .false.
-
-! output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho)
-! rather than fully anisotropic kernels in case ANISOTROPIC_KL is set to .true.
-  logical, parameter :: SAVE_TRANSVERSE_KL = .false.
-
-! output approximate hessian in crust mantle region
-  logical, parameter :: APPROXIMATE_HESS_KL = .false.
-
-! output kernel mask to zero out source region
-  logical, parameter :: SAVE_SOURCE_MASK = .false.
-
-! forces transverse isotropy for all mantle elements
-! (default is to use transverse isotropy only between MOHO and 220 )
-  logical, parameter :: USE_FULL_TISO_MANTLE = .false.
-
 ! regular kernel parameters
   character(len=*), parameter :: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt'
   integer, parameter :: NM_KL_REG_LAYER = 100
@@ -282,12 +276,6 @@
   real, parameter :: KL_REG_MAX_LON = 360.0
   real, parameter :: KL_REG_MIN_LAT = -90.0
   real, parameter :: KL_REG_MAX_LAT = +90.0
-
-! forces attenuation arrays to be fully 3D and defined on all GLL points
-! (useful for more accurate attenuation profiles and adjoint inversions)
-! (if set to .false., 3D attenuation is only used for models with 3D attenuation distributions)
-  logical, parameter :: USE_3D_ATTENUATION_ARRAYS = .false.
-
 
 !!-----------------------------------------------------------
 !!
@@ -361,6 +349,7 @@
 
 ! Deville routines optimized for NGLLX = NGLLY = NGLLZ = 5
   integer, parameter :: m1 = NGLLX, m2 = NGLLX * NGLLY
+  integer, parameter :: NGLLCUBE = NGLLX * NGLLY * NGLLZ
 
 ! mid-points inside a GLL element
   integer, parameter :: MIDX = (NGLLX+1)/2
@@ -372,6 +361,7 @@
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
+  double precision, parameter :: ONE_HALF = HALF, ONE_FOURTH = 0.25d0, ONE_EIGHTH = 0.125d0, ONE_SIXTEENTH = 0.0625d0
 
   real(kind=CUSTOM_REAL), parameter :: &
     ONE_THIRD   = 1._CUSTOM_REAL/3._CUSTOM_REAL, &
@@ -458,10 +448,10 @@
   integer, parameter :: REFERENCE_MODEL_PREM   = 1
   integer, parameter :: REFERENCE_MODEL_IASP91 = 2
   integer, parameter :: REFERENCE_MODEL_1066A  = 3
-  integer, parameter :: REFERENCE_MODEL_AK135  = 4
-  integer, parameter :: REFERENCE_MODEL_1DREF  = 5
+  integer, parameter :: REFERENCE_MODEL_AK135F_NO_MUD = 4
+  integer, parameter :: REFERENCE_MODEL_1DREF = 5
   integer, parameter :: REFERENCE_MODEL_JP1D  = 6
-  integer, parameter :: REFERENCE_MODEL_SEA1D  = 7
+  integer, parameter :: REFERENCE_MODEL_SEA1D = 7
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS   = 1
@@ -477,16 +467,6 @@
   integer, parameter :: THREE_D_MODEL_S40RTS = 11
   integer, parameter :: THREE_D_MODEL_GAPP2  = 12
 
-! define flag for regions of the global Earth for attenuation
-  integer, parameter :: NUM_REGIONS_ATTENUATION = 5
-
-  integer, parameter :: IREGION_ATTENUATION_INNER_CORE = 1
-  integer, parameter :: IREGION_ATTENUATION_CMB_670 = 2
-  integer, parameter :: IREGION_ATTENUATION_670_220 = 3
-  integer, parameter :: IREGION_ATTENUATION_220_80 = 4
-  integer, parameter :: IREGION_ATTENUATION_80_SURFACE = 5
-  integer, parameter :: IREGION_ATTENUATION_UNDEFINED = 6
-
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3
 
@@ -496,15 +476,11 @@
   integer, parameter :: ATTENUATION_COMP_RESOLUTION = 1
   integer, parameter :: ATTENUATION_COMP_MAXIMUM    = 5000
 
-! for lookup table for attenuation every 100 m in radial direction of Earth model
-  integer, parameter          :: NRAD_ATTENUATION  = 70000
-  double precision, parameter :: TABLE_ATTENUATION = R_EARTH_KM * 10.0d0
-
 ! for determination of the attenuation period range
 ! if this is set to .true. then the hardcoded values will be used
 ! otherwise they are computed automatically from the Number of elements
 ! This *may* be a useful parameter for Benchmarking against older versions
-  logical, parameter           :: ATTENUATION_RANGE_PREDEFINED = .false.
+  logical, parameter :: ATTENUATION_RANGE_PREDEFINED = .false.
 
 ! flag for the four edges of each slice and for the bottom edge
   integer, parameter :: XI_MIN  = 1
@@ -525,12 +501,12 @@
 ! number of faces a given slice can share with other slices
 ! this is at most 2, except when there is only once slice per chunk
 ! in which case it is 4
-  integer, parameter :: NUMFACES_SHARED = 4
+  integer, parameter :: NUMFACES_SHARED = 2 !!!!!  DK DK removed support for one slice only, was 4
 
 ! number of corners a given slice can share with other slices
 ! this is at most 1, except when there is only once slice per chunk
 ! in which case it is 4
-  integer, parameter :: NUMCORNERS_SHARED = 4
+  integer, parameter :: NUMCORNERS_SHARED = 1 !!!!!!  DK DK removed support for one slice only, was 4
 
 ! number of slaves per corner
   integer, parameter :: NUMSLAVES = 2
@@ -576,13 +552,37 @@
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
-!!!!!!!!!!!!!! parameters added for the thread-safe version of the code
-
 !!-----------------------------------------------------------
 !!
 !! model constants
 !!
 !!-----------------------------------------------------------
+
+! number of layers in DATA/1066a/1066a.dat
+  integer, parameter :: NR_1066A = 160
+
+! number of layers in ak135-F
+  integer, parameter :: NR_AK135F_NO_MUD = 136
+
+! number of layers in DATA/s362ani/REF
+  integer, parameter :: NR_REF = 750
+
+! number of layers in DATA/Lebedev_sea99 1D model
+  integer, parameter :: NR_SEA1D = 163
+
+! three_d_mantle_model_constants
+  integer, parameter :: NK_20 = 20,NS_20 = 20,NS_40 = 40, ND = 1
+
+! heterogen_mantle_model_constants
+  integer, parameter :: N_R = 256,N_THETA = 256,N_PHI = 256
+
+! Japan 3D model (Zhao, 1994) constants
+  integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
+  integer, parameter :: MKA=2101,MKB=2101
+
+! QRFSI12 constants
+  integer,parameter :: NKQ=8,MAXL_Q=12
+  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
 
 ! The meaningful range of Zhao et al. (1994) model is as follows:
 !        latitude : 32 - 45 N
@@ -595,6 +595,30 @@
   double precision,parameter :: LON_MIN = 130.d0
   double precision,parameter :: DEP_MAX = 500.d0
 
+! crustal_model_constants
+! crustal model parameters for crust2.0
+  integer, parameter :: NKEYS_CRUST = 359
+  integer, parameter :: NLAYERS_CRUST = 8
+  integer, parameter :: NCAP_CRUST = 180
+
+! General Crustmaps parameters
+  integer, parameter :: CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
+  integer, parameter :: NLAYERS_CRUSTMAP = 5
+
+! parameters for EPCRUST , from Molinari & Morelli model(2011)
+!       latitude :  9.0N - 89.5N
+!       longitude:  56.0W - 70.0E
+  character(len=*), parameter :: PATHNAME_EPCRUST = 'DATA/epcrust/EPcrust_0_5.txt'
+  integer, parameter :: EPCRUST_NLON = 253, EPCRUST_NLAT = 162, EPCRUST_NLAYER = 3
+  double precision, parameter :: EPCRUST_LON_MIN = -56.0d0
+  double precision, parameter :: EPCRUST_LON_MAX =  70.0d0
+  double precision, parameter :: EPCRUST_LAT_MIN =   9.0d0
+  double precision, parameter :: EPCRUST_LAT_MAX =  89.5d0
+  double precision, parameter :: EPCRUST_SAMPLE = 0.5d0
+  logical, parameter :: flag_smooth_epcrust = .true.
+  integer, parameter :: NTHETA_EP = 4, NPHI_EP = 20
+  double precision, parameter :: cap_degree_EP = 0.2d0
+
 ! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
 
@@ -604,9 +628,6 @@
 !!-- uncomment for using S362ANI as reference model  (Hejun Zhu)
 !  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
 !  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
-
-
-!!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
 
 !!-----------------------------------------------------------
 !!
@@ -673,20 +694,9 @@
   integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
-! this for LDDRK
-  logical, parameter :: USE_LDDRK = .false. ! .true.
-
-! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
-! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
-! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
-! depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
-! (for instance for models with a large range of Poisson's ratio values).
-! Since the SPECFEM3D_GLOBE code computes the time step using the Newmark scheme, for LDDRK we will simply
-! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
-  logical, parameter :: INCREASE_CFL_FOR_LDDRK = .true.
-  double precision, parameter :: RATIO_BY_WHICH_TO_INCREASE_IT = 1.5d0
-
+! for LDDRK high-order time scheme
   integer, parameter :: NSTAGE = 6
+
   real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)

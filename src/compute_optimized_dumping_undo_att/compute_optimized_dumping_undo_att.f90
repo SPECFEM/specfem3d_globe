@@ -43,13 +43,15 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
+          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY, &
+          ATT1,ATT2,ATT3,ATT4,ATT5
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,RMOHO_FICTITIOUS_IN_MESHER
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,RMOHO_FICTITIOUS_IN_MESHER, &
+          RATIO_BY_WHICH_TO_INCREASE_IT
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
@@ -59,7 +61,11 @@
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL
+          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX, &
+          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE
 
   character(len=150) LOCAL_PATH,MODEL
 
@@ -84,7 +90,7 @@
   double precision :: static_memory_size
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
          NSPEC_INNER_CORE_ATTENUATION, &
          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -141,7 +147,11 @@
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY,&
-         SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION)
+         SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
+          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
+          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
+          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
 
 ! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
 ! thus set it to that value here in this serial code even if it has a different value in the Par_file
@@ -166,7 +176,7 @@
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
                    NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                   NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+                   NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &
                    NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
                    NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -176,7 +186,9 @@
                    NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                    NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                    NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
+                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,ATT1,ATT2,ATT3, &
+                   APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
+                   NCHUNKS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,static_memory_size)
 
   NGLOB1D_RADIAL_TEMP(:) = &
   (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
@@ -222,6 +234,8 @@
   print *,'How much memory (in GB) is installed on your machine per CPU core?'
   print *,'        (or per GPU card or per INTEL MIC Phi board)?'
   print *,'  (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)'
+  print *,'  (this value is for instance 4 GB on Tiger at Princeton, 2 GB on the non-GPU part of Titan at ORNL i.e. when using'
+  print *,'   CPUs only there, 2 GB also on the machine used by Christina Morency, and 1.5 GB on the GPU cluster in Marseille)'
   read(*,*) gigabytes_avail_per_core
 
   if(gigabytes_avail_per_core < 0.1d0) stop 'less than 100 MB per core does not seem realistic; exiting...'
@@ -230,11 +244,11 @@
   print *
   print *,'What percentage of this total do you allow us to use, keeping in mind that you'
   print *,'need to leave some memory available for the GNU/Linux system to run?'
-  print *,'  (a typical value is 90%; 92% to 95% is probably OK too; 85% is very safe)'
+  print *,'  (a typical value is 90%; 92% is probably OK too; 85% is very safe)'
   read(*,*) percentage_to_use_per_core
 
   if(percentage_to_use_per_core < 50.d0) stop 'less than 50% does not seem realistic; exiting...'
-  if(percentage_to_use_per_core > 96.d0) stop 'more than 96% is risky; exiting...'
+  if(percentage_to_use_per_core > 95.d0) stop 'more than 95% is risky; exiting...'
 
   what_we_can_use_in_GB = gigabytes_avail_per_core * percentage_to_use_per_core / 100.d0
 
@@ -267,7 +281,8 @@
   size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
 
   print *
-  print *,'each time step to store in memory to undo attenuation requires storing ',size_to_store_at_each_time_step,' GB per core'
+  print *,'each time step to store in memory to undo attenuation will require storing ', &
+              size_to_store_at_each_time_step,' GB per core'
 
   print *
   print *,'*******************************************************************************'
@@ -298,7 +313,7 @@
   if (ATTENUATION) then
 ! R_memory_crust_mantle
     disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
-      dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+      dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! R_memory_inner_core
     disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
@@ -315,18 +330,18 @@
   print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
 
   print *
-  print *,'each dumping on the disk to undo attenuation requires storing ',disk_size_of_each_dumping,' GB per core'
+  print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
 
   print *
-  print *,'each dumping on the disk requires storing ',disk_size_of_each_dumping*NPROCTOT, &
+  print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT, &
                ' GB for all cores'
 
   print *
-  print *,'ALL dumpings on the disk require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+  print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
 
   print *
   print *,'*******************************************************************************'
-  print *,'ALL dumpings on the disk require storing ', &
+  print *,'ALL dumpings on the disk will require storing ', &
                disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
   print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
   print *,'*******************************************************************************'

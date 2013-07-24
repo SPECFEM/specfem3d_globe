@@ -33,7 +33,7 @@ shared_TARGETS = \
 
 shared_OBJECTS = \
 	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
+	$O/broadcast_computed_parameters.o \
 	$O/calendar.o \
 	$O/count_number_of_sources.o \
 	$O/create_name_database.o \
@@ -79,8 +79,8 @@ $(shared_OBJECTS): S = ${S_TOP}/src/shared
 $O/auto_ner.o: ${SETUP}/constants.h $S/auto_ner.f90
 	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} $S/auto_ner.f90
 
-$O/broadcast_compute_parameters.o: ${SETUP}/constants.h $S/broadcast_compute_parameters.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/broadcast_compute_parameters.o ${FCFLAGS_f90} $S/broadcast_compute_parameters.f90
+$O/broadcast_computed_parameters.o: ${SETUP}/constants.h $S/broadcast_computed_parameters.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/broadcast_computed_parameters.o ${FCFLAGS_f90} $S/broadcast_computed_parameters.f90
 
 $O/calendar.o: $S/calendar.f90
 	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} $S/calendar.f90
@@ -149,8 +149,8 @@ $O/reduce.o: ${SETUP}/constants.h $S/reduce.f90
 $O/rthetaphi_xyz.o: ${SETUP}/constants.h $S/rthetaphi_xyz.f90
 	${FCCOMPILE_CHECK} -c -o $O/rthetaphi_xyz.o ${FCFLAGS_f90} $S/rthetaphi_xyz.f90
 
-$O/save_header_file.o: ${SETUP}/constants.h $S/save_header_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} $S/save_header_file.f90
+$O/save_header_file.o: ${SETUP}/constants.h $S/save_header_file.F90
+	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} $S/save_header_file.F90
 
 $O/spline_routines.o: ${SETUP}/constants.h $S/spline_routines.f90
 	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} $S/spline_routines.f90

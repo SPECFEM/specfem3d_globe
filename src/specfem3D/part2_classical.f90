@@ -8,7 +8,17 @@
 
     ! backward field
     if (SIMULATION_TYPE == 3) then
+
       ! mantle
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_CRUST_MANTLE*NDIM
+        b_displ_crust_mantle(i,1) = b_displ_crust_mantle(i,1) &
+          + b_deltat*b_veloc_crust_mantle(i,1) + b_deltatsqover2*b_accel_crust_mantle(i,1)
+        b_veloc_crust_mantle(i,1) = b_veloc_crust_mantle(i,1) &
+          + b_deltatover2*b_accel_crust_mantle(i,1)
+        b_accel_crust_mantle(i,1) = 0._CUSTOM_REAL
+      enddo
+  else
       do i=1,NGLOB_CRUST_MANTLE
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
@@ -16,6 +26,8 @@
           + b_deltatover2*b_accel_crust_mantle(:,i)
         b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       enddo
+  endif
+
       ! outer core
       do i=1,NGLOB_OUTER_CORE
         b_displ_outer_core(i) = b_displ_outer_core(i) &
@@ -24,7 +36,17 @@
           + b_deltatover2*b_accel_outer_core(i)
         b_accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
+
       ! inner core
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_INNER_CORE*NDIM
+        b_displ_inner_core(i,1) = b_displ_inner_core(i,1) &
+          + b_deltat*b_veloc_inner_core(i,1) + b_deltatsqover2*b_accel_inner_core(i,1)
+        b_veloc_inner_core(i,1) = b_veloc_inner_core(i,1) &
+          + b_deltatover2*b_accel_inner_core(i,1)
+        b_accel_inner_core(i,1) = 0._CUSTOM_REAL
+      enddo
+  else
       do i=1,NGLOB_INNER_CORE
         b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
           + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
@@ -32,6 +54,8 @@
           + b_deltatover2*b_accel_inner_core(:,i)
         b_accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
+  endif
+
     endif ! SIMULATION_TYPE == 3
 
     ! compute the maximum of the norm of the displacement
@@ -73,7 +97,7 @@
         call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -88,14 +112,15 @@
           b_buffer_send_faces,b_buffer_received_faces,npoin2D_max_all_CM_IC, &
           b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar,b_iphase,b_icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE, &
+           wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
       else
         call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -112,7 +137,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
       endif
     endif
 
@@ -179,7 +204,7 @@
 
     ! assemble all the contributions between slices using MPI
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
     if (SIMULATION_TYPE == 3) then
 
@@ -206,7 +231,7 @@
           call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -221,15 +246,16 @@
           b_buffer_send_faces,b_buffer_received_faces,npoin2D_max_all_CM_IC, &
           b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar,b_iphase,b_icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE, &
+           wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
         else
           ! div_displ_outer_core is initialized to zero in the following subroutine.
           call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
-           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core_dummy, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -246,7 +272,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME,&
-           istage,A_array_rotation_lddrk,B_array_rotation_lddrk)
+           istage,A_array_rotation_lddrk,B_array_rotation_lddrk,USE_LDDRK,SIMULATION_TYPE)
         endif
 
         do while (b_iphase <= 7) ! make sure the last communications are finished and processed
@@ -265,7 +291,7 @@
             NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,b_iphase)
         enddo
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
       ! Newmark time scheme - corrector for fluid parts
       do i=1,NGLOB_OUTER_CORE
@@ -315,7 +341,7 @@
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
           muhstore_crust_mantle,eta_anisostore_crust_mantle, &
           c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
@@ -326,11 +352,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_crust_mantle,5),&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -367,11 +393,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_crust_mantle,5),&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
       endif
     endif
 
@@ -400,16 +426,16 @@
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_inner_core,5),&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -438,19 +464,18 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_inner_core,5),&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_inner_core,eps_trace_over_3_inner_core)
       endif
     endif
 
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       if(SIMULATION_TYPE == 3) then
-
         call compute_stacey_crust_mantle_backward(ichunk, &
                               NSTEP,it,ibool_crust_mantle, &
                               b_accel_crust_mantle, &
@@ -534,7 +559,7 @@
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
     if (SIMULATION_TYPE == 3) then
 
@@ -595,7 +620,7 @@
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
           muhstore_crust_mantle,eta_anisostore_crust_mantle, &
           c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
@@ -606,11 +631,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_veloc_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_crust_mantle,5),&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
         else
           call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -647,11 +672,11 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat,b_displ_crust_mantle, &
+          b_R_memory_crust_mantle,one_minus_sum_beta_crust_mantle,b_deltat, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_crust_mantle,5),&
+          istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
         endif
 
         ! Deville routine
@@ -679,16 +704,16 @@
             npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,b_iphase_CC, &
           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_inner_core,5),&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
         else
           call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -717,12 +742,12 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat,b_veloc_inner_core, &
+          b_R_memory_inner_core,one_minus_sum_beta_inner_core,b_deltat, &
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),PARTIAL_PHYS_DISPERSION_ONLY,&
-          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL)
+          size(factor_common_inner_core,5),&
+          istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
+          epsilondev_inner_core,eps_trace_over_3_inner_core)
         endif
 
 ! assemble all the contributions between slices using MPI
@@ -759,10 +784,9 @@
           enddo
       endif   ! end of assembling forces with the central cube
 
-! ------------------- new non blocking implementation -------------------
+! ------------------- non blocking implementation -------------------
 
       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-
          do i=1,NGLOB_CRUST_MANTLE
             b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
@@ -770,9 +794,7 @@
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
             b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
          enddo
-
       else
-
          do i=1,NGLOB_CRUST_MANTLE
             b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
@@ -780,7 +802,6 @@
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
             b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
          enddo
-
       endif
 
    endif ! SIMULATION_TYPE == 3
@@ -792,7 +813,7 @@
                                    rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                    rmass_ocean_load,normal_top_crust_mantle, &
                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                   updated_dof_ocean_load,NGLOB_XY, &
+                                   updated_dof_ocean_load,NGLOB_XY_CM, &
                                    NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
                                    ABSORBING_CONDITIONS)
      endif
@@ -808,10 +829,18 @@
     ! Newmark time scheme - corrector for elastic parts
 
     if (SIMULATION_TYPE == 3) then
+
       ! mantle
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_CRUST_MANTLE*NDIM
+        b_veloc_crust_mantle(i,1) = b_veloc_crust_mantle(i,1) + b_deltatover2*b_accel_crust_mantle(i,1)
+      enddo
+  else
       do i=1,NGLOB_CRUST_MANTLE
         b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
       enddo
+  endif
+
       ! inner core
       do i=1,NGLOB_INNER_CORE
         b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
@@ -819,8 +848,18 @@
         b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
          - b_two_omega_earth*b_veloc_inner_core(1,i)
         b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
+      enddo
+
+  if(FORCE_VECTORIZATION_VAL) then
+      do i=1,NGLOB_INNER_CORE*NDIM
+        b_veloc_inner_core(i,1) = b_veloc_inner_core(i,1) + b_deltatover2*b_accel_inner_core(i,1)
+      enddo
+  else
+      do i=1,NGLOB_INNER_CORE
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
       enddo
+  endif
+
     endif ! SIMULATION_TYPE == 3
 
     ! restores last time snapshot saved for backward/reconstruction of wavefields
@@ -873,14 +912,4 @@
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
-
-!
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!
-
 
