@@ -66,16 +66,17 @@ subroutine get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
 
   end subroutine get_perm_color_faster
 
-!-----------------------------------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-subroutine get_color_faster(ibool, is_on_a_slice_edge, myrank, nspec, nglob, &
+  subroutine get_color_faster(ibool, is_on_a_slice_edge, myrank, nspec, nglob, &
                              color, nb_colors_outer_elements, nb_colors_inner_elements, nspec_outer)
 
   implicit none
 
   include "constants.h"
 
-! local variables
   integer nspec,nglob
 
   logical, dimension(nspec) :: is_on_a_slice_edge

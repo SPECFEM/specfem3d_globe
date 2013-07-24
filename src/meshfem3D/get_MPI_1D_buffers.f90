@@ -118,7 +118,7 @@
 
   close(10)
 
-! compare number of edge elements detected to analytical value
+  ! compare number of edge elements detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,1) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,1)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
 
@@ -168,7 +168,7 @@
 
   close(10)
 
-! compare number of edge elements and points detected to analytical value
+  ! compare number of edge elements and points detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,2) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,2)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 
@@ -226,7 +226,7 @@
 
   close(10)
 
-! compare number of edge elements detected to analytical value
+  ! compare number of edge elements detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,4) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,4)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
 

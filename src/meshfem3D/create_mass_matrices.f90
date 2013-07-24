@@ -329,8 +329,8 @@
       iz_oceans = NGLLZ
 
       ! loops over surface points
-      do ix_oceans = 1,NGLLX
-        do iy_oceans = 1,NGLLY
+      do iy_oceans = 1,NGLLY
+        do ix_oceans = 1,NGLLX
 
           iglob=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
 
@@ -350,11 +350,12 @@
             call reduce(thetaval,phival)
 
             ! convert the geocentric colatitude to a geographic colatitude
-            colat = PI/2.0d0 - datan(1.006760466d0*dcos(thetaval)/dmax1(TINYVAL,dsin(thetaval)))
+            colat = PI_OVER_TWO - &
+                datan(1.006760466d0*dcos(thetaval)/dmax1(TINYVAL,dsin(thetaval)))
 
             ! get geographic latitude and longitude in degrees
-            lat = 90.0d0 - colat*180.0d0/PI
-            lon = phival*180.0d0/PI
+            lat = 90.0d0 - colat*RADIANS_TO_DEGREES
+            lon = phival * RADIANS_TO_DEGREES
 
             ! compute elevation at current point
             call get_topo_bathy(lat,lon,elevation,ibathy_topo)
