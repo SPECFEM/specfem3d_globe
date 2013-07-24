@@ -187,7 +187,6 @@
 
   integer myrank
 
-
 !---
 !
 ! ADD YOUR MODEL HERE
@@ -749,7 +748,6 @@
 
   implicit none
 
-  !integer myrank
   double precision,intent(in) :: lat,lon,r
   double precision,intent(out) :: vpc,vsc,rhoc
   double precision,intent(out) :: moho
