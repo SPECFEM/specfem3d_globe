@@ -263,7 +263,7 @@
   call read_value_logical(ADIOS_FOR_AVS_DX, 'solver.ADIOS_FOR_AVS_DX', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_AVS_DX'
 
-  ! closes parameter file
+  ! close parameter file
   call close_parameter_file()
 
   end subroutine read_parameter_file

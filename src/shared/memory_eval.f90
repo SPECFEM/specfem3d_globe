@@ -397,7 +397,7 @@
 !! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
 !!! b_epsilondev_inner_core
 !!! b_eps_trace_over_3_inner_core
-! rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
+  ! rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
 ! static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
   static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ADJOINT*dble(CUSTOM_REAL)
