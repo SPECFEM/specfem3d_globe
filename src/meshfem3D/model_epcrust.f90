@@ -68,7 +68,7 @@
 
   include "constants.h"
 
-  integer:: myrank,ier
+  integer :: myrank,ier
 
   ! allocates arrays for model
   allocate(lon_ep(EPCRUST_NLON,EPCRUST_NLAT), &
@@ -122,7 +122,10 @@
   call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
 
   open(unit=1001,file=trim(EPCRUST_FNM),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file for EPcrust')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(EPCRUST_FNM), '": ', ier
+    call exit_MPI(0, 'error model epcrust')
+  endif
 
   read(1001,*) header
 
@@ -254,7 +257,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine epcrust_smooth_base(x,y,x1,y1,weight)
 

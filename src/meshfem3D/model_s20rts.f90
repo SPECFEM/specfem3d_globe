@@ -232,7 +232,7 @@
 !----------------------------------
 !
 
-  subroutine s20rts_splhsetup()!!!!!!!!!!!!!!(spknt,qq0,qq)
+  subroutine s20rts_splhsetup()
 
   use model_s20rts_par
 

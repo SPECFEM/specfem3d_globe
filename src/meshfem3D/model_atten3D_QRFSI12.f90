@@ -133,7 +133,10 @@
 
 ! get the dq model coefficients
   open(unit=10,file=QRFSI12,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening model file QRFSI12.dat')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(QRFSI12), '": ', ier
+    call exit_MPI(0, 'error model QRFSI12')
+  endif
 
   do k=1,NKQ
     read(10,*)index
@@ -168,7 +171,10 @@
 
 ! get the depths and 1/Q values of the reference model
   open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening model file ref_QRFSI12')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(QRFSI12_ref), '": ', ier
+    call exit_MPI(0, 'error model QRFSI12')
+  endif
 
   do j=1,NDEPTHS_REFQ
     read(11,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)

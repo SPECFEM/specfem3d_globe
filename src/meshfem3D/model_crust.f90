@@ -87,13 +87,11 @@
   call MPI_BCAST(abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
-
   end subroutine model_crust_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine model_crust(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
 
@@ -206,7 +204,10 @@
 
   call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
   open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file CNtype2.txt of crust2.0 model')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(CNtype2), '": ', ier
+    call exit_MPI(0, 'error model crust2.0')
+  endif
 
   do ila=1,NCAP_CRUST/2
     read(1,*) icolat,(abbreviation(ila,i),i=1,NCAP_CRUST)
@@ -215,7 +216,10 @@
 
   call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
   open(unit=1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file CNtype2_key_modif.txt of crust2.0 model')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(CNtype2_key_modif), '": ', ier
+    call exit_MPI(0, 'error model crust2.0')
+  endif
 
   h_moho_min = HUGEVAL
   h_moho_max = -HUGEVAL
