@@ -310,11 +310,9 @@
   static_memory_size = static_memory_size + &
     dble(NDIM)*dble(NGLLX)*dble(NGLLY)*NSPEC2D_TOP(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-
   ! rho_vp_crust_mantle,rho_vs_crust_mantle
   static_memory_size = static_memory_size + &
     2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STACEY*dble(CUSTOM_REAL)
-
 
 ! inner core
 

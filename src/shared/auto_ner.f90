@@ -76,7 +76,7 @@
   MIN_GLL_POINT_SPACING_5         =   0.1730d0
 
   ! element at inner core
-  elem_size = RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
+  elem_size = RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_INNER_CORE) / &
                 ( dble(NEX_MAX) / DOUBLING_INNER_CORE )
 
   ! minimum grid point spacing
