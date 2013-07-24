@@ -115,7 +115,7 @@
   ! makes smaller hdur for movies
   logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.
 
-! sources
+  ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
   if(myrank == 0) then
@@ -248,7 +248,6 @@
                       yr,jda,ho,mi,sec,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
                       theta_source(1),phi_source(1),rspl,espl,espl2,nspl, &
                       ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS_VAL)
-
 
   ! count number of receivers located in this slice
   nrec_local = 0
@@ -422,7 +421,7 @@
 
     !   check that the source slice number is okay
     if(islice_selected_source(isource) < 0 .or. islice_selected_source(isource) > NPROCTOT_VAL-1) &
-      call exit_MPI(myrank,'something is wrong with the source slice number')
+      call exit_MPI(myrank,'error: source slice number invalid')
 
     !   compute source arrays in source slice
     if(myrank == islice_selected_source(isource)) then
@@ -437,6 +436,7 @@
       sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
 
     endif
+
   enddo
 
   end subroutine setup_sources_receivers_srcarr

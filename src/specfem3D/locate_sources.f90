@@ -347,10 +347,6 @@
       y_target_source = r_target_source*dsin(theta)*dsin(phi)
       z_target_source = r_target_source*dcos(theta)
 
-      ! debug
-      ! would only output desired target locations
-      !if(myrank == 0) write(IOVTK,*) sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
-
       ! set distance to huge initial value
       distmin = HUGEVAL
 
@@ -939,7 +935,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                       tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)

@@ -1,7 +1,0 @@
-# List files that should not be committed
-.*swp
-.*swo
-.*swn
-*~
-*.mod
-obj/*

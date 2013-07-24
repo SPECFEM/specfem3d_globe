@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
+  subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
            ystore,zstore,ibool,ispec_is_tiso, &
            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
            hprime_xx,hprime_yy,hprime_zz, &

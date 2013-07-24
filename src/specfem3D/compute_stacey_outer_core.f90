@@ -104,7 +104,7 @@
   !integer :: reclen1,reclen2
   integer :: i,j,k,ispec2D,ispec,iglob
 
-  ! note: we use c functions for I/O as they still have a better performance than
+  ! note: we use C functions for I/O as they still have a better performance than
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !

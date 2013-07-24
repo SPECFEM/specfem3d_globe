@@ -52,7 +52,7 @@
   include "constants.h"
   include "precision.h"
 
-  integer myrank,NCHUNKS,iphase
+  integer :: myrank,NCHUNKS,iphase
   integer :: nglob
 
   ! array to assemble

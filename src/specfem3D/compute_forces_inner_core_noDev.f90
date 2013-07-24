@@ -213,7 +213,7 @@
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
   real(kind=CUSTOM_REAL) templ
 
-!for LDDRK
+! for LDDRK
   integer :: istage
   logical :: USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk

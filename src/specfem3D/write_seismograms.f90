@@ -339,17 +339,16 @@
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
 
-! local parameters
-  character(len=2) bic
+  ! local parameters
+  character(len=2) :: bic
   ! variables used for calculation of backazimuth and
   ! rotation of components if ROTATE_SEISMOGRAMS=.true.
-  integer ior_start,ior_end
-  double precision backaz
-  real(kind=CUSTOM_REAL) phi,cphi,sphi
-  integer isample
+  integer :: ior_start,ior_end
+  double precision :: backaz
+  real(kind=CUSTOM_REAL) :: phi,cphi,sphi
+  integer :: isample
 
-  !----------------------------------------------------------------
-
+  ! get band code
   call band_instrument_code(DT,bic)
 
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T

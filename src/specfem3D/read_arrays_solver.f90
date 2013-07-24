@@ -102,7 +102,8 @@
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
-        status='old',action='read',form='unformatted')
+        status='old',action='read',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin')
 
   read(IIN) xix
   read(IIN) xiy

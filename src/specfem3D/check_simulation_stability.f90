@@ -269,7 +269,6 @@
     ! write time stamp file to give information about progression of simulation
 !! DK DK for UNDO_ATTENUATION
     if(SIMULATION_TYPE == 1) then
-!     write(outputname,"('/timestamp',i6.6)") it
       write(outputname,"('/timestamp_forward',i6.6)") it
     else
       write(outputname,"('/timestamp_backward',i6.6)") it

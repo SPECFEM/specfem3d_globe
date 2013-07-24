@@ -739,7 +739,6 @@
   ! synchronizes processes
   call sync_all()
 
-
   ! read parameters to couple fluid and solid regions
   !
   ! outer core
