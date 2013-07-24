@@ -177,7 +177,7 @@
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
-  integer :: ispec,i,j,k,iglob1
+  integer :: ispec,i,j,k,iglob
 
   integer :: num_elements,ispec_p
   integer :: iphase
@@ -207,10 +207,10 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          iglob1 = ibool(i,j,k,ispec)
-          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob1)
-          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob1)
-          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob1)
+          iglob = ibool(i,j,k,ispec)
+          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob)
+          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob)
+          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob)
         enddo
       enddo
     enddo
@@ -225,10 +225,10 @@
           do k=1,NGLLZ
              do j=1,NGLLY
                 do i=1,NGLLX
-                  iglob1 = ibool(i,j,k,ispec)
-                  dummyx_loc_att(i,j,k) = dummyx_loc(i,j,k) + deltat*veloc_crust_mantle(1,iglob1)
-                  dummyy_loc_att(i,j,k) = dummyy_loc(i,j,k) + deltat*veloc_crust_mantle(2,iglob1)
-                  dummyz_loc_att(i,j,k) = dummyz_loc(i,j,k) + deltat*veloc_crust_mantle(3,iglob1)
+                  iglob = ibool(i,j,k,ispec)
+                  dummyx_loc_att(i,j,k) = dummyx_loc(i,j,k) + deltat*veloc_crust_mantle(1,iglob)
+                  dummyy_loc_att(i,j,k) = dummyy_loc(i,j,k) + deltat*veloc_crust_mantle(2,iglob)
+                  dummyz_loc_att(i,j,k) = dummyz_loc(i,j,k) + deltat*veloc_crust_mantle(3,iglob)
                 enddo
              enddo
           enddo
@@ -547,8 +547,8 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          iglob1 = ibool(i,j,k,ispec)
-          accel_crust_mantle(:,iglob1) = accel_crust_mantle(:,iglob1) + sum_terms(:,i,j,k)
+          iglob = ibool(i,j,k,ispec)
+          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) + sum_terms(:,i,j,k)
         enddo
       enddo
     enddo
@@ -568,11 +568,7 @@
     ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
     ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
-
-!daniel: att - debug update R_memory variable only if not last time step which will be saved..
-!      if( .not. it == NSTEP ) then
-
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
       ! updates R_memory
       call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                          vx,vy,vz,vnspec,factor_common, &

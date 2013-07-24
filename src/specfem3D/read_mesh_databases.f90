@@ -60,7 +60,7 @@
     call read_mesh_databases_coupling()
   endif
 
-  ! reads "addressing.txt" 2-D addressing (needed for stacey boundaries)
+  ! reads "addressing.txt" 2-D addressing (needed for Stacey boundaries)
   call read_mesh_databases_addressing()
 
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
@@ -132,7 +132,7 @@
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -256,7 +256,7 @@
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -368,7 +368,7 @@
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -451,6 +451,9 @@
   integer :: njunk1,njunk2,njunk3
   integer :: ier
 
+  ! user output
+  if( myrank == 0 ) write(IMAIN,*) 'reading coupling surfaces...'
+
   ! crust and mantle
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
@@ -489,7 +492,6 @@
   read(27) jacobian2D_bottom_crust_mantle
   read(27) jacobian2D_top_crust_mantle
   close(27)
-
 
   ! read parameters to couple fluid and solid regions
   !
@@ -536,7 +538,6 @@
   read(27) jacobian2D_top_outer_core
   close(27)
 
-
   !
   ! inner core
   !
@@ -564,7 +565,6 @@
   read(27) ibelm_bottom_inner_core
   read(27) ibelm_top_inner_core
   close(27)
-
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
@@ -695,7 +695,7 @@
   endif
 
   ! determine chunk number and local slice coordinates using addressing
-  ! (needed for stacey conditions)
+  ! (needed for Stacey conditions)
   ichunk = ichunk_slice(myrank)
 
   end subroutine read_mesh_databases_addressing

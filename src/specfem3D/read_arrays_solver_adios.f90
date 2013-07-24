@@ -375,7 +375,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to
   ! the mass matrix on Stacey edges for the crust_mantle and outer_core regions
   ! but not for the inner_core region thus the mass matrix must be replaced by
   ! three mass matrices including the "C" damping matrix

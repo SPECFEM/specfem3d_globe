@@ -161,7 +161,6 @@
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_oc,iglob_ic,ispec_selected
 
-
   ! for surface elements exactly on the ICB
   do ispec2D = 1, nspec_bottom ! NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
@@ -266,7 +265,6 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_oc,iglob_mantle,ispec_selected
-
 
   ! for surface elements exactly on the CMB
   do ispec2D = 1,nspec_bottom ! NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)

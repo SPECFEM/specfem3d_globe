@@ -61,7 +61,7 @@
   real(kind=CUSTOM_REAL) :: sn,weight
   integer :: i,j,k,ispec2D,ispec,iglob
 
-  ! note: we use c functions for I/O as they still have a better performance than
+  ! note: we use C functions for I/O as they still have a better performance than
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
@@ -263,7 +263,6 @@
                                                               absorb_ymax_outer_core, &
                                                               7) ! <= ymax
   endif
-
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_outer_core > 0 ) then
     call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)

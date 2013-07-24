@@ -91,7 +91,6 @@
       do j = 1, NGLLY
         do i = 1, NGLLX
 
-
           if (ANISOTROPIC_KL) then
 
             ! For anisotropic kernels
@@ -461,13 +460,6 @@
 
           rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
           alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
-
-          !deviatoric kernel check
-          if( deviatoric_outercore ) then
-            beta_kl =  - 2 * beta_kl_outer_core(i,j,k,ispec)  ! not using mul, since it's zero for the fluid
-            beta_kl_outer_core(i,j,k,ispec) = beta_kl
-          endif
-
         enddo
       enddo
     enddo
@@ -481,13 +473,6 @@
   open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) alpha_kl_outer_core
   close(27)
-
-  ! deviatoric kernel check
-  if( deviatoric_outercore ) then
-    open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) beta_kl_outer_core
-    close(27)
-  endif
 
   end subroutine save_kernels_outer_core
 

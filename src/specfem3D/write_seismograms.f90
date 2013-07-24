@@ -371,12 +371,14 @@
   character(len=4) :: chn
   character(len=256) :: sisname,sisname_big_file
   character(len=2) :: bic
+  ! variables used for calculation of backazimuth and
+  ! rotation of components if ROTATE_SEISMOGRAMS=.true.
   integer :: ior_start,ior_end
   double precision :: backaz
   real(kind=CUSTOM_REAL) :: phi,cphi,sphi
   integer :: isample
 
-  ! gets band code
+  ! get band code
   call band_instrument_code(DT,bic)
 
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T

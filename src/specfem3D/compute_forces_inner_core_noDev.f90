@@ -48,7 +48,7 @@
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core,&
+          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat,veloc_inner_core, &
           alphaval,betaval,gammaval,factor_common, &
           vx,vy,vz,vnspec,PARTIAL_PHYS_DISPERSION_ONLY,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL)
@@ -211,7 +211,7 @@
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
   real(kind=CUSTOM_REAL) templ
 
-!for LDDRK
+! for LDDRK
   integer :: istage
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL

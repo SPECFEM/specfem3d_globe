@@ -472,7 +472,7 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
+            if (ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
                ! temporary variables used for fixing attenuation in a consistent way
                duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
                duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -522,7 +522,7 @@
                endif
             endif
 
-            if( ATTENUATION_VAL ) then
+            if(ATTENUATION_VAL ) then
               if( USE_3D_ATTENUATION_ARRAYS ) then
                 minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
               else
@@ -577,7 +577,7 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if( ATTENUATION_VAL ) then
+              if(ATTENUATION_VAL) then
                 if( USE_3D_ATTENUATION_ARRAYS ) then
                   mul = mul * one_minus_sum_beta(i,j,k,ispec)
                 else
@@ -600,16 +600,14 @@
             endif
 
             ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
-
-              ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
+            if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+              ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
               call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
                                               R_yy(1,i,j,k,ispec), &
                                               R_xy(1,i,j,k,ispec), &
                                               R_xz(1,i,j,k,ispec), &
                                               R_yz(1,i,j,k,ispec), &
                                               sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-
             endif
 
             ! define symmetric components of sigma for gravity
@@ -823,14 +821,11 @@
           do i=1,NGLLX
             fac2 = wgllwgll_xz(i,k)
             fac3 = wgllwgll_xy(i,j)
-
             ! sum contributions
             sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
             sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
             sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
-
             if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
-
           enddo
         enddo
       enddo
