@@ -552,8 +552,8 @@
     else
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(REFERENCE_1D_MODEL, RICB, RCMB, &
-              R670, R220, R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
+      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB, &
+                                   R670,R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
     endif
 
   endif
@@ -630,7 +630,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine meshfem3D_models_get1D_val(myrank,iregion_code,idoubling, &
                               r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
@@ -1031,7 +1030,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
                               vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
@@ -1218,7 +1216,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                               tau_e,tau_s,T_c_source, &

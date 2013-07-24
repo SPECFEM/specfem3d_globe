@@ -117,17 +117,17 @@
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
               npoin2D_xi = npoin2D_xi + 1
                 write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                            ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
           enddo
       enddo
     endif
   enddo
 
-! put flag to indicate end of the list of points
+  ! put flag to indicate end of the list of points
   write(10,*) '0 0  0.  0.  0.'
 
-! write total number of points
+  ! write total number of points
   write(10,*) npoin2D_xi
 
   close(10)
@@ -142,7 +142,7 @@
 !
   nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
-! global point number and coordinates right MPI cut-plane
+  ! global point number and coordinates right MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt', &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolright_xi.txt for this process')
@@ -167,17 +167,17 @@
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin2D_xi = npoin2D_xi + 1
               write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         enddo
       enddo
     endif
   enddo
 
-! put flag to indicate end of the list of points
+  ! put flag to indicate end of the list of points
   write(10,*) '0 0  0.  0.  0.'
 
-! write total number of points
+  ! write total number of points
   write(10,*) npoin2D_xi
 
   close(10)

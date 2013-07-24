@@ -67,7 +67,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine model_1066a(x,rho,vp,vs,Qkappa,Qmu,iregion_code,M1066a_V)
 
   implicit none
@@ -144,9 +143,9 @@
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
   if(iregion_code == IREGION_OUTER_CORE) then
-    vs = 0.dd0
-    Qkappa = 3000.dd0
-    Qmu = 3000.dd0
+    vs = 0.d0
+    Qkappa = 3000.d0
+    Qmu = 3000.d0
   endif
 
 ! non-dimensionalize
@@ -179,8 +178,9 @@
   type (model_1066a_variables) M1066a_V
 ! model_1066a_variables
 
-  logical USE_EXTERNAL_CRUSTAL_MODEL
+  logical :: USE_EXTERNAL_CRUSTAL_MODEL
 
+  ! local parameters
   integer :: i
 
 ! define all the values in the model

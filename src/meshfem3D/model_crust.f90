@@ -74,13 +74,11 @@
   call MPI_BCAST(CM_V%abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(CM_V%code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
-
   end subroutine model_crust_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine model_crust(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V,elem_in_crust)
 
@@ -234,16 +232,17 @@
     call exit_MPI(0, 'error model crust2.0')
   endif
 
-  h_moho_min=HUGEVAL
-  h_moho_max=-HUGEVAL
+  h_moho_min = HUGEVAL
+  h_moho_max = -HUGEVAL
+
   do ikey=1,NKEYS_CRUST
     read (1,"(a2)") CM_V%code(ikey)
     read (1,*) (CM_V%velocp(ikey,i),i=1,NLAYERS_CRUST)
     read (1,*) (CM_V%velocs(ikey,i),i=1,NLAYERS_CRUST)
     read (1,*) (CM_V%dens(ikey,i),i=1,NLAYERS_CRUST)
     read (1,*) (CM_V%thlr(ikey,i),i=1,NLAYERS_CRUST-1),CM_V%thlr(ikey,NLAYERS_CRUST)
-    if(CM_V%thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max=CM_V%thlr(ikey,NLAYERS_CRUST)
-    if(CM_V%thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min=CM_V%thlr(ikey,NLAYERS_CRUST)
+    if(CM_V%thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max = CM_V%thlr(ikey,NLAYERS_CRUST)
+    if(CM_V%thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min = CM_V%thlr(ikey,NLAYERS_CRUST)
   enddo
   close(1)
 

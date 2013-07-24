@@ -107,9 +107,10 @@
   type (model_s40rts_variables) S40RTS_V
 ! model_s40rts_variables
 
-  integer k,l,m,ier
+  ! local parameters
+  integer :: k,l,m,ier
+  character(len=150) :: S40RTS, P12
 
-  character(len=150) S40RTS, P12
   call get_value_string(S40RTS, 'model.S40RTS', 'DATA/s40rts/S40RTS.dat')
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')    !model P12 is in s20rts data directory
 
@@ -244,7 +245,7 @@
 
 !----------------------------------
 
-  subroutine s40rts_splhsetup(S40RTS_V)!!!!!!!!!!!!!!(spknt,qq0,qq)
+  subroutine s40rts_splhsetup(S40RTS_V)
 
   implicit none
   include "constants.h"

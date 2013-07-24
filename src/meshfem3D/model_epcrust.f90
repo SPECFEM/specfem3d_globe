@@ -32,7 +32,6 @@
 ! GJI, 185 (1), pages 352-364
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_epcrust_broadcast(myrank,EPCRUST)
 
   use mpi
@@ -50,26 +49,27 @@
     double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: rho_ep
   end type model_epcrust_variables
   type (model_epcrust_variables) EPCRUST
-  integer:: myrank,ierr
+
+  integer :: myrank,ier
 
   ! read EPCRUST model on master
   if(myrank == 0) call read_epcrust_model(EPCRUST)
 
   ! broadcast EPCRUST model
   call MPI_BCAST(EPCRUST%lon_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(EPCRUST%lat_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(EPCRUST%topo_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(EPCRUST%thickness_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(EPCRUST%vp_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(EPCRUST%vs_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(EPCRUST%rho_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine model_epcrust_broadcast
 
@@ -100,7 +100,7 @@
 
   call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
 
-  open(unit=1001,file=EPCRUST_FNM,status='old',action='read',iostat=ier)
+  open(unit=1001,file=trim(EPCRUST_FNM),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(EPCRUST_FNM), '": ', ier
     call exit_MPI(0, 'error model epcrust')
@@ -130,6 +130,7 @@
 !
 
   subroutine model_epcrust(lat,lon,dep,vp,vs,rho,moho,found_crust,EPCRUST,elem_in_crust)
+
   implicit none
 
   include "constants.h"
@@ -167,11 +168,11 @@
 
   if ( .not. flag_smooth_epcrust) then
     call ilon_jlat(lon,lat,ilon,jlat)
-    z0=EPCRUST%topo_ep(ilon,jlat)
-    zsmooth(:)=EPCRUST%thickness_ep(ilon,jlat,:)
-    vpsmooth(:)=EPCRUST%vp_ep(ilon,jlat,:)
-    vssmooth(:)=EPCRUST%vs_ep(ilon,jlat,:)
-    rhosmooth(:)=EPCRUST%rho_ep(ilon,jlat,:)
+    z0 = EPCRUST%topo_ep(ilon,jlat)
+    zsmooth(:) = EPCRUST%thickness_ep(ilon,jlat,:)
+    vpsmooth(:) = EPCRUST%vp_ep(ilon,jlat,:)
+    vssmooth(:) = EPCRUST%vs_ep(ilon,jlat,:)
+    rhosmooth(:) = EPCRUST%rho_ep(ilon,jlat,:)
   else
     call epcrust_smooth_base(lon,lat,x1,y1,weight)
     z0 = ZERO
@@ -243,7 +244,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine epcrust_smooth_base(x,y,x1,y1,weight)
 

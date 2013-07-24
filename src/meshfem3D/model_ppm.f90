@@ -415,7 +415,6 @@
 
   if( weight_sum > 1.e-15) dvs = dvs / weight_sum
 
-
   ! store min/max
   max_dvs = PPM_V%max_dvs
   min_dvs = PPM_V%min_dvs
@@ -425,8 +424,6 @@
 
   PPM_V%max_dvs = max_dvs
   PPM_V%min_dvs = min_dvs
-
-  !write(IMAIN,*) '    dvs = ',sngl(dvs),' weight: ',sngl(weight_sum),(sngl((2*PI*sigma_h**2)*sqrt(2*PI)*sigma_v))
 
   if( SCALE_MODEL ) then
     ! scale density and shear velocity
@@ -540,7 +537,7 @@
                           xstore,ystore,zstore,rhostore,dvpstore, &
                           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
                           nspec,HETEROGEN_3D_MANTLE, &
-                          NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
+                          NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V)
 
 ! smooth model parameters
 

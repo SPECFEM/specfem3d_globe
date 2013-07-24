@@ -324,8 +324,11 @@
             tau_e_store(:,i,j,k,ispec) = tau_e(:)
             Qmu_store(i,j,k,ispec)     = Qmu
           else
-            tau_e_store(:,1,1,1,ispec) = tau_e(:)
-            Qmu_store(1,1,1,ispec)     = Qmu
+            ! store values from mid-point for whole element
+            if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+              tau_e_store(:,1,1,1,ispec) = tau_e(:)
+              Qmu_store(1,1,1,ispec)     = Qmu
+            endif
           endif
         endif
 

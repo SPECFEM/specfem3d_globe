@@ -40,7 +40,6 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_aniso_mantle_broadcast(myrank,AMM_V)
 
 ! standard routine to setup model
@@ -82,7 +81,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine model_aniso_mantle(r,theta,phi,rho, &
                                c11,c12,c13,c14,c15,c16, &

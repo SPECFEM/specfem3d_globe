@@ -94,13 +94,7 @@
   ! than using control nodes
   ! Hejun Zhu, OCT16, 2009
 
-  ! input parameters: myrank,
-  !                   xstore,ystore,zstore,
-  !                   ispec,nspec,
-  !                   ibathy_topo
-  !                   R220
-
-  subroutine add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,&
+  subroutine add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec, &
                                 ibathy_topo,R220)
 
   implicit none

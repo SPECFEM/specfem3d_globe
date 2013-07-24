@@ -206,9 +206,10 @@
 
   include "constants.h"
 
+  integer :: myrank
+
   double precision R220,RMIDDLE_CRUST
   double precision RMOHO_FICTITIOUS_IN_MESHER
-  integer :: myrank
 
   double precision,dimension(NGNOD) :: xelm,yelm,zelm
 

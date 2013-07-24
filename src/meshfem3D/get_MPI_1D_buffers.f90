@@ -267,7 +267,7 @@
           mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
           npoin1D = npoin1D + 1
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                  ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
         endif
       enddo
     endif
