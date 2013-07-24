@@ -61,7 +61,7 @@
   character(len=150) :: prname
 
   ! local parameters
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, T_c_source, scale_t
 

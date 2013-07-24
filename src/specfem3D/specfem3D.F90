@@ -2026,8 +2026,7 @@
     write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
     call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
                 zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-                MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie)
-
+                MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie,myrank)
 
     allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
