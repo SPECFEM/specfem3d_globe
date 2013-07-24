@@ -98,7 +98,7 @@ specfem3D_OBJECTS += \
 # These files come from the shared directory
 specfem3D_SHARED_OBJECTS = \
 	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
+	$O/broadcast_computed_parameters.o \
 	$O/calendar.o \
 	$O/count_number_of_sources.o \
 	$O/create_name_database.o \
@@ -174,8 +174,8 @@ $O/compute_forces_crust_mantle_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from
 $O/compute_forces_outer_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_noDev.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_noDev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_noDev.f90
 
-$O/compute_forces_outer_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_Dev.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_Dev.f90
+$O/compute_forces_outer_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core_Dev.F90
+	${FCCOMPILE_CHECK} -c -o $O/compute_forces_outer_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_Dev.F90
 
 $O/compute_forces_inner_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_noDev.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core_noDev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_noDev.f90
@@ -183,8 +183,8 @@ $O/compute_forces_inner_core_noDev.o: ${SETUP}/constants.h ${OUTPUT}/values_from
 $O/compute_forces_inner_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_Dev.F90
 	${FCCOMPILE_CHECK} -c -o $O/compute_forces_inner_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_Dev.F90
 
-$O/compute_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_kernels.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.f90
+$O/compute_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_kernels.F90
+	${FCCOMPILE_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.F90
 
 $O/compute_seismograms.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_seismograms.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_seismograms.o ${FCFLAGS_f90} $S/compute_seismograms.f90
@@ -231,7 +231,7 @@ $O/convert_time.o: $S/convert_time.f90
 $O/define_derivation_matrices.o: ${SETUP}/constants.h $S/define_derivation_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_derivation_matrices.o ${FCFLAGS_f90} $S/define_derivation_matrices.f90
 
-$O/get_attenuation.o: ${SETUP}/constants.h $S/get_attenuation.f90
+$O/get_attenuation.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/get_attenuation.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_attenuation.o ${FCFLAGS_f90} $S/get_attenuation.f90
 
 $O/get_backazimuth.o: ${SETUP}/constants.h $S/get_backazimuth.f90
@@ -315,7 +315,7 @@ $O/get_event_info.o: ${SETUP}/constants.h $S/get_event_info.f90
 $O/locate_receivers.o: ${SETUP}/constants.h $S/locate_receivers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/locate_receivers.o ${FCFLAGS_f90} $S/locate_receivers.f90
 
-$O/locate_regular_points.o: ${SETUP}/constants.h $S/locate_regular_points.f90
+$O/locate_regular_points.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/locate_regular_points.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/locate_regular_points.o ${FCFLAGS_f90} $S/locate_regular_points.f90
 
 $O/locate_sources.o: ${SETUP}/constants.h $S/locate_sources.f90

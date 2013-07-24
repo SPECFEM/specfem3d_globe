@@ -8,25 +8,25 @@
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
                           alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
-                          deltat,displ_crust_mantle,hprime_xx,hprime_xxT,&
+                          deltat,hprime_xx,hprime_xxT,&
                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle)
+                          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,ANISOTROPIC_KL,&
+                          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
 
     ! outer core
     call compute_kernels_outer_core(ibool_outer_core, &
                         xix_outer_core,xiy_outer_core,xiz_outer_core, &
                         etax_outer_core,etay_outer_core,etaz_outer_core, &
                         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-                        hprime_xx,hprime_yy,hprime_zz, &
+                        hprime_xx,hprime_xxT, &
                         displ_outer_core,accel_outer_core, &
                         b_displ_outer_core,b_accel_outer_core, &
                         vector_accel_outer_core,vector_displ_outer_core, &
                         b_vector_displ_outer_core, &
-                        div_displ_outer_core,b_div_displ_outer_core, &
+                        div_displ_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
                         deltat)
 
     ! inner core
@@ -34,10 +34,11 @@
                           rho_kl_inner_core,beta_kl_inner_core, &
                           alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
-                          deltat,displ_inner_core,hprime_xx,hprime_xxT,&
+                          deltat,hprime_xx,hprime_xxT,&
                           xix_inner_core,xiy_inner_core,xiz_inner_core,&
                           etax_inner_core,etay_inner_core,etaz_inner_core,&
-                          gammax_inner_core,gammay_inner_core,gammaz_inner_core)
+                          gammax_inner_core,gammay_inner_core,gammaz_inner_core,&
+                          epsilondev_inner_core,eps_trace_over_3_inner_core)
 
     ! NOISE TOMOGRAPHY --- source strength kernel
     if (NOISE_TOMOGRAPHY == 3)  &
@@ -239,7 +240,7 @@
       icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if( APPROXIMATE_HESS_KL ) then
       call compute_kernels_hessian(ibool_crust_mantle, &
                           hess_kl_crust_mantle,&
@@ -248,11 +249,4 @@
     endif
 
   endif ! end of if computing kernels
-
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
 
