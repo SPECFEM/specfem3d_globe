@@ -421,7 +421,7 @@
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
-    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
+    call exit_MPI(myrank,'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
   if(UNDO_ATTENUATION .and. PARTIAL_PHYS_DISPERSION_ONLY) &
           call exit_MPI(myrank,'cannot have both UNDO_ATTENUATION and PARTIAL_PHYS_DISPERSION_ONLY')
@@ -464,10 +464,10 @@
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
     .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     if( COMPUTE_AND_STORE_STRAIN_VAL .neqv. .true. ) &
-      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 19')
+      call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN_VAL parameter, please recompile solver 19')
   else
     if( COMPUTE_AND_STORE_STRAIN_VAL .neqv. .false. ) &
-      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 20')
+      call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN_VAL parameter, please recompile solver 20')
   endif
 
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &

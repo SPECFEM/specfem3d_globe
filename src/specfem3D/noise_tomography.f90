@@ -79,6 +79,7 @@
                                    NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
                                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                    irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
+
   use mpi
 
   implicit none
