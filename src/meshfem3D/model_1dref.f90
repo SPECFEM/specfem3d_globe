@@ -54,7 +54,7 @@
   integer, parameter :: NR_REF = 750
 
   ! model_1dref_variables
-  double precision, dimension(:),allocatable :: &
+  double precision, dimension(:), allocatable :: &
     Mref_V_radius_ref,Mref_V_density_ref, &
     Mref_V_vpv_ref,Mref_V_vph_ref, &
     Mref_V_vsv_ref,Mref_V_vsh_ref, &

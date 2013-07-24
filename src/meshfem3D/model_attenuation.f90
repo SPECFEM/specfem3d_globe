@@ -58,7 +58,6 @@
 !   number = {3},
 !   doi = {10.1785/0120090263}}
 !
-!
 !--------------------------------------------------------------------------------------------------
 
   subroutine model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)

@@ -35,8 +35,6 @@
 
   implicit none
 
-!  include "constants.h"
-
   integer :: myrank
 
   double precision,dimension(NGNOD) :: xelm,yelm,zelm
@@ -97,11 +95,6 @@
   ! This subroutine uses GLL points to capture topography variation rather
   ! than using control nodes
   ! Hejun Zhu, OCT16, 2009
-
-  ! input parameters: myrank,
-  !                   xstore,ystore,zstore,
-  !                   ispec,nspec,
-  !                   ibathy_topo
 
   subroutine add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec, &
                                 ibathy_topo)

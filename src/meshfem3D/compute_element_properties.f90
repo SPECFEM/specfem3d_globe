@@ -41,8 +41,6 @@
 
   use meshfem3D_models_par
 
-!  use meshfem3D_par,only: R220
-
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
@@ -194,7 +192,6 @@
   ! interpolates and stores GLL point locations
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                     xstore,ystore,zstore,shape3D)
-
 
   ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)

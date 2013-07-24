@@ -123,8 +123,10 @@
 
   ! S40RTS degree 40 S model from Ritsema
   open(unit=10,file=S40RTS,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file S40RTS.dat')
-
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(S40RTS), '": ', ier
+    call exit_MPI(0, 'error model s40rts')
+  endif
   do k=0,NK_20
     do l=0,NS_40
       read(10,*) S40RTS_V_dvs_a(k,l,0),(S40RTS_V_dvs_a(k,l,m),S40RTS_V_dvs_b(k,l,m),m=1,l)
@@ -134,8 +136,10 @@
 
   ! P12 degree 12 P model from Ritsema
   open(unit=10,file=P12,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file P12.dat')
-
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
+    call exit_MPI(0, 'error model s40rts')
+  endif
   do k=0,NK_20
     do l=0,12
       read(10,*) S40RTS_V_dvp_a(k,l,0),(S40RTS_V_dvp_a(k,l,m),S40RTS_V_dvp_b(k,l,m),m=1,l)
@@ -235,7 +239,7 @@
 
 !----------------------------------
 
-  subroutine s40rts_splhsetup()!!!!!!!!!!!!!!(spknt,qq0,qq)
+  subroutine s40rts_splhsetup()
 
   use model_s40rts_par
 

@@ -215,6 +215,5 @@
   if(npoin2D_eta_all(2) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta_all(2) /= npoin2D_eta) &
       call exit_MPI(myrank,'incorrect iboolright_eta read')
 
-
   end subroutine get_MPI_cutplanes_eta
 

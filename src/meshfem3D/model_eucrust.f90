@@ -130,7 +130,10 @@
   ! opens data file
   call get_value_string(filename, 'model.eu', 'DATA/eucrust-07/ds01.txt')
   open(unit=11,file=filename,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening EUcrust file')
+  if ( ier /= 0 ) then
+    write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
+    call exit_MPI(0, 'error model eucrust')
+  endif
 
   ! skip first line
   read(11,*)
@@ -302,7 +305,7 @@
   double precision,external :: crust_eu
 
   ! local variables
-  integer i,j,k !,icolat,ilon,ierr
+  integer i,j,k !,icolat,ilon,ier
   integer itheta,iphi,npoints
   double precision theta,phi,sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total,valuel
   double precision r_rot,theta_rot,phi_rot
@@ -320,7 +323,7 @@
 
   !call icolat_ilon(lat,lon,icolat,ilon)
   !crustaltype=abbreviation(icolat,ilon)
-  !call get_crust_structure(crustaltype,velp,vels,rho,thick,code,thlr,velocp,velocs,dens,ierr)
+  !call get_crust_structure(crustaltype,velp,vels,rho,thick,code,thlr,velocp,velocs,dens,ier)
 
   !  uncomment the following line to use as is, without smoothing
   !  value = func(lat,lon,x,value,found)

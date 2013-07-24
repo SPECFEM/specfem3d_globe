@@ -144,14 +144,12 @@
     open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file')
-
     write(27) nimin
     write(27) nimax
     write(27) njmin
     write(27) njmax
     write(27) nkmin_xi
     write(27) nkmin_eta
-
     close(27)
   endif
 

@@ -92,7 +92,7 @@
   if( DEBUG ) then
     ! global point number and coordinates left MPI cut-plane
     open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
-          status='unknown',iostat=ier)
+         status='unknown',iostat=ier)
 
     if( ier /= 0 ) then
       if( myrank == 0 ) then
