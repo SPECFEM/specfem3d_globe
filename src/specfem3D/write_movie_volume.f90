@@ -31,7 +31,7 @@
   subroutine count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
                       zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
                       MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie, &
-                      mask_ibool,mask_3dmovie)
+                      mask_ibool,mask_3dmovie,myrank)
 
   implicit none
 
@@ -39,6 +39,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
 ! input
+  integer :: myrank
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
   double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
@@ -52,7 +53,7 @@
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
 
   ! local parameters
-  integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,iNIT
+  integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,iNIT,ier
   real(kind=custom_real) :: rval,thetaval,phival
 
   if(MOVIE_COARSE) then

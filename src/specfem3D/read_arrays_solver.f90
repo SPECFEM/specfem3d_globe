@@ -92,6 +92,8 @@
   character(len=150) :: LOCAL_PATH
 
   ! local parameters
+  integer :: ier
+
   ! processor identification
   character(len=150) :: prname
 
