@@ -96,8 +96,9 @@
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch, let us check which one is right
-!! DK DK to Daniel, Jul 2013
+!! DK DK to Daniel, Jul 2013: double precision in branch.
+!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
+!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
@@ -195,7 +196,7 @@
                                     xstore,ystore,zstore,shape3D)
 
 
-  ! computes model's velocity/density/... values for the chosen Earth model
+  ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)
   if( ipass == 2 ) then
     call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
