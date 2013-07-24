@@ -29,7 +29,7 @@
 !----  locate_sources finds the correct position of the sources
 !----
 
-  subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool,&
+  subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool, &
                             xstore,ystore,zstore,xigll,yigll,zigll, &
                             NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                             sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
@@ -700,7 +700,7 @@
         write(IMAIN,*) 'position of the source that will be used:'
         write(IMAIN,*)
         write(IMAIN,*) '      latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
+        write(IMAIN,*) '     longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
         write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
         write(IMAIN,*)
 

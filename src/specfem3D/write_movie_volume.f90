@@ -68,7 +68,9 @@
   mask_3dmovie(:,:,:,:)=.false.
 
   ! create name of database
-  open(unit=IOUT,file=trim(prname)//'movie3D_info.txt',status='unknown')
+  open(unit=IOUT,file=trim(prname)//'movie3D_info.txt', &
+        status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_info.txt')
 
   !find and count points within given region for storing movie
   do ispec = 1,NSPEC_CRUST_MANTLE

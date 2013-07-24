@@ -687,7 +687,8 @@
   integer SIMULATION_TYPE
 
   ! local parameters
-  integer njunk1,njunk2,njunk3,ier
+  integer :: njunk1,njunk2,njunk3
+  integer :: ier
   character(len=150) prname
 
   ! user output
@@ -702,7 +703,9 @@
 
   ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read')
+        status='old',form='unformatted',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening crust_mantle boundary.bin file')
+
   read(27) nspec2D_xmin_crust_mantle
   read(27) nspec2D_xmax_crust_mantle
   read(27) nspec2D_ymin_crust_mantle
@@ -748,7 +751,9 @@
 
   ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read')
+        status='old',form='unformatted',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening outer_core boundary.bin file')
+
   read(27) nspec2D_xmin_outer_core
   read(27) nspec2D_xmax_outer_core
   read(27) nspec2D_ymin_outer_core
