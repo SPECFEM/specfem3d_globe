@@ -80,7 +80,7 @@
 ! determine if the element falls on the left MPI cut plane
 !
 
-! global point number and coordinates left MPI cut-plane
+  ! global point number and coordinates left MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='unknown')
 
   ! erase the logical mask used to mark points already found
@@ -104,17 +104,17 @@
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
               npoin2D_eta = npoin2D_eta + 1
                 write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                            ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
           enddo
       enddo
     endif
   enddo
 
-! put flag to indicate end of the list of points
+  ! put flag to indicate end of the list of points
   write(10,*) '0 0  0.  0.  0.'
 
-! write total number of points
+  ! write total number of points
   write(10,*) npoin2D_eta
 
   close(10)
@@ -127,7 +127,7 @@
 !
   nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
 
-! global point number and coordinates right MPI cut-plane
+  ! global point number and coordinates right MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='unknown')
 
   ! erase the logical mask used to mark points already found
@@ -151,22 +151,22 @@
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin2D_eta = npoin2D_eta + 1
               write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         enddo
       enddo
     endif
   enddo
 
-! put flag to indicate end of the list of points
+  ! put flag to indicate end of the list of points
   write(10,*) '0 0  0.  0.  0.'
 
-! write total number of points
+  ! write total number of points
   write(10,*) npoin2D_eta
 
   close(10)
 
-! compare number of surface elements detected to analytical value
+  ! compare number of surface elements detected to analytical value
   if(ispecc2 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=right')
 
   end subroutine get_MPI_cutplanes_eta

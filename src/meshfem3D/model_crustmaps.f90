@@ -106,7 +106,6 @@
   call MPI_BCAST(GC_V%velocssp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(GC_V%densitysp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-
   end subroutine model_crustmaps_broadcast
 
 !
@@ -240,7 +239,6 @@
 ! Matthias Meschede
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
-!
 
   implicit none
   include "constants.h"
@@ -339,7 +337,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine read_crustmaps(lat,lon,velp,vels,rhos,thicks,GC_V)
 
 ! crustal vp and vs in km/s, layer thickness in km
@@ -347,7 +344,6 @@
   implicit none
 
   include "constants.h"
-
 
   ! argument variables
   double precision lat,lon

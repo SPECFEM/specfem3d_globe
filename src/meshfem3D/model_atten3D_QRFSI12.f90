@@ -47,7 +47,6 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_atten3D_QRFSI12_broadcast(myrank,QRFSI12_Q)
 
 ! standard routine to setup model
@@ -84,7 +83,6 @@
 
   if(myrank == 0) write(IMAIN,*) 'read 3D attenuation model'
 
-
   end subroutine
 
 !
@@ -109,11 +107,12 @@
   type (model_atten3D_QRFSI12_variables) QRFSI12_Q
 ! three_d_model_atten3D_QRFSI12_variables
 
-  integer j,k,l,m
-  integer index,ll,mm,ier
-  double precision v1,v2
+  ! local parameters
+  integer :: j,k,l,m,ier
+  integer :: index,ll,mm
+  double precision :: v1,v2
 
-  character(len=150) QRFSI12,QRFSI12_ref
+  character(len=150) :: QRFSI12,QRFSI12_ref
 
 ! read in QRFSI12
 ! hard-wire for now

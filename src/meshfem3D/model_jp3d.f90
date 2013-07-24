@@ -1335,7 +1335,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-      SUBROUTINE INPUTJP(JP3DM_V)
+  SUBROUTINE INPUTJP(JP3DM_V)
   implicit none
 
   include "constants.h"
@@ -1437,6 +1437,7 @@
 !-------------------------------------------------------------------------------------------------
 !
   SUBROUTINE JPMODEL(IPS,H,V,JP3DM_V)
+
   implicit none
 
   include "constants.h"

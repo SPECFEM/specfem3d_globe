@@ -238,7 +238,7 @@
 !----------------------------------
 !
 
-  subroutine s20rts_splhsetup(S20RTS_V)!!!!!!!!!!!!!!(spknt,qq0,qq)
+  subroutine s20rts_splhsetup(S20RTS_V)
 
   implicit none
   include "constants.h"

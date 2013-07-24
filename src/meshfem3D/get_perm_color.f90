@@ -822,7 +822,7 @@ nspec,count_only,total_size_ne)
 
   double precision, intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: array_to_permute,temp_array
 
-  integer old_ispec,new_ispec
+  integer :: old_ispec,new_ispec
 
 ! copy the original array
   temp_array(:,:,:,:) = array_to_permute(:,:,:,:)

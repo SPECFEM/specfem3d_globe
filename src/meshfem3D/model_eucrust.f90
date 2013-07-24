@@ -109,16 +109,17 @@
   ! original file size entries
   EUCM_V%num_eucrust = 36058
 
+  ! only on master we allocate these arrays here
   allocate(EUCM_V%eucrust_vp_uppercrust(EUCM_V%num_eucrust),EUCM_V%eucrust_vp_lowercrust(EUCM_V%num_eucrust),&
         EUCM_V%eucrust_mohodepth(EUCM_V%num_eucrust),EUCM_V%eucrust_basement(EUCM_V%num_eucrust),&
         EUCM_V%eucrust_ucdepth(EUCM_V%num_eucrust), EUCM_V%eucrust_lon(EUCM_V%num_eucrust),&
         EUCM_V%eucrust_lat(EUCM_V%num_eucrust))
 
-  EUCM_V%eucrust_vp_uppercrust(:) = 0.0
-  EUCM_V%eucrust_vp_lowercrust(:) = 0.0
-  EUCM_V%eucrust_mohodepth(:) = 0.0
-  EUCM_V%eucrust_basement(:) = 0.0
-  EUCM_V%eucrust_ucdepth(:) = 0.0
+  EUCM_V%eucrust_vp_uppercrust(:) = ZERO
+  EUCM_V%eucrust_vp_lowercrust(:) = ZERO
+  EUCM_V%eucrust_mohodepth(:) = ZERO
+  EUCM_V%eucrust_basement(:) = ZERO
+  EUCM_V%eucrust_ucdepth(:) = ZERO
 
   ! opens data file
   call get_value_string(filename, 'model.eu', 'DATA/eucrust-07/ds01.txt')
@@ -322,7 +323,7 @@
   double precision,external :: crust_eu
 
   ! local variables
-  integer i,j,k !,icolat,ilon,ierr
+  integer i,j,k !,icolat,ilon,ier
   integer itheta,iphi,npoints
   double precision theta,phi,sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total,valuel
   double precision r_rot,theta_rot,phi_rot
@@ -340,7 +341,7 @@
 
   !call icolat_ilon(lat,lon,icolat,ilon)
   !crustaltype=abbreviation(icolat,ilon)
-  !call get_crust_structure(crustaltype,velp,vels,rho,thick,code,thlr,velocp,velocs,dens,ierr)
+  !call get_crust_structure(crustaltype,velp,vels,rho,thick,code,thlr,velocp,velocs,dens,ier)
 
   !  uncomment the following line to use as is, without smoothing
   !  value = func(lat,lon,x,value,found,EUCM_V)

@@ -58,7 +58,6 @@
 !   number = {3},
 !   doi = {10.1785/0120090263}}
 !
-!
 !--------------------------------------------------------------------------------------------------
 
   subroutine model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
@@ -98,6 +97,7 @@
   integer :: myrank
   integer :: ier
 
+  ! master process determines period ranges
   if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
   if(myrank /= 0) allocate(AM_V%Qtau_s(N_SLS))
@@ -110,7 +110,7 @@
   call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 
-  end subroutine
+  end subroutine model_attenuation_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -304,7 +304,6 @@
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank > 0) return
 
-
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
@@ -330,10 +329,12 @@
   endif
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
-  allocate(AM_V%Qr(AM_V%Qn))
-  allocate(AM_V%Qmu(AM_V%Qn))
-  allocate(AM_V%interval_Q(AM_V%Qn))
-  allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
+  allocate(AM_V%Qr(AM_V%Qn), &
+          AM_V%Qmu(AM_V%Qn), &
+          AM_V%interval_Q(AM_V%Qn), &
+          AM_V%Qtau_e(N_SLS,AM_V%Qn), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating AM_V arrays')
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
@@ -472,7 +473,7 @@
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
 
-  integer ier
+  integer :: ier
   double precision :: Qmu
   double precision, dimension(N_SLS) :: tau_e
   integer :: rw

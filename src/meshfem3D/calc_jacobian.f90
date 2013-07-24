@@ -59,8 +59,7 @@
   double precision, dimension(NGLLX):: xigll
   double precision, dimension(NGLLY):: yigll
   double precision, dimension(NGLLZ):: zigll
-  logical::ACTUALLY_STORE_ARRAYS
-
+  logical :: ACTUALLY_STORE_ARRAYS
 
   ! output results
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
@@ -199,32 +198,32 @@
         gammay = (xeta*zxi-xxi*zeta) * jacobian_inv
         gammaz = (xxi*yeta-xeta*yxi) * jacobian_inv
 
-            ! resave the derivatives and the jacobian
-            ! distinguish between single and double precision for reals
-            if (ACTUALLY_STORE_ARRAYS) then
-                if(CUSTOM_REAL == SIZE_REAL) then
-                    xixstore(i,j,k,ispec) = sngl(xix)
-                    xiystore(i,j,k,ispec) = sngl(xiy)
-                    xizstore(i,j,k,ispec) = sngl(xiz)
-                    etaxstore(i,j,k,ispec) = sngl(etax)
-                    etaystore(i,j,k,ispec) = sngl(etay)
-                    etazstore(i,j,k,ispec) = sngl(etaz)
-                    gammaxstore(i,j,k,ispec) = sngl(gammax)
-                    gammaystore(i,j,k,ispec) = sngl(gammay)
-                    gammazstore(i,j,k,ispec) = sngl(gammaz)
-                else
-                    xixstore(i,j,k,ispec) = xix
-                    xiystore(i,j,k,ispec) = xiy
-                    xizstore(i,j,k,ispec) = xiz
-                    etaxstore(i,j,k,ispec) = etax
-                    etaystore(i,j,k,ispec) = etay
-                    etazstore(i,j,k,ispec) = etaz
-                    gammaxstore(i,j,k,ispec) = gammax
-                    gammaystore(i,j,k,ispec) = gammay
-                    gammazstore(i,j,k,ispec) = gammaz
-                endif
-             endif
-        enddo
+        ! resave the derivatives and the jacobian
+        ! distinguish between single and double precision for reals
+        if (ACTUALLY_STORE_ARRAYS) then
+          if(CUSTOM_REAL == SIZE_REAL) then
+            xixstore(i,j,k,ispec) = sngl(xix)
+            xiystore(i,j,k,ispec) = sngl(xiy)
+            xizstore(i,j,k,ispec) = sngl(xiz)
+            etaxstore(i,j,k,ispec) = sngl(etax)
+            etaystore(i,j,k,ispec) = sngl(etay)
+            etazstore(i,j,k,ispec) = sngl(etaz)
+            gammaxstore(i,j,k,ispec) = sngl(gammax)
+            gammaystore(i,j,k,ispec) = sngl(gammay)
+            gammazstore(i,j,k,ispec) = sngl(gammaz)
+          else
+            xixstore(i,j,k,ispec) = xix
+            xiystore(i,j,k,ispec) = xiy
+            xizstore(i,j,k,ispec) = xiz
+            etaxstore(i,j,k,ispec) = etax
+            etaystore(i,j,k,ispec) = etay
+            etazstore(i,j,k,ispec) = etaz
+            gammaxstore(i,j,k,ispec) = gammax
+            gammaystore(i,j,k,ispec) = gammay
+            gammazstore(i,j,k,ispec) = gammaz
+          endif
+        endif
+      enddo
     enddo
   enddo
 
