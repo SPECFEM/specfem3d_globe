@@ -34,7 +34,6 @@
 ! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated.
 !--------------------------------------------------------------------------------------------------
 
-
   subroutine model_s20rts_broadcast(myrank,S20RTS_V)
 
 ! standard routine to setup model
@@ -107,7 +106,7 @@
   ! local parameters
   integer :: k,l,m,ier
 
-  character(len=150) S20RTS, P12
+  character(len=150) :: S20RTS, P12
 
   call get_value_string(S20RTS, 'model.S20RTS', 'DATA/s20rts/S20RTS.dat')
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')
@@ -259,9 +258,9 @@
   type (model_s20rts_variables) S20RTS_V
 ! model_s20rts_variables
 
-
-  integer i,j
-  double precision qqwk(3,NK_20+1)
+  ! local parameters
+  integer :: i,j
+  double precision :: qqwk(3,NK_20+1)
 
   S20RTS_V%spknt(1) = -1.00000d0
   S20RTS_V%spknt(2) = -0.78631d0

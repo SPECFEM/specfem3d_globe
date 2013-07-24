@@ -439,9 +439,9 @@
 
   SUBROUTINE INPUT1(JP3DM_V)
 
-   implicit none
+  implicit none
 
-   include "constants.h"
+  include "constants.h"
 
 ! model_jp3d_variables
   type model_jp3d_variables
@@ -523,13 +523,20 @@
       RETURN
     END SUBROUTINE INPUT1
 
-      SUBROUTINE PUT1(NPX,NRX,NHX,PNX,RNX,HNX,VELXP)
-      integer :: NPX,NRX,NHX,K,I,J
-      double precision ::  VELXP(NPX,NRX,NHX), &
+!
+!-------------------------------------------------------------------------------------------------
+!
+  SUBROUTINE PUT1(NPX,NRX,NHX,PNX,RNX,HNX,VELXP)
+
+  implicit none
+
+  integer :: NPX,NRX,NHX,K,I,J
+  double precision ::  VELXP(NPX,NRX,NHX), &
                 PNX(NPX),RNX(NRX),HNX(NHX)
-      READ(2,110) (PNX(I),I=1,NPX)
-      READ(2,110) (RNX(I),I=1,NRX)
-      READ(2,120) (HNX(I),I=1,NHX)
+
+  READ(2,110) (PNX(I),I=1,NPX)
+  READ(2,110) (RNX(I),I=1,NRX)
+  READ(2,120) (HNX(I),I=1,NHX)
       DO K = 1,NHX
          DO I = 1,NPX
             READ(2,140) (VELXP(I,J,K),J=1,NRX)
@@ -544,6 +551,7 @@
 !---------------------------------------------------------------------------------------------
 !
   SUBROUTINE INPUT2(JP3DM_V)
+
   implicit none
 
   include "constants.h"
@@ -619,17 +627,17 @@
   type (model_jp3d_variables) JP3DM_V
 ! model_jp3d_variables
 
-      integer :: NP,NNR,I,J
-      READ(3,100)  NP,NNR
-      READ(3,110) (JP3DM_V%PN(I),I=1,NP)
-      READ(3,120) (JP3DM_V%RRN(I),I=1,NNR)
-      DO 1  I = NP,1,-1
+  integer :: NP,NNR,I,J
+  READ(3,100)  NP,NNR
+  READ(3,110) (JP3DM_V%PN(I),I=1,NP)
+  READ(3,120) (JP3DM_V%RRN(I),I=1,NNR)
+  DO 1  I = NP,1,-1
       READ(3,130) (JP3DM_V%DEPA(I,J),J=1,NNR)
 1     CONTINUE
-      DO 2  I = NP,1,-1
+  DO 2  I = NP,1,-1
       READ(3,130) (JP3DM_V%DEPB(I,J),J=1,NNR)
 2     CONTINUE
-      DO 3  I = NP,1,-1
+  DO 3  I = NP,1,-1
       READ(3,130) (JP3DM_V%DEPC(I,J),J=1,NNR)
 3     CONTINUE
 
@@ -649,6 +657,7 @@
   implicit none
 
   include "constants.h"
+
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence

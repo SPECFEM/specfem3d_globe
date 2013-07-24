@@ -308,25 +308,25 @@
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-     AM_V%Qn = 12
+    AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-     AM_V%Qn = 12
+    AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
-     call define_model_ak135(.FALSE.,Mak135_V)
-     AM_V%Qn = NR_AK135F_NO_MUD
+    call define_model_ak135(.FALSE.,Mak135_V)
+    AM_V%Qn = NR_AK135F_NO_MUD
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-     call define_model_1066a(.FALSE.,M1066a_V)
-     AM_V%Qn = NR_1066A
+    call define_model_1066a(.FALSE.,M1066a_V)
+    AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-     call define_model_1dref(.FALSE.,Mref_V)
-     AM_V%Qn = NR_REF
+    call define_model_1dref(.FALSE.,Mref_V)
+    AM_V%Qn = NR_REF
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-     AM_V%Qn = 12
+    AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-     call define_model_sea1d(.FALSE.,SEA1DM_V)
-     AM_V%Qn = NR_SEA1D
+    call define_model_sea1d(.FALSE.,SEA1DM_V)
+    AM_V%Qn = NR_SEA1D
   else
-     call exit_MPI(myrank, 'Reference 1D Model Not recognized')
+    call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)

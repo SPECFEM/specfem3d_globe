@@ -149,14 +149,14 @@
   close(10)
 
 ! get the depths (km) of the spline knots
-  QRFSI12_Q%spknt(1) = 24.4
-  QRFSI12_Q%spknt(2) = 75.0
-  QRFSI12_Q%spknt(3) = 150.0
-  QRFSI12_Q%spknt(4) = 225.0
-  QRFSI12_Q%spknt(5) = 300.0
-  QRFSI12_Q%spknt(6) = 410.0
-  QRFSI12_Q%spknt(7) = 530.0
-  QRFSI12_Q%spknt(8) = 650.0
+  QRFSI12_Q%spknt(1) = 24.4d0
+  QRFSI12_Q%spknt(2) = 75.d0
+  QRFSI12_Q%spknt(3) = 150.d0
+  QRFSI12_Q%spknt(4) = 225.d0
+  QRFSI12_Q%spknt(5) = 300.d0
+  QRFSI12_Q%spknt(6) = 410.d0
+  QRFSI12_Q%spknt(7) = 530.d0
+  QRFSI12_Q%spknt(8) = 650.d0
 
 ! get the depths and 1/Q values of the reference model
   open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
@@ -238,7 +238,7 @@
   else if(idoubling == IFLAG_OUTER_CORE_NORMAL) then
   !   print *,'QRFSI12: we are in the outer core'
      Qmu = 0.0d0
-  else !we are in the mantle
+  else ! we are in the mantle
     depth = 6371.-radius
 !   print *,'QRFSI12: we are in the mantle at depth',depth
     ifnd=0

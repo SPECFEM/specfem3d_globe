@@ -80,8 +80,7 @@
   integer :: ier
 
   ! master reads in crust maps
-  if(myrank == 0) &
-    call read_general_crustmap(GC_V)
+  if(myrank == 0) call read_general_crustmap(GC_V)
 
   ! broadcasts values to all processes
   call MPI_BCAST(GC_V%thickness,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &

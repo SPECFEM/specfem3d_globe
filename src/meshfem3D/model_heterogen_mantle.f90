@@ -99,7 +99,6 @@
   type (model_heterogen_m_variables) HMM
 ! model_heterogen_m_variables
 
-
   ! open heterogen.dat
   open(unit=10,file='./DATA/heterogen/heterogen.dat',access='direct',&
        form='formatted',recl=20,status='old',action='read',iostat=ier)

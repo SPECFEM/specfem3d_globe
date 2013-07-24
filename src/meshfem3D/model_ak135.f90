@@ -195,7 +195,7 @@
  type (model_ak135_variables) Mak135_V
 ! model_ak135_variables
 
-  logical USE_EXTERNAL_CRUSTAL_MODEL
+  logical :: USE_EXTERNAL_CRUSTAL_MODEL
 
 ! define all the values in the model
 

@@ -223,7 +223,7 @@
   logical USE_EXTERNAL_CRUSTAL_MODEL
 
 
-! define the 1D REF model of Kustowski et al. (2007)
+  ! define the 1D REF model of Kustowski et al. (2007)
 
  Mref_V%radius_ref( 1 : 30 ) = (/ &
  0.000000000000000E+000 , &
