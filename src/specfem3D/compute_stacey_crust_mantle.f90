@@ -63,7 +63,7 @@
   integer :: i,j,k,ispec,iglob,ispec2D
   !integer :: reclen1,reclen2
 
-  ! note: we use c functions for I/O as they still have a better performance than
+  ! note: we use C functions for I/O as they still have a better performance than
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
@@ -274,13 +274,10 @@
                                                               2) ! <= ymin
   endif
 
-
   ! writes absorbing boundary values
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) then
     call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
   endif
-
-
 
   !   ymax
 

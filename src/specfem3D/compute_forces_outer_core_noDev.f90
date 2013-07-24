@@ -153,7 +153,7 @@
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
   if(istage == 1) then
-    if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+    if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
   computed_elements = 0
@@ -351,7 +351,7 @@
               ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
               !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
               !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-              if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
+              if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. SIMULATION_TYPE == 1 .and. MOVIE_VOLUME) then
                 div_displfluid(i,j,k,ispec) =  &
                    minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
                    dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)

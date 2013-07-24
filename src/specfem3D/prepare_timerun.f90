@@ -612,7 +612,6 @@
     write(IMAIN,*)
   endif
 
-
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
   ! get density and velocity from PREM model using dummy doubling flag
   ! this assumes that the gravity perturbations are small and smooth
@@ -816,6 +815,7 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
+
           if( USE_3D_ATTENUATION_ARRAYS ) then
             scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
           else
@@ -869,6 +869,7 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
+
           if( USE_3D_ATTENUATION_ARRAYS ) then
             scale_factor = factor_scale_inner_core(i,j,k,ispec)
           else

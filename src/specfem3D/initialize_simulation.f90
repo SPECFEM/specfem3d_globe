@@ -119,7 +119,7 @@
 
   ! distributes parameters from master to all processes
   ! note: uses NSPEC_computed,NGLOB_computed as arguments
-  call broadcast_compute_parameters(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+  call broadcast_computed_parameters(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
                 NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                 NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
                 NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &

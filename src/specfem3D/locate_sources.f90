@@ -126,7 +126,7 @@
   double precision :: f0,t0_ricker
 
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
   ! event time
   integer :: yr,jda,ho,mi
@@ -324,10 +324,6 @@
       y_target_source = r_target_source*dsin(theta)*dsin(phi)
       z_target_source = r_target_source*dcos(theta)
 
-      ! debug
-      ! would only output desired target locations
-      !if(myrank == 0) print *,sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
-
       ! set distance to huge initial value
       distmin = HUGEVAL
 
@@ -390,8 +386,6 @@
                 iy_initial_guess_source = j
                 iz_initial_guess_source = k
                 located_target = .true.
-                !debug
-                !print*,myrank,'dist:',distmin*R_EARTH/1000.d0,i,j,k,ispec
               endif
 
             enddo
@@ -703,7 +697,7 @@
         endif
 
         ! stores location for vtk visualization
-        if(isource == 1 ) then
+        if(isource == 1) then
           vtkdata_source_x = sngl(x_found_source(isource_in_this_subset))
           vtkdata_source_y = sngl(y_found_source(isource_in_this_subset))
           vtkdata_source_z = sngl(z_found_source(isource_in_this_subset))
@@ -851,7 +845,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                       tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)

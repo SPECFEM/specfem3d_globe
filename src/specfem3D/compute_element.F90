@@ -843,19 +843,7 @@
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
 
-!daniel: att - debug update
-!          call compute_element_att_mem_up_cm(ispec,i,j,k, &
-!                                          R_xx(:,i,j,k,ispec), &
-!                                          R_yy(:,i,j,k,ispec), &
-!                                          R_xy(:,i,j,k,ispec), &
-!                                          R_xz(:,i,j,k,ispec), &
-!                                          R_yz(:,i,j,k,ispec), &
-!                                          epsilondev_loc(:,i,j,k),muvstore(i,j,k,ispec),is_backward_field)
-! dummy to avoid compiler warning
-          if( is_backward_field ) then
-          endif
-
-          ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
+          ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
                                           R_yy(1,i,j,k,ispec), &
                                           R_xy(1,i,j,k,ispec), &
@@ -922,7 +910,6 @@
               sx_l = rho * dble(dummyx_loc(i,j,k))
               sy_l = rho * dble(dummyy_loc(i,j,k))
               sz_l = rho * dble(dummyz_loc(i,j,k))
-
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
@@ -1266,9 +1253,9 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 
-          ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
+          ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
                                           R_yy(1,i,j,k,ispec), &
                                           R_xy(1,i,j,k,ispec), &
@@ -1556,10 +1543,6 @@
 
   enddo ! i_SLS
 
-! dummy to avoid compiler warning
-  if( is_backward_field ) then
-  endif
-
   end subroutine compute_element_att_memory_cm
 
 !
@@ -1660,10 +1643,6 @@
          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
 
   enddo
-
-! dummy to avoid compiler warning
-  if( is_backward_field ) then
-  endif
 
   end subroutine compute_element_att_memory_ic
 

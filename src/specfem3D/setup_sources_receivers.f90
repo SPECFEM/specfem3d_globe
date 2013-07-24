@@ -344,7 +344,6 @@
                       yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
                       theta_source(1),phi_source(1),NCHUNKS_VAL,ELLIPTICITY_VAL)
 
-
   ! count number of receivers located in this slice
   nrec_local = 0
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then

@@ -74,7 +74,7 @@
 
   ! initializes matrices
   !
-  ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -262,7 +262,7 @@
   subroutine create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code, &
                                         NSPEC2D_BOTTOM)
 
-! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
 ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
 ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
 
@@ -310,7 +310,7 @@
   integer :: ispec2D
 
   ! checks if we have absorbing boundary arrays
-  if( .not. allocated(nimin) ) call exit_MPI(myrank,'error stacey array not allocated')
+  if( .not. allocated(nimin) ) call exit_MPI(myrank,'error Stacey array not allocated')
 
   ! use the non-dimensional time step to make the mass matrix correction
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -338,7 +338,7 @@
     enddo
   enddo
 
-  ! adds contributions to mass matrix to stabilize stacey conditions
+  ! adds contributions to mass matrix to stabilize Stacey conditions
   select case(iregion_code)
   case(IREGION_CRUST_MANTLE)
 

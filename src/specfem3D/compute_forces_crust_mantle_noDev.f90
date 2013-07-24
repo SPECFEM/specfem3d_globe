@@ -915,6 +915,7 @@
 ! IMPROVE we should probably use an average value instead
 
           ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+
           factor_common_c44_muv = factor_common(i_SLS,:,:,:,ispec)
           if(ANISOTROPIC_3D_MANTLE_VAL) then
             factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)

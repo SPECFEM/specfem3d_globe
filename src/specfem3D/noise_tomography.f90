@@ -79,6 +79,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_movie
+
   implicit none
 
   include "precision.h"
@@ -91,7 +92,6 @@
       val_x,val_y,val_z,val_ux,val_uy,val_uz
   real(kind=CUSTOM_REAL), dimension(nmovie_points,0:NPROCTOT_VAL-1) :: &
       val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all
-
 
   ! read master receiver ID -- the ID in DATA/STATIONS
   filename = 'OUTPUT_FILES/NOISE_TOMOGRAPHY/'//'irec_master_noise'
@@ -531,7 +531,6 @@
           eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
                 noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
                 noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
-
 
           accel(1,iglob) = accel(1,iglob) &
                             + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &

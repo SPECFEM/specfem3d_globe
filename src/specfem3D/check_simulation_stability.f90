@@ -282,7 +282,7 @@
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
-      if(it < 100) then
+      if (it < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
         write(IMAIN,*) '**** because fewer than 100 iterations have been performed'
@@ -372,7 +372,6 @@
   character(len=3), dimension(0:6) :: weekday_name
   data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
   data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
-
 
   ! write time stamp file to give information about progression of simulation
   write(outputname,"('/timestamp',i6.6)") it

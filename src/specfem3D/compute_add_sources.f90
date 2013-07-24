@@ -29,6 +29,7 @@
 
   use specfem_par
   use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
+
   implicit none
 
   ! local parameters
@@ -58,12 +59,6 @@
 
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
-          !if (it == 1 .and. myrank == 0) then
-          !  write(IMAIN,*) 'using a source of dominant frequency ',f0
-          !  write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
-          !  write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-          !endif
-
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
 
@@ -74,7 +69,6 @@
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
-
           stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
 
           !     distinguish between single and double precision for reals
@@ -133,6 +127,7 @@
 
   use specfem_par
   use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
+
   implicit none
 
   ! local parameters
@@ -284,7 +279,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_add_sources_backward()
 
   use specfem_par
@@ -319,6 +313,7 @@
         !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
         !       in the first (it=1) time loop.
         !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
+
         if(USE_FORCE_POINT_SOURCE) then
 
            ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]

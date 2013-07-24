@@ -76,7 +76,6 @@
     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file attenuation.bin')
-
     read(27) tau_s
     read(27) factor_common ! tau_e_store
     read(27) scale_factor  ! Qmu_store
