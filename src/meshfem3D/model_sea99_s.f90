@@ -63,12 +63,12 @@
 
 ! standard routine to setup model
 
+  use mpi
   use model_sea99_s_par
 
   implicit none
 
   include "constants.h"
-  include 'mpif.h'
 
   integer :: myrank
 

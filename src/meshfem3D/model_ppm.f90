@@ -511,12 +511,12 @@
 
 ! smooth model parameters
 
+  use mpi
   use model_ppm_par,only: &
     PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
   implicit none
 
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
 

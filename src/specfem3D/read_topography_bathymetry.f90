@@ -27,13 +27,13 @@
 
   subroutine read_topography_bathymetry()
 
+  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
-  implicit none
 
-  include 'mpif.h'
+  implicit none
 
   ! local parameters
   integer :: ier

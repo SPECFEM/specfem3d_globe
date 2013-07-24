@@ -1012,9 +1012,6 @@
 !  use meshfem3D_par,only: NSTEP,DT,NPROC_XI,NPROC_ETA
 !  implicit none
 !
-!  ! standard include of the MPI library
-!  include 'mpif.h'
-!
 !  integer :: myrank
 !  integer :: iregion_code
 !

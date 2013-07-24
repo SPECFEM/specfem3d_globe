@@ -44,10 +44,9 @@
                    receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
                    buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
-  implicit none
+  use mpi
 
-  ! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 

@@ -44,10 +44,9 @@
 
 ! this version of the routine is based on blocking MPI calls
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
   include "precision.h"
