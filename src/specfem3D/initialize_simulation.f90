@@ -41,6 +41,7 @@
 
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
   integer :: ratio_divide_central_cube
   integer :: sizeprocs
   integer :: ios
@@ -269,12 +270,12 @@
     else
       write(IMAIN,*) '  no transverse isotropy'
     endif
-    if(ANISOTROPIC_INNER_CORE) then
+    if(ANISOTROPIC_INNER_CORE_VAL) then
       write(IMAIN,*) '  incorporating anisotropic inner core'
     else
       write(IMAIN,*) '  no inner-core anisotropy'
     endif
-    if(ANISOTROPIC_3D_MANTLE) then
+    if(ANISOTROPIC_3D_MANTLE_VAL) then
       write(IMAIN,*) '  incorporating anisotropic mantle'
     else
       write(IMAIN,*) '  no general mantle anisotropy'
@@ -445,16 +446,13 @@
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
-    call exit_MPI(myrank, &
-    'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
+    call exit_MPI(myrank,'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
-      ! attenuation for adjoint simulations must have USE_ATTENUATION_MIMIC set by xcreate_header_file
-
-!daniel: att - debug todo check attenuation mimick
-      if( USE_ATTENUATION_MIMIC .eqv. .false. ) &
+      ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
+      if(.not. PARTIAL_PHYS_DISPERSION_ONLY) &
         call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
 
       ! user output
@@ -496,13 +494,13 @@
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
   ! checks model for transverse isotropic kernel computation
-  if( SAVE_TRANSVERSE_KL ) then
+  if( SAVE_TRANSVERSE_KL_ONLY ) then
     if( ANISOTROPIC_3D_MANTLE_VAL ) then
-        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: Earth model not supported yet')
+        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL_ONLY: Earth model not supported yet')
     endif
     if( SIMULATION_TYPE == 3 ) then
       if( .not. ANISOTROPIC_KL ) then
-        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: needs anisotropic kernel calculations')
+        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL_ONLY: needs anisotropic kernel calculations')
       endif
     endif
   endif

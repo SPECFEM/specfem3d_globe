@@ -54,7 +54,6 @@
 
   ! create name of database
   write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
-
   open(unit=IOUT,file=trim(prname)//'movie3D_info.txt', &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_info.txt')
@@ -474,13 +473,13 @@
   if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
   ! allocates arrays
-!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppressing it
 !! DK DK (it does not appear in the trunk version of the same routine)
-!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppressing it
 !! DK DK (it does not appear in the trunk version of the same routine)
-!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppressing it
 !! DK DK (it does not appear in the trunk version of the same routine)
-!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppress it
+!! DK DK to Daniel: "vector_scaled" is a big array, we could consider suppressing it
 !! DK DK (it does not appear in the trunk version of the same routine)
   allocate(store_val3d_N(npoints_3dmovie), &
           store_val3d_E(npoints_3dmovie), &

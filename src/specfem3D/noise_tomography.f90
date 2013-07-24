@@ -75,12 +75,12 @@
 
   subroutine read_parameters_noise()
 
+  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_movie
   implicit none
 
-  include 'mpif.h'
   include "precision.h"
 
   ! local parameters

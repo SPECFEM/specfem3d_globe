@@ -27,12 +27,9 @@
 
   subroutine write_seismograms()
 
-! computes the maximum of the norm of the displacement
-! in all the slices using an MPI reduction
-! and output timestamp file to check that simulation is running fine
-
   use specfem_par
   use specfem_par_crustmantle
+
   implicit none
 
   ! update position in seismograms

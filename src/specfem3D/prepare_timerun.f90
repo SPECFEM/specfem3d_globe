@@ -183,7 +183,7 @@
     if(ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
       if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation model'
-      if(USE_ATTENUATION_MIMIC ) write(IMAIN,*) 'mimicking effects on velocity only'
+      if(PARTIAL_PHYS_DISPERSION_ONLY ) write(IMAIN,*) 'mimicking effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
     endif
@@ -619,7 +619,6 @@
   ! and that we can neglect the 3D model and use PREM every 100 m in all cases
   ! this is probably a rather reasonable assumption
   if(GRAVITY_VAL) then
-
     call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
@@ -1490,7 +1489,7 @@
                                   GRAVITY_VAL, &
                                   ROTATION_VAL, &
                                   ATTENUATION_VAL,ATTENUATION_NEW_VAL, &
-                                  USE_ATTENUATION_MIMIC,USE_3D_ATTENUATION_ARRAYS, &
+                                  PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                   COMPUTE_AND_STORE_STRAIN_VAL, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &

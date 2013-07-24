@@ -34,6 +34,7 @@
                              yr,jda,ho,mi,sec, &
                              theta_source,phi_source,NCHUNKS,ELLIPTICITY)
 
+  use mpi
   use constants_solver
   use specfem_par,only: &
     myrank,DT,NSTEP, &
@@ -46,8 +47,6 @@
 
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
   include "precision.h"
 
   integer nspec,nglob

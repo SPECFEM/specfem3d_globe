@@ -395,7 +395,6 @@
     !
     if(ANISOTROPIC_3D_MANTLE_VAL) then
        ! anisotropic element
-
        call compute_element_aniso(ispec, &
             minus_gravity_table,density_table,minus_deriv_gravity_table, &
             xstore,ystore,zstore, &
@@ -415,10 +414,8 @@
             tempz1_att,tempz2_att,tempz3_att, &
             epsilondev_loc,rho_s_H,is_backward_field)
     else
-
-       if( .not. ispec_is_tiso(ispec) ) then
+       if(.not. ispec_is_tiso(ispec)) then
           ! isotropic element
-
           call compute_element_iso(ispec, &
                minus_gravity_table,density_table,minus_deriv_gravity_table, &
                xstore,ystore,zstore, &
@@ -437,7 +434,6 @@
                epsilondev_loc,rho_s_H,is_backward_field)
        else
           ! transverse isotropic element
-
           call compute_element_tiso(ispec, &
                minus_gravity_table,density_table,minus_deriv_gravity_table, &
                xstore,ystore,zstore, &
@@ -572,7 +568,7 @@
     ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
     ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
+    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
 
 !daniel: att - debug update R_memory variable only if not last time step which will be saved..
 !      if( .not. it == NSTEP ) then
@@ -597,7 +593,7 @@
       epsilondev_yz(:,:,:,ispec) = epsilondev_loc(5,:,:,:)
     endif
 
-  enddo   ! spectral element loop NSPEC_CRUST_MANTLE
+  enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 
   end subroutine compute_forces_crust_mantle_Dev
 

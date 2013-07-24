@@ -64,7 +64,7 @@
   scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
 
   ! allocates temporary arrays
-  if( SAVE_TRANSVERSE_KL ) then
+  if( SAVE_TRANSVERSE_KL_ONLY ) then
     ! transverse isotropic kernel arrays for file output
     allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
             alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
@@ -106,7 +106,7 @@
             rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
             ! transverse isotropic kernel calculations
-            if( SAVE_TRANSVERSE_KL ) then
+            if( SAVE_TRANSVERSE_KL_ONLY ) then
               ! note: transverse isotropic kernels are calculated for all elements
               !
               !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -231,7 +231,7 @@
                                               + N*an_kl(3) + L*an_kl(4) + F*an_kl(5) &
                                               + rhonotprime_kl_crust_mantle(i,j,k,ispec)
 
-              ! write the kernel in physical units (01/05/2006)
+              ! write the kernel in physical units
               rhonotprime_kl_crust_mantle(i,j,k,ispec) = - rhonotprime_kl_crust_mantle(i,j,k,ispec) * scale_kl
 
               alphav_kl_crust_mantle(i,j,k,ispec) = - alphav_kl_crust_mantle(i,j,k,ispec) * scale_kl
@@ -253,11 +253,11 @@
                 bulk_sq / alphav_sq * alphav_kl_crust_mantle(i,j,k,ispec) + &
                 bulk_sq / alphah_sq * alphah_kl_crust_mantle(i,j,k,ispec)
 
-              bulk_betah_kl_crust_mantle(i,j,k,ispec ) = &
+              bulk_betah_kl_crust_mantle(i,j,k,ispec) = &
                 betah_kl_crust_mantle(i,j,k,ispec) + &
                 FOUR_THIRDS * betah_sq / alphah_sq * alphah_kl_crust_mantle(i,j,k,ispec)
 
-              bulk_betav_kl_crust_mantle(i,j,k,ispec ) = &
+              bulk_betav_kl_crust_mantle(i,j,k,ispec) = &
                 betav_kl_crust_mantle(i,j,k,ispec) + &
                 FOUR_THIRDS * betav_sq / alphav_sq * alphav_kl_crust_mantle(i,j,k,ispec)
               ! the rest, K_eta and K_rho are the same as above
@@ -270,10 +270,10 @@
               !rho_kl_crust_mantle(i,j,k,ispec) = rhonotprime_kl_crust_mantle(i,j,k,ispec) &
               !                                    + alpha_kl_crust_mantle(i,j,k,ispec) &
               !                                    + beta_kl_crust_mantle(i,j,k,ispec)
-              bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec ) &
-                                                    + bulk_betav_kl_crust_mantle(i,j,k,ispec )
+              bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec) &
+                                                    + bulk_betav_kl_crust_mantle(i,j,k,ispec)
 
-            endif ! SAVE_TRANSVERSE_KL
+            endif ! SAVE_TRANSVERSE_KL_ONLY
 
           else
 
@@ -320,7 +320,7 @@
   if (ANISOTROPIC_KL) then
 
     ! outputs transverse isotropic kernels only
-    if( SAVE_TRANSVERSE_KL ) then
+    if( SAVE_TRANSVERSE_KL_ONLY ) then
       ! transverse isotropic kernels
       ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
       open(unit=27,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
@@ -418,7 +418,7 @@
   endif
 
   ! cleans up temporary kernel arrays
-  if( SAVE_TRANSVERSE_KL ) then
+  if( SAVE_TRANSVERSE_KL_ONLY ) then
     deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
         betav_kl_crust_mantle,betah_kl_crust_mantle, &
         eta_kl_crust_mantle)
@@ -461,7 +461,6 @@
 
           rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
           alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
-
 
           !deviatoric kernel check
           if( deviatoric_outercore ) then
@@ -674,7 +673,7 @@
   ! scaling factors
   scale_kl = scale_t/scale_displ * 1.d9
 
-  ! scales approximate hessian
+  ! scales approximate Hessian
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
 
   ! stores into file
@@ -715,8 +714,10 @@
   implicit none
   include  "constants.h"
 
-  real(kind=CUSTOM_REAL) :: theta_in,phi_in
-  real(kind=CUSTOM_REAL),dimension(21) :: cij_kll,cij_kl
+  real(kind=CUSTOM_REAL), intent(in) :: theta_in,phi_in
+
+  real(kind=CUSTOM_REAL), dimension(21), intent(in) :: cij_kl
+  real(kind=CUSTOM_REAL), dimension(21), intent(out) :: cij_kll
 
   double precision :: theta,phi
   double precision :: costheta,sintheta,cosphi,sinphi
@@ -767,8 +768,7 @@
   sintwothetasq = sintwotheta * sintwotheta
   sintwophisq = sintwophi * sintwophi
 
-
-  cij_kll(1) = 1.d0/16.d0* (cij_kl(16) - cij_kl(16)* costwophi + &
+ cij_kll(1) = ONE_SIXTEENTH* (cij_kl(16) - cij_kl(16)* costwophi + &
      16.d0* cosphi*cosphisq* costhetafour* (cij_kl(1)* cosphi + cij_kl(6)* sinphi) + &
      2.d0* (cij_kl(15) + cij_kl(17))* sintwophi* sintwothetasq - &
      2.d0* (cij_kl(16)* cosfourtheta* sinphisq + &
@@ -786,7 +786,7 @@
      cij_kl(9)* sinphisq)* sintwotheta + &
      sinphi* (-cij_kl(13) + cij_kl(9)* sinphisq)* sinfourtheta))
 
-  cij_kll(2) = 1.d0/4.d0* (costhetasq* (cij_kl(1) + 3.d0* cij_kl(2) + cij_kl(7) - &
+ cij_kll(2) = ONE_FOURTH* (costhetasq* (cij_kl(1) + 3.d0* cij_kl(2) + cij_kl(7) - &
       cij_kl(21) + (-cij_kl(1) + cij_kl(2) - cij_kl(7) + &
       cij_kl(21))* cosfourphi + (-cij_kl(6) + cij_kl(11))* sinfourphi) + &
       4.d0* (cij_kl(8)* cosphisq - cij_kl(15)* cosphi* sinphi + &
@@ -796,7 +796,7 @@
       (cij_kl(5) - cij_kl(18))* cosphi* sinphisq + &
       cij_kl(4)* sinphisq*sinphi)* sintwotheta)
 
-  cij_kll(3) = 1.d0/8.d0* (sintwophi* (3.d0* cij_kl(15) - cij_kl(17) + &
+ cij_kll(3) = ONE_EIGHTH* (sintwophi* (3.d0* cij_kl(15) - cij_kl(17) + &
      4.d0* (cij_kl(2) + cij_kl(21))* costhetasq* sintwophi* sinthetasq) + &
      4.d0* cij_kl(12)* sintwothetasq + 4.d0* cij_kl(1)* cosphifour* sintwothetasq + &
      2.d0* cosphi*cosphisq* (8.d0* cij_kl(6)* costhetasq* sinphi* sinthetasq + &
@@ -811,17 +811,17 @@
      8.d0* cij_kl(11)* costhetasq* sinphi*sinphisq* sinthetasq + &
      (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq)*sinfourtheta))
 
-  cij_kll(4) = 1.d0/8.d0* (cosphi* costheta *(5.d0* cij_kl(4) - &
+ cij_kll(4) = ONE_EIGHTH* (cosphi* costheta *(5.d0* cij_kl(4) - &
      cij_kl(9) + 4.d0* cij_kl(13) - &
      3.d0* cij_kl(20) + (cij_kl(4) + 3.d0* cij_kl(9) - &
      4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + &
-     1.d0/2.d0* (cij_kl(4) - cij_kl(9) + &
+     ONE_HALF* (cij_kl(4) - cij_kl(9) + &
      cij_kl(20))* costhreephi * (costheta + 3.d0* costhreetheta) - &
      costheta* (-cij_kl(5) + 5.d0* cij_kl(10) + &
      4.d0* cij_kl(14) - 3.d0* cij_kl(18) + &
      (3.d0* cij_kl(5) + cij_kl(10) - &
      4.d0* cij_kl(14) + cij_kl(18))* costwotheta)* sinphi - &
-     1.d0/2.d0* (cij_kl(5) - cij_kl(10) - cij_kl(18))* (costheta + &
+     ONE_HALF* (cij_kl(5) - cij_kl(10) - cij_kl(18))* (costheta + &
      3.d0* costhreetheta)* sinthreephi + &
      4.d0* (cij_kl(6) - cij_kl(11))* cosfourphi* costhetasq* sintheta - &
      4.d0* (cij_kl(1) + cij_kl(3) - cij_kl(7) - cij_kl(8) + cij_kl(16) - cij_kl(19) + &
@@ -833,7 +833,7 @@
      2.d0* cij_kl(17))* sintheta + &
      (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + cij_kl(17)))* sinthreetheta))
 
-  cij_kll(5) = 1.d0/4.d0* (2.d0* (cij_kl(4) + &
+ cij_kll(5) = ONE_FOURTH* (2.d0* (cij_kl(4) + &
      cij_kl(20))* cosphisq* (costwotheta + cosfourtheta)* sinphi + &
      2.d0* cij_kl(9)* (costwotheta + cosfourtheta)* sinphi*sinphisq + &
      16.d0* cij_kl(1)* cosphifour* costheta*costhetasq* sintheta + &
@@ -851,10 +851,10 @@
      (cij_kl(3) - cij_kl(16) + cij_kl(19))* costwophi + &
      (cij_kl(15) + cij_kl(17))* sintwophi)* sinfourtheta)
 
-  cij_kll(6) = 1.d0/2.d0* costheta*costhetasq* ((cij_kl(6) + cij_kl(11))* costwophi + &
+ cij_kll(6) = ONE_HALF* costheta*costhetasq* ((cij_kl(6) + cij_kl(11))* costwophi + &
       (cij_kl(6) - cij_kl(11))* cosfourphi + 2.d0* (-cij_kl(1) + cij_kl(7))* sintwophi + &
       (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* sinfourphi) + &
-      1.d0/4.d0* costhetasq* (-(cij_kl(4) + 3* cij_kl(9) + cij_kl(20))* cosphi - &
+      ONE_FOURTH* costhetasq* (-(cij_kl(4) + 3* cij_kl(9) + cij_kl(20))* cosphi - &
       3.d0* (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi + &
       (3.d0* cij_kl(5) + cij_kl(10) + cij_kl(18))* sinphi + &
       3.d0* (cij_kl(5) - cij_kl(10) - cij_kl(18))* sinthreephi)* sintheta + &
@@ -862,12 +862,12 @@
       (-cij_kl(3) + cij_kl(8) + cij_kl(16) - cij_kl(19))* sintwophi)* sinthetasq + &
       (-cij_kl(13)* cosphi + cij_kl(14)* sinphi)* sintheta*sinthetasq
 
-  cij_kll(7) = cij_kl(7)* cosphifour - cij_kl(11)* cosphi*cosphisq* sinphi + &
+ cij_kll(7) = cij_kl(7)* cosphifour - cij_kl(11)* cosphi*cosphisq* sinphi + &
       (cij_kl(2) + cij_kl(21))* cosphisq* sinphisq - &
       cij_kl(6)* cosphi* sinphi*sinphisq + &
       cij_kl(1)* sinphifour
 
-  cij_kll(8) = 1.d0/2.d0* (2.d0* costhetasq* sinphi* (-cij_kl(15)* cosphi + &
+ cij_kll(8) = ONE_HALF* (2.d0* costhetasq* sinphi* (-cij_kl(15)* cosphi + &
       cij_kl(3)* sinphi) + 2.d0* cij_kl(2)* cosphifour* sinthetasq + &
       (2.d0* cij_kl(2)* sinphifour + &
       (cij_kl(1) + cij_kl(7) - cij_kl(21))* sintwophisq)* sinthetasq + &
@@ -879,7 +879,7 @@
       cosphisq* (2.d0* cij_kl(8)* costhetasq + &
       (cij_kl(9) - cij_kl(20))* sinphi* sintwotheta))
 
-  cij_kll(9) = cij_kl(11)* cosphifour* sintheta - sinphi*sinphisq* (cij_kl(5)* costheta + &
+ cij_kll(9) = cij_kl(11)* cosphifour* sintheta - sinphi*sinphisq* (cij_kl(5)* costheta + &
       cij_kl(6)* sinphi* sintheta) +  cosphisq* sinphi* (-(cij_kl(10) + &
       cij_kl(18))* costheta + &
       3.d0* (cij_kl(6) - cij_kl(11))* sinphi* sintheta) + &
@@ -888,7 +888,7 @@
       cosphi*cosphisq* (cij_kl(9)* costheta - 2.d0* (cij_kl(2) - 2.d0* cij_kl(7) + &
       cij_kl(21))* sinphi* sintheta)
 
-  cij_kll(10) = 1.d0/4.d0* (4.d0* costwotheta* (cij_kl(10)* cosphi*cosphisq + &
+ cij_kll(10) = ONE_FOURTH* (4.d0* costwotheta* (cij_kl(10)* cosphi*cosphisq + &
       (cij_kl(9) - cij_kl(20))* cosphisq* sinphi + &
       (cij_kl(5) - cij_kl(18))* cosphi* sinphisq + &
       cij_kl(4)* sinphi*sinphisq) + (cij_kl(1) + 3.d0* cij_kl(2) - &
@@ -898,7 +898,7 @@
       2.d0* cij_kl(15)* sintwophi + &
       (-cij_kl(6) + cij_kl(11))* sinfourphi)* sintwotheta)
 
-  cij_kll(11) = 1.d0/4.d0* (2.d0* costheta* ((cij_kl(6) + cij_kl(11))* costwophi + &
+ cij_kll(11) = ONE_FOURTH* (2.d0* costheta* ((cij_kl(6) + cij_kl(11))* costwophi + &
       (-cij_kl(6) + cij_kl(11))* cosfourphi + &
       2.d0* (-cij_kl(1) + cij_kl(7))* sintwophi + &
       (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(21))* sinfourphi) + &
@@ -907,7 +907,7 @@
       (3.d0* cij_kl(5) + cij_kl(10) + cij_kl(18))* sinphi + &
       (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sintheta)
 
-  cij_kll(12) = 1.d0/16.d0* (cij_kl(16) - 2.d0* cij_kl(16)* cosfourtheta* sinphisq + &
+ cij_kll(12) = ONE_SIXTEENTH* (cij_kl(16) - 2.d0* cij_kl(16)* cosfourtheta* sinphisq + &
       costwophi* (-cij_kl(16) + 8.d0* costheta* sinthetasq* ((cij_kl(3) - &
       cij_kl(8) + cij_kl(19))* costheta + &
       (cij_kl(5) - cij_kl(10) - cij_kl(18))* cosphi* sintheta)) + &
@@ -928,7 +928,7 @@
       cij_kl(19)* sintwothetasq + cij_kl(13)* sinphi* sinfourtheta - &
       cij_kl(9)* sinphi*sinphisq* sinfourtheta))
 
-  cij_kll(13) = 1.d0/8.d0* (cosphi* costheta* (cij_kl(4) + 3.d0* cij_kl(9) + &
+ cij_kll(13) = ONE_EIGHTH* (cosphi* costheta* (cij_kl(4) + 3.d0* cij_kl(9) + &
       4.d0* cij_kl(13) + cij_kl(20) - (cij_kl(4) + 3.d0* cij_kl(9) - &
       4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + 4.d0* (-cij_kl(1) - &
       cij_kl(3) + cij_kl(7) + cij_kl(8) + cij_kl(16) - cij_kl(19) + &
@@ -946,7 +946,7 @@
       (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + &
       cij_kl(17)))* sinthreetheta))
 
-  cij_kll(14) = 1.d0/4.d0* (2.d0* cij_kl(13)* (costwotheta + cosfourtheta)* sinphi + &
+ cij_kll(14) = ONE_FOURTH* (2.d0* cij_kl(13)* (costwotheta + cosfourtheta)* sinphi + &
       8.d0* costheta*costhetasq* (-2.d0* cij_kl(12) + cij_kl(8)* sinphisq)* sintheta + &
       4.d0* (cij_kl(4) + cij_kl(20))* cosphisq* (1.d0 + &
       2.d0* costwotheta)* sinphi* sinthetasq + &
@@ -962,8 +962,8 @@
       (cij_kl(3) + cij_kl(16) + cij_kl(19) + (cij_kl(3) - cij_kl(16) + &
       cij_kl(19))* costwophi + (cij_kl(15) + cij_kl(17))* sintwophi)* sinfourtheta)
 
-  cij_kll(15) = costwophi* costheta* (-cij_kl(17) + (cij_kl(15) + cij_kl(17))* costhetasq) + &
-       1.d0/16.d0* (-((11.d0* cij_kl(4) + cij_kl(9) + 4.d0* cij_kl(13) - &
+ cij_kll(15) = costwophi* costheta* (-cij_kl(17) + (cij_kl(15) + cij_kl(17))* costhetasq) + &
+       ONE_SIXTEENTH* (-((11.d0* cij_kl(4) + cij_kl(9) + 4.d0* cij_kl(13) - &
        5.d0* cij_kl(20))* cosphi + (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi - &
        (cij_kl(5) + 11.d0* cij_kl(10) + 4.d0* cij_kl(14) - &
        5.d0* cij_kl(18))* sinphi + (-cij_kl(5) + cij_kl(10) + &
@@ -979,7 +979,7 @@
        (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))* sinphi + &
        3.d0* (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sinthreetheta)
 
-  cij_kll(16) = 1.d0/4.d0*(cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
+ cij_kll(16) = ONE_FOURTH*(cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
        cij_kl(19) + cij_kl(21) + 2.d0*(cij_kl(16) - cij_kl(19))*costwophi* costhetasq + &
        (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(16) + &
        cij_kl(19) - cij_kl(21))*costwotheta - 2.d0* cij_kl(17)* costhetasq* sintwophi + &
@@ -989,7 +989,7 @@
        (-cij_kl(4) + cij_kl(9) + cij_kl(20))* sinphi - &
        (cij_kl(4) - cij_kl(9) + cij_kl(20))* sinthreephi)* sintwotheta)
 
-  cij_kll(17) = 1.d0/8.d0* (4.d0* costwophi* costheta* (cij_kl(6) + cij_kl(11) - &
+ cij_kll(17) = ONE_EIGHTH* (4.d0* costwophi* costheta* (cij_kl(6) + cij_kl(11) - &
        2.d0* cij_kl(15) - (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + &
        cij_kl(17)))* costwotheta) - (2.d0* cosphi* (-3.d0* cij_kl(4) +&
        cij_kl(9) + 2.d0* cij_kl(13) + cij_kl(20) + (cij_kl(4) - cij_kl(9) + &
@@ -1005,7 +1005,7 @@
        (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))* sinphi + &
        3.d0* (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sinthreetheta)
 
-  cij_kll(18) = 1.d0/2.d0* ((cij_kl(5) - cij_kl(10) + cij_kl(18))* cosphi* costwotheta - &
+ cij_kll(18) = ONE_HALF* ((cij_kl(5) - cij_kl(10) + cij_kl(18))* cosphi* costwotheta - &
        (cij_kl(5) - cij_kl(10) - cij_kl(18))* costhreephi* costwotheta - &
        2.d0* (cij_kl(4) - cij_kl(9) + &
        (cij_kl(4) - cij_kl(9) + cij_kl(20))* costwophi)* costwotheta* sinphi + &
@@ -1015,7 +1015,7 @@
        cij_kl(17)* sintwophi + &
        (-cij_kl(6) + cij_kl(11))* sinfourphi)* sintwotheta)
 
-  cij_kll(19) = 1.d0/4.d0* (cij_kl(16) - cij_kl(16)* costwophi + &
+ cij_kll(19) = ONE_FOURTH* (cij_kl(16) - cij_kl(16)* costwophi + &
       (-cij_kl(15) + cij_kl(17))* sintwophi + &
       4.d0* cij_kl(12)* sintwothetasq + &
       2.d0* (2.d0* cij_kl(1)* cosphifour* sintwothetasq + &
@@ -1029,7 +1029,7 @@
       cosphi* (8.d0* cij_kl(11)* costhetasq* sinphi*sinphisq* sinthetasq + &
       (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq)* sinfourtheta)))
 
-  cij_kll(20) = 1.d0/8.d0* (2.d0* cosphi* costheta* (-3.d0* cij_kl(4) - cij_kl(9) + &
+ cij_kll(20) = ONE_EIGHTH* (2.d0* cosphi* costheta* (-3.d0* cij_kl(4) - cij_kl(9) + &
       4.d0* cij_kl(13) + cij_kl(20) + (cij_kl(4) + 3.d0* cij_kl(9) - &
       4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + &
       (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi* (costheta + &
@@ -1049,7 +1049,7 @@
       2.d0* cij_kl(17))* sintheta + &
       (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + cij_kl(17)))* sinthreetheta))
 
-  cij_kll(21) = 1.d0/4.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
+ cij_kll(21) = ONE_FOURTH* (cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
       cij_kl(19) + cij_kl(21) - 2.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) - &
       cij_kl(21))* cosfourphi* costhetasq + &
       (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(16) - cij_kl(19) + &
@@ -1062,3 +1062,4 @@
       cij_kl(20))* sinthreephi)* sintwotheta)
 
   end subroutine rotate_kernels_dble
+

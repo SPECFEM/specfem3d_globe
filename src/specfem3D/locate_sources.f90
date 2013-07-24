@@ -33,6 +33,7 @@
                             xstore,ystore,zstore, &
                             ELLIPTICITY,min_tshift_cmt_original)
 
+  use mpi
   use constants_solver
   use specfem_par,only: &
     NSOURCES,myrank, &
@@ -47,9 +48,6 @@
   use specfem_par_movie,only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
   implicit none
-
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   include "precision.h"
 
