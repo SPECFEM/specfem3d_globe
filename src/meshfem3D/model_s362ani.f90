@@ -83,13 +83,12 @@
 
 ! standard routine to setup model
 
+  use mpi
   use model_s362ani_par
 
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   integer :: myrank
   integer :: THREE_D_MODEL
@@ -1077,12 +1076,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine splcon(xlat,xlon,nver,verlat,verlon,verrad,ncon,icon,con)
 
   implicit none
 
-  integer :: ncon,nver
+  include "constants.h"
+
+  integer, intent(in) :: nver
+  integer, intent(out) :: ncon
 
 ! Daniel Peter: original define
 !
@@ -1094,39 +1095,39 @@
 !  real(kind=4) con(1)
 
 ! Daniel Peter: avoiding out-of-bounds errors
-  real(kind=4) verlat(nver)
-  real(kind=4) verlon(nver)
-  real(kind=4) verrad(nver)
+  real(kind=4), intent(in) :: verlat(nver)
+  real(kind=4), intent(in) :: verlon(nver)
+  real(kind=4), intent(in) :: verrad(nver)
 
   integer, parameter :: maxver=1000
-  integer icon(maxver)
-  real(kind=4) con(maxver)
+  integer, intent(out) :: icon(maxver)
+  real(kind=4), intent(out) :: con(maxver)
 
   double precision dd
   double precision rn
   double precision dr
-  double precision xrad
   double precision ver8
   double precision xla8
 
   integer :: iver
   real(kind=4) :: xlat,xlon
 
-  xrad=3.14159265358979/180.d0
-
   ncon=0
 
   do iver=1,nver
     if(xlat > verlat(iver)-2.*verrad(iver)) then
       if(xlat < verlat(iver)+2.*verrad(iver)) then
-        ver8=xrad*(verlat(iver))
-        xla8=xrad*(xlat)
-        dd=sin(ver8)*sin(xla8)
-        dd=dd+cos(ver8)*cos(xla8)* cos(xrad*(xlon-verlon(iver)))
-        dd=acos(dd)/xrad
+        ver8=DEGREES_TO_RADIANS*(verlat(iver))
+        xla8=DEGREES_TO_RADIANS*(xlat)
+        dd=sin(ver8)*sin(xla8) + cos(ver8)*cos(xla8)* cos(DEGREES_TO_RADIANS*(xlon-verlon(iver)))
+        dd=acos(dd) * RADIANS_TO_DEGREES
         if(dd > (verrad(iver))*2.d0) then
         else
           ncon=ncon+1
+
+!! DK DK added this safety test
+          if(ncon > maxver) stop 'error: ncon > maxver in splcon()'
+
           icon(ncon)=iver
           rn=dd/(verrad(iver))
           dr=rn-1.d0
@@ -1201,15 +1202,21 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
+
 ! originally called
-!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-!              xlospl(1,ihpa),radspl(1,ihpa), &
-!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+         call splcon(y,x,numcof,xlaspl(1,ihpa), &
+               xlospl(1,ihpa),radspl(1,ihpa), &
+               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
 ! making sure of array bounds
-        call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
-              xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+!! note from DK DK, July 2013: the code below is correct but it is exactly the same as the code
+!! note from DK DK, July 2013: above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
+!! note from DK DK, July 2013: using a pointer to it such as xlaspl(1,ihpa) in the call seems fine as well;
+!! note from DK DK, July 2013: and some compilers could create expensive and useless memory copies for each call
+!! note from DK DK, July 2013: with the new syntax below
+!       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+!             xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
+!             nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
       else
         write(6,"('problem 1')")
@@ -1280,7 +1287,7 @@
 
   enddo ! --- by ish
 
-! --- evaluate perturbations in per cent
+! --- evaluate perturbations in percent
 
   dvsh=vsh3drel
   dvsv=vsv3drel
@@ -1331,14 +1338,19 @@
       numcof=numcoe(ihpa)
 
 ! originally called
-!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-!              xlospl(1,ihpa),radspl(1,ihpa), &
-!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+         call splcon(y,x,numcof,xlaspl(1,ihpa), &
+               xlospl(1,ihpa),radspl(1,ihpa), &
+               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
-! making sure array bounds
-      call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
-              xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-              nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
+! making sure of array bounds
+!! note from DK DK, July 2013: the code below is correct but it is exactly the same as the code
+!! note from DK DK, July 2013: above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
+!! note from DK DK, July 2013: using a pointer to it such as xlaspl(1,ihpa) in the call seems fine as well;
+!! note from DK DK, July 2013: and some compilers could create expensive and useless memory copies for each call
+!! note from DK DK, July 2013: with the new syntax below
+!       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+!             xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
+!             nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
 
 
     else

@@ -51,12 +51,12 @@
 
 ! standard routine to setup model
 
+  use mpi
   use model_eucrust_par
 
   implicit none
 
   include "constants.h"
-  include 'mpif.h'
 
   integer :: myrank
   integer :: ier

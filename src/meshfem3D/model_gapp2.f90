@@ -53,11 +53,12 @@
 ! standard routine to setup model
 
   use gapp2_mantle_model_constants
+  use mpi
 
   implicit none
+
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
+
   integer :: myrank
   integer :: ier
 

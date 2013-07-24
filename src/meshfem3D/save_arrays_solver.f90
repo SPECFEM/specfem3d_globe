@@ -237,7 +237,7 @@
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
@@ -294,7 +294,6 @@
     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
-
     write(27) tau_s
     write(27) tau_e_store
     write(27) Qmu_store

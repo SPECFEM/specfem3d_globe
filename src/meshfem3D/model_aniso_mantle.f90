@@ -58,12 +58,11 @@
 ! standard routine to setup model
 
   use model_aniso_mantle_par
+  use mpi
 
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   integer :: myrank
 

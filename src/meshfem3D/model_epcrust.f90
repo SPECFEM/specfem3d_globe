@@ -61,12 +61,12 @@
 
   subroutine model_epcrust_broadcast(myrank)
 
+  use mpi
   use model_epcrust_par
 
   implicit none
 
   include "constants.h"
-  include 'mpif.h'
 
   integer:: myrank,ier
 

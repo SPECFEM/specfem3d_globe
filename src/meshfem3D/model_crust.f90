@@ -58,12 +58,12 @@
 
 ! standard routine to setup model
 
+  use mpi
   use model_crust_par
 
   implicit none
 
   include "constants.h"
-  include 'mpif.h'
 
   integer :: myrank
   integer :: ier
