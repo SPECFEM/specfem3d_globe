@@ -38,12 +38,11 @@
 ! standard routine to setup model
 
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
+  use mpi
 
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
   include "precision.h"
 
   ! GLL model_variables

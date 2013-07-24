@@ -57,18 +57,16 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-
   subroutine model_s20rts_broadcast(myrank)
 
 ! standard routine to setup model
 
+  use mpi
   use model_s20rts_par
 
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   integer :: myrank
 

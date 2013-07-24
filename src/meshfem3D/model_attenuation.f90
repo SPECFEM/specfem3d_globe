@@ -65,11 +65,11 @@
 
 ! standard routine to setup model
 
+  use mpi
+
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -537,6 +537,8 @@
 
   implicit none
 
+  include "constants.h"
+
   integer n
   double precision tau_s(n)
   double precision min_period, max_period
@@ -544,7 +546,6 @@
   double precision exp1, exp2
   double precision dexp
   integer i
-  double precision, parameter :: PI = 3.14159265358979d0
 
   f1 = 1.0d0 / max_period
   f2 = 1.0d0 / min_period
@@ -566,6 +567,8 @@
   subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e, AS_V)
 
   implicit none
+
+  include "constants.h"
 
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
@@ -596,7 +599,6 @@
   integer i, iterations, err,prnt
   double precision f1, f2, exp1,exp2,dexp, min_value
   double precision, allocatable, dimension(:) :: f
-  double precision, parameter :: PI = 3.14159265358979d0
   integer, parameter :: nf = 100
   double precision, external :: attenuation_eval
 
@@ -768,6 +770,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   implicit none
 
+  include "constants.h"
+
   ! Input
   integer nf, nsls
   double precision, dimension(nf)   :: f
@@ -776,21 +780,17 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   double precision, dimension(nf)   :: A,B
 
   integer i,j
-  double precision w, pi, demon
-
-  PI = 3.14159265358979d0
+  double precision w, demon
 
   A(:) = 1.0d0 -  nsls*1.0d0
   B(:) = 0.0d0
   do i = 1,nf
      w = 2.0d0 * PI * 10**f(i)
      do j = 1,nsls
-!        write(*,*)j,tau_s(j),tau_e(j)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
      enddo
-!     write(*,*)A(i),B(i),10**f(i)
   enddo
 
   end subroutine attenuation_maxwell
@@ -1260,209 +1260,3 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   end subroutine qsort_local
 
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-! unused routines...
-!
-!
-!  subroutine model_attenuation_1D_PREM(x, Qmu)
-!
-!! x is the radius from 0 to 1 where 0 is the center and 1 is the surface
-!! This version is for 1D PREM.
-!
-!  implicit none
-!
-!  include 'constants.h'
-!!  integer iflag
-!  double precision r, x, Qmu,RICB,RCMB, &
-!      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, RMOHO, RMIDDLE_CRUST
-!  double precision Qkappa
-!
-!  r = x * R_EARTH
-!
-!  ROCEAN = 6368000.d0
-!  RMIDDLE_CRUST = 6356000.d0
-!  RMOHO = 6346600.d0
-!  R80  = 6291000.d0
-!  R220 = 6151000.d0
-!  R400 = 5971000.d0
-!  R600 = 5771000.d0
-!  R670 = 5701000.d0
-!  R771 = 5600000.d0
-!  RTOPDDOUBLEPRIME = 3630000.d0
-!  RCMB = 3480000.d0
-!  RICB = 1221000.d0
-!
-!! PREM
-!!
-!!--- inner core
-!!
-!  if(r >= 0.d0 .and. r <= RICB) then
-!     Qmu=84.6d0
-!     Qkappa=1327.7d0
-!!
-!!--- outer core
-!!
-!  else if(r > RICB .and. r <= RCMB) then
-!     Qmu=0.0d0
-!     Qkappa=57827.0d0
-!     if(RCMB - r < r - RICB) then
-!        Qmu = 312.0d0  ! CMB
-!     else
-!        Qmu = 84.6d0   ! ICB
-!     endif
-!!
-!!--- D" at the base of the mantle
-!!
-!  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
-!     Qmu=312.0d0
-!     Qkappa=57827.0d0
-!!
-!!--- mantle: from top of D" to d670
-!!
-!  else if(r > RTOPDDOUBLEPRIME .and. r <= R771) then
-!     Qmu=312.0d0
-!     Qkappa=57827.0d0
-!  else if(r > R771 .and. r <= R670) then
-!     Qmu=312.0d0
-!     Qkappa=57827.0d0
-!!
-!!--- mantle: above d670
-!!
-!  else if(r > R670 .and. r <= R600) then
-!     Qmu=143.0d0
-!     Qkappa=57827.0d0
-!  else if(r > R600 .and. r <= R400) then
-!     Qmu=143.0d0
-!     Qkappa=57827.0d0
-!  else if(r > R400 .and. r <= R220) then
-!     Qmu=143.0d0
-!     Qkappa=57827.0d0
-!  else if(r > R220 .and. r <= R80) then
-!     Qmu=80.0d0
-!     Qkappa=57827.0d0
-!  else if(r > R80) then
-!     Qmu=600.0d0
-!     Qkappa=57827.0d0
-!  endif
-!
-!! Since R80 may be changed, we use radius to decide the attenuation region
-!! rather than doubling flag
-!
-!  ! We determine the attenuation value here dependent on the doubling flag and
-!  ! which region we are sitting in. The radius reported is not accurate for
-!  ! determination of which region we are actually in, whereas the idoubling flag is
-!!  if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-!!       iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
-!!       iflag == IFLAG_IN_FICTITIOUS_CUBE) then
-!!     Qmu =  84.6d0
-!!     Qkappa = 1327.7d0
-!!  else if(iflag == IFLAG_OUTER_CORE_NORMAL) then
-!!     Qmu = 0.0d0
-!!     Qkappa = 57827.0d0
-!!  else if(iflag == IFLAG_MANTLE_NORMAL) then ! D'' to 670 km
-!!     Qmu = 312.0d0
-!!     Qkappa = 57827.0d0
-!!  else if(iflag == IFLAG_670_220) then
-!!     Qmu=143.0d0
-!!     Qkappa = 57827.0d0
-!!  else if(iflag == IFLAG_220_80) then
-!!     Qmu=80.0d0
-!!     Qkappa = 57827.0d0
-!!  else if(iflag == IFLAG_80_MOHO) then
-!!     Qmu=600.0d0
-!!     Qkappa = 57827.0d0
-!!  else if(iflag == IFLAG_CRUST) then
-!!     Qmu=600.0d0
-!!     Qkappa = 57827.0d0
-!!  else
-!!     write(*,*)'iflag:',iflag
-!!     call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
-!!  endif
-!
-!  end subroutine model_attenuation_1D_PREM
-!
-!!
-!!-------------------------------------------------------------------------------------------------
-!!
-!
-!! get 1D REF attenuation model according to radius
-!  subroutine model_attenuation_1D_REF(x, Qmu)
-!
-!! x in the radius from 0 to 1 where 0 is the center and 1 is the surface
-!! This version is for 1D REF.
-!
-!  implicit none
-!
-!  include 'constants.h'
-!
-!  double precision r, x, Qmu,RICB,RCMB, &
-!      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, RMOHO, RMIDDLE_CRUST
-!  double precision Qkappa
-!
-!  r = x * R_EARTH
-!
-!  ROCEAN = 6368000.d0
-!  RMIDDLE_CRUST = 6356000.d0
-!  RMOHO = 6346600.d0
-!  R80  = 6291000.d0
-!  R220 = 6151000.d0
-!  R400 = 5961000.d0
-!  R600 = 5771000.d0
-!  R670 = 5721000.d0
-!  R771 = 5600000.d0
-!  RTOPDDOUBLEPRIME = 3630000.d0
-!  RCMB = 3479958.d0
-!  RICB = 1221491.d0
-!
-!! REF model
-!!
-!!--- inner core
-!!
-!  if(r >= 0.d0 .and. r <= RICB) then
-!     Qmu=104.0d0
-!     Qkappa=1327.6d0
-!
-!!--- outer core
-!!
-!  else if(r > RICB .and. r <= RCMB) then
-!     Qmu=0.0d0
-!     Qkappa=57822.5d0
-!     if(RCMB - r < r - RICB) then
-!        Qmu = 355.0d0  ! CMB
-!     else
-!        Qmu = 104.0d0   ! ICB
-!     endif
-!
-!!--- D" at the base of the mantle
-!!
-!  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
-!     Qmu=355.0d0
-!     Qkappa=57822.5d0
-!
-!!--- mantle: from top of D" to d670
-!!
-!  else if(r > RTOPDDOUBLEPRIME .and. r <= R670) then
-!     Qmu=355.0d0
-!     Qkappa=57822.5d0
-!
-!!--- mantle: above d670
-!!
-!  else if(r > R670 .and. r <= R220) then
-!     Qmu=165.0d0
-!     Qkappa=943.0d0
-!  else if(r > R220 .and. r <= R80) then
-!     Qmu=70.0d0
-!     Qkappa=943.0d0
-!  else if(r > R80.and. r<=RMOHO) then
-!     Qmu=191.0d0
-!     Qkappa=943.0d0
-!  else if (r > RMOHO) then
-!     Qmu=300.0d0
-!     Qkappa=57822.5d0
-!  endif
-!
-!  end subroutine model_attenuation_1D_REF
-!

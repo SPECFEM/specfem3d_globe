@@ -104,7 +104,7 @@ meshfem3D_MODULES = \
 # These files come from the shared directory
 meshfem3D_SHARED_OBJECTS = \
 	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
+	$O/broadcast_computed_parameters.o \
 	$O/calendar.o \
 	$O/count_number_of_sources.o \
 	$O/create_name_database.o \

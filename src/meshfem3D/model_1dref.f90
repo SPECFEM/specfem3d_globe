@@ -125,7 +125,6 @@
 ! shear quality factor Qmu
 ! bulk quality factor Qkappa
 
-
   double precision :: x,rho,vpv,vph,vsv,vsh,eta,Qmu,Qkappa
   integer :: iregion_code
   logical :: CRUSTAL
