@@ -102,8 +102,8 @@
   type (model_crust_variables) CM_V
 ! model_crust_variables
 
-  double precision lat,lon,x,vp,vs,rho,moho
-  logical found_crust,elem_in_crust
+  double precision :: lat,lon,x,vp,vs,rho,moho
+  logical :: found_crust,elem_in_crust
 
   ! local parameters
   double precision :: h_sed,h_uc
@@ -173,18 +173,11 @@
 
   ! non-dimensionalize
   if (found_crust) then
-    scaleval = dsqrt(PI*GRAV*RHOAV)
-    vp = vp*1000.0d0/(R_EARTH*scaleval)
-    vs = vs*1000.0d0/(R_EARTH*scaleval)
-    rho = rho*1000.0d0/RHOAV
+    scaleval = ONE / ( R_EARTH_KM * dsqrt(PI*GRAV*RHOAV) )
+    vp = vp * scaleval
+    vs = vs * scaleval
+    rho = rho * 1000.0d0 / RHOAV
  endif
-
- ! checks moho value
- !moho = h_uc + thicks(6) + thicks(7)
- !if( moho /= thicks(NLAYERS_CRUST) ) then
- ! print*,'moho:',moho,thicks(NLAYERS_CRUST)
- ! print*,'  lat/lon/x:',lat,lon,x
- !endif
 
  ! No matter found_crust true or false, output moho thickness
  moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH

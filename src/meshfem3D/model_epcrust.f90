@@ -131,6 +131,7 @@
 
   subroutine model_epcrust(lat,lon,dep,vp,vs,rho,moho,found_crust,EPCRUST,elem_in_crust)
   implicit none
+
   include "constants.h"
 
   ! INPUT & OUTPUT

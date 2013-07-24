@@ -64,6 +64,8 @@
   ! model_aniso_mantle_variables
 
   integer :: myrank
+
+  ! local parameters
   integer :: ier
 
   ! the variables read are declared and stored in structure AMM_V
