@@ -421,11 +421,12 @@
 
 ! outputs single file for all processes
 
+  use mpi
+
   implicit none
 
   include "constants.h"
 
-  include 'mpif.h'
   include "precision.h"
 
   integer :: myrank,NPROCTOT

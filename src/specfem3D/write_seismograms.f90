@@ -123,6 +123,7 @@
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
+  use mpi
   use constants_solver
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
@@ -137,8 +138,6 @@
 
   implicit none
 
-  ! standard include of the MPI library
-  include 'mpif.h'
   include "precision.h"
 
   ! local parameters

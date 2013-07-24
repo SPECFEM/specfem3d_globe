@@ -32,13 +32,13 @@
 subroutine read_attenuation_adios(myrank, prname, &
    factor_common, scale_factor, tau_s, vx, vy, vz, vnspec, T_c_source)
 
+  use mpi
   use adios_read_mod
   use specfem_par,only: ATTENUATION_VAL
 
   implicit none
 
   include 'constants.h'
-  include 'mpif.h'
 
   integer :: myrank
 

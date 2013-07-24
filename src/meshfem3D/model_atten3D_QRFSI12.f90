@@ -68,13 +68,12 @@
 
 ! standard routine to setup model
 
+  use mpi
   use model_atten3D_QRFSI12_par
 
   implicit none
 
   include "constants.h"
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   integer :: myrank
 

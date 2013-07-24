@@ -293,11 +293,11 @@
 
   subroutine setup_receivers()
 
+  use mpi
   use specfem_par
   use specfem_par_crustmantle
-  implicit none
 
-  include 'mpif.h'
+  implicit none
 
   ! local parameters
   double precision :: junk
