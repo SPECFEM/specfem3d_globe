@@ -35,7 +35,6 @@
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                   eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
                   LOCAL_PATH)
 
   implicit none
@@ -46,14 +45,14 @@
   integer myrank
 
   integer, intent(in) :: npoints_slice
-  real, dimension(NGLLX, NM_KL_REG_PTS), intent(in) :: hxir_reg
-  real, dimension(NGLLY, NM_KL_REG_PTS), intent(in) :: hetar_reg
-  real, dimension(NGLLZ, NM_KL_REG_PTS), intent(in) :: hgammar_reg
-  integer, dimension(NM_KL_REG_PTS), intent(in) :: ispec_reg
+  real, dimension(NGLLX, NM_KL_REG_PTS_VAL), intent(in) :: hxir_reg
+  real, dimension(NGLLY, NM_KL_REG_PTS_VAL), intent(in) :: hetar_reg
+  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL), intent(in) :: hgammar_reg
+  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: ispec_reg
 
   double precision :: scale_t,scale_displ
 
-  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL) :: &
     cijkl_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
@@ -68,7 +67,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
         kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
 
-!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
@@ -120,7 +118,7 @@
            beta_kl_crust_mantle_reg(npoints_slice), &
            alpha_kl_crust_mantle_reg(npoints_slice))
 
-  if( SAVE_TRANSVERSE_KL ) then
+  if( SAVE_TRANSVERSE_KL_ONLY ) then
     ! transverse isotropic kernel arrays for file output
     allocate(alphav_kl_crust_mantle(npoints_slice), &
              alphah_kl_crust_mantle(npoints_slice), &
@@ -145,7 +143,7 @@
   do ipoint = 1, npoints_slice
     ispec = ispec_reg(ipoint)
     if (ANISOTROPIC_KL) then
-      if ( SAVE_TRANSVERSE_KL ) then
+      if ( SAVE_TRANSVERSE_KL_ONLY ) then
         alphav_kl_crust_mantle(ipoint) = 0.0
         alphah_kl_crust_mantle(ipoint) = 0.0
         betav_kl_crust_mantle(ipoint) = 0.0
@@ -194,7 +192,7 @@
             rho_kl = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho * hlagrange
 
             ! transverse isotropic kernel calculations
-            if( SAVE_TRANSVERSE_KL ) then
+            if( SAVE_TRANSVERSE_KL_ONLY ) then
               ! note: transverse isotropic kernels are calculated for all elements
               !
               !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -207,9 +205,6 @@
 
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
-              !if( .not. (TRANSVERSE_ISOTROPY_VAL .and. &
-              !    (idoubling_crust_mantle(ispec) == IFLAG_80_MOHO .or. &
-              !     idoubling_crust_mantle(ispec) == IFLAG_220_80))) then
               if( .not. ispec_is_tiso_crust_mantle(ispec) ) then
 
                 ! layer with no transverse isotropy
@@ -354,7 +349,7 @@
 
               rho_kl_crust_mantle_reg(ipoint) = rho_kl_crust_mantle_reg(ipoint) + rho_kl
 
-            endif ! SAVE_TRANSVERSE_KL
+            endif ! SAVE_TRANSVERSE_KL_ONLY
 
           else
 
@@ -400,8 +395,8 @@
 
     ! do some transforms that are independent of GLL points
     if (ANISOTROPIC_KL) then
-      if (SAVE_TRANSVERSE_KL) then
-        ! write the kernel in physical units (01/05/2006)
+      if (SAVE_TRANSVERSE_KL_ONLY) then
+        ! write the kernel in physical units
         rhonotprime_kl_crust_mantle(ipoint) = - rhonotprime_kl_crust_mantle(ipoint) * scale_kl
 
         alphav_kl_crust_mantle(ipoint) = - alphav_kl_crust_mantle(ipoint) * scale_kl
@@ -432,7 +427,7 @@
   if (ANISOTROPIC_KL) then
 
     ! outputs transverse isotropic kernels only
-    if (SAVE_TRANSVERSE_KL) then
+    if (SAVE_TRANSVERSE_KL_ONLY) then
       ! transverse isotropic kernels
       ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
       open(unit=27,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
@@ -529,7 +524,7 @@
   endif
 
   ! cleans up temporary kernel arrays
-  if (SAVE_TRANSVERSE_KL) then
+  if (SAVE_TRANSVERSE_KL_ONLY) then
     deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                betav_kl_crust_mantle,betah_kl_crust_mantle, &
                eta_kl_crust_mantle)

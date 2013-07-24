@@ -42,8 +42,6 @@
                     tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
-
   implicit none
 
   include "constants.h"
@@ -129,7 +127,7 @@
   integer :: ispec_strain
   integer :: i,j,k
   integer :: int_radius
-  integer :: iglob1
+  integer :: iglob
 
   ! isotropic element
 
@@ -255,7 +253,7 @@
         sigma_yz = mul*duzdyl_plus_duydzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
 
 !daniel: att - debug update
 !          call compute_element_att_mem_up_cm(ispec,i,j,k, &
@@ -286,13 +284,12 @@
 
         ! compute non-symmetric terms for gravity
         if(GRAVITY_VAL) then
-
             ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
-            iglob1 = ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
-            dtheta = dble(ystore(iglob1))
-            dphi = dble(zstore(iglob1))
+            dtheta = dble(ystore(iglob))
+            dphi = dble(zstore(iglob))
 
             cos_theta = dcos(dtheta)
             sin_theta = dsin(dtheta)
@@ -307,7 +304,7 @@
             ! get g, rho and dg/dr=dg
             ! spherical components of the gravitational acceleration
             ! for efficiency replace with lookup table every 100 m in radial direction
-            radius = dble(xstore(iglob1))
+            radius = dble(xstore(iglob))
 
             int_radius = nint(10.d0 * radius * R_EARTH_KM )
             minus_g = minus_gravity_table(int_radius)
@@ -335,9 +332,9 @@
             if(CUSTOM_REAL == SIZE_REAL) then
 
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(dummyx_loc(i,j,k)) ! dble(displ_crust_mantle(1,iglob1))
-              sy_l = rho * dble(dummyy_loc(i,j,k)) ! dble(displ_crust_mantle(2,iglob1))
-              sz_l = rho * dble(dummyz_loc(i,j,k)) ! dble(displ_crust_mantle(3,iglob1))
+              sx_l = rho * dble(dummyx_loc(i,j,k)) ! dble(displ_crust_mantle(1,iglob))
+              sy_l = rho * dble(dummyy_loc(i,j,k)) ! dble(displ_crust_mantle(2,iglob))
+              sz_l = rho * dble(dummyz_loc(i,j,k)) ! dble(displ_crust_mantle(3,iglob))
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
@@ -362,9 +359,9 @@
             else
 
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dummyx_loc(i,j,k) ! displ_crust_mantle(1,iglob1)
-              sy_l = rho * dummyy_loc(i,j,k) ! displ_crust_mantle(2,iglob1)
-              sz_l = rho * dummyz_loc(i,j,k) ! displ_crust_mantle(3,iglob1)
+              sx_l = rho * dummyx_loc(i,j,k) ! displ_crust_mantle(1,iglob)
+              sy_l = rho * dummyy_loc(i,j,k) ! displ_crust_mantle(2,iglob)
+              sz_l = rho * dummyz_loc(i,j,k) ! displ_crust_mantle(3,iglob)
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
@@ -533,7 +530,7 @@
   integer :: ispec_strain
   integer :: i,j,k
   integer :: int_radius
-  integer :: iglob1
+  integer :: iglob
 
   ! transverse isotropic element
 
@@ -631,17 +628,11 @@
         ! compute either isotropic or anisotropic elements
         !
 
-! note : mesh is built such that anisotropic elements are created first in anisotropic layers,
+! note: the mesh is built such that anisotropic elements are created first in anisotropic layers,
 !           thus they are listed first ( see in create_regions_mesh.f90: perm_layer() ordering )
 !           this is therefore still in bounds of 1:NSPECMAX_TISO_MANTLE even if NSPECMAX_TISO is less than NSPEC
 
-        ! uncomment to debug
-        !if ( ispec > NSPECMAX_TISO_MANTLE ) then
-        !  print*,'error tiso: ispec = ',ispec,'max = ',NSPECMAX_TISO_MANTLE
-        !  call exit_mpi(0,'error tiso ispec bounds')
-        !endif
-
-        ! use Kappa and mu from transversely isotropic model
+        ! use kappa and mu from transversely isotropic model
         kappavl = kappavstore(i,j,k,ispec)
         muvl = muvstore(i,j,k,ispec)
 
@@ -671,10 +662,10 @@
 
         ! use mesh coordinates to get theta and phi
         ! ystore and zstore contain theta and phi
-        iglob1 = ibool(i,j,k,ispec)
+        iglob = ibool(i,j,k,ispec)
 
-        theta = ystore(iglob1)
-        phi = zstore(iglob1)
+        theta = ystore(iglob)
+        phi = zstore(iglob)
 
          ! precompute some products to reduce the CPU time
 
@@ -719,8 +710,7 @@
         four_rhovsvsq = 4.0_CUSTOM_REAL*rhovsvsq
         four_rhovshsq = 4.0_CUSTOM_REAL*rhovshsq
 
-
-        ! way 2: pre-compute temporary values
+        ! pre-compute temporary values
         templ1 = four_rhovsvsq - rhovpvsq + twoetaminone*rhovphsq - four_eta_aniso*rhovsvsq
         templ1_cos = rhovphsq - rhovpvsq + costwotheta*templ1
         templ2 = four_rhovsvsq - rhovpvsq - rhovphsq + two_eta_aniso*rhovphsq - four_eta_aniso*rhovsvsq
@@ -729,7 +719,7 @@
         templ3_two = templ3 - two_rhovshsq - two_rhovsvsq
         templ3_cos = templ3_two + costwotheta*templ2
 
-        ! way 2: reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
+        ! reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
         c11 = rhovphsq*sinphifour &
               + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
               ( rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) ) &
@@ -851,7 +841,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
 
 !daniel: att - debug update
 !          call compute_element_att_mem_up_cm(ispec,i,j,k, &
@@ -882,21 +872,19 @@
 
         ! compute non-symmetric terms for gravity
         if(GRAVITY_VAL) then
-
-             ! use mesh coordinates to get theta and phi
+            ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
-            iglob1 = ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
-            dtheta = dble(ystore(iglob1))
-            dphi = dble(zstore(iglob1))
-            radius = dble(xstore(iglob1))
+            dtheta = dble(ystore(iglob))
+            dphi = dble(zstore(iglob))
+            radius = dble(xstore(iglob))
 
             cos_theta = dcos(dtheta)
             sin_theta = dsin(dtheta)
             cos_phi = dcos(dphi)
             sin_phi = dsin(dphi)
 
-            ! way 2
             cos_theta_sq = cos_theta*cos_theta
             sin_theta_sq = sin_theta*sin_theta
             cos_phi_sq = cos_phi*cos_phi
@@ -1029,8 +1017,6 @@
                     tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
-
   implicit none
 
   include "constants.h"
@@ -1121,7 +1107,7 @@
   integer :: ispec_strain
   integer :: i,j,k
   integer :: int_radius
-  integer :: iglob1
+  integer :: iglob
 
   !  anisotropic elements
 
@@ -1280,20 +1266,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
-
-!daniel: att - debug update
-!          call compute_element_att_mem_up_cm(ispec,i,j,k, &
-!                                          R_xx(:,i,j,k,ispec), &
-!                                          R_yy(:,i,j,k,ispec), &
-!                                          R_xy(:,i,j,k,ispec), &
-!                                          R_xz(:,i,j,k,ispec), &
-!                                          R_yz(:,i,j,k,ispec), &
-!                                          epsilondev_loc(:,i,j,k),c44store(i,j,k,ispec),is_backward_field)
-! dummy to avoid compiler warning
-          if( is_backward_field ) then
-          endif
-
+        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
@@ -1312,14 +1285,13 @@
 
         ! compute non-symmetric terms for gravity
         if(GRAVITY_VAL) then
-
-             ! use mesh coordinates to get theta and phi
+            ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
-            iglob1 = ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
-            dtheta = dble(ystore(iglob1))
-            dphi = dble(zstore(iglob1))
-            radius = dble(xstore(iglob1))
+            dtheta = dble(ystore(iglob))
+            dphi = dble(zstore(iglob))
+            radius = dble(xstore(iglob))
 
             cos_theta = dcos(dtheta)
             sin_theta = dsin(dtheta)
@@ -1360,9 +1332,9 @@
             if(CUSTOM_REAL == SIZE_REAL) then
 
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(dummyx_loc(i,j,k)) ! dble(displ_crust_mantle(1,iglob1))
-              sy_l = rho * dble(dummyy_loc(i,j,k)) ! dble(displ_crust_mantle(2,iglob1))
-              sz_l = rho * dble(dummyz_loc(i,j,k)) !  dble(displ_crust_mantle(3,iglob1))
+              sx_l = rho * dble(dummyx_loc(i,j,k)) ! dble(displ_crust_mantle(1,iglob))
+              sy_l = rho * dble(dummyy_loc(i,j,k)) ! dble(displ_crust_mantle(2,iglob))
+              sz_l = rho * dble(dummyz_loc(i,j,k)) !  dble(displ_crust_mantle(3,iglob))
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
@@ -1387,9 +1359,9 @@
             else
 
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dummyx_loc(i,j,k)  ! displ_crust_mantle(1,iglob1)
-              sy_l = rho * dummyy_loc(i,j,k)  !  displ_crust_mantle(2,iglob1)
-              sz_l = rho * dummyz_loc(i,j,k)  ! displ_crust_mantle(3,iglob1)
+              sx_l = rho * dummyx_loc(i,j,k)  ! displ_crust_mantle(1,iglob)
+              sy_l = rho * dummyy_loc(i,j,k)  !  displ_crust_mantle(2,iglob)
+              sz_l = rho * dummyz_loc(i,j,k)  ! displ_crust_mantle(3,iglob)
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
@@ -1507,9 +1479,6 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-!daniel: att - debug predictor
-!  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
-
   implicit none
 
   include "constants.h"
@@ -1553,8 +1522,8 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-!daniel: att - debug original
   do i_SLS = 1,N_SLS
+
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( USE_3D_ATTENUATION_ARRAYS ) then
       if(ANISOTROPIC_3D_MANTLE_VAL) then

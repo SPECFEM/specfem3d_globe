@@ -64,7 +64,7 @@
   !integer :: reclen1,reclen2
 
   ! note: we use c functions for I/O as they still have a better performance than
-  !           fortran, unformatted file I/O. however, using -assume byterecl together with fortran functions
+  !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
   !           tests with intermediate storages (every 8 step) and/or asynchronious

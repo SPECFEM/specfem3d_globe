@@ -153,17 +153,19 @@ end subroutine find_regular_grid_slice_number
 !==============================================================
 
 ! how about using single precision for the iterations?
-subroutine locate_reg_points(npoints_slice,points_slice,GRID, &
+subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
                              NEX_XI,nspec,xstore,ystore,zstore,ibool, &
                              xigll,yigll,zigll,ispec_reg, &
                              hxir_reg,hetar_reg,hgammar_reg)
 
   implicit none
+
   include 'constants.h'
+  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! declarations of regular grid model
   integer, intent(in) :: npoints_slice
-  integer, dimension(NM_KL_REG_PTS), intent(in) :: points_slice
+  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: points_slice
 
   type kl_reg_grid_variables
     sequence
@@ -190,10 +192,10 @@ subroutine locate_reg_points(npoints_slice,points_slice,GRID, &
   double precision, dimension(NGLLZ), intent(in) :: zigll
 
   ! output
-  integer, dimension(NM_KL_REG_PTS), intent(out) :: ispec_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NM_KL_REG_PTS), intent(out) :: hxir_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NM_KL_REG_PTS), intent(out) :: hetar_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NM_KL_REG_PTS), intent(out) :: hgammar_reg
+  integer, dimension(NM_KL_REG_PTS_VAL), intent(out) :: ispec_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NM_KL_REG_PTS_VAL), intent(out) :: hxir_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NM_KL_REG_PTS_VAL), intent(out) :: hetar_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NM_KL_REG_PTS_VAL), intent(out) :: hgammar_reg
 
   ! GLL number of anchors
   integer, dimension(NGNOD) :: iaddx, iaddy, iaddr
@@ -354,7 +356,7 @@ subroutine locate_reg_points(npoints_slice,points_slice,GRID, &
 ! DEBUG
 !  print *, 'Maximum distance discrepancy ', maxval(dist_final(1:npoints_slice))
 
-end subroutine locate_reg_points
+end subroutine locate_regular_points
 
 !==============================================================
 

@@ -191,7 +191,7 @@
   integer :: int_radius
   integer :: ispec,ispec_strain
   integer :: i,j,k
-  integer :: iglob1
+  integer :: iglob
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
   integer :: iphase
@@ -226,10 +226,10 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-            iglob1 = ibool(i,j,k,ispec)
-            dummyx_loc(i,j,k) = displ_inner_core(1,iglob1)
-            dummyy_loc(i,j,k) = displ_inner_core(2,iglob1)
-            dummyz_loc(i,j,k) = displ_inner_core(3,iglob1)
+            iglob = ibool(i,j,k,ispec)
+            dummyx_loc(i,j,k) = displ_inner_core(1,iglob)
+            dummyy_loc(i,j,k) = displ_inner_core(2,iglob)
+            dummyz_loc(i,j,k) = displ_inner_core(3,iglob)
           enddo
         enddo
       enddo
@@ -243,10 +243,10 @@
             do k=1,NGLLZ
                do j=1,NGLLY
                   do i=1,NGLLX
-                     iglob1 = ibool(i,j,k,ispec)
-                     dummyx_loc_att(i,j,k) = deltat*veloc_inner_core(1,iglob1)
-                     dummyy_loc_att(i,j,k) = deltat*veloc_inner_core(2,iglob1)
-                     dummyz_loc_att(i,j,k) = deltat*veloc_inner_core(3,iglob1)
+                     iglob = ibool(i,j,k,ispec)
+                     dummyx_loc_att(i,j,k) = deltat*veloc_inner_core(1,iglob)
+                     dummyy_loc_att(i,j,k) = deltat*veloc_inner_core(2,iglob)
+                     dummyz_loc_att(i,j,k) = deltat*veloc_inner_core(3,iglob)
                   enddo
                enddo
             enddo
@@ -566,7 +566,7 @@
               sigma_xx = c11l*duxdxl + c12l*duydyl + c13l*duzdzl
               sigma_yy = c12l*duxdxl + c11l*duydyl + c13l*duzdzl
               sigma_zz = c13l*duxdxl + c13l*duydyl + c33l*duzdzl
-              sigma_xy = 0.5*(c11l-c12l)*duxdyl_plus_duydxl
+              sigma_xy = 0.5_CUSTOM_REAL*(c11l-c12l)*duxdyl_plus_duydxl
               sigma_xz = c44l*duzdxl_plus_duxdzl
               sigma_yz = c44l*duzdyl_plus_duydzl
             else
@@ -586,7 +586,7 @@
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
-              lambdal = lambdalplus2mul - 2.*mul
+              lambdal = lambdalplus2mul - 2._CUSTOM_REAL*mul
 
               ! compute stress sigma
               sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
@@ -600,7 +600,7 @@
             endif
 
             ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
+            if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
 
               ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
               call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
@@ -622,10 +622,10 @@
 
               ! use mesh coordinates to get theta and phi
               ! x y and z contain r theta and phi
-              iglob1 = ibool(i,j,k,ispec)
-              radius = dble(xstore(iglob1))
-              theta = dble(ystore(iglob1))
-              phi = dble(zstore(iglob1))
+              iglob = ibool(i,j,k,ispec)
+              radius = dble(xstore(iglob))
+              theta = dble(ystore(iglob))
+              phi = dble(zstore(iglob))
 
               ! make sure radius is never zero even for points at center of cube
               ! because we later divide by radius
@@ -668,14 +668,14 @@
               Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
               ! for locality principle, we set iglob again, in order to have it in the cache again
-              iglob1 = ibool(i,j,k,ispec)
+              iglob = ibool(i,j,k,ispec)
 
               ! distinguish between single and double precision for reals
               if(CUSTOM_REAL == SIZE_REAL) then
                 ! get displacement and multiply by density to compute G tensor
-                sx_l = rho * dble(displ_inner_core(1,iglob1))
-                sy_l = rho * dble(displ_inner_core(2,iglob1))
-                sz_l = rho * dble(displ_inner_core(3,iglob1))
+                sx_l = rho * dble(displ_inner_core(1,iglob))
+                sy_l = rho * dble(displ_inner_core(2,iglob))
+                sz_l = rho * dble(displ_inner_core(3,iglob))
 
                 ! compute G tensor from s . g and add to sigma (not symmetric)
                 sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
@@ -700,9 +700,9 @@
               else
 
                 ! get displacement and multiply by density to compute G tensor
-                sx_l = rho * displ_inner_core(1,iglob1)
-                sy_l = rho * displ_inner_core(2,iglob1)
-                sz_l = rho * displ_inner_core(3,iglob1)
+                sx_l = rho * displ_inner_core(1,iglob)
+                sy_l = rho * displ_inner_core(2,iglob)
+                sz_l = rho * displ_inner_core(3,iglob)
 
                 ! compute G tensor from s . g and add to sigma (not symmetric)
                 sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
@@ -839,8 +839,8 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-            iglob1 = ibool(i,j,k,ispec)
-            accel_inner_core(:,iglob1) = accel_inner_core(:,iglob1) + sum_terms(:,i,j,k)
+            iglob = ibool(i,j,k,ispec)
+            accel_inner_core(:,iglob) = accel_inner_core(:,iglob) + sum_terms(:,i,j,k)
           enddo
         enddo
       enddo
@@ -859,7 +859,7 @@
       ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
-      if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
+      if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
 
         ! updates R_memory
         call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
@@ -881,9 +881,9 @@
         epsilondev_yz(:,:,:,ispec) = epsilondev_loc(5,:,:,:)
       endif
 
-    endif   ! end test to exclude fictitious elements in central cube
+    endif ! end of test to exclude fictitious elements in central cube
 
-  enddo ! spectral element loop
+  enddo ! of spectral element loop
 
   end subroutine compute_forces_inner_core_Dev
 

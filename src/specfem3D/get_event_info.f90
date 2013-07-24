@@ -38,10 +38,9 @@
                                     elat,elon,depth,mb,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
-  implicit none
+  use mpi
 
-! standard include of the MPI library
-  include 'mpif.h'
+  implicit none
 
   include "constants.h"
 

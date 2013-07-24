@@ -30,6 +30,8 @@
 
   implicit none
 
+  include "constants.h"
+
   double precision the, phe
   double precision ths, phs
   double precision az,baz,xdeg
@@ -40,23 +42,21 @@
   double precision phsrad, sc, sd, ss
   double precision temp, therad, thg, thsrad
 
-  double precision, parameter :: rad = 6378.160
-  double precision, parameter :: fl = 0.00335293
-  double precision, parameter :: twopideg = 360.
-  double precision, parameter :: c00 = 1.
-  double precision, parameter :: c01 = 0.25
-  double precision, parameter :: c02 = -4.6875e-02
-  double precision, parameter :: c03 = 1.953125e-02
-  double precision, parameter :: c21 = -0.125
-  double precision, parameter :: c22 = 3.125e-02
-  double precision, parameter :: c23 = -1.46484375e-02
-  double precision, parameter :: c42 = -3.90625e-03
-  double precision, parameter :: c43 = 2.9296875e-03
-  double precision, parameter :: degtokm = 111.3199
-  double precision, parameter :: pi = 3.141592654
-  double precision, parameter :: TORAD = pi/180.
-  double precision, parameter :: TODEG = 1./TORAD
-
+  double precision, parameter :: rad = 6378.160d0
+  double precision, parameter :: fl = 0.00335293d0
+  double precision, parameter :: twopideg = 360.d0
+  double precision, parameter :: c00 = 1.d0
+  double precision, parameter :: c01 = 0.25d0
+  double precision, parameter :: c02 = -4.6875d-02
+  double precision, parameter :: c03 = 1.953125d-02
+  double precision, parameter :: c21 = -0.125d0
+  double precision, parameter :: c22 = 3.125d-02
+  double precision, parameter :: c23 = -1.46484375d-02
+  double precision, parameter :: c42 = -3.90625d-03
+  double precision, parameter :: c43 = 2.9296875d-03
+  double precision, parameter :: degtokm = 111.3199d0
+  double precision, parameter :: TORAD = DEGREES_TO_RADIANS
+  double precision, parameter :: TODEG = RADIANS_TO_DEGREES
 
   !=====================================================================
   ! PURPOSE:  To compute the distance and azimuth between locations.
@@ -104,7 +104,7 @@
   !   (Equations are unstable for latidudes of exactly 0 degrees.)
 
   temp = the
-  if( temp == 0. ) temp = 1.0e-08
+  if( temp == 0. ) temp = 1.0d-08
   therad = TORAD*temp
   pherad = TORAD*phe
 
@@ -130,7 +130,7 @@
 
   ! -- Convert to radians.
   temp = Ths
-  if( temp == 0. ) temp = 1.0e-08
+  if( temp == 0. ) temp = 1.0d-08
   thsrad = TORAD*temp
   phsrad = TORAD*Phs
 

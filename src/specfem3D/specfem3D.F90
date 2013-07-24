@@ -29,6 +29,7 @@
 
   program xspecfem3D
 
+  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
@@ -36,9 +37,6 @@
   use specfem_par_movie
 
   implicit none
-
-  ! standard include of the MPI library
-  include 'mpif.h'
 
   ! local parameters
   integer :: ier

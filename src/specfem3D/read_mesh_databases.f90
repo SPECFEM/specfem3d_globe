@@ -439,14 +439,13 @@
 
 ! to couple mantle with outer core
 
+  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
 
   implicit none
-
-  include 'mpif.h'
 
   ! local parameters
   integer :: njunk1,njunk2,njunk3
@@ -605,14 +604,13 @@
 
   subroutine read_mesh_databases_addressing()
 
+  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
 
   implicit none
-
-  include 'mpif.h'
 
   ! local parameters
   integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing

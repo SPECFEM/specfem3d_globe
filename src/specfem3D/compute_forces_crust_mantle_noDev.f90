@@ -64,28 +64,7 @@
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
 
-! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    integer                                   :: Qn                 ! Number of points
-!    integer dummy_pad ! padding 4 bytes to align the structure
-!  end type model_attenuation_variables
-
 ! array with the local to global mapping per slice
-!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
 
 ! displacement and acceleration
@@ -469,7 +448,6 @@
           else
 
         ! do not use transverse isotropy except if element is between d220 and Moho
-!            if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
             if( .not. ispec_is_tiso(ispec) ) then
         ! layer with no transverse isotropy, use kappav and muv
               kappal = kappavstore(i,j,k,ispec)
@@ -701,7 +679,7 @@
           endif   ! end of test whether isotropic or anisotropic element
 
         ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
+          if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
             do i_SLS = 1,N_SLS
               R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
               R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
@@ -922,7 +900,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 
        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,&
                                              deltat,hprime_xx,hprime_yy,hprime_zz,ibool,&
@@ -958,8 +936,8 @@
                                                BETA_LDDRK(istage) * R_memory_lddrk(i_memory,i_SLS,:,:,:,ispec)
          else
            R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-                + factor_common_c44_muv(:,:,:) &
-                * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
+              + factor_common_c44_muv(:,:,:) &
+              * (betaval(i_SLS) * epsilondev_loc(i_memory,:,:,:) + gammaval(i_SLS) * epsilondev_loc_nplus1(i_memory,:,:,:))
          endif
 
         enddo

@@ -371,9 +371,9 @@
 
     ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is
     !          only mimicking effects on phase shifts, but not on amplitudes.
-    !          flag USE_ATTENUATION_MIMIC will have to be set to true in this case.
+    !          flag PARTIAL_PHYS_DISPERSION_ONLY will have to be set to true in this case.
     !
-    ! arrays b_R_xx, ... are not used when USE_ATTENUATION_MIMIC is set,
+    ! arrays b_R_xx, ... are not used when PARTIAL_PHYS_DISPERSION_ONLY is set,
     ! therefore no need to transfer arrays from GPU to CPU
     !if (ATTENUATION) then
     !endif

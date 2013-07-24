@@ -510,15 +510,15 @@
 
 !daniel: att - debug - check if mimic is still needed
     if( ATTENUATION ) then
-      write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .true.'
+      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .true.'
     else
-      write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'
+      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
     endif
 
   else
 
     ! calculates full attenuation (phase & amplitude effects) if used
-    write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'
+    write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
   endif
 
   ! attenuation and/or adjoint simulations

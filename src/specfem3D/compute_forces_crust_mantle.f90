@@ -668,7 +668,7 @@
           endif   ! end of test whether isotropic or anisotropic element
 
           ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
+          if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. ) ) then
              do i_SLS = 1,N_SLS
                 R_xx_val = R_xx(i_SLS,i,j,k,ispec)
                 R_yy_val = R_yy(i_SLS,i,j,k,ispec)
@@ -887,7 +887,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )) then
+    if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )) then
 
 ! use Runge-Kutta scheme to march in time
       do i_SLS = 1,N_SLS
