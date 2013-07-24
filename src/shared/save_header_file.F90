@@ -493,7 +493,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_ICB = ',NSPEC2D_ICB
   write(IOUT,*)
 
-  ! deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
+  ! Deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
   if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.'
   else

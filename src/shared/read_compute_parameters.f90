@@ -60,7 +60,6 @@
                         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
                         USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY,NOISE_TOMOGRAPHY)
 
-
   implicit none
 
   include "constants.h"
@@ -147,7 +146,6 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
-
 
   ! reads in Par_file values
   call read_parameter_file(OUTPUT_FILES, &
@@ -297,7 +295,6 @@
   ! total number of processors in the full Earth composed of the six chunks
   NPROCTOT = NCHUNKS * NPROC
 
-
   !  definition of general mesh parameters
   call define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -313,7 +310,6 @@
                         DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                         DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval,&
                         doubling_index,rmins,rmaxs)
-
 
   ! calculates number of elements (NSPEC)
   call count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC,&
@@ -332,7 +328,6 @@
                         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
                         tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,&
                         nglob_edge_v,to_remove)
-
 
   ! calculates number of points (NGLOB)
   call count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
@@ -369,9 +364,8 @@
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
-  logical ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,&
-        INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM
-
+  logical ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
+          INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM
 
 ! checks parameters
 
