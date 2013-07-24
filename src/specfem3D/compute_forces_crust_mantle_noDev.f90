@@ -103,7 +103,7 @@
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory
   logical :: PARTIAL_PHYS_DISPERSION_ONLY
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
@@ -258,7 +258,7 @@
 
 !for LDDRK
   integer :: istage
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
 ! ****************************************************
@@ -381,7 +381,7 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-          if (COMPUTE_AND_STORE_STRAIN) then
+          if (COMPUTE_AND_STORE_STRAIN_VAL) then
             if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
               ispec_strain = 1
             else

@@ -113,7 +113,7 @@
           ! uses Deville (2002) optimizations
           ! crust/mantle region
           call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-               NSPEC_CRUST_MANTLE_ATTENUAT, &
+               NSPEC_CRUST_MANTLE_ATTENUATION, &
                deltat, &
                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                phase_is_inner, &
@@ -144,7 +144,7 @@
           ! no Deville optimization
           ! crust/mantle region
           call compute_forces_crust_mantle(  NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-               NSPEC_CRUST_MANTLE_ATTENUAT, &
+               NSPEC_CRUST_MANTLE_ATTENUATION, &
                deltat, &
                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                phase_is_inner, &

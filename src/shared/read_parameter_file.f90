@@ -28,7 +28,7 @@
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT if you add new parameters to DATA/Par_file, remember to also
-!!!!!! VERY IMPORTANT broadcast them with MPI_BCAST in src/shared/broadcast_compute_parameters.f90
+!!!!!! VERY IMPORTANT broadcast them with MPI_BCAST in src/shared/broadcast_computed_parameters.f90
 !!!!!! VERY IMPORTANT otherwise the code will *NOT* work
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT
@@ -217,67 +217,3 @@
   call close_parameter_file()
 
   end subroutine read_parameter_file
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_gpu_mode(GPU_MODE)
-
-  implicit none
-  include "constants.h"
-
-  logical :: GPU_MODE
-
-  ! initializes flags
-  GPU_MODE = .false.
-
-  ! opens file Par_file
-  call open_parameter_file()
-
-  call read_value_logical(GPU_MODE, 'solver.GPU_MODE')
-
-  ! close parameter file
-  call close_parameter_file()
-
-  end subroutine read_gpu_mode
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-  subroutine read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
-      ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-      ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
-
-  implicit none
-  include "constants.h"
-
-  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
-
-  ! initializes flags
-  ADIOS_ENABLED = .false.
-  ADIOS_FOR_FORWARD_ARRAYS = .false.
-  ADIOS_FOR_MPI_ARRAYS = .false.
-  ADIOS_FOR_ARRAYS_SOLVER = .false.
-  ADIOS_FOR_SOLVER_MESHFILES = .false.
-  ADIOS_FOR_AVS_DX = .false.
-  ! opens file Par_file
-  call open_parameter_file()
-  call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED')
-  if (ADIOS_ENABLED) then
-    call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, &
-        'solver.ADIOS_FOR_FORWARD_ARRAYS')
-    call read_value_logical(ADIOS_FOR_MPI_ARRAYS, &
-        'solver.ADIOS_FOR_MPI_ARRAYS')
-    call read_value_logical(ADIOS_FOR_ARRAYS_SOLVER, &
-        'solver.ADIOS_FOR_ARRAYS_SOLVER')
-    call read_value_logical(ADIOS_FOR_SOLVER_MESHFILES, &
-        'solver.ADIOS_FOR_ARRAYS_SOLVER')
-    call read_value_logical(ADIOS_FOR_AVS_DX, &
-        'solver.ADIOS_FOR_AVS_DX')
-  endif
-  call close_parameter_file()
-
-  end subroutine read_adios_parameters
-

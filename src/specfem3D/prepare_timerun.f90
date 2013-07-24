@@ -1062,7 +1062,7 @@
 
   endif
 
-  if (COMPUTE_AND_STORE_STRAIN) then
+  if (COMPUTE_AND_STORE_STRAIN_VAL) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
       Iepsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Iepsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
@@ -1491,7 +1491,7 @@
                                   ROTATION_VAL, &
                                   ATTENUATION_VAL,ATTENUATION_NEW_VAL, &
                                   USE_ATTENUATION_MIMIC,USE_3D_ATTENUATION_ARRAYS, &
-                                  COMPUTE_AND_STORE_STRAIN, &
+                                  COMPUTE_AND_STORE_STRAIN_VAL, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &
                                   USE_MESH_COLORING_GPU, &
@@ -1587,7 +1587,7 @@
 
 
   ! prepares attenuation arrays
-  if( COMPUTE_AND_STORE_STRAIN ) then
+  if( COMPUTE_AND_STORE_STRAIN_VAL ) then
     if(myrank == 0 ) write(IMAIN,*) "  loading strain"
 
     call prepare_fields_strain_device(Mesh_pointer, &

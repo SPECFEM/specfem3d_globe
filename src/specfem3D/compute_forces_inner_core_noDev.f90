@@ -213,7 +213,7 @@
 
 !for LDDRK
   integer :: istage
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_lddrk
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
 ! ****************************************************
@@ -339,7 +339,7 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-          if (COMPUTE_AND_STORE_STRAIN) then
+          if (COMPUTE_AND_STORE_STRAIN_VAL) then
             if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
               ispec_strain = 1
             else

@@ -32,9 +32,9 @@
                          ONE_CRUST,doubling_index,this_region_has_a_doubling,NCHUNKS, &
                          ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                          ratio_sampling_array,NPROCTOT, &
-                         NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+                         NSPEC,NGLOB,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+                         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                          NSPEC_INNER_CORE_ATTENUATION, &
                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -57,7 +57,7 @@
              ROTATION,TOPOGRAPHY, &
              ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS, &
              MOVIE_VOLUME,SAVE_FORWARD
-  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob, &
+  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, NGLOB, &
             NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   integer, intent(in) :: NCHUNKS,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE
@@ -70,7 +70,7 @@
   double precision, intent(out) :: static_memory_size
 
   integer, intent(out) :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
          NSPEC_INNER_CORE_ATTENUATION, &
          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -138,10 +138,10 @@
 
   ! if attenuation is off, set dummy size of arrays to one
   if(ATTENUATION) then
-    NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_CRUST_MANTLE_ATTENUATION = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_ATTENUATION = NSPEC(IREGION_INNER_CORE)
   else
-    NSPEC_CRUST_MANTLE_ATTENUAT = 1
+    NSPEC_CRUST_MANTLE_ATTENUATION = 1
     NSPEC_INNER_CORE_ATTENUATION = 1
   endif
 
@@ -207,7 +207,7 @@
 
   ! if oceans are off, set dummy size of arrays to one
   if(OCEANS) then
-    NGLOB_CRUST_MANTLE_OCEANS = nglob(IREGION_CRUST_MANTLE)
+    NGLOB_CRUST_MANTLE_OCEANS = NGLOB(IREGION_CRUST_MANTLE)
   else
     NGLOB_CRUST_MANTLE_OCEANS = 1
   endif
@@ -238,11 +238,11 @@
   if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
      ! three mass matrices for the crust and mantle region: rmassx, rmassy and rmassz
      static_memory_size = static_memory_size + &
-          6.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+          6.d0*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
   else
      ! one only keeps one mass matrix for the calculations: rmassz
      static_memory_size = static_memory_size + &
-          4.d0*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+          4.d0*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
   endif
 
   ! rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
@@ -268,30 +268,30 @@
 
   ! displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
   static_memory_size = static_memory_size + &
-    3.d0*dble(NDIM)*nglob(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    3.d0*dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
   ! attenuation arrays
   if( USE_3D_ATTENUATION_ARRAYS ) then
     ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
     static_memory_size = static_memory_size +  &
-      2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+      2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
     ! factor_common_crust_mantle
     static_memory_size = static_memory_size +  &
-      dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+      dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
   else
     ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
     static_memory_size = static_memory_size +  &
-      2.d0*dble(1)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+      2.d0*dble(1)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
     ! factor_common_crust_mantle
     static_memory_size = static_memory_size +  &
-      dble(N_SLS)*dble(1)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+      dble(N_SLS)*dble(1)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
   endif
 
   ! R_memory_crust_mantle (R_xx, R_yy, ..)
   static_memory_size = static_memory_size +  &
-    5.d0*dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+    5.d0*dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
   ! add arrays used to save strain for attenuation or for adjoint runs
   ! epsilondev_crust_mantle
@@ -331,7 +331,7 @@
 
   ! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmass_inner_core
   static_memory_size = static_memory_size + &
-    4.d0*nglob(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+    4.d0*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
   ! c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core
   static_memory_size = static_memory_size + &
@@ -342,7 +342,7 @@
 
   ! displ_inner_core,veloc_inner_core,accel_inner_core
   static_memory_size = static_memory_size + &
-    3.d0*dble(NDIM)*nglob(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+    3.d0*dble(NDIM)*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
   ! attenuation arrays
   if( USE_3D_ATTENUATION_ARRAYS ) then
@@ -392,7 +392,7 @@
   ! xstore_outer_core, ystore_outer_core, zstore_outer_core, rmass_outer_core,
   ! displ_outer_core, veloc_outer_core, accel_outer_core
   static_memory_size = static_memory_size + &
-    7.d0*nglob(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+    7.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
   ! vp_outer_core
   static_memory_size = static_memory_size + &
@@ -400,8 +400,6 @@
 
   ! ispec_is_tiso_outer_core
   static_memory_size = static_memory_size + NSPEC(IREGION_OUTER_CORE)*dble(SIZE_LOGICAL)
-
-
 
 ! additional arrays
 
@@ -447,7 +445,7 @@
 
     ! mask_ibool
     static_memory_size = static_memory_size + &
-      nglob(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
+      NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 
   endif
 

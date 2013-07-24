@@ -211,7 +211,7 @@
             tempz3l = tempz3l + displ_inner_core(3,iglob)*hp3
           enddo
 
-          if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
+          if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
              ! temporary variables used for fixing attenuation in a consistent way
 
              tempx1l_att = tempx1l
@@ -294,7 +294,7 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
-          if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
+          if( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
              ! temporary variables used for fixing attenuation in a consistent way
              duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att
              duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att
@@ -327,7 +327,7 @@
              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
           else
              ! compute deviatoric strain
-             if (COMPUTE_AND_STORE_STRAIN) then
+             if (COMPUTE_AND_STORE_STRAIN_VAL) then
                 if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
                    ispec_strain = 1
                 else
@@ -688,7 +688,7 @@
 
     endif
 
-    if (COMPUTE_AND_STORE_STRAIN) then
+    if (COMPUTE_AND_STORE_STRAIN_VAL) then
 ! save deviatoric strain for Runge-Kutta scheme
       !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
       do k=1,NGLLZ

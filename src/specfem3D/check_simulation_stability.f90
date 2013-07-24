@@ -149,7 +149,7 @@
     call max_all_cr(b_Ufluidnorm,b_Ufluidnorm_all)
   endif
 
-  if (COMPUTE_AND_STORE_STRAIN) then
+  if (COMPUTE_AND_STORE_STRAIN_VAL) then
     if( .not. GPU_MODE) then
       ! on CPU
       Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
@@ -183,7 +183,7 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
     endif
 
-    if(COMPUTE_AND_STORE_STRAIN) then
+    if(COMPUTE_AND_STORE_STRAIN_VAL) then
       write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif

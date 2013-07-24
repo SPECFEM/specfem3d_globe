@@ -284,7 +284,7 @@ subroutine define_attenuation_forward_arrays_adios(adios_group, group_size_inc)
 
   integer :: local_dim
 
-  local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
+  local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
   call define_adios_global_real_1d_array(adios_group, &
       "R_xx_crust_mantle", local_dim, group_size_inc)
   call define_adios_global_real_1d_array(adios_group, &
@@ -500,7 +500,7 @@ subroutine write_attenuation_forward_arrays_adios(adios_handle, sizeprocs)
 
   integer :: local_dim, adios_err
 
-  local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
+  local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
   call adios_set_path (adios_handle, "R_xx_crust_mantle", adios_err)
   call check_adios_err(myrank,adios_err)
   call write_1D_global_array_adios_dims(adios_handle, local_dim, sizeprocs)

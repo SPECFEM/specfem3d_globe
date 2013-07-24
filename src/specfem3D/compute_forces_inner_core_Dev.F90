@@ -234,7 +234,7 @@
         enddo
       enddo
 
-      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
          if(ATTENUATION_NEW_VAL) then
             ! takes new routines
             ! use first order Taylor expansion of displacement for local storage of stresses
@@ -286,7 +286,7 @@
          enddo
       enddo
 
-      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
          ! temporary variables used for fixing attenuation in a consistent way
          do j=1,m2
             do i=1,m1
@@ -343,7 +343,7 @@
          enddo
       enddo
 
-      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
          ! temporary variables used for fixing attenuation in a consistent way
          do j=1,m1
             do i=1,m1
@@ -400,7 +400,7 @@
          enddo
       enddo
 
-      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+      if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
          ! temporary variables used for fixing attenuation in a consistent way
          do j=1,m1
             do i=1,m2
@@ -472,7 +472,7 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+            if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
                ! temporary variables used for fixing attenuation in a consistent way
                duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
                duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -506,7 +506,7 @@
                epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
             else
                ! compute deviatoric strain
-               if (COMPUTE_AND_STORE_STRAIN) then
+               if (COMPUTE_AND_STORE_STRAIN_VAL) then
                   if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
                      ispec_strain = 1
                   else
@@ -873,7 +873,7 @@
       endif
 
       ! save deviatoric strain for Runge-Kutta scheme
-      if(COMPUTE_AND_STORE_STRAIN) then
+      if(COMPUTE_AND_STORE_STRAIN_VAL) then
         epsilondev_xx(:,:,:,ispec) = epsilondev_loc(1,:,:,:)
         epsilondev_yy(:,:,:,ispec) = epsilondev_loc(2,:,:,:)
         epsilondev_xy(:,:,:,ispec) = epsilondev_loc(3,:,:,:)
