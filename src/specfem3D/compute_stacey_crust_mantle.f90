@@ -97,14 +97,13 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymin_cm) :: absorb_ymin_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymax_cm) :: absorb_ymax_crust_mantle
 
-
   ! local parameters
   real(kind=CUSTOM_REAL) :: weight
   real(kind=CUSTOM_REAL) :: vn,vx,vy,vz,nx,ny,nz,tx,ty,tz
   integer :: i,j,k,ispec,iglob,ispec2D
   !integer :: reclen1,reclen2
 
-  ! note: we use c functions for I/O as they still have a better performance than
+  ! note: we use C functions for I/O as they still have a better performance than
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
@@ -382,7 +381,6 @@
   !           tests with intermediate storages (every 8 step) and/or asynchronious
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
-
 
   ! crust & mantle
 

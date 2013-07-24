@@ -676,8 +676,7 @@ islice_selected_rec(:) = -1
 
   enddo ! end of loop over all station subsets
 
-
-! this is executed by main process only
+! this is executed by the main process only
   if(myrank == 0) then
 
     nrec_found = 0
@@ -801,9 +800,8 @@ islice_selected_rec(:) = -1
 
   endif    ! end of section executed by main process only
 
-! main process broadcasts the results to all the slices
+  ! main process broadcasts the results to all the slices
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)

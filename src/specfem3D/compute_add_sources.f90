@@ -86,12 +86,6 @@
 
         f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
-        !if (it == 1 .and. myrank == 0) then
-        !  write(IMAIN,*) 'using a source of dominant frequency ',f0
-        !  write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
-        !  write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-        !endif
-
         ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
         if(USE_LDDRK)then
           stf_used = FACTOR_FORCE_SOURCE * &
@@ -329,7 +323,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
@@ -371,20 +364,20 @@
 
   do isource = 1,NSOURCES
 
-    !   add the source (only if this proc carries the source)
-    if(myrank == islice_selected_source(isource)) then
+      !   add the source (only if this proc carries the source)
+      if(myrank == islice_selected_source(isource)) then
 
-! note on backward/reconstructed wavefields:
-!       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
-!       as we start with saved wavefields b_displ( 1 ) = displ( NSTEP ) which correspond
-!       to a time (NSTEP - 1)*DT - t0
-!       (see sources for simulation_type 1 and seismograms)
-!
-!       now, at the beginning of the time loop, the numerical Newmark time scheme updates
-!       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
-!       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
-!       in the first (it=1) time loop.
-!       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
+        ! note on backward/reconstructed wavefields:
+        !       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
+        !       as we start with saved wavefields b_displ( 1 ) = displ( NSTEP ) which correspond
+        !       to a time (NSTEP - 1)*DT - t0
+        !       (see sources for simulation_type 1 and seismograms)
+        !
+        !       now, at the beginning of the time loop, the numerical Newmark time scheme updates
+        !       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
+        !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
+        !       in the first (it=1) time loop.
+        !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
 
       if(USE_FORCE_POINT_SOURCE) then
 

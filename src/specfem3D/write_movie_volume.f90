@@ -51,7 +51,7 @@
   logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
 
-! variables
+  ! local parameters
   integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,iNIT
   real(kind=custom_real) :: rval,thetaval,phival
 
@@ -291,8 +291,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
+    muvstore_crust_mantle_3dmovie
+
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
+
   logical :: MOVIE_COARSE
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
   character(len=150) LOCAL_PATH,outputname

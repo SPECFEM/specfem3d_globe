@@ -113,7 +113,6 @@
   real(kind=CUSTOM_REAL), dimension(nmovie_points,0:NPROCTOT_VAL-1) :: &
       val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all
 
-
   ! read master receiver ID -- the ID in DATA/STATIONS
   filename = 'OUTPUT_FILES/NOISE_TOMOGRAPHY/'//'irec_master_noise'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ios)
@@ -236,11 +235,13 @@
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
+
   ! input parameters
   integer :: myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NSPEC_TOP,NSTEP
   logical :: SAVE_FORWARD,ROTATE_SEISMOGRAMS_RT,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
             USE_BINARY_FOR_LARGE_FILE,MOVIE_COARSE
   character(len=150) :: LOCAL_PATH
+
   ! output parameters
   ! local parameters
   integer :: reclen,ier
@@ -567,7 +568,6 @@
           eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
                 noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
                 noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
-
 
           accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) &
                             + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &

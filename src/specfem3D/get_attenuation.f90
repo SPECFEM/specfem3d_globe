@@ -67,13 +67,14 @@
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
-        status='old',action='read',form='unformatted')
-  read(27) tau_s
-  read(27) factor_common
-  read(27) scale_factor
-  read(27) T_c_source
-  close(27)
+    open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
+          status='old',action='read',form='unformatted',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file attenuation.bin')
+    read(27) tau_s
+    read(27) factor_common ! tau_e_store
+    read(27) scale_factor  ! Qmu_store
+    read(27) T_c_source
+    close(27)
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
