@@ -51,7 +51,14 @@
   ! local parameters
   integer :: ier
 
-  if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
+  if(myrank == 0) then
+    ! user output
+    write(IMAIN,*)
+    write(IMAIN,*) 'incorporating topography'
+
+    ! read/save topo file on master
+    call read_topo_bathy_file(ibathy_topo)
+  endif
 
   ! broadcast the information read on the master to the nodes
   call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)

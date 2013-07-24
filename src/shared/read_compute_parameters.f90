@@ -315,7 +315,6 @@
   ! total number of processors in the full Earth composed of the six chunks
   NPROCTOT = NCHUNKS * NPROC
 
-
   !  definition of general mesh parameters
   call rcp_define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -331,7 +330,6 @@
                         DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                         DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval,&
                         doubling_index,rmins,rmaxs)
-
 
   ! calculates number of elements (NSPEC)
   call rcp_count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC,&
@@ -350,7 +348,6 @@
                         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
                         tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,&
                         nglob_edge_v,to_remove)
-
 
   ! calculates number of points (NGLOB)
   call rcp_count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
