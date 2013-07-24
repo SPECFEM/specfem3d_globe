@@ -78,7 +78,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
@@ -172,7 +172,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
+        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
            ! temporary variables used for fixing attenuation in a consistent way
            duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
            duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -206,7 +206,7 @@
            epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN) then
+           if (COMPUTE_AND_STORE_STRAIN_VAL) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
@@ -465,7 +465,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
@@ -576,7 +576,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
+        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
            ! temporary variables used for fixing attenuation in a consistent way
            duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
            duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -610,7 +610,7 @@
            epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN) then
+           if (COMPUTE_AND_STORE_STRAIN_VAL) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
@@ -1064,7 +1064,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
@@ -1164,7 +1164,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
+        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
            ! temporary variables used for fixing attenuation in a consistent way
            duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
            duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -1198,7 +1198,7 @@
            epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN) then
+           if (COMPUTE_AND_STORE_STRAIN_VAL) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
@@ -1525,7 +1525,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   ! variable sized array variables
   integer :: vx,vy,vz,vnspec

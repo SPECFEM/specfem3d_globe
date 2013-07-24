@@ -215,7 +215,7 @@
       enddo
     enddo
 
-    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
 
        if(ATTENUATION_NEW_VAL) then
           ! takes new routines
@@ -318,7 +318,7 @@
        enddo
     enddo
 
-    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN) then
+    if(ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m2
           do i=1,m1
@@ -589,7 +589,7 @@
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) then
+    if(COMPUTE_AND_STORE_STRAIN_VAL) then
       epsilondev_xx(:,:,:,ispec) = epsilondev_loc(1,:,:,:)
       epsilondev_yy(:,:,:,ispec) = epsilondev_loc(2,:,:,:)
       epsilondev_xy(:,:,:,ispec) = epsilondev_loc(3,:,:,:)

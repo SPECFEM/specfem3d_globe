@@ -27,7 +27,7 @@
 
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
-  subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
+  subroutine save_header_file(NSPEC,NGLOB,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
                         ELLIPTICITY,GRAVITY,ROTATION, &
                         OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D, &
@@ -39,7 +39,7 @@
                         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
                         NPROC_XI,NPROC_ETA, &
                         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+                        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                         NSPEC_INNER_CORE_ATTENUATION, &
                         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
                         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -56,7 +56,7 @@
 
   include "constants.h"
 
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC, nglob
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
 
@@ -74,7 +74,7 @@
   integer :: NPROC_XI,NPROC_ETA
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
          NSPEC_INNER_CORE_ATTENUATION, &
          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -101,7 +101,7 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: att1,att2,att3,att4,att5
+  integer :: ATT1,ATT2,ATT3,ATT4,ATT5
   integer :: ier
   character(len=150) HEADER_FILE
 
@@ -136,15 +136,15 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! number of processors = ',NPROCTOT ! should be = NPROC
   write(IOUT,*) '!'
-  write(IOUT,*) '! maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+  write(IOUT,*) '! maximum number of points per region = ',NGLOB(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
 ! use fused loops on NEC SX
   write(IOUT,*) '! on NEC SX, make sure "loopcnt=" parameter'
-  write(IOUT,*) '! in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
+  write(IOUT,*) '! in Makefile is greater than max vector length = ',NGLOB(IREGION_CRUST_MANTLE)*NDIM
   write(IOUT,*) '!'
 
   write(IOUT,*) '! total elements per slice = ',sum(NSPEC)
-  write(IOUT,*) '! total points per slice = ',sum(nglob)
+  write(IOUT,*) '! total points per slice = ',sum(NGLOB)
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
@@ -153,11 +153,11 @@
   write(IOUT,*) '! exact total number of spectral elements in entire mesh = '
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
-  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(nglob)) - subtract_central_cube_points
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NGLOB)) - subtract_central_cube_points
 ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
   write(IOUT,*) '! approximate total number of degrees of freedom in entire mesh = '
-  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(nglob))) &
-    - 2.d0*dble(nglob(IREGION_OUTER_CORE))) &
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(NGLOB))) &
+    - 2.d0*dble(NGLOB(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
 
@@ -302,9 +302,9 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE = ',NSPEC(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE = ',NSPEC(IREGION_INNER_CORE)
   write(IOUT,*)
-  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE = ',nglob(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE = ',nglob(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',nglob(IREGION_INNER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE = ',NGLOB(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE = ',NGLOB(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',NGLOB(IREGION_INNER_CORE)
   write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = ',NSPECMAX_ANISO_IC
@@ -315,7 +315,7 @@
   write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = ',NSPECMAX_ANISO_MANTLE
   write(IOUT,*)
 
-  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = ',NSPEC_CRUST_MANTLE_ATTENUAT
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUATION = ',NSPEC_CRUST_MANTLE_ATTENUATION
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = ',NSPEC_INNER_CORE_ATTENUATION
   write(IOUT,*)
 
@@ -524,9 +524,9 @@
   ! attenuation and/or adjoint simulations
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
     .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .true. '
+    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .true.'
   else
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
+    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .false.'
   endif
   write(IOUT,*)
 

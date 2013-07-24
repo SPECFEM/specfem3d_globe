@@ -393,7 +393,7 @@ module specfem_par_crustmantle
     one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: &
     factor_common_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &

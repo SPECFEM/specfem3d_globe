@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine broadcast_compute_parameters(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+  subroutine broadcast_computed_parameters(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
                 NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                 NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
                 NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
@@ -58,10 +58,10 @@
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
 
+  use mpi
+
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
   include "constants.h"
   include "precision.h"
 
@@ -84,7 +84,7 @@
           MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
           RMOHO_FICTITIOUS_IN_MESHER
 
-  logical   MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+  logical MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
@@ -201,7 +201,7 @@
   call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   ! non-master processes set their parameters
-  if (myrank /=0) then
+  if (myrank /= 0) then
 
     ! please, be careful with ordering and counting here
     ! integers
@@ -318,71 +318,5 @@
 
   endif
 
-  end subroutine broadcast_compute_parameters
+  end subroutine broadcast_computed_parameters
 
-
-!-------------------------------------------------------------------------------------------------
-!> Broadcast the parameters relative to GPU computing settings.
-!! \param myrank The rank of the MPI process in COMM_WORLD
-!! \param GPU_MODE Flag to indicate that GPU computing is ON or OFF.
-  subroutine broadcast_gpu_parameters(myrank,GPU_MODE)
-
-  implicit none
-
-! standard include of the MPI library
-  include 'mpif.h'
-  include "constants.h"
-  include "precision.h"
-
-  integer:: myrank
-  logical:: GPU_MODE
-  ! local parameters
-  integer :: ier
-
-  call MPI_BCAST(GPU_MODE,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting GPU_MODE')
-
-  end subroutine broadcast_gpu_parameters
-
-!-------------------------------------------------------------------------------------------------
-!> Broadcast the parameters relative to ADIOS output settings.
-!! \param myrank The rank of the MPI process in COMM_WORLD
-!! \param ADIOS_ENABLED Flag to indicate ADIOS output for seismograms.
-!! \param ADIOS_FOR_FORWARD_ARRAYS Flag to indicate that intermediate and
-!!        forward arrays are stored with the help of ADIOS.
-subroutine broadcast_adios_parameters(myrank,ADIOS_ENABLED,  &
-    ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-    ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, &
-    ADIOS_FOR_AVS_DX)
-
-  implicit none
-
-  ! standard include of the MPI library
-  include 'mpif.h'
-  include "constants.h"
-  include "precision.h"
-
-  integer:: myrank
-  logical:: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
-  ! local parameters
-  integer :: ier
-  call MPI_BCAST(ADIOS_ENABLED,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting ADIOS_ENABLED')
-  call MPI_BCAST(ADIOS_FOR_FORWARD_ARRAYS,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_FORWARD_ARRAYS')
-  call MPI_BCAST(ADIOS_FOR_MPI_ARRAYS,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_MPI_ARRAYS')
-  call MPI_BCAST(ADIOS_FOR_ARRAYS_SOLVER,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_ARRAYS_SOLVER')
-  call MPI_BCAST(ADIOS_FOR_SOLVER_MESHFILES,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_SOLVER_MESHFILES')
-  call MPI_BCAST(ADIOS_FOR_AVS_DX,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_MPI(myrank, &
-      'error broadcasting ADIOS_FOR_AVS_DX')
-
-end subroutine broadcast_adios_parameters

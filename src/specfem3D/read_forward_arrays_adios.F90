@@ -180,7 +180,7 @@ subroutine read_intermediate_forward_arrays_adios()
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
+  local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
   call adios_schedule_read(adios_handle, sel, "R_xx_crust_mantle/array", 0, 1, &
@@ -385,7 +385,7 @@ subroutine read_forward_arrays_adios()
   endif
 
   if (ATTENUATION_VAL) then
-    local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
+    local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
     call adios_schedule_read(adios_handle, sel, "R_xx_crust_mantle/array", 0, 1, &

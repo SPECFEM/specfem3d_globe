@@ -476,8 +476,8 @@
 
   ! checks attenuation
   if( ATTENUATION_VAL ) then
-    if (NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE) &
-       call exit_MPI(myrank, 'NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE, exit')
+    if (NSPEC_CRUST_MANTLE_ATTENUATION /= NSPEC_CRUST_MANTLE) &
+       call exit_MPI(myrank, 'NSPEC_CRUST_MANTLE_ATTENUATION /= NSPEC_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
        call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
   endif
@@ -485,11 +485,11 @@
   ! checks strain storage
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
     .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    if( COMPUTE_AND_STORE_STRAIN .neqv. .true. ) &
-      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 19')
+    if( COMPUTE_AND_STORE_STRAIN_VAL .neqv. .true. ) &
+      call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN_VAL parameter, please recompile solver 19')
   else
-    if( COMPUTE_AND_STORE_STRAIN .neqv. .false. ) &
-      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 20')
+    if( COMPUTE_AND_STORE_STRAIN_VAL .neqv. .false. ) &
+      call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN_VAL parameter, please recompile solver 20')
   endif
 
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
