@@ -422,6 +422,9 @@ Finally, before compiling, make sure that the subdirectories \texttt{obj},
 with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.5}). The \texttt{go\_mesher}
 script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES} directory.
 
+If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
+\texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
+
 \section{Compiling on an IBM BlueGene}
 
 \underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
