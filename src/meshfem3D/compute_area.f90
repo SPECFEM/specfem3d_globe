@@ -44,7 +44,7 @@
   ! local parameters
   double precision :: volume_total_region,area_total_bottom,area_total_top
 
-  ! use MPI reduction to compute total area and volume
+  ! use an MPI reduction to compute the total area and volume
   volume_total_region = ZERO
   area_total_bottom   = ZERO
   area_total_top   = ZERO
