@@ -2501,6 +2501,15 @@ else ! if UNDO_ATTENUATION
 ! in exact undoing of attenuation
     undo_att_sim_type_3 = .true.
 
+!! DK DK to Daniel, July 2013: in the case of GPU_MODE it will be *crucial* to leave these arrays on the host
+!! i.e. on the CPU, in order to be able to use all the (unused) memory of the host for them, since they are
+!! (purposely) huge and designed to use almost all the memory available (by carefully optimizing the
+!! value of NT_DUMP_ATTENUATION); when writing to these buffers, it will then be OK to use non-blocking writes
+!! from the device to the host, since we do not reuse the content of these buffers until much later, in a second part
+!! of the run; however when reading back from these buffers, the reads from host to device should then be blocking
+!! because we then use the values read immediately (one value at a time, but to reduce the total number of reads
+!! across the PCI-Express bus we could / should consider reading them 10 by 10 for instance (?) if that fits
+!! in the memory of the GPU
     allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')
     allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP_ATTENUATION),stat=ier)
