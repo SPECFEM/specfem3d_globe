@@ -82,6 +82,8 @@ DEFAULT = \
 	xcheck_buffers_2D \
 	xcheck_buffers_corners_chunks \
 	xcheck_buffers_faces_chunks \
+	xcombine_vol_data \
+	xcombine_surf_data \
 	xcombine_AVS_DX \
 	xconvolve_source_timefunction \
 	xcreate_movie_AVS_DX \
@@ -120,6 +122,7 @@ help:
 	@echo "    xcheck_buffers_faces_chunks"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_surf_data"
+	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
