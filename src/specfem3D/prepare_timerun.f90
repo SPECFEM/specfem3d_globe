@@ -52,6 +52,7 @@
                       b_rmassx_inner_core,b_rmassy_inner_core)
 
   use mpi
+
   implicit none
 
   include "constants.h"
