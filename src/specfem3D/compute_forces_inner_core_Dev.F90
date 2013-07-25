@@ -1013,7 +1013,9 @@
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
 ! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
 !IBM* ASSERT (NODEPS)
+!pgi$ ivdep
 !DIR$ IVDEP
           do ijk = 1,NGLLCUBE
             iglob = ibool(ijk,1,1,ispec)
