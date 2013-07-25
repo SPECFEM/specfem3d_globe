@@ -1443,12 +1443,12 @@
 
   subroutine prepare_timerun_GPU()
 
-  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
   use specfem_par_movie
+  use mpi
 
   implicit none
 
