@@ -234,8 +234,9 @@
   print *,'How much memory (in GB) is installed on your machine per CPU core?'
   print *,'        (or per GPU card or per INTEL MIC Phi board)?'
   print *,'  (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)'
-  print *,'  (this value is for instance 4 GB on Tiger at Princeton, 2 GB on the non-GPU part of Titan at ORNL i.e. when using'
-  print *,'   CPUs only there, 2 GB also on the machine used by Christina Morency, and 1.5 GB on the GPU cluster in Marseille)'
+  print *,'  (this value is for instance 4 GB on Tiger at Princeton, 4 GB or 2 GB on the non-GPU part of Titan at ORNL i.e. when'
+  print *,'   using CPUs only there depending on whether you use 8 or 16 MPI tasks per compute node,'
+  print *,'   2 GB also on the machine used by Christina Morency, and 1.5 GB on the GPU cluster in Marseille)'
   read(*,*) gigabytes_avail_per_core
 
   if(gigabytes_avail_per_core < 0.1d0) stop 'less than 100 MB per core does not seem realistic; exiting...'
