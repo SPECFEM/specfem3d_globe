@@ -85,9 +85,9 @@
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-               nglob
+               NGLOB
 
-  double precision :: static_memory_size
+  double precision :: static_memory_size_on_CPU
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
@@ -174,7 +174,7 @@
                    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
                    ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                   NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+                   NSPEC,NGLOB,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &
@@ -188,7 +188,16 @@
                    NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                    NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,ATT1,ATT2,ATT3, &
                    APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
-                   NCHUNKS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,static_memory_size)
+                   NCHUNKS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,static_memory_size_on_CPU)
+
+! in the case of GPUs, the buffers remain on the host i.e. on the CPU, thus static_memory_size_on_CPU could be set to zero here
+! because the solver uses almost no permanent host memory, since all calculations are performed and stored on the device;
+! however we prefer not to do that here because we probably have some temporary copies of all the arrays created on the host first,
+! and it is not clear if they are then suppressed when the time loop of the solver starts because static memory allocation
+! is used for big arrays on the host rather than dynamic, thus there is no way of freeing it dynamically.
+! Thus for now we prefer not to set static_memory_size_on_CPU to zero here.
+!
+! if(GPU_MODE) static_memory_size_on_CPU = 0.d0
 
   NGLOB1D_RADIAL_TEMP(:) = &
   (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
@@ -196,10 +205,10 @@
   print *
   print *,'number of processors = ',NPROCTOT
   print *
-  print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+  print *,'maximum number of points per region = ',NGLOB(IREGION_CRUST_MANTLE)
   print *
   print *,'total elements per slice = ',sum(NSPEC)
-  print *,'total points per slice = ',sum(nglob)
+  print *,'total points per slice = ',sum(NGLOB)
   print *
   print *,'number of time steps = ',NSTEP
   print *
@@ -213,33 +222,38 @@
   print *,' by typing "size -d bin/xspecfem3D"'
   print *,' after compiling the code with the DATA/Par_file you plan to use)'
   print *
-  print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
-  print *,'                                = ',static_memory_size/1048576.d0,' MiB'
-  print *,'                                = ',static_memory_size/1.d9,' GB'
-  print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
+  print *,'size of static arrays per slice = ',static_memory_size_on_CPU/1.d6,' MB'
+  print *,'                                = ',static_memory_size_on_CPU/1048576.d0,' MiB'
+  print *,'                                = ',static_memory_size_on_CPU/1.d9,' GB'
+  print *,'                                = ',static_memory_size_on_CPU/1073741824.d0,' GiB'
   print *
 
-  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
-    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
-    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
-    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  if(static_memory_size_on_CPU*dble(NPROCTOT)/1.d6 < 10000.d0) then
+    print *,'size of static arrays for all slices = ',static_memory_size_on_CPU*dble(NPROCTOT)/1.d6,' MB'
+    print *,'                                     = ',static_memory_size_on_CPU*dble(NPROCTOT)/1048576.d0,' MiB'
+    print *,'                                     = ',static_memory_size_on_CPU*dble(NPROCTOT)/1.d9,' GB'
   else
-    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+    print *,'size of static arrays for all slices = ',static_memory_size_on_CPU*dble(NPROCTOT)/1.d9,' GB'
   endif
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
+  print *,'                                     = ',static_memory_size_on_CPU*dble(NPROCTOT)/1073741824.d0,' GiB'
+  print *,'                                     = ',static_memory_size_on_CPU*dble(NPROCTOT)/1.d12,' TB'
+  print *,'                                     = ',static_memory_size_on_CPU*dble(NPROCTOT)/1099511627776.d0,' TiB'
   print *
 
   print *,'How much memory (in GB) is installed on your machine per CPU core?'
   print *,'        (or per GPU card or per INTEL MIC Phi board)?'
   print *,'  (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)'
-  print *,'  (this value is for instance 4 GB on Tiger at Princeton, 2 GB on the non-GPU part of Titan at ORNL i.e. when using'
-  print *,'   CPUs only there, 2 GB also on the machine used by Christina Morency, and 1.5 GB on the GPU cluster in Marseille)'
+  print *,'  (this value is for instance:'
+  print *,'  -  4 GB on Tiger at Princeton'
+  print *,'  -  4 GB or 2 GB on the non-GPU part of Titan at ORNL i.e. when using CPUs only there'
+  print *,'            depending on whether you use 8 or 16 MPI tasks per compute node'
+  print *,'  - 32 GB on the GPU part of Titan at ORNL'
+  print *,'  -  2 GB on the machine used by Christina Morency)'
+  print *,'  -  1.5 GB on the GPU cluster in Marseille)'
   read(*,*) gigabytes_avail_per_core
 
   if(gigabytes_avail_per_core < 0.1d0) stop 'less than 100 MB per core does not seem realistic; exiting...'
-  if(gigabytes_avail_per_core > 100.d0) stop 'more than 100 GB per core does not seem realistic; exiting...'
+  if(gigabytes_avail_per_core > 200.d0) stop 'more than 200 GB per core does not seem realistic; exiting...'
 
   print *
   print *,'What percentage of this total do you allow us to use, keeping in mind that you'
@@ -252,17 +266,17 @@
 
   what_we_can_use_in_GB = gigabytes_avail_per_core * percentage_to_use_per_core / 100.d0
 
-! convert static_memory_size to GB
-  static_memory_size = static_memory_size / 1.d9
+! convert static_memory_size_on_CPU to GB
+  static_memory_size_on_CPU = static_memory_size_on_CPU / 1.d9
 
   print *
-  print *,'without undoing of attenuation you are using ',static_memory_size,' GB per core'
-  print *,'  i.e. ',sngl(100.d0 * static_memory_size / gigabytes_avail_per_core),'% of the installed memory'
+  print *,'without undoing of attenuation you are using ',static_memory_size_on_CPU,' GB per core'
+  print *,'  i.e. ',sngl(100.d0 * static_memory_size_on_CPU / gigabytes_avail_per_core),'% of the installed memory'
 
-  if(static_memory_size >= gigabytes_avail_per_core) &
+  if(static_memory_size_on_CPU >= gigabytes_avail_per_core) &
     stop 'you are using more memory than what you told us is installed!!! there is an error'
 
-  if(static_memory_size >= what_we_can_use_in_GB) &
+  if(static_memory_size_on_CPU >= what_we_can_use_in_GB) &
     stop 'you are using more memory than what you allowed us to use!!! there is an error'
 
 ! compute the size to store in memory at each time step
@@ -287,7 +301,7 @@
   print *
   print *,'*******************************************************************************'
   print *,'the optimal value to put in DATA/Par_file is thus:'
-  NT_DUMP_ATTENUATION_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size) / size_to_store_at_each_time_step)
+  NT_DUMP_ATTENUATION_optimal_to_use = int((what_we_can_use_in_GB - static_memory_size_on_CPU) / size_to_store_at_each_time_step)
   print *
   print *,'NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal_to_use
   print *
