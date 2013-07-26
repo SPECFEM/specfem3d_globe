@@ -243,7 +243,8 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_MODE'
 
 !! DK DK July 2013: temporary, the time for Daniel Peter to merge his GPU implementation
-  if(GPU_MODE) stop 'GPU_MODE not implemented yet'
+! if(GPU_MODE) stop 'GPU_MODE not implemented yet'
+  if(GPU_MODE) print *,'GPU_MODE not implemented yet'
 
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_ENABLED'
