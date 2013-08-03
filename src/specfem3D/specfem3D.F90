@@ -567,8 +567,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassy_crust_mantle
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -629,8 +629,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassx_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassx_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassy_inner_core
 
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
@@ -1209,7 +1209,7 @@
               ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
               is_on_a_slice_edge_inner_core,rmass_inner_core, &
               ABSORBING_CONDITIONS,LOCAL_PATH,&
-              SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+              EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
               b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
               rmassx_inner_core,rmassy_inner_core,&
               b_rmassx_inner_core,b_rmassy_inner_core)
@@ -1820,7 +1820,7 @@
                       sender_from_slices_to_cube,ibool_central_cube, &
                       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
-    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC_BACKWARD > 0)then
+    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC > 0)then
 
     call prepare_timerun_centralcube(myrank,b_rmassx_inner_core, &
                       iproc_xi,iproc_eta,ichunk, &
@@ -1914,7 +1914,7 @@
             call exit_MPI(myrank,'negative mass matrix term for the rmassy_inner_core')
        rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
        rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
-       if(SIMULATION_TYPE == 3 .and. NGLOB_XY_IC_BACKWARD > 0)then
+       if(SIMULATION_TYPE == 3 .and. NGLOB_XY_IC > 0)then
          if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
               call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
          if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
@@ -1925,7 +1925,7 @@
     endif
 
     if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-      .and. .not. USE_LDDRK .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM_BACKWARD > 0)then
+      .and. .not. USE_LDDRK .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM > 0)then
       if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
            call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
       if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &

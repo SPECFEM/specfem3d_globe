@@ -56,6 +56,16 @@
                         SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
                         ATTENUATION_1D_WITH_3D_STORAGE)
 
+!
+! ****************************************************************************************************
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE, i.e. none of the parameters it computes
+! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
+! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
+! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
+! was compiled with SIMULATION_TYPE == 1
+! ****************************************************************************************************
+!
+
   implicit none
 
   include "constants.h"
@@ -93,7 +103,7 @@
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
          NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB, &
-         NGLOB_XY_CM, NGLOB_XY_IC, NGLOB_XY_CM_BACKWARD, NGLOB_XY_IC_BACKWARD
+         NGLOB_XY_CM, NGLOB_XY_IC
 
   integer :: SIMULATION_TYPE
   logical :: SAVE_FORWARD,MOVIE_VOLUME
@@ -593,8 +603,6 @@
 
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
-  NGLOB_XY_CM_BACKWARD = 1
-  NGLOB_XY_IC_BACKWARD = 1
 
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
@@ -602,26 +610,15 @@
      NGLOB_XY_CM = 1
   endif
 
-  if(SIMULATION_TYPE /= 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     if(ROTATION) then
       NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
       NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-    endif
-  endif
-
-  if(SIMULATION_TYPE == 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    if(ROTATION) then
-      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-      NGLOB_XY_CM_BACKWARD = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC_BACKWARD = NGLOB(IREGION_INNER_CORE)
     endif
   endif
 
   write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM = ',NGLOB_XY_CM
   write(IOUT,*) 'integer, parameter :: NGLOB_XY_IC = ',NGLOB_XY_IC
-  write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM_BACKWARD = ',NGLOB_XY_CM_BACKWARD
-  write(IOUT,*) 'integer, parameter :: NGLOB_XY_IC_BACKWARD = ',NGLOB_XY_IC_BACKWARD
   write(IOUT,*)
 
   if (ATTENUATION_1D_WITH_3D_STORAGE) then

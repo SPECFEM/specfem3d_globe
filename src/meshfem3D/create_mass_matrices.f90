@@ -42,7 +42,7 @@
                           jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
                           jacobian2D_bottom,jacobian2D_top,&
                           SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
-                          nglob_xy_backward,b_rmassx,b_rmassy)
+                          b_rmassx,b_rmassy)
 
   ! creates rmassx, rmassy, rmassz and rmass_ocean_load
 
@@ -69,10 +69,9 @@
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
   real(kind=CUSTOM_REAL) :: two_omega_earth,scale_t_inv
 
-  ! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true.
-  integer :: nglob_xy_backward
+  ! mass matrices for backward simulation when ROTATION is .true.
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
-  real(kind=CUSTOM_REAL), dimension(nglob_xy_backward) :: b_rmassx,b_rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
   real(kind=CUSTOM_REAL) :: b_two_omega_earth
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore

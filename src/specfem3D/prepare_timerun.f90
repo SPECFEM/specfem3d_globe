@@ -66,14 +66,14 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM_BACKWARD) :: b_rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassx_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC_BACKWARD) :: b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassx_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassy_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
 
   integer ichunk,iproc_xi,iproc_eta
@@ -197,9 +197,9 @@
             NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
 
  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-    .and. .not. USE_LDDRK .and. NGLOB_XY_CM_BACKWARD > 0)then
+    .and. .not. USE_LDDRK .and. NGLOB_XY_CM > 0)then
     if(SIMULATION_TYPE == 3)then
-       call assemble_MPI_scalar_block(myrank,b_rmassx_crust_mantle,NGLOB_XY_CM_BACKWARD, &
+       call assemble_MPI_scalar_block(myrank,b_rmassx_crust_mantle,NGLOB_XY_CM, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -212,7 +212,7 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
-      call assemble_MPI_scalar_block(myrank,b_rmassy_crust_mantle,NGLOB_XY_CM_BACKWARD, &
+      call assemble_MPI_scalar_block(myrank,b_rmassy_crust_mantle,NGLOB_XY_CM, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -274,8 +274,8 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
 
-    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC_BACKWARD > 0)then
-      call assemble_MPI_scalar_block(myrank,b_rmassx_inner_core,NGLOB_XY_IC_BACKWARD, &
+    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC > 0)then
+      call assemble_MPI_scalar_block(myrank,b_rmassx_inner_core,NGLOB_XY_IC, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -289,7 +289,7 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
 
-      call assemble_MPI_scalar_block(myrank,b_rmassy_inner_core,NGLOB_XY_IC_BACKWARD, &
+      call assemble_MPI_scalar_block(myrank,b_rmassy_inner_core,NGLOB_XY_IC, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &

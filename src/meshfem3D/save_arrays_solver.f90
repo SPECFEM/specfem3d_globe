@@ -45,20 +45,19 @@
                     ANISOTROPIC_INNER_CORE,OCEANS, &
                     tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,ATT1,ATT2,ATT3,vnspec, &
                     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank,&
-                    SIMULATION_TYPE,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
-                    nglob_xy_backward,b_rmassx,b_rmassy)
+                    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
+                    b_rmassx,b_rmassy)
 
   implicit none
 
   include "constants.h"
 
-  integer SIMULATION_TYPE
   logical ATTENUATION,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
   character(len=150) prname
   integer iregion_code,NCHUNKS
 
-  integer nspec,nglob_xy,nglob,nspec_stacey,myrank,nglob_xy_backward
+  integer nspec,nglob_xy,nglob,nspec_stacey,myrank
   integer npointot_oceans
 
 ! Stacey
@@ -100,8 +99,8 @@
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
 
-! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true.
-  real(kind=CUSTOM_REAL), dimension(nglob_xy_backward) :: b_rmassx,b_rmassy
+! mass matrices for backward simulation when ROTATION is .true.
+  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
 
 ! additional ocean load mass matrix
   real(kind=CUSTOM_REAL) rmass_ocean_load(npointot_oceans)
@@ -277,8 +276,8 @@
 
   if(.not. USE_LDDRK)then
     if(EXACT_MASS_MATRIX_FOR_ROTATION)then
-      if((SIMULATION_TYPE == 3 .and. (ROTATION .and. iregion_code == IREGION_CRUST_MANTLE)) .or. &
-        (SIMULATION_TYPE == 3 .and. (ROTATION .and. iregion_code == IREGION_INNER_CORE)))then
+      if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+         (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
          write(27) b_rmassx
          write(27) b_rmassy
        endif
