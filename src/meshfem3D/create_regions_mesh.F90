@@ -163,8 +163,8 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz
   integer :: nglob_xy
 
-  ! mass matrices for backward simulation when SIMULATION_TYPE =3 and ROTATION is .true.
-  integer :: SIMULATION_TYPE,nglob_xy_backward
+  ! mass matrices for backward simulation when ROTATION is .true.
+  integer :: SIMULATION_TYPE
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx,b_rmassy
 
@@ -983,7 +983,6 @@
     ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
     ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
     nglob_xy = 1
-    nglob_xy_backward = 1
 
     if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
        select case(iregion_code)
@@ -996,26 +995,13 @@
        nglob_xy = 1
     endif
 
-    if(SIMULATION_TYPE /=3  .and. (.not. USE_LDDRK))then
+    if(.not. USE_LDDRK)then
       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
         select case(iregion_code)
         case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
            nglob_xy = nglob
         case( IREGION_OUTER_CORE )
            nglob_xy = 1
-        endselect
-      endif
-    endif
-
-    if(SIMULATION_TYPE ==3  .and. (.not. USE_LDDRK) )then
-      if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-        select case(iregion_code)
-        case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
-           nglob_xy = nglob
-           nglob_xy_backward = nglob
-        case( IREGION_OUTER_CORE )
-           nglob_xy = 1
-           nglob_xy_backward = 1
         endselect
       endif
     endif
@@ -1027,9 +1013,9 @@
     allocate(rmassz(nglob),stat=ier)
     if(ier /= 0) stop 'error in allocate 21'
 
-    allocate(b_rmassx(nglob_xy_backward),stat=ier)
+    allocate(b_rmassx(nglob_xy),stat=ier)
     if(ier /= 0) stop 'error in allocate b_21'
-    allocate(b_rmassy(nglob_xy_backward),stat=ier)
+    allocate(b_rmassy(nglob_xy),stat=ier)
     if(ier /= 0) stop 'error in allocate b_21'
 
     ! allocates ocean load mass matrix as well if oceans
@@ -1060,7 +1046,7 @@
                           jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
                           jacobian2D_bottom,jacobian2D_top,&
                           SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
-                          nglob_xy_backward,b_rmassx,b_rmassy)
+                          b_rmassx,b_rmassy)
 
     ! save the binary files
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
@@ -1090,8 +1076,8 @@
                   tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
                   ATT1,ATT2,ATT3,size(tau_e_store,5),&
                   NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank,&
-                  SIMULATION_TYPE,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
-                  nglob_xy_backward,b_rmassx,b_rmassy)
+                  ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
+                  b_rmassx,b_rmassy)
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
     you_can_start_doing_IOs = .true.
     if (myrank < NPROC_XI*NPROC_ETA-1) call MPI_SEND(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank+1, itag, MPI_COMM_WORLD, ier)

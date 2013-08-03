@@ -83,7 +83,7 @@
   ! local variables
   integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso, &
              NSPEC_CRUST_MANTLE_ADJOINT_HESS,NSPEC_CRUST_MANTLE_ADJOINT_NOISE,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL, &
-             NGLOB_XY_CM,NGLOB_XY_IC,NGLOB_XY_CM_BACKWARD,NGLOB_XY_IC_BACKWARD
+             NGLOB_XY_CM,NGLOB_XY_IC
 
   ! generate the elements in all the regions of the mesh
   ispec_aniso = 0
@@ -427,8 +427,6 @@
 
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
-  NGLOB_XY_CM_BACKWARD = 1
-  NGLOB_XY_IC_BACKWARD = 1
 
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
@@ -436,19 +434,10 @@
      NGLOB_XY_CM = 1
   endif
 
-  if(SIMULATION_TYPE /= 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     if(ROTATION) then
       NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
       NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-    endif
-  endif
-
-  if(SIMULATION_TYPE == 3  .and. .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    if(ROTATION) then
-      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-      NGLOB_XY_CM_BACKWARD = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC_BACKWARD = NGLOB(IREGION_INNER_CORE)
     endif
   endif
 
@@ -456,13 +445,13 @@
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
 
 ! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
-  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM_BACKWARD*4.d0*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
 
 ! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
 
 ! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
-  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC_BACKWARD*4.d0*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
 
   end subroutine memory_eval
 
