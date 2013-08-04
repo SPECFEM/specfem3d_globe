@@ -55,7 +55,7 @@
           R_memory,one_minus_sum_beta,deltat, &
           alphaval,betaval,gammaval,factor_common,vnspec,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
+          epsilondev,eps_trace_over_3,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D,COMPUTE_AND_STORE_STRAIN)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -72,6 +72,8 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+
+  logical :: COMPUTE_AND_STORE_STRAIN
 
   ! x y and z contain r theta and phi
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
@@ -390,7 +392,7 @@
             R_memory, &
             one_minus_sum_beta,vnspec, &
             tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-            dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
+            dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H,COMPUTE_AND_STORE_STRAIN)
     else
        if(.not. ispec_is_tiso(ispec)) then
           ! isotropic element
@@ -404,7 +406,7 @@
                R_memory, &
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
+               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H,COMPUTE_AND_STORE_STRAIN)
        else
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
@@ -417,7 +419,7 @@
                R_memory, &
                one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H)
+               dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3(1,1,1,ispec),rho_s_H,COMPUTE_AND_STORE_STRAIN)
        endif
     endif
 

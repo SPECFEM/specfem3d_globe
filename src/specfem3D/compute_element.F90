@@ -35,7 +35,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -47,6 +47,8 @@
 
   ! element id
   integer :: ispec
+
+  logical :: COMPUTE_AND_STORE_STRAIN
 
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -170,7 +172,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN_VAL) then
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(ijk,1,1) = templ
           epsilondev_loc(1,ijk,1,1) = duxdxl - templ
@@ -378,7 +380,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN_VAL) then
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -544,7 +546,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -556,6 +558,8 @@
 
   ! element id
   integer :: ispec
+
+  logical :: COMPUTE_AND_STORE_STRAIN
 
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -694,7 +698,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN_VAL) then
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(ijk,1,1) = templ
           epsilondev_loc(1,ijk,1,1) = duxdxl - templ
@@ -1088,7 +1092,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN_VAL) then
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
@@ -1442,7 +1446,7 @@
                     R_memory, &
                     one_minus_sum_beta,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H)
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,eps_trace_over_3_loc,rho_s_H,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -1454,6 +1458,8 @@
 
   ! element id
   integer :: ispec
+
+  logical :: COMPUTE_AND_STORE_STRAIN
 
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -1581,7 +1587,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN_VAL) then
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(ijk,1,1) = templ
           epsilondev_loc(1,ijk,1,1) = duxdxl - templ
@@ -1825,7 +1831,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-        if (COMPUTE_AND_STORE_STRAIN_VAL) then
+        if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           eps_trace_over_3_loc(i,j,k) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ

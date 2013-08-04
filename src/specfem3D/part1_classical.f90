@@ -345,7 +345,8 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D, &
+          COMPUTE_AND_STORE_STRAIN)
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -386,7 +387,7 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,COMPUTE_AND_STORE_STRAIN)
     endif
 
     ! Deville routine
@@ -423,7 +424,8 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
+          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D, &
+          COMPUTE_AND_STORE_STRAIN)
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -457,7 +459,7 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core)
+          epsilondev_inner_core,eps_trace_over_3_inner_core,COMPUTE_AND_STORE_STRAIN)
     endif
 
     ! Stacey
@@ -640,7 +642,8 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D, &
+          COMPUTE_AND_STORE_STRAIN)
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -681,7 +684,7 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,5),&
           istage,R_memory_crust_mantle_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle)
+          epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,COMPUTE_AND_STORE_STRAIN)
       endif
 
       ! Deville routine
@@ -718,7 +721,8 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
+          epsilondev_inner_core,eps_trace_over_3_inner_core,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D, &
+          COMPUTE_AND_STORE_STRAIN)
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -752,7 +756,7 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,5),&
           istage,R_memory_inner_core_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev_inner_core,eps_trace_over_3_inner_core)
+          epsilondev_inner_core,eps_trace_over_3_inner_core,COMPUTE_AND_STORE_STRAIN)
       endif
 
 ! assemble all the contributions between slices using MPI

@@ -51,7 +51,7 @@
           alphaval,betaval,gammaval,factor_common, &
           vnspec,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D)
+          epsilondev,eps_trace_over_3,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D,COMPUTE_AND_STORE_STRAIN)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -74,6 +74,8 @@
   ! arrays with mesh parameters per slice
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: xix,xiy,xiz, &
                       etax,etay,etaz,gammax,gammay,gammaz
+
+  logical :: COMPUTE_AND_STORE_STRAIN
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -430,7 +432,7 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            if (COMPUTE_AND_STORE_STRAIN_VAL) then
+            if (COMPUTE_AND_STORE_STRAIN) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               epsilondev_loc(1,ijk,1,1) = duxdxl - templ
               epsilondev_loc(2,ijk,1,1) = duydyl - templ
@@ -685,7 +687,7 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            if (COMPUTE_AND_STORE_STRAIN_VAL) then
+            if (COMPUTE_AND_STORE_STRAIN) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ

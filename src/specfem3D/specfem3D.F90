@@ -933,7 +933,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX, &
-          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE
+          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE,COMPUTE_AND_STORE_STRAIN
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -1132,7 +1132,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
-          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
+          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE,COMPUTE_AND_STORE_STRAIN)
 
 ! define a 3D extension in order to be able to force vectorization in the compute_forces routines
   do k = 1,NGLLZ
@@ -2284,7 +2284,7 @@
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
-  if (COMPUTE_AND_STORE_STRAIN_VAL) then
+  if (COMPUTE_AND_STORE_STRAIN) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
       Iepsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
       Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
@@ -2533,9 +2533,9 @@ else ! if UNDO_ATTENUATION
       it_temp = it
       seismo_current_temp = seismo_current
 
-        if(COMPUTE_AND_STORE_STRAIN_VAL) then
+        if(COMPUTE_AND_STORE_STRAIN) then
           if(.not. USE_DEVILLE_PRODUCTS_VAL) &
-             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN_VAL is not implemented without USE_DEVILLE_PRODUCTS_VAL')
+             call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN is not implemented without USE_DEVILLE_PRODUCTS_VAL')
 ! after reading the restart files of displacement back from disk, recompute the strain from displacement;
 ! this is better than storing the strain to disk as well, which would drastically increase I/O volume
           do ispec = 1, NSPEC_INNER_CORE
@@ -2574,9 +2574,9 @@ else ! if UNDO_ATTENUATION
       it = it_temp
       seismo_current = seismo_current_temp
 
-      if(COMPUTE_AND_STORE_STRAIN_VAL) then
+      if(COMPUTE_AND_STORE_STRAIN) then
         if(.not. USE_DEVILLE_PRODUCTS_VAL) &
-           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN_VAL is not implemented without USE_DEVILLE_PRODUCTS_VAL')
+           call exit_MPI(myrank,'COMPUTE_AND_STORE_STRAIN is not implemented without USE_DEVILLE_PRODUCTS_VAL')
 ! after reading the restart files of displacement back from disk, recompute the strain from displacement;
 ! this is better than storing the strain to disk as well, which would drastically increase I/O volume
         do ispec = 1, NSPEC_INNER_CORE

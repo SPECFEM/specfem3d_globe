@@ -51,14 +51,14 @@
                         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
+                        MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
                         ATT1,ATT2,ATT3,ATT4,ATT5,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
                         SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
                         ATTENUATION_1D_WITH_3D_STORAGE)
 
 !
 ! ****************************************************************************************************
-! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE, i.e. none of the parameters it computes
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
 ! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
 ! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
 ! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
@@ -105,8 +105,7 @@
          NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB, &
          NGLOB_XY_CM, NGLOB_XY_IC
 
-  integer :: SIMULATION_TYPE
-  logical :: SAVE_FORWARD,MOVIE_VOLUME
+  logical :: MOVIE_VOLUME
 
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
@@ -561,15 +560,6 @@
   else
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
   endif
-
-  ! attenuation and/or adjoint simulations
-  if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
-    .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .true.'
-  else
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .false.'
-  endif
-  write(IOUT,*)
 
   if (MOVIE_VOLUME) then
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'
