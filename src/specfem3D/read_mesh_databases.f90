@@ -112,7 +112,7 @@
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
   integer :: NGLOB_DUMMY
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle

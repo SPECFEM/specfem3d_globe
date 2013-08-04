@@ -142,7 +142,7 @@
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
 
   rmassx(:) = 0._CUSTOM_REAL
   rmassy(:) = 0._CUSTOM_REAL
@@ -262,19 +262,19 @@
 
             if(ROTATION .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
               if(CUSTOM_REAL == SIZE_REAL) then
-                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-              else
-                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-              endif
-
-              if(CUSTOM_REAL == SIZE_REAL) then
                 rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
                 rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
               else
                 rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
                 rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+              endif
+
+              if(CUSTOM_REAL == SIZE_REAL) then
+                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+              else
+                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
               endif
             endif
 

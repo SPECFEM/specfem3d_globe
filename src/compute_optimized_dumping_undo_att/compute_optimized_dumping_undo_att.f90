@@ -248,7 +248,8 @@
   print *,'  -  4 GB or 2 GB on the non-GPU part of Titan at ORNL i.e. when using CPUs only there'
   print *,'            depending on whether you use 8 or 16 MPI tasks per compute node'
   print *,'  - 32 GB on the GPU part of Titan at ORNL'
-  print *,'  -  2 GB on the machine used by Christina Morency)'
+  print *,'  -  2 GB on the machine used by Christina Morency'
+  print *,'  -  2 GB on the TACC machine used by Min Chen'
   print *,'  -  1.5 GB on the GPU cluster in Marseille)'
   read(*,*) gigabytes_avail_per_core
 
