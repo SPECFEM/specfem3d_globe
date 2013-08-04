@@ -52,7 +52,7 @@
           alphaval,betaval,gammaval,factor_common, &
           vnspec,&
           istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3)
+          epsilondev,eps_trace_over_3,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -75,6 +75,8 @@
 
 ! variable lengths for factor_common and one_minus_sum_beta
   integer vnspec
+
+  logical :: COMPUTE_AND_STORE_STRAIN
 
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
@@ -347,7 +349,7 @@
 !ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
 !ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
 !ZN from the expression in which we use the strain later in the code.
-          if (COMPUTE_AND_STORE_STRAIN_VAL) then
+          if (COMPUTE_AND_STORE_STRAIN) then
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
             epsilondev_loc(1,i,j,k) = duxdxl - templ
             epsilondev_loc(2,i,j,k) = duydyl - templ

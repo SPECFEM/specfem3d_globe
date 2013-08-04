@@ -59,7 +59,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
-          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION)
+          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION,COMPUTE_AND_STORE_STRAIN)
 
   use mpi
 
@@ -164,7 +164,7 @@
           USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
           USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
           ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX, &
-          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE
+          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE,COMPUTE_AND_STORE_STRAIN
 
   character(len=150) :: MODEL,dummystring
 
@@ -459,16 +459,6 @@
        call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
   endif
 
-  ! checks strain storage
-  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
-    .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    if( COMPUTE_AND_STORE_STRAIN_VAL .neqv. .true. ) &
-      call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN_VAL parameter, please recompile solver 19')
-  else
-    if( COMPUTE_AND_STORE_STRAIN_VAL .neqv. .false. ) &
-      call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN_VAL parameter, please recompile solver 20')
-  endif
-
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
@@ -482,6 +472,15 @@
         call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL_ONLY: needs anisotropic kernel calculations')
       endif
     endif
+  endif
+
+  ! define strain storage
+  ! this cannot be made a constant stored in values_from_mesher.h because it depends on SIMULATION_TYPE
+  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
+    .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    COMPUTE_AND_STORE_STRAIN = .true.
+  else
+    COMPUTE_AND_STORE_STRAIN = .false.
   endif
 
   ! make ellipticity
