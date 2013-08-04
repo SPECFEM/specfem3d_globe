@@ -261,29 +261,20 @@
             endif
 
             if(ROTATION .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-              if(SIMULATION_TYPE == 3)then
-                if(CUSTOM_REAL == SIZE_REAL) then
-                  b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                  b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                else
-                  b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                  b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                endif
-                if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                else
-                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                endif
+              if(CUSTOM_REAL == SIZE_REAL) then
+                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
               else
-                if(CUSTOM_REAL == SIZE_REAL) then
-                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                else
-                  rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                  rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                endif
+                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+              endif
+
+              if(CUSTOM_REAL == SIZE_REAL) then
+                rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+              else
+                rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
+                rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
               endif
             endif
 
@@ -450,7 +441,7 @@
                        rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                        rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                        rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                       if(SIMULATION_TYPE == 3 .and. ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
                          b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
                        endif
@@ -458,7 +449,7 @@
                        rmassx(iglob) = rmassx(iglob) + tx*weight
                        rmassy(iglob) = rmassy(iglob) + ty*weight
                        rmassz(iglob) = rmassz(iglob) + tz*weight
-                       if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                       if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                          b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                        endif
@@ -502,7 +493,7 @@
                        rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                        rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                        rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                       if(SIMULATION_TYPE == 3 .and. ROTATION)then
+                       if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
                          b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
                        endif
@@ -510,7 +501,7 @@
                        rmassx(iglob) = rmassx(iglob) + tx*weight
                        rmassy(iglob) = rmassy(iglob) + ty*weight
                        rmassz(iglob) = rmassz(iglob) + tz*weight
-                       if(SIMULATION_TYPE == 3 .and. ROTATION)then
+                       if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                          b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                        endif
@@ -551,7 +542,7 @@
                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                    if(SIMULATION_TYPE == 3 .and. ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
                       b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
                     endif
@@ -559,7 +550,7 @@
                     rmassx(iglob) = rmassx(iglob) + tx*weight
                     rmassy(iglob) = rmassy(iglob) + ty*weight
                     rmassz(iglob) = rmassz(iglob) + tz*weight
-                    if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                       b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                     endif
@@ -598,7 +589,7 @@
                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                    if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
                       b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
                     endif
@@ -606,7 +597,7 @@
                     rmassx(iglob) = rmassx(iglob) + tx*weight
                     rmassy(iglob) = rmassy(iglob) + ty*weight
                     rmassz(iglob) = rmassz(iglob) + tz*weight
-                    if(SIMULATION_TYPE == 3 .and. ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                       b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                     endif
