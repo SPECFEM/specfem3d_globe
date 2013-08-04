@@ -261,7 +261,7 @@
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
 
   if(.not. USE_LDDRK)then
     if((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
