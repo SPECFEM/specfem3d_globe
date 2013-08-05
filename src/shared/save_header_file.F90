@@ -50,7 +50,17 @@
                         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
+                        MOVIE_VOLUME)
+
+!
+! ****************************************************************************************************
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
+! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
+! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
+! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
+! was compiled with SIMULATION_TYPE == 1
+! ****************************************************************************************************
+!
 
   implicit none
 
@@ -87,8 +97,7 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
          NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
 
-  integer :: SIMULATION_TYPE
-  logical :: SAVE_FORWARD,MOVIE_VOLUME
+  logical :: MOVIE_VOLUME
 
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
@@ -335,6 +344,24 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = ',NSPEC_OUTER_CORE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
 
+  if(ANISOTROPIC_KL) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
+  endif
+
+  if(APPROXIMATE_HESS_KL) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
+  endif
+
+  if(NOISE_TOMOGRAPHY > 0) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
+  endif
+
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = ',NGLOB_CRUST_MANTLE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = ',NGLOB_OUTER_CORE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = ',NGLOB_INNER_CORE_ADJOINT
@@ -414,6 +441,15 @@
   endif
   write(IOUT,*)
 
+  if(TOPOGRAPHY .or. OCEANS) then
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
+  else
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'
+  endif
+  write(IOUT,*)
+
   if(ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
   else
@@ -421,6 +457,24 @@
   endif
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = ',NSPEC_OUTER_CORE_ROTATION
   write(IOUT,*)
+
+  if(PARTIAL_PHYS_DISPERSION_ONLY) then
+    write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.'
+  endif
+
+  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_CM = ',NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_OC = ',NGLOB1D_RADIAL(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_IC = ',NGLOB1D_RADIAL(IREGION_INNER_CORE)
+
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_CM = ',NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_OC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_IC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
+
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_CM = ',NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_OC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
 
   write(IOUT,*) 'integer, parameter :: NPROC_XI_VAL = ',NPROC_XI
   write(IOUT,*) 'integer, parameter :: NPROC_ETA_VAL = ',NPROC_ETA
@@ -500,36 +554,6 @@
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
   endif
 
-  ! backward/reconstruction of forward wavefield:
-  ! can only mimic attenuation effects on velocity at this point, since no full wavefield snapshots are stored
-  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
-
-    ! attenuation mimic:
-    ! mimicking effect of attenuation on apparent velocities, not amplitudes. that is,
-    ! phase shifts should be correctly accounted for, but amplitudes will differ in adjoint simulations
-
-!daniel: att - debug - check if mimic is still needed
-    if( ATTENUATION ) then
-      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .true.'
-    else
-      write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
-    endif
-
-  else
-
-    ! calculates full attenuation (phase & amplitude effects) if used
-    write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.'
-  endif
-
-  ! attenuation and/or adjoint simulations
-  if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
-    .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .true.'
-  else
-    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .false.'
-  endif
-  write(IOUT,*)
-
   if (MOVIE_VOLUME) then
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'
     write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = NGLOB_CRUST_MANTLE'
@@ -537,6 +561,63 @@
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1'
     write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1'
   endif
+  write(IOUT,*)
+
+  if (SAVE_REGULAR_KL) then
+    write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = NM_KL_REG_PTS'
+  else
+    write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = 1'
+  endif
+  write(IOUT,*)
+
+  if (SAVE_SOURCE_MASK) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = NSPEC_CRUST_MANTLE'
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
+  endif
+  write(IOUT,*)
+
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
+
+  NGLOB_XY_CM = 1
+  NGLOB_XY_IC = 1
+
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
+     NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+  else
+     NGLOB_XY_CM = 1
+  endif
+
+  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if(ROTATION) then
+      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
+    endif
+  endif
+
+  write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM = ',NGLOB_XY_CM
+  write(IOUT,*) 'integer, parameter :: NGLOB_XY_IC = ',NGLOB_XY_IC
+  write(IOUT,*)
+
+  if (ATTENUATION_1D_WITH_3D_STORAGE) then
+    write(IOUT,*) 'logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE_VAL = .false.'
+  endif
+  write(IOUT,*)
+
+!! DK DK Jul 2013: we need that for the part1_*.f90 and part2_*.f90 include files, which some compilers
+!! DK DK Jul 2013: refuse to preprocess even if we rename them *.F90
+#ifdef FORCE_VECTORIZATION
+  write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .true.'
+#else
+  write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .false.'
+#endif
 
   close(IOUT)
 

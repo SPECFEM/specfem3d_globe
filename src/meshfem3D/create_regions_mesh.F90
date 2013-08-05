@@ -35,6 +35,16 @@
 
 ! creates the different regions of the mesh
 
+!
+! ****************************************************************************************************
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
+! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
+! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
+! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
+! was compiled with SIMULATION_TYPE == 1
+! ****************************************************************************************************
+!
+
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
     IMAIN,volume_total,myrank,LOCAL_PATH, &
@@ -471,7 +481,7 @@
   ! local parameters
   integer :: ier
 
-  ! new Attenuation definition on all GLL points
+  ! new attenuation definition on all GLL points
   ! attenuation
   if (ATTENUATION) then
     T_c_source = AM_V%QT_c_source
@@ -944,7 +954,7 @@
       call flush_IMAIN()
     endif
 
-  enddo !ilayer_loop
+  enddo ! of ilayer_loop
 
   deallocate(stretch_tab)
   deallocate(perm_layer)

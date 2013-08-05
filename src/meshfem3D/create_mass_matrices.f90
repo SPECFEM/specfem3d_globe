@@ -31,6 +31,16 @@
 
   ! creates rmassx, rmassy, rmassz and rmass_ocean_load
 
+!
+! ****************************************************************************************************
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
+! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
+! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
+! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
+! was compiled with SIMULATION_TYPE == 1
+! ****************************************************************************************************
+!
+
   use constants
 
   use meshfem3D_models_par,only: &
@@ -79,12 +89,17 @@
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
+  !
+  ! Now also handle EXACT_MASS_MATRIX_FOR_ROTATION, which requires similar corrections
 
   rmassx(:) = 0._CUSTOM_REAL
   rmassy(:) = 0._CUSTOM_REAL
   rmassz(:) = 0._CUSTOM_REAL
 
+!----------------------------------------------------------------
+
+! first create the main standard mass matrix with no corrections
   do ispec=1,nspec
 
     ! suppress fictitious elements in central cube
@@ -146,7 +161,9 @@
         enddo
       enddo
     enddo
-  enddo
+  enddo ! of loop on ispec
+
+!----------------------------------------------------------------
 
   ! save ocean load mass matrix as well if oceans
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
