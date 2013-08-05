@@ -43,9 +43,19 @@
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
                           this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta,USE_FULL_TISO_MANTLE, &
-                          ATT1,ATT2,ATT3,SIMULATION_TYPE,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
+                          ATT1,ATT2,ATT3,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
 
 ! creates the different regions of the mesh
+
+!
+! ****************************************************************************************************
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
+! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
+! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
+! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
+! was compiled with SIMULATION_TYPE == 1
+! ****************************************************************************************************
+!
 
   use meshfem3D_models_par
 
@@ -164,7 +174,6 @@
   integer :: nglob_xy
 
   ! mass matrices for backward simulation when ROTATION is .true.
-  integer :: SIMULATION_TYPE
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx,b_rmassy
 
@@ -1045,7 +1054,7 @@
                           rho_vp,rho_vs,nspec_stacey, &
                           jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
                           jacobian2D_bottom,jacobian2D_top,&
-                          SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+                          EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
                           b_rmassx,b_rmassy)
 
     ! save the binary files

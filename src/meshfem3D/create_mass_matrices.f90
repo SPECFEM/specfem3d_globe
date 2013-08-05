@@ -41,16 +41,26 @@
                           rho_vp,rho_vs,nspec_stacey, &
                           jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
                           jacobian2D_bottom,jacobian2D_top,&
-                          SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
+                          EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
                           b_rmassx,b_rmassy)
 
   ! creates rmassx, rmassy, rmassz and rmass_ocean_load
+
+!
+! ****************************************************************************************************
+! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
+! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
+! when switching from SIMULATION_TYPE == 1 to SIMULATION_TYPE == 3 and thus the header file created
+! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
+! was compiled with SIMULATION_TYPE == 1
+! ****************************************************************************************************
+!
 
   use meshfem3D_models_par
 
   implicit none
 
-  integer :: myrank,nspec,SIMULATION_TYPE
+  integer :: myrank,nspec
   integer :: idoubling(nspec)
   integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
   integer :: nspec_actually
@@ -67,12 +77,12 @@
   ! add C delta/2 contribution to the mass matrices on the Stacey edges
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
-  real(kind=CUSTOM_REAL) :: two_omega_earth,scale_t_inv
+  real(kind=CUSTOM_REAL) :: two_omega_earth_dt,scale_t_inv
 
   ! mass matrices for backward simulation when ROTATION is .true.
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
-  real(kind=CUSTOM_REAL) :: b_two_omega_earth
+  real(kind=CUSTOM_REAL) :: b_two_omega_earth_dt
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore
 
@@ -143,6 +153,8 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
+  !
+  ! Now also handle EXACT_MASS_MATRIX_FOR_ROTATION, which requires similar corrections
 
   rmassx(:) = 0._CUSTOM_REAL
   rmassy(:) = 0._CUSTOM_REAL
@@ -154,25 +166,22 @@
   ! use the non-dimensional time step to make the mass matrix correction
   deltat = DT*dsqrt(PI*GRAV*RHOAV)
 
-  if(ROTATION .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-    ! distinguish between single and double precision for reals
+  if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK) then
     scale_t_inv = dsqrt(PI*GRAV*RHOAV)
-    two_omega_earth = 0._CUSTOM_REAL
-    b_two_omega_earth = 0._CUSTOM_REAL
-    if (SIMULATION_TYPE /= 3) then
-      if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
-      else
-        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
-      endif
+    two_omega_earth_dt = 0._CUSTOM_REAL
+    b_two_omega_earth_dt = 0._CUSTOM_REAL
+
+    ! distinguish between single and double precision for reals
+    if(CUSTOM_REAL == SIZE_REAL) then
+      two_omega_earth_dt = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+    else
+      two_omega_earth_dt = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
     endif
 
-    if (SIMULATION_TYPE == 3) then
-      if(CUSTOM_REAL == SIZE_REAL) then
-        b_two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
-      else
-        b_two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
-      endif
+    if(CUSTOM_REAL == SIZE_REAL) then
+      b_two_omega_earth_dt = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+    else
+      b_two_omega_earth_dt = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
     endif
   endif
 
@@ -221,6 +230,9 @@
 
   endif
 
+!----------------------------------------------------------------
+
+! first create the main standard mass matrix with no corrections
   do ispec=1,nspec
 
     ! suppress fictitious elements in central cube
@@ -260,24 +272,6 @@
               rmassz(iglob) = rmassz(iglob) + rhostore(i,j,k,ispec) * jacobianl * weight
             endif
 
-            if(ROTATION .and. (.not. USE_LDDRK) .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-              if(CUSTOM_REAL == SIZE_REAL) then
-                rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-              else
-                rmassx(iglob) = rmassz(iglob) - two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                rmassy(iglob) = rmassz(iglob) + two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-              endif
-
-              if(CUSTOM_REAL == SIZE_REAL) then
-                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-              else
-                b_rmassx(iglob) = rmassz(iglob) - b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-                b_rmassy(iglob) = rmassz(iglob) + b_two_omega_earth * 0.5_CUSTOM_REAL * jacobianl * weight
-              endif
-            endif
-
           ! fluid in outer core
           case( IREGION_OUTER_CORE )
 
@@ -300,93 +294,83 @@
         enddo
       enddo
     enddo
-  enddo
+  enddo ! of loop on ispec
 
-  ! save ocean load mass matrix as well if oceans
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
+!----------------------------------------------------------------
 
-    ! create ocean load mass matrix for degrees of freedom at ocean bottom
-    rmass_ocean_load(:) = 0._CUSTOM_REAL
+! copy the initial mass matrix if needed
+  if(nglob_xy == nglob) then
+    rmassx(:) = rmassz(:)
+    rmassy(:) = rmassz(:)
 
-    ! add contribution of the oceans
-    ! for surface elements exactly at the top of the crust (ocean bottom)
-    do ispec2D_top_crust = 1,NSPEC2D_TOP
+    b_rmassx(:) = rmassz(:)
+    b_rmassy(:) = rmassz(:)
+  endif
 
-      ! gets spectral element index
-      ispec_oceans = ibelm_top(ispec2D_top_crust)
+!----------------------------------------------------------------
 
-      ! assumes elements are ordered such that k == NGLLZ is the top surface
-      iz_oceans = NGLLZ
+! then make the corrections to the copied mass matrices if needed
+  do ispec=1,nspec
 
-      ! loops over surface points
-      do iy_oceans = 1,NGLLY
-        do ix_oceans = 1,NGLLX
+    ! suppress fictitious elements in central cube
+    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-          iglob=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-          ! if 3D Earth, compute local height of oceans
-          !
-          ! note: only for models where 3D crustal model and stretching was used
-          !       (even without topography flag set)
-          if( CASE_3D ) then
+          weight = wxgll(i)*wygll(j)*wzgll(k)
+          iglob = ibool(i,j,k,ispec)
 
-            ! get coordinates of current point
-            xval = xstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
-            yval = ystore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
-            zval = zstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+          ! compute the jacobian
+          xixl = xixstore(i,j,k,ispec)
+          xiyl = xiystore(i,j,k,ispec)
+          xizl = xizstore(i,j,k,ispec)
+          etaxl = etaxstore(i,j,k,ispec)
+          etayl = etaystore(i,j,k,ispec)
+          etazl = etazstore(i,j,k,ispec)
+          gammaxl = gammaxstore(i,j,k,ispec)
+          gammayl = gammaystore(i,j,k,ispec)
+          gammazl = gammazstore(i,j,k,ispec)
 
-            ! map to latitude and longitude for bathymetry routine
-            call xyz_2_rthetaphi_dble(xval,yval,zval,rval,thetaval,phival)
-            call reduce(thetaval,phival)
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                          + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-            ! convert the geocentric colatitude to a geographic colatitude
-            colat = PI_OVER_TWO - &
-                datan(1.006760466d0*dcos(thetaval)/dmax1(TINYVAL,dsin(thetaval)))
+          ! definition depends if region is fluid or solid
+          select case( iregion_code)
 
-            ! get geographic latitude and longitude in degrees
-            lat = 90.0d0 - colat*RADIANS_TO_DEGREES
-            lon = phival * RADIANS_TO_DEGREES
+          case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
+            ! distinguish between single and double precision for reals
+            if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK) then
+              if(CUSTOM_REAL == SIZE_REAL) then
+                rmassx(iglob) = rmassx(iglob) - two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                rmassy(iglob) = rmassy(iglob) + two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+              else
+                rmassx(iglob) = rmassx(iglob) - two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
+                rmassy(iglob) = rmassy(iglob) + two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
+              endif
 
-            ! compute elevation at current point
-            call get_topo_bathy(lat,lon,elevation,ibathy_topo)
-
-            ! non-dimensionalize the elevation, which is in meters
-            ! and suppress positive elevation, which means no oceans
-            if(elevation >= - MINIMUM_THICKNESS_3D_OCEANS) then
-              height_oceans = 0.d0
-            else
-              height_oceans = dabs(elevation) / R_EARTH
+              if(CUSTOM_REAL == SIZE_REAL) then
+                b_rmassx(iglob) = b_rmassx(iglob) - b_two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+                b_rmassy(iglob) = b_rmassy(iglob) + b_two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
+              else
+                b_rmassx(iglob) = b_rmassx(iglob) - b_two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
+                b_rmassy(iglob) = b_rmassy(iglob) + b_two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
+              endif
             endif
 
-          else
-            ! if 1D Earth, use oceans of constant thickness everywhere
-            height_oceans = THICKNESS_OCEANS_PREM
-          endif
-
-          ! take into account inertia of water column
-          weight = wxgll(ix_oceans) * wygll(iy_oceans) &
-                    * dble(jacobian2D_top(ix_oceans,iy_oceans,ispec2D_top_crust)) &
-                    * dble(RHO_OCEANS) * height_oceans
-
-          ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + sngl(weight)
-          else
-            rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + weight
-          endif
+          end select
 
         enddo
       enddo
-
     enddo
+  enddo ! of loop on ispec
 
-    ! add regular mass matrix to ocean load contribution
-    rmass_ocean_load(:) = rmass_ocean_load(:) + rmassz(:)
-
-  endif
+!----------------------------------------------------------------
 
   ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
 
      ! read arrays for Stacey conditions
      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
@@ -402,11 +386,6 @@
      select case(iregion_code)
 
      case(IREGION_CRUST_MANTLE)
-
-        if(.not. ROTATION)then
-          rmassx(:) = rmassz(:)
-          rmassy(:) = rmassz(:)
-        endif
 
         !   xmin
         ! if two chunks exclude this face for one of them
@@ -449,7 +428,7 @@
                        rmassx(iglob) = rmassx(iglob) + tx*weight
                        rmassy(iglob) = rmassy(iglob) + ty*weight
                        rmassz(iglob) = rmassz(iglob) + tz*weight
-                       if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                          b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                        endif
@@ -493,7 +472,7 @@
                        rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                        rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                        rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                       if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
                          b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
                        endif
@@ -501,7 +480,7 @@
                        rmassx(iglob) = rmassx(iglob) + tx*weight
                        rmassy(iglob) = rmassy(iglob) + ty*weight
                        rmassz(iglob) = rmassz(iglob) + tz*weight
-                       if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                       if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                          b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                          b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                        endif
@@ -550,7 +529,7 @@
                     rmassx(iglob) = rmassx(iglob) + tx*weight
                     rmassy(iglob) = rmassy(iglob) + ty*weight
                     rmassz(iglob) = rmassz(iglob) + tz*weight
-                    if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                       b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                     endif
@@ -589,7 +568,7 @@
                     rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
                     rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
                     rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                    if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
                       b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
                     endif
@@ -597,7 +576,7 @@
                     rmassx(iglob) = rmassx(iglob) + tx*weight
                     rmassy(iglob) = rmassy(iglob) + ty*weight
                     rmassz(iglob) = rmassz(iglob) + tz*weight
-                    if(ROTATION.and. EXACT_MASS_MATRIX_FOR_ROTATION)then
+                    if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
                       b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
                       b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
                     endif
@@ -605,10 +584,6 @@
               enddo
            enddo
         enddo
-
-        ! check that mass matrix is positive
-        if(minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')
-        if(minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
 
      case(IREGION_OUTER_CORE)
 
@@ -763,8 +738,103 @@
 
   endif
 
-  ! check that mass matrix is positive
-  ! note: in fictitious elements it is still zero
-  if(minval(rmassz(:)) < 0.) call exit_MPI(myrank,'negative rmassz matrix term')
+  ! check that the main mass matrix is positive
+  ! note: in fictitious elements in the inner core it is still zero
+  if(minval(rmassz) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
+
+  ! check that the additional mass matrices are strictly positive, if they exist
+  if(nglob_xy == nglob) then
+    if(minval(rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
+    if(minval(rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
+
+    if(minval(b_rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
+    if(minval(b_rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
+  endif
+
+!----------------------------------------------------------------
+
+  ! save ocean load mass matrix as well if oceans
+  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
+
+    ! create ocean load mass matrix for degrees of freedom at ocean bottom
+    rmass_ocean_load(:) = 0._CUSTOM_REAL
+
+    ! add contribution of the oceans
+    ! for surface elements exactly at the top of the crust (ocean bottom)
+    do ispec2D_top_crust = 1,NSPEC2D_TOP
+
+      ! gets spectral element index
+      ispec_oceans = ibelm_top(ispec2D_top_crust)
+
+      ! assumes elements are ordered such that k == NGLLZ is the top surface
+      iz_oceans = NGLLZ
+
+      ! loops over surface points
+      do iy_oceans = 1,NGLLY
+        do ix_oceans = 1,NGLLX
+
+          iglob=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+
+          ! if 3D Earth, compute local height of oceans
+          !
+          ! note: only for models where 3D crustal model and stretching was used
+          !       (even without topography flag set)
+          if( CASE_3D ) then
+
+            ! get coordinates of current point
+            xval = xstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+            yval = ystore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+            zval = zstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
+
+            ! map to latitude and longitude for bathymetry routine
+            call xyz_2_rthetaphi_dble(xval,yval,zval,rval,thetaval,phival)
+            call reduce(thetaval,phival)
+
+            ! convert the geocentric colatitude to a geographic colatitude
+            colat = PI_OVER_TWO - &
+                datan(1.006760466d0*dcos(thetaval)/dmax1(TINYVAL,dsin(thetaval)))
+
+            ! get geographic latitude and longitude in degrees
+            lat = 90.0d0 - colat*RADIANS_TO_DEGREES
+            lon = phival * RADIANS_TO_DEGREES
+
+            ! compute elevation at current point
+            call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+
+            ! non-dimensionalize the elevation, which is in meters
+            ! and suppress positive elevation, which means no oceans
+            if(elevation >= - MINIMUM_THICKNESS_3D_OCEANS) then
+              height_oceans = 0.d0
+            else
+              height_oceans = dabs(elevation) / R_EARTH
+            endif
+
+          else
+            ! if 1D Earth, use oceans of constant thickness everywhere
+            height_oceans = THICKNESS_OCEANS_PREM
+          endif
+
+          ! take into account inertia of water column
+          weight = wxgll(ix_oceans) * wygll(iy_oceans) &
+                    * dble(jacobian2D_top(ix_oceans,iy_oceans,ispec2D_top_crust)) &
+                    * dble(RHO_OCEANS) * height_oceans
+
+          ! distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + sngl(weight)
+          else
+            rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + weight
+          endif
+
+        enddo
+      enddo
+
+    enddo
+
+    ! add regular mass matrix to ocean load contribution
+    rmass_ocean_load(:) = rmass_ocean_load(:) + rmassz(:)
+
+  endif
 
   end subroutine create_mass_matrices
+
