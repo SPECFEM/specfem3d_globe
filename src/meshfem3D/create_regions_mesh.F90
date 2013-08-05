@@ -269,7 +269,7 @@
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-  ! new Attenuation definition on all GLL points
+  ! new attenuation definition on all GLL points
   ! attenuation
   if (ATTENUATION) then
     T_c_source = AM_V%QT_c_source
