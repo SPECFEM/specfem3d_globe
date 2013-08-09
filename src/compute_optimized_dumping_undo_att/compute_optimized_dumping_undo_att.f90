@@ -259,7 +259,10 @@
   print *
   print *,'What percentage of this total do you allow us to use, keeping in mind that you'
   print *,'need to leave some memory available for the GNU/Linux system to run?'
-  print *,'  (a typical value is 90%; 92% is probably OK too; 85% is very safe)'
+  print *,'  (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;'
+  print *,'   values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory'
+  print *,'   on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try'
+  print *,'   a higher value and if the adjoint crashes then try again with a lower value)'
   read(*,*) percentage_to_use_per_core
 
   if(percentage_to_use_per_core < 50.d0) stop 'less than 50% does not seem realistic; exiting...'
