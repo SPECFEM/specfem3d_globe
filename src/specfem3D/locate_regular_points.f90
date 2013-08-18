@@ -47,23 +47,27 @@
   type (kl_reg_grid_variables), intent(inout) :: GRID
 
   integer :: myrank,ios,nlayer,i,nlat,nlon,npts_this_layer
+  real :: r
 
   ! improvements to make: read-in by master and broadcast to all slaves
   open(10,file=PATHNAME_KL_REG,iostat=ios,status='old',action='read')
 
   read(10,*) GRID%dlat, GRID%dlon
 
-  nlayer = 1
-  do while (nlayer <= NM_KL_REG_LAYER)
-    read(10,*,iostat=ios) GRID%rlayer(nlayer), GRID%ndoubling(nlayer)
+  nlayer = 0
+  do
+    read(10,*,iostat=ios) r, i
     if (ios/=0) exit
+
+    if (nlayer >= NM_KL_REG_LAYER) then
+      call exit_MPI(myrank, 'Increase NM_KL_REG_LAYER limit')
+    endif
+
     nlayer = nlayer + 1
+    GRID%rlayer(nlayer) = r
+    GRID%ndoubling(nlayer) = i
   enddo
   close(10)
-
-  if (nlayer > NM_KL_REG_LAYER) then
-    call exit_MPI(myrank, 'Increase NM_KL_REG_LAYER limit')
-  endif
 
   GRID%nlayer = nlayer
 
