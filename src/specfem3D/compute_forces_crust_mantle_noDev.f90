@@ -381,7 +381,7 @@
           endif
 
           ! precompute terms for attenuation if needed
-          if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
             one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
             minus_sum_beta =  one_minus_sum_beta_use - 1.0
           else if(ATTENUATION_VAL) then
@@ -921,7 +921,7 @@
 
           ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
 
-    if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+    if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
       do k = 1,NGLLZ
         do j = 1,NGLLZ
           do i = 1,NGLLZ

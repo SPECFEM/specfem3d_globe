@@ -359,7 +359,7 @@
             eps_trace_over_3(i,j,k,ispec) = templ
           endif
 
-          if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
             minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
           else if(ATTENUATION_VAL) then
             minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0
@@ -414,7 +414,7 @@
             mul = muvstore(i,j,k,ispec)
 
             ! use unrelaxed parameters if attenuation
-            if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
               mul = mul * one_minus_sum_beta(i,j,k,ispec)
             else if(ATTENUATION_VAL) then
               mul = mul * one_minus_sum_beta(1,1,1,ispec)
@@ -670,7 +670,7 @@
 
       do i_SLS = 1,N_SLS
 
-    if(ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+    if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
       do k = 1,NGLLZ
         do j = 1,NGLLZ
           do i = 1,NGLLZ
