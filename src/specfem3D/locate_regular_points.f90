@@ -130,13 +130,13 @@
 
   do isp = 1,GRID%npts_total
     if (isp == GRID%npts_before_layer(ilayer+1)+1) ilayer=ilayer+1
-    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlat(ilayer)
-    ilon = (isp - GRID%npts_before_layer(ilayer) - 1) - ilat * GRID%nlat(ilayer)
+    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlon(ilayer)
+    ilon = (isp - GRID%npts_before_layer(ilayer)) - ilat * GRID%nlon(ilayer)
 
     ! (lat,lon,radius) for isp point
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
     th = (90 - lat) * DEGREES_TO_RADIANS
-    lon = KL_REG_MIN_LON + ilon * GRID%dlon * GRID%ndoubling(ilayer)
+    lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
     ph = lon * DEGREES_TO_RADIANS
     x = sin(th) * cos(ph); y = sin(th) * sin(ph); z = cos(th)
 
@@ -244,12 +244,12 @@
       if (isp <= GRID%npts_before_layer(ilayer+1)) exit
     enddo
 
-    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlat(ilayer)
-    ilon = (isp - GRID%npts_before_layer(ilayer) - 1) - ilat * GRID%nlat(ilayer)
+    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlon(ilayer)
+    ilon = (isp - GRID%npts_before_layer(ilayer)) - ilat * GRID%nlon(ilayer)
 
     ! (lat,lon,radius) for isp point
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
-    lon = KL_REG_MIN_LON + ilon * GRID%dlon * GRID%ndoubling(ilayer)
+    lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
     ! convert radius to meters and then scale
     radius = GRID%rlayer(ilayer) * 1000.0 / R_EARTH
     ! (x,y,z) for isp point
