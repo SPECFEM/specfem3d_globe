@@ -333,7 +333,12 @@
 
 ! read all the elements from the same file
   write(outputname,"('/moviedata',i6.6)") it
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted')
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname, &
+       status='old',action='read',form='unformatted',iostat=ierror)
+  if(ierror /= 0 ) then
+    print*,'error opening file: ',trim(OUTPUT_FILES)//outputname
+    stop 'error opening moviedata file'
+  endif
 
   ! reads in point locations
   ! (given as r theta phi for geocentric coordinate system)
@@ -347,6 +352,13 @@
   read(IOUT) store_val_uz
 
   close(IOUT)
+
+  !debug
+  print*
+  print*,"data ux min/max: ",minval(store_val_ux),maxval(store_val_ux)
+  print*,"data uy min/max: ",minval(store_val_uy),maxval(store_val_uy)
+  print*,"data uz min/max: ",minval(store_val_uz),maxval(store_val_uz)
+  print*
 
 ! clear number of elements kept
   ispec = 0
@@ -528,6 +540,18 @@
 
     ! map field to [0:255] for AVS color scale
     field_display(:) = 255. * field_display(:)
+
+  else
+
+    ! compute min and max of data value
+    min_field_current = minval(field_display(:))
+    max_field_current = maxval(field_display(:))
+
+    ! print minimum and maximum amplitude in current snapshot
+    print *
+    print *,'minimum amplitude in current snapshot = ',min_field_current
+    print *,'maximum amplitude in current snapshot = ',max_field_current
+    print *
 
   endif
 
@@ -714,10 +738,18 @@
       do ilocnum = 1,NGNOD2D_AVS_DX
         ibool_number = iglob(ilocnum+ieoff)
         if(.not. mask_point(ibool_number)) then
-          if(USE_OPENDX) then
-            write(11,"(f7.2)") field_display(ilocnum+ieoff)
+          if( .not. ALL_THRESHOLD_OFF ) then
+            if(USE_OPENDX) then
+              write(11,"(f7.2)") field_display(ilocnum+ieoff)
+            else
+              write(11,"(i10,1x,f7.2)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+            endif
           else
-            write(11,"(i10,1x,f7.2)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+            if(USE_OPENDX) then
+              write(11,"(e7.4)") field_display(ilocnum+ieoff)
+            else
+              write(11,"(i10,1x,e7.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+            endif
           endif
         endif
         mask_point(ibool_number) = .true.

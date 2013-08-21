@@ -217,7 +217,7 @@
 
   call get_value_string(eucrust, config_name, default_name)
 
-  open(unit=1,file=eucrust,status='old',action='read')
+  open(unit=1,file=trim(eucrust),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(eucrust), '": ', ier
     call exit_MPI(0, 'error model crustmap')

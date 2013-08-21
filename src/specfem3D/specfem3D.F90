@@ -2510,13 +2510,13 @@ else ! if UNDO_ATTENUATION
 !! because we then use the values read immediately (one value at a time, but to reduce the total number of reads
 !! across the PCI-Express bus we could / should consider reading them 10 by 10 for instance (?) if that fits
 !! in the memory of the GPU
-    allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE,NT_DUMP_ATTENUATION),stat=ier)
+    allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')
-    allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP_ATTENUATION),stat=ier)
+    allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
-    allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE,NT_DUMP_ATTENUATION),stat=ier)
+    allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
-    allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE,NT_DUMP_ATTENUATION),stat=ier)
+    allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_inner_core_store_buffer')
 
     it = 0
