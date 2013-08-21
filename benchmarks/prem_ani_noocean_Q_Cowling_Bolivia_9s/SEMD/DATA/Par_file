@@ -57,9 +57,35 @@ RECORD_LENGTH_IN_MINUTES        = 50.0d0
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
+ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
 NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
+
+# three mass matrices instead of one are needed to handle rotation very accurately;
+# otherwise rotation is handled slightly less accurately (but still reasonably well);
+# set to .true. if you are interested in precise effects related to rotation;
+# set to .false. if you are solving very large inverse problems at high frequency and also undoing attenuation exactly
+# using the UNDO_ATTENUATION flag above, in which case saving as much memory as possible can be a good idea.
+# You can also safely set it to .false. if you are not in a period range in which rotation matters, e.g. if you are targetting very short-period body waves.
+# if in doubt, set to .true.
+# Set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code will use the three mass matrices anyway
+# and thus there is no additional cost.
+# this flag is of course unused if ROTATION above is set to .false.
+EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
+
+# this for LDDRK high-order time scheme instead of Newmark
+USE_LDDRK                       = .false.
+
+# the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+# in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+# and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+# depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+# (for instance for models with a large range of Poisson's ratio values).
+# Since the code computes the time step using the Newmark scheme, for LDDRK we will simply
+# multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+INCREASE_CFL_FOR_LDDRK          = .true.
+RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
 
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
@@ -125,6 +151,47 @@ RECEIVERS_CAN_BE_BURIED         = .false.
 # print source time function
 PRINT_SOURCE_TIME_FUNCTION      = .false.
 
-# output kernels on a regular grid instead of on the mesh points
+#-----------------------------------------------------------
+#
+#  adjoint kernel outputs
+#
+#-----------------------------------------------------------
+
+# this parameter must be set to .true. to compute anisotropic kernels
+# in crust and mantle (related to the 21 Cij in geographical coordinates)
+# default is .false. to compute isotropic kernels (related to alpha and beta)
+ANISOTROPIC_KL                  = .false.
+
+# output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho)
+# rather than fully anisotropic kernels when ANISOTROPIC_KL above is set to .true.
+# means to save radial anisotropic kernels, i.e., sensitivity kernels for beta_v, beta_h, etc.
+SAVE_TRANSVERSE_KL_ONLY         = .false.
+
+# output approximate Hessian in crust mantle region.
+# means to save the preconditioning for gradients, they are cross correlations between forward and adjoint accelerations.
+APPROXIMATE_HESS_KL             = .false.
+
+# forces transverse isotropy for all mantle elements
+# (default is to use transverse isotropy only between MOHO and 220)
+# means we allow radial anisotropy between the bottom of the crust to the bottom of the transition zone, i.e., 660~km depth.
+USE_FULL_TISO_MANTLE            = .false.
+
+# output kernel mask to zero out source region
+# to remove large values near the sources in the sensitivity kernels
+SAVE_SOURCE_MASK                = .false.
+
+# output kernels on a regular grid instead of on the GLL mesh points (a bit expensive)
 SAVE_REGULAR_KL                 = .false.
+
+#-----------------------------------------------------------
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
+
+# set to true to use the ADIOS library for I/Os
+ADIOS_ENABLED                   = .false.
+ADIOS_FOR_FORWARD_ARRAYS        = .true.
+ADIOS_FOR_MPI_ARRAYS            = .true.
+ADIOS_FOR_ARRAYS_SOLVER         = .true.
+ADIOS_FOR_AVS_DX                = .true.
 
