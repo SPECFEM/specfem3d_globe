@@ -94,6 +94,14 @@ all: default
 
 default: change_date_of_calling_code $(DEFAULT)
 
+required: bin obj
+
+bin:
+	mkdir -p $E
+
+obj:
+	mkdir -p $O
+
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
 
@@ -139,15 +147,15 @@ include $(patsubst %, ${S_TOP}/src/%/rules.mk, $(SUBDIRS))
 
 # Shortcut for: <prog>/<xprog> -> bin/<xprog>
 define target_shortcut
-$(patsubst $E/%, %, $(1)): $(1)
+$(patsubst $E/%, %, $(1)): required $(1)
 .PHONY: $(patsubst $E/%, %, $(1))
-$(patsubst $E/x%, %, $(1)): $(1)
+$(patsubst $E/x%, %, $(1)): required $(1)
 .PHONY: $(patsubst $E/x%, %, $(1))
 endef
 
 # Shortcut for: dir -> src/dir/<targets in here>
 define shortcut
-$(1): $($(1)_TARGETS)
+$(1): required $($(1)_TARGETS)
 .PHONY: $(1)
 $$(foreach target, $$(filter $E/%,$$($(1)_TARGETS)), $$(eval $$(call target_shortcut,$$(target))))
 endef
