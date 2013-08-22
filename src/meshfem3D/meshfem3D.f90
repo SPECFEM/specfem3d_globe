@@ -29,13 +29,7 @@
 
   program xmeshfem3D
 
-  use meshfem3D_par
-  use mpi
-
   implicit none
-
-  ! local parameters
-  integer :: ier
 
 !=====================================================================!
 !                                                                     !
@@ -362,7 +356,7 @@
 !-------------------------------------------------------------------------------------------------
 
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
-  call MPI_INIT(ier)
+  call init_mpi()
 
   ! initializes parameters
   call initialize_mesher()
@@ -377,7 +371,7 @@
   call finalize_mesher()
 
   ! stop all the MPI processes, and exit
-  call MPI_FINALIZE(ier)
+  call finalize_mpi()
 
   end program xmeshfem3D
 

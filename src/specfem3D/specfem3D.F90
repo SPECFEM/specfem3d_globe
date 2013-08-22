@@ -29,17 +29,7 @@
 
   program xspecfem3D
 
-  use mpi
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
-  use specfem_par_movie
-
   implicit none
-
-  ! local parameters
-  integer :: ier
 
 !=======================================================================!
 !                                                                       !
@@ -447,7 +437,7 @@
 !-------------------------------------------------------------------------------------------------
 !
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
-  call MPI_INIT(ier)
+  call init_mpi()
 
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()
@@ -457,6 +447,7 @@
 
   ! starts reading the databases
   call read_mesh_databases()
+
   ! sets up reference element GLL points/weights/derivatives
   call setup_GLL_points()
 
@@ -476,7 +467,7 @@
   call finalize_simulation()
 
   ! stop all the MPI processes, and exit
-  call MPI_FINALIZE(ier)
+  call finalize_mpi()
 
   end program xspecfem3D
 

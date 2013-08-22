@@ -135,6 +135,41 @@
 !
 !-------------------------------------------------------------------------------------------------
 
+  subroutine init_mpi()
+
+  use mpi
+
+  implicit none
+
+  integer :: ier
+
+  call MPI_INIT(ier)
+  if( ier /= 0 ) stop 'error initializing MPI'
+
+  end subroutine init_mpi
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine finalize_mpi()
+
+  use mpi
+
+  implicit none
+
+  integer :: ier
+
+  call MPI_FINALIZE(ier)
+  if( ier /= 0 ) stop 'error finalizing MPI'
+
+  end subroutine finalize_mpi
+
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine sync_all()
 
