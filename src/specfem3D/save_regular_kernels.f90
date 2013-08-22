@@ -137,6 +137,10 @@
     ! allocates temporary isotropic kernel arrays for file output
     allocate(bulk_c_kl_crust_mantle(npoints_slice), &
              bulk_beta_kl_crust_mantle(npoints_slice))
+
+    allocate(kappa_kl_crust_mantle(npoints_slice), &
+             mu_kl_crust_mantle(npoints_slice), &
+             rhonotprime_kl_crust_mantle(npoints_slice))
   endif
 
   ! crust_mantle
@@ -164,6 +168,7 @@
       rhonotprime_kl_crust_mantle(ipoint) = 0.0
       kappa_kl_crust_mantle(ipoint) = 0.0
       mu_kl_crust_mantle(ipoint) = 0.0
+
       rho_kl_crust_mantle_reg(ipoint) = 0.0
       alpha_kl_crust_mantle_reg(ipoint) = 0.0
       beta_kl_crust_mantle_reg(ipoint) = 0.0
@@ -292,7 +297,7 @@
 
               ! K_rho (primary kernel, for a parameterization (A,C,L,N,F,rho) )
               rhonotprime_kl = rhol * rho_kl / scale_kl_rho
-              rhonotprime_kl_crust_mantle(ipoint) = rhonotprime_kl_crust_mantle(ipoint) + rhonotprime_kl
+              !rhonotprime_kl_crust_mantle(ipoint) = rhonotprime_kl_crust_mantle(ipoint) + rhonotprime_kl
 
               ! note: transverse isotropic kernels are calculated for ALL elements,
               !          and not just transverse elements
@@ -397,7 +402,7 @@
     if (ANISOTROPIC_KL) then
       if (SAVE_TRANSVERSE_KL_ONLY) then
         ! write the kernel in physical units
-        rhonotprime_kl_crust_mantle(ipoint) = - rhonotprime_kl_crust_mantle(ipoint) * scale_kl
+        !rhonotprime_kl_crust_mantle(ipoint) = - rhonotprime_kl_crust_mantle(ipoint) * scale_kl
 
         alphav_kl_crust_mantle(ipoint) = - alphav_kl_crust_mantle(ipoint) * scale_kl
         alphah_kl_crust_mantle(ipoint) = - alphah_kl_crust_mantle(ipoint) * scale_kl
@@ -531,9 +536,12 @@
     deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
                bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
   endif
+
   if (.not. ANISOTROPIC_KL) then
     deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+    deallocate(kappa_kl_crust_mantle,mu_kl_crust_mantle,rhonotprime_kl_crust_mantle)
   endif
+
   deallocate(cijkl_kl_crust_mantle_reg, &
              rho_kl_crust_mantle_reg, &
              beta_kl_crust_mantle_reg, &
