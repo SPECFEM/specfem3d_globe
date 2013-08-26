@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -29,8 +29,6 @@
     npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
     receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
     ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,vector_assemble,ndim_assemble,iphase_CC)
-
-  use mpi
 
   implicit none
 
@@ -71,7 +69,6 @@
 ! therefore NPROC_XI+4 is always large enough
   integer, dimension(NPROC_XI_VAL+4), save :: request_send_array,request_receive_array
   logical :: flag_result_test
-  integer, dimension(MPI_STATUS_SIZE) :: msg_status
   integer :: ier
 
 ! mask
@@ -88,9 +85,8 @@
     do imsg = 1,nb_msgs_theor_in_cube-1
 ! receive buffers from slices
       sender = sender_from_slices_to_cube(imsg)
-      call MPI_IRECV(buffer_all_cube_from_slices(1,1,imsg), &
-                ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-                itag,MPI_COMM_WORLD,request_receive_array(imsg),ier)
+      call irecv_dp(buffer_all_cube_from_slices(1,1,imsg),ndim_assemble*npoin2D_cube_from_slices, &
+                    sender,itag,request_receive_array(imsg))
     enddo
   endif
 
@@ -111,8 +107,9 @@
     enddo
 ! send buffer to central cube
     receiver = receiver_cube_from_slices
-    call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send,ier)
+    call isend_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
+                  receiver,itag,request_send)
+
  endif  ! end sending info to central cube
 
   iphase_CC = iphase_CC + 1
@@ -123,13 +120,13 @@
   if(iphase_CC == 2) then
 
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-    call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+    call test_request(request_send,flag_result_test)
     if(.not. flag_result_test) return ! exit if message not sent yet
   endif
 
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
     do imsg = 1,nb_msgs_theor_in_cube-1
-      call MPI_TEST(request_receive_array(imsg),flag_result_test,msg_status,ier)
+      call test_request(request_receive_array(imsg),flag_result_test)
       if(.not. flag_result_test) return ! exit if message not received yet
     enddo
   endif
@@ -149,17 +146,15 @@
       endif
     enddo
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
-!   call MPI_SENDRECV(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-!       itag,buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,&
-!       MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
-    call MPI_IRECV(buffer_all_cube_from_slices(1,1,nb_msgs_theor_in_cube), &
-        ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,request_receive,ier)
+    call irecv_dp(buffer_all_cube_from_slices(1,1,nb_msgs_theor_in_cube),ndim_assemble*npoin2D_cube_from_slices, &
+                  sender,itag,request_receive)
+
 !! DK DK this merged with previous statement
 !   buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube) = buffer_slices2(:,:)
 
-    call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-        itag,MPI_COMM_WORLD,request_send,ier)
+    call isend_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
+                  receiver_cube_from_slices,itag,request_send)
   endif
 
   iphase_CC = iphase_CC + 1
@@ -173,9 +168,9 @@
 
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
-    call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+    call test_request(request_send,flag_result_test)
     if(.not. flag_result_test) return ! exit if message not sent yet
-    call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+    call test_request(request_receive,flag_result_test)
     if(.not. flag_result_test) return ! exit if message not received yet
 
     do idimension = 1,ndim_assemble
@@ -243,9 +238,9 @@
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
 ! receive buffers from slices
   sender = receiver_cube_from_slices
-  call MPI_IRECV(buffer_slices, &
-              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-              itag,MPI_COMM_WORLD,request_receive,ier)
+  call irecv_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
+              sender,itag,request_receive)
+
 ! for bottom elements in contact with central cube from the slices side
 !   ipoin = 0
 !   do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
@@ -273,8 +268,8 @@
     do imsg = 1,nb_msgs_theor_in_cube-1
 ! send buffers to slices
       receiver = sender_from_slices_to_cube(imsg)
-      call MPI_ISEND(buffer_all_cube_from_slices(1,1,imsg),ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send_array(imsg),ier)
+      call isend_dp(buffer_all_cube_from_slices(1,1,imsg),ndim_assemble*npoin2D_cube_from_slices, &
+                    receiver,itag,request_send_array(imsg))
     enddo
   endif
 
@@ -287,13 +282,13 @@
 
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
     do imsg = 1,nb_msgs_theor_in_cube-1
-      call MPI_TEST(request_send_array(imsg),flag_result_test,msg_status,ier)
+      call test_request(request_send_array(imsg),flag_result_test)
       if(.not. flag_result_test) return ! exit if message not sent yet
     enddo
   endif
 
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-    call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+    call test_request(request_receive,flag_result_test)
     if(.not. flag_result_test) return ! exit if message not received yet
   endif
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -600,7 +600,8 @@
 
   use meshfem3D_models_par,only: &
     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,ATTENUATION,SAVE_BOUNDARY_MESH
+    ANISOTROPIC_INNER_CORE,ATTENUATION,SAVE_BOUNDARY_MESH, &
+    ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
   use meshfem3D_par,only: &
     ABSORBING_CONDITIONS, &
@@ -854,7 +855,7 @@
 
   ! attenuation arrays
   if (ATTENUATION) then
-    if (USE_3D_ATTENUATION_ARRAYS) then
+    if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
       allocate(temp_array_dble_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
       call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)

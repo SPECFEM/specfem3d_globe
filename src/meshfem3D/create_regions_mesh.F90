@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -461,7 +461,8 @@
   use meshfem3D_par,only: &
     NCHUNKS,NUMCORNERS_SHARED,NUMFACES_SHARED, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-    NGLOB1D_RADIAL,NGLOB1D_RADIAL_CORNER
+    NGLOB1D_RADIAL,NGLOB1D_RADIAL_CORNER, &
+    ATT1,ATT2,ATT3
 
   use meshfem3D_models_par,only: &
     ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
@@ -487,25 +488,12 @@
     T_c_source = AM_V%QT_c_source
     tau_s(:)   = AM_V%Qtau_s(:)
     nspec_att = nspec
-
-    ! note: to save memory, one can set USE_3D_ATTENUATION_ARRAYS to .false. which
-    !          will create attenuation arrays storing only 1 point per element
-    !          (otherwise, 3D attenuation arrays will be defined for all GLL points)
-    if( USE_3D_ATTENUATION_ARRAYS ) then
-      ! attenuation arrays are fully 3D
-      allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
-              tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
-    else
-      ! save some memory in case of 1D attenuation models
-      allocate(Qmu_store(1,1,1,nspec_att), &
-              tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
-    endif
   else
     ! allocates dummy size arrays
     nspec_att = 1
-    allocate(Qmu_store(1,1,1,nspec_att), &
-            tau_e_store(N_SLS,1,1,1,nspec_att),stat=ier)
   endif
+  allocate(Qmu_store(ATT1,ATT2,ATT3,nspec_att), &
+          tau_e_store(N_SLS,ATT1,ATT2,ATT3,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
 
   ! array with model density
@@ -1200,7 +1188,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
   use create_regions_mesh_par2
 
   ! Modules for temporary AVS/DX data
-  use AVS_DX_global_mod
+!  use AVS_DX_global_mod
 
   implicit none
 
@@ -1211,12 +1199,13 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
   ! arrays used for AVS or DX files
   integer, dimension(:), allocatable :: num_ibool_AVS_DX
   logical, dimension(:), allocatable :: mask_ibool
-  ! structures used for ADIOS AVS/DX files
-  type(avs_dx_global_t) :: avs_dx_global_vars
+  integer :: ier
 
-  character(len=150) :: reg_name, outputname, group_name
-  integer :: comm, sizeprocs, ier
-  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
+  ! structures used for ADIOS AVS/DX files
+!  type(avs_dx_global_t) :: avs_dx_global_vars
+!  character(len=150) :: reg_name, outputname, group_name
+!  integer :: comm, sizeprocs
+!  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
 
   ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
   ! allocate memory for arrays

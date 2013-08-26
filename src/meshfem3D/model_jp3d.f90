@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -125,7 +125,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_jp3d_par
 
   implicit none
@@ -155,60 +154,65 @@
   if(myrank == 0) call read_jp3d_iso_zhao_model()
 
   ! JP3DM_V
-  call MPI_BCAST(JP3DM_NPA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_NRA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_NHA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_NPB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_NRB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_NHB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PNA,MPA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RNA,MRA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HNA,MHA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PNB,MPB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RNB,MRB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HNB,MHB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_VELAP,MPA*MRA*MHA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_VELBP,MPB*MRB*MHB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PN,51,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RRN,63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_DEPA,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_DEPB,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_DEPC,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IPLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IRLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IHLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IPLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IRLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IHLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_JP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_KP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_IP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_JP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_KP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_WV,8,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_P,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_R,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_H,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_PD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_HD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_VP,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_VS,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(JP3DM_NPA,1)
+  call bcast_all_i(JP3DM_NRA,1)
+  call bcast_all_i(JP3DM_NHA,1)
+  call bcast_all_i(JP3DM_NPB,1)
+  call bcast_all_i(JP3DM_NRB,1)
+  call bcast_all_i(JP3DM_NHB,1)
+
+  call bcast_all_dp(JP3DM_PNA,MPA)
+  call bcast_all_dp(JP3DM_RNA,MRA)
+  call bcast_all_dp(JP3DM_HNA,MHA)
+  call bcast_all_dp(JP3DM_PNB,MPB)
+  call bcast_all_dp(JP3DM_RNB,MRB)
+  call bcast_all_dp(JP3DM_HNB,MHB)
+  call bcast_all_dp(JP3DM_VELAP,MPA*MRA*MHA)
+  call bcast_all_dp(JP3DM_VELBP,MPB*MRB*MHB)
+  call bcast_all_dp(JP3DM_PN,51)
+  call bcast_all_dp(JP3DM_RRN,63)
+  call bcast_all_dp(JP3DM_DEPA,51*63)
+  call bcast_all_dp(JP3DM_DEPB,51*63)
+  call bcast_all_dp(JP3DM_DEPC,51*63)
+
+  call bcast_all_i(JP3DM_IPLOCA,MKA)
+  call bcast_all_i(JP3DM_IRLOCA,MKA)
+  call bcast_all_i(JP3DM_IHLOCA,MKA)
+  call bcast_all_i(JP3DM_IPLOCB,MKB)
+  call bcast_all_i(JP3DM_IRLOCB,MKB)
+  call bcast_all_i(JP3DM_IHLOCB,MKB)
+
+  call bcast_all_dp(JP3DM_PLA,1)
+  call bcast_all_dp(JP3DM_RLA,1)
+  call bcast_all_dp(JP3DM_HLA,1)
+  call bcast_all_dp(JP3DM_PLB,1)
+  call bcast_all_dp(JP3DM_RLB,1)
+  call bcast_all_dp(JP3DM_HLB,1)
+
+  call bcast_all_i(JP3DM_IP,1)
+  call bcast_all_i(JP3DM_JP,1)
+  call bcast_all_i(JP3DM_KP,1)
+  call bcast_all_i(JP3DM_IP1,1)
+  call bcast_all_i(JP3DM_JP1,1)
+  call bcast_all_i(JP3DM_KP1,1)
+
+  call bcast_all_dp(JP3DM_WV,8)
+  call bcast_all_dp(JP3DM_P,1)
+  call bcast_all_dp(JP3DM_R,1)
+  call bcast_all_dp(JP3DM_H,1)
+  call bcast_all_dp(JP3DM_PF,1)
+  call bcast_all_dp(JP3DM_RF,1)
+  call bcast_all_dp(JP3DM_HF,1)
+  call bcast_all_dp(JP3DM_PF1,1)
+  call bcast_all_dp(JP3DM_RF1,1)
+  call bcast_all_dp(JP3DM_HF1,1)
+  call bcast_all_dp(JP3DM_PD,1)
+  call bcast_all_dp(JP3DM_RD,1)
+  call bcast_all_dp(JP3DM_HD,1)
+  call bcast_all_dp(JP3DM_VP,29)
+  call bcast_all_dp(JP3DM_VS,29)
+  call bcast_all_dp(JP3DM_RA,29)
+  call bcast_all_dp(JP3DM_DEPJ,29)
 
   end subroutine model_jp3d_broadcast
 

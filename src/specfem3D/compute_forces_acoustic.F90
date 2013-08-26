@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -190,7 +190,7 @@
       else
         ! on GPU
         ! outer core
-        call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
                                 buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,&
@@ -213,7 +213,7 @@
         else
           ! on GPU
           ! outer core
-          call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,&
@@ -236,7 +236,7 @@
                                 request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
-        call assemble_MPI_scalar_write_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                                 buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 request_send_scalar_oc,request_recv_scalar_oc, &
@@ -255,7 +255,7 @@
                                 b_request_send_scalar_oc,b_request_recv_scalar_oc)
         else
           ! on GPU
-          call assemble_MPI_scalar_write_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                                 b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 b_request_send_scalar_oc,b_request_recv_scalar_oc, &

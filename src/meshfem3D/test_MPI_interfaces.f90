@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -150,32 +150,19 @@
     ! collects from other processes
     do iproc=1,NPROCTOT-1
       ! gets number of interfaces
-      !call MPI_RECV(inum,1,MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
       call recv_singlei(inum,iproc,itag)
       dummy_i(iproc) = inum
       if( inum > 0 ) then
-        !call MPI_RECV(test_interfaces(1:inum,iproc),inum, &
-        !              MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
         call recv_i(test_interfaces(1:inum,iproc),inum,iproc,itag)
-
-        !call MPI_RECV(test_interfaces_nibool(1:inum,iproc),inum, &
-        !              MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
         call recv_i(test_interfaces_nibool(1:inum,iproc),inum,iproc,itag)
       endif
     enddo
   else
     ! sends infos to master process
-    !call MPI_SEND(num_interfaces,1,MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
     call send_singlei(num_interfaces,0,itag)
     if( num_interfaces > 0 ) then
-      !call MPI_SEND(my_neighbours(1:num_interfaces),num_interfaces, &
-      !              MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
       call send_i(my_neighbours(1:num_interfaces),num_interfaces,0,itag)
-
-      !call MPI_SEND(nibool_interfaces(1:num_interfaces),num_interfaces, &
-      !              MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
       call send_i(nibool_interfaces(1:num_interfaces),num_interfaces,0,itag)
-
     endif
   endif
   call sync_all()

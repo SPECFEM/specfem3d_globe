@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -98,52 +98,43 @@
     write(IMAIN,*)
 
     ! evaluate the amount of static memory needed by the solver
-    call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
-                   TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY, &
-                   ONE_CRUST,doubling_index,this_region_has_a_doubling,NCHUNKS, &
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   ratio_sampling_array,NPROCTOT, &
-                   NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
-                   NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                   NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                   NSPEC_INNER_CORE_ATTENUATION, &
-                   NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                   NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                   NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                   NSPEC_CRUST_MANTLE_ADJOINT, &
-                   NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                   NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                   NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                   NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                   NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                   static_memory_size)
+    call memory_eval(doubling_index,this_region_has_a_doubling, &
+                     ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                     ratio_sampling_array,NPROCTOT, &
+                     NSPEC,NGLOB, &
+                     NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                     NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                     NSPEC_INNER_CORE_ATTENUATION, &
+                     NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                     NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                     NSPEC_CRUST_MANTLE_ADJOINT, &
+                     NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                     NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                     NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+                     static_memory_size)
 
     ! create include file for the solver
-    call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
-                    TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                    ELLIPTICITY,GRAVITY,ROTATION, &
-                    OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D, &
-                    ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-                    INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,&
-                    CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP, &
-                    static_memory_size, &
-                    NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                    NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-                    NPROC_XI,NPROC_ETA, &
-                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                    NSPEC_INNER_CORE_ATTENUATION, &
-                    NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                    NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                    NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                    NSPEC_CRUST_MANTLE_ADJOINT, &
-                    NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                    NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                    NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                    NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                    NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
+    call save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
+                          NSOURCES, &
+                          static_memory_size, &
+                          NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                          NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                          NSPEC_INNER_CORE_ATTENUATION, &
+                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                          NSPEC_CRUST_MANTLE_ADJOINT, &
+                          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
 
   endif   ! end of section executed by main process only
 

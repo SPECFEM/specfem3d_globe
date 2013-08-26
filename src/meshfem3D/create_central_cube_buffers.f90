@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -44,11 +44,9 @@
                    receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
                    buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
-  use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   integer, intent(in) :: myrank,iproc_xi,iproc_eta,ichunk, &
        NPROC_XI,NPROC_ETA,NCHUNKS,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
@@ -83,14 +81,11 @@
         buffer_all_cube_from_slices
 
   ! local variables below
-  integer i,j,k,ispec,ispec2D,iglob,ier
+  integer i,j,k,ispec,ispec2D,iglob
   integer sender,receiver,imsg,ipoin,iproc_xi_loop
 
   double precision x_target,y_target,z_target
   double precision x_current,y_current,z_current
-
-  ! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE)
 
   integer :: nproc_xi_half_floor,nproc_xi_half_ceil
 
@@ -281,9 +276,7 @@
 
     ! receive buffers from slices
     sender = sender_from_slices_to_cube(imsg)
-    call MPI_RECV(buffer_slices, &
-              NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_dp(buffer_slices,NDIM*npoin2D_cube_from_slices,sender,itag)
 
     ! copy buffer in 2D array for each slice
     buffer_all_cube_from_slices(imsg,:,:) = buffer_slices(:,:)
@@ -314,16 +307,12 @@
 
     ! send buffer to central cube
     receiver = receiver_cube_from_slices
-    call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_dp(buffer_slices,NDIM*npoin2D_cube_from_slices,receiver,itag)
 
     ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
-      call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
-                   MPI_DOUBLE_PRECISION, &
-                   addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
-                   itag,MPI_COMM_WORLD,ier)
+      call send_dp(buffer_slices,NDIM*npoin2D_cube_from_slices,addressing(CHUNK_AB_ANTIPODE,0,iproc_eta),itag)
     endif
 
   endif  ! end sending info to central cube
@@ -353,9 +342,8 @@
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
 
-    call MPI_SENDRECV(buffer_slices,NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-        itag,buffer_slices2,NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+    call sendrecv_dp(buffer_slices,NDIM*npoin2D_cube_from_slices,receiver_cube_from_slices,itag, &
+                     buffer_slices2,NDIM*npoin2D_cube_from_slices,sender,itag)
 
     buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,:) = buffer_slices2(:,:)
 
@@ -561,9 +549,9 @@
 !--- compute number of messages to expect in cube as well as their size
 !--- take into account vertical sides and bottom side
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: iproc_xi,iproc_eta,ichunk,NPROC_XI,NPROC_ETA,NSPEC2D_BOTTOM_INNER_CORE
 

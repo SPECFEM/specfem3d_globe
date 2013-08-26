@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -383,7 +383,7 @@
       else
         ! on GPU
         ! crust mantle
-        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
                       buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
@@ -392,7 +392,7 @@
                       IREGION_CRUST_MANTLE, &
                       1) ! <-- 1 == fwd accel
         ! inner core
-        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
                       buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -426,7 +426,7 @@
         else
           ! on GPU
           ! crust mantle
-          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
@@ -435,7 +435,7 @@
                       IREGION_CRUST_MANTLE, &
                       3) ! <-- 3 == adjoint b_accel
           ! inner core
-          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -467,14 +467,14 @@
       else
         ! on GPU
         ! crust mantle
-        call assemble_MPI_vector_write_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                             buffer_recv_vector_crust_mantle, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                             request_send_vector_cm,request_recv_vector_cm, &
                             IREGION_CRUST_MANTLE, &
                             1) ! <-- 1 == fwd accel
         ! inner core
-        call assemble_MPI_vector_write_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                             buffer_recv_vector_inner_core, &
                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
                             request_send_vector_ic,request_recv_vector_ic, &
@@ -506,14 +506,14 @@
         else
           ! on GPU
           ! crust mantle
-          call assemble_MPI_vector_write_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                             b_buffer_recv_vector_cm, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                             b_request_send_vector_cm,b_request_recv_vector_cm, &
                             IREGION_CRUST_MANTLE, &
                             3) ! <-- 3 == adjoint b_accel
           ! inner core
-          call assemble_MPI_vector_write_cuda(NPROCTOT_VAL,&
+          call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL,&
                             b_buffer_recv_vector_inner_core, &
                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
                             b_request_send_vector_ic,b_request_recv_vector_ic, &

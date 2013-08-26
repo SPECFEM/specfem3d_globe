@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -38,12 +38,11 @@
 ! standard routine to setup model
 
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
-  use mpi
 
   implicit none
 
   include "constants.h"
-  include "precision.h"
+!  include "precision.h"
 
   ! GLL model_variables
   type model_gll_variables
@@ -72,17 +71,21 @@
   ! differs for isotropic model or transverse isotropic models
   if( .not. TRANSVERSE_ISOTROPY ) then
     ! isotropic model
-    allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
-    allocate( MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
+    allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
+              MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating vp_new,.. arrays')
   else
     ! transverse isotropic model
-    allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
-    allocate( MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
-    allocate( MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
-    allocate( MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
-    allocate( MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
+    allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
+              MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
+              MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
+              MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
+              MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating vpv_new,.. arrays')
+
   endif
-  allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
+  allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rho_new,.. arrays')
 
   ! reads in model files for each process
   call read_gll_model(myrank,MGLL_V,NSPEC)
@@ -98,24 +101,24 @@
     ! Vs
     max = maxval( MGLL_V%vs_new )
     min = minval( MGLL_V%vs_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vs new min/max: ',min_all,max_all
     endif
     ! Vp
     max = maxval( MGLL_V%vp_new )
     min = minval( MGLL_V%vp_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vp new min/max: ',min_all,max_all
     endif
     ! density
     max = maxval( MGLL_V%rho_new )
     min = minval( MGLL_V%rho_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
       write(IMAIN,*)
@@ -131,48 +134,48 @@
     ! Vsv
     max = maxval( MGLL_V%vsv_new )
     min = minval( MGLL_V%vsv_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vsv new min/max: ',min_all,max_all
     endif
     ! Vsh
     max = maxval( MGLL_V%vsh_new )
     min = minval( MGLL_V%vsh_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vsh new min/max: ',min_all,max_all
     endif
     ! Vpv
     max = maxval( MGLL_V%vpv_new )
     min = minval( MGLL_V%vpv_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vpv new min/max: ',min_all,max_all
     endif
     ! Vph
     max = maxval( MGLL_V%vph_new )
     min = minval( MGLL_V%vph_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vph new min/max: ',min_all,max_all
     endif
     ! density
     max = maxval( MGLL_V%rho_new )
     min = minval( MGLL_V%rho_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
     endif
     ! eta
     max = maxval( MGLL_V%eta_new )
     min = minval( MGLL_V%eta_new )
-    call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-    call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+    call max_all_cr(max, max_all)
+    call min_all_cr(min, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  eta new min/max: ',min_all,max_all
       write(IMAIN,*)

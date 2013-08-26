@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@
   module model_ak135_par
 
   ! number of layers in DATA/ak135/ak135.dat
-  integer, parameter :: NR_AK135 = 136
+  integer, parameter :: NR_AK135F_NO_MUD = 136
 
   ! model_ak135_variables
   double precision, dimension(:), allocatable :: &
@@ -84,12 +84,12 @@
   integer :: ier
 
   ! allocates model arrays
-  allocate(Mak135_V_radius_ak135(NR_AK135), &
-          Mak135_V_density_ak135(NR_AK135), &
-          Mak135_V_vp_ak135(NR_AK135), &
-          Mak135_V_vs_ak135(NR_AK135), &
-          Mak135_V_Qkappa_ak135(NR_AK135), &
-          Mak135_V_Qmu_ak135(NR_AK135), &
+  allocate(Mak135_V_radius_ak135(NR_AK135F_NO_MUD), &
+          Mak135_V_density_ak135(NR_AK135F_NO_MUD), &
+          Mak135_V_vp_ak135(NR_AK135F_NO_MUD), &
+          Mak135_V_vs_ak135(NR_AK135F_NO_MUD), &
+          Mak135_V_Qkappa_ak135(NR_AK135F_NO_MUD), &
+          Mak135_V_Qmu_ak135(NR_AK135F_NO_MUD), &
           stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating Mak135_V arrays')
 
@@ -129,7 +129,7 @@
   r = x * R_EARTH
 
   i = 1
-  do while(r >= Mak135_V_radius_ak135(i) .and. i /= NR_AK135)
+  do while(r >= Mak135_V_radius_ak135(i) .and. i /= NR_AK135F_NO_MUD)
     i = i + 1
   enddo
 

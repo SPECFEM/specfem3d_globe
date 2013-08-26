@@ -7,7 +7,7 @@
  !          Main authors: Dimitri Komatitsch and Jeroen Tromp
  !    Princeton University, USA and University of Pau / CNRS / INRIA
  ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            April 2011
+ !                            August 2013
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -543,7 +543,6 @@ typedef struct mesh_ {
   int absorbing_conditions;
 
   int attenuation;
-  int attenuation_new;
   int use_attenuation_mimic;
   int use_3d_attenuation_arrays;
 

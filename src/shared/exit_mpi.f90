@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,16 +25,19 @@
 !
 !=====================================================================
 
+!-------------------------------------------------------------------------------------------------
+!
 ! end the simulation and exit MPI
+!
+!-------------------------------------------------------------------------------------------------
 
 ! version with rank number printed in the error message
   subroutine exit_MPI(myrank,error_msg)
 
   use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   ! identifier for error message file
   integer, parameter :: IERROR = 30
@@ -84,10 +87,9 @@
   subroutine exit_MPI_without_rank(error_msg)
 
   use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   character(len=*) error_msg
 
@@ -111,9 +113,9 @@
 
   subroutine flush_IMAIN()
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! only master process writes out to main output file
   ! file I/O in Fortran is buffered by default
@@ -192,16 +194,51 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
+  integer function null_process()
 
   use mpi
 
   implicit none
 
-  include "constants.h"
+  null_process = MPI_PROC_NULL
+
+  end function null_process
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_request(request,flag_result_test)
+
+  use mpi
+
+  implicit none
+
+  integer :: request
+  logical :: flag_result_test
+
+  ! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+
+  integer :: ier
+
+  call MPI_TEST(request,flag_result_test,msg_status,ier)
+
+  end subroutine test_request
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
+
+  use mpi
+  use constants
+
+  implicit none
+
   include "precision.h"
 
-  integer recvcount, dest, recvtag, req
+  integer :: recvcount, dest, recvtag, req
   real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
 
   integer ier
@@ -215,13 +252,33 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
+  subroutine irecv_dp(recvbuf, recvcount, dest, recvtag, req)
 
   use mpi
 
   implicit none
 
-  include "constants.h"
+  integer :: recvcount, dest, recvtag, req
+  double precision, dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_IRECV(recvbuf(1),recvcount,MPI_DOUBLE_PRECISION,dest,recvtag, &
+                  MPI_COMM_WORLD,req,ier)
+
+  end subroutine irecv_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
+
+  use mpi
+  use constants
+
+  implicit none
+
   include "precision.h"
 
   integer sendcount, dest, sendtag, req
@@ -233,6 +290,26 @@
                   MPI_COMM_WORLD,req,ier)
 
   end subroutine isend_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine isend_dp(sendbuf, sendcount, dest, sendtag, req)
+
+  use mpi
+
+  implicit none
+
+  integer :: sendcount, dest, sendtag, req
+  double precision, dimension(sendcount) :: sendbuf
+
+  integer :: ier
+
+  call MPI_ISEND(sendbuf(1),sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
+                  MPI_COMM_WORLD,req,ier)
+
+  end subroutine isend_dp
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -278,16 +355,32 @@
 
   implicit none
 
-  include "constants.h"
-  include "precision.h"
-
   integer:: sendbuf, recvbuf
   integer ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
-                  MPI_MIN,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
 
   end subroutine min_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine min_all_cr(sendbuf, recvbuf)
+
+  use mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MIN,0,MPI_COMM_WORLD,ier)
+
+  end subroutine min_all_cr
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -299,14 +392,10 @@
 
   implicit none
 
-  include "constants.h"
-  include "precision.h"
-
   integer :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
-                  MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   end subroutine max_all_i
 
@@ -317,17 +406,16 @@
   subroutine max_all_cr(sendbuf, recvbuf)
 
   use mpi
+  use constants
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE, &
-                  MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   end subroutine max_all_cr
 
@@ -344,8 +432,7 @@
   integer :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
-                  MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
   end subroutine sum_all_i
 
@@ -359,11 +446,10 @@
 
   implicit none
 
-  double precision sendbuf, recvbuf
-  integer ier
+  double precision :: sendbuf, recvbuf
+  integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION, &
-                  MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
   end subroutine sum_all_dp
 
@@ -380,7 +466,7 @@
   integer :: iproc
   integer :: buffer
 
-  integer ier
+  integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_INTEGER,iproc,MPI_COMM_WORLD,ier)
 
@@ -398,11 +484,133 @@
 
   integer :: buffer
 
-  integer ier
+  integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_i(buffer, count)
+
+  use :: mpi
+
+  implicit none
+
+  integer :: count
+  integer, dimension(count) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,count,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_cr(buffer, count)
+
+  use :: mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: count
+  real(kind=CUSTOM_REAL), dimension(count) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,count,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_r(buffer, count)
+
+  use :: mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: count
+  real, dimension(count) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,count,MPI_REAL,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_dp(buffer, count)
+
+  use :: mpi
+
+  implicit none
+
+  integer :: count
+  double precision, dimension(count) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,count,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_dp
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_ch(buffer, count)
+
+  use :: mpi
+
+  implicit none
+
+  integer :: count
+  character(len=count) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,count,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_ch
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_l(buffer, count)
+
+  use :: mpi
+
+  implicit none
+
+  integer :: count
+  logical,dimension(count) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,count,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_l
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -453,16 +661,66 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+
+  subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
+
+  use mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  real(kind=CUSTOM_REAL),dimension(recvcount) :: recvbuf
+
+  ! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine recv_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine recv_dp(recvbuf, recvcount, dest, recvtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  double precision,dimension(recvcount) :: recvbuf
+
+  ! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine recv_dp
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine send_i(sendbuf, sendcount, dest, sendtag)
 
   use mpi
 
   implicit none
 
-  integer dest,sendtag
-  integer sendcount
+  integer :: dest,sendtag
+  integer :: sendcount
   integer,dimension(sendcount):: sendbuf
-  integer ier
+  integer :: ier
 
   call MPI_SEND(sendbuf,sendcount,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
 
@@ -486,9 +744,109 @@
 
   end subroutine send_singlei
 
+
 !
 !-------------------------------------------------------------------------------------------------
 !
+
+  subroutine send_cr(sendbuf, sendcount, dest, sendtag)
+
+  use mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  real(kind=CUSTOM_REAL),dimension(sendcount):: sendbuf
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_dp(sendbuf, sendcount, dest, sendtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  double precision,dimension(sendcount):: sendbuf
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_dp
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sendrecv_cr(sendbuf, sendcount, dest, sendtag, &
+                         recvbuf, recvcount, source, recvtag)
+
+  use mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: sendcount, recvcount, dest, sendtag, source, recvtag
+  real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
+  real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
+
+! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+
+  integer :: ier
+
+  call MPI_SENDRECV(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
+                    recvbuf,recvcount,CUSTOM_MPI_TYPE,source,recvtag, &
+                    MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine sendrecv_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sendrecv_dp(sendbuf, sendcount, dest, sendtag, &
+                         recvbuf, recvcount, source, recvtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: sendcount, recvcount, dest, sendtag, source, recvtag
+  double precision, dimension(sendcount) :: sendbuf
+  double precision, dimension(recvcount) :: recvbuf
+
+! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+
+  integer :: ier
+
+  call MPI_SENDRECV(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
+                    recvbuf,recvcount,MPI_DOUBLE_PRECISION,source,recvtag, &
+                    MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine sendrecv_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
 
   subroutine world_size(size)
 
@@ -496,8 +854,8 @@
 
   implicit none
 
-  integer size
-  integer ier
+  integer :: size
+  integer :: ier
 
   call MPI_COMM_SIZE(MPI_COMM_WORLD,size,ier)
 
@@ -513,8 +871,8 @@
 
   implicit none
 
-  integer rank
-  integer ier
+  integer :: rank
+  integer :: ier
 
   call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
 
@@ -530,11 +888,11 @@
 
   implicit none
 
-  integer sendcnt, recvcount, NPROC
+  integer :: sendcnt, recvcount, NPROC
   integer, dimension(sendcnt) :: sendbuf
   integer, dimension(recvcount,0:NPROC-1) :: recvbuf
 
-  integer ier
+  integer :: ier
 
   call MPI_GATHER(sendbuf,sendcnt,MPI_INTEGER, &
                   recvbuf,recvcount,MPI_INTEGER, &
@@ -546,13 +904,61 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
+  subroutine gather_all_cr(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
+
+  use mpi
+  use constants
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: sendcnt, recvcount, NPROC
+  real(kind=CUSTOM_REAL), dimension(sendcnt) :: sendbuf
+  real(kind=CUSTOM_REAL), dimension(recvcount,0:NPROC-1) :: recvbuf
+
+  integer :: ier
+
+  call MPI_GATHER(sendbuf,sendcnt,CUSTOM_MPI_TYPE, &
+                  recvbuf,recvcount,CUSTOM_MPI_TYPE, &
+                  0,MPI_COMM_WORLD,ier)
+
+  end subroutine gather_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gather_all_dp(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
   use mpi
 
   implicit none
 
-  include "constants.h"
+  integer :: sendcnt, recvcount, NPROC
+  double precision, dimension(sendcnt) :: sendbuf
+  double precision, dimension(recvcount,0:NPROC-1) :: recvbuf
+
+  integer :: ier
+
+  call MPI_GATHER(sendbuf,sendcnt,MPI_DOUBLE_PRECISION, &
+                  recvbuf,recvcount,MPI_DOUBLE_PRECISION, &
+                  0,MPI_COMM_WORLD,ier)
+
+  end subroutine gather_all_dp
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
+
+  use mpi
+  use constants
+
+  implicit none
+
   include "precision.h"
 
   integer :: sendcnt,recvcounttot,NPROC
@@ -575,10 +981,10 @@
   subroutine gatherv_all_cr(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
   use mpi
+  use constants
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   integer :: sendcnt,recvcounttot,NPROC

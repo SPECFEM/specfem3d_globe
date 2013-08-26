@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -67,7 +67,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_s40rts_par
 
   implicit none
@@ -93,13 +92,13 @@
   if(myrank == 0) call read_model_s40rts()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(S40RTS_V_dvs_a,(NK_20+1)*(NS_40+1)*(NS_40+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S40RTS_V_dvs_b,(NK_20+1)*(NS_40+1)*(NS_40+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S40RTS_V_dvp_a,(NK_20+1)*(NS_40+1)*(NS_40+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S40RTS_V_dvp_b,(NK_20+1)*(NS_40+1)*(NS_40+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S40RTS_V_spknt,NK_20+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S40RTS_V_qq0,(NK_20+1)*(NK_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S40RTS_V_qq,3*(NK_20+1)*(NK_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(S40RTS_V_dvs_a,(NK_20+1)*(NS_40+1)*(NS_40+1))
+  call bcast_all_dp(S40RTS_V_dvs_b,(NK_20+1)*(NS_40+1)*(NS_40+1))
+  call bcast_all_dp(S40RTS_V_dvp_a,(NK_20+1)*(NS_40+1)*(NS_40+1))
+  call bcast_all_dp(S40RTS_V_dvp_b,(NK_20+1)*(NS_40+1)*(NS_40+1))
+  call bcast_all_dp(S40RTS_V_spknt,NK_20+1)
+  call bcast_all_dp(S40RTS_V_qq0,(NK_20+1)*(NK_20+1))
+  call bcast_all_dp(S40RTS_V_qq,3*(NK_20+1)*(NK_20+1))
 
   end subroutine model_s40rts_broadcast
 !

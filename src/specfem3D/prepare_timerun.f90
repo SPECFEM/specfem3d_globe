@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -722,16 +722,16 @@
   endif
 
   ! allocates temporary arrays
-  allocate(omsb_crust_mantle_dble(ATT1,ATT2,ATT3,ATT4), &
-          factor_scale_crust_mantle_dble(ATT1,ATT2,ATT3,ATT4),stat=ier)
+  allocate(omsb_crust_mantle_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
+          factor_scale_crust_mantle_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb crust_mantle arrays')
-  allocate(factor_common_crust_mantle_dble(N_SLS,ATT1,ATT2,ATT3,ATT4),stat=ier)
+  allocate(factor_common_crust_mantle_dble(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common crust_mantle array')
 
-  allocate(omsb_inner_core_dble(ATT1,ATT2,ATT3,ATT5), &
-          factor_scale_inner_core_dble(ATT1,ATT2,ATT3,ATT5),stat=ier)
+  allocate(omsb_inner_core_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
+          factor_scale_inner_core_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb inner_core arrays')
-  allocate(factor_common_inner_core_dble(N_SLS,ATT1,ATT2,ATT3,ATT5),stat=ier)
+  allocate(factor_common_inner_core_dble(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common inner_core array')
 
   ! CRUST_MANTLE ATTENUATION
@@ -747,11 +747,11 @@
   else
     call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
   endif
-  call get_attenuation_model_3D_or_1D(myrank, prnamel, &
-                                     omsb_crust_mantle_dble, &
-                                     factor_common_crust_mantle_dble, &
-                                     factor_scale_crust_mantle_dble,tau_sigma_dble, &
-                                     ATT1,ATT2,ATT3,ATT4)
+  call get_attenuation_model_3D(myrank, prnamel, &
+                                omsb_crust_mantle_dble, &
+                                factor_common_crust_mantle_dble, &
+                                factor_scale_crust_mantle_dble,tau_sigma_dble, &
+                                NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
   ! initializes
@@ -766,11 +766,11 @@
   else
     call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
   endif
-  call get_attenuation_model_3D_or_1D(myrank, prnamel, &
-                                     omsb_inner_core_dble, &
-                                     factor_common_inner_core_dble, &
-                                     factor_scale_inner_core_dble,tau_sigma_dble, &
-                                     ATT1,ATT2,ATT3,ATT5)
+  call get_attenuation_model_3D(myrank, prnamel, &
+                                omsb_inner_core_dble, &
+                                factor_common_inner_core_dble, &
+                                factor_scale_inner_core_dble,tau_sigma_dble, &
+                                NSPEC_INNER_CORE)
 
   ! converts to custom real arrays
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -816,7 +816,7 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          if( USE_3D_ATTENUATION_ARRAYS ) then
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
             scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
           else
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
@@ -870,7 +870,7 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          if( USE_3D_ATTENUATION_ARRAYS ) then
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
             scale_factor = factor_scale_inner_core(i,j,k,ispec)
           else
             scale_factor = factor_scale_inner_core(1,1,1,ispec)
@@ -1062,7 +1062,7 @@
 
   endif
 
-  if (COMPUTE_AND_STORE_STRAIN_VAL) then
+  if (COMPUTE_AND_STORE_STRAIN) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
       Iepsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Iepsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
@@ -1448,7 +1448,6 @@
   use specfem_par_innercore
   use specfem_par_outercore
   use specfem_par_movie
-  use mpi
 
   implicit none
 
@@ -1462,11 +1461,18 @@
     cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
     cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
     cr_density_table
+  logical :: USE_3D_ATTENUATION_ARRAYS
 
   ! user output
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing Fields and Constants on GPU Device."
     write(IMAIN,*)
+  endif
+
+  if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+    USE_3D_ATTENUATION_ARRAYS = .true.
+  else
+    USE_3D_ATTENUATION_ARRAYS = .false.
   endif
 
   ! prepares general fields on GPU
@@ -1490,9 +1496,9 @@
                                   OCEANS_VAL, &
                                   GRAVITY_VAL, &
                                   ROTATION_VAL, &
-                                  ATTENUATION_VAL,ATTENUATION_NEW_VAL, &
+                                  ATTENUATION_VAL, &
                                   PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
-                                  COMPUTE_AND_STORE_STRAIN_VAL, &
+                                  COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &
                                   USE_MESH_COLORING_GPU, &
@@ -1588,7 +1594,7 @@
 
 
   ! prepares attenuation arrays
-  if( COMPUTE_AND_STORE_STRAIN_VAL ) then
+  if( COMPUTE_AND_STORE_STRAIN ) then
     if(myrank == 0 ) write(IMAIN,*) "  loading strain"
 
     call prepare_fields_strain_device(Mesh_pointer, &
@@ -1897,7 +1903,6 @@
   integer :: vol_nspec_all,ispec_start,ispec_end
   real(kind=CUSTOM_REAL),dimension(1):: dummy
   integer,dimension(1):: dummy_i
-  integer :: NPROC
 
   real(kind=CUSTOM_REAL) :: x,y,z
 
@@ -1916,7 +1921,7 @@
   call sync_all()
 
   ! to avoid compiler warnings
-  NPROC = NPROCTOT_VAL
+  !NPROC = NPROCTOT_VAL
 
   ! adds source
   if( myrank == 0 ) then

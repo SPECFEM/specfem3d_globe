@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -53,7 +53,6 @@
 ! standard routine to setup model
 
   use gapp2_mantle_model_constants
-  use mpi
 
   implicit none
 
@@ -73,16 +72,18 @@
   if(myrank == 0) call read_mantle_gapmodel()
 
   ! master process broadcasts data to all processes
-  call MPI_BCAST( dep,mr+1,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(dep1,mr1+1,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST( vp1,mr1+1,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST( vp3,ma*mo*mr,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST( nnr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST( nr1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(  no,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(  na,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST( dela,1,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST( delo,1,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call bcast_all_r( dep,mr+1)
+  call bcast_all_r(dep1,mr1+1)
+  call bcast_all_r( vp1,mr1+1)
+  call bcast_all_r( vp3,ma*mo*mr)
+
+  call bcast_all_i( nnr,1)
+  call bcast_all_i( nr1,1)
+  call bcast_all_i(  no,1)
+  call bcast_all_i(  na,1)
+
+  call bcast_all_r( dela,1)
+  call bcast_all_r( delo,1)
 
   end subroutine model_gapp2_broadcast
 

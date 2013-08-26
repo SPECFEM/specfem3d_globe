@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -30,9 +30,10 @@
 
   program combine_AVS_DX
 
-  implicit none
+  use constants
+  use shared_parameters
 
-  include "constants.h"
+  implicit none
 
 ! threshold for number of points per wavelength displayed
 ! otherwise the scale is too large and we cannot see the small values
@@ -45,7 +46,7 @@
 ! maximum polynomial degree for which we can compute the stability condition
   integer, parameter :: NGLL_MAX_STABILITY = 15
 
-  integer iproc,nspec,npoin
+  integer iproc,nspec_ab,npoin
   integer ispec
   integer iglob1,iglob2,iglob3,iglob4
   integer ipoin,numpoin,numpoin2,iglobpointoffset,ntotpoin,ntotspec
@@ -123,46 +124,46 @@
   integer, dimension(:), allocatable :: ichunk_slice
 
 ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
+!  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+!          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+!          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+!          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
+!          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+!          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+!          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
+!          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
 
-  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-          RMOHO_FICTITIOUS_IN_MESHER
+!  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+!          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+!          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+!          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+!          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
+!          RMOHO_FICTITIOUS_IN_MESHER
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
-          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+!  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+!          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
+!          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
+!          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+!          SAVE_MESH_FILES,ATTENUATION, &
+!          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
+!          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+!          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
+!          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+!  character(len=150) OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
 ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
+!  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
 ! for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_COMP, &
-               NSPEC2D_XI, &
-               NSPEC2D_ETA, &
-               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-               NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-               nglob
+!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_COMP, &
+!               NSPEC2D_XI, &
+!               NSPEC2D_ETA, &
+!               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+!               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+!               NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+!               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+!               nglob
 
   integer region_min,region_max
 
@@ -170,15 +171,15 @@
 
   integer proc_p1,proc_p2
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+!  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+!  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+!  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+!  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -191,41 +192,42 @@
   print *
 
 ! read the parameter file and compute additional parameters
-  call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-                 NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                 NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                 NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
-                 NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                 NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-                 NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
-                 ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-                 CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-                 RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                 R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
-                 MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,&
-                 MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
-                 TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-                 ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-                 ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-                 MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-                 PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-                 ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-                 INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
-                 LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-                 SIMULATION_TYPE,SAVE_FORWARD, &
-                 NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                 NSPEC_COMP,NSPEC2D_XI,NSPEC2D_ETA,NSPEC2DMAX_XMIN_XMAX,&
-                 NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                 NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-                 ratio_sampling_array, ner, doubling_index,r_bottom,r_top,&
-                 this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
-                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                 ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,&
-                 HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
-                 DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-                 WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
-                 USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY)
-
+  call read_compute_parameters()
+!                 MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+!                 NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+!                 NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+!                 NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
+!                 NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+!                 NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+!                 NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
+!                 ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+!                 CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+!                 RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+!                 R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
+!                 MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,&
+!                 MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
+!                 TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+!                 ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+!                 ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+!                 MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+!                 PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
+!                 ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
+!                 INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
+!                 LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
+!                 SIMULATION_TYPE,SAVE_FORWARD, &
+!                 NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+!                 NSPEC_COMP,NSPEC2D_XI,NSPEC2D_ETA,NSPEC2DMAX_XMIN_XMAX,&
+!                 NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+!                 NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+!                 ratio_sampling_array, ner, doubling_index,r_bottom,r_top,&
+!                 this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+!                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+!                 ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,&
+!                 HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+!                 DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
+!                 WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
+!                 USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY)
+!
   if(.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 
 ! get the base pathname for output files
@@ -419,9 +421,9 @@
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
-  read(10,*) nspec
-  print *,'There are ',nspec,' AVS or DX elements in the slice'
-  ntotspec = ntotspec + nspec
+  read(10,*) nspec_ab
+  print *,'There are ',nspec_ab,' AVS or DX elements in the slice'
+  ntotspec = ntotspec + nspec_ab
   close(10)
 
   enddo
@@ -565,13 +567,13 @@
 
   endif
 
-  read(10,*) nspec
+  read(10,*) nspec_ab
   read(12,*) npoin
   print *,'There are ',npoin,' global AVS or DX points in the slice'
-  print *,'There are ',nspec,' AVS or DX elements in the slice'
+  print *,'There are ',nspec_ab,' AVS or DX elements in the slice'
 
 ! read local elements in this slice and output global AVS or DX elements
-  do ispec=1,nspec
+  do ispec=1,nspec_ab
       read(10,*) numelem,idoubling,iglob1,iglob2,iglob3,iglob4
       if(icolor == 5 .or. icolor == 6) then
         read(13,*) numelem2,deltavp,deltavs
@@ -757,7 +759,7 @@
 
   enddo
 
-  iglobelemoffset = iglobelemoffset + nspec
+  iglobelemoffset = iglobelemoffset + nspec_ab
   iglobpointoffset = iglobpointoffset + npoin
 
   close(10)
@@ -885,11 +887,11 @@
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
-  read(10,*) nspec
-  print *,'There are ',nspec,' AVS or DX elements in the slice'
+  read(10,*) nspec_ab
+  print *,'There are ',nspec_ab,' AVS or DX elements in the slice'
 
 ! read local elements in this slice and output global AVS or DX elements
-  do ispec=1,nspec
+  do ispec=1,nspec_ab
       read(10,*) numelem,idoubling,iglob1,iglob2,iglob3,iglob4
       if(numelem /= ispec) stop 'incorrect element number'
 
@@ -937,7 +939,7 @@
       endif
   enddo
 
-  iglobelemoffset = iglobelemoffset + nspec
+  iglobelemoffset = iglobelemoffset + nspec_ab
 
   close(10)
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,8 +35,6 @@
      NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA, &
      LOCAL_PATH,NCHUNKS)
-
-  use mpi
 
   implicit none
 
@@ -123,13 +121,13 @@
     endif
 
     ! broadcast the information read on the master to the nodes
-    call MPI_BCAST(imsg_type,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iprocto_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call bcast_all_i(imsg_type,NUMMSGS_FACES)
+    call bcast_all_i(iprocfrom_faces,NUMMSGS_FACES)
+    call bcast_all_i(iprocto_faces,NUMMSGS_FACES)
 
-    call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call bcast_all_i(iproc_master_corners,NCORNERSCHUNKS)
+    call bcast_all_i(iproc_worker1_corners,NCORNERSCHUNKS)
+    call bcast_all_i(iproc_worker2_corners,NCORNERSCHUNKS)
 
     ! synchronizes processes
     call sync_all()
@@ -156,8 +154,6 @@
      iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
      npoin2D_xi,npoin2D_eta, &
      NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,LOCAL_PATH)
-
-  use mpi
 
   implicit none
 
@@ -310,8 +306,6 @@
      iboolfaces,npoin2D_faces,iboolcorner, &
      NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROC_XI,NPROC_ETA,LOCAL_PATH)
-
-  use mpi
 
   implicit none
 

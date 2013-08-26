@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,30 +27,23 @@
 
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
-  subroutine save_header_file(NSPEC,NGLOB,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
-                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,ROTATION, &
-                        OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D, &
-                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-                        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
-                        CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-                        static_memory_size, &
-                        NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                        NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-                        NPROC_XI,NPROC_ETA, &
-                        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                        NSPEC_INNER_CORE_ATTENUATION, &
-                        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                        NSPEC_CRUST_MANTLE_ADJOINT, &
-                        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                        MOVIE_VOLUME)
+  subroutine save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
+                              NSOURCES, &
+                              static_memory_size, &
+                              NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                              NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+                              NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                              NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                              NSPEC_INNER_CORE_ATTENUATION, &
+                              NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                              NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                              NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                              NSPEC_CRUST_MANTLE_ADJOINT, &
+                              NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                              NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                              NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                              NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
 
 !
 ! ****************************************************************************************************
@@ -62,26 +55,36 @@
 ! ****************************************************************************************************
 !
 
+  use shared_parameters,only: TOPOGRAPHY, &
+    TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    ELLIPTICITY,GRAVITY,ROTATION, &
+    OCEANS,ATTENUATION,ATTENUATION_3D, &
+    ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+    INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
+    CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
+    NSTEP,NEX_XI,NEX_ETA, &
+    NPROC_XI,NPROC_ETA, &
+    SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
+    APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
+    SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
+    ATTENUATION_1D_WITH_3D_STORAGE, &
+    ATT1,ATT2,ATT3,ATT4,ATT5, &
+    MOVIE_VOLUME
+
   implicit none
 
   include "constants.h"
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
-  integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
+  integer :: NPROC,NPROCTOT,NSOURCES
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_NEW,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
-
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   ! static memory size needed by the solver
   double precision :: static_memory_size
 
   integer, dimension(MAX_NUM_REGIONS) :: &
         NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
-  integer :: NPROC_XI,NPROC_ETA
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
@@ -97,7 +100,7 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
          NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
 
-  logical :: MOVIE_VOLUME
+  integer :: NGLOB_XY_CM, NGLOB_XY_IC
 
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
@@ -110,7 +113,6 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: ATT1,ATT2,ATT3,ATT4,ATT5
   integer :: ier
   character(len=150) HEADER_FILE
 
@@ -406,13 +408,6 @@
   endif
   write(IOUT,*)
 
-  if(ATTENUATION_NEW) then
-    write(IOUT,*) 'logical, parameter :: ATTENUATION_NEW_VAL = .true.'
-  else
-    write(IOUT,*) 'logical, parameter :: ATTENUATION_NEW_VAL = .false.'
-  endif
-  write(IOUT,*)
-
   if(ATTENUATION_3D) then
     write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .true.'
   else
@@ -464,49 +459,17 @@
     write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.'
   endif
 
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_CM = ',NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_OC = ',NGLOB1D_RADIAL(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_IC = ',NGLOB1D_RADIAL(IREGION_INNER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_CM = ',NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_OC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_IC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_CM = ',NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_OC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
-
   write(IOUT,*) 'integer, parameter :: NPROC_XI_VAL = ',NPROC_XI
   write(IOUT,*) 'integer, parameter :: NPROC_ETA_VAL = ',NPROC_ETA
   write(IOUT,*) 'integer, parameter :: NCHUNKS_VAL = ',NCHUNKS
   write(IOUT,*) 'integer, parameter :: NPROCTOT_VAL = ',NPROCTOT
   write(IOUT,*)
 
-  if(ATTENUATION) then
-     if(USE_3D_ATTENUATION_ARRAYS) then
-        att1 = NGLLX
-        att2 = NGLLY
-        att3 = NGLLZ
-     else
-        att1 = 1
-        att2 = 1
-        att3 = 1
-     endif
-     att4 = NSPEC(IREGION_CRUST_MANTLE)
-     att5 = NSPEC(IREGION_INNER_CORE)
-  else
-     att1 = 1
-     att2 = 1
-     att3 = 1
-     att4 = 1
-     att5 = 1
-  endif
-
-  write(IOUT,*) 'integer, parameter :: ATT1 = ',att1
-  write(IOUT,*) 'integer, parameter :: ATT2 = ',att2
-  write(IOUT,*) 'integer, parameter :: ATT3 = ',att3
-  write(IOUT,*) 'integer, parameter :: ATT4 = ',att4
-  write(IOUT,*) 'integer, parameter :: ATT5 = ',att5
+  write(IOUT,*) 'integer, parameter :: ATT1_VAL = ',ATT1
+  write(IOUT,*) 'integer, parameter :: ATT2_VAL = ',ATT2
+  write(IOUT,*) 'integer, parameter :: ATT3_VAL = ',ATT3
+  write(IOUT,*) 'integer, parameter :: ATT4_VAL = ',ATT4
+  write(IOUT,*) 'integer, parameter :: ATT5_VAL = ',ATT5
   write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)

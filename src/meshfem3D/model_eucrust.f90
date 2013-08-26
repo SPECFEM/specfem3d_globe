@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -51,7 +51,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_eucrust_par
 
   implicit none
@@ -65,7 +64,7 @@
   if( myrank == 0 ) call read_EuCrust()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(num_eucrust,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(num_eucrust,1)
 
   ! allocates on all other processes
   if( myrank /= 0 ) then
@@ -80,13 +79,13 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating EUcrust arrays')
   endif
 
-  call MPI_BCAST(eucrust_lat(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eucrust_lon(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eucrust_vp_uppercrust(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eucrust_vp_lowercrust(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eucrust_mohodepth(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eucrust_basement(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eucrust_ucdepth(1:num_eucrust),num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(eucrust_lat(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_lon(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_vp_uppercrust(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_vp_lowercrust(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_mohodepth(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_basement(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_ucdepth(1:num_eucrust),num_eucrust)
 
   end subroutine model_eucrust_broadcast
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -36,8 +36,6 @@
                                           iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
 
   ! this version of the routine is based on blocking MPI calls
-
-  use mpi
 
   implicit none
 
@@ -74,9 +72,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: array_central_cube
 
-  ! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE), ier
-
   ! mask
   logical, dimension(NGLOB_INNER_CORE) :: mask
 
@@ -91,9 +86,7 @@
 
   ! receive buffers from slices
     sender = sender_from_slices_to_cube(imsg)
-    call MPI_RECV(buffer_slices, &
-                ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-                itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,sender,itag)
 
   ! copy buffer in 2D array for each slice
     buffer_all_cube_from_slices(imsg,:,1:ndim_assemble) = buffer_slices(:,1:ndim_assemble)
@@ -121,16 +114,12 @@
 
     ! send buffer to central cube
     receiver = receiver_cube_from_slices
-    call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-                 MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,receiver,itag)
 
     ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
-      call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-                   MPI_DOUBLE_PRECISION, &
-                   addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
-                   itag,MPI_COMM_WORLD,ier)
+      call send_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,addressing(CHUNK_AB_ANTIPODE,0,iproc_eta),itag)
     endif
 
   endif  ! end sending info to central cube
@@ -154,9 +143,8 @@
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
 
-    call MPI_SENDRECV(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-        itag,buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,&
-        MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+    call sendrecv_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,receiver_cube_from_slices,itag, &
+                     buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,sender,itag)
 
    buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,1:ndim_assemble) = buffer_slices2(:,1:ndim_assemble)
 
@@ -268,17 +256,12 @@
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
     ! receive buffers from slices
     sender = receiver_cube_from_slices
-    call MPI_RECV(buffer_slices, &
-                ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-                itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,sender,itag)
 
     ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
     if(NPROC_XI==1) then
-      call MPI_RECV(buffer_slices2, &
-                  ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION, &
-                  addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
-                  itag,MPI_COMM_WORLD,msg_status,ier)
+      call recv_dp(buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,addressing(CHUNK_AB_ANTIPODE,0,iproc_eta),itag)
 
       buffer_slices = buffer_slices + buffer_slices2
     endif
@@ -320,8 +303,7 @@
 
   ! send buffers to slices
     receiver = sender_from_slices_to_cube(imsg)
-    call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,receiver,itag)
 
    enddo
    endif

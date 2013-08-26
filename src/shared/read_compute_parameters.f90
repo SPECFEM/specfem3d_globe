@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,104 +25,68 @@
 !
 !=====================================================================
 
-  subroutine read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-                        NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                        NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
-                        NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                        NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-                        NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
-                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-                        CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-                        RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                        R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
-                        MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,&
-                        MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
-                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-                        ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-                        ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-                        MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-                        PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-                        ATTENUATION,ATTENUATION_NEW,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-                        INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
-                        LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-                        SIMULATION_TYPE,SAVE_FORWARD, &
-                        NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                        NSPEC,NSPEC2D_XI,NSPEC2D_ETA,NSPEC2DMAX_XMIN_XMAX, &
-                        NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                        NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-                        ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
-                        this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
-                        OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                        ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube, &
-                        HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
-                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-                        WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
-                        USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY,NOISE_TOMOGRAPHY)
+
+  subroutine read_compute_parameters()
+!                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+!                        NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+!                        NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+!                        NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
+!                        NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+!                        NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+!                        NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
+!                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+!                        CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+!                        RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+!                        R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
+!                        MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,&
+!                        MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
+!                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+!                        ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+!                        ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+!                        MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+!                        PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
+!                        ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
+!                        INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
+!                        LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
+!                        SIMULATION_TYPE,SAVE_FORWARD, &
+!                        NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+!                        NSPEC,NSPEC2D_XI,NSPEC2D_ETA,NSPEC2DMAX_XMIN_XMAX, &
+!                        NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+!                        NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+!                        ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
+!                        this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+!                        OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+!                        ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube, &
+!                        HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+!                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
+!                        WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,&
+!                        USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY,NOISE_TOMOGRAPHY)
+!
+
+  use constants
+  use shared_parameters
 
   implicit none
 
-  include "constants.h"
-
-! parameters read from parameter file
-  integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY
-
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-          HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM, &
-          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,&
-          MOVIE_SOUTH_DEG,RECORD_LENGTH_IN_MINUTES
-
-  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-         MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-         RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-         SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW, &
-         ABSORBING_CONDITIONS,SAVE_FORWARD, &
-         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
-
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
-
-! parameters to be computed based upon parameters above read from file
-  integer NSTEP,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-          NPROC_XI,NPROC_ETA,REFERENCE_1D_MODEL,THREE_D_MODEL
-
-  double precision DT,ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400, &
-          R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-
-  double precision MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST,&
-          MOVIE_NORTH,MOVIE_SOUTH
-
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ONE_CRUST,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-          ATTENUATION_3D,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
-          EMULATE_ONLY
+  ! local parameters
 
   integer NEX_MAX
 
   double precision ELEMENT_WIDTH
 
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
+!  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
-      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-      NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-      NGLOB
+!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
+!      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+
+!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+!      NGLOB
 
   integer nblocks_xi,nblocks_eta
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+!  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
@@ -130,42 +94,53 @@
 
 ! honor PREM Moho or not
 ! doing so drastically reduces the stability condition and therefore the time step
-  logical :: HONOR_1D_SPHERICAL_MOHO,CASE_3D
+!  logical :: HONOR_1D_SPHERICAL_MOHO,CASE_3D
 
   integer :: ifirst_region, ilast_region, iter_region, iter_layer, doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+
+!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+
   integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
               nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
 
 ! for the cut doublingbrick improvement
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+!  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+
   integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
-  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
+!  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+!  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
+  integer, external :: err_occurred
 
   ! reads in Par_file values
-  call read_parameter_file(OUTPUT_FILES, &
-                          LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-                          NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-                          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-                          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-                          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-                          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read, &
-                          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-                          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-                          HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,RECORD_LENGTH_IN_MINUTES, &
-                          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,&
-                          ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-                          MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-                          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-                          SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,SAVE_FORWARD, &
-                          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
-                          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
+  call read_parameter_file()
+!                          OUTPUT_FILES, &
+!                          LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
+!                          NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
+!                          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+!                          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
+!                          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
+!                          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read, &
+!                          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
+!                          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
+!                          HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,RECORD_LENGTH_IN_MINUTES, &
+!                          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,&
+!                          ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
+!                          MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
+!                          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+!                          SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
+!                          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+!                          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
+!                          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
+!
+
+  if(err_occurred() /= 0) then
+    stop 'an error occurred while reading the parameter file'
+  endif
 
   ! converts values to radians
   MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
@@ -230,9 +205,7 @@
 ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-!<YANGL
   if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1   ! time steps needs to be doubled, due to +/- branches
-!>YANGL
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
@@ -248,7 +221,7 @@
   call rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
                         NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-                        ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
+                        ATTENUATION,ABSORBING_CONDITIONS, &
                         INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM)
 
   ! check that mesh can be coarsened in depth three or four times
@@ -344,6 +317,28 @@
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
 
+  if(ATTENUATION) then
+!! DK DK July 2013: to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
+!! DK DK July 2013: per spectral element because the Q attenuation factor is then constant per layer of the geological model
+    if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
+      ATT1     = NGLLX
+      ATT2     = NGLLY
+      ATT3     = NGLLZ
+    else
+      ATT1     = 1
+      ATT2     = 1
+      ATT3     = 1
+    endif
+    ATT4     = NSPEC(IREGION_CRUST_MANTLE)
+    ATT5     = NSPEC(IREGION_INNER_CORE)
+  else
+     ATT1 = 1
+     ATT2 = 1
+     ATT3 = 1
+     ATT4 = 1
+     ATT5 = 1
+  endif
+
   end subroutine read_compute_parameters
 
 !
@@ -353,7 +348,7 @@
   subroutine rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
                         NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-                        ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
+                        ATTENUATION,ABSORBING_CONDITIONS, &
                         INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM)
 
   implicit none
@@ -364,7 +359,7 @@
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
-  logical ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS, &
+  logical ATTENUATION,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM
 
 ! checks parameters
@@ -385,9 +380,6 @@
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 3) &
     stop 'absorbing conditions not supported for three chunks yet'
-
-  if(ATTENUATION_NEW .and. .not. ATTENUATION) &
-    stop 'need ATTENUATION to use ATTENUATION_NEW'
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
     stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'

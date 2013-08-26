@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -62,7 +62,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_crustmaps_par
 
   implicit none
@@ -97,28 +96,24 @@
   if(myrank == 0) call read_general_crustmap()
 
   ! broadcasts values to all processes
-  call MPI_BCAST(thickness,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocp,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocs,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(density,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thickness,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocp,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocs,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
+  call bcast_all_dp(density,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
 
   ! north pole
-  call MPI_BCAST(thicknessnp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(densitynp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocpnp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocsnp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(densitynp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thicknessnp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitynp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocpnp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocsnp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitynp,NLAYERS_CRUSTMAP)
 
   ! south pole
-  call MPI_BCAST(thicknesssp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(densitysp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocpsp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocssp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(densitysp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thicknesssp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitysp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocpsp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocssp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitysp,NLAYERS_CRUSTMAP)
 
   end subroutine model_crustmaps_broadcast
 
@@ -188,6 +183,8 @@
 !
 
   subroutine read_general_crustmap_layer(var,var_letter,ind)
+
+  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
 
   implicit none
   include "constants.h"

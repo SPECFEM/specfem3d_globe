@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -437,7 +437,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call MPI_Barrier(comm, ierr)
+  call sync_all()
   ! checks dimensions
   if( lnspec /= nspec ) then
     print*,'error file dimension: nspec in file = ',lnspec, &

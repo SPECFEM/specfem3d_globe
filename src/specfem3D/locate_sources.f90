@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@
                             xstore,ystore,zstore, &
                             ELLIPTICITY,min_tshift_cmt_original)
 
-  use mpi
   use constants_solver
+
   use specfem_par,only: &
     NSOURCES,myrank, &
     tshift_cmt,theta_source,phi_source, &
@@ -43,13 +43,12 @@
     LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     xigll,yigll,zigll, &
     xi_source,eta_source,gamma_source,nu_source, &
-    islice_selected_source,ispec_selected_source
+    islice_selected_source,ispec_selected_source, &
+    SAVE_SOURCE_MASK
 
   use specfem_par_movie,only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
   implicit none
-
-  include "precision.h"
 
   integer nspec,nglob
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
@@ -150,14 +149,14 @@
                               DT,NSOURCES,min_tshift_cmt_original)
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(tshift_cmt,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(hdur,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lat,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(long,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(depth,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(tshift_cmt,NSOURCES)
+  call bcast_all_dp(hdur,NSOURCES)
+  call bcast_all_dp(lat,NSOURCES)
+  call bcast_all_dp(long,NSOURCES)
+  call bcast_all_dp(depth,NSOURCES)
 
-  call MPI_BCAST(moment_tensor,6*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(min_tshift_cmt_original,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(moment_tensor,6*NSOURCES)
+  call bcast_all_dp(min_tshift_cmt_original,1)
 
   ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
@@ -554,22 +553,24 @@
     ! now gather information from all the nodes
     ! use -1 as a flag to detect if gather fails for some reason
     ispec_selected_source_all(:,:) = -1
-    call MPI_GATHER(ispec_selected_source_subset,NSOURCES_SUBSET_current_size,MPI_INTEGER, &
-      ispec_selected_source_all,NSOURCES_SUBSET_current_size,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(xi_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      xi_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(eta_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      eta_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(gamma_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      gamma_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(final_distance_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      final_distance_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(x_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      x_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(y_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      y_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(z_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
-      z_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+    call gather_all_i(ispec_selected_source_subset,NSOURCES_SUBSET_current_size, &
+      ispec_selected_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+
+    call gather_all_dp(xi_source_subset,NSOURCES_SUBSET_current_size, &
+      xi_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(eta_source_subset,NSOURCES_SUBSET_current_size, &
+      eta_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(gamma_source_subset,NSOURCES_SUBSET_current_size, &
+      gamma_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(final_distance_source_subset,NSOURCES_SUBSET_current_size, &
+      final_distance_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(x_found_source,NSOURCES_SUBSET_current_size, &
+      x_found_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(y_found_source,NSOURCES_SUBSET_current_size, &
+      y_found_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(z_found_source,NSOURCES_SUBSET_current_size, &
+      z_found_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
 
     ! this is executed by main process only
     if(myrank == 0) then
@@ -730,12 +731,12 @@
   call sync_all()
 
   ! main process broadcasts the results to all the slices
-  call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(islice_selected_source,NSOURCES)
+  call bcast_all_i(ispec_selected_source,NSOURCES)
 
-  call MPI_BCAST(xi_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(xi_source,NSOURCES)
+  call bcast_all_dp(eta_source,NSOURCES)
+  call bcast_all_dp(gamma_source,NSOURCES)
 
   ! stores source mask
   if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then

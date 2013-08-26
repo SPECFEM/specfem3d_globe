@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -83,7 +83,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_s362ani_par
 
   implicit none
@@ -117,26 +116,32 @@
   if(myrank == 0) call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
                           THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
 
-  call MPI_BCAST(numker,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(numhpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ihpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lmxhpa,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(itypehpa,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ihpakern,maxker,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(numcoe,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ivarkern,maxker,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(itpspl,maxcoe*maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(numker,1)
+  call bcast_all_i(numhpa,1)
+  call bcast_all_i(ihpa,1)
+  call bcast_all_i(lmxhpa,maxhpa)
+  call bcast_all_i(itypehpa,maxhpa)
+  call bcast_all_i(ihpakern,maxker)
+  call bcast_all_i(numcoe,maxhpa)
+  call bcast_all_i(ivarkern,maxker)
+  call bcast_all_i(itpspl,maxcoe*maxhpa)
 
-  call MPI_BCAST(xlaspl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(xlospl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(radspl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(coe,maxcoe*maxker,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call bcast_all_r(xlaspl,maxcoe*maxhpa)
+  call bcast_all_r(xlospl,maxcoe*maxhpa)
+  call bcast_all_r(radspl,maxcoe*maxhpa)
+  call bcast_all_r(coe,maxcoe*maxker)
 
-  call MPI_BCAST(hsplfl,80*maxhpa,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(dskker,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(kerstr,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(refmdl,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  !call MPI_BCAST(hsplfl,80*maxhpa,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(hsplfl,80*maxhpa)
+
+  !call MPI_BCAST(dskker,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(dskker,40*maxker)
+
+  call bcast_all_ch(kerstr,80)
+  call bcast_all_ch(refmdl,80)
+
+  !call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(varstr,40*maxker)
 
   end subroutine model_s362ani_broadcast
 

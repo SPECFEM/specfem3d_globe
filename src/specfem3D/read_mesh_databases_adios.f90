@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -673,10 +673,10 @@ subroutine read_mesh_databases_addressing_adios()
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  call MPI_BCAST(ichunk_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  call MPI_BCAST(iproc_xi_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  call MPI_BCAST(iproc_eta_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+  call bcast_all_i(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL)
+  call bcast_all_i(ichunk_slice,NPROCTOT_VAL)
+  call bcast_all_i(iproc_xi_slice,NPROCTOT_VAL)
+  call bcast_all_i(iproc_eta_slice,NPROCTOT_VAL)
 
   ! output a topology map of slices - fix 20x by nproc
   if (myrank == 0 ) then
@@ -919,7 +919,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call MPI_Barrier(comm, ierr)
+  call sync_all()
 
 end subroutine read_mesh_databases_MPI_CM_adios
 
@@ -1102,7 +1102,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call MPI_Barrier(comm, ierr)
+  call sync_all()
 
 end subroutine read_mesh_databases_MPI_OC_adios
 
@@ -1287,7 +1287,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call MPI_Barrier(comm, ierr)
+  call sync_all()
 
 end subroutine read_mesh_databases_MPI_IC_adios
 

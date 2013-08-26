@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -77,7 +77,7 @@
     case(REFERENCE_MODEL_1066A)
       call model_1066a_broadcast(myrank,CRUSTAL)
 
-    case( REFERENCE_MODEL_AK135)
+    case( REFERENCE_MODEL_AK135F_NO_MUD)
       call model_ak135_broadcast(myrank,CRUSTAL)
 
     case(REFERENCE_MODEL_1DREF)
@@ -290,7 +290,7 @@
       ! 1066A (by Gilbert & Dziewonski) - pure isotropic model, used in 1D model mode only
       call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
-    case(REFERENCE_MODEL_AK135)
+    case(REFERENCE_MODEL_AK135F_NO_MUD)
       ! AK135 (by Kennett et al. ) - pure isotropic model, used in 1D model mode only
       call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,16 +25,15 @@
 !
 !=====================================================================
 
-  subroutine get_attenuation_model_3D_or_1D(myrank, prname, &
-                                           one_minus_sum_beta, &
-                                           factor_common, &
-                                           scale_factor, tau_s, vx, vy, vz, vnspec)
+  subroutine get_attenuation_model_3D(myrank, prname, &
+                                      one_minus_sum_beta, &
+                                      factor_common, &
+                                      scale_factor, tau_s, vnspec)
 
+  use constants_solver
   use specfem_par,only: ATTENUATION_VAL, ADIOS_FOR_ARRAYS_SOLVER
 
   implicit none
-
-  include 'constants.h'
 
   integer :: myrank
 
@@ -52,8 +51,8 @@
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
 !! DK DK to Daniel, Jul 2013
-  double precision, dimension(vx,vy,vz,vnspec)       :: one_minus_sum_beta, scale_factor
-  double precision, dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL_ATT), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec)       :: one_minus_sum_beta, scale_factor
+  real(kind=CUSTOM_REAL_ATT), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
 
   double precision, dimension(N_SLS)                 :: tau_s
 
@@ -90,55 +89,37 @@
   T_c_source               = 1000.0d0 / T_c_source
   T_c_source               = T_c_source / scale_t
 
-  if( USE_3D_ATTENUATION_ARRAYS ) then
-    do ispec = 1, vnspec
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            tau_e(:) = factor_common(:,i,j,k,ispec)
-            Q_mu     = scale_factor(i,j,k,ispec)
+  do ispec = 1, vnspec
+    do k = 1, ATT3_VAL
+      do j = 1, ATT2_VAL
+        do i = 1, ATT1_VAL
+          tau_e(:) = factor_common(:,i,j,k,ispec)
+          Q_mu     = scale_factor(i,j,k,ispec)
 
-            ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
-            call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
+          ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
+          call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
 
-            factor_common(:,i,j,k,ispec)    = fc(:)
-            one_minus_sum_beta(i,j,k,ispec) = omsb
+          factor_common(:,i,j,k,ispec)    = fc(:)
+          one_minus_sum_beta(i,j,k,ispec) = omsb
 
-            ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
-            call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
-            scale_factor(i,j,k,ispec) = sf
-          enddo
+          ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
+          call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
+          scale_factor(i,j,k,ispec) = sf
         enddo
       enddo
     enddo
-  else
-    ! uses 1-D arrays for attenuation
-    do ispec = 1, vnspec
-      tau_e(:) = factor_common(:,1,1,1,ispec)
-      Q_mu     = scale_factor(1,1,1,ispec)
+  enddo
 
-      ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
-      call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
-
-      factor_common(:,1,1,1,ispec)   = fc(:)
-      one_minus_sum_beta(1,1,1,ispec) = omsb
-
-      ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
-      call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
-      scale_factor(1,1,1,ispec) = sf
-    enddo
-  endif
-
-  end subroutine get_attenuation_model_3D_or_1D
+  end subroutine get_attenuation_model_3D
 
 !
 !-------------------------------------------------------------------------------------------------
 !
   subroutine get_attenuation_property_values(tau_s, tau_e, factor_common, one_minus_sum_beta)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision, dimension(N_SLS),intent(in) :: tau_s, tau_e
   double precision, dimension(N_SLS),intent(out) :: factor_common
@@ -172,9 +153,9 @@
 
   subroutine get_attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer myrank
   double precision scale_factor, Q_mu, T_c_source
@@ -238,9 +219,9 @@
 
   subroutine get_attenuation_memory_values(tau_s,deltat, alphaval,betaval,gammaval)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision, dimension(N_SLS), intent(in) :: tau_s
   double precision, dimension(N_SLS), intent(out) :: alphaval, betaval,gammaval

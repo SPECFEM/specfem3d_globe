@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -42,13 +42,10 @@
                     tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
+  use constants_solver
+  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! element id
   integer :: ispec
@@ -170,7 +167,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
+        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
            ! temporary variables used for fixing attenuation in a consistent way
            duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
            duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -204,7 +201,7 @@
            epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN_VAL) then
+           if (COMPUTE_AND_STORE_STRAIN) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
@@ -230,13 +227,12 @@
         mul = muvstore(i,j,k,ispec)
 
         ! use unrelaxed parameters if attenuation
-        if(ATTENUATION_VAL) then
+        if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
           ! precompute terms for attenuation if needed
-          if( USE_3D_ATTENUATION_ARRAYS ) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-          endif
+          one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          mul = mul * one_minus_sum_beta_use
+        else if( ATTENUATION_VAL ) then
+          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
           mul = mul * one_minus_sum_beta_use
         endif
 
@@ -253,7 +249,7 @@
         sigma_yz = mul*duzdyl_plus_duydzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
 
 !daniel: att - debug update
 !          call compute_element_att_mem_up_cm(ispec,i,j,k, &
@@ -429,13 +425,10 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
+  use constants_solver
+  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! element id
   integer :: ispec
@@ -573,7 +566,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
+        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
            ! temporary variables used for fixing attenuation in a consistent way
            duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
            duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -607,7 +600,7 @@
            epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN_VAL) then
+           if (COMPUTE_AND_STORE_STRAIN) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
@@ -641,13 +634,13 @@
 
         ! use unrelaxed parameters if attenuation
         ! eta does not need to be shifted since it is a ratio
-        if(ATTENUATION_VAL) then
+        if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
           ! precompute terms for attenuation if needed
-          if( USE_3D_ATTENUATION_ARRAYS ) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
-          endif
+          one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          muvl = muvl * one_minus_sum_beta_use
+          muhl = muhl * one_minus_sum_beta_use
+        else if( ATTENUATION_VAL ) then
+          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
           muvl = muvl * one_minus_sum_beta_use
           muhl = muhl * one_minus_sum_beta_use
         endif
@@ -841,7 +834,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. ( PARTIAL_PHYS_DISPERSION_ONLY .eqv. .false. )  ) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
 
           ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
@@ -1004,13 +997,10 @@
                     tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
+  use constants_solver
+  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! element id
   integer :: ispec
@@ -1137,7 +1127,7 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN_VAL ) then
+        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
            ! temporary variables used for fixing attenuation in a consistent way
            duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
            duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
@@ -1171,7 +1161,7 @@
            epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
         else
            ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN_VAL) then
+           if (COMPUTE_AND_STORE_STRAIN) then
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
               if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
                  ispec_strain = 1
@@ -1214,13 +1204,22 @@
         c56 = c56store(i,j,k,ispec)
         c66 = c66store(i,j,k,ispec)
 
-        if(ATTENUATION_VAL) then
+        if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
           ! precompute terms for attenuation if needed
-          if( USE_3D_ATTENUATION_ARRAYS ) then
-            minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
-          else
-            minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
-          endif
+          minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+          !mul = c44
+          mul = c44 * minus_sum_beta
+          c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+          c12 = c12 - TWO_THIRDS * mul
+          c13 = c13 - TWO_THIRDS * mul
+          c22 = c22 + FOUR_THIRDS * mul
+          c23 = c23 - TWO_THIRDS * mul
+          c33 = c33 + FOUR_THIRDS * mul
+          c44 = c44 + mul
+          c55 = c55 + mul
+          c66 = c66 + mul
+        else if( ATTENUATION_VAL ) then
+          minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
           !mul = c44
           mul = c44 * minus_sum_beta
           c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
@@ -1253,7 +1252,7 @@
                  c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
         ! subtract memory variables if attenuation
-        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+        if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
 
           ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
@@ -1401,13 +1400,9 @@
   subroutine compute_element_att_stress(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
                                        sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
+  use constants_solver
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! attenuation
   ! memory variables for attenuation
@@ -1466,13 +1461,9 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
+  use constants_solver
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! element id
   integer :: ispec
@@ -1512,7 +1503,7 @@
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( USE_3D_ATTENUATION_ARRAYS ) then
+    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       if(ANISOTROPIC_3D_MANTLE_VAL) then
         factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
       else
@@ -1572,13 +1563,9 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
+  use constants_solver
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! element id
   integer :: ispec
@@ -1615,7 +1602,7 @@
 
   do i_SLS = 1,N_SLS
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( USE_3D_ATTENUATION_ARRAYS ) then
+    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
     else
       factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
@@ -1662,13 +1649,9 @@
 
   use specfem_par_crustmantle,only: factor_common=>factor_common_crust_mantle
 
+  use constants_solver
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! element id
   integer :: ispec,i,j,k
@@ -1729,7 +1712,7 @@
     endif
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( USE_3D_ATTENUATION_ARRAYS ) then
+    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       factor_common_c44_muv = factor_common(i_SLS,i,j,k,ispec) * c44_muv
     else
       factor_common_c44_muv = factor_common(i_SLS,1,1,1,ispec) * c44_muv

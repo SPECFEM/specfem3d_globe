@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
                           myrank)
 
   use constants_solver
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par,only: GPU_MODE,Mesh_pointer,COMPUTE_AND_STORE_STRAIN
 
   implicit none
 
@@ -149,7 +149,7 @@
     call max_all_cr(b_Ufluidnorm,b_Ufluidnorm_all)
   endif
 
-  if (COMPUTE_AND_STORE_STRAIN_VAL) then
+  if (COMPUTE_AND_STORE_STRAIN) then
     if( .not. GPU_MODE) then
       ! on CPU
       Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
@@ -183,7 +183,7 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
     endif
 
-    if(COMPUTE_AND_STORE_STRAIN_VAL) then
+    if(COMPUTE_AND_STORE_STRAIN) then
       write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif

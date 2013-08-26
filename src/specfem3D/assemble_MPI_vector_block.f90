@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -51,15 +51,9 @@
 
 ! this version of the routine is based on blocking MPI calls
 
-  use mpi
+  use constants_solver
 
   implicit none
-
-  include "constants.h"
-  include "precision.h"
-
-! include values created by the mesher
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank,NCHUNKS
 
@@ -109,9 +103,6 @@
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
-! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE)
-
   integer ipoin,ipoin2D,ipoin1D
   integer sender,receiver,ier
   integer imsg,imsg_loop
@@ -119,6 +110,9 @@
 
   integer :: NGLOB1D_RADIAL_all,ioffset
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all,npoin2D_eta_all
+
+  integer, external :: null_process
+
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
@@ -159,19 +153,18 @@
 
 ! send messages forward along each row
   if(iproc_xi == 0) then
-    sender = MPI_PROC_NULL
+    sender = null_process()
   else
     sender = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
   if(iproc_xi == NPROC_XI-1) then
-    receiver = MPI_PROC_NULL
+    receiver = null_process()
   else
     receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
 
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+  call sendrecv_cr(buffer_send_faces_vector,NDIM*npoin2D_xi_all(2),receiver,itag2, &
+                   buffer_received_faces_vector,NDIM*npoin2D_xi_all(1),sender,itag)
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_xi > 0) then
@@ -217,18 +210,17 @@
 
 ! send messages backward along each row
   if(iproc_xi == NPROC_XI-1) then
-    sender = MPI_PROC_NULL
+    sender = null_process()
   else
     sender = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
   if(iproc_xi == 0) then
-    receiver = MPI_PROC_NULL
+    receiver = null_process()
   else
     receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+  call sendrecv_cr(buffer_send_faces_vector,NDIM*npoin2D_xi_all(1),receiver,itag2, &
+                   buffer_received_faces_vector,NDIM*npoin2D_xi_all(2),sender,itag)
 
 ! all slices copy the buffer received to the contributions on the right face
   if(iproc_xi < NPROC_XI-1) then
@@ -275,18 +267,17 @@
 
 ! send messages forward along each row
   if(iproc_eta == 0) then
-    sender = MPI_PROC_NULL
+    sender = null_process()
   else
     sender = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
   if(iproc_eta == NPROC_ETA-1) then
-    receiver = MPI_PROC_NULL
+    receiver = null_process()
   else
     receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+  call sendrecv_cr(buffer_send_faces_vector,NDIM*npoin2D_eta_all(2),receiver,itag2, &
+                   buffer_received_faces_vector,NDIM*npoin2D_eta_all(1),sender,itag)
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_eta > 0) then
@@ -332,18 +323,17 @@
 
 ! send messages backward along each row
   if(iproc_eta == NPROC_ETA-1) then
-    sender = MPI_PROC_NULL
+    sender = null_process()
   else
     sender = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
   if(iproc_eta == 0) then
-    receiver = MPI_PROC_NULL
+    receiver = null_process()
   else
     receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+  call sendrecv_cr(buffer_send_faces_vector,NDIM*npoin2D_eta_all(1),receiver,itag2, &
+                   buffer_received_faces_vector,NDIM*npoin2D_eta_all(2),sender,itag)
 
 ! all slices copy the buffer received to the contributions on the right face
   if(iproc_eta < NPROC_ETA-1) then
@@ -397,8 +387,7 @@
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
     ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
-    call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_cr(buffer_received_faces_vector,NDIM*npoin2D_chunks_all,sender,itag)
 
     do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
       accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
@@ -448,7 +437,7 @@
       buffer_send_faces_vector(3,ioffset + ipoin2D) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_cr(buffer_send_faces_vector,NDIM*npoin2D_chunks_all,receiver,itag)
 
   endif
   enddo
@@ -474,8 +463,7 @@
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
     ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
-    call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_cr(buffer_received_faces_vector,NDIM*npoin2D_chunks_all,sender,itag)
 
     do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
       accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(1,ipoin2D)
@@ -519,7 +507,7 @@
       buffer_send_faces_vector(3,ioffset + ipoin2D) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_cr(buffer_send_faces_vector,NDIM*npoin2D_chunks_all,receiver,itag)
 
   endif
   enddo
@@ -558,8 +546,7 @@
 ! receive from worker #1 and add to local array
     sender = iproc_worker1_corners(imsg)
 
-    call MPI_RECV(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all, &
-          CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_cr(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,sender,itag)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
       accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
@@ -590,8 +577,7 @@
 
     sender = iproc_worker2_corners(imsg)
 
-    call MPI_RECV(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all, &
-          CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_cr(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,sender,itag)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
       accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
@@ -639,7 +625,7 @@
       buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
     enddo
 
-    call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_cr(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,receiver,itag)
 
   endif
 
@@ -654,8 +640,7 @@
 ! receive from master and copy to local array
     sender = iproc_master_corners(imsg)
 
-    call MPI_RECV(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all, &
-          CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+    call recv_cr(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,sender,itag)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
       accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(1,ipoin1D)
@@ -688,12 +673,12 @@
 
 ! send to worker #1
     receiver = iproc_worker1_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_cr(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,receiver,itag)
 
 ! send to worker #2
   if(NCHUNKS /= 2) then
     receiver = iproc_worker2_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call send_cr(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,receiver,itag)
 
   endif
 

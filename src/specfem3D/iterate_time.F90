@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -63,6 +63,12 @@
 
   ! get MPI starting time
   time_start = wtime()
+
+#ifdef FORCE_VECTORIZATION
+  if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL .and. N_SLS /= 3) &
+      stop 'FORCE_VECTORIZATION can only be used with N_SLS == 3 when ATTENUATION .and. .not. PARTIAL_PHYS_DISPERSION_ONLY&
+              & because N_SLS is assumed to be equal to 3 when vectorizing compute_element_iso,tiso,aniso'
+#endif
 
   ! *********************************************************
   ! ************* MAIN LOOP OVER THE TIME STEPS *************

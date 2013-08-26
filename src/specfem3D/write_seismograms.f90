@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -123,7 +123,6 @@
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
-  use mpi
   use constants_solver
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
@@ -138,8 +137,6 @@
 
   implicit none
 
-  include "precision.h"
-
   ! local parameters
   double precision :: write_time_begin,write_time
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
@@ -148,7 +145,6 @@
   integer :: nrec_local_received
   integer :: total_seismos,total_seismos_local
   integer,dimension(:),allocatable:: islice_num_rec_local
-  integer :: msg_status(MPI_STATUS_SIZE)
   character(len=256) :: sisname
   ! timing
   double precision, external :: wtime
@@ -272,7 +268,7 @@
        ! receive except from proc 0, which is me and therefore I already have this value
        sender = iproc
        if(iproc /= 0) then
-         call MPI_RECV(nrec_local_received,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+         call recv_singlei(nrec_local_received,sender,itag)
          if(nrec_local_received < 0) call exit_MPI(myrank,'error while receiving local number of receivers')
        else
          nrec_local_received = nrec_local
@@ -285,9 +281,9 @@
              irec = number_receiver_global(irec_local)
              one_seismogram(:,:) = seismograms(:,irec_local,:)
            else
-             call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+             call recv_singlei(irec,sender,itag)
              if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
-             call MPI_RECV(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+             call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
            endif
 
            total_seismos = total_seismos + 1
@@ -310,14 +306,15 @@
 
     else  ! on the nodes, send the seismograms to the master
       receiver = 0
-      call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+      call send_singlei(nrec_local,receiver,itag)
       if (nrec_local > 0) then
         do irec_local = 1,nrec_local
           ! get global number of that receiver
           irec = number_receiver_global(irec_local)
-          call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+          call send_singlei(irec,receiver,itag)
+
           one_seismogram(:,:) = seismograms(:,irec_local,:)
-          call MPI_SEND(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+          call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
         enddo
       endif
     endif
