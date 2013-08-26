@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ module specfem_par
 ! main parameter module for specfem simulations
 
   use constants_solver
+  use shared_parameters
 
   implicit none
 
@@ -202,29 +203,34 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! parameters read from parameter file
-  double precision DT,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-          ANGULAR_WIDTH_XI_IN_DEGREES
+!  double precision DT,ROCEAN,RMIDDLE_CRUST, &
+!          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+!          RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+!          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
+!          ANGULAR_WIDTH_XI_IN_DEGREES
 
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-          NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
+!  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+!          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+!          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+!          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
+!          NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
+!          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+!          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
+!          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
 
-  logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+!  integer NT_DUMP_ATTENUATION
 
-  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+!  logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
+!          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+!          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
+!          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+!          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
+!          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+
+  logical :: COMPUTE_AND_STORE_STRAIN
+
+!  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+
   ! process/partition name
   character(len=150) :: prname
 
@@ -234,14 +240,14 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
+!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   ! computed in read_compute_parameters
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+!  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
   !-----------------------------------------------------------------
   ! MPI partitions
@@ -301,14 +307,14 @@ module specfem_par
 
   ! CUDA mesh pointer<->integer wrapper
   integer(kind=8) :: Mesh_pointer
-  logical :: GPU_MODE
+!  logical :: GPU_MODE
 
   !-----------------------------------------------------------------
   ! ADIOS
   !-----------------------------------------------------------------
 
-  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
+!  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
+!      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
 
   !-----------------------------------------------------------------
   ! time scheme
@@ -378,7 +384,7 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassz_crust_mantle
-  integer :: NGLOB_XY_CM
+!  integer :: NGLOB_XY_CM
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -389,9 +395,9 @@ module specfem_par_crustmantle
     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
 
   ! memory variables and standard linear solids for attenuation
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: &
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: &
     one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: &
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: &
     factor_common_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
@@ -537,9 +543,9 @@ module specfem_par_innercore
     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
 
   ! memory variables and standard linear solids for attenuation
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: &
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: &
     one_minus_sum_beta_inner_core, factor_scale_inner_core
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: &
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: &
     factor_common_inner_core
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -32,10 +32,9 @@
                                        wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                        SIMULATION_TYPE,nspec2D_top)
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle
@@ -131,10 +130,9 @@
                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                             SIMULATION_TYPE,nspec_bottom)
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
     displ_inner_core
@@ -233,10 +231,9 @@
                             RHO_TOP_OC,minus_g_cmb, &
                             SIMULATION_TYPE,nspec_bottom)
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle,accel_crust_mantle
@@ -339,10 +336,9 @@
                             RHO_BOTTOM_OC,minus_g_icb, &
                             SIMULATION_TYPE,nspec2D_top)
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
     displ_inner_core,accel_inner_core
@@ -442,10 +438,9 @@
                             SIMULATION_TYPE,nspec_top, &
                             ABSORBING_CONDITIONS)
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_accel_crust_mantle

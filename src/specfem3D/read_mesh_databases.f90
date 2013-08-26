@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -138,11 +138,11 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     NGLOB_XY_CM = NGLOB_CRUST_MANTLE
-  else
-     NGLOB_XY_CM = 1
-  endif
+!  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+!     NGLOB_XY_CM = NGLOB_CRUST_MANTLE
+!  else
+!     NGLOB_XY_CM = 1
+!  endif
 
   ! allocates dummy array
   allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
@@ -439,7 +439,6 @@
 
 ! to couple mantle with outer core
 
-  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
@@ -604,7 +603,6 @@
 
   subroutine read_mesh_databases_addressing()
 
-  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
@@ -636,10 +634,10 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ichunk_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_xi_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_eta_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL)
+  call bcast_all_i(ichunk_slice,NPROCTOT_VAL)
+  call bcast_all_i(iproc_xi_slice,NPROCTOT_VAL)
+  call bcast_all_i(iproc_eta_slice,NPROCTOT_VAL)
 
   ! output a topology map of slices - fix 20x by nproc
   if (myrank == 0 ) then

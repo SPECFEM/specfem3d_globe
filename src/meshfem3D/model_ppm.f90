@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -96,7 +96,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_ppm_par
 
   implicit none
@@ -104,31 +103,31 @@
   include "constants.h"
 
   integer :: myrank
-  integer :: ier
 
   ! upper mantle structure
   if(myrank == 0) call read_model_ppm()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(PPM_num_v,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_num_latperlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_num_lonperdepth,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(PPM_num_v,1)
+  call bcast_all_i(PPM_num_latperlon,1)
+  call bcast_all_i(PPM_num_lonperdepth,1)
   if( myrank /= 0 ) then
     allocate(PPM_lat(PPM_num_v),PPM_lon(PPM_num_v),PPM_depth(PPM_num_v),PPM_dvs(PPM_num_v))
   endif
-  call MPI_BCAST(PPM_dvs(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_lat(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_lon(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_depth(1:PPM_num_v),PPM_num_v,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_maxlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_minlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_maxlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_minlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_maxdepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_mindepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_dlat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_dlon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(PPM_ddepth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  call bcast_all_dp(PPM_dvs(1:PPM_num_v),PPM_num_v)
+  call bcast_all_dp(PPM_lat(1:PPM_num_v),PPM_num_v)
+  call bcast_all_dp(PPM_lon(1:PPM_num_v),PPM_num_v)
+  call bcast_all_dp(PPM_depth(1:PPM_num_v),PPM_num_v)
+  call bcast_all_dp(PPM_maxlat,1)
+  call bcast_all_dp(PPM_minlat,1)
+  call bcast_all_dp(PPM_maxlon,1)
+  call bcast_all_dp(PPM_minlon,1)
+  call bcast_all_dp(PPM_maxdepth,1)
+  call bcast_all_dp(PPM_mindepth,1)
+  call bcast_all_dp(PPM_dlat,1)
+  call bcast_all_dp(PPM_dlon,1)
+  call bcast_all_dp(PPM_ddepth,1)
 
   end subroutine model_ppm_broadcast
 
@@ -508,14 +507,12 @@
 
 ! smooth model parameters
 
-  use mpi
   use model_ppm_par,only: &
     PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
   implicit none
 
   include "constants.h"
-  include "precision.h"
 
   integer :: myrank, nproc_xi, nproc_eta
 
@@ -551,7 +548,7 @@
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
 
-  integer :: sizeprocs, ier, ixi, ieta
+  integer :: sizeprocs, ixi, ieta
   integer :: islice(NSLICES2), islice0(NSLICES2), nums
 
   real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
@@ -594,6 +591,8 @@
   real(kind=CUSTOM_REAL) minlat,minlon,mindepth
   real(kind=CUSTOM_REAL) radius,theta,phi,lat,lon,r_depth,margin_v,margin_h
   real(kind=CUSTOM_REAL) dist_h,dist_v
+
+  double precision,external :: wtime
 
 !----------------------------------------------------------------------------------------------------
   ! smoothing parameters
@@ -752,7 +751,7 @@
   deallocate(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   if (myrank == 0) write(IMAIN, *) 'distributing locations, jacobians and model values ...'
-  call mpi_barrier(MPI_COMM_WORLD,ier)
+  call sync_all()
 
   ! get location/jacobian info from slices
   allocate( slice_x(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
@@ -767,10 +766,10 @@
       z(:,:,:,:) = zstore(:,:,:,:)
     endif
     ! every process broadcasts its info
-    call MPI_BCAST(x,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(y,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(z,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(jacobian,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
+    call bcast_all_cr(x,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(y,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(z,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(jacobian,NGLLX*NGLLY*NGLLZ*NSPEC)
 
     ! only relevant process info gets stored
     do ii=1,nums
@@ -811,15 +810,15 @@
       ! one should add the c**store and tau_* arrays here as well
     endif
     ! every process broadcasts its info
-    call MPI_BCAST(ks_rho,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_kv,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_kh,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_muv,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_muh,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_eta,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_dvp,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_rhovp,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ks_rhovs,NGLLX*NGLLY*NGLLZ*NSPEC,CUSTOM_MPI_TYPE,rank,MPI_COMM_WORLD,ier)
+    call bcast_all_cr(ks_rho,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_kv,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_kh,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_muv,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_muh,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_eta,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_dvp,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_rhovp,NGLLX*NGLLY*NGLLZ*NSPEC)
+    call bcast_all_cr(ks_rhovs,NGLLX*NGLLY*NGLLZ*NSPEC)
 
     ! only relevant process info gets stored
     do ii=1,nums
@@ -838,9 +837,8 @@
   enddo
 
   ! get the global maximum value of the original kernel file
-  !call mpi_barrier(MPI_COMM_WORLD,ier)
-  !call mpi_reduce(maxval(abs(muvstore(:,:,:,:))), max_old, 1, &
-  !              CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
+  !call sync_all()
+  !call max_all_cr(maxval(abs(muvstore(:,:,:,:))), max_old)
 
   if (myrank == 0) write(IMAIN, *) 'start looping over elements and points for smoothing ...'
 
@@ -857,7 +855,7 @@
 
   bk(:,:,:,:) = 0.0_CUSTOM_REAL
   do ii = 1, nums
-    if (myrank == 0) starttime = MPI_WTIME()
+    if (myrank == 0) starttime = wtime()
     if (myrank == 0) write(IMAIN, *) '  slice number = ', ii
 
     ! read in the topology, jacobian, calculate center of elements
@@ -891,7 +889,7 @@
     ! loop over elements to be smoothed in the current slice
     do ispec = 1, nspec
 
-      if (myrank == 0 .and. mod(ispec,100) == 0 ) write(IMAIN, *) '    ispec ', ispec,' sec:',MPI_WTIME()-starttime
+      if (myrank == 0 .and. mod(ispec,100) == 0 ) write(IMAIN, *) '    ispec ', ispec,' sec:',wtime()-starttime
 
       ! --- only double loop over the elements in the search radius ---
       do ispec2 = 1, nspec
@@ -1045,15 +1043,14 @@
   !if (myrank == 0) write(IMAIN, *) 'Maximum data value before smoothing = ', max_old
 
   ! the maximum value for the smoothed kernel
-  !call mpi_barrier(MPI_COMM_WORLD,ier)
-  !call mpi_reduce(maxval(abs(muvstore(:,:,:,:))), max_new, 1, &
-  !           CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
+  !call sync_all()
+  !call max_all_cr(maxval(abs(muvstore(:,:,:,:))), max_new)
 
   !if (myrank == 0) then
   !  write(IMAIN, *) 'Maximum data value after smoothing = ', max_new
   !  write(IMAIN, *)
   !endif
-  !call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  !call sync_all()
 
   end subroutine
 

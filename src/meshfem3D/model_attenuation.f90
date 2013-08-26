@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -64,8 +64,6 @@
 
 ! standard routine to setup model
 
-  use mpi
-
   implicit none
 
   include "constants.h"
@@ -97,16 +95,17 @@
   integer :: myrank
   integer :: ier
 
-  allocate(AM_V%Qtau_s(N_SLS))
+  allocate(AM_V%Qtau_s(N_SLS),stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating Qtau_s array')
 
   ! master process determines period ranges
   if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
   ! broadcasts to all others
-  call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s,   N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call bcast_all_dp(AM_V%min_period,  1)
+  call bcast_all_dp(AM_V%max_period,  1)
+  call bcast_all_dp(AM_V%QT_c_source, 1)
+  call bcast_all_dp(AM_V%Qtau_s,   N_SLS)
 
   end subroutine model_attenuation_broadcast
 
@@ -171,7 +170,7 @@
     NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
 
   use model_ak135_par, only: &
-    NR_AK135,Mak135_V_radius_ak135,Mak135_V_Qmu_ak135
+    NR_AK135F_NO_MUD,Mak135_V_radius_ak135,Mak135_V_Qmu_ak135
 
   use model_1066a_par, only: &
     NR_1066A,M1066a_V_radius_1066a,M1066a_V_Qmu_1066a
@@ -255,10 +254,10 @@
     AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
     AM_V%Qn = 12
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
     ! redefines "pure" 1D model without crustal modification
     call define_model_ak135(.FALSE.)
-    AM_V%Qn = NR_AK135
+    AM_V%Qn = NR_AK135F_NO_MUD
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
     ! redefines "pure" 1D model without crustal modification
     call define_model_1066a(.FALSE.)
@@ -291,7 +290,7 @@
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
      AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
      AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
@@ -315,7 +314,7 @@
 
   ! re-defines 1D models with crustal modification if necessary
   if( CRUSTAL ) then
-    if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+    if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
       ! redefines 1D model with crustal modification
       call define_model_ak135(CRUSTAL)
     else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then

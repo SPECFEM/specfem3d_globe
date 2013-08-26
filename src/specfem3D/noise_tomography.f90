@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,8 +34,11 @@
   subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
                   mask_noise_out)
+
+  use constants
+
   implicit none
-  include "constants.h"
+
   ! input parameters
   real(kind=CUSTOM_REAL) :: xcoord_in,ycoord_in,zcoord_in
   ! output parameters
@@ -75,17 +78,14 @@
 
   subroutine read_parameters_noise()
 
-  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_movie
 
   implicit none
 
-  include "precision.h"
-
   ! local parameters
-  integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ios, ier
+  integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ios
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
   character(len=150) :: filename
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
@@ -170,12 +170,12 @@
 
   ! gather info on master proc
   ispec = nmovie_points
-  call MPI_GATHER(val_x,ispec,CUSTOM_MPI_TYPE,val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_y,ispec,CUSTOM_MPI_TYPE,val_y_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_z,ispec,CUSTOM_MPI_TYPE,val_z_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_ux,ispec,CUSTOM_MPI_TYPE,val_ux_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_uy,ispec,CUSTOM_MPI_TYPE,val_uy_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_uz,ispec,CUSTOM_MPI_TYPE,val_uz_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call gather_all_cr(val_x,ispec,val_x_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_y,ispec,val_y_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_z,ispec,val_z_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_ux,ispec,val_ux_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_uy,ispec,val_uy_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_uz,ispec,val_uz_all,ispec,NPROCTOT_VAL)
 
   ! save maks_noise data to disk in home directory
   ! this file can be viewed the same way as surface movie data (xcreate_movie_AVS_DX)
@@ -300,9 +300,11 @@
   subroutine compute_arrays_source_noise(myrank, &
                                          xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
                                          xigll,yigll,zigll,NSTEP)
+
+  use constants_solver
+
   implicit none
-  include 'constants.h'
-  include "OUTPUT_FILES/values_from_mesher.h"
+
   ! input parameters
   integer :: myrank, NSTEP
   double precision, dimension(NGLLX) :: xigll
@@ -494,15 +496,15 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-  subroutine noise_read_add_surface_movie(NGLOB,accel,it_index)
+  subroutine noise_read_add_surface_movie(NGLOB_AB,accel,it_index)
 
   use specfem_par
   use specfem_par_crustmantle
 
   implicit none
 
-  integer :: NGLOB
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel
+  integer :: NGLOB_AB
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_AB),intent(inout) :: accel
 
   integer,intent(in) :: it_index
 

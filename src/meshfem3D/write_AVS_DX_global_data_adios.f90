@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ contains
 !! \param avs_dx_adios The structure holding the data to be allocated
 subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
     npointot, mask_ibool, group_size_inc, avs_dx_adios)
-  use mpi
+
   use adios_write_mod
   implicit none
   include "constants.h"
@@ -166,7 +166,7 @@ end subroutine define_AVS_DX_global_data_adios
 subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
     nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
     mask_ibool, npointot, avs_dx_adios)
-  use mpi
+
   use adios_write_mod
 
   implicit none
@@ -339,7 +339,7 @@ end subroutine prepare_AVS_DX_global_data_adios
 !! \avs_dx_adios Structure with the data that have to be wrtten
 subroutine write_AVS_DX_global_data_adios(adios_handle, myrank, &
     sizeprocs, avs_dx_adios)
-  use mpi
+
   use adios_write_mod
   implicit none
   !--- Arguments

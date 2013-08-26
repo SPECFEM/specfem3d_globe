@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -46,6 +46,8 @@ subroutine write_specfem_header_adios()
   use adios_write_mod
   use specfem_par, only : myrank, NSOURCES
 
+  use shared_input_parameters
+
   implicit none
   include "constants.h"
 
@@ -53,25 +55,25 @@ subroutine write_specfem_header_adios()
   ! local parameters
   !-------------------------------------------------------------------
   ! parameters read from parameter file (cf. DATA/Par_file)
-  integer  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,        &
-      NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,        &
-      NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, MOVIE_VOLUME_TYPE,           &
-      MOVIE_START,MOVIE_STOP, NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,               &
-      NOISE_TOMOGRAPHY
+!  integer  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,        &
+!      NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,        &
+!      NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, MOVIE_VOLUME_TYPE,           &
+!      MOVIE_START,MOVIE_STOP, NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,               &
+!      NOISE_TOMOGRAPHY
 
-  double precision :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-      CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,                  &
-      GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,         &
-      MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,           &
-      RECORD_LENGTH_IN_MINUTES
+!  double precision :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
+!      CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,                  &
+!      GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,         &
+!      MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,           &
+!      RECORD_LENGTH_IN_MINUTES
 
-  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, MOVIE_SURFACE,    &
-      MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,                      &
-      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW, &
-      ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
-      OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
-      ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
-      SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+!  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, MOVIE_SURFACE,    &
+!      MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,                      &
+!      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION, &
+!      ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
+!      OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
+!      ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
+!      SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
   ! values from CMTSOLUTION -------------------------------
   ! integer          :: NSOURCES -> in specfem_par module
@@ -88,7 +90,7 @@ subroutine write_specfem_header_adios()
   character(len=:),   allocatable :: station_name, network_name
   double precision, allocatable, dimension(:) :: stlat, stlon, stele, stbur
 
-  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+!  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
   ! Adios variables
   integer                 :: adios_err
@@ -115,24 +117,25 @@ subroutine write_specfem_header_adios()
 
     !--*** Values read from DATA/Par_file ***
     ! extract all unmodified values from the Par_file
-    call read_parameter_file(OUTPUT_FILES,                                     &
-        LOCAL_PATH, LOCAL_TMP_PATH, MODEL,                                     &
-        NTSTEP_BETWEEN_OUTPUT_SEISMOS, NTSTEP_BETWEEN_READ_ADJSRC,             &
-        NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS,     &
-        NUMBER_OF_THIS_RUN, NCHUNKS, SIMULATION_TYPE, MOVIE_VOLUME_TYPE,       &
-        MOVIE_START, MOVIE_STOP, NEX_XI, NEX_ETA, NPROC_XI, NPROC_ETA,         &
-        ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES,             &
-        CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES,               &
-        GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM,     &
-        RECORD_LENGTH_IN_MINUTES, MOVIE_EAST_DEG, MOVIE_WEST_DEG,              &
-        MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, ELLIPTICITY, GRAVITY, ROTATION,      &
-        TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE,         &
-        RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,  &
-        ATTENUATION, ATTENUATION_NEW, ABSORBING_CONDITIONS, SAVE_FORWARD,      &
-        OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                &
-        OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                      &
-        WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,             &
-        USE_BINARY_FOR_LARGE_FILE, NOISE_TOMOGRAPHY)
+    call read_parameter_file()
+!        OUTPUT_FILES,                                     &
+!        LOCAL_PATH, LOCAL_TMP_PATH, MODEL,                                     &
+!        NTSTEP_BETWEEN_OUTPUT_SEISMOS, NTSTEP_BETWEEN_READ_ADJSRC,             &
+!        NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS,     &
+!        NUMBER_OF_THIS_RUN, NCHUNKS, SIMULATION_TYPE, MOVIE_VOLUME_TYPE,       &
+!        MOVIE_START, MOVIE_STOP, NEX_XI, NEX_ETA, NPROC_XI, NPROC_ETA,         &
+!        ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES,             &
+!        CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES,               &
+!        GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM,     &
+!        RECORD_LENGTH_IN_MINUTES, MOVIE_EAST_DEG, MOVIE_WEST_DEG,              &
+!        MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, ELLIPTICITY, GRAVITY, ROTATION,      &
+!        TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE,         &
+!        RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,  &
+!        ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD,      &
+!        OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                &
+!        OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                      &
+!        WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,             &
+!        USE_BINARY_FOR_LARGE_FILE, NOISE_TOMOGRAPHY)
 
     model_length = len(MODEL)
     ! define adios variables for the Par_file
@@ -175,7 +178,7 @@ subroutine write_specfem_header_adios()
         NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY,  &
         ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME,MOVIE_COARSE,&
         RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,  &
-        ATTENUATION, ATTENUATION_NEW, ABSORBING_CONDITIONS, SAVE_FORWARD,      &
+        ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD,      &
         OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                &
         OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                      &
         WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,             &
@@ -304,7 +307,6 @@ subroutine define_par_file_variables (adios_group, group_size_inc, model_length)
   call define_adios_byte_scalar (adios_group, "PRINT_SOURCE_TIME_FUNCTION", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_byte_scalar (adios_group, "SAVE_MESH_FILES", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_byte_scalar (adios_group, "ATTENUATION", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "ATTENUATION_NEW", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_byte_scalar (adios_group, "ABSORBING_CONDITIONS", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_byte_scalar (adios_group, "SAVE_FORWARD", "/specfem3D_globe_parameter_file", group_size_inc)
   call define_adios_byte_scalar (adios_group, "OUTPUT_SEISMOS_ASCII_TEXT", "/specfem3D_globe_parameter_file", group_size_inc)
@@ -598,7 +600,7 @@ subroutine write_adios_par_file_variables (adios_handle,                       &
     NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY,      &
     ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE,   &
     RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,      &
-    ATTENUATION, ATTENUATION_NEW, ABSORBING_CONDITIONS, SAVE_FORWARD,          &
+    ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD,          &
     OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                    &
     OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                          &
     WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,                 &
@@ -618,7 +620,7 @@ subroutine write_adios_par_file_variables (adios_handle,                       &
       MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG, RECORD_LENGTH_IN_MINUTES
   logical, intent(in) :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,       &
       MOVIE_SURFACE, MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,       &
-      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW, &
+      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION, &
       ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
       OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
       ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
@@ -669,7 +671,6 @@ subroutine write_adios_par_file_variables (adios_handle,                       &
   call adios_write (adios_handle, "PRINT_SOURCE_TIME_FUNCTION", PRINT_SOURCE_TIME_FUNCTION, adios_err)
   call adios_write (adios_handle, "SAVE_MESH_FILES", SAVE_MESH_FILES, adios_err)
   call adios_write (adios_handle, "ATTENUATION", ATTENUATION, adios_err)
-  call adios_write (adios_handle, "ATTENUATION_NEW", ATTENUATION_NEW, adios_err)
   call adios_write (adios_handle, "ABSORBING_CONDITIONS", ABSORBING_CONDITIONS, adios_err)
   call adios_write (adios_handle, "SAVE_FORWARD", SAVE_FORWARD, adios_err)
   call adios_write (adios_handle, "OUTPUT_SEISMOS_ASCII_TEXT", OUTPUT_SEISMOS_ASCII_TEXT, adios_err)

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -61,7 +61,6 @@
 
   subroutine model_epcrust_broadcast(myrank)
 
-  use mpi
   use model_epcrust_par
 
   implicit none
@@ -85,20 +84,13 @@
   if(myrank == 0) call read_epcrust_model()
 
   ! broadcast EPCRUST model
-  call MPI_BCAST(lon_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lat_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(topo_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(thickness_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(vp_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(vs_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(rho_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(lon_ep,EPCRUST_NLON*EPCRUST_NLAT)
+  call bcast_all_dp(lat_ep,EPCRUST_NLON*EPCRUST_NLAT)
+  call bcast_all_dp(topo_ep,EPCRUST_NLON*EPCRUST_NLAT)
+  call bcast_all_dp(thickness_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
+  call bcast_all_dp(vp_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
+  call bcast_all_dp(vs_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
+  call bcast_all_dp(rho_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
 
   end subroutine model_epcrust_broadcast
 

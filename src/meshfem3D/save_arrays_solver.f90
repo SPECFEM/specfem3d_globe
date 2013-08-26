@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -329,7 +329,7 @@
   use constants
 
   use meshfem3D_models_par,only: &
-    TRANSVERSE_ISOTROPY,ATTENUATION
+    TRANSVERSE_ISOTROPY,ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
   use create_regions_mesh_par2,only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -424,7 +424,7 @@
     ! saves Qmu_store to full custom_real array
     ! uses temporary array
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
-    if (USE_3D_ATTENUATION_ARRAYS) then
+    if( ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE ) then
       ! attenuation arrays are fully 3D
       if(CUSTOM_REAL == SIZE_REAL) then
         temp_store(:,:,:,:) = sngl(Qmu_store(:,:,:,:))

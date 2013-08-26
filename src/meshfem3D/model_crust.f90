@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -58,7 +58,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_crust_par
 
   implicit none
@@ -80,12 +79,13 @@
   if(myrank == 0) call read_crust_model()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thlr,NKEYS_CRUST*NLAYERS_CRUST)
+  call bcast_all_dp(velocp,NKEYS_CRUST*NLAYERS_CRUST)
+  call bcast_all_dp(velocs,NKEYS_CRUST*NLAYERS_CRUST)
+  call bcast_all_dp(dens,NKEYS_CRUST*NLAYERS_CRUST)
+
+  call bcast_all_ch(abbreviation,NCAP_CRUST*NCAP_CRUST)
+  call bcast_all_ch(code,2*NKEYS_CRUST)
 
   end subroutine model_crust_broadcast
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -41,9 +41,9 @@
 
 ! sends data
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: NPROC
   integer :: nglob
@@ -106,7 +106,7 @@
 ! check: MP_CSS_INTERRUPT environment variable on IBM systems
 
 
-  subroutine assemble_MPI_vector_send_cuda(NPROC, &
+  subroutine assemble_MPI_vector_send_cuda(Mesh_pointer,NPROC, &
                                           buffer_send_vector,buffer_recv_vector, &
                                           num_interfaces,max_nibool_interfaces, &
                                           nibool_interfaces, &
@@ -116,10 +116,11 @@
 
   ! sends data
   ! note: array to assemble already filled into buffer_send_vector array
-  use constants_solver
-  use specfem_par,only: Mesh_pointer
+  use constants
 
   implicit none
+
+  integer(kind=8) :: Mesh_pointer
 
   integer :: NPROC
 
@@ -179,9 +180,9 @@
 
 ! waits for data to receive and assembles
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: NPROC
   integer :: nglob
@@ -233,7 +234,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_vector_write_cuda(NPROC, &
+  subroutine assemble_MPI_vector_write_cuda(Mesh_pointer,NPROC, &
                                             buffer_recv_vector, &
                                             num_interfaces,max_nibool_interfaces, &
                                             request_send_vector,request_recv_vector, &
@@ -241,10 +242,11 @@
 
 ! waits for data to receive and assembles
 
-  use constants_solver
-  use specfem_par,only: Mesh_pointer
+  use constants
 
   implicit none
+
+  integer(kind=8) :: Mesh_pointer
 
   integer :: NPROC
 

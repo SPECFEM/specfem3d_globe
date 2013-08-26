@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -68,7 +68,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_atten3D_QRFSI12_par
 
   implicit none
@@ -92,10 +91,10 @@
   if(myrank == 0) call read_atten_model_3D_QRFSI12()
 
   ! broadcasts to all processes
-  call MPI_BCAST(QRFSI12_Q_dqmu,          NKQ*NSQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(QRFSI12_Q_spknt,             NKQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(QRFSI12_Q_refdepth, NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(QRFSI12_Q_refqmu,   NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call bcast_all_dp(QRFSI12_Q_dqmu,          NKQ*NSQ)
+  call bcast_all_dp(QRFSI12_Q_spknt,             NKQ)
+  call bcast_all_dp(QRFSI12_Q_refdepth, NDEPTHS_REFQ)
+  call bcast_all_dp(QRFSI12_Q_refqmu,   NDEPTHS_REFQ)
 
   ! user output
   if(myrank == 0) then

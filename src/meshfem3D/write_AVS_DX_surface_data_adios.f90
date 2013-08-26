@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN,iregion_code, &
     group_size_inc, avs_dx_adios)
-  use mpi
+
   use adios_write_mod
 
   implicit none
@@ -451,7 +451,7 @@ end subroutine prepare_AVS_DX_surfaces_data_adios
 !===============================================================================
 subroutine write_AVS_DX_surfaces_data_adios(adios_handle, myrank, &
     sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
-  use mpi
+
   use adios_write_mod
   implicit none
   !--- Arguments

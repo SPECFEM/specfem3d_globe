@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -63,7 +63,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_sea99_s_par
 
   implicit none
@@ -84,16 +83,16 @@
   if(myrank == 0) call read_sea99_s_model()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(sea99_ndep,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sea99_nlat,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sea99_nlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sea99_ddeg,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(alatmin,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(alatmax,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(alonmin,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(alonmax,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sea99_vs,100*100*100,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(sea99_depth,100,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(sea99_ndep,1)
+  call bcast_all_i(sea99_nlat,1)
+  call bcast_all_i(sea99_nlon,1)
+  call bcast_all_dp(sea99_ddeg,1)
+  call bcast_all_dp(alatmin,1)
+  call bcast_all_dp(alatmax,1)
+  call bcast_all_dp(alonmin,1)
+  call bcast_all_i(alonmax,1)
+  call bcast_all_i(sea99_vs,100*100*100)
+  call bcast_all_i(sea99_depth,100)
 
   end subroutine model_sea99_s_broadcast
 

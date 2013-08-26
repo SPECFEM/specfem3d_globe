@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -49,7 +49,6 @@
 
 ! standard routine to setup model
 
-  use mpi
   use model_heterogen_mantle_par
 
   implicit none
@@ -74,7 +73,7 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(HMM_rho_in,N_R*N_THETA*N_PHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(HMM_rho_in,N_R*N_THETA*N_PHI)
 
   if(myrank == 0) then
      write(IMAIN,*) 'model_heterogen_mantle is broadcast.'

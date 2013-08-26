@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -590,9 +590,9 @@ end program combine_vol_data_vtk
 
   subroutine reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   real(kind=CUSTOM_REAL) :: x,y,z
   integer nspl
@@ -635,9 +635,9 @@ end program combine_vol_data_vtk
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
 
@@ -787,9 +787,9 @@ end program combine_vol_data_vtk
   subroutine prem_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -1133,9 +1133,9 @@ end program combine_vol_data_vtk
 
 ! convert x y z to r theta phi, double precision call
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision x,y,z,r,theta,phi
   double precision xmesh,ymesh,zmesh

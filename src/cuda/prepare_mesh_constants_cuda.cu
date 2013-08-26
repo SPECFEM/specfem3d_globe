@@ -7,7 +7,7 @@
  !          Main authors: Dimitri Komatitsch and Jeroen Tromp
  !    Princeton University, USA and University of Pau / CNRS / INRIA
  ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            April 2011
+ !                            August 2013
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -136,7 +136,6 @@ void FC_FUNC_(prepare_constants_device,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,
-                                        int* ATTENUATION_NEW_f,
                                         int* USE_ATTENUATION_MIMIC_f,
                                         int* USE_3D_ATTENUATION_ARRAYS_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
@@ -239,7 +238,6 @@ void FC_FUNC_(prepare_constants_device,
   mp->rotation = *ROTATION_f;
 
   mp->attenuation = *ATTENUATION_f;
-  mp->attenuation_new = *ATTENUATION_NEW_f;
   mp->use_attenuation_mimic = *USE_ATTENUATION_MIMIC_f;
   mp->use_3d_attenuation_arrays = *USE_3D_ATTENUATION_ARRAYS_f;
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,14 +27,11 @@
 
   subroutine write_movie_surface()
 
-  use mpi
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_movie
 
   implicit none
-
-  include "precision.h"
 
   ! local parameters
   character(len=150) :: outputname
@@ -80,12 +77,12 @@
 
   ! gather info on master proc
   ispec = nmovie_points
-  call MPI_GATHER(store_val_x,ispec,CUSTOM_MPI_TYPE,store_val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(store_val_y,ispec,CUSTOM_MPI_TYPE,store_val_y_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(store_val_z,ispec,CUSTOM_MPI_TYPE,store_val_z_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(store_val_ux,ispec,CUSTOM_MPI_TYPE,store_val_ux_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(store_val_uy,ispec,CUSTOM_MPI_TYPE,store_val_uy_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(store_val_uz,ispec,CUSTOM_MPI_TYPE,store_val_uz_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call gather_all_cr(store_val_x,ispec,store_val_x_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(store_val_y,ispec,store_val_y_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(store_val_z,ispec,store_val_z_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(store_val_ux,ispec,store_val_ux_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(store_val_uy,ispec,store_val_uy_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(store_val_uz,ispec,store_val_uz_all,ispec,NPROCTOT_VAL)
 
   ! save movie data to disk in home directory
   if(myrank == 0) then

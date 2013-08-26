@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@
                              yr,jda,ho,mi,sec, &
                              theta_source,phi_source,NCHUNKS,ELLIPTICITY)
 
-  use mpi
   use constants_solver
+
   use specfem_par,only: &
     myrank,DT,NSTEP, &
     xigll,yigll,zigll, &
@@ -46,8 +46,6 @@
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
   implicit none
-
-  include "precision.h"
 
   integer nspec,nglob
 
@@ -138,6 +136,8 @@
   character(len=150) OUTPUT_FILES
   character(len=2) bic
 
+  integer, allocatable, dimension(:) :: station_duplet
+
   ! timing
   double precision, external :: wtime
 
@@ -220,8 +220,9 @@
 ! file, problems occur, as two (or more) seismograms are written (with mode
 ! "append") to a file with same name. The philosophy here is to accept multiple
 ! appearences and to just add a count to the station name in this case.
-    allocate(station_duplet(nrec))
-    station_duplet=0
+    allocate(station_duplet(nrec),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating station_duplet array')
+    station_duplet(:) = 0
     do irec = 1,nrec
       do i=1,irec-1
         if ((station_name(irec)==station_name(i)) .and. &
@@ -237,6 +238,7 @@
         endif
       enddo
     enddo
+    deallocate(station_duplet)
 ! BS BS end
 
     ! if receivers can not be buried, sets depth to zero
@@ -245,13 +247,13 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(station_name,nrec*MAX_LENGTH_STATION_NAME)
+  call bcast_all_ch(network_name,nrec*MAX_LENGTH_NETWORK_NAME)
 
-  call MPI_BCAST(stlat,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(stlat,nrec)
+  call bcast_all_dp(stlon,nrec)
+  call bcast_all_dp(stele,nrec)
+  call bcast_all_dp(stbur,nrec)
 
   ! loop on all the stations to locate them in the mesh
   do irec=1,nrec
@@ -590,22 +592,15 @@
 
   ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
-  call MPI_GATHER(ispec_selected_rec,nrec,MPI_INTEGER,ispec_selected_rec_all,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call gather_all_i(ispec_selected_rec,nrec,ispec_selected_rec_all,nrec,NPROCTOT_VAL)
 
-  call MPI_GATHER(xi_receiver,nrec,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(eta_receiver,nrec,MPI_DOUBLE_PRECISION,eta_receiver_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,gamma_receiver_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(final_distance,nrec,MPI_DOUBLE_PRECISION,final_distance_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(x_found,nrec,MPI_DOUBLE_PRECISION,x_found_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(y_found,nrec,MPI_DOUBLE_PRECISION,y_found_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(z_found,nrec,MPI_DOUBLE_PRECISION,z_found_all,nrec, &
-                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call gather_all_dp(xi_receiver,nrec,xi_receiver_all,nrec,NPROCTOT_VAL)
+  call gather_all_dp(eta_receiver,nrec,eta_receiver_all,nrec,NPROCTOT_VAL)
+  call gather_all_dp(gamma_receiver,nrec,gamma_receiver_all,nrec,NPROCTOT_VAL)
+  call gather_all_dp(final_distance,nrec,final_distance_all,nrec,NPROCTOT_VAL)
+  call gather_all_dp(x_found,nrec,x_found_all,nrec,NPROCTOT_VAL)
+  call gather_all_dp(y_found,nrec,y_found_all,nrec,NPROCTOT_VAL)
+  call gather_all_dp(z_found,nrec,z_found_all,nrec,NPROCTOT_VAL)
 
   ! this is executed by main process only
   if(myrank == 0) then
@@ -770,22 +765,23 @@
   deallocate(final_distance_all)
 
   ! main process broadcasts the results to all the slices
-  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(nrec,1)
 
-  call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(xi_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eta_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(islice_selected_rec,nrec)
+  call bcast_all_i(ispec_selected_rec,nrec)
 
-  call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(xi_receiver,nrec)
+  call bcast_all_dp(eta_receiver,nrec)
+  call bcast_all_dp(gamma_receiver,nrec)
 
-  call MPI_BCAST(stlat,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(station_name,nrec*MAX_LENGTH_STATION_NAME)
+  call bcast_all_ch(network_name,nrec*MAX_LENGTH_NETWORK_NAME)
+
+  call bcast_all_dp(stlat,nrec)
+  call bcast_all_dp(stlon,nrec)
+  call bcast_all_dp(stele,nrec)
+  call bcast_all_dp(stbur,nrec)
+  call bcast_all_dp(nu,nrec*3*3)
 
   ! elapsed time since beginning of mesh generation
   if( myrank == 0 ) then

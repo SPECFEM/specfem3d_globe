@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -421,13 +421,9 @@
 
 ! outputs single file for all processes
 
-  use mpi
-
   implicit none
 
   include "constants.h"
-
-  include "precision.h"
 
   integer :: myrank,NPROCTOT
 
@@ -480,17 +476,16 @@
   endif
 
   ! gather info on master proc
-  call MPI_GATHER(xstore_dummy,nglob,CUSTOM_MPI_TYPE,store_val_x_all,nglob,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(ystore_dummy,nglob,CUSTOM_MPI_TYPE,store_val_y_all,nglob,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(zstore_dummy,nglob,CUSTOM_MPI_TYPE,store_val_z_all,nglob,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call gather_all_cr(xstore_dummy,nglob,store_val_x_all,nglob,NPROCTOT)
+  call gather_all_cr(ystore_dummy,nglob,store_val_y_all,nglob,NPROCTOT)
+  call gather_all_cr(zstore_dummy,nglob,store_val_z_all,nglob,NPROCTOT)
 
-  call MPI_GATHER(glob_data(1,:),nglob,CUSTOM_MPI_TYPE,store_val_ux_all,nglob,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(glob_data(2,:),nglob,CUSTOM_MPI_TYPE,store_val_uy_all,nglob,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(glob_data(3,:),nglob,CUSTOM_MPI_TYPE,store_val_uz_all,nglob,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call gather_all_cr(glob_data(1,:),nglob,store_val_ux_all,nglob,NPROCTOT)
+  call gather_all_cr(glob_data(2,:),nglob,store_val_uy_all,nglob,NPROCTOT)
+  call gather_all_cr(glob_data(3,:),nglob,store_val_uz_all,nglob,NPROCTOT)
 
-  call MPI_GATHER(ibool,NGLLX*NGLLY*NGLLZ*nspec,MPI_INTEGER,ibool_all, &
-                  NGLLX*NGLLY*NGLLZ*nspec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(idoubling,nspec,MPI_INTEGER,idoubling_all,nspec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call gather_all_i(ibool,NGLLX*NGLLY*NGLLZ*nspec,ibool_all,NGLLX*NGLLY*NGLLZ*nspec,NPROCTOT)
+  call gather_all_i(idoubling,nspec,idoubling_all,nspec,NPROCTOT)
 
 
   if( myrank == 0 ) then

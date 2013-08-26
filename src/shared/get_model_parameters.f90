@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -201,8 +201,8 @@
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
     else if(MODEL_ROOT == '1D_1066a') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if(MODEL_ROOT == '1D_ak135') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+    else if(MODEL_ROOT == '1D_ak135f_no_mud') then
+      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     else if(MODEL_ROOT == '1D_jp3d') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
     else if(MODEL_ROOT == '1D_sea99') then
@@ -237,8 +237,8 @@
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
     else if(MODEL_ROOT == '1D_1066a_onecrust') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if(MODEL_ROOT == '1D_ak135_onecrust') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+    else if(MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
+      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     else
       stop 'reference 1D Earth model unknown'
     endif
@@ -364,7 +364,7 @@
     TRANSVERSE_ISOTROPY = .true. ! to use transverse isotropic PREM 1D ref model
     ! CRUSTAL = .true. ! with 3D crust: depends on 3D mantle reference model
     ! THREE_D_MODEL = 0 ! for default crustal model
-    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
 
   else if(MODEL_ROOT == 'heterogen') then
@@ -446,16 +446,12 @@
 
   ! checks that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
   if((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135 .or. &
+      REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
-  ! checks that 3D attenuation models use 3D arrays
-  if( ATTENUATION_3D .and. ( .not. USE_3D_ATTENUATION_ARRAYS )) then
-    stop '3D attenuation models need 3D attenuation arrays'
-  endif
 
   end subroutine get_model_parameters_flags
 
@@ -554,7 +550,7 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
 
 !! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
 

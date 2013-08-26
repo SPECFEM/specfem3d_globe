@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -58,7 +58,6 @@
 ! standard routine to setup model
 
   use model_aniso_mantle_par
-  use mpi
 
   implicit none
 
@@ -79,9 +78,9 @@
   if(myrank == 0) call read_aniso_mantle_model()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(AMM_V_npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AMM_V_beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AMM_V_pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(AMM_V_npar1,1)
+  call bcast_all_dp(AMM_V_beta,14*34*37*73)
+  call bcast_all_dp(AMM_V_pro,47)
 
   end subroutine model_aniso_mantle_broadcast
 
