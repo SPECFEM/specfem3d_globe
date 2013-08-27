@@ -324,11 +324,10 @@
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
+  use constants
   use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
-
-  include "constants.h"
 
   integer ia
 
@@ -475,11 +474,10 @@
 ! honors shallow and middle depth moho, deep moho will be interpolated within elements
 ! mesh will get stretched down to r220
 
+  use constants
   use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
-
-  include "constants.h"
 
   integer ia
 
@@ -598,9 +596,10 @@
   subroutine move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
 ! moves a point to a new location defined by gamma,elevation and r
-  implicit none
 
-  include "constants.h"
+  use constants
+
+  implicit none
 
   integer ia
 

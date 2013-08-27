@@ -114,9 +114,9 @@
                                 seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                                 seismograms)
 
+  use constants_solver
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer nrec_local,nrec
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
@@ -207,9 +207,9 @@
                     ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
                     NSTEP,it,nit_written)
 
+  use constants_solver
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer NSOURCES,nrec_local
 

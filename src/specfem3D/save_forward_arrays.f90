@@ -48,7 +48,7 @@ subroutine save_forward_arrays()
 
   ! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    if (ADIOS_FOR_FORWARD_ARRAYS) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
       call save_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
@@ -98,7 +98,7 @@ subroutine save_forward_arrays()
 
   ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    if (ADIOS_FOR_FORWARD_ARRAYS) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
       call save_forward_arrays_adios()
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'

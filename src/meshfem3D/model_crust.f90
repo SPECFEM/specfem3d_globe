@@ -58,11 +58,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_crust_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
   integer :: ier
@@ -84,8 +83,8 @@
   call bcast_all_dp(velocs,NKEYS_CRUST*NLAYERS_CRUST)
   call bcast_all_dp(dens,NKEYS_CRUST*NLAYERS_CRUST)
 
-  call bcast_all_ch(abbreviation,NCAP_CRUST*NCAP_CRUST)
-  call bcast_all_ch(code,2*NKEYS_CRUST)
+  call bcast_all_ch_array2(abbreviation,NCAP_CRUST/2,NCAP_CRUST,2)
+  call bcast_all_ch_array(code,NKEYS_CRUST,2)
 
   end subroutine model_crust_broadcast
 
@@ -95,10 +94,10 @@
 
   subroutine model_crust(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
 
+  use constants
   use model_crust_par
 
   implicit none
-  include "constants.h"
 
   double precision :: lat,lon,x,vp,vs,rho,moho
   logical :: found_crust,elem_in_crust
@@ -189,11 +188,10 @@
 
   subroutine read_crust_model()
 
+  use constants
   use model_crust_par
 
   implicit none
-
-  include "constants.h"
 
   ! local variables
   integer :: i,ila,icolat,ikey,ier
@@ -206,6 +204,8 @@
   open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(CNtype2), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model crust2.0')
   endif
 
@@ -251,11 +251,10 @@
 ! in the theta direction and NPHI in the phi direction.
 ! The cap is rotated to the North Pole.
 
+  use constants
   use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST,NCAP_CRUST
 
   implicit none
-
-  include "constants.h"
 
   ! sampling rate for CAP points
   integer, parameter :: NTHETA = 4
@@ -434,8 +433,9 @@
 !
 ! returns: xlon,xlat,weight
 
+  use constants
+
   implicit none
-  include "constants.h"
 
   ! sampling rate
   integer :: NTHETA

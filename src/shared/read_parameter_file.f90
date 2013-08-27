@@ -34,56 +34,15 @@
 !!!!!! VERY IMPORTANT
 
   subroutine read_parameter_file()
-!                                OUTPUT_FILES, &
-!                                LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-!                                NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-!                                NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-!                                NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-!                                MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-!                                NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read, &
-!                                ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-!                                CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-!                                HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,RECORD_LENGTH_IN_MINUTES, &
-!                                MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,&
-!                                ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-!                                MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-!                                RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!                                SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
-!                                OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!                                ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-!                                SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
-!
+
+  use constants
   use shared_input_parameters
 
   implicit none
 
-  include "constants.h"
-
-  ! parameters read from parameter file
-!  integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-!          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-!          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-!          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY
-!
-!  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-!          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-!          HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM, &
-!          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,&
-!          MOVIE_SOUTH_DEG,RECORD_LENGTH_IN_MINUTES
-!
-!  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-!         MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-!         RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!         SAVE_MESH_FILES,ATTENUATION, &
-!         ABSORBING_CONDITIONS,SAVE_FORWARD, &
-!         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!         ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-!         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
-!
-!  character(len=150) OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
-!
 ! local variables
   integer :: ierr
+  integer, external :: err_occurred
 
   ! gets the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -166,7 +125,8 @@
 
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'solver.EXACT_MASS_MATRIX_FOR_ROTATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
-! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
+
+  ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
   if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
 
   ! low-memory runge-kutta time scheme
@@ -175,7 +135,7 @@
   call read_value_logical(INCREASE_CFL_FOR_LDDRK, 'solver.INCREASE_CFL_FOR_LDDRK', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: INCREASE_CFL_FOR_LDDRK'
   call read_value_double_precision(RATIO_BY_WHICH_TO_INCREASE_IT, 'solver.RATIO_BY_WHICH_TO_INCREASE_IT', ierr)
-
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: RATIO_BY_WHICH_TO_INCREASE_IT'
 
   ! movie options
   call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE', ierr)
@@ -214,10 +174,12 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_RUNS'
   call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_THIS_RUN'
+
   call read_value_string(LOCAL_PATH, 'LOCAL_PATH', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: LOCAL_PATH'
   call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: LOCAL_TMP_PATH'
+
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_INFO'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS', ierr)
@@ -259,16 +221,13 @@
   call read_value_logical(SAVE_REGULAR_KL, 'solver.SAVE_REGULAR_KL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_REGULAR_KL'
 
-  ! gpu simulations
+  ! GPU simulations
   call read_value_logical(GPU_MODE, 'solver.GPU_MODE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_MODE'
 
-  ! ADIO file format output
+  ! ADIOS file format output
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_ENABLED'
-!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  if(ADIOS_ENABLED) stop 'ADIOS support not implemented yet'
-
   call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, 'solver.ADIOS_FOR_FORWARD_ARRAYS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_FORWARD_ARRAYS'
   call read_value_logical(ADIOS_FOR_MPI_ARRAYS, 'solver.ADIOS_FOR_MPI_ARRAYS', ierr)
@@ -280,20 +239,18 @@
   call read_value_logical(ADIOS_FOR_AVS_DX, 'solver.ADIOS_FOR_AVS_DX', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_AVS_DX'
 
-
-
   ! closes parameter file
   call close_parameter_file()
 
-  ! optional parameters:
-!  ! initializes
-!  LOCAL_TMP_PATH = LOCAL_PATH
-!  ! opens file Par_file
-!  call open_parameter_file()
-!  call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH')
-!  call read_value_clear_err()
-!  ! close parameter file
-!  call close_parameter_file()
+  ! checks
+  if(err_occurred() /= 0) then
+    stop 'an error occurred while reading the parameter file'
+  endif
+
+!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
+  if( ADIOS_ENABLED ) then
+    stop 'ADIOS support not implemented yet'
+  endif
 
   end subroutine read_parameter_file
 
@@ -304,8 +261,8 @@
 !
 !  subroutine read_gpu_mode(GPU_MODE)
 !
+!  use constants
 !  implicit none
-!  include "constants.h"
 !
 !  logical :: GPU_MODE
 !

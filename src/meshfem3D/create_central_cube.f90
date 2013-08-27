@@ -37,7 +37,7 @@
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,vx,vy,vz, &
+                        nspec_ani,nspec_stacey, &
                         rho_vp,rho_vs,xigll,yigll,zigll, &
                         ispec_is_tiso)
 
@@ -107,25 +107,6 @@
 
   integer ispec
   integer iproc_xi,iproc_eta,ichunk,ipass
-
-! attenuation
-  integer :: vx,vy,vz,nspec_att
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  double precision, dimension(vx,vy,vz,nspec_att) :: Qmu_store
-  double precision, dimension(N_SLS,vx,vy,vz,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision  T_c_source
 
   logical, dimension(nspec) :: ispec_is_tiso
 
@@ -272,8 +253,7 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                         size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
+                         nspec_ani,nspec_stacey, &
                          rho_vp,rho_vs, &
                          xigll,yigll,zigll,ispec_is_tiso)
       enddo

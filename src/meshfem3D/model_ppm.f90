@@ -96,11 +96,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_ppm_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -137,11 +136,10 @@
 
   subroutine read_model_ppm()
 
+  use constants
   use model_ppm_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer ::            ier,counter,i
@@ -156,6 +154,8 @@
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
     write(IMAIN,*) ' error opening: ',trim(filename)
+    call flush_IMAIN()
+    ! stop
     call exit_mpi(0,"error opening model ppm")
   endif
 
@@ -179,12 +179,15 @@
     write(IMAIN,*) '     no values read in!!!!!!'
     write(IMAIN,*)
     write(IMAIN,*)
+    call flush_IMAIN()
+    ! stop
     call exit_mpi(0,' no model PPM ')
   else
     write(IMAIN,*)
     write(IMAIN,*) 'model PPM:',trim(filename)
     write(IMAIN,*) '  values: ',counter
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   allocate(PPM_lat(counter),PPM_lon(counter),PPM_depth(counter),PPM_dvs(counter))
@@ -256,6 +259,7 @@
     write(IMAIN,*) '    sigma vertical   : ',sigma_v
     write(IMAIN,*)
   endif
+  call flush_IMAIN()
 
   ! steps lengths
   PPM_dlat = 0.0d0
@@ -289,11 +293,14 @@
     write(IMAIN,*) '  model PPM:',filename
     write(IMAIN,*) '     error in delta values:'
     write(IMAIN,*) '     dlat : ',PPM_dlat,' dlon: ',PPM_dlon,' ddepth: ',PPM_ddepth
+    call flush_IMAIN()
+    ! stop
     call exit_mpi(0,' error model PPM ')
   else
     write(IMAIN,*) '  model increments:'
     write(IMAIN,*) '  ddepth: ',sngl(PPM_ddepth),' dlat:',sngl(PPM_dlat),' dlon:',sngl(PPM_dlon)
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   PPM_num_latperlon = int( (PPM_maxlat - PPM_minlat) / PPM_dlat) + 1
@@ -310,11 +317,10 @@
 
 ! returns dvs,dvp and drho for given radius,theta,phi  location
 
+  use constants
   use model_ppm_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: radius,theta,phi,dvs,dvp,drho
 
@@ -415,11 +421,10 @@
 
   subroutine get_PPMmodel_value(lat,lon,depth,dvs)
 
+  use constants
   use model_ppm_par
 
   implicit none
-
-  include "constants.h"
 
   double precision lat,lon,depth,dvs
 
@@ -475,9 +480,9 @@
 
   subroutine get_Gaussianweight(x,sigma,weight)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision:: x,sigma,weight
 
@@ -507,12 +512,11 @@
 
 ! smooth model parameters
 
+  use constants
   use model_ppm_par,only: &
     PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank, nproc_xi, nproc_eta
 
@@ -687,6 +691,7 @@
     write(IMAIN, *) 'slices:',nums
     write(IMAIN, *) '  ',islice(1:nums)
     write(IMAIN, *)
+    call flush_IMAIN()
   endif
 
   ! read in the topology files of the current and neighboring slices
@@ -1060,8 +1065,10 @@
   subroutine smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
                               xx_elem,yy_elem,zz_elem)
 
+
+  use constants
+
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: exp_val
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: xx_elem, yy_elem, zz_elem
@@ -1115,8 +1122,9 @@
 
 ! returns vector lengths as distances in radial and horizontal direction
 
+  use constants
+
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL),intent(out) :: dist_h,dist_v
   real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,x1,y1,z1

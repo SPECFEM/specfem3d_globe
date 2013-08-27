@@ -69,6 +69,7 @@
       end select
       write(IMAIN,*) '*******************************************'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     ! compute maximum number of points

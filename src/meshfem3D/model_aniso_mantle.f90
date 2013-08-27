@@ -57,11 +57,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_aniso_mantle_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -92,11 +91,10 @@
                                c11,c12,c13,c14,c15,c16, &
                                c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
+  use constants
   use model_aniso_mantle_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: r,theta,phi
   double precision :: rho
@@ -135,9 +133,9 @@
        d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
        d44,d45,d46,d55,d56,d66)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision :: pro(47)
   integer :: npar1
@@ -373,11 +371,10 @@
 
   subroutine read_aniso_mantle_model()
 
+  use constants
   use model_aniso_mantle_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
@@ -644,9 +641,9 @@
                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision theta,phi
   double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &

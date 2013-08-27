@@ -278,7 +278,7 @@
 ! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
   logical, parameter :: USE_VERSION_5_1_5 = .true.
 !  logical, parameter :: USE_3D_ATTENUATION_ARRAYS = .true.
-  integer, parameter :: CUSTOM_REAL_ATT = CUSTOM_REAL
+!  integer, parameter :: CUSTOM_REAL_ATT = CUSTOM_REAL
 ! new version
 ! new version uses full 3d attenuation, double precision for attenuation arrays (Qmu_store, tau_e_store)
 !!  logical, parameter :: USE_VERSION_5_1_5 = .false.

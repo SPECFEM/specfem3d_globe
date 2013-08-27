@@ -37,9 +37,6 @@
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc, &
-                    tempx1_att,tempx2_att,tempx3_att, &
-                    tempy1_att,tempy2_att,tempy3_att, &
-                    tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
   use constants_solver
@@ -87,9 +84,6 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
-    tempx1_att,tempx2_att,tempx3_att,tempy1_att,tempy2_att,tempy3_att,tempz1_att,tempz2_att,tempz3_att
-
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -103,10 +97,6 @@
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
-
-  real(kind=CUSTOM_REAL) duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att
-  real(kind=CUSTOM_REAL) duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att
 
   real(kind=CUSTOM_REAL) templ
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
@@ -167,55 +157,21 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
-           ! temporary variables used for fixing attenuation in a consistent way
-           duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
-           duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
-           duxdzl_att = xizl*tempx1_att(i,j,k) + etazl*tempx2_att(i,j,k) + gammazl*tempx3_att(i,j,k)
-
-           duydxl_att = xixl*tempy1_att(i,j,k) + etaxl*tempy2_att(i,j,k) + gammaxl*tempy3_att(i,j,k)
-           duydyl_att = xiyl*tempy1_att(i,j,k) + etayl*tempy2_att(i,j,k) + gammayl*tempy3_att(i,j,k)
-           duydzl_att = xizl*tempy1_att(i,j,k) + etazl*tempy2_att(i,j,k) + gammazl*tempy3_att(i,j,k)
-
-           duzdxl_att = xixl*tempz1_att(i,j,k) + etaxl*tempz2_att(i,j,k) + gammaxl*tempz3_att(i,j,k)
-           duzdyl_att = xiyl*tempz1_att(i,j,k) + etayl*tempz2_att(i,j,k) + gammayl*tempz3_att(i,j,k)
-           duzdzl_att = xizl*tempz1_att(i,j,k) + etazl*tempz2_att(i,j,k) + gammazl*tempz3_att(i,j,k)
-
-           ! precompute some sums to save CPU time
-           duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att
-           duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att
-           duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att
-
-           ! compute deviatoric strain
-           if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              ispec_strain = 1
-           else
-              ispec_strain = ispec
-           endif
-           templ = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
-           epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-           epsilondev_loc(1,i,j,k) = duxdxl_att - templ
-           epsilondev_loc(2,i,j,k) = duydyl_att - templ
-           epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl_att
-           epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl_att
-           epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
-        else
-           ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN) then
-              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-                 ispec_strain = 1
-                 epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              else
-                 ispec_strain = ispec
-                 epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              endif
-              epsilondev_loc(1,i,j,k) = duxdxl - templ
-              epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-           endif
+        ! compute deviatoric strain
+        if (COMPUTE_AND_STORE_STRAIN) then
+          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+             ispec_strain = 1
+             epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+          else
+             ispec_strain = ispec
+             epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+          endif
+          epsilondev_loc(1,i,j,k) = duxdxl - templ
+          epsilondev_loc(2,i,j,k) = duydyl - templ
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         !
@@ -418,9 +374,6 @@
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc, &
-                    tempx1_att,tempx2_att,tempx3_att, &
-                    tempy1_att,tempy2_att,tempy3_att, &
-                    tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
@@ -473,9 +426,6 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
-       tempx1_att,tempx2_att,tempx3_att,tempy1_att,tempy2_att,tempy3_att,tempz1_att,tempz2_att,tempz3_att
-
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -501,10 +451,6 @@
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
-
-  real(kind=CUSTOM_REAL) duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att
-  real(kind=CUSTOM_REAL) duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att
 
   real(kind=CUSTOM_REAL) templ
   real(kind=CUSTOM_REAL) templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
@@ -566,55 +512,21 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
-           ! temporary variables used for fixing attenuation in a consistent way
-           duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
-           duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
-           duxdzl_att = xizl*tempx1_att(i,j,k) + etazl*tempx2_att(i,j,k) + gammazl*tempx3_att(i,j,k)
-
-           duydxl_att = xixl*tempy1_att(i,j,k) + etaxl*tempy2_att(i,j,k) + gammaxl*tempy3_att(i,j,k)
-           duydyl_att = xiyl*tempy1_att(i,j,k) + etayl*tempy2_att(i,j,k) + gammayl*tempy3_att(i,j,k)
-           duydzl_att = xizl*tempy1_att(i,j,k) + etazl*tempy2_att(i,j,k) + gammazl*tempy3_att(i,j,k)
-
-           duzdxl_att = xixl*tempz1_att(i,j,k) + etaxl*tempz2_att(i,j,k) + gammaxl*tempz3_att(i,j,k)
-           duzdyl_att = xiyl*tempz1_att(i,j,k) + etayl*tempz2_att(i,j,k) + gammayl*tempz3_att(i,j,k)
-           duzdzl_att = xizl*tempz1_att(i,j,k) + etazl*tempz2_att(i,j,k) + gammazl*tempz3_att(i,j,k)
-
-           ! precompute some sums to save CPU time
-           duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att
-           duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att
-           duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att
-
-           ! compute deviatoric strain
-           if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              ispec_strain = 1
-           else
-              ispec_strain = ispec
-           endif
-           templ = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
-           epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-           epsilondev_loc(1,i,j,k) = duxdxl_att - templ
-           epsilondev_loc(2,i,j,k) = duydyl_att - templ
-           epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl_att
-           epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl_att
-           epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
-        else
-           ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN) then
-              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-                 ispec_strain = 1
-                 epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              else
-                 ispec_strain = ispec
-                 epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              endif
-              epsilondev_loc(1,i,j,k) = duxdxl - templ
-              epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-           endif
+        ! compute deviatoric strain
+        if (COMPUTE_AND_STORE_STRAIN) then
+          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+             ispec_strain = 1
+             epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+          else
+             ispec_strain = ispec
+             epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+          endif
+          epsilondev_loc(1,i,j,k) = duxdxl - templ
+          epsilondev_loc(2,i,j,k) = duydyl - templ
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         !
@@ -992,9 +904,6 @@
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc, &
-                    tempx1_att,tempx2_att,tempx3_att, &
-                    tempy1_att,tempy2_att,tempy3_att, &
-                    tempz1_att,tempz2_att,tempz3_att, &
                     epsilondev_loc,rho_s_H,is_backward_field)
 
   use constants_solver
@@ -1045,9 +954,6 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
-       tempx1_att,tempx2_att,tempx3_att,tempy1_att,tempy2_att,tempy3_att,tempz1_att,tempz2_att,tempz3_att
-
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -1064,10 +970,6 @@
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
-
-  real(kind=CUSTOM_REAL) duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att
-  real(kind=CUSTOM_REAL) duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att
 
   real(kind=CUSTOM_REAL) templ
 
@@ -1127,55 +1029,21 @@
         duzdxl_plus_duxdzl = duzdxl + duxdzl
         duzdyl_plus_duydzl = duzdyl + duydzl
 
-        if ( ATTENUATION_VAL .and. COMPUTE_AND_STORE_STRAIN ) then
-           ! temporary variables used for fixing attenuation in a consistent way
-           duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
-           duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
-           duxdzl_att = xizl*tempx1_att(i,j,k) + etazl*tempx2_att(i,j,k) + gammazl*tempx3_att(i,j,k)
-
-           duydxl_att = xixl*tempy1_att(i,j,k) + etaxl*tempy2_att(i,j,k) + gammaxl*tempy3_att(i,j,k)
-           duydyl_att = xiyl*tempy1_att(i,j,k) + etayl*tempy2_att(i,j,k) + gammayl*tempy3_att(i,j,k)
-           duydzl_att = xizl*tempy1_att(i,j,k) + etazl*tempy2_att(i,j,k) + gammazl*tempy3_att(i,j,k)
-
-           duzdxl_att = xixl*tempz1_att(i,j,k) + etaxl*tempz2_att(i,j,k) + gammaxl*tempz3_att(i,j,k)
-           duzdyl_att = xiyl*tempz1_att(i,j,k) + etayl*tempz2_att(i,j,k) + gammayl*tempz3_att(i,j,k)
-           duzdzl_att = xizl*tempz1_att(i,j,k) + etazl*tempz2_att(i,j,k) + gammazl*tempz3_att(i,j,k)
-
-           ! precompute some sums to save CPU time
-           duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att
-           duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att
-           duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att
-
-           ! compute deviatoric strain
-           if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              ispec_strain = 1
-           else
-              ispec_strain = ispec
-           endif
-           templ = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
-           epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-           epsilondev_loc(1,i,j,k) = duxdxl_att - templ
-           epsilondev_loc(2,i,j,k) = duydyl_att - templ
-           epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl_att
-           epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl_att
-           epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl_att
-        else
-           ! compute deviatoric strain
-           if (COMPUTE_AND_STORE_STRAIN) then
-              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-                 ispec_strain = 1
-                 epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              else
-                 ispec_strain = ispec
-                 epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              endif
-              epsilondev_loc(1,i,j,k) = duxdxl - templ
-              epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-           endif
+        ! compute deviatoric strain
+        if (COMPUTE_AND_STORE_STRAIN) then
+          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+          if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+             ispec_strain = 1
+             epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+          else
+             ispec_strain = ispec
+             epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+          endif
+          epsilondev_loc(1,i,j,k) = duxdxl - templ
+          epsilondev_loc(2,i,j,k) = duydyl - templ
+          epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+          epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+          epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
         !

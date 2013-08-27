@@ -51,11 +51,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_eucrust_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
   integer :: ier
@@ -93,11 +92,10 @@
 
   subroutine read_EuCrust()
 
+  use constants
   use model_eucrust_par
 
   implicit none
-
-  include "constants.h"
 
   ! local variables
   character(len=80):: line
@@ -131,6 +129,8 @@
   open(unit=11,file=filename,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model eucrust')
   endif
 
@@ -204,11 +204,10 @@
 
 ! returns Vp at the specific location lat/lon
 
+  use constants
   use model_eucrust_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: lat,lon,x,vp !,vs,rho,moho
   logical :: found_crust
@@ -286,11 +285,10 @@
 ! and NPHI in the phi direction (longitudal).
 ! The cap is rotated to the North Pole.
 
+  use constants
   use model_eucrust_par
 
   implicit none
-
-  include "constants.h"
 
   ! argument variables
   double precision lat,lon,radius

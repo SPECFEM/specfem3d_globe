@@ -37,9 +37,9 @@
                           ANISOTROPIC_INNER_CORE)
 
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD

@@ -301,6 +301,7 @@
     if(myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'crust/mantle region:'
+      call flush_IMAIN()
     endif
     call cmi_read_buffer_data(IREGION_CRUST_MANTLE, &
                             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
@@ -346,6 +347,7 @@
     if(myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'outer core region:'
+      call flush_IMAIN()
     endif
     call cmi_read_buffer_data(IREGION_OUTER_CORE, &
                             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
@@ -389,6 +391,7 @@
     if(myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'inner core region:'
+      call flush_IMAIN()
     endif
     call cmi_read_buffer_data(IREGION_INNER_CORE, &
                             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
@@ -406,6 +409,7 @@
       if(myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) 'including central cube'
+        call flush_IMAIN()
       endif
       call sync_all()
 
@@ -664,6 +668,7 @@
     write(IMAIN,*) '  #max of array elements transferred npoin2D_eta*NDIM = ', &
                                 maxval(npoin2D_eta_s(:))*NDIM
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine cmi_read_buffer_data

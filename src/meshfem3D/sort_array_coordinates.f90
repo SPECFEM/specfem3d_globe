@@ -34,9 +34,9 @@
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: npointot,nglob
 

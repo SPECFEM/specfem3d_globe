@@ -25,42 +25,33 @@
 !
 !=====================================================================
 
-  subroutine check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                          b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
-                          eps_trace_over_3_crust_mantle, &
-                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                          epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                          SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          myrank)
+  subroutine check_stability()
 
-  use constants_solver
-  use specfem_par,only: GPU_MODE,Mesh_pointer,COMPUTE_AND_STORE_STRAIN
+! computes the maximum of the norm of the displacement
+! in all the slices using an MPI reduction
+! and output timestamp file to check that simulation is running fine
 
-  implicit none
+  use constants,only: CUSTOM_REAL,IMAIN,R_EARTH, &
+    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
+    STABILITY_THRESHOLD
 
-  ! time step
-  integer it,NSTEP,myrank
+  use specfem_par,only: &
+    GPU_MODE,Mesh_pointer, &
+    COMPUTE_AND_STORE_STRAIN, &
+    SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0, &
+    NSTEP,it, &
+    myrank
 
-  ! displacement
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: b_displ_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
-    eps_trace_over_3_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+    eps_trace_over_3_crust_mantle, &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  integer SIMULATION_TYPE
-  character(len=150) OUTPUT_FILES
+  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core
 
-  double precision :: time_start,DT,t0
+  use specfem_par_outercore,only: displ_outer_core,b_displ_outer_core
+
+  implicit none
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
@@ -88,7 +79,6 @@
   double precision, external :: wtime
 
   double precision,parameter :: scale_displ = R_EARTH
-
 
   ! compute maximum of norm of displacement in each slice
   if( .not. GPU_MODE) then
@@ -323,7 +313,26 @@
 
   endif
 
-  end subroutine check_simulation_stability
+  ! debug output
+  !if( maxval(displ_crust_mantle(1,:)**2 + &
+  !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4 ) then
+  !  print*,'slice',myrank
+  !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)), &
+  !           maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
+  !  print*,'  indxs: ',maxloc( displ_crust_mantle(1,:)),maxloc( displ_crust_mantle(2,:)),maxloc( displ_crust_mantle(3,:))
+  !  indx = maxloc( displ_crust_mantle(3,:) )
+  !  rval = xstore_crust_mantle(indx(1))
+  !  thetaval = ystore_crust_mantle(indx(1))
+  !  phival = zstore_crust_mantle(indx(1))
+  !  !thetaval = PI_OVER_TWO-datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dsin(dble(thetaval))))
+  !  print*,'r/lat/lon:',rval*R_EARTH_KM,90.0-thetaval*180./PI,phival*180./PI
+  !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
+  !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))
+  !  print*,'x/y/z:',rval,thetaval,phival
+  !  call exit_MPI(myrank,'error stability')
+  !endif
+
+  end subroutine check_stability
 
 !
 !------------------------------------------------------------------------------------------------------------------

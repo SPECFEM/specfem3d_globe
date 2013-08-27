@@ -101,11 +101,11 @@
   ! JAN08, 2010
   subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
 
+
+  use constants
   use meshfem3D_par,only: R220,R400,R670,R771
 
   implicit none
-
-  include "constants.h"
 
   integer myrank
   integer:: ispec,nspec

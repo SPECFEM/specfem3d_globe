@@ -34,7 +34,6 @@
                       nspec_stacey,rho_vp,rho_vs, &
                       xstore,ystore,zstore, &
                       rmin,rmax, &
-                      tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
                       elem_in_crust,elem_in_mantle)
 
   use meshfem3D_par,only: &
@@ -43,6 +42,9 @@
     ABSORBING_CONDITIONS
 
   use meshfem3D_models_par
+
+  use create_regions_mesh_par2,only: &
+    Qmu_store,tau_e_store,tau_s,T_c_source
 
   implicit none
 
@@ -64,26 +66,6 @@
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   double precision :: rmin,rmax
-
-  ! attenuation values
-  integer :: vx,vy,vz,vnspec
-  double precision, dimension(N_SLS) :: tau_s
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  double precision, dimension(vx, vy, vz, vnspec) :: Qmu_store
-  double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
-  double precision :: T_c_source
-
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
@@ -91,12 +73,12 @@
   ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
+
+  double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_e
 
-  ! local parameters
   double precision :: rho,dvp
   double precision :: vpv,vph,vsv,vsh,eta_aniso
-  double precision :: Qkappa,Qmu
   double precision :: r,r_prem,moho
   integer :: i,j,k
 
@@ -200,8 +182,8 @@
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
         if( ATTENUATION ) &
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
-                              tau_e,tau_s,T_c_source, &
-                              moho,Qmu,Qkappa,elem_in_crust) ! R80
+                                             tau_e,tau_s,T_c_source, &
+                                             moho,Qmu,Qkappa,elem_in_crust)
 
 ! define elastic parameters in the model
 
@@ -353,8 +335,6 @@
   use meshfem3D_models_par
 
   implicit none
-
-  !include "constants.h"
 
   integer idoubling,myrank
 

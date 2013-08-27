@@ -37,8 +37,7 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
-    ADIOS_FOR_AVS_DX, LOCAL_PATH
-
+    LOCAL_PATH
 
   use meshfem3D_models_par,only: &
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &

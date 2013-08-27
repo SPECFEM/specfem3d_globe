@@ -145,9 +145,8 @@
 
 !  subroutine read_next_line(string_read)
 !
+!  use constants
 !  implicit none
-!
-!  include "constants.h"
 !
 !  character(len=100) string_read
 !

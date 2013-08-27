@@ -75,7 +75,6 @@
       end select
     endif
 
-    write(IMAIN,*)
     write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
 
     ! compare to exact theoretical value
@@ -91,6 +90,7 @@
           call exit_MPI(myrank,'incorrect region code')
       end select
     endif
+    call flush_IMAIN()
 
   endif
 

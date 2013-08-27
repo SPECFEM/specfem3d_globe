@@ -62,11 +62,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_crustmaps_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -125,10 +124,10 @@
 
   subroutine read_general_crustmap()
 
+  use constants
   use model_crustmaps_par
 
   implicit none
-  include "constants.h"
 
   integer :: i,l
 
@@ -184,10 +183,10 @@
 
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
+  use constants
   use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
 
   implicit none
-  include "constants.h"
 
   double precision, intent(out), &
     dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION)&
@@ -209,6 +208,8 @@
   open(unit=1,file=trim(eucrust),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(eucrust), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model crustmap')
   endif
 
@@ -231,10 +232,10 @@
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 
+  use constants
   use model_crustmaps_par
 
   implicit none
-  include "constants.h"
 
   double precision :: lat,lon,x,vp,vs,rho,moho
   logical :: found_crust,elem_in_crust
@@ -307,11 +308,10 @@
 
 ! crustal vp and vs in km/s, layer thickness in km
 
+  use constants
   use model_crustmaps_par
 
   implicit none
-
-  include "constants.h"
 
   ! argument variables
   double precision lat,lon
@@ -507,11 +507,10 @@
 
   subroutine ibilinearmap(lat,lng,iupcolat,ileftlng,weightup,weightleft)
 
+  use constants
   use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
 
   implicit none
-
-  include "constants.h"
 
   ! argument variables
   double precision weightup,weightleft

@@ -146,6 +146,7 @@
     write(IMAIN,*) 'There are ',NCHUNKS,' chunks'
     write(IMAIN,*) 'There is a total of ',NPROCTOT,' slices in all the chunks'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! initializes counters
@@ -210,6 +211,7 @@
       write(IMAIN,*)
       write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
     ! exit routine
     return
@@ -819,6 +821,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'all the messages for chunk faces have the right size'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
   call sync_all()
 
@@ -935,7 +938,10 @@
   icount_corners = 0
   do imsg = 1,NCORNERSCHUNKS
 
-    if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
+    if(myrank == 0) then
+      write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
+      call flush_IMAIN()
+    endif
 
     ! save triplet of processors in list of messages
     iproc_master_corners(imsg) = iprocscorners(1,imsg)

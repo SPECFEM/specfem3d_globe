@@ -135,7 +135,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
-	$O/exit_mpi.sharedmpi.o \
+	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
@@ -149,6 +149,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
@@ -167,8 +168,9 @@ XMESHFEM_OBJECTS = $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
 ###
 
 adios_OBJECTS = \
-  $O/adios_helpers.shared.o \
-  $O/adios_manager.shared.o \
+	$O/adios_helpers.shared.o \
+	$O/adios_manager.shared.o \
+	$O/save_arrays_solver_adios.check.o \
 	$(EMPTY_MACRO)
 
 adios_STUBS = \

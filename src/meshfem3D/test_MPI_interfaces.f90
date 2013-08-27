@@ -219,6 +219,7 @@
     write(IMAIN,*) '  mpi addressing maximum interfaces:',maxval(dummy_i)
     write(IMAIN,*) '  mpi addressing : all interfaces okay'
     write(IMAIN,*)
+    call flush_IMAIN()
 
     deallocate(dummy_i)
     deallocate(test_interfaces)
@@ -283,6 +284,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',ival
+    call flush_IMAIN()
   endif
 
   ! initializes for assembly
@@ -333,6 +335,7 @@
     ! user output
     write(IMAIN,*) '  total unique MPI interface points:',inum
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   deallocate(test_flag_vector)
@@ -441,6 +444,7 @@
     ! user output
     write(IMAIN,*) '  total assembled MPI interface points:',inum
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   deallocate(test_flag)
@@ -552,6 +556,7 @@
     ! user output
     write(IMAIN,*) '  total assembled MPI interface points:',inum
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   deallocate(test_flag_vector)

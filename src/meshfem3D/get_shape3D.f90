@@ -27,9 +27,9 @@
 
   subroutine get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer myrank
 

@@ -82,11 +82,10 @@
 
   subroutine model_sea1d(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
+  use constants
   use model_sea1d_par
 
   implicit none
-
-  include "constants.h"
 
 ! input:
 ! radius r: meters
@@ -160,11 +159,10 @@
 
   subroutine define_model_sea1d(USE_EXTERNAL_CRUSTAL_MODEL)
 
+  use constants
   use model_sea1d_par
 
   implicit none
-
-  include "constants.h"
 
   logical :: USE_EXTERNAL_CRUSTAL_MODEL
 

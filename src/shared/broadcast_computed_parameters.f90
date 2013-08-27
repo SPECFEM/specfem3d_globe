@@ -25,135 +25,54 @@
 !
 !=====================================================================
 
-  subroutine broadcast_computed_parameters()
-!                myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-!                NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-!                NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-!                NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-!                NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!                NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-!                NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-!                MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-!                DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-!                CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-!                RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!                R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-!                MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-!                RMOHO_FICTITIOUS_IN_MESHER, &
-!                MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!                SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
-!                SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT, &
-!                OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!                ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-!                LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-!                NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-!                NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
-!                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-!                NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-!                ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
-!                this_region_has_a_doubling,rmins,rmaxs, &
-!                ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-!                DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-!                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-!                HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-!                ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-!                ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
-!
+  subroutine broadcast_computed_parameters(myrank)
 
   use constants
   use shared_parameters
 
   implicit none
 
-  integer myrank
-
-  ! parameters read from parameter file
-!  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-!          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-!          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-!          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-!          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-!          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-!          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
-
-!  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-!          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-!          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-!          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-!          RMOHO_FICTITIOUS_IN_MESHER
-
-!  logical MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
-!          SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
-!          OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
-!          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE
-
-!  character(len=150) LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+  integer,intent(in) :: myrank
 
   ! local parameters
-  integer :: NSOURCES
-
-  ! parameters to be computed based upon parameters above read from file
-!  integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
-!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
-!      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-!      NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-!      NGLOB
-
-!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array,ner
-!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-
-!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-
-!  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
-!  integer ratio_divide_central_cube
-
-  ! for the cut doublingbrick improvement
-!  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-!  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-!  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-
-  ! mesh model parameters
-!  integer REFERENCE_1D_MODEL,THREE_D_MODEL
-
-!  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-!    HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-!    ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-!    ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE
-
   ! broadcast parameter arrays
-  integer, parameter :: nparam_dp = 32
-  double precision, dimension(nparam_dp) :: bcast_double_precision
-
-  integer, parameter :: nparam_i = 45
+  integer, parameter :: nparam_i = 44
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 54
   logical, dimension(nparam_l) :: bcast_logical
 
-  ! master process prepares broadcasting arrays
-  if (myrank==0) then
-    ! count the total number of sources in the CMTSOLUTION file
-    call count_number_of_sources(NSOURCES)
+  integer, parameter :: nparam_dp = 32
+  double precision, dimension(nparam_dp) :: bcast_double_precision
 
+  ! initializes containers
+  bcast_integer(:) = 0
+  bcast_logical(:) = .false.
+  bcast_double_precision(:) = 0.d0
+
+  ! master process prepares broadcasting arrays
+  if( myrank == 0 ) then
     ! funny way to pass parameters in arrays from master to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
     bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
             NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-            NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-            NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-            NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-            NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
-            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
+            NER_TOP_CENTRAL_CUBE_ICB, &
+            NEX_XI,NEX_ETA, &
+            NPROC_XI,NPROC_ETA, &
+            NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            NTSTEP_BETWEEN_READ_ADJSRC, &
+            NSTEP,NSOURCES, &
+            NTSTEP_BETWEEN_FRAMES, &
+            NTSTEP_BETWEEN_OUTPUT_INFO, &
+            NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
+            SIMULATION_TYPE, &
+            REFERENCE_1D_MODEL,THREE_D_MODEL, &
+            NPROC,NPROCTOT, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
-            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NSOURCES,NOISE_TOMOGRAPHY, &
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
+            NOISE_TOMOGRAPHY, &
             NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -184,8 +103,8 @@
 
   ! broadcasts the information read on the master to the nodes
   call bcast_all_i(bcast_integer,nparam_i)
-  call bcast_all_dp(bcast_double_precision,nparam_dp)
   call bcast_all_l(bcast_logical,nparam_l)
+  call bcast_all_dp(bcast_double_precision,nparam_dp)
 
   ! broadcasts non-single value parameters
   call bcast_all_ch(LOCAL_PATH,150)
@@ -219,8 +138,12 @@
   call bcast_all_i(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
   call bcast_all_i(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
 
+  ! debug
+  !print*,'rank:',myrank,'bcast_integer:',bcast_integer(:)
+  !print*
+
   ! non-master processes set their parameters
-  if (myrank /= 0) then
+  if( myrank /= 0 ) then
 
     ! please, be careful with ordering and counting here
     ! integers
@@ -261,14 +184,13 @@
     MOVIE_VOLUME_TYPE = bcast_integer(35)
     MOVIE_START = bcast_integer(36)
     MOVIE_STOP = bcast_integer(37)
-    NSOURCES = bcast_integer(38)
-    NOISE_TOMOGRAPHY = bcast_integer(39)
-    NT_DUMP_ATTENUATION = bcast_integer(40)
-    ATT1 = bcast_integer(41)
-    ATT2 = bcast_integer(42)
-    ATT3 = bcast_integer(43)
-    ATT4 = bcast_integer(44)
-    ATT5 = bcast_integer(45)
+    NOISE_TOMOGRAPHY = bcast_integer(38)
+    NT_DUMP_ATTENUATION = bcast_integer(39)
+    ATT1 = bcast_integer(40)
+    ATT2 = bcast_integer(41)
+    ATT3 = bcast_integer(42)
+    ATT4 = bcast_integer(43)
+    ATT5 = bcast_integer(44)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)

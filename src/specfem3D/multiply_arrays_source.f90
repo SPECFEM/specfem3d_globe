@@ -34,9 +34,9 @@
   subroutine multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
                   G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! source arrays
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
@@ -82,9 +82,9 @@
 
   subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
   double precision, dimension(NGLLX) :: hxir

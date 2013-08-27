@@ -51,6 +51,7 @@
     write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
     write(IMAIN,*)
     if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
+    call flush_IMAIN()
   endif
   call sync_all()
 
@@ -218,6 +219,7 @@
         write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
+        call flush_IMAIN()
       endif
       call exit_mpi(myrank,'error USER_T0 is set but too small')
     endif
@@ -293,7 +295,6 @@
 
   subroutine setup_receivers()
 
-  use mpi
   use specfem_par
   use specfem_par_crustmantle
 
@@ -310,18 +311,18 @@
 
   ! allocate memory for receiver arrays
   allocate(islice_selected_rec(nrec), &
-          ispec_selected_rec(nrec), &
-          xi_receiver(nrec), &
-          eta_receiver(nrec), &
-          gamma_receiver(nrec),stat=ier)
+           ispec_selected_rec(nrec), &
+           xi_receiver(nrec), &
+           eta_receiver(nrec), &
+           gamma_receiver(nrec),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
 
   allocate(station_name(nrec), &
-          network_name(nrec), &
-          stlat(nrec), &
-          stlon(nrec), &
-          stele(nrec), &
-          stbur(nrec),stat=ier)
+           network_name(nrec), &
+           stlat(nrec), &
+           stlon(nrec), &
+           stele(nrec), &
+           stbur(nrec),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
 
   allocate(nu(NDIM,NDIM,nrec),stat=ier)
@@ -336,6 +337,7 @@
       write(IMAIN,*) 'Total number of adjoint sources = ', nrec
     endif
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! locate receivers in the crust in the mesh
@@ -413,7 +415,7 @@
     enddo
 
     ! checks if any adjoint source files found at all
-    call MPI_REDUCE(nadj_files_found,nadj_files_found_tot,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+    call sum_all_i(nadj_files_found,nadj_files_found_tot)
     if( myrank == 0 ) then
       write(IMAIN,*)
       write(IMAIN,*) '    ',nadj_files_found_tot,' adjoint component traces found in all slices'
@@ -423,7 +425,7 @@
   endif
 
   ! check that the sum of the number of receivers in each slice is nrec
-  call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call sum_all_i(nrec_local,nrec_tot_found)
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers in all slices'
@@ -432,6 +434,7 @@
     else
       write(IMAIN,*) 'this total is okay'
     endif
+    call flush_IMAIN()
   endif
 
   ! check that the sum of the number of receivers in each slice is nrec
@@ -624,9 +627,9 @@
                       NTSTEP_BETWEEN_READ_ADJSRC, &
                       iadjsrc,iadjsrc_len,iadj_vec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer NSTEP,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
 
@@ -781,9 +784,9 @@
                       hxir_store,hetar_store,hgammar_store, &
                       nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer NSOURCES,myrank
 

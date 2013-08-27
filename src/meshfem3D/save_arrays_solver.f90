@@ -26,8 +26,8 @@
 !=====================================================================
 
   subroutine save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
-                    iregion_code,xstore,ystore,zstore, &
-                    NSPEC2D_TOP,NSPEC2D_BOTTOM)
+                                iregion_code,xstore,ystore,zstore, &
+                                NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
   use constants
 
@@ -36,7 +36,8 @@
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
   use meshfem3D_par,only: &
-    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES
+    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, &
+    USE_LDDRK,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
   use create_regions_mesh_par2,only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -46,6 +47,7 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
     rmassx,rmassy,rmassz,rmass_ocean_load, &
+    b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
     normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
     jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
@@ -57,33 +59,33 @@
 
   implicit none
 
-  integer :: myrank
-  integer :: nspec,nglob
+  integer,intent(in) :: myrank
+  integer,intent(in) :: nspec,nglob
 
   ! doubling mesh flag
-  integer, dimension(nspec) :: idoubling
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(nspec),intent(in) :: idoubling
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-  integer :: iregion_code
+  integer,intent(in) :: iregion_code
 
   ! arrays with the mesh in double precision
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! boundary parameters locator
-  integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
+  integer,intent(in) :: NSPEC2D_TOP,NSPEC2D_BOTTOM
 
   ! local parameters
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array
 
   ! mesh databases
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data.bin', &
        status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data.bin file')
 
   ! save nspec and nglob, to be used in combine_paraview_data
-  write(27) nspec
-  write(27) nglob
+  write(IOUT) nspec
+  write(IOUT) nglob
 
   ! mesh topology
 
@@ -110,7 +112,7 @@
       enddo
     enddo
   enddo
-  write(27) tmp_array ! xstore
+  write(IOUT) tmp_array ! xstore
 
   !--- y coordinate
   tmp_array(:) = 0._CUSTOM_REAL
@@ -129,7 +131,7 @@
       enddo
     enddo
   enddo
-  write(27) tmp_array ! ystore
+  write(IOUT) tmp_array ! ystore
 
   !--- z coordinate
   tmp_array(:) = 0._CUSTOM_REAL
@@ -148,91 +150,89 @@
       enddo
     enddo
   enddo
-  write(27) tmp_array ! zstore
+  write(IOUT) tmp_array ! zstore
 
   deallocate(tmp_array)
 
   ! local to global indexing
-  write(27) ibool
-  write(27) idoubling
-  write(27) ispec_is_tiso
+  write(IOUT) ibool
+  write(IOUT) idoubling
+  write(IOUT) ispec_is_tiso
 
   ! local GLL points
-  write(27) xixstore
-  write(27) xiystore
-  write(27) xizstore
-  write(27) etaxstore
-  write(27) etaystore
-  write(27) etazstore
-  write(27) gammaxstore
-  write(27) gammaystore
-  write(27) gammazstore
+  write(IOUT) xixstore
+  write(IOUT) xiystore
+  write(IOUT) xizstore
+  write(IOUT) etaxstore
+  write(IOUT) etaystore
+  write(IOUT) etazstore
+  write(IOUT) gammaxstore
+  write(IOUT) gammaystore
+  write(IOUT) gammazstore
 
-  write(27) rhostore
-  write(27) kappavstore
+  write(IOUT) rhostore
+  write(IOUT) kappavstore
 
   ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
 
     ! note: muvstore needed for Q_mu shear attenuation in inner core
     if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-      write(27) muvstore
+      write(IOUT) muvstore
     endif
 
     !   save anisotropy in the mantle only
     if(TRANSVERSE_ISOTROPY) then
       if(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
-        write(27) kappahstore
-        write(27) muhstore
-        write(27) eta_anisostore
+        write(IOUT) kappahstore
+        write(IOUT) muhstore
+        write(IOUT) eta_anisostore
       endif
     endif
 
     !   save anisotropy in the inner core only
     if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-      write(27) c11store
-      write(27) c33store
-      write(27) c12store
-      write(27) c13store
-      write(27) c44store
+      write(IOUT) c11store
+      write(IOUT) c33store
+      write(IOUT) c12store
+      write(IOUT) c13store
+      write(IOUT) c44store
     endif
 
     if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-        write(27) c11store
-        write(27) c12store
-        write(27) c13store
-        write(27) c14store
-        write(27) c15store
-        write(27) c16store
-        write(27) c22store
-        write(27) c23store
-        write(27) c24store
-        write(27) c25store
-        write(27) c26store
-        write(27) c33store
-        write(27) c34store
-        write(27) c35store
-        write(27) c36store
-        write(27) c44store
-        write(27) c45store
-        write(27) c46store
-        write(27) c55store
-        write(27) c56store
-        write(27) c66store
+        write(IOUT) c11store
+        write(IOUT) c12store
+        write(IOUT) c13store
+        write(IOUT) c14store
+        write(IOUT) c15store
+        write(IOUT) c16store
+        write(IOUT) c22store
+        write(IOUT) c23store
+        write(IOUT) c24store
+        write(IOUT) c25store
+        write(IOUT) c26store
+        write(IOUT) c33store
+        write(IOUT) c34store
+        write(IOUT) c35store
+        write(IOUT) c36store
+        write(IOUT) c44store
+        write(IOUT) c45store
+        write(IOUT) c46store
+        write(IOUT) c55store
+        write(IOUT) c56store
+        write(IOUT) c66store
     endif
 
   endif
 
   ! Stacey
   if(ABSORBING_CONDITIONS) then
-
     if(iregion_code == IREGION_CRUST_MANTLE) then
-      write(27) rho_vp
-      write(27) rho_vs
+      write(IOUT) rho_vp
+      write(IOUT) rho_vs
     else if(iregion_code == IREGION_OUTER_CORE) then
-      write(27) rho_vp
+      write(IOUT) rho_vp
     endif
-
   endif
 
   ! mass matrices
@@ -243,71 +243,87 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
-     write(27) rmassx
-     write(27) rmassy
+  if(.not. USE_LDDRK)then
+    if((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+       write(IOUT) rmassx
+       write(IOUT) rmassy
+    endif
   endif
 
-  write(27) rmassz
+  write(IOUT) rmassz
+
+  ! mass matrices for backward simulation when ROTATION is .true.
+  if(.not. USE_LDDRK)then
+    if(EXACT_MASS_MATRIX_FOR_ROTATION)then
+      if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+         (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+         write(IOUT) b_rmassx
+         write(IOUT) b_rmassy
+      endif
+    endif
+  endif
+
 
   ! additional ocean load mass matrix if oceans and if we are in the crust
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
+  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(IOUT) rmass_ocean_load
 
-  close(27) ! solver_data.bin
+  close(IOUT) ! solver_data.bin
 
   ! absorbing boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'boundary.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
 
-  write(27) nspec2D_xmin
-  write(27) nspec2D_xmax
-  write(27) nspec2D_ymin
-  write(27) nspec2D_ymax
-  write(27) NSPEC2D_BOTTOM
-  write(27) NSPEC2D_TOP
+  write(IOUT) nspec2D_xmin
+  write(IOUT) nspec2D_xmax
+  write(IOUT) nspec2D_ymin
+  write(IOUT) nspec2D_ymax
+  write(IOUT) NSPEC2D_BOTTOM
+  write(IOUT) NSPEC2D_TOP
 
-  write(27) ibelm_xmin
-  write(27) ibelm_xmax
-  write(27) ibelm_ymin
-  write(27) ibelm_ymax
-  write(27) ibelm_bottom
-  write(27) ibelm_top
+  write(IOUT) ibelm_xmin
+  write(IOUT) ibelm_xmax
+  write(IOUT) ibelm_ymin
+  write(IOUT) ibelm_ymax
+  write(IOUT) ibelm_bottom
+  write(IOUT) ibelm_top
 
-  write(27) normal_xmin
-  write(27) normal_xmax
-  write(27) normal_ymin
-  write(27) normal_ymax
-  write(27) normal_bottom
-  write(27) normal_top
+  write(IOUT) normal_xmin
+  write(IOUT) normal_xmax
+  write(IOUT) normal_ymin
+  write(IOUT) normal_ymax
+  write(IOUT) normal_bottom
+  write(IOUT) normal_top
 
-  write(27) jacobian2D_xmin
-  write(27) jacobian2D_xmax
-  write(27) jacobian2D_ymin
-  write(27) jacobian2D_ymax
-  write(27) jacobian2D_bottom
-  write(27) jacobian2D_top
+  write(IOUT) jacobian2D_xmin
+  write(IOUT) jacobian2D_xmax
+  write(IOUT) jacobian2D_ymin
+  write(IOUT) jacobian2D_ymax
+  write(IOUT) jacobian2D_bottom
+  write(IOUT) jacobian2D_top
 
-  close(27)
+  close(IOUT)
 
   if(ATTENUATION) then
-    open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
+    open(unit=IOUT, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
-    write(27) tau_s
-    write(27) tau_e_store
-    write(27) Qmu_store
-    write(27) T_c_source
-    close(27)
+    write(IOUT) tau_s
+    write(IOUT) tau_e_store
+    write(IOUT) Qmu_store
+    write(IOUT) T_c_source
+    close(IOUT)
   endif
 
   if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-    open(unit=27,file=prname(1:len_trim(prname))//'dvp.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'dvp.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
 
-    write(27) dvpstore
-    close(27)
+    write(IOUT) dvpstore
+    close(IOUT)
   endif
 
   ! uncomment for vp & vs model storage
@@ -352,71 +368,71 @@
 
   ! isotropic model
   ! vp
-  open(unit=27,file=prname(1:len_trim(prname))//'vp.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'vp.bin', &
        status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening vp.bin file')
 
-  write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
-  close(27)
+  write(IOUT) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
+  close(IOUT)
   ! vs
-  open(unit=27,file=prname(1:len_trim(prname))//'vs.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'vs.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening vs.bin file')
 
-  write(27) sqrt( muvstore/rhostore )*scaleval1
-  close(27)
+  write(IOUT) sqrt( muvstore/rhostore )*scaleval1
+  close(IOUT)
   ! rho
-  open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
 
-  write(27) rhostore*scaleval2
-  close(27)
+  write(IOUT) rhostore*scaleval2
+  close(IOUT)
 
   ! transverse isotropic model
   if( TRANSVERSE_ISOTROPY ) then
     ! vpv
-    open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'vpv.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening vpv.bin file')
 
-    write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
-    close(27)
+    write(IOUT) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
+    close(IOUT)
     ! vph
-    open(unit=27,file=prname(1:len_trim(prname))//'vph.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'vph.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening vph.bin file')
 
-    write(27) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
-    close(27)
+    write(IOUT) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
+    close(IOUT)
     ! vsv
-    open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'vsv.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening vsv.bin file')
 
-    write(27) sqrt( muvstore/rhostore )*scaleval1
-    close(27)
+    write(IOUT) sqrt( muvstore/rhostore )*scaleval1
+    close(IOUT)
     ! vsh
-    open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'vsh.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening vsh.bin file')
 
-    write(27) sqrt( muhstore/rhostore )*scaleval1
-    close(27)
+    write(IOUT) sqrt( muhstore/rhostore )*scaleval1
+    close(IOUT)
     ! rho
-    open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
 
-    write(27) rhostore*scaleval2
-    close(27)
+    write(IOUT) rhostore*scaleval2
+    close(IOUT)
     ! eta
-    open(unit=27,file=prname(1:len_trim(prname))//'eta.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'eta.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening eta.bin file')
 
-    write(27) eta_anisostore
-    close(27)
+    write(IOUT) eta_anisostore
+    close(IOUT)
   endif ! TRANSVERSE_ISOTROPY
 
   ! shear attenuation
@@ -426,23 +442,14 @@
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
     if( ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE ) then
       ! attenuation arrays are fully 3D
-      if(CUSTOM_REAL == SIZE_REAL) then
-        temp_store(:,:,:,:) = sngl(Qmu_store(:,:,:,:))
-      else
-        temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
-      endif
+      temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
     else
       ! attenuation array dimensions: Q_mustore(1,1,1,nspec)
       do ispec = 1,nspec
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
-              ! distinguish between single and double precision for reals
-              if(CUSTOM_REAL == SIZE_REAL) then
-                temp_store(i,j,k,ispec) = sngl(Qmu_store(1,1,1,ispec))
-              else
-                temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
-              endif
+              temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
             enddo
           enddo
         enddo
@@ -450,12 +457,12 @@
     endif
 
     ! Qmu
-    open(unit=27,file=prname(1:len_trim(prname))//'qmu.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'qmu.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening qmu.bin file')
 
-    write(27) temp_store
-    close(27)
+    write(IOUT) temp_store
+    close(IOUT)
 
     ! frees temporary memory
     deallocate(temp_store)
@@ -472,7 +479,7 @@
   use meshfem3D_par,only: &
     myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
-    ADIOS_FOR_MPI_ARRAYS
+    ADIOS_ENABLED,ADIOS_FOR_MPI_ARRAYS
 
 !  use create_MPI_interfaces_par
 
@@ -487,7 +494,7 @@
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
-    if (ADIOS_FOR_MPI_ARRAYS) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
       call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
           my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
@@ -509,7 +516,7 @@
 
   case( IREGION_OUTER_CORE )
     ! outer core
-    if (ADIOS_FOR_MPI_ARRAYS) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
       call save_MPI_arrays_adios(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
           num_interfaces_outer_core,max_nibool_interfaces_oc, &
           my_neighbours_outer_core,nibool_interfaces_outer_core, &
@@ -531,7 +538,7 @@
 
   case( IREGION_INNER_CORE )
     ! inner core
-    if (ADIOS_FOR_MPI_ARRAYS) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
       call save_MPI_arrays_adios(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
           num_interfaces_inner_core,max_nibool_interfaces_ic, &
           my_neighbours_inner_core,nibool_interfaces_inner_core, &
@@ -567,9 +574,9 @@
                                   num_phase_ispec,phase_ispec_inner, &
                                   num_colors_outer,num_colors_inner, &
                                   num_elem_colors)
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: iregion_code,myrank
 
@@ -636,6 +643,8 @@
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
 
+  use constants,only: IOUT
+
   use meshfem3d_par,only: &
     myrank
 
@@ -666,26 +675,26 @@
            call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
   ! writing surface topology databases
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
        status='unknown',form='unformatted',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
 
-  write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
+  write(IOUT) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
 
-  write(27) ibelm_moho_top
-  write(27) ibelm_moho_bot
+  write(IOUT) ibelm_moho_top
+  write(IOUT) ibelm_moho_bot
 
-  write(27) ibelm_400_top
-  write(27) ibelm_400_bot
+  write(IOUT) ibelm_400_top
+  write(IOUT) ibelm_400_bot
 
-  write(27) ibelm_670_top
-  write(27) ibelm_670_bot
+  write(IOUT) ibelm_670_top
+  write(IOUT) ibelm_670_bot
 
-  write(27) normal_moho
-  write(27) normal_400
-  write(27) normal_670
+  write(IOUT) normal_moho
+  write(IOUT) normal_400
+  write(IOUT) normal_670
 
-  close(27)
+  close(IOUT)
 
   end subroutine save_arrays_solver_boundary
 

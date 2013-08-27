@@ -54,13 +54,13 @@ specfem3D_OBJECTS = \
 # values_from_mesher.h
 specfem3D_OBJECTS += \
 	$O/specfem3D_par.solverstatic.o \
-	$O/check_simulation_stability.solverstatic.o \
+	$O/check_stability.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
 	$O/compute_boundary_kernel.solverstatic.o \
 	$O/compute_coupling.solverstatic.o \
 	$O/compute_element.solverstatic.o \
-	$O/compute_forces_acoustic.solverstatic.o \
-	$O/compute_forces_elastic.solverstatic.o \
+	$O/compute_forces_acoustic_calling_routine.solverstatic.o \
+	$O/compute_forces_viscoelastic_calling_routine.solverstatic.o \
 	$O/compute_forces_crust_mantle_noDev.solverstatic.o \
 	$O/compute_forces_crust_mantle_Dev.solverstatic.o \
 	$O/compute_forces_inner_core_noDev.solverstatic.o \
@@ -108,7 +108,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
-	$O/exit_mpi.sharedmpi.o \
+	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
@@ -121,6 +121,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/make_gravity.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
@@ -177,8 +178,14 @@ endif
 ###
 
 adios_OBJECTS = \
-  $O/adios_helpers.shared.o \
-  $O/adios_manager.shared.o \
+	$O/adios_helpers.shared.o \
+	$O/adios_manager.shared.o \
+	$O/read_arrays_solver_adios.solverstatic.o \
+	$O/read_attenuation_adios.solverstatic.o \
+	$O/read_forward_arrays_adios.solverstatic.o \
+	$O/read_mesh_databases_adios.solverstatic.o \
+	$O/save_forward_arrays_adios.solverstatic.o \
+	$O/write_specfem_adios_header.solverstatic.o \
 	$(EMPTY_MACRO)
 
 adios_STUBS = \

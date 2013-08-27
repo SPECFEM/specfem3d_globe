@@ -126,15 +126,6 @@
   double precision,dimension(NR) :: rspl,espl,espl2
   integer :: nspl
 
-! model parameter and flags
-!  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
-!  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS
-!  logical :: HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY
-!  logical :: ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE
-!  logical :: ATTENUATION,ATTENUATION_3D
-!  logical :: ANISOTROPIC_INNER_CORE
-
-
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
@@ -159,8 +150,8 @@
   ! correct number of spectral elements in each block depending on chunk type
   integer :: npointot
 
-  ! proc numbers for MPI
-  integer :: myrank,sizeprocs
+  ! proc number for MPI process
+  integer :: myrank
 
   ! check area and volume of the final mesh
   double precision :: volume_total
@@ -183,48 +174,6 @@
   ! addressing for all the slices
   integer, dimension(:), allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
   integer, dimension(:,:,:), allocatable :: addressing
-
-  ! parameters read from parameter file
-!  integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-!          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-!          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-!          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-!          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-!          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-!          NCHUNKS,SIMULATION_TYPE, &
-!          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
-
-!  double precision :: DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-!          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-!          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-!          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-!          RMOHO_FICTITIOUS_IN_MESHER
-
-!  logical :: MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-!          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
-!          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-!          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
-
-!  character(len=150) :: OUTPUT_FILES
-!  character(len=150) :: LOCAL_PATH,LOCAL_TMP_PATH,MODEL
-
-  ! parameters deduced from parameters read from file
-!  integer :: NPROC,NPROCTOT
-!  integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
-
-  integer :: NSOURCES
-
-
-  ! computed in read_compute_parameters
-!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-!  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
   ! memory size of all the static arrays
   double precision :: static_memory_size
@@ -252,10 +201,6 @@
   ! 1 -> min, 2 -> max
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
 
-!  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-!  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-!  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-
   ! arrays with the mesh in double precision
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
   ! parameters needed to store the radii of the grid points
@@ -265,13 +210,6 @@
 
   ! this for non blocking MPI
   logical, dimension(:), allocatable :: is_on_a_slice_edge
-  !-----------------------------------------------------------------
-  ! ADIOS
-  !-----------------------------------------------------------------
-
-!  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-!      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, &
-!      ADIOS_FOR_AVS_DX
 
   end module meshfem3D_par
 
@@ -344,6 +282,9 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz
   integer :: nglob_xy
 
+  ! mass matrices for backward simulation when ROTATION is .true.
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx,b_rmassy
+
   ! mass matrix and bathymetry for ocean load
   integer :: nglob_oceans
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
@@ -371,8 +312,8 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
   ! attenuation
-  double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
-  double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),   allocatable :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store
   double precision, dimension(N_SLS) :: tau_s
   double precision :: T_c_source
 

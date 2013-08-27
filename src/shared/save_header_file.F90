@@ -55,6 +55,7 @@
 ! ****************************************************************************************************
 !
 
+  use constants
   use shared_parameters,only: TOPOGRAPHY, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ELLIPTICITY,GRAVITY,ROTATION, &
@@ -72,8 +73,6 @@
     MOVIE_VOLUME
 
   implicit none
-
-  include "constants.h"
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
@@ -556,7 +555,7 @@
      NGLOB_XY_CM = 1
   endif
 
-  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if( .not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
     if(ROTATION) then
       NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
       NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)

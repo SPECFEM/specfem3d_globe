@@ -30,11 +30,11 @@
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
 ! Stacey, define flags for absorbing boundaries
-  use meshfem3D_par, only: ADIOS_FOR_ARRAYS_SOLVER
+
+  use constants
+  use meshfem3D_par, only: ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER
 
   implicit none
-
-  include "constants.h"
 
   integer :: nspec,myrank,iregion
 
@@ -137,7 +137,7 @@
   ! save these temporary arrays for the solver for Stacey conditions
   ! This files will be saved with the help of ADIOS if the
   ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
         nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
   else

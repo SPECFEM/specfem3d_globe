@@ -44,9 +44,9 @@
                                   first_elem_number_in_this_color, &
                                   myrank)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec, nglob
   logical, dimension(nspec), intent(in) :: is_on_a_slice_edge
@@ -81,6 +81,7 @@
     write(IMAIN,*) '       number of elements for outer elements  = ',nspec_outer
     write(IMAIN,*) '       number of elements for inner elements  = ',nspec_inner
     write(IMAIN,*) '       total number of elements for domain elements  = ',nspec_domain
+    call flush_IMAIN()
   endif
 
   ! total number of colors used
@@ -104,9 +105,9 @@
                              color, nb_colors_outer_elements, nb_colors_inner_elements, &
                              nspec_outer,nspec_inner,nspec_domain)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspec,nglob
   logical, dimension(nspec) :: is_on_a_slice_edge,ispec_is_d
@@ -143,6 +144,7 @@
     else
       write(IMAIN,*) '     fast coloring mesh algorithm'
     endif
+    call flush_IMAIN()
   endif
 
   ! counts number of elements for inner, outer and total domain
@@ -408,9 +410,9 @@
                                 myrank, nspec, nglob, &
                                 maxval_count_ibool_outer,maxval_count_ibool_inner)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,nglob
 
@@ -499,6 +501,7 @@
   if( myrank == 0 ) then
     write(IMAIN,*) '     maximum valence (i.e. minimum possible nb of colors) for outer = ',maxval_count_ibool_outer
     write(IMAIN,*) '     maximum valence (i.e. minimum possible nb of colors) for inner = ',maxval_count_ibool_inner
+    call flush_IMAIN()
   endif
 
   deallocate(count_ibool)
@@ -515,9 +518,9 @@
                                   nspec_outer,nspec_inner,maxval_count_ibool_inner, &
                                   mask_ibool,fail_safe)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,nglob
 
@@ -549,6 +552,7 @@
     write(IMAIN,*) '       initial number of outer element colors = ',nb_colors_outer_elements
     write(IMAIN,*) '       initial number of inner element colors = ',nb_colors_inner_elements
     write(IMAIN,*) '       initial number of total colors = ',nb_colors_outer_elements + nb_colors_inner_elements
+    call flush_IMAIN()
   endif
 
   ! initial guess of number of colors needed
@@ -688,6 +692,7 @@
     if( nb_colors_inner_elements > 0 ) &
       write(IMAIN,*) '     typical nb of elements per color for inner elements should be ', &
         nspec_inner / nb_colors_inner_elements
+    call flush_IMAIN()
   endif
 
 
@@ -702,9 +707,9 @@
                                   color, nb_colors_outer_elements, nb_colors_inner_elements, &
                                   nspec_outer,nspec_inner,mask_ibool)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,nglob
 
@@ -734,6 +739,7 @@
     write(IMAIN,*) '       number of outer element colors = ',nb_colors_outer_elements
     write(IMAIN,*) '       number of inner element colors = ',nb_colors_inner_elements
     write(IMAIN,*) '       number of total colors = ',nb_colors_outer_elements + nb_colors_inner_elements
+    call flush_IMAIN()
   endif
 
   ! balances colors in postprocess if Droux (1993) is not used
@@ -1009,6 +1015,8 @@
                             nspec,nb_colors,nb_colors_outer_elements, &
                             ispec_is_d,nspec_domain)
 
+  implicit none
+
   integer, intent(in) :: nspec,nb_colors
 
   integer,dimension(nspec), intent(in) :: color
@@ -1079,9 +1087,9 @@
 
   subroutine permute_elements_real(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1105,13 +1113,105 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real1(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real1
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real_sls(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real_sls
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real_sls1(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(N_SLS,1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real_sls1
+
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 ! implement permutation of elements for arrays of integer type
 
   subroutine permute_elements_integer(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1139,9 +1239,9 @@
 
   subroutine permute_elements_dble(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1169,9 +1269,9 @@
 
   subroutine permute_elements_logical1D(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1198,9 +1298,9 @@
 
   subroutine permute_elements_integer1D(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1228,9 +1328,9 @@
 
   subroutine permute_elements_dble1(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1258,9 +1358,9 @@
 
   subroutine permute_elements_dble_sls(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
@@ -1288,9 +1388,9 @@
 
   subroutine permute_elements_dble_sls1(array_to_permute,temp_array,perm,nspec)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm

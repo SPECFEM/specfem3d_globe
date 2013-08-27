@@ -34,9 +34,9 @@
 
 ! leave sorting subroutines in same source file to allow for inlining
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! input parameters
   integer, intent(in) :: npointot,nspec
@@ -145,9 +145,9 @@
 !- we can create a new indirect addressing to reduce cache misses
 ! (put into this subroutine but compiler keeps on complaining that it can't vectorize loops...)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer,intent(in) :: nspec,nglob
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool

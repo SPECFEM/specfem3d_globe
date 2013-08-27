@@ -29,7 +29,9 @@
 
 module constants_solver
 
-  include "constants.h"
+  use constants
+
+  implicit none
 
   ! include values created by the mesher
   ! done for performance only using static allocation to allow for loop unrolling
@@ -44,6 +46,7 @@ module specfem_par
 ! main parameter module for specfem simulations
 
   use constants_solver
+
   use shared_parameters
 
   implicit none
@@ -138,7 +141,7 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! parameters for the source
-  integer :: NSOURCES,nsources_local
+  integer :: nsources_local
   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
   double precision, dimension(:,:,:) ,allocatable:: nu_source
@@ -198,56 +201,11 @@ module specfem_par
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
   character(len=20) :: event_name_SAC
 
-  !-----------------------------------------------------------------
-  ! file parameters
-  !-----------------------------------------------------------------
-
-  ! parameters read from parameter file
-!  double precision DT,ROCEAN,RMIDDLE_CRUST, &
-!          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!          RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-!          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-!          ANGULAR_WIDTH_XI_IN_DEGREES
-
-!  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-!          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-!          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-!          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-!          NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
-!          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-!          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-!          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
-
-!  integer NT_DUMP_ATTENUATION
-
-!  logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-!          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
-!          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
-!          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
-
+  ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN
-
-!  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
   ! process/partition name
   character(len=150) :: prname
-
-
-  !-----------------------------------------------------------------
-  ! mesh
-  !-----------------------------------------------------------------
-
-  ! this for all the regions
-!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
-
-  ! computed in read_compute_parameters
-!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-!  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-!  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-!  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
   !-----------------------------------------------------------------
   ! MPI partitions
@@ -307,14 +265,6 @@ module specfem_par
 
   ! CUDA mesh pointer<->integer wrapper
   integer(kind=8) :: Mesh_pointer
-!  logical :: GPU_MODE
-
-  !-----------------------------------------------------------------
-  ! ADIOS
-  !-----------------------------------------------------------------
-
-!  logical :: ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, &
-!      ADIOS_FOR_ARRAYS_SOLVER, ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX
 
   !-----------------------------------------------------------------
   ! time scheme
@@ -381,10 +331,16 @@ module specfem_par_crustmantle
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle,rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassz_crust_mantle
-!  integer :: NGLOB_XY_CM
+
+!daniel debug: static
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassx_crust_mantle
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassy_crust_mantle
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -534,6 +490,15 @@ module specfem_par_innercore
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_inner_core,rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_inner_core,b_rmassy_inner_core
+
+! daniel debug: static
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassx_inner_core
+!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassy_inner_core
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &

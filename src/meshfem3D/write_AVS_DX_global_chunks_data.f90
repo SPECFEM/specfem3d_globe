@@ -34,9 +34,9 @@
                 RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                 RMIDDLE_CRUST,ROCEAN,iregion_code)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: myrank
 

@@ -42,6 +42,8 @@
 !! the simulation. These values come form the following files :
 !! DATA/Par_file, DATA/CMTSOLUTION, DATA/STATIONS
 subroutine write_specfem_header_adios()
+
+  use constants
   use mpi
   use adios_write_mod
   use specfem_par, only : myrank, NSOURCES
@@ -49,31 +51,10 @@ subroutine write_specfem_header_adios()
   use shared_input_parameters
 
   implicit none
-  include "constants.h"
 
   !-------------------------------------------------------------------
   ! local parameters
   !-------------------------------------------------------------------
-  ! parameters read from parameter file (cf. DATA/Par_file)
-!  integer  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,        &
-!      NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,        &
-!      NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, MOVIE_VOLUME_TYPE,           &
-!      MOVIE_START,MOVIE_STOP, NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,               &
-!      NOISE_TOMOGRAPHY
-
-!  double precision :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-!      CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,                  &
-!      GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,         &
-!      MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,           &
-!      RECORD_LENGTH_IN_MINUTES
-
-!  logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, MOVIE_SURFACE,    &
-!      MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,                      &
-!      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION, &
-!      ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
-!      OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
-!      ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
-!      SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
   ! values from CMTSOLUTION -------------------------------
   ! integer          :: NSOURCES -> in specfem_par module
@@ -89,8 +70,6 @@ subroutine write_specfem_header_adios()
   integer :: station_name_length, network_name_length ! for later reading
   character(len=:),   allocatable :: station_name, network_name
   double precision, allocatable, dimension(:) :: stlat, stlon, stele, stbur
-
-!  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
   ! Adios variables
   integer                 :: adios_err
@@ -118,24 +97,6 @@ subroutine write_specfem_header_adios()
     !--*** Values read from DATA/Par_file ***
     ! extract all unmodified values from the Par_file
     call read_parameter_file()
-!        OUTPUT_FILES,                                     &
-!        LOCAL_PATH, LOCAL_TMP_PATH, MODEL,                                     &
-!        NTSTEP_BETWEEN_OUTPUT_SEISMOS, NTSTEP_BETWEEN_READ_ADJSRC,             &
-!        NTSTEP_BETWEEN_FRAMES, NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS,     &
-!        NUMBER_OF_THIS_RUN, NCHUNKS, SIMULATION_TYPE, MOVIE_VOLUME_TYPE,       &
-!        MOVIE_START, MOVIE_STOP, NEX_XI, NEX_ETA, NPROC_XI, NPROC_ETA,         &
-!        ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES,             &
-!        CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES,               &
-!        GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM,     &
-!        RECORD_LENGTH_IN_MINUTES, MOVIE_EAST_DEG, MOVIE_WEST_DEG,              &
-!        MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, ELLIPTICITY, GRAVITY, ROTATION,      &
-!        TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE,         &
-!        RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,  &
-!        ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD,      &
-!        OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                &
-!        OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                      &
-!        WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,             &
-!        USE_BINARY_FOR_LARGE_FILE, NOISE_TOMOGRAPHY)
 
     model_length = len(MODEL)
     ! define adios variables for the Par_file

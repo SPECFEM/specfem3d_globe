@@ -28,9 +28,9 @@
 ! get backazimuth baz from event and station coordinates the, phe, ths and phs
   subroutine get_backazimuth(the,phe,ths,phs,baz)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision the, phe
   double precision ths, phs

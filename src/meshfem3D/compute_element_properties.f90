@@ -35,8 +35,8 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                         vx,vy,vz,rho_vp,rho_vs,&
+                         nspec_ani,nspec_stacey, &
+                         rho_vp,rho_vs,&
                          xigll,yigll,zigll,ispec_is_tiso)
 
   use meshfem3D_models_par
@@ -86,24 +86,6 @@
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
-
-! attenuation
-  integer :: vx,vy,vz,nspec_att
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  double precision, dimension(vx,vy,vz,nspec_att) :: Qmu_store
-  double precision, dimension(N_SLS,vx,vy,vz,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision :: T_c_source
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
   double precision :: xigll(NGLLX)
@@ -197,17 +179,15 @@
   ! (only needed for second meshing phase)
   if( ipass == 2 ) then
     call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
-                      kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                      rhostore,dvpstore,nspec_ani, &
-                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                      nspec_stacey,rho_vp,rho_vs, &
-                      xstore,ystore,zstore, &
-                      rmin,rmax, &
-                      tau_s,tau_e_store,Qmu_store,T_c_source, &
-                      size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5), &
-                      elem_in_crust,elem_in_mantle)
+                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                   rhostore,dvpstore,nspec_ani, &
+                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                   nspec_stacey,rho_vp,rho_vs, &
+                   xstore,ystore,zstore, &
+                   rmin,rmax, &
+                   elem_in_crust,elem_in_mantle)
 
   endif
 

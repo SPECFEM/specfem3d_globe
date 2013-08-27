@@ -68,7 +68,8 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   use meshfem3D_par,only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, LOCAL_PATH, &
-    ADIOS_FOR_SOLVER_MESHFILES
+    ADIOS_ENABLED,ADIOS_FOR_SOLVER_MESHFILES, &
+    USE_LDDRK,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
   use create_regions_mesh_par2,only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -78,6 +79,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
     rmassx,rmassy,rmassz,rmass_ocean_load, &
+    b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
     normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
     jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
@@ -284,16 +286,33 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   endif
 
   local_dim = nglob_xy
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. &
-      iregion_code == IREGION_CRUST_MANTLE) then
-    call define_adios_global_real_1d_array(adios_group, "rmassx", &
-        local_dim, group_size_inc)
-    call define_adios_global_real_1d_array(adios_group, "rmassy", &
-        local_dim, group_size_inc)
+  if(.not. USE_LDDRK)then
+    if((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+      call define_adios_global_real_1d_array(adios_group, "rmassx", &
+          local_dim, group_size_inc)
+      call define_adios_global_real_1d_array(adios_group, "rmassy", &
+          local_dim, group_size_inc)
+    endif
   endif
   local_dim = nglob
   call define_adios_global_real_1d_array(adios_group, "rmassz", &
       local_dim, group_size_inc)
+
+  ! mass matrices for backward simulation when ROTATION is .true.
+  local_dim = nglob_xy
+  if(.not. USE_LDDRK)then
+    if(EXACT_MASS_MATRIX_FOR_ROTATION)then
+      if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+         (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+        call define_adios_global_real_1d_array(adios_group, "b_rmassx", &
+            local_dim, group_size_inc)
+        call define_adios_global_real_1d_array(adios_group, "b_rmassy", &
+            local_dim, group_size_inc)
+      endif
+    endif
+  endif
 
   local_dim = nglob_oceans
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -655,18 +674,22 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     endif
   endif
 
+  ! mass matrices
   local_dim = nglob_xy
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. &
-      iregion_code == IREGION_CRUST_MANTLE) then
-    call adios_set_path (adios_handle, "rmassx", adios_err)
-    call write_1D_global_array_adios_dims(adios_handle, myrank, &
-        local_dim, sizeprocs)
-    call adios_write(adios_handle, "array", rmassx, adios_err)
+  if(.not. USE_LDDRK)then
+    if((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+      call adios_set_path (adios_handle, "rmassx", adios_err)
+      call write_1D_global_array_adios_dims(adios_handle, myrank, &
+          local_dim, sizeprocs)
+      call adios_write(adios_handle, "array", rmassx, adios_err)
 
-    call adios_set_path (adios_handle, "rmassy", adios_err)
-    call write_1D_global_array_adios_dims(adios_handle, myrank, &
-        local_dim, sizeprocs)
-    call adios_write(adios_handle, "array", rmassy, adios_err)
+      call adios_set_path (adios_handle, "rmassy", adios_err)
+      call write_1D_global_array_adios_dims(adios_handle, myrank, &
+          local_dim, sizeprocs)
+      call adios_write(adios_handle, "array", rmassy, adios_err)
+    endif
   endif
 
   local_dim = nglob
@@ -675,6 +698,26 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
       local_dim, sizeprocs)
   call adios_write(adios_handle, "array", rmassz, adios_err)
 
+  ! mass matrices for backward simulation when ROTATION is .true.
+  local_dim = nglob_xy
+  if(.not. USE_LDDRK)then
+    if(EXACT_MASS_MATRIX_FOR_ROTATION)then
+      if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+         (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+        call adios_set_path (adios_handle, "b_rmassx", adios_err)
+        call write_1D_global_array_adios_dims(adios_handle, myrank, &
+            local_dim, sizeprocs)
+        call adios_write(adios_handle, "array", b_rmassx, adios_err)
+
+        call adios_set_path (adios_handle, "b_rmassy", adios_err)
+        call write_1D_global_array_adios_dims(adios_handle, myrank, &
+            local_dim, sizeprocs)
+        call adios_write(adios_handle, "array", b_rmassy, adios_err)
+      endif
+    endif
+  endif
+
+  ! additional ocean load mass matrix if oceans and if we are in the crust
   local_dim = nglob_oceans
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
     call adios_set_path (adios_handle, "rmass_ocean_load", adios_err)
@@ -938,10 +981,10 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     call define_adios_global_double_1d_array(adios_group, "tau_s", &
         local_dim, group_size_inc)
     local_dim = size(tau_e_store)
-    call define_adios_global_double_1d_array(adios_group, "tau_e_store", &
+    call define_adios_global_real_1d_array(adios_group, "tau_e_store", &
         local_dim, group_size_inc)
     local_dim = size(Qmu_store)
-    call define_adios_global_double_1d_array(adios_group, "Qmu_store", &
+    call define_adios_global_real_1d_array(adios_group, "Qmu_store", &
         local_dim, group_size_inc)
 
     !--- Open an ADIOS handler to the restart file. ---------
@@ -1011,7 +1054,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
     ! outputs model files in binary format
-    if (ADIOS_FOR_SOLVER_MESHFILES) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_SOLVER_MESHFILES ) then
       call save_arrays_solver_meshfiles_adios(myrank,iregion_code, &
           reg_name, nspec)
     else
@@ -1210,23 +1253,14 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       ! attenuation arrays are fully 3D
-      if(CUSTOM_REAL == SIZE_REAL) then
-        temp_store(:,:,:,:) = sngl(Qmu_store(:,:,:,:))
-      else
-        temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
-      endif
+      temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
     else
       ! attenuation array dimensions: Q_mustore(1,1,1,nspec)
       do ispec = 1,nspec
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
-              ! distinguish between single and double precision for reals
-              if(CUSTOM_REAL == SIZE_REAL) then
-                temp_store(i,j,k,ispec) = sngl(Qmu_store(1,1,1,ispec))
-              else
-                temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
-              endif
+              temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
             enddo
           enddo
         enddo
@@ -1274,11 +1308,10 @@ subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
    ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
    phase_ispec_inner, num_colors_outer,num_colors_inner, num_elem_colors)
 
+  use constants
   use mpi
   use adios_write_mod
   implicit none
-
-  include "constants.h"
 
   integer :: iregion_code,myrank
   character(len=150) :: LOCAL_PATH
@@ -1431,6 +1464,7 @@ end subroutine save_MPI_arrays_adios
 subroutine save_arrays_solver_boundary_adios()
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
+  use constants
   use mpi
 
   use meshfem3d_par,only: &
@@ -1449,7 +1483,6 @@ subroutine save_arrays_solver_boundary_adios()
     prname
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   ! local parameters

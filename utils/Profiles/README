@@ -6,8 +6,8 @@ To update the program:
 Most of the code is from get_model.f90 and is marked with comments.  Copy paste the corresponding part from the most recent get_model.f90 and paste it
 into write_profile.f90.   Updated calls to subroutines may be necessary, in particular to read_compute_parameters which often changes.  Copy write_profile.f90 to the trunk directory.  Add the following lines to the Makefile:
 
-xwrite_profile: $O/write_profile.o $O/exit_mpi.o  $O/meshfem3D_models.o $(LIBSPECFEM_MESHER)
-	${MPIFCCOMPILE_CHECK} -o xwrite_profile $O/exit_mpi.o $O/write_profile.o  $O/meshfem3D_models.o $(LIBSPECFEM_MESHER) $(MPILIBS)
+xwrite_profile: $O/write_profile.o $O/exit_mpi.o $O/parallel.o  $O/meshfem3D_models.o $(LIBSPECFEM_MESHER)
+	${MPIFCCOMPILE_CHECK} -o xwrite_profile $O/exit_mpi.o $O/parallel.o $O/write_profile.o  $O/meshfem3D_models.o $(LIBSPECFEM_MESHER) $(MPILIBS)
 
 $O/write_profile.o: constants.h write_profile.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/write_profile.o ${FCFLAGS_f90} write_profile.f90

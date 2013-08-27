@@ -132,9 +132,9 @@
       xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
       NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! input -- notice here NSTEP_BLOCK is different from the NSTEP in the main program
 ! instead NSTEP_BLOCK = iadjsrc_len(it_sub_adj), the length of this specific block

@@ -104,11 +104,10 @@
 
   subroutine model_1dref(x,rho,vpv,vph,vsv,vsh,eta,Qkappa,Qmu,iregion_code,CRUSTAL)
 
+  use constants
   use model_1dref_par
 
   implicit none
-
-  include "constants.h"
 
 ! model_1dref_variables
 
@@ -203,14 +202,12 @@
 
   subroutine define_model_1dref(USE_EXTERNAL_CRUSTAL_MODEL)
 
+  use constants
   use model_1dref_par
 
   implicit none
 
-  include "constants.h"
-
   logical :: USE_EXTERNAL_CRUSTAL_MODEL
-
 
   ! define the 1D REF model of Kustowski et al. (2007)
 

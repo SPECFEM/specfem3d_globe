@@ -353,9 +353,9 @@
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            k_disc,ibelm_disc,normal_disc,b_kl,fluid_solid_boundary,NSPEC2D_DISC)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,*) :: displ,accel,b_displ
   integer nspec, iregion_code
@@ -555,10 +555,9 @@
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            ystore,zstore,ibool,ispec_is_tiso)
 
-  implicit none
+  use constants_solver
 
-  include 'constants.h'
-  include 'OUTPUT_FILES/values_from_mesher.h'
+  implicit none
 
   real(kind=CUSTOM_REAL) :: dsdx(NDIM,NDIM), sigma(NDIM,NDIM)
   integer i, j, k, ispec, iregion_code

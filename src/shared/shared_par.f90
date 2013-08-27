@@ -91,7 +91,8 @@
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION
 
   ! adjoint kernels
-  logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
+  logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY, &
+             APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
   ! gpu simulations
   logical :: GPU_MODE
@@ -120,10 +121,12 @@
   integer :: NPROC,NPROCTOT
   integer :: NPROC_XI,NPROC_ETA
 
-
   ! number of time steps
   integer :: NSTEP
   double precision :: DT
+
+  ! number of sources given in CMTSOLUTION file
+  integer :: NSOURCES
 
   ! number of elements
   integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -153,7 +156,7 @@
              CRUSTAL,ONE_CRUST,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE
   logical :: ATTENUATION_3D
   logical :: INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
-  logical :: EMULATE_ONLY
+  logical :: EMULATE_ONLY = .false.
 
 
 ! honor PREM Moho or not
