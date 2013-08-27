@@ -696,6 +696,7 @@
           write(IMAIN,*) '*****************************************************'
           write(IMAIN,*) '*****************************************************'
         endif
+        call flush_IMAIN()
 
         ! stores location for vtk visualization
         if(isource == 1) then
@@ -724,6 +725,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
+    call flush_IMAIN()
 
     ! closing sr_tmp.vtk
     close(IOVTK)
@@ -752,6 +754,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'End of source detection - done'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
   call sync_all()
 
@@ -768,9 +771,9 @@
 ! calculate a gaussian function mask in the crust_mantle region
 ! which is 0 around the source locations and 1 everywhere else
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: ispec,NSPEC,NGLOB
 
@@ -820,9 +823,9 @@
 ! saves a mask in the crust_mantle region which is 0 around the source locations
 ! and 1 everywhere else
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: myrank,NSPEC
 
@@ -835,11 +838,11 @@
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
-  open(unit=27,file=trim(prname)//'mask_source.bin', &
+  open(unit=IOUT,file=trim(prname)//'mask_source.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening mask_source.bin file')
-  write(27) mask_source
-  close(27)
+  write(IOUT) mask_source
+  close(IOUT)
 
   end subroutine save_mask_source
 
@@ -852,9 +855,9 @@
 
 ! prints source time function
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: NSOURCES,isource
 
@@ -886,6 +889,7 @@
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
+  call flush_IMAIN()
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -904,7 +908,7 @@
   endif
 
   ! output file
-  open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_time_function file')
 
@@ -936,18 +940,19 @@
     if( USE_FORCE_POINT_SOURCE ) then
       ! Ricker source time function
       f0 = hdur(isource)
-      write(27,*) sngl(dble(it-1)*DT-t0), &
+      write(IOUT,*) sngl(dble(it-1)*DT-t0), &
         sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
     else
       ! Gaussian source time function
-      write(27,*) sngl(dble(it-1)*DT-t0), &
+      write(IOUT,*) sngl(dble(it-1)*DT-t0), &
         sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
     endif
   enddo
-  close(27)
+  close(IOUT)
 
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source spectrum'
+  call flush_IMAIN()
 
   ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
   if(NSOURCES == 1) then
@@ -962,15 +967,15 @@
     endif
   endif
 
-  open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_spectrum file')
 
   do iom=1,NSAMP_PLOT_SOURCE
     om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
-    write(27,*) sngl(om/TWO_PI), &
+    write(IOUT,*) sngl(om/TWO_PI), &
       sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
   enddo
-  close(27)
+  close(IOUT)
 
   end subroutine print_stf

@@ -29,9 +29,9 @@
 
 ! convert x y z to r theta phi, single precision call
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   real(kind=CUSTOM_REAL) x,y,z,r,theta,phi
   double precision xmesh,ymesh,zmesh
@@ -77,9 +77,9 @@
 
 ! convert x y z to r theta phi, double precision call
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision x,y,z,r,theta,phi
   double precision xmesh,ymesh,zmesh
@@ -108,9 +108,9 @@
 
 ! convert r theta phi to x y z
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   real(kind=CUSTOM_REAL) x,y,z,r,theta,phi
 

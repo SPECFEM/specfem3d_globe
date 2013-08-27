@@ -37,9 +37,9 @@
 ! returns: NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE,
 !              NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer myrank
 

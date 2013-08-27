@@ -64,6 +64,7 @@ auxiliaries_SHARED_OBJECTS = \
 	$O/auto_ner.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
+	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/create_serial_name_database.shared.o \
 	$O/define_all_layers.shared.o \

@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_elastic()
+  subroutine compute_forces_viscoelastic()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -80,7 +80,6 @@
 !    endif
 !  endif
 
-
   ! ****************************************************
   !   big loop over all spectral elements in the solid
   ! ****************************************************
@@ -125,6 +124,7 @@
                alphaval,betaval,gammaval,factor_common_crust_mantle, &
                size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
                size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), .false. )
+
           ! inner core region
           call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                NSPEC_INNER_CORE_ATTENUATION, &
@@ -253,7 +253,6 @@
        call compute_forces_inner_core_cuda(Mesh_pointer,iphase)
     endif ! GPU_MODE
 
-
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
 
@@ -304,7 +303,6 @@
           call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
 
        end select
-
 
        ! ****************************************************
        ! **********  add matching with fluid part  **********
@@ -549,17 +547,18 @@
   if( OCEANS_VAL ) then
     if(.NOT. GPU_MODE) then
       ! on CPU
-      call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
-             rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
-             rmass_ocean_load,normal_top_crust_mantle, &
-             ibool_crust_mantle,ibelm_top_crust_mantle, &
-             updated_dof_ocean_load,NGLOB_XY_CM, &
-             SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-             ABSORBING_CONDITIONS)
+      call compute_coupling_ocean(accel_crust_mantle, &
+                                  rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
+                                  rmass_ocean_load,normal_top_crust_mantle, &
+                                  ibool_crust_mantle,ibelm_top_crust_mantle, &
+                                  updated_dof_ocean_load,NGLOB_XY_CM, &
+                                  NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                                  ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK)
 
     else
       ! on GPU
-      call compute_coupling_ocean_cuda(Mesh_pointer,NCHUNKS_VAL)
+      call compute_coupling_ocean_cuda(Mesh_pointer,NCHUNKS_VAL,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+                                       1) ! <- 1 == forward arrays
     endif
   endif
 
@@ -596,7 +595,7 @@
 !    endif
 !  endif
 
-  end subroutine compute_forces_elastic
+  end subroutine compute_forces_viscoelastic
 
 
 !=====================================================================

@@ -36,9 +36,9 @@
 
 ! routine to create the MPI 1D chunk buffers for edges
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,myrank
 

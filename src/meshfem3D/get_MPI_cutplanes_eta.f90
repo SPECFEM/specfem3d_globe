@@ -36,9 +36,9 @@
 ! and the right cut plane of the last slice are not used
 ! in the solver except if we want to have periodic conditions
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,myrank
 

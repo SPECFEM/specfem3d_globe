@@ -54,7 +54,7 @@
   call read_mesh_databases_IC()
 
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_mesh_databases_coupling_adios()
   else
     call read_mesh_databases_coupling()
@@ -69,7 +69,7 @@
   ! absorbing boundaries
   if(ABSORBING_CONDITIONS) then
     ! reads "stacey.bin" files
-    if (ADIOS_FOR_ARRAYS_SOLVER) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
       call read_mesh_databases_stacey_adios()
     else
       call read_mesh_databases_stacey()
@@ -84,6 +84,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for reading mesh in seconds = ',sngl(tCPU)
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine read_mesh_databases
@@ -138,11 +139,6 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-!  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-!     NGLOB_XY_CM = NGLOB_CRUST_MANTLE
-!  else
-!     NGLOB_XY_CM = 1
-!  endif
 
   ! allocates dummy array
   allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
@@ -150,13 +146,18 @@
 
   ! allocates mass matrices
   allocate(rmassx_crust_mantle(NGLOB_XY_CM), &
-          rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
-  if(ier /= 0) stop 'error allocating dummy rmassx, rmassy in crust_mantle'
+           rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
+  if(ier /= 0) stop 'error allocating rmassx, rmassy in crust_mantle'
+
   allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
 
+  allocate(b_rmassx_crust_mantle(NGLOB_XY_CM), &
+           b_rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
+  if(ier /= 0) stop 'error allocating b_rmassx, b_rmassy in crust_mantle'
+
   ! reads databases file
-  if(ADIOS_FOR_ARRAYS_SOLVER) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
         NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
         nspec_iso,nspec_tiso,nspec_ani, &
@@ -177,7 +178,7 @@
         ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
         rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
         READ_KAPPA_MU,READ_TISO, &
-        ABSORBING_CONDITIONS,LOCAL_PATH)
+        b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   else
     call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
         NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
@@ -199,7 +200,7 @@
         ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
         rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
         READ_KAPPA_MU,READ_TISO, &
-        ABSORBING_CONDITIONS,LOCAL_PATH)
+        b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   endif
 
   ! check that the number of points in this slice is correct
@@ -265,7 +266,7 @@
   allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
   if(ier /= 0) stop 'error allocating rmass in outer core'
 
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
               NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
               nspec_iso,nspec_tiso,nspec_ani, &
@@ -286,7 +287,7 @@
               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
               dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
-              ABSORBING_CONDITIONS,LOCAL_PATH)
+              dummy_rmass,dummy_rmass)
   else
     call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
               NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
@@ -308,7 +309,7 @@
               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
               dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
-              ABSORBING_CONDITIONS,LOCAL_PATH)
+              dummy_rmass,dummy_rmass)
   endif
 
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
@@ -337,13 +338,12 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
+  integer :: nspec_iso,nspec_tiso,nspec_ani
   logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: dummy_rmass
   logical, dimension(:),allocatable:: dummy_ispec_is_tiso
 
   ! inner core (no anisotropy)
@@ -358,13 +358,9 @@
     nspec_ani = 1
   endif
 
-  ! dummy allocation
-  NGLOB_XY_dummy = 1
-
-  allocate(dummy_rmass(NGLOB_XY_dummy), &
-          dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
-          stat=ier)
-  if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec in inner core'
+  allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
+           stat=ier)
+  if(ier /= 0) stop 'error allocating dummy ispec in inner core'
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -374,12 +370,21 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  allocate(rmassx_inner_core(NGLOB_XY_IC), &
+           rmassy_inner_core(NGLOB_XY_IC),stat=ier)
+  if(ier /= 0) stop 'error allocating rmassx, rmassy in inner_core'
+
   allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
   if(ier /= 0) stop 'error allocating rmass in inner core'
 
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
+  allocate(b_rmassx_inner_core(NGLOB_XY_IC), &
+           b_rmassy_inner_core(NGLOB_XY_IC),stat=ier)
+  if(ier /= 0) stop 'error allocating b_rmassx, b_rmassy in inner_core'
+
+  ! reads in arrays
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
-              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
+              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
               nspec_iso,nspec_tiso,nspec_ani, &
               dummy_array,dummy_array, &
               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -396,12 +401,12 @@
               c44store_inner_core,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load, &
+              rmassx_inner_core,rmassy_inner_core,rmass_inner_core,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
-              ABSORBING_CONDITIONS,LOCAL_PATH)
+              b_rmassx_inner_core,b_rmassy_inner_core)
   else
     call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_dummy, &
+              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
               nspec_iso,nspec_tiso,nspec_ani, &
               dummy_array,dummy_array, &
               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -418,12 +423,12 @@
               c44store_inner_core,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              dummy_rmass,dummy_rmass,rmass_inner_core,rmass_ocean_load, &
+              rmassx_inner_core,rmassy_inner_core,rmass_inner_core,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
-              ABSORBING_CONDITIONS,LOCAL_PATH)
+              b_rmassx_inner_core,b_rmassy_inner_core)
   endif
 
-  deallocate(dummy_ispec_is_tiso,dummy_rmass)
+  deallocate(dummy_ispec_is_tiso)
 
   ! check that the number of points in this slice is correct
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
@@ -718,7 +723,7 @@
   ! read MPI interfaces from file
 
   ! crust mantle
-  if (ADIOS_FOR_MPI_ARRAYS) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
     call read_mesh_databases_MPI_CM_adios()
   else
     call read_mesh_databases_MPI_CM()
@@ -741,7 +746,7 @@
   endif
 
   ! outer core
-  if (ADIOS_FOR_MPI_ARRAYS) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
     call read_mesh_databases_MPI_OC_adios()
   else
     call read_mesh_databases_MPI_OC()
@@ -764,7 +769,7 @@
   endif
 
   ! inner core
-  if (ADIOS_FOR_MPI_ARRAYS) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
     call read_mesh_databases_MPI_IC_adios()
   else
     call read_mesh_databases_MPI_IC()
@@ -806,6 +811,7 @@
     write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
     write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
   ! synchronizes MPI processes
   call sync_all()

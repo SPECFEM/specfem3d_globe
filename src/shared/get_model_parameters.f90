@@ -34,10 +34,9 @@
                         RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
                         R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
 
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   character(len=150) MODEL
 
@@ -86,10 +85,9 @@
                         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
                         OCEANS,TOPOGRAPHY)
 
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   character(len=150) MODEL
 
@@ -469,9 +467,9 @@
                                   HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
 
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! parameters read from parameter file
   integer REFERENCE_1D_MODEL

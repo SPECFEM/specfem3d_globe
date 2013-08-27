@@ -88,6 +88,7 @@
       write(IMAIN,*) 'percentage of edge elements in crust/mantle ',percentage_edge,'%'
       write(IMAIN,*) 'percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     ! debug: saves element flags
@@ -172,6 +173,7 @@
       write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
       write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     ! debug: saves element flags

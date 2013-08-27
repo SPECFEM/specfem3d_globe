@@ -57,9 +57,10 @@ contains
 subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
     npointot, mask_ibool, group_size_inc, avs_dx_adios)
 
+  use constants
   use adios_write_mod
   implicit none
-  include "constants.h"
+
   !--- Arguments -------------------------------------------
   integer(kind=8), intent(in) :: adios_group
   integer(kind=4), intent(in) :: nspec, npointot, myrank
@@ -167,11 +168,10 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
     nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
     mask_ibool, npointot, avs_dx_adios)
 
+  use constants
   use adios_write_mod
 
   implicit none
-
-  include "constants.h"
 
   integer(kind=8), intent(in)    :: adios_handle
   integer nspec,myrank

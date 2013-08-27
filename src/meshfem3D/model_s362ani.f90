@@ -83,11 +83,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_s362ani_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
   integer :: THREE_D_MODEL
@@ -131,17 +130,13 @@
   call bcast_all_r(radspl,maxcoe*maxhpa)
   call bcast_all_r(coe,maxcoe*maxker)
 
-  !call MPI_BCAST(hsplfl,80*maxhpa,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call bcast_all_ch(hsplfl,80*maxhpa)
-
-  !call MPI_BCAST(dskker,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call bcast_all_ch(dskker,40*maxker)
+  call bcast_all_ch_array(hsplfl,maxhpa,80)
+  call bcast_all_ch_array(dskker,maxker,40)
 
   call bcast_all_ch(kerstr,80)
   call bcast_all_ch(refmdl,80)
 
-  !call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call bcast_all_ch(varstr,40*maxker)
+  call bcast_all_ch(varstr,maxker,40)
 
   end subroutine model_s362ani_broadcast
 
@@ -937,8 +932,9 @@
     xlaspl,xlospl,xraspl,ixlspl,coef, &
     hsplfile,refmodel,kernstri,desckern)
 
+  use constants
+
   implicit none
-  include "constants.h"
 
   integer, parameter :: mxhpar=2
   integer, parameter :: mxkern=200
@@ -972,8 +968,11 @@
   open(lu,file=filename,status='old',action='read',iostat=ios)
   if ( ios /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(filename), '": ', ios
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model s362ani')
   endif
+
   do while (ios == 0)
   read(lu,"(a)",iostat=ios) string
   lstr=len_trim(string)
@@ -1083,9 +1082,9 @@
 
   subroutine splcon(xlat,xlon,nver,verlat,verlon,verrad,ncon,icon,con)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nver
   integer, intent(out) :: ncon

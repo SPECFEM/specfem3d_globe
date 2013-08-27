@@ -29,9 +29,9 @@
   subroutine write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
                  xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspec,myrank
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
@@ -203,9 +203,9 @@
                  xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore,&
                  ATTENUATION)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspec
   character(len=150) prname

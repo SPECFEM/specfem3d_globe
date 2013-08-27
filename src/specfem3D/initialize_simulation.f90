@@ -33,30 +33,8 @@
   implicit none
 
   ! local parameters
-!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed,NGLOB_computed, &
-!    NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL
-!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-!    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-
-!  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-!  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-!  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-
-!  integer :: ratio_divide_central_cube
   integer :: sizeprocs
   integer :: ios
-!  integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,NPROC_XI,NPROC_ETA
-
-!  double precision :: RMOHO_FICTITIOUS_IN_MESHER,R120,R_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,&
-!    CENTER_LATITUDE_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-!    GAMMA_ROTATION_AZIMUTH
-
-!  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
-
-!  logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-!    ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY, &
-!    GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
-!    HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
   character(len=150) :: dummystring
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
@@ -67,103 +45,30 @@
   call world_rank(myrank)
 
   if (myrank == 0) then
-
     ! read the parameter file and compute additional parameters
     call read_compute_parameters()
-!         MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-!         NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-!         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-!         NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
-!         NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!         NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-!         NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
-!         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-!         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-!         RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
-!         MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST, &
-!         MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
-!         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-!         ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-!         ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-!         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-!         PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-!         ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-!         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE, &
-!         LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-!         SIMULATION_TYPE,SAVE_FORWARD, &
-!         NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-!         NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA,NSPEC2DMAX_XMIN_XMAX, &
-!         NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-!         NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed, &
-!         ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
-!         this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
-!         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube, &
-!         HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
-!         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-!         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
-!         USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY)
-
-!    ! GPU_MODE: parameter is optional, may not be in the Par_file
-!    call read_gpu_mode(GPU_MODE)
-
-    ! ADIOS_ENABLED: parameter is optional, may not be in the Par_file
-!    call read_adios_parameters(ADIOS_ENABLED, ADIOS_FOR_FORWARD_ARRAYS, &
-!                               ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-!                               ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
-
   endif
 
   ! distributes parameters from master to all processes
-  call broadcast_computed_parameters()
-!                myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-!                NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-!                NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-!                NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-!                NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-!                NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-!                NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-!                MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-!                DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-!                CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-!                RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!                R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-!                MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-!                RMOHO_FICTITIOUS_IN_MESHER, &
-!                MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-!                SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
-!                SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT, &
-!                OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-!                ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-!                LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
-!                NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-!                NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
-!                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-!                NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed, &
-!                ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
-!                this_region_has_a_doubling,rmins,rmaxs, &
-!                ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-!                DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-!                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-!                HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-!                ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-!                ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
-!
-  ! broadcasts optional GPU_MODE
-!  call broadcast_gpu_parameters(myrank,GPU_MODE)
+  call broadcast_computed_parameters(myrank)
 
-  ! broadcasts optional ADIOS_ENABLED
-!  call broadcast_adios_parameters(myrank,ADIOS_ENABLED, &
-!                                  ADIOS_FOR_FORWARD_ARRAYS, ADIOS_FOR_MPI_ARRAYS, ADIOS_FOR_ARRAYS_SOLVER, &
-!                                  ADIOS_FOR_SOLVER_MESHFILES, ADIOS_FOR_AVS_DX)
+  ! check that the code is running with the requested nb of processes
+  if( sizeprocs /= NPROCTOT ) then
+    print*,'error: rank ',myrank,' - wrong number of MPI processes',sizeprocs,NPROCTOT
+    call exit_MPI(myrank,'wrong number of MPI processes(initialization specfem)')
+  endif
+
+  ! synchronizes processes
+  call sync_all()
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   ! open main output file, only written to by process 0
-  if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write')
+  if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ios)
+    if( ios /= 0 ) call exit_MPI(myrank,'error opening file output_solver.txt for writing output infos')
+  endif
 
   if(myrank == 0) then
 
@@ -283,7 +188,7 @@
 
     write(IMAIN,*)
     write(IMAIN,*)
-
+    call flush_IMAIN()
   endif
 
   ! define strain storage
@@ -296,13 +201,10 @@
   endif
 
   ! checks flags
-  call initialize_simulation_check(sizeprocs)
-!                                 ,NPROCTOT,NSPEC, &
-!                                  ATTENUATION,ATTENUATION_3D,NCHUNKS,GRAVITY,ROTATION, &
-!                                  ELLIPTICITY,OCEANS,NPROC_XI,NPROC_ETA, &
-!                                  TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-!                                  ANISOTROPIC_INNER_CORE)
+  call initialize_simulation_check()
 
+  ! synchronizes processes
+  call sync_all()
 
   ! counts receiver stations
   if (SIMULATION_TYPE == 1) then
@@ -348,32 +250,19 @@
     !call write_specfem_header_adios()
   !endif
 
+  ! synchronizes processes
+  call sync_all()
+
   end subroutine initialize_simulation
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine initialize_simulation_check(sizeprocs)
-!                                      ,NPROCTOT,NSPEC, &
-!                                        ATTENUATION,ATTENUATION_3D,NCHUNKS,GRAVITY,ROTATION, &
-!                                        ELLIPTICITY,OCEANS,NPROC_XI,NPROC_ETA, &
-!                                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-!                                        ANISOTROPIC_INNER_CORE)
+  subroutine initialize_simulation_check()
 
   use specfem_par
   implicit none
-
-  integer :: sizeprocs
-!  integer :: NPROCTOT,NCHUNKS,NPROC_XI,NPROC_ETA
-!  integer, dimension(MAX_NUM_REGIONS) :: NSPEC
-
-!  logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-!    ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY
-
-
-  ! check that the code is running with the requested nb of processes
-  if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes(initialization specfem)')
 
   ! check that the code has been compiled with the right values
   if (NSPEC(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
@@ -480,6 +369,7 @@
       if( myrank == 0 ) then
         write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
         write(IMAIN,*)
+        call flush_IMAIN()
       endif
     endif
 
@@ -581,6 +471,7 @@
     write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min
     write(IMAIN,*) "                                max =",ncuda_devices_max
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine initialize_GPU

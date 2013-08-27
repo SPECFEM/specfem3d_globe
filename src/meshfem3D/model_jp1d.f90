@@ -33,12 +33,12 @@
 
 
   subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
-     check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
-     R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
+                        check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
+
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   ! given a normalized radius x, gives the non-dimensionalized density rho,
   ! speeds vp and vs, and the quality factors Qkappa and Qmu

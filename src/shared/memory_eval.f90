@@ -46,6 +46,7 @@
                          NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                          static_memory_size)
 
+  use constants
   use shared_parameters,only: ATT1,ATT2,ATT3, &
     APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
     USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
@@ -55,8 +56,6 @@
     SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD
 
   implicit none
-
-  include "constants.h"
 
   ! input
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, NGLOB, &

@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
+  subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
                      xstore,ystore,zstore,dershape2D_bottom, &
                      ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                      normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -33,9 +33,9 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r
                      NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
                      is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   ! input
   integer myrank, ispec, ix_elem, iy_elem

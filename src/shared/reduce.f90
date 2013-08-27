@@ -29,9 +29,9 @@
 
 ! bring theta between 0 and PI, and phi between 0 and 2*PI
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision :: theta,phi
 

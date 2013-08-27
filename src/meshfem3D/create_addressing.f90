@@ -56,6 +56,7 @@
     if( ier /= 0 ) call exit_mpi(myrank,'error opening addressing.txt')
     write(IMAIN,*) 'creating global slice addressing'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   do ichunk = 1,NCHUNKS
@@ -123,6 +124,7 @@
         write(IMAIN,'(1x)',advance='yes')
       enddo
       write(IMAIN, *) ' '
+      call flush_IMAIN()
     endif
   endif
 

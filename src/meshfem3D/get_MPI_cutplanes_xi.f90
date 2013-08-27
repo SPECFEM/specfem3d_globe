@@ -36,9 +36,9 @@
 ! and the right cut plane of the last slice are not used
 ! in the solver except if we want to have periodic conditions
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,myrank
 
@@ -102,6 +102,7 @@
         write(IMAIN,*)
         write(IMAIN,*) 'please make sure that the directory specified in Par_file as LOCAL_PATH exists'
         write(IMAIN,*)
+        call flush_IMAIN()
       endif
       call exit_mpi(myrank,'error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting')
     endif

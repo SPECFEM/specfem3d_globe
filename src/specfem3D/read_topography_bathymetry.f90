@@ -62,6 +62,7 @@
     if(myrank == 0 ) then
       ! user output
       write(IMAIN,*) 'topography:'
+      call flush_IMAIN()
 
       ! reads topo file
       call read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
@@ -79,6 +80,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for reading topo/bathy in seconds = ',sngl(tCPU)
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine read_topography_bathymetry

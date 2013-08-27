@@ -63,11 +63,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_sea99_s_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -102,11 +101,10 @@
 
   subroutine read_sea99_s_model()
 
+  use constants
   use model_sea99_s_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: i,ia,io,j,ier
 
@@ -151,11 +149,10 @@
 
 ! returns Vs perturbation (dvs) for given position r/theta/phi
 
+  use constants
   use model_sea99_s_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: id1,i,ilat,ilon
   double precision :: alat1,alon1,radius,theta,phi,dvs

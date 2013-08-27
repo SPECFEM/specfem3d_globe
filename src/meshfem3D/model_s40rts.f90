@@ -67,11 +67,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_s40rts_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -107,11 +106,10 @@
 
   subroutine read_model_s40rts()
 
+  use constants
   use model_s40rts_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: k,l,m,ier
@@ -124,8 +122,11 @@
   open(unit=10,file=S40RTS,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(S40RTS), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model s40rts')
   endif
+
   do k=0,NK_20
     do l=0,NS_40
       read(10,*) S40RTS_V_dvs_a(k,l,0),(S40RTS_V_dvs_a(k,l,m),S40RTS_V_dvs_b(k,l,m),m=1,l)
@@ -162,11 +163,10 @@
 
   subroutine mantle_s40rts(radius,theta,phi,dvs,dvp,drho)
 
+  use constants
   use model_s40rts_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: radius,theta,phi,dvs,dvp,drho
 
@@ -240,10 +240,10 @@
 
   subroutine s40rts_splhsetup()
 
+  use constants
   use model_s40rts_par
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i,j

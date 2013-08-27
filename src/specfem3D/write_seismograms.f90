@@ -102,6 +102,7 @@
         write(IMAIN,*)
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
+        call flush_IMAIN()
       endif
     else
       if( nrec_local > 0 ) &
@@ -209,6 +210,7 @@
       write(IMAIN,*)
       write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   ! now only the master process does the writing of seismograms and
@@ -325,6 +327,7 @@
       write(IMAIN,*)
       write(IMAIN,*) 'Writing the seismograms by master proc alone took ',write_time,' seconds'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   endif ! WRITE_SEISMOGRAMS_BY_MASTER
@@ -503,9 +506,9 @@
               nrec_local,it,nit_written,DT,NSTEP, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,hdur,LOCAL_TMP_PATH)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nrec_local,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,it,nit_written
   integer, dimension(nrec_local) :: number_receiver_global

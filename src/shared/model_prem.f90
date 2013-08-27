@@ -43,9 +43,9 @@
       ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
@@ -276,9 +276,9 @@
       idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
@@ -532,9 +532,9 @@
 ! routine used for AVS or DX display of stability condition
 ! and number of points per wavelength only in the fluid outer core
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
@@ -572,9 +572,9 @@
   subroutine prem_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN

@@ -39,9 +39,9 @@
 
 ! create the different regions of the mesh
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: myrank,ipass
 

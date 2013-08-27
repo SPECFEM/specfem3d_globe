@@ -52,11 +52,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use gapp2_mantle_model_constants
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
   integer :: ier
@@ -93,10 +92,11 @@
 
   subroutine read_mantle_gapmodel()
 
+  use constants
   use gapp2_mantle_model_constants
 
   implicit none
-  include "constants.h"
+
   integer i,ir,ia,io,ier
   character(len=150) GAPP2
 
@@ -117,6 +117,7 @@
   write(IMAIN,*) "  dimensions no = ",no
   write(IMAIN,*) "             na,nnr = ",na,nnr
   write(IMAIN,*) "             dela,delon = ",dela,delo
+  call flush_IMAIN()
 
   ! checks bounds
   if( nnr /= mr .or. no /= mo .or. na /= ma ) then
@@ -164,6 +165,7 @@
   write(IMAIN,*) '  check vp3: ',vp3(1,1,1),vp3(na,no,nnr)
   write(IMAIN,*) '  check vp3: min/max = ',minval(vp3),maxval(vp3)
   write(IMAIN,*)
+  call flush_IMAIN()
 
   end subroutine read_mantle_gapmodel
 
@@ -173,56 +175,57 @@
 
   subroutine mantle_gapmodel(radius,theta,phi,dvs,dvp,drho)
 
-    use gapp2_mantle_model_constants
+  use constants
+  use gapp2_mantle_model_constants
 
-    implicit none
-    include "constants.h"
-    integer id,ia,io,icon
-    real d,dtheta,dphi
+  implicit none
 
-    double precision radius,theta,phi,dvs,dvp,drho
+  integer id,ia,io,icon
+  real d,dtheta,dphi
+
+  double precision radius,theta,phi,dvs,dvp,drho
 
 ! factor to convert perturbations in shear speed to perturbations in density
-    double precision, parameter :: SCALE_VS =  1.40d0
-    double precision, parameter :: SCALE_RHO = 0.0d0
+  double precision, parameter :: SCALE_VS =  1.40d0
+  double precision, parameter :: SCALE_RHO = 0.0d0
 
-    double precision, parameter :: R_EARTH_ = 6371.d0
-    double precision, parameter :: ZERO_ = 0.d0
+  double precision, parameter :: R_EARTH_ = 6371.d0
+  double precision, parameter :: ZERO_ = 0.d0
 
 !.....................................
 
-    dvs = ZERO_
-    dvp = ZERO_
-    drho = ZERO_
+  dvs = ZERO_
+  dvp = ZERO_
+  drho = ZERO_
 
-    ! increments in latitude/longitude (in rad)
-    dtheta = dela * DEGREES_TO_RADIANS
-    dphi = delo * DEGREES_TO_RADIANS
+  ! increments in latitude/longitude (in rad)
+  dtheta = dela * DEGREES_TO_RADIANS
+  dphi = delo * DEGREES_TO_RADIANS
 
-    ! depth given in km
-    d=R_EARTH_-radius*R_EARTH_
+  ! depth given in km
+  d=R_EARTH_-radius*R_EARTH_
 
-    call d2id(d,nnr,dep,id,icon)
-    if(icon/=0) then
-       write(6,*)icon
-       write(6,*) radius,theta,phi,dvp,dvs,drho
-    endif
+  call d2id(d,nnr,dep,id,icon)
+  if(icon/=0) then
+     write(6,*)icon
+     write(6,*) radius,theta,phi,dvp,dvs,drho
+  endif
 
-    ! latitude
-    if(theta>=PI) then
-       ia = na
-    else
-       ia = theta / dtheta + 1
-    endif
-    ! longitude
-    if(phi < 0.0d0) phi = phi + 2.*PI
-    io=phi / dphi + 1
-    if(io>no) io=io-no
+  ! latitude
+  if(theta>=PI) then
+     ia = na
+  else
+     ia = theta / dtheta + 1
+  endif
+  ! longitude
+  if(phi < 0.0d0) phi = phi + 2.*PI
+  io=phi / dphi + 1
+  if(io>no) io=io-no
 
-    ! velocity and density perturbations
-    dvp = vp3(ia,io,id)/100.d0
-    dvs = SCALE_VS*dvp
-    drho = SCALE_RHO*dvs
+  ! velocity and density perturbations
+  dvp = vp3(ia,io,id)/100.d0
+  dvs = SCALE_VS*dvp
+  drho = SCALE_RHO*dvs
 
   end subroutine mantle_gapmodel
 

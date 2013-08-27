@@ -27,9 +27,9 @@
 
   subroutine hex_nodes(iaddx,iaddy,iaddz)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! topology of the elements
   integer, dimension(NGNOD) :: iaddx,iaddy,iaddz

@@ -125,11 +125,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
   integer :: ier
@@ -222,11 +221,10 @@
 
   subroutine read_jp3d_iso_zhao_model()
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   OPEN(2,FILE="DATA/Zhao_JP_model/m3d1341")
   OPEN(3,FILE="DATA/Zhao_JP_model/datadis")
@@ -243,11 +241,10 @@
 
   subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   logical found_crust
   double precision :: radius,theta,phi,vp,vs,dvs,dvp,rho
@@ -315,11 +312,10 @@
 
   SUBROUTINE INPUT1()
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
 100     FORMAT(3I3)
 
@@ -364,11 +360,10 @@
 !
   SUBROUTINE INPUT2()
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: NP,NNR,I,J
 
@@ -399,11 +394,10 @@
 
   SUBROUTINE BLDMAP()
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   CALL LOCX(JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,JP3DM_NPA,JP3DM_NRA,JP3DM_NHA,MKA, &
            JP3DM_PLA,JP3DM_RLA,JP3DM_HLA,JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA)
@@ -458,11 +452,10 @@
 
   SUBROUTINE VEL3(PE,RE,HE,V,LAY)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: PE,RE,HE,V
 
@@ -506,11 +499,10 @@
 
   SUBROUTINE VABPS(MP,MR,MH,V,VEL)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: VEL
   integer :: MP,MR,MH
@@ -547,11 +539,10 @@
   SUBROUTINE PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
                       PNX,RNX,HNX,MPX,MRX,MHX,MKX)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: MPX,MRX,MHX,MKX
   integer ::  IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
@@ -585,11 +576,10 @@
 
   SUBROUTINE HLAY(PE,RE,HE,IJK)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: PE,RE,HE,WV1,WV2,WV3,WV4,P,R,PF,RF,PF1,RF1
   integer :: IJK,J,J1,I,I1
@@ -654,11 +644,10 @@
 
   SUBROUTINE VEL1D(HE,V,LAY,IPS)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: IPS,LAY
   double precision :: HE,V,VM,HM
@@ -689,11 +678,10 @@
 
   SUBROUTINE INPUTJP()
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: VP1(29),VS1(29),RA1(29)
   integer :: L
@@ -727,11 +715,10 @@
 
   SUBROUTINE JPMODEL(IPS,H,V)
 
+  use constants
   use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: IPS,K,K1
   double precision :: H1,H2,H12,H,V

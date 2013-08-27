@@ -85,12 +85,10 @@
 
   subroutine model_1066a(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
+  use constants
   use model_1066a_par
 
   implicit none
-
-  include "constants.h"
-
 
 ! input:
 ! radius r: meters
@@ -166,11 +164,10 @@
 
   subroutine define_model_1066a(USE_EXTERNAL_CRUSTAL_MODEL)
 
+  use constants
   use model_1066a_par
 
   implicit none
-  include "constants.h"
-
 
   logical :: USE_EXTERNAL_CRUSTAL_MODEL
 

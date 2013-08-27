@@ -52,9 +52,9 @@
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer NEX_MAX
   double precision DT, WIDTH
@@ -96,9 +96,9 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
   double precision WIDTH, TMP
@@ -156,9 +156,9 @@
                       R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
                       HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision WIDTH
   integer NEX_MAX
@@ -267,9 +267,9 @@
 
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer NUM_REGIONS
   integer NEX
@@ -381,9 +381,9 @@
 
   subroutine compute_nex(nex_xi, rcube, alpha, ner)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision, parameter :: RICB_KM = 1221.0d0
 
@@ -528,9 +528,9 @@
 
   subroutine compute_coordinate_central_cube(ix,iy,nbx,nby,radius, alpha, x, y)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer ix, iy, nbx, nby
   double precision radius, alpha
@@ -560,9 +560,9 @@
 
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision, parameter :: RICB_KM = 1221.0d0
 

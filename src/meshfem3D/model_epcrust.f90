@@ -61,11 +61,10 @@
 
   subroutine model_epcrust_broadcast(myrank)
 
+  use constants
   use model_epcrust_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank,ier
 
@@ -100,11 +99,10 @@
 
   subroutine read_epcrust_model()
 
+  use constants
   use model_epcrust_par
 
   implicit none
-
-  include "constants.h"
 
   character(len=150) EPCRUST_FNM
   character(len=150),dimension(15) :: header
@@ -116,6 +114,8 @@
   open(unit=1001,file=trim(EPCRUST_FNM),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(EPCRUST_FNM), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model epcrust')
   endif
 
@@ -144,11 +144,10 @@
 
   subroutine model_epcrust(lat,lon,dep,vp,vs,rho,moho,found_crust,elem_in_crust)
 
+  use constants
   use model_epcrust_par
 
   implicit none
-
-  include "constants.h"
 
   ! INPUT & OUTPUT
   double precision:: lat, lon, dep, vp, vs, rho, moho
@@ -252,10 +251,10 @@
 
   subroutine epcrust_smooth_base(x,y,x1,y1,weight)
 
+  use constants
   use model_epcrust_par,only: NTHETA_EP,NPHI_EP,cap_degree_EP
 
   implicit none
-  include "constants.h"
 
   ! INPUT & OUTPUT
   double precision:: x, y
@@ -351,13 +350,12 @@
 
   subroutine ilon_jlat(lon,lat,ilon,jlat)
 
+  use constants
   use model_epcrust_par,only: &
     EPCRUST_LON_MIN,EPCRUST_LAT_MAX,EPCRUST_SAMPLE, &
     EPCRUST_NLON,EPCRUST_NLAT
 
   implicit none
-
-  include "constants.h"
 
   double precision:: lon,lat
   integer:: ilon,jlat

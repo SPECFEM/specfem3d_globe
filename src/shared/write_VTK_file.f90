@@ -33,9 +33,9 @@
 
 ! external mesh routine for saving vtk files for points locations
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nglob
 
@@ -91,9 +91,9 @@
 
 ! external mesh routine for saving vtk files for points locations
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nglob
 
@@ -150,9 +150,9 @@
 
 ! routine for saving vtk file holding logical flag on each spectral element
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,nglob
 
@@ -225,9 +225,9 @@
 
 ! routine for saving vtk file holding integer value on each spectral element
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,nglob
 
@@ -294,9 +294,9 @@
 
 ! outputs single file for each process
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,nglob
 
@@ -421,9 +421,9 @@
 
 ! outputs single file for all processes
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: myrank,NPROCTOT
 

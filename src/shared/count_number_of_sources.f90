@@ -36,20 +36,21 @@
 
   integer, intent(out) :: NSOURCES
 
-  integer ios,icounter
+  integer :: ios,icounter
 
-  character(len=150) CMTSOLUTION,dummystring
+  character(len=150) :: CMTSOLUTION,dummystring
 
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
 
-  open(unit=1,file=CMTSOLUTION,iostat=ios,status='old',action='read')
+  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
   if(ios /= 0) stop 'error opening CMTSOLUTION file'
+
   icounter = 0
   do while(ios == 0)
-    read(1,"(a)",iostat=ios) dummystring
+    read(IIN,"(a)",iostat=ios) dummystring
     if(ios == 0) icounter = icounter + 1
   enddo
-  close(1)
+  close(IIN)
 
   if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
     stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'

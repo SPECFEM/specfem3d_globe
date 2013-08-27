@@ -141,11 +141,14 @@
   ! frees dynamically allocated memory
 
   ! mass matrices
-  deallocate(rmassx_crust_mantle)
-  deallocate(rmassy_crust_mantle)
+  deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+  deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   deallocate(rmassz_crust_mantle)
 
   deallocate(rmass_outer_core)
+
+  deallocate(rmassx_inner_core,rmassy_inner_core)
+  deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
   deallocate(rmass_inner_core)
 
 
@@ -262,6 +265,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'End of the simulation'
     write(IMAIN,*)
+    call flush_IMAIN()
     close(IMAIN)
   endif
 

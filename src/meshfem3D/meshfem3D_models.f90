@@ -801,8 +801,8 @@
 !
 
   subroutine meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
-                              tau_e,tau_s,T_c_source, &
-                              moho,Qmu,Qkappa,elem_in_crust)
+                                           tau_e,tau_s,T_c_source, &
+                                           moho,Qmu,Qkappa,elem_in_crust)
 
 ! sets attenuation values tau_e and Qmu for a given point
 !
@@ -812,23 +812,23 @@
 
   implicit none
 
-  integer idoubling
+  integer :: idoubling
 
-  double precision xmesh,ymesh,zmesh
+  double precision :: xmesh,ymesh,zmesh
 
-  double precision r_prem
-  double precision moho
+  double precision :: r_prem
+  double precision :: moho
 
   ! attenuation values
   double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_s, tau_e
   double precision  :: T_c_source
 
-  logical elem_in_crust
+  logical :: elem_in_crust
 
   ! local parameters
-  double precision r_dummy,theta,phi,theta_degrees,phi_degrees
-  double precision r_used
+  double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
+  double precision :: r_used
   double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
 
   ! initializes

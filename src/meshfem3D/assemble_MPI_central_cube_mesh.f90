@@ -37,9 +37,9 @@
 
   ! this version of the routine is based on blocking MPI calls
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   ! for matching with central cube in inner core
   integer ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices

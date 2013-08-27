@@ -30,9 +30,9 @@
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
 

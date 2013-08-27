@@ -32,8 +32,8 @@ program combine_paraview_movie_data
 
   implicit none
 
-  include 'constants.h'
-  include 'OUTPUT_FILES/values_from_mesher.h'
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer fid,i,ipoint, ios, it,itstart,itstop,dit_movie
   integer iproc, num_node,  npoint_all, nelement_all

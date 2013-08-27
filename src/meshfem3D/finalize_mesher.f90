@@ -96,6 +96,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
     write(IMAIN,*)
+    call flush_IMAIN()
 
     ! evaluate the amount of static memory needed by the solver
     call memory_eval(doubling_index,this_region_has_a_doubling, &
@@ -154,6 +155,8 @@
     write(IMAIN,*)
     write(IMAIN,*) 'End of mesh generation'
     write(IMAIN,*)
+    call flush_IMAIN()
+
     ! close main output file
     close(IMAIN)
   endif

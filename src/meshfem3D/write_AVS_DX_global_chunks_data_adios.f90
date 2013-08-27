@@ -53,11 +53,10 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
     RMIDDLE_CRUST,ROCEAN,iregion_code, &
     group_size_inc, avs_dx_adios)
 
+  use constants
   use adios_write_mod
 
   implicit none
-
-  include "constants.h"
 
   integer(kind=8), intent(in) :: adios_group
   integer(kind=8), intent(inout) :: group_size_inc
@@ -248,9 +247,9 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
     RMIDDLE_CRUST,ROCEAN,iregion_code, &
     avs_dx_adios)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: myrank
 

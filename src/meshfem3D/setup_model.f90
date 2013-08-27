@@ -79,7 +79,7 @@
 
   use meshfem3D_models_par
   use meshfem3D_par,only: &
-    MODEL,sizeprocs,NEX_XI,NEX_ETA, &
+    MODEL,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
     R_CENTRAL_CUBE
 
@@ -87,8 +87,8 @@
 
   ! user output
   write(IMAIN,*)
-  write(IMAIN,*) 'There are ',sizeprocs,' MPI processes'
-  write(IMAIN,*) 'Processes are numbered from 0 to ',sizeprocs-1
+  write(IMAIN,*) 'There are ',NPROCTOT,' MPI processes'
+  write(IMAIN,*) 'Processes are numbered from 0 to ',NPROCTOT-1
   write(IMAIN,*)
   write(IMAIN,*) 'There are ',NEX_XI,' elements along xi in each chunk'
   write(IMAIN,*) 'There are ',NEX_ETA,' elements along eta in each chunk'

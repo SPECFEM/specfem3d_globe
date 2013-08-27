@@ -29,13 +29,13 @@
 ! in contact with the MPI faces by an edge or a corner only but not
 ! a full face are missing, therefore let us add them
   subroutine fix_non_blocking_slices(is_on_a_slice_edge,iboolright_xi, &
-         iboolleft_xi,iboolright_eta,iboolleft_eta, &
-         npoin2D_xi,npoin2D_eta,ibool, &
-         nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
+                                     iboolleft_xi,iboolright_eta,iboolleft_eta, &
+                                     npoin2D_xi,npoin2D_eta,ibool, &
+                                     nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
+
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   integer :: nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
@@ -93,22 +93,22 @@
 
   end subroutine fix_non_blocking_slices
 
+!
 !-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
+!
 
 ! fix the non blocking arrays to assemble the central cube: elements
 ! in contact with the MPI faces by an edge or a corner only but not
 ! a full face are missing, therefore let us add them
   subroutine fix_non_blocking_central_cube(is_on_a_slice_edge, &
-         ibool,nspec,nglob,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
-         idoubling_inner_core,npoin2D_cube_from_slices, &
-         ibool_central_cube,NSPEC2D_BOTTOM_INNER_CORE, &
-         ichunk,NPROC_XI)
+                                           ibool,nspec,nglob,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
+                                           idoubling_inner_core,npoin2D_cube_from_slices, &
+                                           ibool_central_cube,NSPEC2D_BOTTOM_INNER_CORE, &
+                                           ichunk,NPROC_XI)
+
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   integer :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE
   integer :: ichunk,npoin2D_cube_from_slices,NPROC_XI

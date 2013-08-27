@@ -64,9 +64,9 @@
 
 ! standard routine to setup model
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -115,9 +115,9 @@
 
   subroutine read_attenuation_model(min_att_period, max_att_period, AM_V)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -166,6 +166,8 @@
   subroutine model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
                                     R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
+  use constants
+
   use model_1dref_par, only: &
     NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
 
@@ -179,8 +181,6 @@
     NR_SEA1D,SEA1DM_V_radius_sea1d,SEA1DM_V_Qmu_sea1d
 
   implicit none
-
-  include 'constants.h'
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -339,9 +339,9 @@
 
 ! includes min_period, max_period, and N_SLS
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -420,9 +420,9 @@
 
   subroutine model_attenuation_storage(Qmu, tau_e, rw, AM_S)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
@@ -457,11 +457,13 @@
   endif
 
   if(Qmu < 0.0d0 .OR. Qmu > AM_S%Q_max) then
-     write(IMAIN,*) 'Error attenuation_storage()'
-     write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
-     write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
-     call world_rank(myrank)
-     call exit_MPI(myrank, 'Attenuation Value out of Range')
+    write(IMAIN,*) 'Error attenuation_storage()'
+    write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
+    write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
+    call flush_IMAIN()
+    ! stop
+    call world_rank(myrank)
+    call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
   if(rw > 0 .AND. Qmu == 0.0d0) then
@@ -533,9 +535,9 @@
   subroutine attenuation_tau_sigma(tau_s, n, min_period, max_period)
   ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer n
   double precision tau_s(n)
@@ -564,9 +566,9 @@
 
   subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e, AS_V)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
@@ -766,9 +768,9 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
   subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! Input
   integer nf, nsls

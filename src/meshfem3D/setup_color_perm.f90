@@ -52,6 +52,7 @@
   ! user output
   if(myrank == 0) then
     write(IMAIN,*) '  mesh coloring: ',USE_MESH_COLORING_GPU
+    call flush_IMAIN()
   endif
 
   select case( iregion_code )
@@ -569,6 +570,7 @@
     write(IMAIN,*) '       elements per color min/max = ',min_elem_global,max_elem_global
     write(IMAIN,*) '       inner elements min/max = ',nspec_inner_min_global,nspec_inner_max_global
     write(IMAIN,*) '       outer elements min/max = ',nspec_outer_min_global,nspec_outer_max_global
+    call flush_IMAIN()
   endif
 
   ! debug: outputs permutation array as vtk file
@@ -647,9 +649,9 @@
 
   ! local parameters
   ! added for sorting
-  double precision, dimension(:,:,:,:), allocatable :: temp_array_dble,temp_array_dble1
-  double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_sls,temp_array_dble_sls1
+  double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: temp_array_real_sls
   integer, dimension(:,:,:,:), allocatable :: temp_array_int
   integer, dimension(:), allocatable :: temp_array_int_1D
   integer, dimension(:), allocatable :: temp_perm_global
@@ -757,6 +759,7 @@
   ! user output
   if(myrank == 0) then
     write(IMAIN,*) '       number of permutations = ',icounter
+    call flush_IMAIN()
   endif
 
   ! outputs permutation array as vtk file
@@ -856,17 +859,17 @@
   ! attenuation arrays
   if (ATTENUATION) then
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-      allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
-      allocate(temp_array_dble_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
-      call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
-      call permute_elements_dble_sls(tau_e_store,temp_array_dble_sls,perm,nspec)
-      deallocate(temp_array_dble,temp_array_dble_sls)
+      allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
+      allocate(temp_array_real_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
+      call permute_elements_real(Qmu_store,temp_array_real,perm,nspec)
+      call permute_elements_real_sls(tau_e_store,temp_array_real_sls,perm,nspec)
+      deallocate(temp_array_real,temp_array_real_sls)
     else
-      allocate(temp_array_dble1(1,1,1,nspec))
-      allocate(temp_array_dble_sls1(N_SLS,1,1,1,nspec))
-      call permute_elements_dble1(Qmu_store,temp_array_dble1,perm,nspec)
-      call permute_elements_dble_sls1(tau_e_store,temp_array_dble_sls1,perm,nspec)
-      deallocate(temp_array_dble1,temp_array_dble_sls1)
+      allocate(temp_array_real(1,1,1,nspec))
+      allocate(temp_array_real_sls(N_SLS,1,1,1,nspec))
+      call permute_elements_real1(Qmu_store,temp_array_real,perm,nspec)
+      call permute_elements_real_sls1(tau_e_store,temp_array_real_sls,perm,nspec)
+      deallocate(temp_array_real,temp_array_real_sls)
     endif
   endif
 

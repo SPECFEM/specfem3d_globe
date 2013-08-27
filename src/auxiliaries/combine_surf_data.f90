@@ -31,8 +31,8 @@ program combine_surf_data
 
   implicit none
 
-  include 'constants.h'
-  include 'OUTPUT_FILES/values_from_mesher.h'
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 400
 

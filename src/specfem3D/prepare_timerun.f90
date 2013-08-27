@@ -104,6 +104,7 @@
     write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
     write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
     write(IMAIN,*)
+    call flush_IMAIN()
 
     ! daniel: total time estimation
     !  average time per element per time step:
@@ -191,7 +192,7 @@
     write(IMAIN,*)
     write(IMAIN,*)
     write(IMAIN,*)
-
+    call flush_IMAIN()
   endif
 
   end subroutine prepare_timerun_user_output
@@ -211,44 +212,98 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing mass matrices."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! mass matrices need to be assembled with MPI here once and for all
   call prepare_timerun_rmass_assembly()
 
-  ! check that all the mass matrices are positive
+  ! checks that all the mass matrices are positive
+  ! ocean load
   if(OCEANS_VAL) then
     if(minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
 
-  ! add C*deltat/2 contribution to the mass matrices on Stacey edges
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
-          call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
-     if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
-          call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+  ! crust/mantle
+  ! checks C*deltat/2 contribution to the mass matrices on Stacey edges
+  if( .not. USE_LDDRK ) then
+    if( ( NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS ) .or. &
+        ( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) ) then
+       if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+            call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+       if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+            call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+    endif
+    ! checks mass matrices for rotation
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+      .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM > 0)then
+      if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+           call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
+      if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+           call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
+    endif
   endif
-
   if(minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
        call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+
+  ! inner core
+  ! checks mass matrices for rotation
+  if( .not. USE_LDDRK ) then
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. NGLOB_XY_IC > 0) then
+       if(minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
+            call exit_MPI(myrank,'negative mass matrix term for the rmassx_inner_core')
+       if(minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
+            call exit_MPI(myrank,'negative mass matrix term for the rmassy_inner_core')
+       if( SIMULATION_TYPE == 3 .and. NGLOB_XY_IC > 0 ) then
+         if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
+              call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
+         if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
+              call exit_MPI(myrank,'negative mass matrix term for the b_rmassy_inner_core')
+       endif
+    endif
+  endif
   if(minval(rmass_inner_core) <= 0._CUSTOM_REAL) &
        call exit_MPI(myrank,'negative mass matrix term for the inner core')
+
+  ! outer core
   if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
        call exit_MPI(myrank,'negative mass matrix term for the outer core')
 
+  ! mass matrix inversions
   ! for efficiency, invert final mass matrix once and for all on each slice
+  ! ocean load
   if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
 
-  ! add C*deltat/2 contribution to the mass matrices on Stacey edges
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
-     rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+  ! mass matrices on Stacey edges
+  ! crust/mantle
+  if( .not. USE_LDDRK ) then
+    if(((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) ) then
+       rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
+       rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+    endif
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+      .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM > 0)then
+      b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
+      b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
+    endif
   endif
-
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
-  rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
+  ! inner core
+  if(.not. USE_LDDRK)then
+    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. NGLOB_XY_IC > 0) then
+       rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
+       rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
+       if(SIMULATION_TYPE == 3 .and. NGLOB_XY_IC > 0)then
+         b_rmassx_inner_core = 1._CUSTOM_REAL / b_rmassx_inner_core
+         b_rmassy_inner_core = 1._CUSTOM_REAL / b_rmassy_inner_core
+       endif
+    endif
+  endif
   rmass_inner_core = 1._CUSTOM_REAL / rmass_inner_core
+  ! outer core
+  rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
 
   end subroutine prepare_timerun_mass_matrices
 
@@ -276,18 +331,37 @@
   endif
 
   ! crust and mantle
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+  if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
+     (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. NGLOB_CRUST_MANTLE > 0 &
+      .and. (.not. USE_LDDRK)) then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                            my_neighbours_crust_mantle)
 
-     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassy_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                            my_neighbours_crust_mantle)
+  endif
+
+  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+    .and. .not. USE_LDDRK .and. NGLOB_XY_CM > 0)then
+    if( SIMULATION_TYPE == 3 ) then
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
+                           b_rmassx_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
+
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
+                           b_rmassy_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
+    endif
   endif
 
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
@@ -295,6 +369,7 @@
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                         nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                         my_neighbours_crust_mantle)
+
 
   ! outer core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
@@ -304,11 +379,43 @@
                         my_neighbours_outer_core)
 
   ! inner core
+  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
+     .and. (.not. USE_LDDRK) .and. NGLOB_XY_IC > 0)then
+
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                          rmassx_inner_core, &
+                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                          nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                          my_neighbours_inner_core)
+
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                          rmassy_inner_core, &
+                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                          nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                          my_neighbours_inner_core)
+
+    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC > 0)then
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                            b_rmassx_inner_core, &
+                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                            my_neighbours_inner_core)
+
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                            b_rmassy_inner_core, &
+                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                            my_neighbours_inner_core)
+    endif
+
+  endif
+
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                         rmass_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_ic, &
                         nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                         my_neighbours_inner_core)
+
 
   ! mass matrix including central cube
   if(INCLUDE_CENTRAL_CUBE) then
@@ -390,6 +497,7 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing movie surface."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 
@@ -429,6 +537,7 @@
       write(IMAIN,*) '  movie output: velocity'
     endif
     write(IMAIN,*) '  time steps every: ',NTSTEP_BETWEEN_FRAMES
+    call flush_IMAIN()
   endif
 
   call sync_all()
@@ -452,6 +561,7 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing movie volume."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 
@@ -500,6 +610,7 @@
     write(IMAIN,*) '  lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
     write(IMAIN,*) '  lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
     write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
+    call flush_IMAIN()
   endif
 
   if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
@@ -523,6 +634,7 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing constants."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! define constants for the time integration
@@ -610,6 +722,7 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing gravity arrays."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
@@ -698,19 +811,12 @@
   implicit none
 
   ! local parameters
-  double precision, dimension(:,:,:,:), allocatable :: &
-    omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-  double precision, dimension(:,:,:,:), allocatable :: &
-    omsb_inner_core_dble, factor_scale_inner_core_dble
-  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle_dble
-  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_inner_core_dble
-
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
-  double precision :: scale_factor,scale_factor_minus_one
 
+  double precision :: scale_factor,scale_factor_minus_one
   real(kind=CUSTOM_REAL) :: mul
-  integer :: ispec,i,j,k,ier
-  character(len=150) :: prnamel
+  integer :: ispec,i,j,k
+  character(len=150) :: prname_l
 
   ! checks if attenuation is on and anything to do
   if( .not. ATTENUATION_VAL ) return
@@ -719,82 +825,33 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing attenuation."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
-
-  ! allocates temporary arrays
-  allocate(omsb_crust_mantle_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
-          factor_scale_crust_mantle_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb crust_mantle arrays')
-  allocate(factor_common_crust_mantle_dble(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common crust_mantle array')
-
-  allocate(omsb_inner_core_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
-          factor_scale_inner_core_dble(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb inner_core arrays')
-  allocate(factor_common_inner_core_dble(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common inner_core array')
-
-  ! CRUST_MANTLE ATTENUATION
-  ! initializes
-  omsb_crust_mantle_dble = 0.d0
-  factor_common_crust_mantle_dble = 0.d0
-  factor_scale_crust_mantle_dble = 0.d0
-  tau_sigma_dble(:) = 0.d0
 
   ! reads in attenuation values
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call create_name_database_adios(prnamel, IREGION_CRUST_MANTLE, LOCAL_PATH)
+  ! CRUST_MANTLE ATTENUATION
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call create_name_database_adios(prname_l, IREGION_CRUST_MANTLE, LOCAL_PATH)
   else
-    call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+    call create_name_database(prname_l, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
   endif
-  call get_attenuation_model_3D(myrank, prnamel, &
-                                omsb_crust_mantle_dble, &
-                                factor_common_crust_mantle_dble, &
-                                factor_scale_crust_mantle_dble,tau_sigma_dble, &
+  call get_attenuation_model_3D(myrank, prname_l, &
+                                one_minus_sum_beta_crust_mantle, &
+                                factor_common_crust_mantle, &
+                                factor_scale_crust_mantle,tau_sigma_dble, &
                                 NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
-  ! initializes
-  omsb_inner_core_dble = 0.d0
-  factor_common_inner_core_dble = 0.d0
-  factor_scale_inner_core_dble = 0.d0
-  tau_sigma_dble = 0.d0
-
-  ! reads in attenuation values
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call create_name_database_adios(prnamel, IREGION_INNER_CORE, LOCAL_PATH)
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call create_name_database_adios(prname_l, IREGION_INNER_CORE, LOCAL_PATH)
   else
-    call create_name_database(prnamel, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+    call create_name_database(prname_l, myrank, IREGION_INNER_CORE, LOCAL_PATH)
   endif
-  call get_attenuation_model_3D(myrank, prnamel, &
-                                omsb_inner_core_dble, &
-                                factor_common_inner_core_dble, &
-                                factor_scale_inner_core_dble,tau_sigma_dble, &
+  call get_attenuation_model_3D(myrank, prname_l, &
+                                one_minus_sum_beta_inner_core, &
+                                factor_common_inner_core, &
+                                factor_scale_inner_core,tau_sigma_dble, &
                                 NSPEC_INNER_CORE)
-
-  ! converts to custom real arrays
-  if(CUSTOM_REAL == SIZE_REAL) then
-    factor_scale_crust_mantle = sngl(factor_scale_crust_mantle_dble)
-    one_minus_sum_beta_crust_mantle = sngl(omsb_crust_mantle_dble)
-    factor_common_crust_mantle = sngl(factor_common_crust_mantle_dble)
-
-    factor_scale_inner_core = sngl(factor_scale_inner_core_dble)
-    one_minus_sum_beta_inner_core = sngl(omsb_inner_core_dble)
-    factor_common_inner_core = sngl(factor_common_inner_core_dble)
-  else
-    factor_scale_crust_mantle       = factor_scale_crust_mantle_dble
-    one_minus_sum_beta_crust_mantle = omsb_crust_mantle_dble
-    factor_common_crust_mantle      = factor_common_crust_mantle_dble
-
-    factor_scale_inner_core         = factor_scale_inner_core_dble
-    one_minus_sum_beta_inner_core   = omsb_inner_core_dble
-    factor_common_inner_core        = factor_common_inner_core_dble
-  endif
-
-  deallocate(omsb_crust_mantle_dble,factor_scale_crust_mantle_dble)
-  deallocate(omsb_inner_core_dble,factor_scale_inner_core_dble)
-  deallocate(factor_common_crust_mantle_dble)
-  deallocate(factor_common_inner_core_dble)
 
   ! if attenuation is on, shift PREM to right frequency
   ! rescale mu in PREM to average frequency for attenuation
@@ -950,6 +1007,7 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "initializing wavefields."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 
@@ -1410,6 +1468,7 @@
     if(myrank == 0 ) then
       write(IMAIN,*) "preparing noise arrays."
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
@@ -1467,6 +1526,7 @@
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing Fields and Constants on GPU Device."
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
@@ -1842,6 +1902,8 @@
                                     Mesh_pointer)
   endif
 
+  ! synchronizes processes
+  call sync_all()
 
   ! outputs GPU usage to files for all processes
   call output_free_device_memory(myrank)
@@ -1856,6 +1918,7 @@
     write(IMAIN,*)"             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
     write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine prepare_timerun_GPU

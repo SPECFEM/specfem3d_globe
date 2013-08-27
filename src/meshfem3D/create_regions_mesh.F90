@@ -55,7 +55,8 @@
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-    ADIOS_FOR_ARRAYS_SOLVER
+    ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -304,7 +305,7 @@
     ! copy the theoretical number of points for the second pass
     nglob = nglob_theor
 
-    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
       select case(iregion_code)
       case( IREGION_CRUST_MANTLE )
         nglob_xy = nglob
@@ -315,10 +316,25 @@
        nglob_xy = 1
     endif
 
+    if( .not. USE_LDDRK )then
+      if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+        select case(iregion_code)
+        case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
+           nglob_xy = nglob
+        case( IREGION_OUTER_CORE )
+           nglob_xy = 1
+        endselect
+      endif
+    endif
+
     allocate(rmassx(nglob_xy), &
-            rmassy(nglob_xy), &
-            stat=ier)
+             rmassy(nglob_xy), &
+             stat=ier)
     if(ier /= 0) stop 'error in allocate 21'
+
+    allocate(b_rmassx(nglob_xy), &
+             b_rmassy(nglob_xy),stat=ier)
+    if(ier /= 0) stop 'error in allocate b_21'
 
     allocate(rmassz(nglob),stat=ier)
     if(ier /= 0) stop 'error in allocate 22'
@@ -334,9 +350,9 @@
     if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
-    call create_mass_matrices(myrank,nspec,idoubling,ibool, &
-                            iregion_code,xstore,ystore,zstore, &
-                            NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    call create_mass_matrices(myrank,nspec,nglob,idoubling,ibool, &
+                              iregion_code,xstore,ystore,zstore, &
+                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
     ! save the binary files
     call sync_all()
@@ -346,18 +362,21 @@
       call flush_IMAIN()
     endif
     ! saves mesh and model parameters
-    if (ADIOS_FOR_ARRAYS_SOLVER) then
+    if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+      if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
       call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
-          iregion_code,xstore,ystore,zstore,  &
-          NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
-          NSPEC2D_TOP,NSPEC2D_BOTTOM)
+                                    iregion_code,xstore,ystore,zstore,  &
+                                    NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+                                    NSPEC2D_TOP,NSPEC2D_BOTTOM)
     else
       call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
-          iregion_code,xstore,ystore,zstore, NSPEC2D_TOP,NSPEC2D_BOTTOM)
+                              iregion_code,xstore,ystore,zstore, &
+                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
     endif
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
+    deallocate(b_rmassx,b_rmassy)
     deallocate(rmass_ocean_load)
     ! Stacey
     if( NCHUNKS /= 6 ) deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
@@ -378,7 +397,7 @@
         call flush_IMAIN()
       endif
       ! saves boundary file
-      if (ADIOS_FOR_ARRAYS_SOLVER) then
+      if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
         call save_arrays_solver_boundary_adios()
       else
         call save_arrays_solver_boundary()
@@ -831,6 +850,7 @@
     if(myrank == 0 ) then
       write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
                                    'out of ',ilast_region-ifirst_region+1
+      call flush_IMAIN()
     endif
 
     ! determine the radii that define the shell
@@ -879,8 +899,6 @@
                     gammaxstore,gammaystore,gammazstore,&
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                    size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     stretch_tab, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
@@ -910,8 +928,6 @@
                     gammaxstore,gammaystore,gammazstore,&
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                    size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
@@ -967,8 +983,7 @@
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                        size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4), &
+                        nspec_ani,nspec_stacey, &
                         rho_vp,rho_vs,xigll,yigll,zigll, &
                         ispec_is_tiso)
   endif
@@ -1178,7 +1193,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
-    ADIOS_FOR_AVS_DX
+    ADIOS_ENABLED,ADIOS_FOR_AVS_DX
 
 
   use meshfem3D_models_par,only: &
@@ -1214,7 +1229,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
           stat=ier)
   if(ier /= 0) stop 'error in allocate 21'
 
-  if (ADIOS_FOR_AVS_DX) then
+  if( ADIOS_ENABLED .and. ADIOS_FOR_AVS_DX ) then
     call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
         num_ibool_AVS_DX, mask_ibool)
   else

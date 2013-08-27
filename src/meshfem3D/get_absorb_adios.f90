@@ -53,14 +53,13 @@
 subroutine get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
   nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
+  use constants
   use mpi
   use adios_write_mod
   use meshfem3D_par, only: LOCAL_PATH
 
   ! Stacey, define flags for absorbing boundaries
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX

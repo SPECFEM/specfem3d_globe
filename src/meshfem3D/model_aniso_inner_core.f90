@@ -36,9 +36,9 @@
   subroutine model_aniso_inner_core(x,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL, &
                                     vpv,vph,vsv,vsh,rho,eta_aniso)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! given a normalized radius x, gives non-dimensionalized c11,c33,c12,c13,c44
 

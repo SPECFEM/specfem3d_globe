@@ -430,20 +430,19 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
-                            rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
-                            rmass_ocean_load,normal_top_crust_mantle, &
-                            ibool_crust_mantle,ibelm_top_crust_mantle, &
-                            updated_dof_ocean_load,NGLOB_XY, &
-                            SIMULATION_TYPE,nspec_top, &
-                            ABSORBING_CONDITIONS)
+  subroutine compute_coupling_ocean(accel_crust_mantle, &
+                                    rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
+                                    rmass_ocean_load,normal_top_crust_mantle, &
+                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
+                                    updated_dof_ocean_load,NGLOB_XY, &
+                                    nspec_top, &
+                                    ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK)
 
   use constants_solver
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: b_accel_crust_mantle
 
   ! mass matrices
   !
@@ -465,23 +464,22 @@
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
-  logical :: ABSORBING_CONDITIONS
+  logical :: ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
-  integer SIMULATION_TYPE
   integer nspec_top
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: force_normal_comp,b_force_normal_comp
+  real(kind=CUSTOM_REAL) :: force_normal_comp
   real(kind=CUSTOM_REAL) :: additional_term_x,additional_term_y,additional_term_z
-  real(kind=CUSTOM_REAL) :: b_additional_term_x,b_additional_term_y,b_additional_term_z
-  real(kind=CUSTOM_REAL) :: additional_term,b_additional_term
+  real(kind=CUSTOM_REAL) :: additional_term
   real(kind=CUSTOM_REAL) :: nx,ny,nz
   integer :: i,j,k,ispec,ispec2D,iglob
 
   !   initialize the updates
   updated_dof_ocean_load(:) = .false.
 
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+  if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. (.not. USE_LDDRK)) then
 
      ! for surface elements exactly at the top of the crust (ocean bottom)
      do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -519,20 +517,6 @@
                  accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term_x * nx
                  accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term_y * ny
                  accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term_z * nz
-
-                 if (SIMULATION_TYPE == 3) then
-                    b_force_normal_comp = b_accel_crust_mantle(1,iglob)*nx / rmassx_crust_mantle(iglob) + &
-                         b_accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) + &
-                         b_accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)
-
-                    b_additional_term_x = (rmass_ocean_load(iglob) - rmassx_crust_mantle(iglob)) * b_force_normal_comp
-                    b_additional_term_y = (rmass_ocean_load(iglob) - rmassy_crust_mantle(iglob)) * b_force_normal_comp
-                    b_additional_term_z = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * b_force_normal_comp
-
-                    b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) + b_additional_term_x * nx
-                    b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) + b_additional_term_y * ny
-                    b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) + b_additional_term_z * nz
-                 endif
 
                  ! done with this point
                  updated_dof_ocean_load(iglob) = .true.
@@ -579,18 +563,6 @@
                  accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term * nx
                  accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term * ny
                  accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term * nz
-
-                 if (SIMULATION_TYPE == 3) then
-                    b_force_normal_comp = (b_accel_crust_mantle(1,iglob)*nx + &
-                         b_accel_crust_mantle(2,iglob)*ny + &
-                         b_accel_crust_mantle(3,iglob)*nz) / rmassz_crust_mantle(iglob)
-
-                    b_additional_term = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * b_force_normal_comp
-
-                    b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) + b_additional_term * nx
-                    b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) + b_additional_term * ny
-                    b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) + b_additional_term * nz
-                 endif
 
                  ! done with this point
                  updated_dof_ocean_load(iglob) = .true.

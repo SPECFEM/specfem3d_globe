@@ -68,11 +68,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_atten3D_QRFSI12_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -102,6 +101,7 @@
     write(IMAIN,*) 'read 3D attenuation model'
     write(IMAIN,*) '  model: QRFSI12'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine
@@ -112,11 +112,10 @@
 
   subroutine read_atten_model_3D_QRFSI12()
 
+  use constants
   use model_atten3D_QRFSI12_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: j,k,l,m,ier
@@ -189,11 +188,10 @@
 
   subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,idoubling)
 
+  use constants
   use model_atten3D_QRFSI12_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: radius,theta,phi,Qmu
   integer :: idoubling

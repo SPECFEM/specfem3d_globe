@@ -49,11 +49,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_heterogen_mantle_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -68,17 +67,22 @@
   ! master process reads in model
   if(myrank == 0) then
      write(IMAIN,*) 'Reading in model_heterogen_mantle.'
+     call flush_IMAIN()
+
      call read_heterogen_mantle_model()
+
      write(IMAIN,*) 'model_heterogen_mantle is read in.'
+     call flush_IMAIN()
   endif
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(HMM_rho_in,N_R*N_THETA*N_PHI)
 
   if(myrank == 0) then
-     write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
-     write(IMAIN,*) 'First value in HMM:',HMM_rho_in(1)
-     write(IMAIN,*) 'Last value in HMM:',HMM_rho_in(N_R*N_THETA*N_PHI)
+    write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
+    write(IMAIN,*) 'First value in HMM:',HMM_rho_in(1)
+    write(IMAIN,*) 'Last value in HMM:',HMM_rho_in(N_R*N_THETA*N_PHI)
+    call flush_IMAIN()
   endif
 
   end subroutine model_heterogen_mntl_broadcast
@@ -94,11 +98,10 @@
 
   subroutine read_heterogen_mantle_model()
 
+  use constants
   use model_heterogen_mantle_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: i,j,ier
@@ -124,11 +127,10 @@
 
   subroutine model_heterogen_mantle(radius,theta,phi,dvs,dvp,drho)
 
+  use constants
   use model_heterogen_mantle_par
 
   implicit none
-
-  include "constants.h"
 
   ! variable declaration
   double precision :: radius,theta,phi            ! input coordinates

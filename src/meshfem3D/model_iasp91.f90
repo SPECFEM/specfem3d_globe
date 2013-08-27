@@ -43,10 +43,9 @@
 ! because IASP91 does not provide a density model.
 ! Note that "ttimes" from the official IASP91 package uses a slightly different
 ! model: scaling of the P wave velocity based on Birch's law. Both options are fine.
+  use constants
 
   implicit none
-
-  include "constants.h"
 
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu

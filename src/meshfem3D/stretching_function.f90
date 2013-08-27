@@ -32,9 +32,9 @@
 ! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision :: r_top, r_bottom,value
   integer :: ner,i
@@ -90,9 +90,9 @@
 ! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision :: r_top, r_bottom !,value
   integer :: ner !,i

@@ -27,9 +27,9 @@
 
   subroutine get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
   double precision xelm(NGNOD)
@@ -61,20 +61,20 @@
 
   enddo
 
+  end subroutine get_ellipticity
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-  end subroutine get_ellipticity
 
   !> Hejun
   ! get ellipticity according to GLL points
   ! JAN08, 2010
   subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
   integer::ispec,nspec

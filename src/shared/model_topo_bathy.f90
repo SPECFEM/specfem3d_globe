@@ -37,9 +37,9 @@
 
 ! standard routine to setup model
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: myrank
 
@@ -52,6 +52,7 @@
     ! user output
     write(IMAIN,*)
     write(IMAIN,*) 'incorporating topography'
+    call flush_IMAIN()
 
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
@@ -71,9 +72,9 @@
 !
 !---- read topography and bathymetry file once and for all
 !
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
@@ -156,9 +157,9 @@
 
   subroutine save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
@@ -194,9 +195,9 @@
 
   subroutine read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
@@ -233,6 +234,7 @@
 
     ! user output
     write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+    call flush_IMAIN()
   endif
 
   end subroutine read_topo_bathy_database
@@ -247,9 +249,9 @@
 !---- get elevation or ocean depth in meters at a given latitude and longitude
 !
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! location latitude/longitude (in degree)
   double precision,intent(in):: xlat,xlon

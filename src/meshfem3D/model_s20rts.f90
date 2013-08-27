@@ -61,11 +61,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use model_s20rts_par
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -103,11 +102,10 @@
 
   subroutine read_model_s20rts()
 
+  use constants
   use model_s20rts_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: k,l,m,ier
@@ -155,11 +153,10 @@
 
   subroutine mantle_s20rts(radius,theta,phi,dvs,dvp,drho)
 
+  use constants
   use model_s20rts_par
 
   implicit none
-
-  include "constants.h"
 
   double precision :: radius,theta,phi,dvs,dvp,drho
 
@@ -233,10 +230,10 @@
 
   subroutine s20rts_splhsetup()
 
+  use constants
   use model_s20rts_par
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i,j

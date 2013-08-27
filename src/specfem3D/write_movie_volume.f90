@@ -289,10 +289,9 @@
 
 ! outputs strains: MOVIE_VOLUME_TYPE == 1 / 2 / 3
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   ! input
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
@@ -439,10 +438,9 @@
 
 ! outputs displacement/velocity: MOVIE_VOLUME_TYPE == 5 / 6
 
-  implicit none
+  use constants_solver
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  implicit none
 
   ! input
   integer :: myrank,it
@@ -565,9 +563,9 @@
 
 ! outputs divergence and curl: MOVIE_VOLUME_TYPE == 4
 
+  use constants_solver
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: myrank,it
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
@@ -749,9 +747,9 @@
 
 ! outputs norm of displacement: MOVIE_VOLUME_TYPE == 7
 
+  use constants_solver
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: myrank,it
 
@@ -865,9 +863,9 @@
 
 ! outputs norm of velocity: MOVIE_VOLUME_TYPE == 8
 
+  use constants_solver
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: myrank,it
 
@@ -981,9 +979,9 @@
 
 ! outputs norm of acceleration: MOVIE_VOLUME_TYPE == 1
 
+  use constants_solver
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: myrank,it
 

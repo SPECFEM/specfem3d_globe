@@ -37,12 +37,10 @@
 
 ! standard routine to setup model
 
+  use constants
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
 
   implicit none
-
-  include "constants.h"
-!  include "precision.h"
 
   ! GLL model_variables
   type model_gll_variables
@@ -96,6 +94,7 @@
     ! isotropic model
     if( myrank == 0 ) then
       write(IMAIN,*)'model GLL: isotropic'
+      call flush_IMAIN()
     endif
 
     ! Vs
@@ -122,6 +121,7 @@
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   else
@@ -179,6 +179,7 @@
     if( myrank == 0 ) then
       write(IMAIN,*) '  eta new min/max: ',min_all,max_all
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   endif
@@ -215,11 +216,10 @@
 
   subroutine read_gll_model(myrank,MGLL_V,NSPEC)
 
+  use constants
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
 
   implicit none
-
-  include "constants.h"
 
   ! GLL model_variables
   type model_gll_variables
@@ -246,6 +246,7 @@
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
+    call flush_IMAIN()
   endif
 
   ! only crust and mantle

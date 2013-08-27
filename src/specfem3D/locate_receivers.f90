@@ -154,6 +154,7 @@
     write(IMAIN,*) ' locating receivers'
     write(IMAIN,*) '********************'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! define topology of the control element
@@ -171,6 +172,7 @@
     write(IMAIN,*) 'reading receiver information'
     write(IMAIN,*) '****************************'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! allocate memory for arrays using number of stations
@@ -222,6 +224,7 @@
 ! appearences and to just add a count to the station name in this case.
     allocate(station_duplet(nrec),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating station_duplet array')
+
     station_duplet(:) = 0
     do irec = 1,nrec
       do i=1,irec-1
@@ -247,9 +250,8 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_ch(station_name,nrec*MAX_LENGTH_STATION_NAME)
-  call bcast_all_ch(network_name,nrec*MAX_LENGTH_NETWORK_NAME)
-
+  call bcast_all_ch_array(station_name,nrec,MAX_LENGTH_STATION_NAME)
+  call bcast_all_ch_array(network_name,nrec,MAX_LENGTH_NETWORK_NAME)
   call bcast_all_dp(stlat,nrec)
   call bcast_all_dp(stlon,nrec)
   call bcast_all_dp(stele,nrec)
@@ -421,7 +423,7 @@
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file RECORDHEADERS')
 
@@ -430,31 +432,31 @@
     do irec = 1,nrec
 
       if(stele(irec) >= -999.9999) then
-        write(1,500) station_name(irec),bic(1:2)//'N', &
+        write(IOUT,500) station_name(irec),bic(1:2)//'N', &
                      stlat(irec),stlon(irec),stele(irec),stbur(irec), &
                      0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,500) station_name(irec),bic(1:2)//'E', &
+        write(IOUT,500) station_name(irec),bic(1:2)//'E', &
                      stlat(irec),stlon(irec),stele(irec),stbur(irec), &
                      90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,500) station_name(irec),bic(1:2)//'Z', &
+        write(IOUT,500) station_name(irec),bic(1:2)//'Z', &
                      stlat(irec),stlon(irec),stele(irec),stbur(irec), &
                      0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
       else
         ! very deep ocean-bottom stations such as H2O are not compatible
         ! with the standard RECORDHEADERS format because of the f6.1 format
         ! therefore suppress decimals for depth in that case
-        write(1,600) station_name(irec),bic(1:2)//'N', &
+        write(IOUT,600) station_name(irec),bic(1:2)//'N', &
                      stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
                      0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,600) station_name(irec),bic(1:2)//'E', &
+        write(IOUT,600) station_name(irec),bic(1:2)//'E', &
                      stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
                      90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,600) station_name(irec),bic(1:2)//'Z', &
+        write(IOUT,600) station_name(irec),bic(1:2)//'Z', &
                      stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
                      0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
       endif
     enddo
-    close(1)
+    close(IOUT)
 
   endif
 
@@ -704,6 +706,7 @@
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'
     endif
+    call flush_IMAIN()
 
     nrec = nrec_found
     islice_selected_rec(1:nrec) = islice_selected_rec_found(1:nrec)
@@ -721,32 +724,32 @@
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
-    open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file output_list_stations.txt')
-    write(27,*)
-    write(27,*) 'total number of stations: ',nrec
-    write(27,*)
+    write(IOUT,*)
+    write(IOUT,*) 'total number of stations: ',nrec
+    write(IOUT,*)
     do irec=1,nrec
-      write(27,*) station_name(irec)(1:len_trim(station_name(irec))), &
+      write(IOUT,*) station_name(irec)(1:len_trim(station_name(irec))), &
                   '.',network_name(irec)(1:len_trim(network_name(irec))), &
                   ' epicentral distance ',sngl(epidist(irec)),' deg'
     enddo
-    close(27)
+    close(IOUT)
 
     ! write out a filtered station list
     if( NCHUNKS /= 6 ) then
-      open(unit=27,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
             status='unknown',iostat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
-        write(27,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
+        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
                   trim(network_name(irec)),sngl(stlat(irec)),&
                   sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
       enddo
       ! close receiver file
-      close(27)
+      close(IOUT)
     endif
 
   endif    ! end of section executed by main process only
@@ -774,8 +777,8 @@
   call bcast_all_dp(eta_receiver,nrec)
   call bcast_all_dp(gamma_receiver,nrec)
 
-  call bcast_all_ch(station_name,nrec*MAX_LENGTH_STATION_NAME)
-  call bcast_all_ch(network_name,nrec*MAX_LENGTH_NETWORK_NAME)
+  call bcast_all_ch_array(station_name,nrec,MAX_LENGTH_STATION_NAME)
+  call bcast_all_ch_array(network_name,nrec,MAX_LENGTH_NETWORK_NAME)
 
   call bcast_all_dp(stlat,nrec)
   call bcast_all_dp(stlon,nrec)
@@ -791,6 +794,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'End of receiver detection - done'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
   call sync_all()
 

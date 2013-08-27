@@ -39,12 +39,15 @@
               ibool,idoubling,ispec_is_tiso, &
               rmassx,rmassy,rmassz,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
-              ABSORBING_CONDITIONS,LOCAL_PATH)
+              b_rmassx,b_rmassy)
+
+  use constants_solver
+  use specfem_par,only: &
+    ABSORBING_CONDITIONS, &
+    LOCAL_PATH,ABSORBING_CONDITIONS,&
+    EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: iregion_code,myrank
   integer :: nspec,nglob,nglob_xy
@@ -79,13 +82,15 @@
 
   ! mass matrices and additional ocean load mass matrix
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
+
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
   ! flags to know if we should read Vs and anisotropy arrays
-  logical :: READ_KAPPA_MU,READ_TISO,ABSORBING_CONDITIONS
+  logical :: READ_KAPPA_MU,READ_TISO !,ABSORBING_CONDITIONS
 
-  character(len=150) :: LOCAL_PATH
+!  character(len=150) :: LOCAL_PATH
 
   ! local parameters
   integer :: ier,lnspec,lnglob
@@ -185,14 +190,12 @@
 
   ! Stacey
   if(ABSORBING_CONDITIONS) then
-
     if(iregion_code == IREGION_CRUST_MANTLE) then
       read(IIN) rho_vp
       read(IIN) rho_vs
     else if(iregion_code == IREGION_OUTER_CORE) then
       read(IIN) rho_vp
     endif
-
   endif
 
   ! mass matrices
@@ -203,12 +206,25 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
-     read(IIN) rmassx
-     read(IIN) rmassy
+  if(.not. USE_LDDRK)then
+    if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+       read(IIN) rmassx
+       read(IIN) rmassy
+    endif
   endif
 
   read(IIN) rmassz
+
+  if(.not. USE_LDDRK)then
+    if((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+       read(IIN) b_rmassx
+       read(IIN) b_rmassy
+    endif
+  endif
+
 
   ! read additional ocean load mass matrix
   if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
