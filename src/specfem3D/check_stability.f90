@@ -38,8 +38,8 @@
   use specfem_par,only: &
     GPU_MODE,Mesh_pointer, &
     COMPUTE_AND_STORE_STRAIN, &
-    SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0, &
-    NSTEP,it, &
+    SIMULATION_TYPE,time_start,DT,t0, &
+    NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
     myrank
 
   use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
@@ -63,11 +63,14 @@
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
+  integer :: it_run,nstep_run
+  logical :: SHOW_SEPARATE_RUN_INFORMATION
   ! to determine date and time at which the run will finish
   character(len=8) datein
   character(len=10) timein
   character(len=5)  :: zone
   integer, dimension(8) :: time_values
+
   character(len=3), dimension(12) :: month_name
   character(len=3), dimension(0:6) :: weekday_name
   data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
@@ -159,6 +162,38 @@
 
   if(myrank == 0) then
 
+    ! this is in the case of restart files, when a given run consists of several partial runs
+    ! information about the current run only
+    SHOW_SEPARATE_RUN_INFORMATION = ( NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS )
+    it_run = it - it_begin + 1
+    nstep_run = it_end - it_begin + 1
+
+    ! elapsed time since beginning of the simulation
+    tCPU = wtime() - time_start
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+
+    ! compute estimated remaining simulation time
+    if (SHOW_SEPARATE_RUN_INFORMATION) then
+      t_remain = (it_end - it) * (tCPU/dble(it_run))
+    else
+      t_remain = (NSTEP - it) * (tCPU/dble(it))
+    endif
+    int_t_remain = int(t_remain)
+    ihours_remain = int_t_remain / 3600
+    iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
+    iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
+
+    ! compute estimated total simulation time
+    t_total = t_remain + tCPU
+    int_t_total = int(t_total)
+    ihours_total = int_t_total / 3600
+    iminutes_total = (int_t_total - 3600*ihours_total) / 60
+    iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
+
+    ! user output
     write(IMAIN,*) 'Time step # ',it
     write(IMAIN,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
 
@@ -178,38 +213,30 @@
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif
 
-    ! elapsed time since beginning of the simulation
-    tCPU = wtime() - time_start
-    int_tCPU = int(tCPU)
-    ihours = int_tCPU / 3600
-    iminutes = (int_tCPU - 3600*ihours) / 60
-    iseconds = int_tCPU - 3600*ihours - 60*iminutes
     write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
     write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
-    ! compute estimated remaining simulation time
-    t_remain = (NSTEP - it) * (tCPU/dble(it))
-    int_t_remain = int(t_remain)
-    ihours_remain = int_t_remain / 3600
-    iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
-    iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
-    write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
-    write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+    if (SHOW_SEPARATE_RUN_INFORMATION) then
+      write(IMAIN,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
+      write(IMAIN,*) 'Time steps done in total = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining for this run = ',it_end - it
+      write(IMAIN,*) 'Time steps remaining for all runs = ',NSTEP - it
+    else
+      write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+    endif
+
+    write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
     write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
     write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_remain,iminutes_remain,iseconds_remain
 
-    ! compute estimated total simulation time
-    t_total = t_remain + tCPU
-    int_t_total = int(t_total)
-    ihours_total = int_t_total / 3600
-    iminutes_total = (int_t_total - 3600*ihours_total) / 60
-    iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
     write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
     write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_total,iminutes_total,iseconds_total
     write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+
 
     if(it < NSTEP) then
 
@@ -287,14 +314,12 @@
     call flush_IMAIN()
 
     ! write time stamp file to give information about progression of simulation
-    call write_timestamp_file(it,NSTEP,DT,t0,SIMULATION_TYPE, &
-                              Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
+    call write_timestamp_file(Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
                               tCPU,ihours,iminutes,iseconds, &
                               t_remain,ihours_remain,iminutes_remain,iseconds_remain, &
                               t_total,ihours_total,iminutes_total,iseconds_total, &
                               day_of_week,mon,day,year,hr,minutes, &
-                              day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote, &
-                              OUTPUT_FILES)
+                              day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote)
 
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
@@ -338,24 +363,21 @@
 !------------------------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_timestamp_file(it,NSTEP,DT,t0,SIMULATION_TYPE, &
-                              Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
-                              tCPU,ihours,iminutes,iseconds, &
-                              t_remain,ihours_remain,iminutes_remain,iseconds_remain, &
-                              t_total,ihours_total,iminutes_total,iseconds_total, &
-                              day_of_week,mon,day,year,hr,minutes, &
-                              day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote, &
-                              OUTPUT_FILES)
+  subroutine write_timestamp_file(Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
+                                  tCPU,ihours,iminutes,iseconds, &
+                                  t_remain,ihours_remain,iminutes_remain,iseconds_remain, &
+                                  t_total,ihours_total,iminutes_total,iseconds_total, &
+                                  day_of_week,mon,day,year,hr,minutes, &
+                                  day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote)
 
-  use constants_solver
+  use constants,only: CUSTOM_REAL,IOUT, &
+    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE
+
+  use specfem_par,only: &
+    SIMULATION_TYPE,OUTPUT_FILES,DT,t0, &
+    NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
 
   implicit none
-
-  ! time step
-  integer :: it,NSTEP
-  integer :: SIMULATION_TYPE
-
-  double precision :: DT,t0
 
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm_all,Ufluidnorm_all
@@ -370,12 +392,11 @@
   integer :: year,mon,day,hr,minutes,day_of_week, &
              year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
 
-  character(len=150) :: OUTPUT_FILES
 
   ! local parameters
+  integer :: it_run,nstep_run
   ! names of the data files for all the processors in MPI
   character(len=150) :: outputname
-
   ! to determine date and time at which the run will finish
   character(len=3), dimension(12) :: month_name
   character(len=3), dimension(0:6) :: weekday_name
@@ -405,8 +426,20 @@
   write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
   write(IOUT,*)
 
-  write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
-  write(IOUT,*) 'Time steps remaining = ',NSTEP - it
+  if( NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS ) then
+    ! this is in the case of restart files, when a given run consists of several partial runs
+    ! information about the current run only
+    it_run = it - it_begin + 1
+    nstep_run = it_end - it_begin + 1
+    write(IOUT,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
+    write(IOUT,*) 'Time steps done in total = ',it,' out of ',NSTEP
+    write(IOUT,*) 'Time steps remaining for this run = ',it_end - it
+    write(IOUT,*) 'Time steps remaining for all runs = ',NSTEP - it
+  else
+    write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
+    write(IOUT,*) 'Time steps remaining = ',NSTEP - it
+  endif
+
   write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
   write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
            ihours_remain,iminutes_remain,iseconds_remain

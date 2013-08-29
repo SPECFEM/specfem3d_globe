@@ -401,6 +401,13 @@
       call exit_MPI(myrank, 'error in compiled COMPUTE_AND_STORE_STRAIN parameter, please recompile solver 20')
   endif
 
+  if( FORCE_VECTORIZATION_VAL ) then
+    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL .and. N_SLS /= 3) &
+      call exit_MPI(myrank, &
+      'FORCE_VECTORIZATION can only be used with N_SLS == 3 when ATTENUATION .and. .not. PARTIAL_PHYS_DISPERSION_ONLY&
+              & because N_SLS is assumed to be equal to 3 when vectorizing compute_element_iso,tiso,aniso')
+  endif
+
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 

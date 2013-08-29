@@ -30,10 +30,9 @@
 !> \brief Read adios attenuation arrays created by the mesher
 !         (regX_attenuation.bp)
 subroutine read_attenuation_adios(myrank, prname, &
-   factor_common, scale_factor, tau_s, vx, vy, vz, vnspec, T_c_source)
+                                  factor_common, scale_factor, tau_s, vnspec, T_c_source)
 
-  use constants
-
+  use constants_solver
   use mpi
   use adios_read_mod
   use specfem_par,only: ATTENUATION_VAL
@@ -42,9 +41,9 @@ subroutine read_attenuation_adios(myrank, prname, &
 
   integer :: myrank
 
-  integer :: vx,vy,vz,vnspec
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec)       :: scale_factor
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  integer :: vnspec
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec)       :: scale_factor
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   double precision, dimension(N_SLS)                 :: tau_s
 
   character(len=150) :: prname

@@ -247,10 +247,22 @@
     stop 'an error occurred while reading the parameter file'
   endif
 
+!daniel debug: status of implementation
+
 !! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
   if( ADIOS_ENABLED ) then
-    stop 'ADIOS support not implemented yet'
+    stop 'ADIOS_ENABLED support not implemented yet'
   endif
+  if( USE_LDDRK ) then
+    stop 'USE_LDDRK support not implemented yet'
+  endif
+  if( EXACT_MASS_MATRIX_FOR_ROTATION ) then
+    stop 'EXACT_MASS_MATRIX_FOR_ROTATION support not implemented yet'
+  endif
+  if( UNDO_ATTENUATION ) then
+    stop 'UNDO_ATTENUATION support not implemented yet'
+  endif
+
 
   end subroutine read_parameter_file
 

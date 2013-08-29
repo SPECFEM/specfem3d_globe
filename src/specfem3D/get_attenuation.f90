@@ -61,7 +61,7 @@
   ! use the filename to determine the actual contents of the read
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_attenuation_adios(myrank, prname, &
-       factor_common, scale_factor, tau_s, ATT1_VAL, ATT2_VAL, ATT3_VAL, vnspec, T_c_source)
+                                factor_common, scale_factor, tau_s, vnspec, T_c_source)
   else
     open(unit=IIN, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)

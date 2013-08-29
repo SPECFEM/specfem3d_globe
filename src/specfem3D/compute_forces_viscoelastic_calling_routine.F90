@@ -46,7 +46,7 @@
   logical :: phase_is_inner
 
 
-!daniel: att - debug
+!daniel debug: att - debug
 !  integer :: iglob
 !  logical,parameter :: DEBUG = .false.
 !  if( DEBUG ) then
@@ -121,9 +121,8 @@
                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                eps_trace_over_3_crust_mantle, &
-               alphaval,betaval,gammaval,factor_common_crust_mantle, &
-               size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-               size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), .false. )
+               alphaval,betaval,gammaval, &
+               factor_common_crust_mantle,size(factor_common_crust_mantle,5), .false. )
 
           ! inner core region
           call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
@@ -136,9 +135,7 @@
                epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                eps_trace_over_3_inner_core,&
                alphaval,betaval,gammaval, &
-               factor_common_inner_core, &
-               size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-               size(factor_common_inner_core,4), size(factor_common_inner_core,5), .false. )
+               factor_common_inner_core,size(factor_common_inner_core,5), .false. )
 
        else
           ! no Deville optimization
@@ -153,9 +150,8 @@
                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                eps_trace_over_3_crust_mantle, &
-               alphaval,betaval,gammaval,factor_common_crust_mantle, &
-               size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-               size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+               alphaval,betaval,gammaval, &
+               factor_common_crust_mantle,size(factor_common_crust_mantle,5) )
           ! inner core region
           call compute_forces_inner_core( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                NSPEC_INNER_CORE_ATTENUATION, &
@@ -167,9 +163,7 @@
                epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                eps_trace_over_3_inner_core,&
                alphaval,betaval,gammaval, &
-               factor_common_inner_core, &
-               size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-               size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+               factor_common_inner_core,size(factor_common_inner_core,5) )
 
        endif
 
@@ -189,9 +183,8 @@
                   b_epsilondev_xy_crust_mantle, &
                   b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                   b_eps_trace_over_3_crust_mantle, &
-                  b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-                  size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-                  size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), .true. )
+                  b_alphaval,b_betaval,b_gammaval, &
+                  factor_common_crust_mantle,size(factor_common_crust_mantle,5), .true. )
              ! inner core region
              call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                   NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -204,9 +197,7 @@
                   b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                   b_eps_trace_over_3_inner_core,&
                   b_alphaval,b_betaval,b_gammaval, &
-                  factor_common_inner_core, &
-                  size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-                  size(factor_common_inner_core,4), size(factor_common_inner_core,5), .true. )
+                  factor_common_inner_core,size(factor_common_inner_core,5), .true. )
 
           else
              ! no Deville optimization
@@ -222,9 +213,8 @@
                   b_epsilondev_xy_crust_mantle, &
                   b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                   b_eps_trace_over_3_crust_mantle, &
-                  b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-                  size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-                  size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+                  b_alphaval,b_betaval,b_gammaval, &
+                  factor_common_crust_mantle,size(factor_common_crust_mantle,5) )
 
              ! inner core region
              call compute_forces_inner_core( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
@@ -238,9 +228,7 @@
                   b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                   b_eps_trace_over_3_inner_core,&
                   b_alphaval,b_betaval,b_gammaval, &
-                  factor_common_inner_core, &
-                  size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-                  size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+                  factor_common_inner_core,size(factor_common_inner_core,5) )
           endif
        endif !SIMULATION_TYPE == 3
 
@@ -526,16 +514,16 @@
   ! updates (only) acceleration w/ rotation in the crust/mantle region (touches oceans)
   if(.NOT. GPU_MODE) then
      ! on CPU
-     call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE,NGLOB_XY_CM,veloc_crust_mantle,accel_crust_mantle, &
-                                        two_omega_earth, &
-                                        rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                                        NCHUNKS_VAL,ABSORBING_CONDITIONS)
+     call update_accel_elastic(NGLOB_CRUST_MANTLE,NGLOB_XY_CM,veloc_crust_mantle,accel_crust_mantle, &
+                               two_omega_earth, &
+                               rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                               NCHUNKS_VAL,ABSORBING_CONDITIONS)
      ! adjoint / kernel runs
      if (SIMULATION_TYPE == 3) &
-          call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_XY_CM,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                             b_two_omega_earth, &
-                                             rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                                             NCHUNKS_VAL,ABSORBING_CONDITIONS)
+          call update_accel_elastic(NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_XY_CM,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                    b_two_omega_earth, &
+                                    rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                    NCHUNKS_VAL,ABSORBING_CONDITIONS)
   else
      ! on GPU
      call kernel_3_a_cuda(Mesh_pointer, &
@@ -567,14 +555,14 @@
   ! (updates velocity)
   if(.NOT. GPU_MODE ) then
     ! on CPU
-    call compute_forces_el_update_veloc(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
-                                       NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
-                                       deltatover2,two_omega_earth,rmass_inner_core)
+    call update_veloc_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
+                              NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
+                              deltatover2,two_omega_earth,rmass_inner_core)
     ! adjoint / kernel runs
     if (SIMULATION_TYPE == 3) &
-      call compute_forces_el_update_veloc(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                         NGLOB_INNER_CORE_ADJOINT,b_veloc_inner_core,b_accel_inner_core, &
-                                         b_deltatover2,b_two_omega_earth,rmass_inner_core)
+      call update_veloc_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                NGLOB_INNER_CORE_ADJOINT,b_veloc_inner_core,b_accel_inner_core, &
+                                b_deltatover2,b_two_omega_earth,rmass_inner_core)
   else
     ! on GPU
     call kernel_3_b_cuda(Mesh_pointer, &
@@ -582,7 +570,7 @@
   endif
 
 
-!daniel: att - debug
+!daniel debug: att - debug
 !  if( DEBUG ) then
 !    if( SIMULATION_TYPE == 1) then
 !      if( it > NSTEP - 1000 .and. myrank == 0 ) then
@@ -597,118 +585,3 @@
 
   end subroutine compute_forces_viscoelastic
 
-
-!=====================================================================
-
-  subroutine compute_forces_el_update_accel(NGLOB,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle, &
-                                           two_omega_earth, &
-                                           rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                                           NCHUNKS_VAL,ABSORBING_CONDITIONS)
-
-  use constants_solver,only: CUSTOM_REAL,NDIM
-
-  implicit none
-
-  integer :: NGLOB,NGLOB_XY,NCHUNKS_VAL
-
-  ! velocity & acceleration
-  ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle,accel_crust_mantle
-
-  ! mass matrices
-  !
-  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  !
-  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB)    :: rmassz_crust_mantle
-
-  real(kind=CUSTOM_REAL) :: two_omega_earth
-
-  logical :: ABSORBING_CONDITIONS
-
-  ! local parameters
-  integer :: i
-
-  ! updates acceleration w/ rotation in crust/mantle region only
-
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-
-     do i=1,NGLOB
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-             + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-             - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-     enddo
-
-  else
-
-     do i=1,NGLOB
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-             + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-             - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-     enddo
-
-  endif
-
-  end subroutine compute_forces_el_update_accel
-
-
-!=====================================================================
-
-  subroutine compute_forces_el_update_veloc(NGLOB_CM,veloc_crust_mantle,accel_crust_mantle, &
-                                            NGLOB_IC,veloc_inner_core,accel_inner_core, &
-                                            deltatover2,two_omega_earth,rmass_inner_core)
-
-  use constants_solver,only: CUSTOM_REAL,NDIM
-
-  implicit none
-
-  integer :: NGLOB_CM,NGLOB_IC
-
-  ! acceleration & velocity
-  ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: veloc_crust_mantle,accel_crust_mantle
-  ! inner core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: veloc_inner_core,accel_inner_core
-
-  ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_IC) :: rmass_inner_core
-
-  real(kind=CUSTOM_REAL) :: deltatover2,two_omega_earth
-
-  ! local parameters
-  integer :: i
-
-  ! Newmark time scheme:
-  !
-  ! note:
-  !   - crust/mantle region
-  !         needs only velocity corrector terms
-  !         (acceleration already updated before)
-  !   - inner core region
-  !         needs both, acceleration update & velocity corrector terms
-
-  ! mantle
-  do i=1,NGLOB_CM
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-  enddo
-  ! inner core
-  do i=1,NGLOB_IC
-    accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-           + two_omega_earth*veloc_inner_core(2,i)
-    accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-           - two_omega_earth*veloc_inner_core(1,i)
-    accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-  enddo
-
-  end subroutine compute_forces_el_update_veloc

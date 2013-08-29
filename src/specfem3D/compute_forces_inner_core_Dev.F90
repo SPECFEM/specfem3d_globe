@@ -36,7 +36,7 @@
                                             epsilondev_xz,epsilondev_yz, &
                                             epsilon_trace_over_3,&
                                             alphaval,betaval,gammaval,factor_common, &
-                                            vx,vy,vz,vnspec,is_backward_field)
+                                            vnspec,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -78,8 +78,8 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common and one_minus_sum_beta
-  integer vx, vy, vz, vnspec
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+  integer :: vnspec
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
@@ -666,7 +666,7 @@
 
         ! updates R_memory
         call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                      vx,vy,vz,vnspec,factor_common, &
+                                      vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
                                       epsilondev_xx,epsilondev_yy,epsilondev_xy, &

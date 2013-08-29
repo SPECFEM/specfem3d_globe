@@ -183,8 +183,10 @@
     write(IMAIN,*)
     if(ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-      if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation model'
-      if(PARTIAL_PHYS_DISPERSION_ONLY ) write(IMAIN,*) 'mimicking effects on velocity only'
+      if(ATTENUATION_3D_VAL) &
+        write(IMAIN,*) 'using 3D attenuation model'
+      if(PARTIAL_PHYS_DISPERSION_ONLY_VAL ) &
+        write(IMAIN,*) 'mimicking effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
     endif
@@ -564,7 +566,7 @@
     call flush_IMAIN()
   endif
 
-
+  ! checks
   ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
   if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) &
@@ -572,6 +574,7 @@
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
     stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
 
+  ! counts total number of points for movie file output
   call movie_volume_count_points()
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
@@ -807,7 +810,8 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_movie
+  use specfem_par_movie,only: muvstore_crust_mantle_3dmovie
+
   implicit none
 
   ! local parameters
@@ -903,8 +907,8 @@
                     + scale_factor_minus_one * mul
           else
             if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
-              ! store the original value of \mu to comput \mu*\eps
-              muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
+              ! store the original value of \mu to compute \mu*\eps
+              muvstore_crust_mantle_3dmovie(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec)
             endif
 
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
@@ -1085,39 +1089,75 @@
   endif
 
   ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
+  ! crust/mantle
   eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-
   epsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_xy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_xz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_yz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
 
-  eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+  ! backward/reconstructed strain fields
+  if( .not. UNDO_ATTENUATION ) then
+    allocate(b_epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             b_epsilondev_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             b_epsilondev_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             b_epsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             b_epsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
 
+    allocate(b_epsilondev_xx_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             b_epsilondev_yy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             b_epsilondev_xy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             b_epsilondev_xz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             b_epsilondev_yz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
+  else
+    ! dummy arrays
+    allocate(b_epsilondev_xx_crust_mantle(1,1,1,1), &
+             b_epsilondev_yy_crust_mantle(1,1,1,1), &
+             b_epsilondev_xy_crust_mantle(1,1,1,1), &
+             b_epsilondev_xz_crust_mantle(1,1,1,1), &
+             b_epsilondev_yz_crust_mantle(1,1,1,1), &
+             b_eps_trace_over_3_crust_mantle(1,1,1,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
+
+    allocate(b_epsilondev_xx_inner_core(1,1,1,1), &
+             b_epsilondev_yy_inner_core(1,1,1,1), &
+             b_epsilondev_xy_inner_core(1,1,1,1), &
+             b_epsilondev_xz_inner_core(1,1,1,1), &
+             b_epsilondev_yz_inner_core(1,1,1,1), &
+             b_eps_trace_over_3_inner_core(1,1,1,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
+  endif
+
+  ! inner core
+  eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_xx_inner_core(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_yy_inner_core(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_xy_inner_core(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_xz_inner_core(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_yz_inner_core(:,:,:,:) = 0._CUSTOM_REAL
 
-  if(FIX_UNDERFLOW_PROBLEM) then
-    eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
 
+
+  if(FIX_UNDERFLOW_PROBLEM) then
+    ! crust/mantle
+    eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
     epsilondev_xx_crust_mantle(:,:,:,:) = VERYSMALLVAL
     epsilondev_yy_crust_mantle(:,:,:,:) = VERYSMALLVAL
     epsilondev_xy_crust_mantle(:,:,:,:) = VERYSMALLVAL
     epsilondev_xz_crust_mantle(:,:,:,:) = VERYSMALLVAL
     epsilondev_yz_crust_mantle(:,:,:,:) = VERYSMALLVAL
-
+    ! inner core
     eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
-
     epsilondev_xx_inner_core(:,:,:,:) = VERYSMALLVAL
     epsilondev_yy_inner_core(:,:,:,:) = VERYSMALLVAL
     epsilondev_xy_inner_core(:,:,:,:) = VERYSMALLVAL
     epsilondev_xz_inner_core(:,:,:,:) = VERYSMALLVAL
     epsilondev_yz_inner_core(:,:,:,:) = VERYSMALLVAL
-
   endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
@@ -1556,7 +1596,7 @@
                                   OCEANS_VAL, &
                                   GRAVITY_VAL, &
                                   ROTATION_VAL, &
-                                  ATTENUATION_VAL, &
+                                  ATTENUATION_VAL,UNDO_ATTENUATION, &
                                   PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                   COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &

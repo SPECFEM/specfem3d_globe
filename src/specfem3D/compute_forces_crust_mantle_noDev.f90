@@ -36,7 +36,7 @@
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
                                         alphaval,betaval,gammaval, &
-                                        factor_common,vx,vy,vz,vnspec)
+                                        factor_common,vnspec)
 
   use constants_solver
 
@@ -81,7 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_crust_mantle
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -93,7 +93,7 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag

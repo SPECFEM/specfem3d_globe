@@ -557,6 +557,12 @@
     call gather_all_i(ispec_selected_source_subset,NSOURCES_SUBSET_current_size, &
       ispec_selected_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
 
+    ! checks that the gather operation went well
+    if(myrank == 0) then
+      if(minval(ispec_selected_source_all(:,:)) <= 0) &
+        call exit_MPI(myrank,'gather operation failed for source')
+    endif
+
     call gather_all_dp(xi_source_subset,NSOURCES_SUBSET_current_size, &
       xi_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
     call gather_all_dp(eta_source_subset,NSOURCES_SUBSET_current_size, &
@@ -574,10 +580,6 @@
 
     ! this is executed by main process only
     if(myrank == 0) then
-
-      ! check that the gather operation went well
-      if(minval(ispec_selected_source_all) <= 0) &
-        call exit_MPI(myrank,'gather operation failed for source')
 
       ! loop on all the sources within subsets
       do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
