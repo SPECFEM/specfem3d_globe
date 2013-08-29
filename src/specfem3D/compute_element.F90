@@ -26,18 +26,18 @@
 !=====================================================================
 
   subroutine compute_element_iso(ispec, &
-                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                    xstore,ystore,zstore, &
-                    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                    wgll_cube, &
-                    kappavstore,muvstore, &
-                    ibool, &
-                    R_xx,R_yy,R_xy,R_xz,R_yz, &
-                    epsilon_trace_over_3, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &
-                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc, &
-                    epsilondev_loc,rho_s_H,is_backward_field)
+                                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                 xstore,ystore,zstore, &
+                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                 wgll_cube, &
+                                 kappavstore,muvstore, &
+                                 ibool, &
+                                 R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                 epsilon_trace_over_3, &
+                                 one_minus_sum_beta,vnspec, &
+                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 epsilondev_loc,rho_s_H,is_backward_field)
 
   use constants_solver
   use specfem_par,only: COMPUTE_AND_STORE_STRAIN
@@ -64,7 +64,7 @@
         kappavstore,muvstore
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! attenuation
   ! memory variables for attenuation
@@ -74,7 +74,7 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -115,6 +115,12 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob
+
+  logical :: dummyl
+
+!daniel debug
+  ! dummy to avoid compiler warning
+  dummyl = is_backward_field
 
   ! isotropic element
 
@@ -183,12 +189,13 @@
         mul = muvstore(i,j,k,ispec)
 
         ! use unrelaxed parameters if attenuation
-        if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
+        if(ATTENUATION_VAL ) then
           ! precompute terms for attenuation if needed
-          one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          mul = mul * one_minus_sum_beta_use
-        else if( ATTENUATION_VAL ) then
-          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          else
+            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          endif
           mul = mul * one_minus_sum_beta_use
         endif
 
@@ -207,7 +214,7 @@
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
 
-!daniel: att - debug update
+!daniel debug: att - debug update
 !          call compute_element_att_mem_up_cm(ispec,i,j,k, &
 !                                          R_xx(1,i,j,k,ispec), &
 !                                          R_yy(1,i,j,k,ispec), &
@@ -215,10 +222,9 @@
 !                                          R_xz(1,i,j,k,ispec), &
 !                                          R_yz(1,i,j,k,ispec), &
 !                                          epsilondev_loc(:,i,j,k),muvstore(i,j,k,ispec),is_backward_field)
-! dummy to avoid compiler warning
-          if( is_backward_field ) then
-          endif
 
+          ! note: function inlining is generally done by fortran compilers;
+          !       compilers decide based on performance heuristics
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
                                           R_yy(1,i,j,k,ispec), &
@@ -363,18 +369,18 @@
 !
 
   subroutine compute_element_tiso(ispec, &
-                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                    xstore,ystore,zstore, &
-                    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                    wgll_cube, &
-                    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                    ibool, &
-                    R_xx,R_yy,R_xy,R_xz,R_yz, &
-                    epsilon_trace_over_3, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &
-                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc, &
-                    epsilondev_loc,rho_s_H,is_backward_field)
+                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                  xstore,ystore,zstore, &
+                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                  wgll_cube, &
+                                  kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                                  ibool, &
+                                  R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                  epsilon_trace_over_3, &
+                                  one_minus_sum_beta,vnspec, &
+                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                  dummyx_loc,dummyy_loc,dummyz_loc, &
+                                  epsilondev_loc,rho_s_H,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -413,10 +419,10 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -470,6 +476,12 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob
+
+  logical :: dummyl
+
+!daniel debug
+  ! dummy to avoid compiler warning
+  dummyl = is_backward_field
 
   ! transverse isotropic element
 
@@ -546,13 +558,13 @@
 
         ! use unrelaxed parameters if attenuation
         ! eta does not need to be shifted since it is a ratio
-        if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
+        if( ATTENUATION_VAL ) then
           ! precompute terms for attenuation if needed
-          one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-          muvl = muvl * one_minus_sum_beta_use
-          muhl = muhl * one_minus_sum_beta_use
-        else if( ATTENUATION_VAL ) then
-          one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+          else
+            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          endif
           muvl = muvl * one_minus_sum_beta_use
           muhl = muhl * one_minus_sum_beta_use
         endif
@@ -748,7 +760,9 @@
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
 
-          ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
+          ! note: function inlining is generally done by fortran compilers;
+          !       compilers decide based on performance heuristics
+          ! note: fortran passes pointers to array location, thus R_memory(1,1,...) is fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
                                           R_yy(1,i,j,k,ispec), &
                                           R_xy(1,i,j,k,ispec), &
@@ -891,20 +905,20 @@
 !
 
   subroutine compute_element_aniso(ispec, &
-                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                    xstore,ystore,zstore, &
-                    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                    wgll_cube, &
-                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    ibool, &
-                    R_xx,R_yy,R_xy,R_xz,R_yz, &
-                    epsilon_trace_over_3, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &
-                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc, &
-                    epsilondev_loc,rho_s_H,is_backward_field)
+                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                   xstore,ystore,zstore, &
+                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                   wgll_cube, &
+                                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                   ibool, &
+                                   R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                   epsilon_trace_over_3, &
+                                   one_minus_sum_beta,vnspec, &
+                                   tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                   dummyx_loc,dummyy_loc,dummyz_loc, &
+                                   epsilondev_loc,rho_s_H,is_backward_field)
 
   use constants_solver
   use specfem_par,only: COMPUTE_AND_STORE_STRAIN
@@ -941,10 +955,10 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
@@ -987,6 +1001,12 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob
+
+  logical :: dummyl
+
+!daniel debug
+  ! dummy to avoid compiler warning
+  dummyl = is_backward_field
 
   !  anisotropic elements
 
@@ -1072,23 +1092,13 @@
         c56 = c56store(i,j,k,ispec)
         c66 = c66store(i,j,k,ispec)
 
-        if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
+        if( ATTENUATION_VAL ) then
           ! precompute terms for attenuation if needed
-          minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
-          !mul = c44
-          mul = c44 * minus_sum_beta
-          c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
-          c12 = c12 - TWO_THIRDS * mul
-          c13 = c13 - TWO_THIRDS * mul
-          c22 = c22 + FOUR_THIRDS * mul
-          c23 = c23 - TWO_THIRDS * mul
-          c33 = c33 + FOUR_THIRDS * mul
-          c44 = c44 + mul
-          c55 = c55 + mul
-          c66 = c66 + mul
-        else if( ATTENUATION_VAL ) then
-          minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
-          !mul = c44
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+            minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+          else
+            minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+          endif
           mul = c44 * minus_sum_beta
           c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
           c12 = c12 - TWO_THIRDS * mul
@@ -1121,6 +1131,8 @@
 
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+          ! note: function inlining is generally done by fortran compilers;
+          !       compilers decide based on performance heuristics
 
           ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
           call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
@@ -1268,7 +1280,7 @@
   subroutine compute_element_att_stress(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
                                        sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
-  use constants_solver
+  use constants_solver,only: CUSTOM_REAL,N_SLS
 
   implicit none
 
@@ -1307,11 +1319,11 @@
 !
 
   subroutine compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                        vx,vy,vz,vnspec,factor_common, &
-                                        alphaval,betaval,gammaval, &
-                                        c44store,muvstore, &
-                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-                                        epsilondev_loc,is_backward_field)
+                                           vnspec,factor_common, &
+                                           alphaval,betaval,gammaval, &
+                                           c44store,muvstore, &
+                                           epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+                                           epsilondev_loc,is_backward_field)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1343,9 +1355,9 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
@@ -1409,11 +1421,11 @@
 !
 
   subroutine compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                        vx,vy,vz,vnspec,factor_common, &
-                                        alphaval,betaval,gammaval, &
-                                        muvstore, &
-                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-                                        epsilondev_loc,is_backward_field)
+                                           vnspec,factor_common, &
+                                           alphaval,betaval,gammaval, &
+                                           muvstore, &
+                                           epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+                                           epsilondev_loc,is_backward_field)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1442,9 +1454,9 @@
     R_xx,R_yy,R_xy,R_xz,R_yz
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
@@ -1596,3 +1608,4 @@
   enddo ! i_SLS
 
   end subroutine compute_element_att_mem_up_cm
+

@@ -135,7 +135,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* OCEANS_f,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
-                                        int* ATTENUATION_f,
+                                        int* ATTENUATION_f,int* UNDO_ATTENUATION_f,
                                         int* USE_ATTENUATION_MIMIC_f,
                                         int* USE_3D_ATTENUATION_ARRAYS_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
@@ -238,6 +238,7 @@ void FC_FUNC_(prepare_constants_device,
   mp->rotation = *ROTATION_f;
 
   mp->attenuation = *ATTENUATION_f;
+  mp->undo_attenuation = *UNDO_ATTENUATION_f;
   mp->use_attenuation_mimic = *USE_ATTENUATION_MIMIC_f;
   mp->use_3d_attenuation_arrays = *USE_3D_ATTENUATION_ARRAYS_f;
 

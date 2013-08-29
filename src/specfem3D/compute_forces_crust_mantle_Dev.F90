@@ -36,7 +36,7 @@
                                               epsilondev_xz,epsilondev_yz, &
                                               epsilon_trace_over_3, &
                                               alphaval,betaval,gammaval, &
-                                              factor_common,vx,vy,vz,vnspec,is_backward_field)
+                                              factor_common,vnspec,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -85,7 +85,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_crust_mantle
 
   ! variable sized array variables
-  integer :: vx,vy,vz,vnspec
+  integer :: vnspec
 
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -97,7 +97,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
@@ -298,7 +298,7 @@
             ibool, &
             R_xx,R_yy,R_xy,R_xz,R_yz, &
             epsilon_trace_over_3, &
-            one_minus_sum_beta,vx,vy,vz,vnspec, &
+            one_minus_sum_beta,vnspec, &
             tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
             dummyx_loc,dummyy_loc,dummyz_loc, &
             epsilondev_loc, &
@@ -315,7 +315,7 @@
                ibool, &
                R_xx,R_yy,R_xy,R_xz,R_yz, &
                epsilon_trace_over_3, &
-               one_minus_sum_beta,vx,vy,vz,vnspec, &
+               one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                dummyx_loc,dummyy_loc,dummyz_loc, &
                epsilondev_loc, &
@@ -331,7 +331,7 @@
                ibool, &
                R_xx,R_yy,R_xy,R_xz,R_yz, &
                epsilon_trace_over_3, &
-               one_minus_sum_beta,vx,vy,vz,vnspec, &
+               one_minus_sum_beta,vnspec, &
                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                dummyx_loc,dummyy_loc,dummyz_loc, &
                epsilondev_loc, &
@@ -496,7 +496,7 @@
     if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
       ! updates R_memory
       call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                         vx,vy,vz,vnspec,factor_common, &
+                                         vnspec,factor_common, &
                                          alphaval,betaval,gammaval, &
                                          c44store,muvstore, &
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy, &

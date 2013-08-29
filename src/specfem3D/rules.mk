@@ -59,6 +59,7 @@ specfem3D_OBJECTS += \
 	$O/compute_boundary_kernel.solverstatic.o \
 	$O/compute_coupling.solverstatic.o \
 	$O/compute_element.solverstatic.o \
+	$O/compute_element_strain.solverstatic.o \
 	$O/compute_forces_acoustic_calling_routine.solverstatic.o \
 	$O/compute_forces_viscoelastic_calling_routine.solverstatic.o \
 	$O/compute_forces_crust_mantle_noDev.solverstatic.o \
@@ -90,6 +91,7 @@ specfem3D_OBJECTS += \
 	$O/setup_GLL_points.solverstatic.o \
 	$O/setup_sources_receivers.solverstatic.o \
 	$O/specfem3D.solverstatic.o \
+	$O/update_displacement_Newmark.solverstatic.o \
 	$O/write_movie_output.solverstatic.o \
 	$O/write_movie_volume.solverstatic.o \
 	$O/write_movie_surface.solverstatic.o \

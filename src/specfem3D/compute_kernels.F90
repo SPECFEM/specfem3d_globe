@@ -61,45 +61,87 @@
   subroutine compute_kernels_crust_mantle()
 
   use constants_solver
-  use specfem_par,only: deltat,GPU_MODE,Mesh_pointer,ANISOTROPIC_KL
+
+  use specfem_par,only: deltat,GPU_MODE,Mesh_pointer,ANISOTROPIC_KL,UNDO_ATTENUATION, &
+    hprime_xx,hprime_xxT,hprime_yy,hprime_zz
+
   use specfem_par_crustmantle
+
   implicit none
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) :: prod
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
+
   integer :: i,j,k,ispec,iglob
 
   if( .not. GPU_MODE ) then
     ! on CPU
     ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            ! density kernel: see e.g. Tromp et al.(2005), equation (14)
-            !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
-            !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
-            !
-            !                         note with respect to eq. (14) the second time derivative is applied to the
-            !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
-            !                         this is a valid operation and the resultant kernel identical to the eq. (14).
-            !
-            !                         reason for this is that the adjoint wavefield is in general smoother
-            !                         since the adjoint sources normally are obtained for filtered traces.
-            !                         numerically, the time derivative by a finite-difference scheme should
-            !                         behave better for smoother wavefields, thus containing less numerical artefacts.
-            rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
-               + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
-               + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+      ! simulations with UNDO_ATTENUATION save as much memory as possible;
+      ! backward/reconstructed wavefield strain will be re-computed locally here
+      if( UNDO_ATTENUATION ) then
+        if( USE_DEVILLE_PRODUCTS_VAL ) then
+          call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+                                                   b_displ_crust_mantle,ibool_crust_mantle, &
+                                                   hprime_xx,hprime_xxT,&
+                                                   xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                                   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                                   gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
+                                                   b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
 
-            ! isotropic kernels
-            if (.not. ANISOTROPIC_KL) then
+        else
+          call compute_element_strain_undo_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                                                     b_displ_crust_mantle, &
+                                                     hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle, &
+                                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                                     b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+        endif
+      else
+        ! backward/reconstructed strain arrays
+        b_eps_trace_over_3_loc_matrix(:,:,:) = b_eps_trace_over_3_crust_mantle(:,:,:,ispec)
+        b_epsilondev_loc_matrix(1,:,:,:) = b_epsilondev_xx_crust_mantle(:,:,:,ispec)
+        b_epsilondev_loc_matrix(2,:,:,:) = b_epsilondev_yy_crust_mantle(:,:,:,ispec)
+        b_epsilondev_loc_matrix(3,:,:,:) = b_epsilondev_xy_crust_mantle(:,:,:,ispec)
+        b_epsilondev_loc_matrix(4,:,:,:) = b_epsilondev_xz_crust_mantle(:,:,:,ispec)
+        b_epsilondev_loc_matrix(5,:,:,:) = b_epsilondev_yz_crust_mantle(:,:,:,ispec)
+      endif
 
+      ! For anisotropic kernels
+      if (ANISOTROPIC_KL) then
+
+        ! computes fully anisotropic kernel cijkl_kl
+        do k = 1, NGLLZ
+          do j = 1, NGLLY
+            do i = 1, NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec)
+
+              ! density kernel: see e.g. Tromp et al.(2005), equation (14)
+              !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
+              !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
+              !
+              !                         note with respect to eq. (14) the second time derivative is applied to the
+              !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
+              !                         this is a valid operation and the resultant kernel identical to the eq. (14).
+              !
+              !                         reason for this is that the adjoint wavefield is in general smoother
+              !                         since the adjoint sources normally are obtained for filtered traces.
+              !                         numerically, the time derivative by a finite-difference scheme should
+              !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+              rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
+                 + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+                 + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+                 + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+
+              ! fully anisotropic kernel
               ! temporary arrays
               epsilondev_loc(1) = epsilondev_xx_crust_mantle(i,j,k,ispec)
               epsilondev_loc(2) = epsilondev_yy_crust_mantle(i,j,k,ispec)
@@ -107,11 +149,52 @@
               epsilondev_loc(4) = epsilondev_xz_crust_mantle(i,j,k,ispec)
               epsilondev_loc(5) = epsilondev_yz_crust_mantle(i,j,k,ispec)
 
-              b_epsilondev_loc(1) = b_epsilondev_xx_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(2) = b_epsilondev_yy_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(3) = b_epsilondev_xy_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(4) = b_epsilondev_xz_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(5) = b_epsilondev_yz_crust_mantle(i,j,k,ispec)
+              b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
+
+              call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
+                                         b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
+
+              cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
+
+            enddo
+          enddo
+        enddo
+
+      else
+
+        ! isotropic kernels
+
+        do k = 1, NGLLZ
+          do j = 1, NGLLY
+            do i = 1, NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec)
+
+              ! density kernel: see e.g. Tromp et al.(2005), equation (14)
+              !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
+              !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
+              !
+              !                         note with respect to eq. (14) the second time derivative is applied to the
+              !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
+              !                         this is a valid operation and the resultant kernel identical to the eq. (14).
+              !
+              !                         reason for this is that the adjoint wavefield is in general smoother
+              !                         since the adjoint sources normally are obtained for filtered traces.
+              !                         numerically, the time derivative by a finite-difference scheme should
+              !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+              rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
+                 + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+                 + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+                 + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+
+              ! isotropic kernels
+              ! temporary arrays
+              epsilondev_loc(1) = epsilondev_xx_crust_mantle(i,j,k,ispec)
+              epsilondev_loc(2) = epsilondev_yy_crust_mantle(i,j,k,ispec)
+              epsilondev_loc(3) = epsilondev_xy_crust_mantle(i,j,k,ispec)
+              epsilondev_loc(4) = epsilondev_xz_crust_mantle(i,j,k,ispec)
+              epsilondev_loc(5) = epsilondev_yz_crust_mantle(i,j,k,ispec)
+
+              b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
 
               ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
               ! note: multiplication with 2*mu(x) will be done after the time loop
@@ -127,49 +210,15 @@
               ! note: multiplication with kappa(x) will be done after the time loop
               alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
                  + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) &
-                               * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
-
-            endif
-
-          enddo
-        enddo
-      enddo
-    enddo
-
-    ! For anisotropic kernels
-    if (ANISOTROPIC_KL) then
-
-      ! computes fully anisotropic kernel cijkl_kl
-      do ispec = 1, NSPEC_CRUST_MANTLE
-        do k = 1, NGLLZ
-          do j = 1, NGLLY
-            do i = 1, NGLLX
-              iglob = ibool_crust_mantle(i,j,k,ispec)
-
-              ! temporary arrays
-              epsilondev_loc(1) = epsilondev_xx_crust_mantle(i,j,k,ispec)
-              epsilondev_loc(2) = epsilondev_yy_crust_mantle(i,j,k,ispec)
-              epsilondev_loc(3) = epsilondev_xy_crust_mantle(i,j,k,ispec)
-              epsilondev_loc(4) = epsilondev_xz_crust_mantle(i,j,k,ispec)
-              epsilondev_loc(5) = epsilondev_yz_crust_mantle(i,j,k,ispec)
-
-              b_epsilondev_loc(1) = b_epsilondev_xx_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(2) = b_epsilondev_yy_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(3) = b_epsilondev_xy_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(4) = b_epsilondev_xz_crust_mantle(i,j,k,ispec)
-              b_epsilondev_loc(5) = b_epsilondev_yz_crust_mantle(i,j,k,ispec)
-
-              call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
-                                         b_eps_trace_over_3_crust_mantle(i,j,k,ispec),b_epsilondev_loc)
-
-              cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
+                               * b_eps_trace_over_3_loc_matrix(i,j,k))
 
             enddo
           enddo
         enddo
-      enddo
 
-    endif
+      endif ! ANISOTROPIC_KL
+
+    enddo
 
   else
     ! updates kernel contribution on GPU
@@ -438,8 +487,10 @@
   subroutine compute_kernels_inner_core()
 
   use constants_solver
-  use specfem_par,only: deltat
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+
+  use specfem_par,only: deltat,GPU_MODE,Mesh_pointer,UNDO_ATTENUATION, &
+    hprime_xx,hprime_xxT,hprime_yy,hprime_zz
+
   use specfem_par_innercore
 
   implicit none
@@ -448,12 +499,45 @@
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
+
   integer :: i,j,k,ispec,iglob
 
   if( .not. GPU_MODE ) then
     ! on CPU
     ! inner_core
     do ispec = 1, NSPEC_INNER_CORE
+
+      ! gets element strain
+      if( UNDO_ATTENUATION ) then
+        if( USE_DEVILLE_PRODUCTS_VAL ) then
+          call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
+                                                   b_displ_inner_core,ibool_inner_core, &
+                                                   hprime_xx,hprime_xxT, &
+                                                   xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                                   etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                                   gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                                   b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+        else
+          call compute_element_strain_undo_att_noDev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
+                                                     b_displ_inner_core, &
+                                                     hprime_xx,hprime_yy,hprime_zz,ibool_inner_core, &
+                                                     xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                                     etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                                     gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                                     b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+        endif
+      else
+        ! backward/reconstructed strain arrays
+        b_eps_trace_over_3_loc_matrix(:,:,:) = b_eps_trace_over_3_inner_core(:,:,:,ispec)
+        b_epsilondev_loc_matrix(1,:,:,:) = b_epsilondev_xx_inner_core(:,:,:,ispec)
+        b_epsilondev_loc_matrix(2,:,:,:) = b_epsilondev_yy_inner_core(:,:,:,ispec)
+        b_epsilondev_loc_matrix(3,:,:,:) = b_epsilondev_xy_inner_core(:,:,:,ispec)
+        b_epsilondev_loc_matrix(4,:,:,:) = b_epsilondev_xz_inner_core(:,:,:,ispec)
+        b_epsilondev_loc_matrix(5,:,:,:) = b_epsilondev_yz_inner_core(:,:,:,ispec)
+      endif
+
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
@@ -470,11 +554,7 @@
             epsilondev_loc(4) = epsilondev_xz_inner_core(i,j,k,ispec)
             epsilondev_loc(5) = epsilondev_yz_inner_core(i,j,k,ispec)
 
-            b_epsilondev_loc(1) = b_epsilondev_xx_inner_core(i,j,k,ispec)
-            b_epsilondev_loc(2) = b_epsilondev_yy_inner_core(i,j,k,ispec)
-            b_epsilondev_loc(3) = b_epsilondev_xy_inner_core(i,j,k,ispec)
-            b_epsilondev_loc(4) = b_epsilondev_xz_inner_core(i,j,k,ispec)
-            b_epsilondev_loc(5) = b_epsilondev_yz_inner_core(i,j,k,ispec)
+            b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,i,j,k)
 
             beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
                + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
@@ -485,7 +565,7 @@
 
             alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
                + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * &
-                               b_eps_trace_over_3_inner_core(i,j,k,ispec))
+                               b_eps_trace_over_3_loc_matrix(i,j,k))
           enddo
         enddo
       enddo

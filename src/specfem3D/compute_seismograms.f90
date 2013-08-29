@@ -208,6 +208,7 @@
                     NSTEP,it,nit_written)
 
   use constants_solver
+  use specfem_par,only: UNDO_ATTENUATION
 
   implicit none
 
@@ -270,17 +271,16 @@
 
   double precision, external :: comp_source_time_function
 
+  ! element strain
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
+
   do irec_local = 1,nrec_local
 
-    ! get global number of that receiver
-    irec = number_receiver_global(irec_local)
-
-    ! perform the general interpolation using Lagrange polynomials
+    ! initializes
     uxd = ZERO
     uyd = ZERO
     uzd = ZERO
-
-
     eps_trace = ZERO
     dxx = ZERO
     dyy = ZERO
@@ -288,11 +288,38 @@
     dxz = ZERO
     dyz = ZERO
 
+    ! gets global number of that receiver
+    irec = number_receiver_global(irec_local)
+
+    ! gets element id
+    ispec = ispec_selected_source(irec)
+
+    ! adjoint strain
+    if( UNDO_ATTENUATION ) then
+      ! recomputes strain
+      call compute_element_strain_undo_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                                                 displ_crust_mantle, &
+                                                 hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle, &
+                                                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                                 etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                                 epsilondev_loc_crust_mantle,eps_trace_over_3_loc_crust_mantle)
+    else
+      ! element adjoint strain
+      eps_trace_over_3_loc_crust_mantle(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(1,:,:,:) = epsilondev_xx_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(2,:,:,:) = epsilondev_yy_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(3,:,:,:) = epsilondev_xy_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(4,:,:,:) = epsilondev_xz_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(5,:,:,:) = epsilondev_yz_crust_mantle(:,:,:,ispec)
+    endif
+
+    ! perform the general interpolation using Lagrange polynomials
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
 
-          iglob = ibool_crust_mantle(i,j,k,ispec_selected_source(irec))
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
           hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
 
@@ -300,12 +327,13 @@
           uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
           uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
-          eps_trace = eps_trace + dble(eps_trace_over_3_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-          dxx = dxx + dble(epsilondev_xx_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-          dyy = dyy + dble(epsilondev_yy_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-          dxy = dxy + dble(epsilondev_xy_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-          dxz = dxz + dble(epsilondev_xz_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-          dyz = dyz + dble(epsilondev_yz_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
+          eps_trace = eps_trace + dble(eps_trace_over_3_loc_crust_mantle(i,j,k))*hlagrange
+
+          dxx = dxx + dble(epsilondev_loc_crust_mantle(1,i,j,k))*hlagrange
+          dyy = dyy + dble(epsilondev_loc_crust_mantle(2,i,j,k))*hlagrange
+          dxy = dxy + dble(epsilondev_loc_crust_mantle(3,i,j,k))*hlagrange
+          dxz = dxz + dble(epsilondev_loc_crust_mantle(4,i,j,k))*hlagrange
+          dyz = dyz + dble(epsilondev_loc_crust_mantle(5,i,j,k))*hlagrange
 
           displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
 
@@ -349,16 +377,14 @@
     endif
 
     ! frechet derviatives of the source
-    ispec = ispec_selected_source(irec)
-
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &
                 Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s,eps_m_l_s, &
                 hxir_store(irec_local,:),hetar_store(irec_local,:),hgammar_store(irec_local,:), &
                 hpxir_store(irec_local,:),hpetar_store(irec_local,:),hpgammar_store(irec_local,:), &
                 hprime_xx,hprime_yy,hprime_zz, &
-                xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
-                etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
-                gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec))
+                xix_crust_mantle(1,1,1,ispec),xiy_crust_mantle(1,1,1,ispec),xiz_crust_mantle(1,1,1,ispec), &
+                etax_crust_mantle(1,1,1,ispec),etay_crust_mantle(1,1,1,ispec),etaz_crust_mantle(1,1,1,ispec), &
+                gammax_crust_mantle(1,1,1,ispec),gammay_crust_mantle(1,1,1,ispec),gammaz_crust_mantle(1,1,1,ispec))
 
     stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(irec),hdur_gaussian(irec))
     stf_deltat = stf * deltat

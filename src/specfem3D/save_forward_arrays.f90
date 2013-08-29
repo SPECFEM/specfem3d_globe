@@ -34,7 +34,7 @@
 !! Moreover, one can choose to save these arrays with the help of the ADIOS
 !! library. Set ADIOS_FOR_FORWARD_ARRAYS to true in the Par_file for this
 !! feature.
-subroutine save_forward_arrays()
+  subroutine save_forward_arrays()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -44,7 +44,11 @@ subroutine save_forward_arrays()
   implicit none
 
   ! local parameters
+  integer :: ier
   character(len=150) outputname
+
+  ! checks if anything to do
+  if( UNDO_ATTENUATION ) return
 
   ! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
@@ -52,47 +56,50 @@ subroutine save_forward_arrays()
       call save_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
-      open(unit=55,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
-      status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file dump_all_arrays*** for writing')
 
-      write(55) displ_crust_mantle
-      write(55) veloc_crust_mantle
-      write(55) accel_crust_mantle
-      write(55) displ_inner_core
-      write(55) veloc_inner_core
-      write(55) accel_inner_core
-      write(55) displ_outer_core
-      write(55) veloc_outer_core
-      write(55) accel_outer_core
+      write(IOUT) displ_crust_mantle
+      write(IOUT) veloc_crust_mantle
+      write(IOUT) accel_crust_mantle
 
-      write(55) epsilondev_xx_crust_mantle
-      write(55) epsilondev_yy_crust_mantle
-      write(55) epsilondev_xy_crust_mantle
-      write(55) epsilondev_xz_crust_mantle
-      write(55) epsilondev_yz_crust_mantle
+      write(IOUT) displ_inner_core
+      write(IOUT) veloc_inner_core
+      write(IOUT) accel_inner_core
 
-      write(55) epsilondev_xx_inner_core
-      write(55) epsilondev_yy_inner_core
-      write(55) epsilondev_xy_inner_core
-      write(55) epsilondev_xz_inner_core
-      write(55) epsilondev_yz_inner_core
+      write(IOUT) displ_outer_core
+      write(IOUT) veloc_outer_core
+      write(IOUT) accel_outer_core
 
-      write(55) A_array_rotation
-      write(55) B_array_rotation
+      write(IOUT) epsilondev_xx_crust_mantle
+      write(IOUT) epsilondev_yy_crust_mantle
+      write(IOUT) epsilondev_xy_crust_mantle
+      write(IOUT) epsilondev_xz_crust_mantle
+      write(IOUT) epsilondev_yz_crust_mantle
 
-      write(55) R_xx_crust_mantle
-      write(55) R_yy_crust_mantle
-      write(55) R_xy_crust_mantle
-      write(55) R_xz_crust_mantle
-      write(55) R_yz_crust_mantle
+      write(IOUT) epsilondev_xx_inner_core
+      write(IOUT) epsilondev_yy_inner_core
+      write(IOUT) epsilondev_xy_inner_core
+      write(IOUT) epsilondev_xz_inner_core
+      write(IOUT) epsilondev_yz_inner_core
 
-      write(55) R_xx_inner_core
-      write(55) R_yy_inner_core
-      write(55) R_xy_inner_core
-      write(55) R_xz_inner_core
-      write(55) R_yz_inner_core
+      write(IOUT) A_array_rotation
+      write(IOUT) B_array_rotation
 
-      close(55)
+      write(IOUT) R_xx_crust_mantle
+      write(IOUT) R_yy_crust_mantle
+      write(IOUT) R_xy_crust_mantle
+      write(IOUT) R_xz_crust_mantle
+      write(IOUT) R_yz_crust_mantle
+
+      write(IOUT) R_xx_inner_core
+      write(IOUT) R_yy_inner_core
+      write(IOUT) R_xy_inner_core
+      write(IOUT) R_xz_inner_core
+      write(IOUT) R_yz_inner_core
+
+      close(IOUT)
     endif
   endif
 
@@ -102,54 +109,124 @@ subroutine save_forward_arrays()
       call save_forward_arrays_adios()
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-      open(unit=55,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='unknown', &
-          form='unformatted',action='write')
+      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='unknown', &
+          form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_forward_arrays** for writing')
 
-      write(55) displ_crust_mantle
-      write(55) veloc_crust_mantle
-      write(55) accel_crust_mantle
+      write(IOUT) displ_crust_mantle
+      write(IOUT) veloc_crust_mantle
+      write(IOUT) accel_crust_mantle
 
-      write(55) displ_inner_core
-      write(55) veloc_inner_core
-      write(55) accel_inner_core
+      write(IOUT) displ_inner_core
+      write(IOUT) veloc_inner_core
+      write(IOUT) accel_inner_core
 
-      write(55) displ_outer_core
-      write(55) veloc_outer_core
-      write(55) accel_outer_core
+      write(IOUT) displ_outer_core
+      write(IOUT) veloc_outer_core
+      write(IOUT) accel_outer_core
 
-      write(55) epsilondev_xx_crust_mantle
-      write(55) epsilondev_yy_crust_mantle
-      write(55) epsilondev_xy_crust_mantle
-      write(55) epsilondev_xz_crust_mantle
-      write(55) epsilondev_yz_crust_mantle
+      if( .not. UNDO_ATTENUATION ) then
+        write(IOUT) epsilondev_xx_crust_mantle
+        write(IOUT) epsilondev_yy_crust_mantle
+        write(IOUT) epsilondev_xy_crust_mantle
+        write(IOUT) epsilondev_xz_crust_mantle
+        write(IOUT) epsilondev_yz_crust_mantle
 
-      write(55) epsilondev_xx_inner_core
-      write(55) epsilondev_yy_inner_core
-      write(55) epsilondev_xy_inner_core
-      write(55) epsilondev_xz_inner_core
-      write(55) epsilondev_yz_inner_core
+        write(IOUT) epsilondev_xx_inner_core
+        write(IOUT) epsilondev_yy_inner_core
+        write(IOUT) epsilondev_xy_inner_core
+        write(IOUT) epsilondev_xz_inner_core
+        write(IOUT) epsilondev_yz_inner_core
+      endif
 
       if (ROTATION_VAL) then
-        write(55) A_array_rotation
-        write(55) B_array_rotation
+        write(IOUT) A_array_rotation
+        write(IOUT) B_array_rotation
       endif
 
       if (ATTENUATION_VAL) then
-         write(55) R_xx_crust_mantle
-         write(55) R_yy_crust_mantle
-         write(55) R_xy_crust_mantle
-         write(55) R_xz_crust_mantle
-         write(55) R_yz_crust_mantle
+         write(IOUT) R_xx_crust_mantle
+         write(IOUT) R_yy_crust_mantle
+         write(IOUT) R_xy_crust_mantle
+         write(IOUT) R_xz_crust_mantle
+         write(IOUT) R_yz_crust_mantle
 
-         write(55) R_xx_inner_core
-         write(55) R_yy_inner_core
-         write(55) R_xy_inner_core
-         write(55) R_xz_inner_core
-         write(55) R_yz_inner_core
+         write(IOUT) R_xx_inner_core
+         write(IOUT) R_yy_inner_core
+         write(IOUT) R_xy_inner_core
+         write(IOUT) R_xz_inner_core
+         write(IOUT) R_yz_inner_core
       endif
 
-      close(55)
+      close(IOUT)
     endif
   endif
 
-end subroutine save_forward_arrays
+  end subroutine save_forward_arrays
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_forward_arrays_undoatt(iteration_on_subset)
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  integer :: iteration_on_subset
+
+  ! local parameters
+  integer :: ier
+  character(len=150) :: outputname
+
+  ! save files to local disk or tape system if restart file
+  if(NUMBER_OF_RUNS > 1) stop 'NUMBER_OF_RUNS > 1 is not support for undoing attenuation'
+
+  ! save last frame of the forward simulation
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
+    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
+
+    write(IOUT) displ_crust_mantle
+    write(IOUT) veloc_crust_mantle
+    write(IOUT) accel_crust_mantle
+
+    write(IOUT) displ_inner_core
+    write(IOUT) veloc_inner_core
+    write(IOUT) accel_inner_core
+
+    write(IOUT) displ_outer_core
+    write(IOUT) veloc_outer_core
+    write(IOUT) accel_outer_core
+
+    if (ROTATION_VAL) then
+      write(IOUT) A_array_rotation
+      write(IOUT) B_array_rotation
+    endif
+
+    if (ATTENUATION_VAL) then
+      write(IOUT) R_xx_crust_mantle
+      write(IOUT) R_yy_crust_mantle
+      write(IOUT) R_xy_crust_mantle
+      write(IOUT) R_xz_crust_mantle
+      write(IOUT) R_yz_crust_mantle
+
+      write(IOUT) R_xx_inner_core
+      write(IOUT) R_yy_inner_core
+      write(IOUT) R_xy_inner_core
+      write(IOUT) R_xz_inner_core
+      write(IOUT) R_yz_inner_core
+    endif
+
+    close(IOUT)
+
+  endif
+
+  end subroutine save_forward_arrays_undoatt
+
+

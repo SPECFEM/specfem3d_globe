@@ -28,7 +28,14 @@
 
   subroutine read_compute_parameters()
 
-  use constants
+  use constants,only: &
+    TINYVAL,R_EARTH_KM,DEGREES_TO_RADIANS, &
+    SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
+    DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
+    NGLLX,NGLLY,NGLLZ
+
+
   use shared_parameters
 
   implicit none
@@ -113,13 +120,17 @@
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-
-! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
+  ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1   ! time steps needs to be doubled, due to +/- branches
+  ! noise simulations
+  if ( NOISE_TOMOGRAPHY /= 0 ) then
+    ! time steps needs to be doubled, due to +/- branches
+    NSTEP = 2*NSTEP-1
+  endif
+
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
@@ -132,11 +143,7 @@
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
   ! checks parameters
-  call rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
-                        NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-                        ATTENUATION,ABSORBING_CONDITIONS, &
-                        INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM)
+  call rcp_check_parameters()
 
   ! check that mesh can be coarsened in depth three or four times
   CUT_SUPERBRICK_XI=.false.
@@ -259,22 +266,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine rcp_check_parameters(NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
-                        NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-                        ATTENUATION,ABSORBING_CONDITIONS, &
-                        INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM)
+  subroutine rcp_check_parameters()
 
-  use constants
+  use constants,only: &
+    CUSTOM_REAL,SIZE_REAL,SIZE_DOUBLE,NUMFACES_SHARED,NUMCORNERS_SHARED, &
+    N_SLS,NGNOD,NGNOD2D
+
+  use shared_parameters
 
   implicit none
-
-  integer  NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS
-
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
-
-  logical ATTENUATION,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM
 
 ! checks parameters
 
@@ -294,6 +294,21 @@
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 3) &
     stop 'absorbing conditions not supported for three chunks yet'
+
+  if(ATTENUATION_3D .and. .not. ATTENUATION) &
+    stop 'need ATTENUATION to use ATTENUATION_3D'
+
+  if(SAVE_TRANSVERSE_KL_ONLY .and. .not. ANISOTROPIC_KL) &
+    stop 'need ANISOTROPIC_KL to use SAVE_TRANSVERSE_KL_ONLY'
+
+  if(PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
+    stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
+
+  if(UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
+    stop 'MOVIE_VOLUME_TYPE == 4 is not implemented for UNDO_ATTENUATION in order to save memory'
+
+  if(UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
+    stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
     stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'

@@ -36,7 +36,7 @@
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3,&
                                         alphaval,betaval,gammaval,factor_common, &
-                                        vx,vy,vz,vnspec)
+                                        vnspec)
 
   use constants_solver
 
@@ -79,9 +79,8 @@
   ! variable lengths for factor_common and one_minus_sum_beta
 
   ! variable sized array variables
-  integer vx, vy, vz, vnspec
-
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  integer :: vnspec
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz

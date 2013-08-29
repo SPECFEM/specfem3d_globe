@@ -271,13 +271,13 @@
   ! (multiply by the inverse of the mass matrix and update velocity)
   if(.NOT. GPU_MODE) then
     ! on CPU
-    call compute_forces_ac_update_veloc(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
-                                       deltatover2,rmass_outer_core)
+    call update_veloc_acoustic(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
+                               deltatover2,rmass_outer_core)
 
    ! adjoint / kernel runs
     if (SIMULATION_TYPE == 3) &
-      call compute_forces_ac_update_veloc(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
-                                         b_deltatover2,rmass_outer_core)
+      call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
+                                 b_deltatover2,rmass_outer_core)
 
   else
     ! on GPU
@@ -287,35 +287,4 @@
 
   end subroutine compute_forces_acoustic
 
-!=====================================================================
-
-  subroutine compute_forces_ac_update_veloc(NGLOB,veloc_outer_core,accel_outer_core, &
-                                           deltatover2,rmass_outer_core)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer :: NGLOB
-
-  ! velocity potential
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
-
-  ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_outer_core
-
-  real(kind=CUSTOM_REAL) :: deltatover2
-
-  ! local parameters
-  integer :: i
-
-  ! Newmark time scheme
-  ! multiply by the inverse of the mass matrix and update velocity
-
-  do i=1,NGLOB
-    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-  enddo
-
-  end subroutine compute_forces_ac_update_veloc
 

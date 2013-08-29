@@ -543,6 +543,7 @@ typedef struct mesh_ {
   int absorbing_conditions;
 
   int attenuation;
+  int undo_attenuation;
   int use_attenuation_mimic;
   int use_3d_attenuation_arrays;
 

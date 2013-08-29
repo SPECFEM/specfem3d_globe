@@ -369,12 +369,20 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
     b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
     b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
     b_eps_trace_over_3_crust_mantle
+
+! daniel debug: static
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+!    b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
+!    b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
+
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+!    b_eps_trace_over_3_crust_mantle
 
   ! for crust/oceans coupling
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
@@ -526,13 +534,20 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
     b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core
 
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
     b_eps_trace_over_3_inner_core
+
+!daniel debug: static
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+!    b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
+!    b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core
+!
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+!    b_eps_trace_over_3_inner_core
 
   ! coupling/boundary surfaces
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &

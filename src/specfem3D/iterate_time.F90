@@ -65,12 +65,6 @@
   ! get MPI starting time
   time_start = wtime()
 
-#ifdef FORCE_VECTORIZATION
-  if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL .and. N_SLS /= 3) &
-      stop 'FORCE_VECTORIZATION can only be used with N_SLS == 3 when ATTENUATION .and. .not. PARTIAL_PHYS_DISPERSION_ONLY&
-              & because N_SLS is assumed to be equal to 3 when vectorizing compute_element_iso,tiso,aniso'
-#endif
-
   ! *********************************************************
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
@@ -83,7 +77,7 @@
     endif
 
     ! update displacement using Newmark time scheme
-    call it_update_displacement_scheme()
+    call update_displacement_Newmark()
 
     ! acoustic solver for outer core
     ! (needs to be done first, before elastic one)
@@ -141,127 +135,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine it_update_displacement_scheme()
-
-! explicit Newmark time scheme with acoustic & elastic domains:
-! (see e.g. Hughes, 1987; Chaljub et al., 2003)
-!
-! chi(t+delta_t) = chi(t) + delta_t chi_dot(t) + 1/2 delta_t**2 chi_dot_dot(t)
-! chi_dot(t+delta_t) = chi_dot(t) + 1/2 delta_t chi_dot_dot(t) + 1/2 delta_t chi_dot_dot(t+delta_t)
-! chi_dot_dot(t+delta_t) = 1/M_acoustic( -K_acoustic chi(t+delta) + B_acoustic u(t+delta_t) + f(t+delta_t) )
-!
-! u(t+delta_t) = u(t) + delta_t  v(t) + 1/2  delta_t**2 a(t)
-! v(t+delta_t) = v(t) + 1/2 delta_t a(t) + 1/2 delta_t a(t+delta_t)
-! a(t+delta_t) = 1/M_elastic ( -K_elastic u(t+delta) + B_elastic chi_dot_dot(t+delta_t) + f( t+delta_t) )
-!
-! where
-!   chi, chi_dot, chi_dot_dot are acoustic (fluid) potentials ( dotted with respect to time)
-!   u, v, a are displacement,velocity & acceleration
-!   M is mass matrix, K stiffness matrix and B boundary term for acoustic/elastic domains
-!   f denotes a source term (acoustic/elastic)
-!
-! note that this stage calculates the predictor terms
-!
-!   for
-!   potential chi_dot(t+delta) requires + 1/2 delta_t chi_dot_dot(t+delta_t)
-!                                   at a later stage (corrector) once where chi_dot_dot(t+delta) is calculated
-!   and similar,
-!   velocity v(t+delta_t) requires  + 1/2 delta_t a(t+delta_t)
-!                                   at a later stage once where a(t+delta) is calculated
-! also:
-!   boundary term B_elastic requires chi_dot_dot(t+delta)
-!                                   thus chi_dot_dot has to be updated first before the elastic boundary term is considered
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
-  implicit none
-
-  ! local parameters
-  integer :: i
-
-  ! updates wavefields
-  if( .not. GPU_MODE) then
-  ! on CPU
-
-    ! Newmark time scheme update
-    ! mantle
-    do i=1,NGLOB_CRUST_MANTLE
-      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-        + deltatover2*accel_crust_mantle(:,i)
-      accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-    enddo
-    ! outer core
-    do i=1,NGLOB_OUTER_CORE
-      displ_outer_core(i) = displ_outer_core(i) &
-        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-      veloc_outer_core(i) = veloc_outer_core(i) &
-        + deltatover2*accel_outer_core(i)
-      accel_outer_core(i) = 0._CUSTOM_REAL
-    enddo
-    ! inner core
-    do i=1,NGLOB_INNER_CORE
-      displ_inner_core(:,i) = displ_inner_core(:,i) &
-        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-        + deltatover2*accel_inner_core(:,i)
-      accel_inner_core(:,i) = 0._CUSTOM_REAL
-    enddo
-
-    ! backward field
-    if (SIMULATION_TYPE == 3) then
-      ! mantle
-      do i=1,NGLOB_CRUST_MANTLE
-        b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-          + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-          + b_deltatover2*b_accel_crust_mantle(:,i)
-        b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-      enddo
-      ! outer core
-      do i=1,NGLOB_OUTER_CORE
-        b_displ_outer_core(i) = b_displ_outer_core(i) &
-          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
-          + b_deltatover2*b_accel_outer_core(i)
-        b_accel_outer_core(i) = 0._CUSTOM_REAL
-      enddo
-      ! inner core
-      do i=1,NGLOB_INNER_CORE
-        b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-          + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-          + b_deltatover2*b_accel_inner_core(:,i)
-        b_accel_inner_core(:,i) = 0._CUSTOM_REAL
-      enddo
-    endif ! SIMULATION_TYPE == 3
-  else
-    ! on GPU
-    ! Includes SIM_TYPE 1 & 3
-
-    ! outer core region
-    call it_update_displacement_oc_cuda(Mesh_pointer, &
-                                       deltat, deltatsqover2, deltatover2, &
-                                       b_deltat, b_deltatsqover2, b_deltatover2)
-    ! inner core region
-    call it_update_displacement_ic_cuda(Mesh_pointer, &
-                                       deltat, deltatsqover2, deltatover2, &
-                                       b_deltat, b_deltatsqover2, b_deltatover2)
-
-    ! crust/mantle region
-    call it_update_displacement_cm_cuda(Mesh_pointer, &
-                                       deltat, deltatsqover2, deltatover2, &
-                                       b_deltat, b_deltatsqover2, b_deltatover2)
-  endif
-
-  end subroutine it_update_displacement_scheme
-
-!
-!-------------------------------------------------------------------------------------------------
-!
 
   subroutine it_print_elapsed_time()
 
