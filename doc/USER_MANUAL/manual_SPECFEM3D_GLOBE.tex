@@ -425,6 +425,12 @@ script discussed below automatically takes care of creating the \texttt{OUTPUT\_
 If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
 \texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
 
+We recommend that you ask for exclusive use of the compute nodes when running on a cluster or a supercomputer, i.e., make sure that no other users
+are running on the same nodes at the same time. Otherwise your run could run out of memory if the memory of some nodes is used by other users, in particular
+when undoing attenuation using the UNDO\_ATTENUATION option in DATA/Par\_file.
+To do so, ask your system administrator for the option to add to your batch submission script; it is for instance 
+\texttt{\#BSUB -x} with SLURM and \texttt{\#\$ -l exclusive=TRUE} with Sun Grid Engine (SGE).
+
 \section{Compiling on an IBM BlueGene}
 
 \underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
