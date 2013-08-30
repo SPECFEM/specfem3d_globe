@@ -45,7 +45,15 @@
                               NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                               NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
 
+! daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
+!              for SIMULATION_TYPE == 1 or equal to NSPEC_CRUST_MANTLE for SIMULATION_TYPE == 3 or SAVE_FORWARD set to .true.
+!              the value is determined in routine memory_eval() and passed here as argument.
 !
+!              thus, in order to be able to run a kernel simulation, users still have to re-compile the binaries with the right
+!              parameters set in Par_file otherwise the kernel runs will crash.
+!
+!              there is hardly another way of this usage when trying to take advantage of static compilation for the solver.
+!              please ignore the following remark:
 ! ****************************************************************************************************
 ! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
 ! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
@@ -65,9 +73,9 @@
     CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
     NSTEP,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA, &
-    SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
-    APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
-    SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
+    SAVE_REGULAR_KL, &
+    PARTIAL_PHYS_DISPERSION_ONLY, &
+    ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
     ATTENUATION_1D_WITH_3D_STORAGE, &
     ATT1,ATT2,ATT3,ATT4,ATT5, &
     MOVIE_VOLUME
@@ -345,23 +353,26 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = ',NSPEC_OUTER_CORE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
 
-  if(ANISOTROPIC_KL) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
-  endif
+  ! unused... (dynamic allocation used)
+  !if(ANISOTROPIC_KL) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
+  !endif
 
-  if(APPROXIMATE_HESS_KL) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
-  endif
+  ! unused... (dynamic allocation used)
+  !if(APPROXIMATE_HESS_KL) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
+  !endif
 
-  if(NOISE_TOMOGRAPHY > 0) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
-  endif
+  ! unused... (dynamic allocation used)
+  !if(NOISE_TOMOGRAPHY > 0) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
+  !endif
 
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = ',NGLOB_CRUST_MANTLE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = ',NGLOB_OUTER_CORE_ADJOINT
@@ -532,12 +543,13 @@
   endif
   write(IOUT,*)
 
-  if (SAVE_SOURCE_MASK) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = NSPEC_CRUST_MANTLE'
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
-  endif
-  write(IOUT,*)
+  ! unused... (dynamic allocation used)
+  !if (SAVE_SOURCE_MASK) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = NSPEC_CRUST_MANTLE'
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
+  !endif
+  !write(IOUT,*)
 
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region

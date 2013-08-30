@@ -192,7 +192,7 @@
     TRANSVERSE_ISOTROPY = .true.
 
   else if(MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
-          MODEL_ROOT == '1D_ak135' .or. MODEL_ROOT == '1D_jp3d' .or. &
+          MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
           MODEL_ROOT == '1D_sea99') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     if(MODEL_ROOT == '1D_iasp91') then
@@ -228,7 +228,7 @@
     ONE_CRUST = .true.
 
   else if(MODEL_ROOT == '1D_iasp91_onecrust' .or. MODEL_ROOT == '1D_1066a_onecrust' &
-        .or. MODEL_ROOT == '1D_ak135_onecrust') then
+        .or. MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     ONE_CRUST = .true.
     if(MODEL_ROOT == '1D_iasp91_onecrust') then

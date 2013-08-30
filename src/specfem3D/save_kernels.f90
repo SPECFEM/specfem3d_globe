@@ -322,96 +322,96 @@
     if( SAVE_TRANSVERSE_KL_ONLY ) then
       ! transverse isotropic kernels
       ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
-      open(unit=27,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) alphav_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'alphah_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) alphah_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'betav_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) betav_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'betah_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) betah_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) eta_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) rho_kl_crust_mantle
-      close(27)
+      open(unit=IOUT,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alphav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'alphah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alphah_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'betav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) betav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'betah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) betah_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) eta_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) rho_kl_crust_mantle
+      close(IOUT)
 
       ! in case one is interested in primary kernel K_rho
-      !open(unit=27,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
-      !write(27) rhonotprime_kl_crust_mantle
-      !close(27)
+      !open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
+      !write(IOUT) rhonotprime_kl_crust_mantle
+      !close(IOUT)
 
       ! (bulk, beta_v, beta_h, eta, rho ) parameterization: K_eta and K_rho same as above
-      open(unit=27,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) bulk_c_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'bulk_betav_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) bulk_betav_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'bulk_betah_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) bulk_betah_kl_crust_mantle
-      close(27)
+      open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_c_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_betav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_betav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_betah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_betah_kl_crust_mantle
+      close(IOUT)
 
       ! to check: isotropic kernels
-      open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) alpha_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) beta_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) bulk_beta_kl_crust_mantle
-      close(27)
+      open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alpha_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) beta_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_beta_kl_crust_mantle
+      close(IOUT)
 
     else
 
       ! fully anisotropic kernels
       ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
       !          but absolute perturbations (delta m_i = m_i - m_0)
-      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) - rho_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(27) - cijkl_kl_crust_mantle
-      close(27)
+      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) - rho_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) - cijkl_kl_crust_mantle
+      close(IOUT)
 
     endif
 
   else
     ! primary kernels: (rho,kappa,mu) parameterization
-    open(unit=27,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) rhonotprime_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'kappa_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) kappa_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) mu_kl_crust_mantle
-    close(27)
+    open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) rhonotprime_kl_crust_mantle
+    close(IOUT)
+    open(unit=IOUT,file=trim(prname)//'kappa_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) kappa_kl_crust_mantle
+    close(IOUT)
+    open(unit=IOUT,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) mu_kl_crust_mantle
+    close(IOUT)
 
     ! (rho, alpha, beta ) parameterization
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) rho_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) alpha_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) beta_kl_crust_mantle
-    close(27)
+    open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) rho_kl_crust_mantle
+    close(IOUT)
+    open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) alpha_kl_crust_mantle
+    close(IOUT)
+    open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) beta_kl_crust_mantle
+    close(IOUT)
 
     ! (rho, bulk, beta ) parameterization, K_rho same as above
-    open(unit=27,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) bulk_c_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) bulk_beta_kl_crust_mantle
-    close(27)
+    open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) bulk_c_kl_crust_mantle
+    close(IOUT)
+    open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) bulk_beta_kl_crust_mantle
+    close(IOUT)
 
 
   endif
@@ -467,12 +467,12 @@
 
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
 
-  open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) rho_kl_outer_core
-  close(27)
-  open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) alpha_kl_outer_core
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) rho_kl_outer_core
+  close(IOUT)
+  open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) alpha_kl_outer_core
+  close(IOUT)
 
   end subroutine save_kernels_outer_core
 
@@ -517,15 +517,15 @@
 
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
 
-  open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) rho_kl_inner_core
-  close(27)
-  open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) alpha_kl_inner_core
-  close(27)
-  open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) beta_kl_inner_core
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) rho_kl_inner_core
+  close(IOUT)
+  open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) alpha_kl_inner_core
+  close(IOUT)
+  open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) beta_kl_inner_core
+  close(IOUT)
 
   end subroutine save_kernels_inner_core
 
@@ -557,28 +557,28 @@
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-    open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(27) moho_kl
-    close(27)
+    open(unit=IOUT,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) moho_kl
+    close(IOUT)
   endif
 
-  open(unit=27,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) d400_kl
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) d400_kl
+  close(IOUT)
 
-  open(unit=27,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) d670_kl
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) d670_kl
+  close(IOUT)
 
-  open(unit=27,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) cmb_kl
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) cmb_kl
+  close(IOUT)
 
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
-  open(unit=27,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) icb_kl
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) icb_kl
+  close(IOUT)
 
   end subroutine save_kernels_boundary_kl
 
@@ -613,7 +613,7 @@
     shdur_der(irec_local) = shdur_der(irec_local) * scale_displ**2
 
     write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
-    open(unit=27,file=trim(outputname),status='unknown',action='write')
+    open(unit=IOUT,file=trim(outputname),status='unknown',action='write')
   !
   ! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
   !  Mrr =  Mzz
@@ -625,18 +625,18 @@
   ! for consistency, location derivatives are in the order of [Xr,Xt,Xp]
   ! minus sign for sloc_der(3,irec_local) to get derivative for depth instead of radius
 
-    write(27,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
-    write(27,'(g16.5)') moment_der(1,1,irec_local) * 1e-7
-    write(27,'(g16.5)') moment_der(2,2,irec_local) * 1e-7
-    write(27,'(g16.5)') -2*moment_der(1,3,irec_local) * 1e-7
-    write(27,'(g16.5)') 2*moment_der(2,3,irec_local) * 1e-7
-    write(27,'(g16.5)') -2*moment_der(1,2,irec_local) * 1e-7
-    write(27,'(g16.5)') sloc_der(2,irec_local)
-    write(27,'(g16.5)') sloc_der(1,irec_local)
-    write(27,'(g16.5)') -sloc_der(3,irec_local)
-    write(27,'(g16.5)') stshift_der(irec_local)
-    write(27,'(g16.5)') shdur_der(irec_local)
-    close(27)
+    write(IOUT,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
+    write(IOUT,'(g16.5)') moment_der(1,1,irec_local) * 1e-7
+    write(IOUT,'(g16.5)') moment_der(2,2,irec_local) * 1e-7
+    write(IOUT,'(g16.5)') -2*moment_der(1,3,irec_local) * 1e-7
+    write(IOUT,'(g16.5)') 2*moment_der(2,3,irec_local) * 1e-7
+    write(IOUT,'(g16.5)') -2*moment_der(1,2,irec_local) * 1e-7
+    write(IOUT,'(g16.5)') sloc_der(2,irec_local)
+    write(IOUT,'(g16.5)') sloc_der(1,irec_local)
+    write(IOUT,'(g16.5)') -sloc_der(3,irec_local)
+    write(IOUT,'(g16.5)') stshift_der(irec_local)
+    write(IOUT,'(g16.5)') shdur_der(irec_local)
+    close(IOUT)
   enddo
 
   end subroutine save_kernels_source_derivatives
@@ -664,9 +664,9 @@
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
-  open(unit=27,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
-  write(27) hess_kl_crust_mantle
-  close(27)
+  open(unit=IOUT,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(IOUT) hess_kl_crust_mantle
+  close(IOUT)
 
   end subroutine save_kernels_hessian
 
