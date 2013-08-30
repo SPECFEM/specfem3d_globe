@@ -69,6 +69,10 @@
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
 
+#ifdef FORCE_VECTORIZATION
+  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+#endif
+
 !daniel: att - debug
 !  use specfem_par,only: it,NSTEP
 
@@ -421,8 +425,7 @@
       sum_terms(2,ijk,1,1) = - (fac1*newtempy1(ijk,1,1) + fac2*newtempy2(ijk,1,1) + fac3*newtempy3(ijk,1,1))
       sum_terms(3,ijk,1,1) = - (fac1*newtempz1(ijk,1,1) + fac2*newtempz2(ijk,1,1) + fac3*newtempz3(ijk,1,1))
     enddo
-
-    ! add gravity terms
+    ! adds gravity terms
     if(GRAVITY_VAL) then
       do ijk = 1,NDIM*NGLLCUBE
         sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
@@ -435,15 +438,12 @@
         do i=1,NGLLX
           fac2 = wgllwgll_xz(i,k)
           fac3 = wgllwgll_xy(i,j)
-
-          ! sum contributions
+          ! sums contributions
           sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
           sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
           sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
-
-          ! add gravity terms
+          ! adds gravity terms
           if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
-
         enddo ! NGLLX
       enddo ! NGLLY
     enddo ! NGLLZ
@@ -507,23 +507,12 @@
 
     ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) then
-
-#ifdef FORCE_VECTORIZATION
-      do ijk = 1,NGLLCUBE
-        epsilondev_xx(ijk,1,1,ispec) = epsilondev_loc(1,ijk,1,1)
-        epsilondev_yy(ijk,1,1,ispec) = epsilondev_loc(2,ijk,1,1)
-        epsilondev_xy(ijk,1,1,ispec) = epsilondev_loc(3,ijk,1,1)
-        epsilondev_xz(ijk,1,1,ispec) = epsilondev_loc(4,ijk,1,1)
-        epsilondev_yz(ijk,1,1,ispec) = epsilondev_loc(5,ijk,1,1)
-      enddo
-#else
       epsilondev_xx(:,:,:,ispec) = epsilondev_loc(1,:,:,:)
       epsilondev_yy(:,:,:,ispec) = epsilondev_loc(2,:,:,:)
       epsilondev_xy(:,:,:,ispec) = epsilondev_loc(3,:,:,:)
       epsilondev_xz(:,:,:,ispec) = epsilondev_loc(4,:,:,:)
       epsilondev_yz(:,:,:,ispec) = epsilondev_loc(5,:,:,:)
     endif
-#endif
 
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 

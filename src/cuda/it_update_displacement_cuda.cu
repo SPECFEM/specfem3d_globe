@@ -72,9 +72,7 @@ void FC_FUNC_(it_update_displacement_ic_cuda,
                                              realw* deltat_F,
                                              realw* deltatsqover2_F,
                                              realw* deltatover2_F,
-                                             realw* b_deltat_F,
-                                             realw* b_deltatsqover2_F,
-                                             realw* b_deltatover2_F) {
+                                             int* FORWARD_OR_ADJOINT) {
 
 TRACE("it_update_displacement_ic_cuda");
 
@@ -99,22 +97,18 @@ TRACE("it_update_displacement_ic_cuda");
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  //launch kernel
-  UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
-                                           mp->d_veloc_inner_core,
-                                           mp->d_accel_inner_core,
-                                           size,deltat,deltatsqover2,deltatover2);
-
-  // kernel for backward fields
-  if(mp->simulation_type == 3) {
-    realw b_deltat = *b_deltat_F;
-    realw b_deltatsqover2 = *b_deltatsqover2_F;
-    realw b_deltatover2 = *b_deltatover2_F;
-
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    //launch kernel
+    UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+                                             mp->d_veloc_inner_core,
+                                             mp->d_accel_inner_core,
+                                             size,deltat,deltatsqover2,deltatover2);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
+    // kernel for backward fields
     UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
                                              mp->d_b_veloc_inner_core,
                                              mp->d_b_accel_inner_core,
-                                             size,b_deltat,b_deltatsqover2,b_deltatover2);
+                                             size,deltat,deltatsqover2,deltatover2);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -135,9 +129,7 @@ void FC_FUNC_(it_update_displacement_cm_cuda,
                                              realw* deltat_F,
                                              realw* deltatsqover2_F,
                                              realw* deltatover2_F,
-                                             realw* b_deltat_F,
-                                             realw* b_deltatsqover2_F,
-                                             realw* b_deltatover2_F) {
+                                             int* FORWARD_OR_ADJOINT) {
 
   TRACE("it_update_displacement_cm_cuda");
 
@@ -162,22 +154,18 @@ void FC_FUNC_(it_update_displacement_cm_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  //launch kernel
-  UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
-                                           mp->d_veloc_crust_mantle,
-                                           mp->d_accel_crust_mantle,
-                                           size,deltat,deltatsqover2,deltatover2);
-
-  // kernel for backward fields
-  if(mp->simulation_type == 3) {
-    realw b_deltat = *b_deltat_F;
-    realw b_deltatsqover2 = *b_deltatsqover2_F;
-    realw b_deltatover2 = *b_deltatover2_F;
-
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    //launch kernel
+    UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+                                             mp->d_veloc_crust_mantle,
+                                             mp->d_accel_crust_mantle,
+                                             size,deltat,deltatsqover2,deltatover2);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
+    // kernel for backward fields
     UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
                                              mp->d_b_veloc_crust_mantle,
                                              mp->d_b_accel_crust_mantle,
-                                             size,b_deltat,b_deltatsqover2,b_deltatover2);
+                                             size,deltat,deltatsqover2,deltatover2);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -226,12 +214,10 @@ __global__ void UpdatePotential_kernel(realw* potential_acoustic,
 extern "C"
 void FC_FUNC_(it_update_displacement_oc_cuda,
               IT_UPDATE_DISPLACEMENT_OC_cuda)(long* Mesh_pointer_f,
-                                               realw* deltat_F,
-                                               realw* deltatsqover2_F,
-                                               realw* deltatover2_F,
-                                               realw* b_deltat_F,
-                                               realw* b_deltatsqover2_F,
-                                               realw* b_deltatover2_F) {
+                                              realw* deltat_F,
+                                              realw* deltatsqover2_F,
+                                              realw* deltatover2_F,
+                                              int* FORWARD_OR_ADJOINT) {
 
   TRACE("it_update_displacement_oc_cuda");
 
@@ -256,21 +242,17 @@ void FC_FUNC_(it_update_displacement_oc_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  //launch kernel
-  UpdatePotential_kernel<<<grid,threads>>>(mp->d_displ_outer_core,
-                                           mp->d_veloc_outer_core,
-                                           mp->d_accel_outer_core,
-                                           size,deltat,deltatsqover2,deltatover2);
-
-  if(mp->simulation_type == 3) {
-    realw b_deltat = *b_deltat_F;
-    realw b_deltatsqover2 = *b_deltatsqover2_F;
-    realw b_deltatover2 = *b_deltatover2_F;
-
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    //launch kernel
+    UpdatePotential_kernel<<<grid,threads>>>(mp->d_displ_outer_core,
+                                             mp->d_veloc_outer_core,
+                                             mp->d_accel_outer_core,
+                                             size,deltat,deltatsqover2,deltatover2);
+  }else if( *FORWARD_OR_ADJOINT == 1 ){
     UpdatePotential_kernel<<<grid,threads>>>(mp->d_b_displ_outer_core,
                                              mp->d_b_veloc_outer_core,
                                              mp->d_b_accel_outer_core,
-                                             size,b_deltat,b_deltatsqover2,b_deltatover2);
+                                             size,deltat,deltatsqover2,deltatover2);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -352,20 +334,16 @@ __global__ void kernel_3_veloc_cuda_device(realw* veloc,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(kernel_3_a_cuda,
-              KERNEL_3_A_CUDA)(long* Mesh_pointer,
-                               realw* deltatover2_F,
-                               int* SIMULATION_TYPE_f,
-                               realw* b_deltatover2_F,
-                               int* NCHUNKS_VAL) {
-  TRACE("kernel_3_a_cuda");
+void FC_FUNC_(update_accel_3_a_cuda,
+              UPDATE_ACCEL_3_A_CUDA)(long* Mesh_pointer,
+                                     realw* deltatover2_F,
+                                     int* NCHUNKS_VAL,
+                                     int* FORWARD_OR_ADJOINT) {
+  TRACE("update_accel_3_a_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  int SIMULATION_TYPE = *SIMULATION_TYPE_f;
-
   realw deltatover2 = *deltatover2_F;
-  realw b_deltatover2 = *b_deltatover2_F;
 
   int blocksize = BLOCKSIZE_KERNEL3;
   int size_padded = ((int)ceil(((double)mp->NGLOB_CRUST_MANTLE)/((double)blocksize)))*blocksize;
@@ -386,40 +364,42 @@ void FC_FUNC_(kernel_3_a_cuda,
     // updates both, accel and veloc
 
     if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
-      kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
-                                               mp->d_accel_crust_mantle,
-                                               mp->NGLOB_CRUST_MANTLE,
-                                               deltatover2,
-                                               mp->two_omega_earth,
-                                               mp->d_rmassx_crust_mantle,
-                                               mp->d_rmassy_crust_mantle,
-                                               mp->d_rmassz_crust_mantle);
-
-      if(SIMULATION_TYPE == 3){
+      // uses corrected mass matrices rmassx,rmassy,rmassz
+      if( *FORWARD_OR_ADJOINT == 1 ){
+        kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
+                                                 mp->d_accel_crust_mantle,
+                                                 mp->NGLOB_CRUST_MANTLE,
+                                                 deltatover2,
+                                                 mp->two_omega_earth,
+                                                 mp->d_rmassx_crust_mantle,
+                                                 mp->d_rmassy_crust_mantle,
+                                                 mp->d_rmassz_crust_mantle);
+      }else if( *FORWARD_OR_ADJOINT == 3 ){
         kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
                                                  mp->d_b_accel_crust_mantle,
                                                  mp->NGLOB_CRUST_MANTLE,
-                                                 b_deltatover2,
+                                                 deltatover2,
                                                  mp->b_two_omega_earth,
                                                  mp->d_rmassx_crust_mantle,
                                                  mp->d_rmassy_crust_mantle,
                                                  mp->d_rmassz_crust_mantle);
       }
     }else{
-      kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
-                                               mp->d_accel_crust_mantle,
-                                               mp->NGLOB_CRUST_MANTLE,
-                                               deltatover2,
-                                               mp->two_omega_earth,
-                                               mp->d_rmassz_crust_mantle,
-                                               mp->d_rmassz_crust_mantle,
-                                               mp->d_rmassz_crust_mantle);
-
-      if(SIMULATION_TYPE == 3){
+      // uses only rmassz
+      if( *FORWARD_OR_ADJOINT == 1 ){
+        kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
+                                                 mp->d_accel_crust_mantle,
+                                                 mp->NGLOB_CRUST_MANTLE,
+                                                 deltatover2,
+                                                 mp->two_omega_earth,
+                                                 mp->d_rmassz_crust_mantle,
+                                                 mp->d_rmassz_crust_mantle,
+                                                 mp->d_rmassz_crust_mantle);
+      }else if( *FORWARD_OR_ADJOINT == 3 ){
         kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
                                                  mp->d_b_accel_crust_mantle,
                                                  mp->NGLOB_CRUST_MANTLE,
-                                                 b_deltatover2,
+                                                 deltatover2,
                                                  mp->b_two_omega_earth,
                                                  mp->d_rmassz_crust_mantle,
                                                  mp->d_rmassz_crust_mantle,
@@ -431,15 +411,16 @@ void FC_FUNC_(kernel_3_a_cuda,
     // updates only accel
 
     if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
-      kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
-                                                     mp->d_veloc_crust_mantle,
-                                                     mp->NGLOB_CRUST_MANTLE,
-                                                     mp->two_omega_earth,
-                                                     mp->d_rmassx_crust_mantle,
-                                                     mp->d_rmassy_crust_mantle,
-                                                     mp->d_rmassz_crust_mantle);
-
-      if(SIMULATION_TYPE == 3) {
+      // uses corrected mass matrices
+      if( *FORWARD_OR_ADJOINT == 1 ){
+        kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
+                                                       mp->d_veloc_crust_mantle,
+                                                       mp->NGLOB_CRUST_MANTLE,
+                                                       mp->two_omega_earth,
+                                                       mp->d_rmassx_crust_mantle,
+                                                       mp->d_rmassy_crust_mantle,
+                                                       mp->d_rmassz_crust_mantle);
+      }else if( *FORWARD_OR_ADJOINT == 3 ){
         kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
                                                        mp->d_b_veloc_crust_mantle,
                                                        mp->NGLOB_CRUST_MANTLE,
@@ -449,15 +430,16 @@ void FC_FUNC_(kernel_3_a_cuda,
                                                        mp->d_rmassz_crust_mantle);
       }
     }else{
-      kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
-                                                     mp->d_veloc_crust_mantle,
-                                                     mp->NGLOB_CRUST_MANTLE,
-                                                     mp->two_omega_earth,
-                                                     mp->d_rmassz_crust_mantle,
-                                                     mp->d_rmassz_crust_mantle,
-                                                     mp->d_rmassz_crust_mantle);
-
-      if(SIMULATION_TYPE == 3) {
+      // uses only rmassz
+      if( *FORWARD_OR_ADJOINT == 1 ){
+        kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
+                                                       mp->d_veloc_crust_mantle,
+                                                       mp->NGLOB_CRUST_MANTLE,
+                                                       mp->two_omega_earth,
+                                                       mp->d_rmassz_crust_mantle,
+                                                       mp->d_rmassz_crust_mantle,
+                                                       mp->d_rmassz_crust_mantle);
+      }else if( *FORWARD_OR_ADJOINT == 3 ){
         kernel_3_accel_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
                                                        mp->d_b_veloc_crust_mantle,
                                                        mp->NGLOB_CRUST_MANTLE,
@@ -471,26 +453,23 @@ void FC_FUNC_(kernel_3_a_cuda,
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel_3_a");
+  exit_on_cuda_error("after update_accel_3_a");
 #endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(kernel_3_b_cuda,
-              KERNEL_3_B_CUDA)(long* Mesh_pointer,
-                               realw* deltatover2_F,
-                               int* SIMULATION_TYPE_f,
-                               realw* b_deltatover2_F) {
-  TRACE("kernel_3_b_cuda");
+void FC_FUNC_(update_veloc_3_b_cuda,
+              UPDATE_VELOC_3_B_CUDA)(long* Mesh_pointer,
+                                     realw* deltatover2_F,
+                                     int* FORWARD_OR_ADJOINT) {
+  TRACE("update_veloc_3_b_cuda");
   int size_padded,num_blocks_x,num_blocks_y;
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  int SIMULATION_TYPE = *SIMULATION_TYPE_f;
   realw deltatover2 = *deltatover2_F;
-  realw b_deltatover2 = *b_deltatover2_F;
 
   int blocksize = BLOCKSIZE_KERNEL3;
 
@@ -508,16 +487,16 @@ void FC_FUNC_(kernel_3_b_cuda,
     dim3 threads1(blocksize,1,1);
 
     // updates only veloc at this point
-    kernel_3_veloc_cuda_device<<< grid1, threads1>>>(mp->d_veloc_crust_mantle,
-                                                     mp->d_accel_crust_mantle,
-                                                     mp->NGLOB_CRUST_MANTLE,
-                                                     deltatover2);
-
-    if(SIMULATION_TYPE == 3) {
+    if( *FORWARD_OR_ADJOINT == 1 ){
+      kernel_3_veloc_cuda_device<<< grid1, threads1>>>(mp->d_veloc_crust_mantle,
+                                                       mp->d_accel_crust_mantle,
+                                                       mp->NGLOB_CRUST_MANTLE,
+                                                       deltatover2);
+    }else if( *FORWARD_OR_ADJOINT == 3 ){
       kernel_3_veloc_cuda_device<<< grid1, threads1>>>(mp->d_b_veloc_crust_mantle,
                                                        mp->d_b_accel_crust_mantle,
                                                        mp->NGLOB_CRUST_MANTLE,
-                                                       b_deltatover2);
+                                                       deltatover2);
     }
   }
 
@@ -533,30 +512,29 @@ void FC_FUNC_(kernel_3_b_cuda,
   dim3 threads(blocksize,1,1);
 
   // updates both, accel and veloc
-  kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_inner_core,
-                                           mp->d_accel_inner_core,
-                                           mp->NGLOB_INNER_CORE,
-                                           deltatover2,
-                                           mp->two_omega_earth,
-                                           mp->d_rmass_inner_core,
-                                           mp->d_rmass_inner_core,
-                                           mp->d_rmass_inner_core);
-
-  if(SIMULATION_TYPE == 3) {
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    kernel_3_cuda_device<<< grid, threads>>>(mp->d_veloc_inner_core,
+                                             mp->d_accel_inner_core,
+                                             mp->NGLOB_INNER_CORE,
+                                             deltatover2,
+                                             mp->two_omega_earth,
+                                             mp->d_rmass_inner_core,
+                                             mp->d_rmass_inner_core,
+                                             mp->d_rmass_inner_core);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
     kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_inner_core,
                                              mp->d_b_accel_inner_core,
                                              mp->NGLOB_INNER_CORE,
-                                             b_deltatover2,
+                                             deltatover2,
                                              mp->b_two_omega_earth,
                                              mp->d_rmass_inner_core,
                                              mp->d_rmass_inner_core,
                                              mp->d_rmass_inner_core);
   }
 
-
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel_3_b");
+  exit_on_cuda_error("after update_veloc_3_b");
 #endif
 }
 
@@ -593,16 +571,13 @@ extern "C"
 void FC_FUNC_(kernel_3_outer_core_cuda,
               KERNEL_3_OUTER_CORE_CUDA)(long* Mesh_pointer,
                                         realw* deltatover2_F,
-                                        int* SIMULATION_TYPE_f,
-                                        realw* b_deltatover2_F) {
+                                        int* FORWARD_OR_ADJOINT) {
 
   TRACE("kernel_3_outer_core_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  int SIMULATION_TYPE = *SIMULATION_TYPE_f;
   realw deltatover2 = *deltatover2_F;
-  realw b_deltatover2 = *b_deltatover2_F;
 
   int blocksize = BLOCKSIZE_KERNEL3;
 
@@ -616,16 +591,16 @@ void FC_FUNC_(kernel_3_outer_core_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  kernel_3_outer_core_cuda_device<<< grid, threads>>>(mp->d_veloc_outer_core,
-                                                      mp->d_accel_outer_core,
-                                                      mp->NGLOB_OUTER_CORE,
-                                                      deltatover2,mp->d_rmass_outer_core);
-
-  if(SIMULATION_TYPE == 3) {
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    kernel_3_outer_core_cuda_device<<< grid, threads>>>(mp->d_veloc_outer_core,
+                                                        mp->d_accel_outer_core,
+                                                        mp->NGLOB_OUTER_CORE,
+                                                        deltatover2,mp->d_rmass_outer_core);
+  }else if( *FORWARD_OR_ADJOINT == 3){
     kernel_3_outer_core_cuda_device<<< grid, threads>>>(mp->d_b_veloc_outer_core,
                                                         mp->d_b_accel_outer_core,
                                                         mp->NGLOB_OUTER_CORE,
-                                                        b_deltatover2,mp->d_rmass_outer_core);
+                                                        deltatover2,mp->d_rmass_outer_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

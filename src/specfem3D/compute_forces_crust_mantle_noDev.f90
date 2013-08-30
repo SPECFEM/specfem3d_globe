@@ -273,11 +273,12 @@
           endif
 
           ! precompute terms for attenuation if needed
-          if( ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-            one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-            minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
-          else if( ATTENUATION_VAL ) then
-            one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+          if( ATTENUATION_VAL ) then
+            if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+              one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+            else
+              one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+            endif
             minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
           endif
 

@@ -172,7 +172,8 @@ __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
 
 extern "C"
 void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
-              COMPUTE_COUPLING_FLUID_CMB_CUDA)(long* Mesh_pointer_f) {
+              COMPUTE_COUPLING_FLUID_CMB_CUDA)(long* Mesh_pointer_f,
+                                               int* FORWARD_OR_ADJOINT) {
 
   TRACE("compute_coupling_fluid_cmb_cuda");
   //double start_time = get_time();
@@ -190,19 +191,19 @@ void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
   dim3 threads(5,5,1);
 
   // launches GPU kernel
-  compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
-                                                      mp->d_accel_outer_core,
-                                                      mp->d_ibool_crust_mantle,
-                                                      mp->d_ibelm_bottom_crust_mantle,
-                                                      mp->d_normal_top_outer_core,
-                                                      mp->d_jacobian2D_top_outer_core,
-                                                      mp->d_wgllwgll_xy,
-                                                      mp->d_ibool_outer_core,
-                                                      mp->d_ibelm_top_outer_core,
-                                                      mp->nspec2D_top_outer_core);
-
-  // adjoint simulations
-  if ( mp->simulation_type == 3 ){
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+                                                        mp->d_accel_outer_core,
+                                                        mp->d_ibool_crust_mantle,
+                                                        mp->d_ibelm_bottom_crust_mantle,
+                                                        mp->d_normal_top_outer_core,
+                                                        mp->d_jacobian2D_top_outer_core,
+                                                        mp->d_wgllwgll_xy,
+                                                        mp->d_ibool_outer_core,
+                                                        mp->d_ibelm_top_outer_core,
+                                                        mp->nspec2D_top_outer_core);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
+    // adjoint simulations
     compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
                                                         mp->d_b_accel_outer_core,
                                                         mp->d_ibool_crust_mantle,
@@ -226,7 +227,8 @@ void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
 
 extern "C"
 void FC_FUNC_(compute_coupling_fluid_icb_cuda,
-              COMPUTE_COUPLING_FLUID_ICB_CUDA)(long* Mesh_pointer_f) {
+              COMPUTE_COUPLING_FLUID_ICB_CUDA)(long* Mesh_pointer_f,
+                                               int* FORWARD_OR_ADJOINT) {
 
   TRACE("compute_coupling_fluid_icb_cuda");
   //double start_time = get_time();
@@ -244,19 +246,19 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
   dim3 threads(5,5,1);
 
   // launches GPU kernel
-  compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
-                                                      mp->d_accel_outer_core,
-                                                      mp->d_ibool_inner_core,
-                                                      mp->d_ibelm_top_inner_core,
-                                                      mp->d_normal_bottom_outer_core,
-                                                      mp->d_jacobian2D_bottom_outer_core,
-                                                      mp->d_wgllwgll_xy,
-                                                      mp->d_ibool_outer_core,
-                                                      mp->d_ibelm_bottom_outer_core,
-                                                      mp->nspec2D_bottom_outer_core);
-
-  // adjoint simulations
-  if ( mp->simulation_type == 3 ){
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+                                                        mp->d_accel_outer_core,
+                                                        mp->d_ibool_inner_core,
+                                                        mp->d_ibelm_top_inner_core,
+                                                        mp->d_normal_bottom_outer_core,
+                                                        mp->d_jacobian2D_bottom_outer_core,
+                                                        mp->d_wgllwgll_xy,
+                                                        mp->d_ibool_outer_core,
+                                                        mp->d_ibelm_bottom_outer_core,
+                                                        mp->nspec2D_bottom_outer_core);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
+    // adjoint simulations
     compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
                                                         mp->d_b_accel_outer_core,
                                                         mp->d_ibool_inner_core,
@@ -268,6 +270,7 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
                                                         mp->d_ibelm_bottom_outer_core,
                                                         mp->nspec2D_bottom_outer_core);
   }
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
@@ -420,7 +423,8 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
 
 extern "C"
 void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
-              COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f) {
+              COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f,
+                                               int* FORWARD_OR_ADJOINT) {
 
   TRACE("compute_coupling_cmb_fluid_cuda");
   //double start_time = get_time();
@@ -438,23 +442,23 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
   dim3 threads(5,5,1);
 
   // launches GPU kernel
-  compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
-                                                      mp->d_accel_crust_mantle,
-                                                      mp->d_accel_outer_core,
-                                                      mp->d_ibool_crust_mantle,
-                                                      mp->d_ibelm_bottom_crust_mantle,
-                                                      mp->d_normal_top_outer_core,
-                                                      mp->d_jacobian2D_top_outer_core,
-                                                      mp->d_wgllwgll_xy,
-                                                      mp->d_ibool_outer_core,
-                                                      mp->d_ibelm_top_outer_core,
-                                                      mp->RHO_TOP_OC,
-                                                      mp->minus_g_cmb,
-                                                      mp->gravity,
-                                                      mp->nspec2D_bottom_crust_mantle);
-
-  //  adjoint simulations
-  if ( mp->simulation_type == 3 ){
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+                                                        mp->d_accel_crust_mantle,
+                                                        mp->d_accel_outer_core,
+                                                        mp->d_ibool_crust_mantle,
+                                                        mp->d_ibelm_bottom_crust_mantle,
+                                                        mp->d_normal_top_outer_core,
+                                                        mp->d_jacobian2D_top_outer_core,
+                                                        mp->d_wgllwgll_xy,
+                                                        mp->d_ibool_outer_core,
+                                                        mp->d_ibelm_top_outer_core,
+                                                        mp->RHO_TOP_OC,
+                                                        mp->minus_g_cmb,
+                                                        mp->gravity,
+                                                        mp->nspec2D_bottom_crust_mantle);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
+    //  adjoint simulations
     compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
                                                         mp->d_b_accel_crust_mantle,
                                                         mp->d_b_accel_outer_core,
@@ -482,7 +486,8 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
 
 extern "C"
 void FC_FUNC_(compute_coupling_icb_fluid_cuda,
-              COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f) {
+              COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f,
+                                               int* FORWARD_OR_ADJOINT) {
 
   TRACE("compute_coupling_icb_fluid_cuda");
   //double start_time = get_time();
@@ -500,23 +505,23 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
   dim3 threads(5,5,1);
 
   // launches GPU kernel
-  compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
-                                                      mp->d_accel_inner_core,
-                                                      mp->d_accel_outer_core,
-                                                      mp->d_ibool_inner_core,
-                                                      mp->d_ibelm_top_inner_core,
-                                                      mp->d_normal_bottom_outer_core,
-                                                      mp->d_jacobian2D_bottom_outer_core,
-                                                      mp->d_wgllwgll_xy,
-                                                      mp->d_ibool_outer_core,
-                                                      mp->d_ibelm_bottom_outer_core,
-                                                      mp->RHO_BOTTOM_OC,
-                                                      mp->minus_g_icb,
-                                                      mp->gravity,
-                                                      mp->nspec2D_top_inner_core);
-
-  //  adjoint simulations
-  if ( mp->simulation_type == 3 ){
+  if( *FORWARD_OR_ADJOINT == 1 ){
+    compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+                                                        mp->d_accel_inner_core,
+                                                        mp->d_accel_outer_core,
+                                                        mp->d_ibool_inner_core,
+                                                        mp->d_ibelm_top_inner_core,
+                                                        mp->d_normal_bottom_outer_core,
+                                                        mp->d_jacobian2D_bottom_outer_core,
+                                                        mp->d_wgllwgll_xy,
+                                                        mp->d_ibool_outer_core,
+                                                        mp->d_ibelm_bottom_outer_core,
+                                                        mp->RHO_BOTTOM_OC,
+                                                        mp->minus_g_icb,
+                                                        mp->gravity,
+                                                        mp->nspec2D_top_inner_core);
+  }else if( *FORWARD_OR_ADJOINT == 3 ){
+    //  adjoint simulations
     compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
                                                         mp->d_b_accel_inner_core,
                                                         mp->d_b_accel_outer_core,
@@ -625,6 +630,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
   if( ( *NCHUNKS_VAL != 6 && mp->absorbing_conditions || (mp->rotation && *exact_mass_matrix_for_rotation)) &&
       ! *use_lddrk ){
+    // uses corrected mass matrices
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                            mp->d_rmassx_crust_mantle,
@@ -646,6 +652,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
                                                            mp->d_normal_ocean_load);
     }
   }else{
+    // uses only rmassz
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                            mp->d_rmassz_crust_mantle,

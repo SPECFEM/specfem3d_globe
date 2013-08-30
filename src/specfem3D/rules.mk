@@ -236,7 +236,7 @@ ifeq ($(CUDA5),yes)
 ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 	@echo "building xspecfem3D with CUDA 5 support"
 	${NVCCLINK} -o $(cuda_DEVICE_OBJ) $(cuda_OBJECTS)
-  ${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
+	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
 else
 
 ## cuda 4 version

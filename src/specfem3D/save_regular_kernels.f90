@@ -25,53 +25,12 @@
 !
 !=====================================================================
 
-  subroutine save_regular_kernels_crust_mantle(myrank, &
-                  npoints_slice, hxir_reg, hetar_reg, hgammar_reg, ispec_reg, &
-                  scale_t,scale_displ, &
-                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
-                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
-                  ystore_crust_mantle,zstore_crust_mantle, &
-                  rhostore_crust_mantle,muvstore_crust_mantle, &
-                  kappavstore_crust_mantle,ibool_crust_mantle, &
-                  kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-                  LOCAL_PATH)
+  subroutine save_regular_kernels_crust_mantle()
 
-  use constants_solver
-  use specfem_par,only: ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
-
-  integer myrank
-
-  integer, intent(in) :: npoints_slice
-  real, dimension(NGLLX, NM_KL_REG_PTS_VAL), intent(in) :: hxir_reg
-  real, dimension(NGLLY, NM_KL_REG_PTS_VAL), intent(in) :: hetar_reg
-  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL), intent(in) :: hgammar_reg
-  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: ispec_reg
-
-  double precision :: scale_t,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL) :: &
-    cijkl_kl_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-        ystore_crust_mantle,zstore_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
-        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
-
-  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  character(len=150) LOCAL_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
@@ -85,7 +44,7 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   real(kind=CUSTOM_REAL) :: alphah_kl,alphav_kl,betah_kl,betav_kl,rhonotprime_kl
   integer :: ispec,i,j,k,iglob
-  character(len=150) prname
+!  character(len=150) prname
   double precision :: hlagrange
   integer :: ipoint
 

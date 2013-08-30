@@ -310,8 +310,15 @@
             vector_accel(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             ! density kernel
+!            rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
+!              + deltat * dot_product(vector_accel(:), b_vector_displ_outer_core(:,iglob))
+
+!! DK DK July 2013: replaces dot_product() with an unrolled expression, otherwise most compilers
+!! DK DK July 2013: will try to vectorize this rather than the outer loop, resulting in a much slower code
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * dot_product(vector_accel(:), b_vector_displ_outer_core(:,iglob))
+              + deltat * (  vector_accel(1) * b_vector_displ_outer_core(1,iglob) &
+                          + vector_accel(2) * b_vector_displ_outer_core(2,iglob) &
+                          + vector_accel(3) * b_vector_displ_outer_core(3,iglob) )
 
             ! bulk modulus kernel
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)

@@ -591,6 +591,28 @@
 !
 
 
+  subroutine recv_singlel(recvbuf, dest, recvtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  logical :: recvbuf
+
+  ! MPI status of messages to be received
+  integer :: msg_status(MPI_STATUS_SIZE)
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+
+  end subroutine recv_singlel
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
   use mpi
@@ -672,6 +694,7 @@
   integer :: dest,sendtag
   integer :: sendcount
   integer,dimension(sendcount):: sendbuf
+
   integer :: ier
 
   call MPI_SEND(sendbuf,sendcount,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
@@ -690,12 +713,31 @@
 
   integer :: dest,sendtag
   integer :: sendbuf
+
   integer :: ier
 
   call MPI_SEND(sendbuf,1,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
 
   end subroutine send_singlei
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_singlel(sendbuf, dest, sendtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  logical :: sendbuf
+
+  integer :: ier
+
+  call MPI_SEND(sendbuf,1,MPI_LOGICAL,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_singlel
 
 !
 !-------------------------------------------------------------------------------------------------

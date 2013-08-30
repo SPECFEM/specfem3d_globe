@@ -41,6 +41,12 @@
   ! get MPI starting time
   time_start = wtime()
 
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+  ! serial i/o
+  you_can_start_doing_IOs = .false.
+  if (myrank > 0) call recv_singlel(you_can_start_doing_IOs,myrank-1,itag)
+#endif
+
   ! start reading the databases
   ! read arrays created by the mesher
 
@@ -75,6 +81,17 @@
       call read_mesh_databases_stacey()
     endif
   endif
+
+  ! kernels on regular grids
+  if (SAVE_REGULAR_KL) then
+    call read_mesh_databases_regular_kl()
+  endif
+
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+  ! serial i/o
+  you_can_start_doing_IOs = .true.
+  if (myrank < NPROC_XI_VAL*NPROC_ETA_VAL-1) call send_singlel(you_can_start_doing_IOs,myrank+1,itag)
+#endif
 
   ! user output
   call sync_all()
@@ -1125,3 +1142,100 @@
   close(27)
 
   end subroutine read_mesh_databases_stacey
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_mesh_databases_regular_kl()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  ! local parameters
+  integer, dimension(:), allocatable :: slice_number
+  integer :: i,isp,ier
+  ! grid parameters
+  type kl_reg_grid_variables
+    sequence
+    real dlat
+    real dlon
+    integer nlayer
+    real rlayer(NM_KL_REG_LAYER)
+    integer ndoubling(NM_KL_REG_LAYER)
+    integer nlat(NM_KL_REG_LAYER)
+    integer nlon(NM_KL_REG_LAYER)
+    integer npts_total
+    integer npts_before_layer(NM_KL_REG_LAYER+1)
+  end type kl_reg_grid_variables
+  type (kl_reg_grid_variables) KL_REG_GRID
+
+  call read_kl_regular_grid(myrank, KL_REG_GRID)
+
+  if( myrank == 0 ) then
+    ! master process
+    allocate(slice_number(KL_REG_GRID%npts_total),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating slice_number array')
+
+    ! print *, 'slice npts =', KL_REG_GRID%npts_total
+    call find_regular_grid_slice_number(slice_number, KL_REG_GRID, NCHUNKS_VAL, &
+                                        NPROC_XI_VAL, NPROC_ETA_VAL)
+
+    do i = NPROCTOT_VAL-1,0,-1
+      npoints_slice = 0
+      do isp = 1,KL_REG_GRID%npts_total
+        if (slice_number(isp) == i) then
+          npoints_slice = npoints_slice + 1
+          if (npoints_slice > NM_KL_REG_PTS) stop 'Exceeding NM_KL_REG_PTS limit'
+          points_slice(npoints_slice) = isp
+        endif
+      enddo
+
+      if (i /= 0) then
+        call send_singlei(npoints_slice,i,i)
+        if (npoints_slice > 0) then
+          call send_i(points_slice,npoints_slice,i,2*i)
+        endif
+      endif
+    enddo
+
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/kl_grid_slice.txt',status='unknown',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file kl_grid_slice.txt for writing')
+    write(IOUT,*) slice_number
+    close(IOUT)
+
+    deallocate(slice_number)
+  else
+    ! slave processes
+    call recv_singlei(npoints_slice,0,myrank)
+    if (npoints_slice > 0) then
+      call recv_i(points_slice,npoints_slice,0,2*myrank)
+    endif
+  endif
+
+  ! this is the core part that takes up most of the computation time,
+  ! and presumably the more processors involved the faster.
+  if (npoints_slice > 0) then
+    call locate_regular_points(npoints_slice, points_slice, KL_REG_GRID, &
+                           NEX_XI, NSPEC_CRUST_MANTLE, &
+                           xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
+                           ibool_crust_mantle, &
+                           xigll, yigll, zigll, &
+                           ispec_reg, hxir_reg, hetar_reg, hgammar_reg)
+  endif
+
+  ! user output
+  if (myrank==0) then
+    write(IMAIN,*) ' '
+    write(IMAIN,*) 'Finished locating kernel output regular grid'
+    write(IMAIN,*) ' '
+    call flush_IMAIN()
+  endif
+
+  end subroutine read_mesh_databases_regular_kl
+
+

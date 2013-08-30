@@ -72,6 +72,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
 
+  ! arrays for force_vectorization
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
   !-----------------------------------------------------------------
   ! attenuation parameters
@@ -278,6 +280,21 @@ module specfem_par
   ! ADJOINT
   real(kind=CUSTOM_REAL) :: b_deltat,b_deltatover2,b_deltatsqover2
 
+  ! this is for LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: displ_outer_core_lddrk,veloc_outer_core_lddrk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_inner_core_lddrk,veloc_inner_core_lddrk
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_array_rotation_lddrk,B_array_rotation_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:,:), allocatable :: R_memory_crust_mantle_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:,:), allocatable :: R_memory_inner_core_lddrk
+
+  integer :: NSTAGE_TIME_SCHEME,istage
+
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+  logical :: you_can_start_doing_IOs
+#endif
+
 end module specfem_par
 
 
@@ -411,7 +428,7 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: &
     rho_vp_crust_mantle,rho_vs_crust_mantle
   integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-            nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
   integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
@@ -442,6 +459,14 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_400) :: d400_kl, d400_kl_top, d400_kl_bot
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_670) ::  d670_kl, d670_kl_top, d670_kl_bot
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_CMB) :: cmb_kl, cmb_kl_top, cmb_kl_bot
+
+  ! For saving kernels on a regular grid
+  integer :: npoints_slice
+  integer, dimension(NM_KL_REG_PTS_VAL) :: points_slice
+  integer, dimension(NM_KL_REG_PTS_VAL) :: ispec_reg
+  real, dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
+  real, dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
+  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
 
   ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
@@ -614,8 +639,8 @@ module specfem_par_outercore
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
   integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-            nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
-            nspec2D_zmin_outer_core
+             nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+             nspec2D_zmin_outer_core
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
   integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
@@ -624,7 +649,7 @@ module specfem_par_outercore
      absorb_zmin_outer_core
 
   integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
-            reclen_ymin_outer_core, reclen_ymax_outer_core
+             reclen_ymin_outer_core, reclen_ymax_outer_core
   integer :: reclen_zmin
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: &

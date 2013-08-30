@@ -169,9 +169,11 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
 #endif
 
   __shared__ realw s_dummy_loc[NGLL3];
+
   __shared__ realw s_temp1[NGLL3];
   __shared__ realw s_temp2[NGLL3];
   __shared__ realw s_temp3[NGLL3];
+
   __shared__ realw sh_hprime_xx[NGLL2];
   __shared__ realw sh_hprimewgll_xx[NGLL2];
 
@@ -461,11 +463,12 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                          realw* d_xix,realw* d_xiy,realw* d_xiz,
                          realw* d_etax,realw* d_etay,realw* d_etaz,
                          realw* d_gammax,realw* d_gammay,realw* d_gammaz,
-                         realw time, realw b_time,
+                         realw time,
                          realw* d_A_array_rotation,
                          realw* d_B_array_rotation,
                          realw* d_b_A_array_rotation,
-                         realw* d_b_B_array_rotation){
+                         realw* d_b_B_array_rotation,
+                         int FORWARD_OR_ADJOINT){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before outer_core kernel Kernel_2");
@@ -497,7 +500,8 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   // cudaEventCreate(&stop);
   // cudaEventRecord( start, 0 );
 
-  Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
+  if( FORWARD_OR_ADJOINT == 1 ){
+    Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
                                                           mp->NGLOB_OUTER_CORE,
                                                           d_ibool,
                                                           mp->d_phase_ispec_inner_outer_core,
@@ -524,8 +528,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                           d_A_array_rotation,
                                                           d_B_array_rotation,
                                                           mp->NSPEC_OUTER_CORE);
-
-  if(mp->simulation_type == 3) {
+  }else if( FORWARD_OR_ADJOINT == 3 ){
     Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
                                                             mp->NGLOB_OUTER_CORE,
                                                             d_ibool,
@@ -547,7 +550,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                             mp->d_minus_rho_g_over_kappa_fluid,
                                                             mp->d_wgll_cube,
                                                             mp->rotation,
-                                                            b_time,
+                                                            time,
                                                             mp->b_two_omega_earth,
                                                             mp->b_deltat,
                                                             d_b_A_array_rotation,
@@ -580,7 +583,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
               COMPUTE_FORCES_OUTER_CORE_CUDA)(long* Mesh_pointer_f,
                                               int* iphase,
                                               realw* time_f,
-                                              realw* b_time_f) {
+                                              int* FORWARD_OR_ADJOINT) {
 
   TRACE("compute_forces_outer_core_cuda");
 
@@ -590,7 +593,6 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
   realw time = *time_f;
-  realw b_time = *b_time_f;
 
   int num_elements;
 
@@ -676,11 +678,12 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
                           mp->d_gammax_outer_core + color_offset,
                           mp->d_gammay_outer_core + color_offset,
                           mp->d_gammaz_outer_core + color_offset,
-                          time,b_time,
+                          time,
                           mp->d_A_array_rotation + color_offset_nonpadded,
                           mp->d_B_array_rotation + color_offset_nonpadded,
                           mp->d_b_A_array_rotation + color_offset_nonpadded,
-                          mp->d_b_B_array_rotation + color_offset_nonpadded);
+                          mp->d_b_B_array_rotation + color_offset_nonpadded,
+                          *FORWARD_OR_ADJOINT);
 
       // for padded and aligned arrays
       color_offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -697,11 +700,12 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
                         mp->d_xix_outer_core,mp->d_xiy_outer_core,mp->d_xiz_outer_core,
                         mp->d_etax_outer_core,mp->d_etay_outer_core,mp->d_etaz_outer_core,
                         mp->d_gammax_outer_core,mp->d_gammay_outer_core,mp->d_gammaz_outer_core,
-                        time,b_time,
+                        time,
                         mp->d_A_array_rotation,
                         mp->d_B_array_rotation,
                         mp->d_b_A_array_rotation,
-                        mp->d_b_B_array_rotation);
+                        mp->d_b_B_array_rotation,
+                        *FORWARD_OR_ADJOINT);
 
   }
 
