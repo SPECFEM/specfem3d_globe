@@ -144,6 +144,7 @@
 
   integer :: iproc,sender,irec_local,irec,ier,receiver
   integer :: nrec_local_received
+  integer :: nrec_tot_found
   integer :: total_seismos,total_seismos_local
   integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=256) :: sisname
@@ -153,6 +154,11 @@
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if(ier /= 0) call exit_mpi(myrank,'error while allocating one temporary seismogram')
+
+  ! check that the sum of the number of receivers in each slice is nrec
+  call sum_all_i(nrec_local,nrec_tot_found)
+  if(myrank == 0 .and. nrec_tot_found /= nrec) &
+      call exit_MPI(myrank,'total number of receivers is incorrect')
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')

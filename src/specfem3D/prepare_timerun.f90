@@ -1055,7 +1055,13 @@
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    if (NOISE_TOMOGRAPHY == 3) Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+
+    ! noise strength kernel
+    if (NOISE_TOMOGRAPHY == 3) then
+      allocate( Sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise sigma kernel')
+      Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    endif
 
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
@@ -1065,7 +1071,11 @@
     endif
 
     ! For anisotropic kernels (in crust_mantle only)
-    cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    if( ANISOTROPIC_KL ) then
+      allocate( cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating full cijkl kernel in crust_mantle')
+      cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    endif
 
     rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL

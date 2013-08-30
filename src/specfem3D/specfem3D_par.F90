@@ -440,10 +440,12 @@ module specfem_par_crustmantle
 
   ! kernels
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    rho_kl_crust_mantle,beta_kl_crust_mantle, alpha_kl_crust_mantle, Sigma_kl_crust_mantle
+    rho_kl_crust_mantle,beta_kl_crust_mantle,alpha_kl_crust_mantle
+
+  ! noise strength kernel
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: Sigma_kl_crust_mantle
   ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
-  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    cijkl_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: cijkl_kl_crust_mantle
   ! approximate hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: hess_kl_crust_mantle
 
