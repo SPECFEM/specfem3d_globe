@@ -66,7 +66,7 @@
 
   ! updates wavefields
   if( .not. GPU_MODE) then
-  ! on CPU
+    ! on CPU
 
     ! Newmark time scheme update
     ! mantle
@@ -78,37 +78,15 @@
     ! inner core
     call update_displ_elastic(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
                                 deltat,deltatover2,deltatsqover2)
-
-    ! backward field
-    if (SIMULATION_TYPE == 3) then
-      ! mantle
-      call update_displ_elastic(NGLOB_CRUST_MANTLE,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                b_deltat,b_deltatover2,b_deltatsqover2)
-      ! outer core
-      call update_displ_acoustic(NGLOB_OUTER_CORE,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                                b_deltat,b_deltatover2,b_deltatsqover2)
-      ! inner core
-      call update_displ_elastic(NGLOB_INNER_CORE,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                                b_deltat,b_deltatover2,b_deltatsqover2)
-    endif
-
   else
     ! on GPU
-    ! Includes SIM_TYPE 1 & 3
-
+    ! Includes FORWARD_OR_ADJOINT == 1
     ! outer core region
-    call it_update_displacement_oc_cuda(Mesh_pointer, &
-                                       deltat, deltatsqover2, deltatover2, &
-                                       b_deltat, b_deltatsqover2, b_deltatover2)
+    call it_update_displacement_oc_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
     ! inner core region
-    call it_update_displacement_ic_cuda(Mesh_pointer, &
-                                       deltat, deltatsqover2, deltatover2, &
-                                       b_deltat, b_deltatsqover2, b_deltatover2)
-
+    call it_update_displacement_ic_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
     ! crust/mantle region
-    call it_update_displacement_cm_cuda(Mesh_pointer, &
-                                       deltat, deltatsqover2, deltatover2, &
-                                       b_deltat, b_deltatsqover2, b_deltatover2)
+    call it_update_displacement_cm_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
   endif
 
   end subroutine update_displacement_Newmark
@@ -117,15 +95,59 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displ_elastic(nglob,displ,veloc,accel, &
+
+  subroutine update_displacement_Newmark_backward()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  ! checks
+  if( SIMULATION_TYPE /= 3 ) return
+
+  ! updates wavefields
+  if( .not. GPU_MODE) then
+    ! on CPU
+    ! Newmark time scheme update for backward/reconstructed fields
+    ! mantle
+    call update_displ_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                              b_deltat,b_deltatover2,b_deltatsqover2)
+    ! outer core
+    call update_displ_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                              b_deltat,b_deltatover2,b_deltatsqover2)
+    ! inner core
+    call update_displ_elastic(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                              b_deltat,b_deltatover2,b_deltatsqover2)
+  else
+    ! on GPU
+    ! Includes FORWARD_OR_ADJOINT == 3
+    ! outer core region
+    call it_update_displacement_oc_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    ! inner core region
+    call it_update_displacement_ic_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    ! crust/mantle region
+    call it_update_displacement_cm_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+  endif
+
+  end subroutine update_displacement_Newmark_backward
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine update_displ_elastic(NGLOB,displ,veloc,accel, &
                                   deltat,deltatover2,deltatsqover2)
 
   use constants_solver,only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
 
   implicit none
 
-  integer,intent(in) :: nglob
-  real(kind=CUSTOM_REAL),dimension(NDIM,nglob),intent(inout) :: displ,veloc,accel
+  integer,intent(in) :: NGLOB
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(inout) :: displ,veloc,accel
   real(kind=CUSTOM_REAL),intent(in) :: deltat,deltatover2,deltatsqover2
 
   ! local parameters
@@ -133,13 +155,13 @@
 
   ! Newmark time scheme update
   if(FORCE_VECTORIZATION_VAL) then
-    do i=1,nglob * NDIM
+    do i=1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
       accel(i,1) = 0._CUSTOM_REAL
     enddo
   else
-    do i=1,nglob
+    do i=1,NGLOB
       displ(:,i) = displ(:,i) + deltat * veloc(:,i) + deltatsqover2 * accel(:,i)
       veloc(:,i) = veloc(:,i) + deltatover2 * accel(:,i)
       accel(:,i) = 0._CUSTOM_REAL
@@ -153,22 +175,22 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displ_acoustic(nglob,displ,veloc,accel, &
+  subroutine update_displ_acoustic(NGLOB,displ,veloc,accel, &
                                    deltat,deltatover2,deltatsqover2)
 
   use constants,only: CUSTOM_REAL
 
   implicit none
 
-  integer,intent(in) :: nglob
-  real(kind=CUSTOM_REAL),dimension(nglob),intent(inout) :: displ,veloc,accel
+  integer,intent(in) :: NGLOB
+  real(kind=CUSTOM_REAL),dimension(NGLOB),intent(inout) :: displ,veloc,accel
   real(kind=CUSTOM_REAL),intent(in) :: deltat,deltatover2,deltatsqover2
 
   ! local parameters
   integer :: i
 
   ! Newmark time scheme update
-  do i=1,nglob
+  do i=1,NGLOB
     displ(i) = displ(i) + deltat * veloc(i) + deltatsqover2 * accel(i)
     veloc(i) = veloc(i) + deltatover2 * accel(i)
     accel(i) = 0._CUSTOM_REAL
@@ -218,17 +240,18 @@
 !
 
   subroutine update_accel_elastic(NGLOB,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle, &
-                                           two_omega_earth, &
-                                           rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                                           NCHUNKS_VAL,ABSORBING_CONDITIONS)
+                                  two_omega_earth, &
+                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
 
 ! updates acceleration in crust/mantle region
 
-  use constants_solver,only: CUSTOM_REAL,NDIM
+  use constants_solver,only: CUSTOM_REAL,NDIM,NCHUNKS_VAL
+
+  use specfem_par,only: ABSORBING_CONDITIONS
 
   implicit none
 
-  integer :: NGLOB,NGLOB_XY,NCHUNKS_VAL
+  integer :: NGLOB,NGLOB_XY
 
   ! velocity & acceleration
   ! crust/mantle region
@@ -247,8 +270,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB)    :: rmassz_crust_mantle
 
   real(kind=CUSTOM_REAL) :: two_omega_earth
-
-  logical :: ABSORBING_CONDITIONS
 
   ! local parameters
   integer :: i
@@ -285,12 +306,12 @@
 !
 
   subroutine update_veloc_elastic(NGLOB_CM,veloc_crust_mantle,accel_crust_mantle, &
-                                            NGLOB_IC,veloc_inner_core,accel_inner_core, &
-                                            deltatover2,two_omega_earth,rmass_inner_core)
+                                  NGLOB_IC,veloc_inner_core,accel_inner_core, &
+                                  deltatover2,two_omega_earth,rmass_inner_core)
 
 ! updates velocity in crust/mantle region, and acceleration and velocity in inner core
 
-  use constants_solver,only: CUSTOM_REAL,NDIM
+  use constants_solver,only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
 
   implicit none
 
@@ -320,19 +341,38 @@
   !         needs both, acceleration update & velocity corrector terms
 
   ! mantle
-  do i=1,NGLOB_CM
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-  enddo
+  if(FORCE_VECTORIZATION_VAL) then
+    do i=1,NGLOB_CM * NDIM
+      veloc_crust_mantle(i,i) = veloc_crust_mantle(i,i) + deltatover2*accel_crust_mantle(i,i)
+    enddo
+  else
+    do i=1,NGLOB_CM
+      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
+    enddo
+  endif
 
   ! inner core
-  do i=1,NGLOB_IC
-    accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-           + two_omega_earth*veloc_inner_core(2,i)
-    accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-           - two_omega_earth*veloc_inner_core(1,i)
-    accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+  if(FORCE_VECTORIZATION_VAL) then
+    do i=1,NGLOB_IC
+      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
+             + two_omega_earth*veloc_inner_core(2,i)
+      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
+             - two_omega_earth*veloc_inner_core(1,i)
+      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+    enddo
+    do i=1,NGLOB_IC * NDIM
+      veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
+    enddo
+  else
+    do i=1,NGLOB_IC
+      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
+             + two_omega_earth*veloc_inner_core(2,i)
+      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
+             - two_omega_earth*veloc_inner_core(1,i)
+      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-  enddo
+      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
+    enddo
+  endif
 
   end subroutine update_veloc_elastic

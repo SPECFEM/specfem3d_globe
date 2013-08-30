@@ -25,18 +25,20 @@
 !
 !=====================================================================
 
-  subroutine compute_stacey_crust_mantle()
+  subroutine compute_stacey_crust_mantle_forward()
+
+! stacey conditions for forward or adjoint wavefields (SIMULATION_TYPE == 1 or 2)
 
   use constants_solver
 
   use specfem_par,only: &
-    ichunk,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD,it, &
     wgllwgll_xz,wgllwgll_yz
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
 
   use specfem_par_crustmantle, only: &
-    veloc_crust_mantle,accel_crust_mantle,b_accel_crust_mantle, &
+    veloc_crust_mantle,accel_crust_mantle, &
     ibool_crust_mantle, &
     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
     jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
@@ -71,19 +73,14 @@
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
+  ! checks
+  if( SIMULATION_TYPE == 3 ) return
 
   ! crust & mantle
 
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
-
-    ! reads absorbing boundary values
-    if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
-      ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
-      !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1
-      call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)
-    endif
 
     if ( .NOT. GPU_MODE) then
       ! on CPU
@@ -119,9 +116,7 @@
             accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
             accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 3) then
-              b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
-            else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if( SAVE_FORWARD ) then
               absorb_xmin_crust_mantle(1,j,k,ispec2D) = tx*weight
               absorb_xmin_crust_mantle(2,j,k,ispec2D) = ty*weight
               absorb_xmin_crust_mantle(3,j,k,ispec2D) = tz*weight
@@ -138,7 +133,7 @@
     endif
 
     ! writes absorbing boundary values
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) then
+    if( SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) then
       call write_abs(0,absorb_xmin_crust_mantle, reclen_xmin_crust_mantle,it)
     endif
 
@@ -147,11 +142,6 @@
   !   xmax
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
-
-    ! reads absorbing boundary values
-    if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_crust_mantle > 0)  then
-      call read_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,NSTEP-it+1)
-    endif
 
     if(.NOT. GPU_MODE ) then
       ! on CPU
@@ -187,9 +177,7 @@
             accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
             accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 3) then
-              b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmax_crust_mantle(:,j,k,ispec2D)
-            else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if( SAVE_FORWARD ) then
               absorb_xmax_crust_mantle(1,j,k,ispec2D) = tx*weight
               absorb_xmax_crust_mantle(2,j,k,ispec2D) = ty*weight
               absorb_xmax_crust_mantle(3,j,k,ispec2D) = tz*weight
@@ -208,18 +196,13 @@
 
 
     ! writes absorbing boundary values
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) then
+    if( SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) then
       call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
 
   !   ymin
-
-  ! reads absorbing boundary values
-  if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_crust_mantle > 0)  then
-    call read_abs(2,absorb_ymin_crust_mantle, reclen_ymin_crust_mantle,NSTEP-it+1)
-  endif
 
   if( .NOT. GPU_MODE ) then
     ! on CPU
@@ -255,9 +238,7 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SIMULATION_TYPE == 3) then
-            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymin_crust_mantle(:,i,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+          if( SAVE_FORWARD ) then
             absorb_ymin_crust_mantle(1,i,k,ispec2D) = tx*weight
             absorb_ymin_crust_mantle(2,i,k,ispec2D) = ty*weight
             absorb_ymin_crust_mantle(3,i,k,ispec2D) = tz*weight
@@ -275,16 +256,11 @@
   endif
 
   ! writes absorbing boundary values
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) then
+  if( SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) then
     call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
   endif
 
   !   ymax
-
-  ! reads absorbing boundary values
-  if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_crust_mantle > 0)  then
-    call read_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,NSTEP-it+1)
-  endif
 
   if( .NOT. GPU_MODE ) then
     ! on CPU
@@ -320,9 +296,7 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SIMULATION_TYPE == 3) then
-            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymax_crust_mantle(:,i,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+          if( SAVE_FORWARD ) then
             absorb_ymax_crust_mantle(1,i,k,ispec2D) = tx*weight
             absorb_ymax_crust_mantle(2,i,k,ispec2D) = ty*weight
             absorb_ymax_crust_mantle(3,i,k,ispec2D) = tz*weight
@@ -340,9 +314,202 @@
   endif
 
   ! writes absorbing boundary values
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) then
+  if( SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) then
     call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
   endif
 
-  end subroutine compute_stacey_crust_mantle
+  end subroutine compute_stacey_crust_mantle_forward
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_stacey_crust_mantle_backward()
+
+! stacey for backward/reconstructed wavefield
+
+  use constants_solver
+
+  use specfem_par,only: &
+    ichunk,SIMULATION_TYPE,NSTEP,it
+
+  use specfem_par,only: GPU_MODE,Mesh_pointer
+
+  use specfem_par_crustmantle, only: &
+    b_accel_crust_mantle, &
+    ibool_crust_mantle, &
+    ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+    ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+    nimin_crust_mantle,nimax_crust_mantle, &
+    njmin_crust_mantle,njmax_crust_mantle, &
+    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+    nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+    reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
+    reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+    absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
+    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle
+
+  implicit none
+
+  ! local parameters
+  integer :: i,j,k,ispec,iglob,ispec2D
+
+  ! note: we use C functions for I/O as they still have a better performance than
+  !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
+  !           comes very close (only  ~ 4 % slower ).
+  !
+  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           file access (by process rank modulo 8) showed that the following,
+  !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
+
+  ! checks
+  if (SIMULATION_TYPE /= 3 ) return
+
+  ! crust & mantle
+
+  !   xmin
+  ! if two chunks exclude this face for one of them
+  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+
+    ! reads absorbing boundary values
+    if( nspec2D_xmin_crust_mantle > 0 )  then
+      ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
+      !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1
+      call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)
+    endif
+
+    if ( .NOT. GPU_MODE) then
+      ! on CPU
+      do ispec2D=1,nspec2D_xmin_crust_mantle
+
+        ispec=ibelm_xmin_crust_mantle(ispec2D)
+
+        ! exclude elements that are not on absorbing edges
+        if(nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
+
+        i=1
+        do k=nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
+          do j=njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
+            iglob=ibool_crust_mantle(i,j,k,ispec)
+
+            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
+                                                                absorb_xmin_crust_mantle, &
+                                                                0) ! <= xmin
+    endif
+
+  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
+
+  !   xmax
+  ! if two chunks exclude this face for one of them
+  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+
+    ! reads absorbing boundary values
+    if( nspec2D_xmax_crust_mantle > 0 ) then
+      call read_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,NSTEP-it+1)
+    endif
+
+    if(.NOT. GPU_MODE ) then
+      ! on CPU
+      do ispec2D=1,nspec2D_xmax_crust_mantle
+
+        ispec=ibelm_xmax_crust_mantle(ispec2D)
+
+        ! exclude elements that are not on absorbing edges
+        if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
+
+        i=NGLLX
+        do k=nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
+          do j=njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
+            iglob=ibool_crust_mantle(i,j,k,ispec)
+
+            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmax_crust_mantle(:,j,k,ispec2D)
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
+                                                                absorb_xmax_crust_mantle, &
+                                                                1) ! <= xmin
+    endif
+
+  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
+
+  !   ymin
+
+  ! reads absorbing boundary values
+  if( nspec2D_ymin_crust_mantle > 0 ) then
+    call read_abs(2,absorb_ymin_crust_mantle, reclen_ymin_crust_mantle,NSTEP-it+1)
+  endif
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D=1,nspec2D_ymin_crust_mantle
+
+      ispec=ibelm_ymin_crust_mantle(ispec2D)
+
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
+
+      j=1
+      do k=nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
+        do i=nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
+          iglob=ibool_crust_mantle(i,j,k,ispec)
+
+          b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymin_crust_mantle(:,i,k,ispec2D)
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
+                                                              absorb_ymin_crust_mantle, &
+                                                              2) ! <= ymin
+  endif
+
+  !   ymax
+
+  ! reads absorbing boundary values
+  if( nspec2D_ymax_crust_mantle > 0 ) then
+    call read_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,NSTEP-it+1)
+  endif
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D=1,nspec2D_ymax_crust_mantle
+
+      ispec=ibelm_ymax_crust_mantle(ispec2D)
+
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
+
+      j=NGLLY
+      do k=nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
+        do i=nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
+          iglob=ibool_crust_mantle(i,j,k,ispec)
+
+          b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymax_crust_mantle(:,i,k,ispec2D)
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
+                                                              absorb_ymax_crust_mantle, &
+                                                              3) ! <= ymax
+  endif
+
+  end subroutine compute_stacey_crust_mantle_backward
+
 

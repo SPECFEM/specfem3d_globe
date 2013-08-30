@@ -62,6 +62,10 @@
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
 
+#ifdef FORCE_VECTORIZATION
+  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+#endif
+
   implicit none
 
   integer :: NSPEC,NGLOB,NSPEC_ATT
@@ -170,6 +174,10 @@
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
   integer :: iphase
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -334,12 +342,6 @@
               epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
             endif
 
-            if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-              minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
-            else if( ATTENUATION_VAL ) then
-              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
-            endif
-
             if(ANISOTROPIC_INNER_CORE_VAL) then
               ! elastic tensor for hexagonal symmetry in reduced notation:
               !
@@ -365,6 +367,11 @@
 
               ! use unrelaxed parameters if attenuation
               if(ATTENUATION_VAL) then
+                if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+                  minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+                else
+                  minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+                endif
                 mul = muvstore(i,j,k,ispec)
                 c11l = c11l + FOUR_THIRDS * minus_sum_beta * mul
                 c12l = c12l - TWO_THIRDS * minus_sum_beta * mul
@@ -387,10 +394,12 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-                mul = mul * one_minus_sum_beta(i,j,k,ispec)
-              else if( ATTENUATION_VAL ) then
-                mul = mul * one_minus_sum_beta(1,1,1,ispec)
+              if(ATTENUATION_VAL ) then
+                if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+                  mul = mul * one_minus_sum_beta(i,j,k,ispec)
+                else
+                  mul = mul * one_minus_sum_beta(1,1,1,ispec)
+                endif
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
@@ -623,6 +632,21 @@
         enddo
       enddo
 
+#ifdef FORCE_VECTORIZATION
+      do ijk=1,NGLLCUBE
+        fac1 = wgllwgll_yz_3D(ijk,1,1)
+        fac2 = wgllwgll_xz_3D(ijk,1,1)
+        fac3 = wgllwgll_xy_3D(ijk,1,1)
+        sum_terms(1,ijk,1,1) = - (fac1*newtempx1(ijk,1,1) + fac2*newtempx2(ijk,1,1) + fac3*newtempx3(ijk,1,1))
+        sum_terms(2,ijk,1,1) = - (fac1*newtempy1(ijk,1,1) + fac2*newtempy2(ijk,1,1) + fac3*newtempy3(ijk,1,1))
+        sum_terms(3,ijk,1,1) = - (fac1*newtempz1(ijk,1,1) + fac2*newtempz2(ijk,1,1) + fac3*newtempz3(ijk,1,1))
+      enddo
+      if(GRAVITY_VAL) then
+        do ijk = 1,NDIM*NGLLCUBE
+          sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
+        enddo
+      endif
+#else
       do k=1,NGLLZ
         do j=1,NGLLY
           fac1 = wgllwgll_yz(j,k)
@@ -637,8 +661,26 @@
           enddo
         enddo
       enddo
+#endif
 
       ! sum contributions from each element to the global mesh and add gravity terms
+#ifdef FORCE_VECTORIZATION
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
+!IBM* ASSERT (NODEPS)
+!pgi$ ivdep
+!DIR$ IVDEP
+      do ijk = 1,NGLLCUBE
+        iglob = ibool(ijk,1,1,ispec)
+        ! do NOT use array syntax ":" for the three statements below
+        ! otherwise most compilers will not be able to vectorize the outer loop
+        accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,ijk,1,1)
+        accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,ijk,1,1)
+        accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk,1,1)
+      enddo
+#else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -647,6 +689,7 @@
           enddo
         enddo
       enddo
+#endif
 
       ! use Runge-Kutta scheme to march memory variables in time
       ! convention for attenuation

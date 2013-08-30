@@ -60,7 +60,12 @@
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-          stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+          if(USE_LDDRK)then
+            stf_used = FACTOR_FORCE_SOURCE * &
+                     comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
+          else
+            stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+          endif
 
           ! we use a force in a single direction along one of the components:
           !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
@@ -69,7 +74,12 @@
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
-          stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          if(USE_LDDRK)then
+            stf = comp_source_time_function(dble(it-1)*DT + &
+                                            dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          else
+            stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          endif
 
           !     distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
@@ -103,13 +113,23 @@
     ! prepares buffer with source time function values, to be copied onto GPU
     if(USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
-        stf_pre_compute(isource) = &
-          FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+        if(USE_LDDRK)then
+          stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * &
+                     comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
+        else
+          stf_pre_compute(isource) = &
+                      FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+        endif
       enddo
     else
       do isource = 1,NSOURCES
-        stf_pre_compute(isource) = &
-          comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        if(USE_LDDRK)then
+          stf_pre_compute(isource) = comp_source_time_function(dble(it-1)*DT + &
+                                            dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        else
+          stf_pre_compute(isource) = &
+            comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        endif
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM=0

@@ -86,22 +86,35 @@
     ! elastic solver for crust/mantle and inner core
     call compute_forces_viscoelastic()
 
-    ! restores last time snapshot saved for backward/reconstruction of wavefields
-    ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
-    !          and adjoint sources will become more complicated
-    !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
-    if( SIMULATION_TYPE == 3 .and. it == 1 ) then
-      call read_forward_arrays()
+    ! kernel simulations (forward and adjoint wavefields)
+    if( SIMULATION_TYPE == 3 ) then
+      ! reconstructs forward wavefields based on last store wavefield data
+
+      ! update displacement using Newmark time scheme
+      call update_displacement_Newmark_backward()
+
+      ! acoustic solver for outer core
+      ! (needs to be done first, before elastic one)
+      call compute_forces_acoustic_backward()
+
+      ! elastic solver for crust/mantle and inner core
+      call compute_forces_viscoelastic_backward()
+
+      ! restores last time snapshot saved for backward/reconstruction of wavefields
+      ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
+      !          and adjoint sources will become more complicated
+      !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
+      if( it == 1 ) then
+        call read_forward_arrays()
+      endif
+
+      ! adjoint simulations: kernels
+      call compute_kernels()
     endif
 
     ! write the seismograms with time shift
     if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) ) then
       call write_seismograms()
-    endif
-
-    ! adjoint simulations: kernels
-    if( SIMULATION_TYPE == 3 ) then
-      call compute_kernels()
     endif
 
     ! outputs movie files

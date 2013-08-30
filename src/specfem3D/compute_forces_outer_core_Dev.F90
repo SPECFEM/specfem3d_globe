@@ -50,6 +50,10 @@
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
 
+#ifdef FORCE_VECTORIZATION
+  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+#endif
+
   implicit none
 
   integer :: NSPEC,NGLOB
@@ -392,11 +396,41 @@
       enddo
     enddo
 
+#ifdef FORCE_VECTORIZATION
+    ! sum contributions from each element to the global mesh and add gravity term
+    do ijk=1,NGLLCUBE
+      sum_terms(ijk,1,1) = - (wgllwgll_yz_3D(ijk,1,1)*newtempx1(ijk,1,1) &
+                            + wgllwgll_xz_3D(ijk,1,1)*newtempx2(ijk,1,1) &
+                            + wgllwgll_xy_3D(ijk,1,1)*newtempx3(ijk,1,1))
+    enddo
+    if(GRAVITY_VAL) then
+      do ijk = 1,NGLLCUBE
+        sum_terms(ijk,1,1) = sum_terms(ijk,1,1) + gravity_term(ijk,1,1)
+      enddo
+    endif
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
+!IBM* ASSERT (NODEPS)
+!pgi$ ivdep
+!DIR$ IVDEP
+    do ijk = 1,NGLLCUBE
+      iglob = ibool(ijk,1,1,ispec)
+      accelfluid(iglob) = accelfluid(iglob) + sum_terms(ijk,1,1)
+    enddo
+    ! update rotation term with Euler scheme
+    if(ROTATION_VAL) then
+      do ijk = 1,NGLLCUBE
+        A_array_rotation(ijk,1,1,ispec) = A_array_rotation(ijk,1,1,ispec) + source_euler_A(ijk,1,1)
+        B_array_rotation(ijk,1,1,ispec) = B_array_rotation(ijk,1,1,ispec) + source_euler_B(ijk,1,1)
+      enddo
+    endif
+#else
+    ! sum contributions from each element to the global mesh and add gravity term
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-
-          ! sum contributions from each element to the global mesh and add gravity term
           sum_terms = - (wgllwgll_yz(j,k)*newtempx1(i,j,k) &
                        + wgllwgll_xz(i,k)*newtempx2(i,j,k) &
                        + wgllwgll_xy(i,j)*newtempx3(i,j,k))
@@ -405,17 +439,16 @@
 
           iglob = ibool(i,j,k,ispec)
           accelfluid(iglob) = accelfluid(iglob) + sum_terms
-
         enddo
       enddo
     enddo
-
     ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
       ! use the source saved above
       A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
       B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
     endif
+#endif
 
   enddo   ! spectral element loop
 

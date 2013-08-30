@@ -138,7 +138,7 @@
 
   ! Moho
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-    call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+    call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -154,7 +154,7 @@
              c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
              k_top,ibelm_moho_top,normal_moho,moho_kl_top,fluid_solid_boundary,NSPEC2D_MOHO)
 
-    call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+    call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -174,7 +174,7 @@
   endif
 
   ! 400
-  call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -190,7 +190,7 @@
              c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
              k_top,ibelm_400_top,normal_400,d400_kl_top,fluid_solid_boundary,NSPEC2D_400)
 
-  call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -209,7 +209,7 @@
   d400_kl = d400_kl + (d400_kl_top - d400_kl_bot) * deltat
 
   ! 670
-  call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -225,7 +225,7 @@
              c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
              k_top,ibelm_670_top,normal_670,d670_kl_top,fluid_solid_boundary,NSPEC2D_670)
 
-  call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -247,7 +247,7 @@
   fluid_solid_boundary = .true.
   iregion_code = IREGION_CRUST_MANTLE
 
-  call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
              b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -270,7 +270,7 @@
   allocate(dummy_ispec_is_tiso(NSPEC_OUTER_CORE))
   dummy_ispec_is_tiso(:) = .false.
 
-  call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core, &
+  call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core, &
              b_vector_displ_outer_core,nspec_outer_core, &
              iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
              xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -291,7 +291,7 @@
 
   ! ICB
   fluid_solid_boundary = .true.
-  call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core, &
+  call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core, &
              b_vector_displ_outer_core,nspec_outer_core, &
              iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
              xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -317,7 +317,7 @@
   allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE))
   dummy_ispec_is_tiso(:) = .false.
 
-  call compute_boundary_kernel(displ_inner_core,accel_inner_core, &
+  call compute_boundary_kernel_depth(displ_inner_core,accel_inner_core, &
              b_displ_inner_core,nspec_inner_core,iregion_code, &
              ystore_inner_core,zstore_inner_core,ibool_inner_core,dummy_ispec_is_tiso, &
              xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -343,15 +343,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
-           ystore,zstore,ibool,ispec_is_tiso, &
-           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-           hprime_xx,hprime_yy,hprime_zz, &
-           rhostore,kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
-           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-           k_disc,ibelm_disc,normal_disc,b_kl,fluid_solid_boundary,NSPEC2D_DISC)
+  subroutine compute_boundary_kernel_depth(displ,accel,b_displ,nspec,iregion_code, &
+                                           ystore,zstore,ibool,ispec_is_tiso, &
+                                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                           hprime_xx,hprime_yy,hprime_zz, &
+                                           rhostore,kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+                                           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                           k_disc,ibelm_disc,normal_disc,b_kl,fluid_solid_boundary,NSPEC2D_DISC)
 
   use constants
 
@@ -543,7 +543,7 @@
 
     enddo
 
-  end subroutine compute_boundary_kernel
+  end subroutine compute_boundary_kernel_depth
 
 
 ! ==========================================================================================

@@ -114,6 +114,8 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MODEL'
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
+
+  ! attenuation parameters
   call read_value_logical(ATTENUATION_1D_WITH_3D_STORAGE, 'solver.ATTENUATION_1D_WITH_3D_STORAGE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION_1D_WITH_3D_STORAGE'
   call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'solver.PARTIAL_PHYS_DISPERSION_ONLY', ierr)
@@ -123,11 +125,9 @@
   call read_value_integer(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP_ATTENUATION'
 
+  ! mass matrix corrections
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'solver.EXACT_MASS_MATRIX_FOR_ROTATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
-
-  ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
-  if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
 
   ! low-memory runge-kutta time scheme
   call read_value_logical(USE_LDDRK, 'solver.USE_LDDRK', ierr)
@@ -175,11 +175,13 @@
   call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_THIS_RUN'
 
+  ! data file output directories
   call read_value_string(LOCAL_PATH, 'LOCAL_PATH', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: LOCAL_PATH'
   call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: LOCAL_TMP_PATH'
 
+  ! user output
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_INFO'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS', ierr)
@@ -245,6 +247,29 @@
   ! checks
   if(err_occurred() /= 0) then
     stop 'an error occurred while reading the parameter file'
+  endif
+
+  ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
+  if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+
+  ! produces simulations compatible with old globe version 5.1.5
+  if( USE_VERSION_5_1_5 ) then
+    if( .not. ATTENUATION_1D_WITH_3D_STORAGE ) then
+      print*,'setting ATTENUATION_1D_WITH_3D_STORAGE to .true. for compatibility with globe version 5.1.5 '
+      ATTENUATION_1D_WITH_3D_STORAGE = .true.
+    endif
+    if( UNDO_ATTENUATION ) then
+      print*,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
+      UNDO_ATTENUATION = .false.
+    endif
+    if( USE_LDDRK ) then
+      print*,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
+      USE_LDDRK = .false.
+    endif
+    if( EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      print*,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
+      EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+    endif
   endif
 
 !daniel debug: status of implementation

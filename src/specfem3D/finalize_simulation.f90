@@ -109,7 +109,11 @@
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
     ! crust mantle
-    call save_kernels_crust_mantle()
+    if (SAVE_REGULAR_KL) then
+      call save_regular_kernels_crust_mantle()
+    else
+      call save_kernels_crust_mantle()
+    endif
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then

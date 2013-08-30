@@ -28,10 +28,11 @@
   subroutine setup_GLL_points()
 
   use specfem_par
+
   implicit none
 
   ! local parameters
-  integer :: i,j
+  integer :: i,j,k
 
   ! set up GLL points, weights and derivation matrices
   call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
@@ -39,9 +40,21 @@
                                  hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
                                  wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
-  if( USE_DEVILLE_PRODUCTS_VAL ) then
+  ! define a 3D extension in order to be able to force vectorization in the compute_forces routines
+  if( FORCE_VECTORIZATION_VAL ) then
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          wgllwgll_yz_3D(i,j,k) = wgllwgll_yz(j,k)
+          wgllwgll_xz_3D(i,j,k) = wgllwgll_xz(i,k)
+          wgllwgll_xy_3D(i,j,k) = wgllwgll_xy(i,j)
+        enddo
+      enddo
+    enddo
+  endif
 
-  ! check that optimized routines from Deville et al. (2002) can be used
+  if( USE_DEVILLE_PRODUCTS_VAL ) then
+    ! check that optimized routines from Deville et al. (2002) can be used
     if(NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5) &
       stop 'Deville et al. (2002) routines can only be used if NGLLX = NGLLY = NGLLZ = 5'
 
