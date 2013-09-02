@@ -45,9 +45,6 @@
   integer :: iphase
   logical :: phase_is_inner
 
-  ! checks
-  if( SIMULATION_TYPE == 3 ) return
-
   ! compute internal forces in the fluid region
   if(CUSTOM_REAL == SIZE_REAL) then
     time = sngl((dble(it-1)*DT-t0)*scale_t_inv)

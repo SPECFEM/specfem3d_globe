@@ -299,7 +299,7 @@
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
-      if (it < 100) then
+      if (it_run < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
         write(IMAIN,*) '**** because fewer than 100 iterations have been performed'
@@ -403,9 +403,18 @@
   data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
   data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
 
-  ! write time stamp file to give information about progression of simulation
-  write(outputname,"('/timestamp',i6.6)") it
+  ! information about the current run only
+  it_run = it - it_begin + 1
+  nstep_run = it_end - it_begin + 1
 
+  ! write time stamp file to give information about progression of simulation
+  if(SIMULATION_TYPE == 1) then
+    write(outputname,"('/timestamp_forward',i6.6)") it
+  else
+    write(outputname,"('/timestamp_backward',i6.6)") it
+  endif
+
+  ! file output
   open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
 
   write(IOUT,*) 'Time step # ',it
@@ -428,9 +437,6 @@
 
   if( NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS ) then
     ! this is in the case of restart files, when a given run consists of several partial runs
-    ! information about the current run only
-    it_run = it - it_begin + 1
-    nstep_run = it_end - it_begin + 1
     write(IOUT,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
     write(IOUT,*) 'Time steps done in total = ',it,' out of ',NSTEP
     write(IOUT,*) 'Time steps remaining for this run = ',it_end - it
@@ -451,7 +457,7 @@
   write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
   write(IOUT,*)
 
-  if(it < NSTEP) then
+  if(it < it_end) then
 
     write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
         weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
@@ -472,7 +478,7 @@
           day_remote,year_remote,hr_remote,minutes_remote
     endif
 
-    if(it < 100) then
+    if(it_run < 100) then
       write(IOUT,*)
       write(IOUT,*) '************************************************************'
       write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'

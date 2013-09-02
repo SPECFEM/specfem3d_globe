@@ -49,7 +49,7 @@
   call prepare_timerun_convert_coord()
 
   ! allocate files to save movies
-  ! for noise tomography, store_val_x/y/z/ux/uy/uz needed for 'surface movie'
+  ! for noise tomography, number of movie points (nmovie_points) needed for 'surface movie'
   if( MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
     call prepare_timerun_movie_surface()
   endif
@@ -496,39 +496,59 @@
   ! local parameters
   integer :: ier
 
+  ! user output
   if(myrank == 0 ) then
     write(IMAIN,*) "preparing movie surface."
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
-
-  if(MOVIE_COARSE .and. NOISE_TOMOGRAPHY ==0) then  ! only output corners !for noise tomography, must NOT be coarse
-     nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-     if(NGLLX /= NGLLY) &
+  ! only output corners 
+  ! note: for noise tomography, must NOT be coarse (have to be saved on all gll points)
+  if( MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0 ) then
+    ! checks setup
+    if(NGLLX /= NGLLY) &
       call exit_MPI(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
-     NIT = NGLLX - 1
+    ! number of points
+    nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    NIT = NGLLX - 1
   else
-     nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-     NIT = 1
+    ! number of points
+    nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    NIT = 1
   endif
-  allocate(store_val_x(nmovie_points), &
-          store_val_y(nmovie_points), &
-          store_val_z(nmovie_points), &
-          store_val_ux(nmovie_points), &
-          store_val_uy(nmovie_points), &
-          store_val_uz(nmovie_points),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface arrays')
 
-  if (MOVIE_SURFACE) then  ! those arrays are not neccessary for noise tomography, so only allocate them in MOVIE_SURFACE case
-     allocate(store_val_x_all(nmovie_points,0:NPROCTOT_VAL-1), &
-            store_val_y_all(nmovie_points,0:NPROCTOT_VAL-1), &
-            store_val_z_all(nmovie_points,0:NPROCTOT_VAL-1), &
-            store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
-            store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
-            store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
-     if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+  ! checks exact number of points nmovie_points
+  call movie_surface_count_points()
+
+  ! those arrays are not neccessary for noise tomography, so only allocate them in MOVIE_SURFACE case
+  if( MOVIE_SURFACE ) then
+    ! writes out movie point locations to file
+    call write_movie_surface_mesh()
+
+    ! allocates movie surface arrays for wavefield values
+    allocate(store_val_ux(nmovie_points), &
+             store_val_uy(nmovie_points), &
+             store_val_uz(nmovie_points),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface arrays')
+
+    ! allocates arrays for gathering wavefield values
+    if( myrank == 0 ) then
+      ! only master needs full arrays
+      allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
+               store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
+               store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    else
+      ! slave processes only need dummy arrays
+      allocate(store_val_ux_all(1,1), &
+               store_val_uy_all(1,1), &
+               store_val_uz_all(1,1),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    endif
   endif
+
+  ! user output
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Movie surface:'
@@ -1522,11 +1542,11 @@
     endif
 
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
-            normal_x_noise(nmovie_points), &
-            normal_y_noise(nmovie_points), &
-            normal_z_noise(nmovie_points), &
-            mask_noise(nmovie_points), &
-            noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
+             normal_x_noise(nmovie_points), &
+             normal_y_noise(nmovie_points), &
+             normal_z_noise(nmovie_points), &
+             mask_noise(nmovie_points), &
+             noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
 
     noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
