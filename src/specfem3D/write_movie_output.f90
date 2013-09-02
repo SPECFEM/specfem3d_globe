@@ -52,8 +52,11 @@
       ! gets resulting array values onto CPU
       if( GPU_MODE ) then
         ! transfers whole fields
-        call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
-        call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+        if(MOVIE_VOLUME_TYPE == 5) then
+          call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+        else
+          call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+        endif
       endif
 
       ! save velocity here to avoid static offset on displacement for movies

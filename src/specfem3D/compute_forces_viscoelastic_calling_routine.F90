@@ -48,9 +48,6 @@
   integer :: iphase
   logical :: phase_is_inner
 
-  ! checks
-  if( SIMULATION_TYPE == 3 ) return
-
   ! ****************************************************
   !   big loop over all spectral elements in the solid
   ! ****************************************************
@@ -152,7 +149,9 @@
        ! add the sources
 
        ! add adjoint sources
-       if (SIMULATION_TYPE == 2 ) then
+       ! note: this must remain here even when SIMULATION_TYPE == 3 because it applies to array
+       !       accel_crust_mantle rather than b_accel_crust_mantle
+       if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 ) then
           if( nadj_rec_local > 0 ) call compute_add_sources_adjoint()
        endif
 

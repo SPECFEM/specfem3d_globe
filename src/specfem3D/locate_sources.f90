@@ -574,13 +574,11 @@
     call gather_all_i(ispec_selected_source_subset,NSOURCES_SUBSET_current_size, &
       ispec_selected_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
 
-    ! daniel debug
-    !print*,'rank',myrank,'ispec:',ispec_selected_source_subset(:),'all:',ispec_selected_source_all(:,:)
-
     ! checks that the gather operation went well
     if(myrank == 0) then
       if(minval(ispec_selected_source_all(:,:)) <= 0) then
-        print*,'error ispec all:',ispec_selected_source_all(:,:)
+        print*,'error ispec all:',NPROCTOT_VAL,NSOURCES_SUBSET_current_size
+        print*,ispec_selected_source_all(:,:)
         call exit_MPI(myrank,'gather operation failed for source')
       endif
     endif

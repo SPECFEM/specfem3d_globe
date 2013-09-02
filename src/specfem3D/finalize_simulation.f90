@@ -232,13 +232,9 @@
   endif
 
   ! movies
-  if(MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
-    deallocate(store_val_x,store_val_y,store_val_z, &
-              store_val_ux,store_val_uy,store_val_uz)
-    if (MOVIE_SURFACE) then
-      deallocate(store_val_x_all,store_val_y_all,store_val_z_all, &
-            store_val_ux_all,store_val_uy_all,store_val_uz_all)
-    endif
+  if (MOVIE_SURFACE) then
+    deallocate(store_val_ux,store_val_uy,store_val_uz)
+    deallocate(store_val_ux_all,store_val_uy_all,store_val_uz_all)
   endif
   if(MOVIE_VOLUME) then
     deallocate(nu_3dmovie)

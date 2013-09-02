@@ -713,13 +713,8 @@ module specfem_par_movie
   ! to save movie frames
   integer :: nmovie_points,NIT
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-      store_val_x,store_val_y,store_val_z, &
-      store_val_ux,store_val_uy,store_val_uz
-
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-      store_val_x_all,store_val_y_all,store_val_z_all, &
-      store_val_ux_all,store_val_uy_all,store_val_uz_all
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: store_val_ux,store_val_uy,store_val_uz
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: store_val_ux_all,store_val_uy_all,store_val_uz_all
 
   ! to save movie volume
   double precision :: scalingval
