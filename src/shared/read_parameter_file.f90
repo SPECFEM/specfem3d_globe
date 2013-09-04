@@ -272,21 +272,40 @@
     endif
   endif
 
-!daniel debug: status of implementation
+!----------------------------------------------
+!
+! status of implementation
+!
+!----------------------------------------------
+!daniel debug:
+! please remove these security checks only after validating new features
 
 !! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  if( ADIOS_ENABLED ) then
+  if( ADIOS_ENABLED ) &
     stop 'ADIOS_ENABLED support not implemented yet'
-  endif
-  if( USE_LDDRK ) then
-    stop 'USE_LDDRK support not implemented yet'
-  endif
-  if( EXACT_MASS_MATRIX_FOR_ROTATION ) then
-    stop 'EXACT_MASS_MATRIX_FOR_ROTATION support not implemented yet'
-  endif
-  if( UNDO_ATTENUATION ) then
+  if( ADIOS_ENABLED .and. GPU_MODE ) &
+    stop 'ADIOS_ENABLED support not implemented yet'
+
+  !if( USE_LDDRK ) &
+  !  stop 'USE_LDDRK support not implemented yet'
+  if( USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
+    stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
+  if( USE_LDDRK .and. GPU_MODE ) &
+    stop 'USE_LDDRK support not implemented yet for GPU simulations'
+
+  if( EXACT_MASS_MATRIX_FOR_ROTATION .and. GPU_MODE ) &
+    stop 'EXACT_MASS_MATRIX_FOR_ROTATION support not implemented yet for GPU simulations'
+
+  if( UNDO_ATTENUATION ) &
     stop 'UNDO_ATTENUATION support not implemented yet'
-  endif
+  if( UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
+  if( UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
+  if( UNDO_ATTENUATION .and. GPU_MODE ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for GPU simulations'
+  if( UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
 
 
   end subroutine read_parameter_file

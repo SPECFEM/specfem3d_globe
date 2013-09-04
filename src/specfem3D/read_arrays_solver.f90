@@ -28,24 +28,24 @@
 ! read arrays created by the mesher
 
   subroutine read_arrays_solver(iregion_code,myrank, &
-              nspec,nglob,nglob_xy, &
-              nspec_iso,nspec_tiso,nspec_ani, &
-              rho_vp,rho_vs,xstore,ystore,zstore, &
-              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-              rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
-              c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-              c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-              c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-              ibool,idoubling,ispec_is_tiso, &
-              rmassx,rmassy,rmassz,rmass_ocean_load, &
-              READ_KAPPA_MU,READ_TISO, &
-              b_rmassx,b_rmassy)
+                                nspec,nglob,nglob_xy, &
+                                nspec_iso,nspec_tiso,nspec_ani, &
+                                rho_vp,rho_vs,xstore,ystore,zstore, &
+                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+                                c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                ibool,idoubling,ispec_is_tiso, &
+                                rmassx,rmassy,rmassz,rmass_ocean_load, &
+                                READ_KAPPA_MU,READ_TISO, &
+                                b_rmassx,b_rmassy)
 
   use constants_solver
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+    EXACT_MASS_MATRIX_FOR_ROTATION
 
   implicit none
 
@@ -88,9 +88,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
   ! flags to know if we should read Vs and anisotropy arrays
-  logical :: READ_KAPPA_MU,READ_TISO !,ABSORBING_CONDITIONS
+  logical :: READ_KAPPA_MU,READ_TISO
 
-!  character(len=150) :: LOCAL_PATH
 
   ! local parameters
   integer :: ier,lnspec,lnglob
@@ -206,25 +205,20 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(.not. USE_LDDRK)then
-    if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
-       read(IIN) rmassx
-       read(IIN) rmassy
-    endif
+  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+    read(IIN) rmassx
+    read(IIN) rmassy
   endif
 
   read(IIN) rmassz
 
-  if(.not. USE_LDDRK)then
-    if((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
-       read(IIN) b_rmassx
-       read(IIN) b_rmassy
-    endif
+  if( ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE))then
+    read(IIN) b_rmassx
+    read(IIN) b_rmassy
   endif
-
 
   ! read additional ocean load mass matrix
   if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load

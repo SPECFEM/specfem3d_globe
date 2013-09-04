@@ -25,6 +25,11 @@
 !
 !=====================================================================
 
+!-------------------------------------------------------------------------------------------------
+!
+! predictor-step: acoustic & elastic domains
+!
+!-------------------------------------------------------------------------------------------------
 
   subroutine update_displacement_Newmark()
 
@@ -199,6 +204,60 @@
   end subroutine update_displ_acoustic
 
 
+!-------------------------------------------------------------------------------------------------
+!
+! corrector-step: acoustic domains
+!
+!-------------------------------------------------------------------------------------------------
+
+
+  subroutine update_veloc_acoustic_newmark()
+
+! Newmark correction for velocity in fluid outer core
+
+  use specfem_par
+  use specfem_par_outercore
+  implicit none
+
+  ! corrector terms for fluid parts to update velocity
+  if(.NOT. GPU_MODE) then
+    ! on CPU
+    call update_veloc_acoustic(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
+                               deltatover2,rmass_outer_core)
+  else
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 1
+    call kernel_3_outer_core_cuda(Mesh_pointer,deltatover2,1)
+  endif
+
+  end subroutine update_veloc_acoustic_newmark
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine update_veloc_acoustic_newmark_backward()
+
+! kernel simulations Newmark correction for velocity in fluid outer core
+
+  use specfem_par
+  use specfem_par_outercore
+  implicit none
+
+  ! corrector terms for fluid parts to update velocity
+  if(.NOT. GPU_MODE) then
+    ! on CPU
+    ! adjoint / kernel runs
+    call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
+                               b_deltatover2,b_rmass_outer_core)
+  else
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 3
+    call kernel_3_outer_core_cuda(Mesh_pointer,b_deltatover2,3)
+  endif
+
+  end subroutine update_veloc_acoustic_newmark_backward
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -226,80 +285,73 @@
   integer :: i
 
   ! Newmark time scheme
-  ! multiply by the inverse of the mass matrix and update velocity
 
+  ! update velocity
   do i=1,NGLOB
-    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
+    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2 * accel_outer_core(i)
   enddo
 
   end subroutine update_veloc_acoustic
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! corrector-step: elastic domains
+!
+!-------------------------------------------------------------------------------------------------
+
+
+  subroutine update_veloc_elastic_newmark()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  implicit none
+
+  ! corrector terms for elastic parts updates velocity
+  if(.NOT. GPU_MODE ) then
+    ! on CPU
+    call update_veloc_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
+                              NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
+                              deltatover2)
+  else
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 1
+    call update_veloc_3_b_cuda(Mesh_pointer,deltatover2,1)
+
+  endif
+
+  end subroutine update_veloc_elastic_newmark
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_accel_elastic(NGLOB,NGLOB_XY,veloc_crust_mantle,accel_crust_mantle, &
-                                  two_omega_earth, &
-                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
+  subroutine update_veloc_elastic_newmark_backward()
 
-! updates acceleration in crust/mantle region
-
-  use constants_solver,only: CUSTOM_REAL,NDIM,NCHUNKS_VAL
-
-  use specfem_par,only: ABSORBING_CONDITIONS
-
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
   implicit none
 
-  integer :: NGLOB,NGLOB_XY
+  ! corrector terms for elastic parts updates velocity
 
-  ! velocity & acceleration
-  ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle,accel_crust_mantle
-
-  ! mass matrices
-  !
-  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  !
-  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB)    :: rmassz_crust_mantle
-
-  real(kind=CUSTOM_REAL) :: two_omega_earth
-
-  ! local parameters
-  integer :: i
-
-  ! updates acceleration w/ rotation in crust/mantle region only
-
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-
-     do i=1,NGLOB
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassx_crust_mantle(i) &
-             + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassy_crust_mantle(i) &
-             - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-     enddo
-
+  if(.NOT. GPU_MODE ) then
+    ! on CPU
+    ! adjoint / kernel runs
+    ! uses corrected mass matrices for update
+    call update_veloc_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                              NGLOB_INNER_CORE_ADJOINT,b_veloc_inner_core,b_accel_inner_core, &
+                              b_deltatover2)
   else
-
-     do i=1,NGLOB
-        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmassz_crust_mantle(i) &
-             + two_omega_earth*veloc_crust_mantle(2,i)
-        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmassz_crust_mantle(i) &
-             - two_omega_earth*veloc_crust_mantle(1,i)
-        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmassz_crust_mantle(i)
-     enddo
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 3
+    call update_veloc_3_b_cuda(Mesh_pointer,b_deltatover2,3)
 
   endif
 
-  end subroutine update_accel_elastic
 
+  end subroutine update_veloc_elastic_newmark_backward
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -307,7 +359,7 @@
 
   subroutine update_veloc_elastic(NGLOB_CM,veloc_crust_mantle,accel_crust_mantle, &
                                   NGLOB_IC,veloc_inner_core,accel_inner_core, &
-                                  deltatover2,two_omega_earth,rmass_inner_core)
+                                  deltatover2)
 
 ! updates velocity in crust/mantle region, and acceleration and velocity in inner core
 
@@ -323,10 +375,7 @@
   ! inner core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: veloc_inner_core,accel_inner_core
 
-  ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_IC) :: rmass_inner_core
-
-  real(kind=CUSTOM_REAL) :: deltatover2,two_omega_earth
+  real(kind=CUSTOM_REAL) :: deltatover2
 
   ! local parameters
   integer :: i
@@ -340,39 +389,35 @@
   !   - inner core region
   !         needs both, acceleration update & velocity corrector terms
 
-  ! mantle
+  ! crust/mantle
   if(FORCE_VECTORIZATION_VAL) then
+
     do i=1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,i) = veloc_crust_mantle(i,i) + deltatover2*accel_crust_mantle(i,i)
     enddo
+
   else
+
     do i=1,NGLOB_CM
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
     enddo
+
   endif
 
   ! inner core
   if(FORCE_VECTORIZATION_VAL) then
-    do i=1,NGLOB_IC
-      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
-      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-    enddo
+
     do i=1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
-  else
-    do i=1,NGLOB_IC
-      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
-      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
+  else
+
+    do i=1,NGLOB_IC
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
+
   endif
 
   end subroutine update_veloc_elastic
+

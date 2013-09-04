@@ -26,38 +26,17 @@
 !=====================================================================
 
 
-  subroutine get_timestep_and_layers(DT,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-                          NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,&
-                          NER_600_400,NER_670_600,NER_771_670, &
-                          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                          NER_TOP_CENTRAL_CUBE_ICB,R_CENTRAL_CUBE, &
-                          NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-                          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-                          ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
-                          ANISOTROPIC_INNER_CORE)
-
+  subroutine get_timestep_and_layers(NEX_MAX)
 
   use constants
+  use shared_parameters
 
   implicit none
 
-  ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
-
-  integer NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB
-
-  integer NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL,THREE_D_MODEL
-
-  double precision DT
-  double precision R_CENTRAL_CUBE
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
-
-  logical ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,ANISOTROPIC_INNER_CORE
+  integer,intent(in) :: NEX_MAX
 
   ! local variables
-  integer multiplication_factor
+  integer :: multiplication_factor
 
   !----
   !----  case prem_onecrust by default
@@ -444,5 +423,15 @@
     if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! asia & middle east
 
   endif
+
+! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+! depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+! (for instance for models with a large range of Poisson's ratio values).
+! Since the code computes the time step using the Newmark scheme, for LDDRK we simply
+! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+  if(USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
+
 
   end subroutine get_timestep_and_layers

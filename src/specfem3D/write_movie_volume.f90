@@ -100,14 +100,14 @@
 !
 
   subroutine movie_volume_integrate_strain(deltat,vnspec, &
-                                    eps_trace_over_3, &
-                                    epsilondev_xx,epsilondev_yy, &
-                                    epsilondev_xy,epsilondev_xz, &
-                                    epsilondev_yz, &
-                                    Ieps_trace_over_3, &
-                                    Iepsilondev_xx,Iepsilondev_yy, &
-                                    Iepsilondev_xy,Iepsilondev_xz, &
-                                    Iepsilondev_yz)
+                                           eps_trace_over_3, &
+                                           epsilondev_xx,epsilondev_yy, &
+                                           epsilondev_xy,epsilondev_xz, &
+                                           epsilondev_yz, &
+                                           Ieps_trace_over_3, &
+                                           Iepsilondev_xx,Iepsilondev_yy, &
+                                           Iepsilondev_xy,Iepsilondev_xz, &
+                                           Iepsilondev_yz)
 
   use constants_solver
 

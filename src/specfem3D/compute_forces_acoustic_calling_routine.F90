@@ -46,10 +46,20 @@
   logical :: phase_is_inner
 
   ! compute internal forces in the fluid region
-  if(CUSTOM_REAL == SIZE_REAL) then
-    time = sngl((dble(it-1)*DT-t0)*scale_t_inv)
+
+  ! current simulated time
+  if(USE_LDDRK)then
+    if(CUSTOM_REAL == SIZE_REAL) then
+      time = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
+    else
+      time = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
+    endif
   else
-    time = (dble(it-1)*DT-t0)*scale_t_inv
+    if(CUSTOM_REAL == SIZE_REAL) then
+      time = sngl((dble(it-1)*DT-t0)*scale_t_inv)
+    else
+      time = (dble(it-1)*DT-t0)*scale_t_inv
+    endif
   endif
 
   ! ****************************************************
@@ -75,17 +85,19 @@
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
-                                      NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
-                                      A_array_rotation,B_array_rotation, &
-                                      displ_outer_core,accel_outer_core, &
-                                      div_displ_outer_core,phase_is_inner)
+                                           NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
+                                           A_array_rotation,B_array_rotation, &
+                                           A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                           displ_outer_core,accel_outer_core, &
+                                           div_displ_outer_core,phase_is_inner)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
         call compute_forces_outer_core(time,deltat,two_omega_earth, &
-                                      NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
-                                      A_array_rotation,B_array_rotation, &
-                                      displ_outer_core,accel_outer_core, &
-                                      div_displ_outer_core,phase_is_inner)
+                                       NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
+                                       A_array_rotation,B_array_rotation, &
+                                       A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                       displ_outer_core,accel_outer_core, &
+                                       div_displ_outer_core,phase_is_inner)
       endif
     else
       ! on GPU
@@ -161,12 +173,12 @@
         ! on GPU
         ! outer core
         call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
-                                buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,&
-                                my_neighbours_outer_core, &
-                                request_send_scalar_oc,request_recv_scalar_oc, &
-                                1) ! <-- 1 == fwd accel
+                                           buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+                                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                           nibool_interfaces_outer_core,&
+                                           my_neighbours_outer_core, &
+                                           request_send_scalar_oc,request_recv_scalar_oc, &
+                                           1) ! <-- 1 == fwd accel
       endif
     else
       ! make sure the last communications are finished and processed
@@ -174,34 +186,33 @@
       if(.NOT. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                                accel_outer_core, &
-                                buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
-                                max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                request_send_scalar_oc,request_recv_scalar_oc)
+                                   accel_outer_core, &
+                                   buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
+                                   max_nibool_interfaces_oc, &
+                                   nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                   request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
         call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
-                                buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                request_send_scalar_oc,request_recv_scalar_oc, &
-                                1) ! <-- 1 == fwd accel
+                                            buffer_recv_scalar_outer_core, &
+                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                            request_send_scalar_oc,request_recv_scalar_oc, &
+                                            1) ! <-- 1 == fwd accel
       endif
     endif ! iphase == 1
 
   enddo ! iphase
 
-  ! Newmark time scheme:
-  ! corrector terms for fluid parts
-  ! (multiply by the inverse of the mass matrix and update velocity)
-  if(.NOT. GPU_MODE) then
-    ! on CPU
-    call update_veloc_acoustic(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
-                               deltatover2,rmass_outer_core)
+  ! multiply by the inverse of the mass matrix
+  call it_multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
+
+  ! time schemes
+  if( USE_LDDRK ) then
+    ! runge-kutta scheme
+    call update_veloc_acoustic_lddrk()
   else
-    ! on GPU
-    ! includes FORWARD_OR_ADJOINT == 1
-    call kernel_3_outer_core_cuda(Mesh_pointer,deltatover2,1)
+    ! Newmark time scheme
+    call update_veloc_acoustic_newmark()
   endif
 
   end subroutine compute_forces_acoustic
@@ -241,10 +252,28 @@
   !       as we start with saved wavefields b_displ( 1 ) <-> displ( NSTEP ) which correspond
   !       to a time (NSTEP - (it-1) - 1)*DT - t0
   !       for reconstructing the rotational contributions
-  if(CUSTOM_REAL == SIZE_REAL) then
-    b_time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
+
+  ! current simulated time
+  if(USE_LDDRK)then
+    if(CUSTOM_REAL == SIZE_REAL) then
+      b_time = sngl((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
+    else
+      b_time = (dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
+    endif
   else
-    b_time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
+    if(CUSTOM_REAL == SIZE_REAL) then
+      b_time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
+    else
+      b_time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
+    endif
+  endif
+
+  if(UNDO_ATTENUATION)then
+    if(CUSTOM_REAL == SIZE_REAL) then
+      b_time = sngl((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv)
+    else
+      b_time = (dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv
+    endif
   endif
 
   ! ****************************************************
@@ -271,16 +300,18 @@
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(b_time,b_deltat,b_two_omega_earth, &
-                                    NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                                    b_A_array_rotation,b_B_array_rotation, &
-                                    b_displ_outer_core,b_accel_outer_core, &
-                                    b_div_displ_outer_core,phase_is_inner)
+                                           NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                                           b_A_array_rotation,b_B_array_rotation, &
+                                           b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
+                                           b_displ_outer_core,b_accel_outer_core, &
+                                           b_div_displ_outer_core,phase_is_inner)
       else
         call compute_forces_outer_core(b_time,b_deltat,b_two_omega_earth, &
-                                    NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                                    b_A_array_rotation,b_B_array_rotation, &
-                                    b_displ_outer_core,b_accel_outer_core, &
-                                    b_div_displ_outer_core,phase_is_inner)
+                                       NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                                       b_A_array_rotation,b_B_array_rotation, &
+                                       b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
+                                       b_displ_outer_core,b_accel_outer_core, &
+                                       b_div_displ_outer_core,phase_is_inner)
       endif
     else
       ! on GPU
@@ -292,50 +323,56 @@
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
 
-       ! Stacey absorbing boundaries
-       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_outer_core_backward()
+      ! Stacey absorbing boundaries
+      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+        if(UNDO_ATTENUATION)then
+          call compute_stacey_outer_core_backward_undoatt()
+        else
+          call compute_stacey_outer_core_backward()
+        endif
+      endif
 
-       ! ****************************************************
-       ! **********  add matching with solid part  **********
-       ! ****************************************************
-       ! only for elements in first matching layer in the fluid
-       if( .not. GPU_MODE ) then
-          ! on CPU
-          !---
-          !--- couple with mantle at the top of the outer core
-          !---
-          if(ACTUALLY_COUPLE_FLUID_CMB) &
-               call compute_coupling_fluid_CMB(b_displ_crust_mantle, &
-                                               ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                               b_accel_outer_core, &
-                                               normal_top_outer_core,jacobian2D_top_outer_core, &
-                                               wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                                               NSPEC2D_TOP(IREGION_OUTER_CORE))
+      ! ****************************************************
+      ! **********  add matching with solid part  **********
+      ! ****************************************************
+      ! only for elements in first matching layer in the fluid
+      if( .not. GPU_MODE ) then
+        ! on CPU
+        !---
+        !--- couple with mantle at the top of the outer core
+        !---
+        if(ACTUALLY_COUPLE_FLUID_CMB) &
+          call compute_coupling_fluid_CMB(b_displ_crust_mantle, &
+                                          ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                          b_accel_outer_core, &
+                                          normal_top_outer_core,jacobian2D_top_outer_core, &
+                                          wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                          NSPEC2D_TOP(IREGION_OUTER_CORE))
 
-          !---
-          !--- couple with inner core at the bottom of the outer core
-          !---
-          if(ACTUALLY_COUPLE_FLUID_ICB) &
-               call compute_coupling_fluid_ICB(b_displ_inner_core, &
-                                               ibool_inner_core,ibelm_top_inner_core,  &
-                                               b_accel_outer_core, &
-                                               normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-                                               wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                                               NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
-       else
-          ! on GPU
-          !---
-          !--- couple with mantle at the top of the outer core
-          !---
-          if( ACTUALLY_COUPLE_FLUID_CMB ) &
-               call compute_coupling_fluid_cmb_cuda(Mesh_pointer,3)
-          !---
-          !--- couple with inner core at the bottom of the outer core
-          !---
-          if( ACTUALLY_COUPLE_FLUID_ICB ) &
-               call compute_coupling_fluid_icb_cuda(Mesh_pointer,3)
+        !---
+        !--- couple with inner core at the bottom of the outer core
+        !---
+        if(ACTUALLY_COUPLE_FLUID_ICB) &
+          call compute_coupling_fluid_ICB(b_displ_inner_core, &
+                                          ibool_inner_core,ibelm_top_inner_core,  &
+                                          b_accel_outer_core, &
+                                          normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+                                          wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+                                          NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
+      else
+        ! on GPU
+        !---
+        !--- couple with mantle at the top of the outer core
+        !---
+        if( ACTUALLY_COUPLE_FLUID_CMB ) &
+          call compute_coupling_fluid_cmb_cuda(Mesh_pointer,3)
+        !---
+        !--- couple with inner core at the bottom of the outer core
+        !---
+        if( ACTUALLY_COUPLE_FLUID_ICB ) &
+          call compute_coupling_fluid_icb_cuda(Mesh_pointer,3)
 
-       endif
+      endif
     endif ! iphase == 1
 
     ! assemble all the contributions between slices using MPI
@@ -387,18 +424,16 @@
 
   enddo ! iphase
 
-  ! Newmark time scheme:
-  ! corrector terms for fluid parts
-  ! (multiply by the inverse of the mass matrix and update velocity)
-  if(.NOT. GPU_MODE) then
-    ! on CPU
-    ! adjoint / kernel runs
-    call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
-                                 b_deltatover2,rmass_outer_core)
+  ! multiply by the inverse of the mass matrix
+  call it_multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
+
+  ! time schemes
+  if( USE_LDDRK ) then
+    ! runge-kutta scheme
+    call update_veloc_acoustic_lddrk_backward()
   else
-    ! on GPU
-    ! includes FORWARD_OR_ADJOINT == 3
-    call kernel_3_outer_core_cuda(Mesh_pointer,b_deltatover2,3)
+    ! Newmark time scheme
+    call update_veloc_acoustic_newmark_backward()
   endif
 
   end subroutine compute_forces_acoustic_backward

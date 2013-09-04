@@ -404,3 +404,64 @@
   enddo
 
   end subroutine compute_seismograms_adjoint
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_seismograms_undoatt(seismo_current,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms)
+
+! re-orders seismogram entries
+
+  use specfem_par,only: CUSTOM_REAL,NDIM,NT_DUMP_ATTENUATION
+
+  implicit none
+
+  integer :: seismo_current
+  integer :: nrec_local
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: &
+    seismograms
+
+  ! local parameters
+  integer :: i,j,k,irec_local
+  real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
+
+  if(mod(NT_DUMP_ATTENUATION,2) == 0)then
+
+    do irec_local = 1,nrec_local
+      do i = 1,seismo_current/NT_DUMP_ATTENUATION
+        do j = 1,NT_DUMP_ATTENUATION/2
+          do k = 1,NDIM
+            seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j)
+
+            seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j) = &
+                          seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1))
+
+            seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1)) = seismograms_temp(k)
+          enddo
+        enddo
+      enddo
+    enddo
+
+  else
+
+    do irec_local = 1,nrec_local
+      do i = 1,seismo_current/NT_DUMP_ATTENUATION
+        do j = 1,(NT_DUMP_ATTENUATION-1)/2
+          do k = 1,NDIM
+            seismograms_temp(k) = seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j)
+            seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + j) = &
+                  seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1))
+            seismograms(k,irec_local,(i-1)*NT_DUMP_ATTENUATION + (NT_DUMP_ATTENUATION-j+1)) = seismograms_temp(k)
+          enddo
+        enddo
+      enddo
+    enddo
+
+  endif
+
+  end subroutine compute_seismograms_undoatt
+

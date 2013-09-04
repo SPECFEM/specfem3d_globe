@@ -91,11 +91,22 @@
 
   endif ! nrec_local
 
+
   ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+
+    ! writes out seismogram files
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+
+      ! stores seismograms in right order
+      if( UNDO_ATTENUATION .and. SIMULATION_TYPE == 3) then
+        call compute_seismograms_undoatt(seismo_current,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms)
+      endif
+
       ! writes out seismogram files
-      call write_seismograms_to_file()
+      if( .not. undo_att_sim_type_3 ) then
+        call write_seismograms_to_file()
+      endif
 
       ! user output
       if(myrank==0) then
@@ -104,15 +115,19 @@
         write(IMAIN,*)
         call flush_IMAIN()
       endif
-    else
+    else if( SIMULATION_TYPE == 2 ) then
       if( nrec_local > 0 ) &
-        call write_adj_seismograms(seismograms,number_receiver_global, &
-                                  nrec_local,it,nit_written,DT, &
-                                  NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_TMP_PATH)
+        call write_adj_seismograms(nit_written)
         nit_written = it
     endif
-    seismo_offset = seismo_offset + seismo_current
+
+    ! resets current seismogram position
+    if( .not. undo_att_sim_type_3 ) then
+      seismo_offset = seismo_offset + seismo_current
+    endif
+
     seismo_current = 0
+
   endif
 
   end subroutine write_seismograms
@@ -508,20 +523,19 @@
 
 ! write adjoint seismograms to text files
 
-  subroutine write_adj_seismograms(seismograms,number_receiver_global, &
-              nrec_local,it,nit_written,DT,NSTEP, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,hdur,LOCAL_TMP_PATH)
+  subroutine write_adj_seismograms(nit_written)
 
   use constants
+  use specfem_par,only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+    DT,t0,LOCAL_TMP_PATH, &
+    seismograms,number_receiver_global,nrec_local, &
+    it
 
   implicit none
 
-  integer :: nrec_local,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,it,nit_written
-  integer, dimension(nrec_local) :: number_receiver_global
-  real(kind=CUSTOM_REAL), dimension(9,nrec_local,NSTEP) :: seismograms
-  double precision :: hdur,DT
-  character(len=150) :: LOCAL_TMP_PATH
+  integer :: nit_written
 
+  ! local parameters
   integer :: irec,irec_local
   integer :: iorientation,isample
 
@@ -589,9 +603,9 @@
       do isample = nit_written+1,min(it,NSTEP)
         ! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
-          write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',seismograms(iorientation,irec_local,isample-nit_written)
+          write(IOUT,*) sngl(dble(isample-1)*DT - t0),' ',seismograms(iorientation,irec_local,isample-nit_written)
         else
-          write(IOUT,*) dble(isample-1)*DT - hdur,' ',seismograms(iorientation,irec_local,isample-nit_written)
+          write(IOUT,*) dble(isample-1)*DT - t0,' ',seismograms(iorientation,irec_local,isample-nit_written)
         endif
       enddo
 

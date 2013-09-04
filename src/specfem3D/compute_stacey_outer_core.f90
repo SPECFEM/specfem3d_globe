@@ -507,3 +507,224 @@
 
   end subroutine compute_stacey_outer_core_backward
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_stacey_outer_core_backward_undoatt()
+
+  use constants_solver
+
+  use specfem_par,only: &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+    wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
+
+  use specfem_par,only: GPU_MODE,Mesh_pointer
+
+  use specfem_par_outercore,only: &
+    b_veloc_outer_core,b_accel_outer_core, &
+    ibool_outer_core, &
+    jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+    jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
+    jacobian2D_bottom_outer_core, &
+    nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core,nspec2D_zmin_outer_core, &
+    vp_outer_core, &
+    nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core, &
+    njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core, &
+    absorb_xmin_outer_core,absorb_xmax_outer_core, &
+    absorb_ymin_outer_core,absorb_ymax_outer_core, &
+    absorb_zmin_outer_core, &
+    ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
+    ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+    ibelm_bottom_outer_core
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: sn,weight
+  integer :: i,j,k,ispec2D,ispec,iglob
+
+  ! checks
+  if( SIMULATION_TYPE /= 3 ) return
+  if( SAVE_FORWARD ) return
+
+  ! daniel debug
+  if( GPU_MODE ) stop 'error compute_stacey_outer_core_backward_undoatt not implemented yet for GPU simulations'
+
+  ! outer core
+
+  !   xmin
+  ! if two chunks exclude this face for one of them
+  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+
+    if( .NOT. GPU_MODE) then
+      ! on CPU
+      do ispec2D=1,nspec2D_xmin_outer_core
+
+        ispec=ibelm_xmin_outer_core(ispec2D)
+
+        ! exclude elements that are not on absorbing edges
+        if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
+
+        i=1
+        do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
+          do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
+            iglob=ibool_outer_core(i,j,k,ispec)
+
+            sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
+
+            weight = jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*sn
+
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if( nspec2D_xmin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
+                                                                absorb_xmin_outer_core, &
+                                                                4) ! <= xmin
+    endif
+
+  endif
+
+  !   xmax
+  ! if two chunks exclude this face for one of them
+  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+
+    if( .NOT. GPU_MODE ) then
+      ! on CPU
+      do ispec2D=1,nspec2D_xmax_outer_core
+
+        ispec=ibelm_xmax_outer_core(ispec2D)
+
+        ! exclude elements that are not on absorbing edges
+        if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
+
+        i=NGLLX
+        do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
+          do j=njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
+            iglob=ibool_outer_core(i,j,k,ispec)
+
+            sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
+
+            weight = jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*sn
+
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if( nspec2D_xmax_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
+                                                                absorb_xmax_outer_core, &
+                                                                5) ! <= xmax
+    endif
+
+  endif
+
+  !   ymin
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D=1,nspec2D_ymin_outer_core
+
+      ispec=ibelm_ymin_outer_core(ispec2D)
+
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+
+      j=1
+      do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
+        do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
+          iglob=ibool_outer_core(i,j,k,ispec)
+
+          sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
+
+          weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+          b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*sn
+
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_ymin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
+                                                              absorb_ymin_outer_core, &
+                                                              6) ! <= ymin
+  endif
+
+  !   ymax
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D=1,nspec2D_ymax_outer_core
+
+      ispec=ibelm_ymax_outer_core(ispec2D)
+
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
+
+      j=NGLLY
+      do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
+        do i=nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
+          iglob=ibool_outer_core(i,j,k,ispec)
+
+          sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
+
+          weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+          b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*sn
+
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_ymax_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
+                                                              absorb_ymax_outer_core, &
+                                                              7) ! <= ymax
+  endif
+
+  ! zmin
+
+  ! for surface elements exactly on the ICB
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D = 1,nspec2D_zmin_outer_core
+
+      ispec = ibelm_bottom_outer_core(ispec2D)
+
+      k = 1
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool_outer_core(i,j,k,ispec)
+
+          sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
+
+          weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
+
+          b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*sn
+
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_zmin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
+                                                              absorb_zmin_outer_core, &
+                                                              8) ! <= zmin
+  endif
+
+  end subroutine compute_stacey_outer_core_backward_undoatt
+
+

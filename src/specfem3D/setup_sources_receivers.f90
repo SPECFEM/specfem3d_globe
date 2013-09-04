@@ -265,6 +265,16 @@
   use specfem_par
   implicit none
 
+  ! local parameters
+  logical :: is_initial_guess
+
+  ! checks if set by initial guess from read_compute_parameters() routine
+  if( NTSTEP_BETWEEN_OUTPUT_SEISMOS == NSTEP) then
+    is_initial_guess = .true.
+  else
+    is_initial_guess = .false.
+  endif
+
   ! from intial guess in read_compute_parameters:
   !    compute total number of time steps, rounded to next multiple of 100
   !    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
@@ -281,7 +291,7 @@
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
-  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP .or. is_initial_guess) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
   ! re-checks output steps?
   !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
@@ -745,8 +755,9 @@
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
     else
+      ! adjoint seismograms
       allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-      if(ier /= 0) stop 'error while allocating seismograms'
+      if(ier /= 0) stop 'error while allocating adjoint seismograms'
       ! allocate Frechet derivatives array
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)

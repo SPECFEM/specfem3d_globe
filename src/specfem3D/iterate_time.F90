@@ -71,35 +71,52 @@
 
   do it = it_begin,it_end
 
-    ! simulation status output and stability check
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-      call check_stability()
-    endif
+    do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-    ! update displacement using Newmark time scheme
-    call update_displacement_Newmark()
+      ! simulation status output and stability check
+      if((mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) .and. istage == 1) then
+        call check_stability()
+      endif
 
-    ! acoustic solver for outer core
-    ! (needs to be done first, before elastic one)
-    call compute_forces_acoustic()
-
-    ! elastic solver for crust/mantle and inner core
-    call compute_forces_viscoelastic()
-
-    ! kernel simulations (forward and adjoint wavefields)
-    if( SIMULATION_TYPE == 3 ) then
-      ! reconstructs forward wavefields based on last store wavefield data
-
-      ! update displacement using Newmark time scheme
-      call update_displacement_Newmark_backward()
+      if(USE_LDDRK)then
+        ! update displacement using runge-kutta time scheme
+        call update_displacement_lddrk()
+      else
+        ! update displacement using Newmark time scheme
+        call update_displacement_Newmark()
+      endif
 
       ! acoustic solver for outer core
       ! (needs to be done first, before elastic one)
-      call compute_forces_acoustic_backward()
+      call compute_forces_acoustic()
 
       ! elastic solver for crust/mantle and inner core
-      call compute_forces_viscoelastic_backward()
+      call compute_forces_viscoelastic()
 
+      ! kernel simulations (forward and adjoint wavefields)
+      if( SIMULATION_TYPE == 3 ) then
+        ! reconstructs forward wavefields based on last stored wavefield data
+
+        if(USE_LDDRK)then
+          ! update displacement using runge-kutta time scheme
+          call update_displacement_lddrk_backward()
+        else
+          ! update displacement using Newmark time scheme
+          call update_displacement_Newmark_backward()
+        endif
+
+        ! acoustic solver for outer core
+        ! (needs to be done first, before elastic one)
+        call compute_forces_acoustic_backward()
+
+        ! elastic solver for crust/mantle and inner core
+        call compute_forces_viscoelastic_backward()
+      endif
+
+    enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
+
+    ! kernel simulations (forward and adjoint wavefields)
+    if( SIMULATION_TYPE == 3 ) then
       ! restores last time snapshot saved for backward/reconstruction of wavefields
       ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
       !          and adjoint sources will become more complicated
@@ -143,6 +160,87 @@
   if(GPU_MODE) call it_transfer_from_GPU()
 
   end subroutine iterate_time
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine it_multiply_accel_elastic(NGLOB,veloc,accel, &
+                                       two_omega_earth, &
+                                       rmassx,rmassy,rmassz)
+
+! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
+
+  use constants_solver,only: CUSTOM_REAL,NDIM
+
+  implicit none
+
+  integer :: NGLOB
+
+  ! velocity & acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc,accel
+
+  real(kind=CUSTOM_REAL) :: two_omega_earth
+
+  ! mass matrices
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmassx,rmassy,rmassz
+
+  ! local parameters
+  integer :: i
+
+  ! note: mass matrices
+  !
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
+  ! updates acceleration w/ rotation in elastic region
+
+  ! see input call, differs for corrected mass matrices for rmassx,rmassy,rmassz
+  do i=1,NGLOB
+    accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
+    accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
+    accel(3,i) = accel(3,i)*rmassz(i)
+  enddo
+
+  end subroutine it_multiply_accel_elastic
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine it_multiply_accel_acoustic(NGLOB,accel,rmass)
+
+! multiplies acceleration with inverse of mass matrix in outer core region
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer :: NGLOB
+
+  ! velocity & acceleration
+  ! crust/mantle region
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: accel
+
+  ! mass matrices
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass
+
+  ! local parameters
+  integer :: i
+
+  ! note: mass matrices for fluid region has no stacey or rotation correction
+  !       it is also the same for forward and backward/reconstructed wavefields
+
+  do i=1,NGLOB
+    accel(i) = accel(i)*rmass(i)
+  enddo
+
+  end subroutine it_multiply_accel_acoustic
+
 
 !
 !-------------------------------------------------------------------------------------------------

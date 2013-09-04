@@ -119,15 +119,8 @@ module specfem_par
 
   ! non-dimensionalized rotation rate of the Earth times two
   real(kind=CUSTOM_REAL) :: two_omega_earth
-
-  ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
-
   !ADJOINT
   real(kind=CUSTOM_REAL) b_two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
-    b_A_array_rotation,b_B_array_rotation
 
   !-----------------------------------------------------------------
   ! gravity
@@ -274,23 +267,25 @@ module specfem_par
 
   integer :: it
 
-  ! Newmark time scheme parameters and non-dimensionalization
+  ! non-dimensionalization
   double precision :: scale_t,scale_t_inv,scale_displ,scale_veloc
+
+  ! time scheme parameters
   real(kind=CUSTOM_REAL) :: deltat,deltatover2,deltatsqover2
   ! ADJOINT
   real(kind=CUSTOM_REAL) :: b_deltat,b_deltatover2,b_deltatsqover2
 
-  ! this is for LDDRK
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: displ_outer_core_lddrk,veloc_outer_core_lddrk
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_inner_core_lddrk,veloc_inner_core_lddrk
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_array_rotation_lddrk,B_array_rotation_lddrk
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:,:), allocatable :: R_memory_crust_mantle_lddrk
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:,:), allocatable :: R_memory_inner_core_lddrk
-
+  ! LDDRK time scheme
   integer :: NSTAGE_TIME_SCHEME,istage
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
+  ! undo_attenuation
+  ! to switch between simulation type 1 mode and simulation type 3 mode
+  ! in exact undoing of attenuation
+  logical :: undo_att_sim_type_3
+  integer :: iteration_on_subset,it_of_this_subset
+
+  ! serial i/o mesh reading
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
   logical :: you_can_start_doing_IOs
 #endif
@@ -348,16 +343,11 @@ module specfem_par_crustmantle
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_crust_mantle,rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_crust_mantle,rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
 
-!daniel debug: static
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassx_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassy_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable,target :: rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_crust_mantle
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -375,31 +365,23 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT),target :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),target :: &
     eps_trace_over_3_crust_mantle
 
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
     b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
     b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
     b_eps_trace_over_3_crust_mantle
-
-! daniel debug: static
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-!    b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
-!    b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
-
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-!    b_eps_trace_over_3_crust_mantle
 
   ! for crust/oceans coupling
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
@@ -487,6 +469,17 @@ module specfem_par_crustmantle
   integer :: num_colors_outer_crust_mantle,num_colors_inner_crust_mantle
   integer,dimension(:),allocatable :: num_elem_colors_crust_mantle
 
+  ! LDDRK time scheme
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:), allocatable :: &
+    R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
+    R_xz_crust_mantle_lddrk,R_yz_crust_mantle_lddrk
+  ! adjoint
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_crust_mantle_lddrk,b_veloc_crust_mantle_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:), allocatable :: &
+    b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
+    b_R_xz_crust_mantle_lddrk,b_R_yz_crust_mantle_lddrk
+
 end module specfem_par_crustmantle
 
 !=====================================================================
@@ -524,16 +517,11 @@ module specfem_par_innercore
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx_inner_core,rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx_inner_core,b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable,target :: rmassz_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_inner_core
 
-! daniel debug: static
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassx_inner_core
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_inner_core,rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_inner_core,b_rmassy_inner_core
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
@@ -550,31 +538,23 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT),target :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),target :: &
     eps_trace_over_3_inner_core
 
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
     b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
     b_eps_trace_over_3_inner_core
-
-!daniel debug: static
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
-!    b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
-!    b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core
-!
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
-!    b_eps_trace_over_3_inner_core
 
   ! coupling/boundary surfaces
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
@@ -600,6 +580,17 @@ module specfem_par_innercore
   ! mesh coloring
   integer :: num_colors_outer_inner_core,num_colors_inner_inner_core
   integer,dimension(:),allocatable :: num_elem_colors_inner_core
+
+  ! LDDRK time scheme
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: displ_inner_core_lddrk,veloc_inner_core_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:), allocatable :: &
+    R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
+    R_xz_inner_core_lddrk,R_yz_inner_core_lddrk
+  ! adjoint
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: b_displ_inner_core_lddrk,b_veloc_inner_core_lddrk
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:,:), allocatable :: &
+    b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
+    b_R_xz_inner_core_lddrk,b_R_yz_inner_core_lddrk
 
 end module specfem_par_innercore
 
@@ -628,7 +619,8 @@ module specfem_par_outercore
     rhostore_outer_core,kappavstore_outer_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable,target :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmass_outer_core
 
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
@@ -637,6 +629,14 @@ module specfem_par_outercore
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
+
+  ! for the Euler scheme for rotation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
+    A_array_rotation,B_array_rotation
+  !ADJOINT
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
+    b_A_array_rotation,b_B_array_rotation
+
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
@@ -696,6 +696,13 @@ module specfem_par_outercore
   ! mesh coloring
   integer :: num_colors_outer_outer_core,num_colors_inner_outer_core
   integer,dimension(:),allocatable :: num_elem_colors_outer_core
+
+  ! LDDRK time scheme
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: displ_outer_core_lddrk,veloc_outer_core_lddrk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_array_rotation_lddrk,B_array_rotation_lddrk
+  ! adjoint
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_displ_outer_core_lddrk,b_veloc_outer_core_lddrk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_A_array_rotation_lddrk,b_B_array_rotation_lddrk
 
 end module specfem_par_outercore
 

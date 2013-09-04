@@ -26,10 +26,11 @@
 !=====================================================================
 
   subroutine compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
-                                          NSPEC,NGLOB, &
-                                          A_array_rotation,B_array_rotation, &
-                                          displfluid,accelfluid, &
-                                          div_displfluid,phase_is_inner)
+                                           NSPEC,NGLOB, &
+                                           A_array_rotation,B_array_rotation, &
+                                           A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                           displfluid,accelfluid, &
+                                           div_displfluid,phase_is_inner)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -38,7 +39,8 @@
   use specfem_par,only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
-    MOVIE_VOLUME
+    MOVIE_VOLUME, &
+    USE_LDDRK,istage
 
   use specfem_par_outercore,only: &
     xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
@@ -60,8 +62,11 @@
 
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     A_array_rotation,B_array_rotation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+    A_array_rotation_lddrk,B_array_rotation_lddrk
 
   ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: displfluid,accelfluid
@@ -444,9 +449,18 @@
     enddo
     ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
-      ! use the source saved above
-      A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
-      B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
+      if(USE_LDDRK) then
+        ! use the source saved above
+        A_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec) + source_euler_A(:,:,:)
+        A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec)
+
+        B_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * B_array_rotation_lddrk(:,:,:,ispec) + source_euler_B(:,:,:)
+        B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * B_array_rotation_lddrk(:,:,:,ispec)
+      else
+        ! use the source saved above
+        A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
+        B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
+      endif
     endif
 #endif
 

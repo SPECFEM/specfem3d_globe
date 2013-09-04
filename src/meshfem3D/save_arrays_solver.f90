@@ -37,7 +37,7 @@
 
   use meshfem3D_par,only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, &
-    USE_LDDRK,ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
   use create_regions_mesh_par2,only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -243,28 +243,23 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if(.not. USE_LDDRK)then
-    if((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
-       write(IOUT) rmassx
-       write(IOUT) rmassy
-    endif
+  if( ((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+     write(IOUT) rmassx
+     write(IOUT) rmassy
   endif
 
   write(IOUT) rmassz
 
   ! mass matrices for backward simulation when ROTATION is .true.
-  if(.not. USE_LDDRK)then
-    if(EXACT_MASS_MATRIX_FOR_ROTATION)then
-      if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-         (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
-         write(IOUT) b_rmassx
-         write(IOUT) b_rmassy
-      endif
+  if(EXACT_MASS_MATRIX_FOR_ROTATION)then
+    if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+       write(IOUT) b_rmassx
+       write(IOUT) b_rmassy
     endif
   endif
-
 
   ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(IOUT) rmass_ocean_load

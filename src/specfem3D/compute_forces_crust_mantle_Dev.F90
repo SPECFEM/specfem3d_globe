@@ -32,6 +32,7 @@
                                               accel_crust_mantle, &
                                               phase_is_inner, &
                                               R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                              R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                               epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                               epsilondev_xz,epsilondev_yz, &
                                               epsilon_trace_over_3, &
@@ -45,7 +46,7 @@
   use specfem_par,only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    COMPUTE_AND_STORE_STRAIN
+    COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle,only: &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
@@ -95,6 +96,8 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
@@ -160,12 +163,6 @@
 
   integer :: num_elements,ispec_p
   integer :: iphase
-
-! for LDDRK
-!  integer :: istage
-!  logical :: USE_LDDRK
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk
-!  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
@@ -495,14 +492,24 @@
 
     if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
       ! updates R_memory
-      call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                         vnspec,factor_common, &
-                                         alphaval,betaval,gammaval, &
-                                         c44store,muvstore, &
-                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                         epsilondev_xz,epsilondev_yz, &
-                                         epsilondev_loc,is_backward_field)
-
+      if( USE_LDDRK ) then
+        call compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                                 R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                                 ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                                 c44store,muvstore, &
+                                                 epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                                 epsilondev_xz,epsilondev_yz, &
+                                                 epsilondev_loc, &
+                                                 deltat)
+      else
+        call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                           ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                           alphaval,betaval,gammaval, &
+                                           c44store,muvstore, &
+                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                           epsilondev_xz,epsilondev_yz, &
+                                           epsilondev_loc,is_backward_field)
+      endif
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme

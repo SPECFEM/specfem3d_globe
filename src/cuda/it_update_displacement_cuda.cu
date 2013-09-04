@@ -518,18 +518,18 @@ void FC_FUNC_(update_veloc_3_b_cuda,
                                              mp->NGLOB_INNER_CORE,
                                              deltatover2,
                                              mp->two_omega_earth,
-                                             mp->d_rmass_inner_core,
-                                             mp->d_rmass_inner_core,
-                                             mp->d_rmass_inner_core);
+                                             mp->d_rmassx_inner_core,
+                                             mp->d_rmassy_inner_core,
+                                             mp->d_rmassz_inner_core);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
     kernel_3_cuda_device<<< grid, threads>>>(mp->d_b_veloc_inner_core,
                                              mp->d_b_accel_inner_core,
                                              mp->NGLOB_INNER_CORE,
                                              deltatover2,
                                              mp->b_two_omega_earth,
-                                             mp->d_rmass_inner_core,
-                                             mp->d_rmass_inner_core,
-                                             mp->d_rmass_inner_core);
+                                             mp->d_rmassx_inner_core,
+                                             mp->d_rmassy_inner_core,
+                                             mp->d_rmassz_inner_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

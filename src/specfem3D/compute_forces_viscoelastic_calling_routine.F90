@@ -84,6 +84,8 @@
                phase_is_inner, &
                R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                R_xz_crust_mantle,R_yz_crust_mantle, &
+               R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
+               R_xz_crust_mantle_lddrk,R_yz_crust_mantle_lddrk, &
                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                eps_trace_over_3_crust_mantle, &
@@ -95,7 +97,10 @@
                deltat, &
                displ_inner_core,veloc_inner_core,accel_inner_core, &
                phase_is_inner, &
-               R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core, &
+               R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+               R_xz_inner_core,R_yz_inner_core, &
+               R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
+               R_xz_inner_core_lddrk,R_yz_inner_core_lddrk, &
                epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                eps_trace_over_3_inner_core,&
@@ -111,23 +116,28 @@
                phase_is_inner, &
                R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                R_xz_crust_mantle,R_yz_crust_mantle, &
+               R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
+               R_xz_crust_mantle_lddrk,R_yz_crust_mantle_lddrk, &
                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                eps_trace_over_3_crust_mantle, &
                alphaval,betaval,gammaval, &
-               factor_common_crust_mantle,size(factor_common_crust_mantle,5) )
+               factor_common_crust_mantle,size(factor_common_crust_mantle,5), .false. )
           ! inner core region
           call compute_forces_inner_core( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                NSPEC_INNER_CORE_ATTENUATION, &
                deltat, &
                displ_inner_core,veloc_inner_core,accel_inner_core, &
                phase_is_inner, &
-               R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core, &
+               R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+               R_xz_inner_core,R_yz_inner_core, &
+               R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
+               R_xz_inner_core_lddrk,R_yz_inner_core_lddrk, &
                epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                eps_trace_over_3_inner_core,&
                alphaval,betaval,gammaval, &
-               factor_common_inner_core,size(factor_common_inner_core,5) )
+               factor_common_inner_core,size(factor_common_inner_core,5), .false. )
 
        endif
     else
@@ -313,15 +323,21 @@
 
   enddo ! iphase
 
-  ! updates (only) acceleration w/ rotation in the crust/mantle region (touches oceans)
+  ! updates (only) acceleration w/ rotation in the crust/mantle and inner core region
   if(.NOT. GPU_MODE) then
-     ! on CPU
-     call update_accel_elastic(NGLOB_CRUST_MANTLE,NGLOB_XY_CM,veloc_crust_mantle,accel_crust_mantle, &
-                               two_omega_earth,rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
+    ! on CPU
+    ! crust/mantle region
+    call it_multiply_accel_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
+                                   two_omega_earth, &
+                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
+    ! inner core region
+    call it_multiply_accel_elastic(NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
+                                   two_omega_earth, &
+                                   rmassx_inner_core,rmassy_inner_core,rmassz_inner_core)
   else
-     ! on GPU
-     ! includes FORWARD_OR_ADJOINT == 1
-     call update_accel_3_a_cuda(Mesh_pointer,deltatover2,NCHUNKS_VAL,1)
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 1
+    call update_accel_3_a_cuda(Mesh_pointer,deltatover2,NCHUNKS_VAL,1)
   endif
 
   ! couples ocean with crust mantle
@@ -330,7 +346,7 @@
     if(.NOT. GPU_MODE) then
       ! on CPU
       call compute_coupling_ocean(accel_crust_mantle, &
-                                  rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
+                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                   rmass_ocean_load,normal_top_crust_mantle, &
                                   ibool_crust_mantle,ibelm_top_crust_mantle, &
                                   updated_dof_ocean_load,NGLOB_XY_CM, &
@@ -342,18 +358,13 @@
     endif
   endif
 
-  ! Newmark time scheme:
-  ! corrector terms for elastic parts
-  ! (updates velocity)
-  if(.NOT. GPU_MODE ) then
-    ! on CPU
-    call update_veloc_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
-                              NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
-                              deltatover2,two_omega_earth,rmass_inner_core)
+  ! time scheme update
+  if( USE_LDDRK ) then
+    ! runge-kutta scheme
+    call update_veloc_elastic_lddrk()
   else
-    ! on GPU
-    ! includes FORWARD_OR_ADJOINT == 1
-    call update_veloc_3_b_cuda(Mesh_pointer,deltatover2,1)
+    ! Newmark time scheme
+    call update_veloc_elastic_newmark()
   endif
 
   end subroutine compute_forces_viscoelastic
@@ -458,6 +469,8 @@
               phase_is_inner, &
               b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
               b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
+              b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
+              b_R_xz_crust_mantle_lddrk,b_R_yz_crust_mantle_lddrk, &
               b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,&
               b_epsilondev_xy_crust_mantle, &
               b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
@@ -472,6 +485,8 @@
               phase_is_inner, &
               b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
               b_R_xz_inner_core,b_R_yz_inner_core, &
+              b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
+              b_R_xz_inner_core_lddrk,b_R_yz_inner_core_lddrk, &
               b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
               b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
               b_eps_trace_over_3_inner_core,&
@@ -488,12 +503,14 @@
               phase_is_inner, &
               b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
               b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
+              b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
+              b_R_xz_crust_mantle_lddrk,b_R_yz_crust_mantle_lddrk, &
               b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,&
               b_epsilondev_xy_crust_mantle, &
               b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
               b_eps_trace_over_3_crust_mantle, &
               b_alphaval,b_betaval,b_gammaval, &
-              factor_common_crust_mantle,size(factor_common_crust_mantle,5) )
+              factor_common_crust_mantle,size(factor_common_crust_mantle,5), .true. )
 
         ! inner core region
         call compute_forces_inner_core( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
@@ -503,11 +520,13 @@
               phase_is_inner, &
               b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
               b_R_xz_inner_core,b_R_yz_inner_core, &
+              b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
+              b_R_xz_inner_core_lddrk,b_R_yz_inner_core_lddrk, &
               b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
               b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
               b_eps_trace_over_3_inner_core,&
               b_alphaval,b_betaval,b_gammaval, &
-              factor_common_inner_core,size(factor_common_inner_core,5) )
+              factor_common_inner_core,size(factor_common_inner_core,5), .true. )
       endif
     else
       ! on GPU
@@ -521,70 +540,75 @@
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
 
-       ! absorbing boundaries
-       ! Stacey
-       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_crust_mantle_backward()
+      ! absorbing boundaries
+      ! Stacey
+      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+        if( UNDO_ATTENUATION ) then
+          call compute_stacey_crust_mantle_backward_undoatt()
+        else
+          call compute_stacey_crust_mantle_backward()
+        endif
+      endif
 
-       ! add the sources
-       select case( NOISE_TOMOGRAPHY )
-       case( 0 )
-          ! add sources for backward/reconstructed wavefield
-          if( nsources_local > 0 ) &
-            call compute_add_sources_backward()
+      ! add the sources
+      select case( NOISE_TOMOGRAPHY )
+      case( 0 )
+        ! add sources for backward/reconstructed wavefield
+        if( nsources_local > 0 ) &
+          call compute_add_sources_backward()
 
-       case( 3 )
-          ! third step of noise tomography, i.e., read the surface movie saved at every timestep
-          ! use the movie to reconstruct the ensemble forward wavefield
-          ! the ensemble adjoint wavefield is done as usual
-          ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
-          call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
+      case( 3 )
+        ! third step of noise tomography, i.e., read the surface movie saved at every timestep
+        ! use the movie to reconstruct the ensemble forward wavefield
+        ! the ensemble adjoint wavefield is done as usual
+        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
+        call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
 
-       end select
+      end select
 
-       ! ****************************************************
-       ! **********  add matching with fluid part  **********
-       ! ****************************************************
-       ! only for elements in first matching layer in the solid
-       if( .not. GPU_MODE ) then
-          ! on CPU
-          !---
-          !--- couple with outer core at the bottom of the mantle
-          !---
-          if(ACTUALLY_COUPLE_FLUID_CMB) &
-            call compute_coupling_CMB_fluid(b_displ_crust_mantle,b_accel_crust_mantle, &
-                                            ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                            b_accel_outer_core, &
-                                            normal_top_outer_core,jacobian2D_top_outer_core, &
-                                            wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                                            RHO_TOP_OC,minus_g_cmb, &
-                                            NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
+      ! ****************************************************
+      ! **********  add matching with fluid part  **********
+      ! ****************************************************
+      ! only for elements in first matching layer in the solid
+      if( .not. GPU_MODE ) then
+        ! on CPU
+        !---
+        !--- couple with outer core at the bottom of the mantle
+        !---
+        if(ACTUALLY_COUPLE_FLUID_CMB) &
+          call compute_coupling_CMB_fluid(b_displ_crust_mantle,b_accel_crust_mantle, &
+                                          ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                          b_accel_outer_core, &
+                                          normal_top_outer_core,jacobian2D_top_outer_core, &
+                                          wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                          RHO_TOP_OC,minus_g_cmb, &
+                                          NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
 
-          !---
-          !--- couple with outer core at the top of the inner core
-          !---
-          if(ACTUALLY_COUPLE_FLUID_ICB) &
-            call compute_coupling_ICB_fluid(b_displ_inner_core,b_accel_inner_core, &
-                                            ibool_inner_core,ibelm_top_inner_core,  &
-                                            b_accel_outer_core, &
-                                            normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-                                            wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                                            RHO_BOTTOM_OC,minus_g_icb, &
-                                            NSPEC2D_TOP(IREGION_INNER_CORE))
+        !---
+        !--- couple with outer core at the top of the inner core
+        !---
+        if(ACTUALLY_COUPLE_FLUID_ICB) &
+          call compute_coupling_ICB_fluid(b_displ_inner_core,b_accel_inner_core, &
+                                          ibool_inner_core,ibelm_top_inner_core,  &
+                                          b_accel_outer_core, &
+                                          normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+                                          wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+                                          RHO_BOTTOM_OC,minus_g_icb, &
+                                          NSPEC2D_TOP(IREGION_INNER_CORE))
 
-       else
-          ! on GPU
-          !---
-          !--- couple with outer core at the bottom of the mantle
-          !---
-          if( ACTUALLY_COUPLE_FLUID_CMB ) &
-               call compute_coupling_cmb_fluid_cuda(Mesh_pointer,3)
-          !---
-          !--- couple with outer core at the top of the inner core
-          !---
-          if( ACTUALLY_COUPLE_FLUID_ICB ) &
-               call compute_coupling_icb_fluid_cuda(Mesh_pointer,3)
-
-       endif
+      else
+        ! on GPU
+        !---
+        !--- couple with outer core at the bottom of the mantle
+        !---
+        if( ACTUALLY_COUPLE_FLUID_CMB ) &
+          call compute_coupling_cmb_fluid_cuda(Mesh_pointer,3)
+        !---
+        !--- couple with outer core at the top of the inner core
+        !---
+        if( ACTUALLY_COUPLE_FLUID_ICB ) &
+          call compute_coupling_icb_fluid_cuda(Mesh_pointer,3)
+      endif
     endif ! iphase == 1
 
     ! assemble all the contributions between slices using MPI
@@ -677,12 +701,18 @@
 
   enddo ! iphase
 
-  ! updates (only) acceleration w/ rotation in the crust/mantle region (touches oceans)
+  ! updates (only) acceleration w/ rotation in the crust/mantle and inner core region
   if(.NOT. GPU_MODE) then
     ! on CPU
     ! adjoint / kernel runs
-    call update_accel_elastic(NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_XY_CM,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                              b_two_omega_earth,rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
+    ! crust/mantle region
+    call it_multiply_accel_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                   b_two_omega_earth, &
+                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle)
+    ! inner core region
+    call it_multiply_accel_elastic(NGLOB_INNER_CORE,b_veloc_inner_core,b_accel_inner_core, &
+                                   b_two_omega_earth, &
+                                   b_rmassx_inner_core,b_rmassy_inner_core,b_rmassz_inner_core)
   else
      ! on GPU
      ! includes FORWARD_OR_ADJOINT == 3
@@ -695,7 +725,7 @@
     if(.NOT. GPU_MODE) then
       ! on CPU
       call compute_coupling_ocean(b_accel_crust_mantle, &
-                                  rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
+                                  b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle, &
                                   rmass_ocean_load,normal_top_crust_mantle, &
                                   ibool_crust_mantle,ibelm_top_crust_mantle, &
                                   updated_dof_ocean_load,NGLOB_XY_CM, &
@@ -707,19 +737,13 @@
     endif
   endif
 
-  ! Newmark time scheme:
-  ! corrector terms for elastic parts
-  ! (updates velocity)
-  if(.NOT. GPU_MODE ) then
-    ! on CPU
-    ! adjoint / kernel runs
-    call update_veloc_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                              NGLOB_INNER_CORE_ADJOINT,b_veloc_inner_core,b_accel_inner_core, &
-                              b_deltatover2,b_two_omega_earth,rmass_inner_core)
+  ! time scheme update
+  if( USE_LDDRK ) then
+    ! runge-kutta scheme
+    call update_veloc_elastic_lddrk_backward()
   else
-    ! on GPU
-    ! includes FORWARD_OR_ADJOINT == 3
-    call update_veloc_3_b_cuda(Mesh_pointer,b_deltatover2,3)
+    ! Newmark time scheme
+    call update_veloc_elastic_newmark_backward()
   endif
 
 

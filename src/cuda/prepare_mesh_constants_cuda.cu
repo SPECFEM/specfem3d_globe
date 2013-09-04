@@ -627,13 +627,24 @@ void FC_FUNC_(prepare_fields_strain_device,
 
   // backward/reconstructed fields
   if( mp->simulation_type == 3 ){
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_xx_crust_mantle,b_epsilondev_xx_crust_mantle,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_yy_crust_mantle,b_epsilondev_yy_crust_mantle,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_xy_crust_mantle,b_epsilondev_xy_crust_mantle,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_xz_crust_mantle,b_epsilondev_xz_crust_mantle,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_yz_crust_mantle,b_epsilondev_yz_crust_mantle,R_size);
-    //strain
-    copy_todevice_realw((void**)&mp->d_b_eps_trace_over_3_crust_mantle,b_eps_trace_over_3_crust_mantle,R_size);
+    if( mp->undo_attenuation ){
+      // strain will be computed locally based on displacement wavefield
+      // only uses pointers to already allocated arrays
+      mp->d_b_epsilondev_xx_crust_mantle = mp->d_epsilondev_xx_crust_mantle;
+      mp->d_b_epsilondev_yy_crust_mantle = mp->d_epsilondev_yy_crust_mantle;
+      mp->d_b_epsilondev_xy_crust_mantle = mp->d_epsilondev_xy_crust_mantle;
+      mp->d_b_epsilondev_xz_crust_mantle = mp->d_epsilondev_xz_crust_mantle;
+      mp->d_b_epsilondev_yz_crust_mantle = mp->d_epsilondev_yz_crust_mantle;
+      mp->d_b_eps_trace_over_3_crust_mantle = mp->d_eps_trace_over_3_crust_mantle;
+    }else{
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_xx_crust_mantle,b_epsilondev_xx_crust_mantle,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_yy_crust_mantle,b_epsilondev_yy_crust_mantle,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_xy_crust_mantle,b_epsilondev_xy_crust_mantle,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_xz_crust_mantle,b_epsilondev_xz_crust_mantle,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_yz_crust_mantle,b_epsilondev_yz_crust_mantle,R_size);
+      //strain
+      copy_todevice_realw((void**)&mp->d_b_eps_trace_over_3_crust_mantle,b_eps_trace_over_3_crust_mantle,R_size);
+    }
   }
 
   // inner_core
@@ -650,13 +661,24 @@ void FC_FUNC_(prepare_fields_strain_device,
 
   // backward/reconstructed fields
   if( mp->simulation_type == 3 ){
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_xx_inner_core,b_epsilondev_xx_inner_core,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_yy_inner_core,b_epsilondev_yy_inner_core,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_xy_inner_core,b_epsilondev_xy_inner_core,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_xz_inner_core,b_epsilondev_xz_inner_core,R_size);
-    copy_todevice_realw((void**)&mp->d_b_epsilondev_yz_inner_core,b_epsilondev_yz_inner_core,R_size);
-    // strain
-    copy_todevice_realw((void**)&mp->d_b_eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core,R_size);
+    if( mp->undo_attenuation ){
+      // strain will be computed locally based on displacement wavefield
+      // only uses pointers to already allocated arrays
+      mp->d_b_epsilondev_xx_inner_core = mp->d_epsilondev_xx_inner_core;
+      mp->d_b_epsilondev_yy_inner_core = mp->d_epsilondev_yy_inner_core;
+      mp->d_b_epsilondev_xy_inner_core = mp->d_epsilondev_xy_inner_core;
+      mp->d_b_epsilondev_xz_inner_core = mp->d_epsilondev_xz_inner_core;
+      mp->d_b_epsilondev_yz_inner_core = mp->d_epsilondev_yz_inner_core;
+      mp->d_b_eps_trace_over_3_inner_core = mp->d_eps_trace_over_3_inner_core;
+    }else{
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_xx_inner_core,b_epsilondev_xx_inner_core,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_yy_inner_core,b_epsilondev_yy_inner_core,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_xy_inner_core,b_epsilondev_xy_inner_core,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_xz_inner_core,b_epsilondev_xz_inner_core,R_size);
+      copy_todevice_realw((void**)&mp->d_b_epsilondev_yz_inner_core,b_epsilondev_yz_inner_core,R_size);
+      // strain
+      copy_todevice_realw((void**)&mp->d_b_eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core,R_size);
+    }
   }
 }
 
@@ -1338,11 +1360,14 @@ void FC_FUNC_(prepare_crust_mantle_device,
 
 
   // mass matrices
+  copy_todevice_realw((void**)&mp->d_rmassz_crust_mantle,h_rmassz,size_glob);
   if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
     copy_todevice_realw((void**)&mp->d_rmassx_crust_mantle,h_rmassx,size_glob);
     copy_todevice_realw((void**)&mp->d_rmassy_crust_mantle,h_rmassy,size_glob);
+  }else{
+    mp->d_rmassx_crust_mantle = mp->d_rmassz_crust_mantle;
+    mp->d_rmassy_crust_mantle = mp->d_rmassz_crust_mantle;
   }
-  copy_todevice_realw((void**)&mp->d_rmassz_crust_mantle,h_rmassz,size_glob);
 
   // kernels
   if( mp->simulation_type == 3 ){
@@ -1589,7 +1614,7 @@ void FC_FUNC_(prepare_inner_core_device,
                                          realw* h_etax, realw* h_etay, realw* h_etaz,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav, realw* h_muv,
-                                         realw* h_rmass,
+                                         realw* h_rmassx,realw* h_rmassy,realw* h_rmassz,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          realw *c11store,realw *c12store,realw *c13store,
@@ -1766,7 +1791,9 @@ void FC_FUNC_(prepare_inner_core_device,
   #endif
 
   // mass matrix
-  copy_todevice_realw((void**)&mp->d_rmass_inner_core,h_rmass,size_glob);
+  copy_todevice_realw((void**)&mp->d_rmassx_inner_core,h_rmassx,size_glob);
+  copy_todevice_realw((void**)&mp->d_rmassy_inner_core,h_rmassy,size_glob);
+  copy_todevice_realw((void**)&mp->d_rmassz_inner_core,h_rmassz,size_glob);
 
   // kernels
   if( mp->simulation_type == 3 ){
@@ -1915,7 +1942,7 @@ TRACE("prepare_cleanup_device");
 
     cudaFree(mp->d_eps_trace_over_3_crust_mantle);
     cudaFree(mp->d_eps_trace_over_3_inner_core);
-    if( mp->simulation_type == 3 ){
+    if( mp->simulation_type == 3 && ! mp->undo_attenuation ){
       cudaFree(mp->d_b_epsilondev_xx_crust_mantle);
       cudaFree(mp->d_b_epsilondev_yy_crust_mantle);
       cudaFree(mp->d_b_epsilondev_xy_crust_mantle);
@@ -2244,7 +2271,9 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_beta_kl_inner_core);
   }
   // mass matrix
-  cudaFree(mp->d_rmass_inner_core);
+  cudaFree(mp->d_rmassx_inner_core);
+  cudaFree(mp->d_rmassy_inner_core);
+  cudaFree(mp->d_rmassz_inner_core);
 
   // oceans
   if( mp->oceans ){

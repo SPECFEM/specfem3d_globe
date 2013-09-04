@@ -49,7 +49,7 @@
   use constants
   use shared_parameters,only: ATT1,ATT2,ATT3, &
     APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
-    USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
+    EXACT_MASS_MATRIX_FOR_ROTATION, &
     OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY, &
     ONE_CRUST,NCHUNKS, &
@@ -323,7 +323,7 @@
   static_memory_size = static_memory_size + &
     12.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
-  ! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmass_inner_core
+  ! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmassz_inner_core
   static_memory_size = static_memory_size + &
     4.d0*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
@@ -510,30 +510,32 @@
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
+  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
   else
      NGLOB_XY_CM = 1
   endif
 
-  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    if(ROTATION) then
-      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-    endif
+  if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+    NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
   endif
 
   ! rmassx_crust_mantle,rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
 
-  ! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
-  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
+  if( SIMULATION_TYPE == 3 ) then
+    ! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
+    static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
+  endif
 
   ! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
 
-  ! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
-  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
+  if( SIMULATION_TYPE == 3 ) then
+    ! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
+    static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
+  endif
 
   end subroutine memory_eval
 

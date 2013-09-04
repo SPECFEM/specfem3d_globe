@@ -315,6 +315,15 @@
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
+  integer :: it_tmp
+
+  ! iteration step
+  if( UNDO_ATTENUATION ) then
+    it_tmp = iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1
+  else
+    it_tmp = it
+  endif
+
   if( .not. GPU_MODE ) then
     ! on CPU
     do isource = 1,NSOURCES
@@ -351,7 +360,7 @@
            !endif
 
            ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),f0)
+           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
 
            ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
            ! note: time step is now at NSTEP-it
@@ -361,7 +370,7 @@
         else
 
           ! see note above: time step corresponds now to NSTEP-it
-          stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          stf = comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
 
           !     distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
@@ -396,12 +405,12 @@
     if(USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
         stf_pre_compute(isource) = &
-          FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),f0)
+          FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
       enddo
     else
       do isource = 1,NSOURCES
         stf_pre_compute(isource) = &
-          comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM=0)
