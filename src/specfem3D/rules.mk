@@ -59,6 +59,7 @@ specfem3D_OBJECTS += \
 	$O/compute_boundary_kernel.solverstatic.o \
 	$O/compute_coupling.solverstatic.o \
 	$O/compute_element.solverstatic.o \
+	$O/compute_element_att_memory.solverstatic.o \
 	$O/compute_element_strain.solverstatic.o \
 	$O/compute_forces_acoustic_calling_routine.solverstatic.o \
 	$O/compute_forces_viscoelastic_calling_routine.solverstatic.o \
@@ -76,9 +77,10 @@ specfem3D_OBJECTS += \
 	$O/get_attenuation.solverstatic.o \
 	$O/initialize_simulation.solverstatic.o \
 	$O/iterate_time.solverstatic.o \
+	$O/iterate_time_undoatt.solverstatic.o \
 	$O/locate_receivers.solverstatic.o \
 	$O/locate_regular_points.solverstatic.o \
-	$O/locate_sources.solver.o \
+	$O/locate_sources.solverstatic.o \
 	$O/noise_tomography.solverstatic.o \
 	$O/prepare_timerun.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
@@ -91,11 +93,12 @@ specfem3D_OBJECTS += \
 	$O/setup_GLL_points.solverstatic.o \
 	$O/setup_sources_receivers.solverstatic.o \
 	$O/specfem3D.solverstatic.o \
+	$O/update_displacement_LDDRK.solverstatic.o \
 	$O/update_displacement_Newmark.solverstatic.o \
 	$O/write_movie_output.solverstatic.o \
 	$O/write_movie_volume.solverstatic.o \
 	$O/write_movie_surface.solverstatic.o \
-	$O/write_seismograms.solver.o \
+	$O/write_seismograms.solverstatic.o \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory

@@ -411,7 +411,9 @@ typedef struct mesh_ {
   // model parameters
   realw* d_rhostore_inner_core;
   realw* d_kappavstore_inner_core; realw* d_muvstore_inner_core;
-  realw* d_rmass_inner_core;
+  realw* d_rmassx_inner_core;
+  realw* d_rmassy_inner_core;
+  realw* d_rmassz_inner_core;
 
   // global indexing
   int* d_ibool_inner_core;

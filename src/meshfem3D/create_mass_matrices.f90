@@ -48,7 +48,7 @@
 
   use meshfem3D_par,only: &
     NCHUNKS,ABSORBING_CONDITIONS, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
   use create_regions_mesh_par,only: &
     wxgll,wygll,wzgll
@@ -175,28 +175,37 @@
   endif
 
   ! then make the corrections to the copied mass matrices if needed
-  if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. .not. USE_LDDRK) then
+  if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
     call create_mass_matrices_rotation(myrank,nspec,ibool,idoubling,iregion_code)
   endif
 
   ! absorbing boundaries
   ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK ) then
-    call create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code, &
-                                    NSPEC2D_BOTTOM)
+  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
+    call create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code,NSPEC2D_BOTTOM)
   endif
 
   ! check that mass matrix is positive
-  ! note: in fictitious elements it is still zero
-  if(minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
-
-  ! check that the additional mass matrices are strictly positive, if they exist
-  if(nglob_xy == nglob) then
-    if(minval(rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
-    if(minval(rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
-
-    if(minval(b_rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
-    if(minval(b_rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
+  if( iregion_code == IREGION_INNER_CORE ) then
+    ! note: in fictitious elements mass matrix is still zero
+    if(minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
+    ! check that the additional mass matrices are positive, if they exist
+    if(nglob_xy == nglob) then
+      if(minval(rmassx) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
+      if(minval(rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
+      if(minval(b_rmassx) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
+      if(minval(b_rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
+    endif
+  else
+    ! no ficticious elements, mass matrix must be strictly positive
+    if(minval(rmassz(:)) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
+    ! check that the additional mass matrices are strictly positive, if they exist
+    if(nglob_xy == nglob) then
+      if(minval(rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
+      if(minval(rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
+      if(minval(b_rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
+      if(minval(b_rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
+    endif
   endif
 
   ! save ocean load mass matrix as well if oceans
@@ -776,7 +785,7 @@
   use constants
 
   use meshfem3D_models_par,only: &
-    TOPOGRAPHY,ibathy_topo
+    TOPOGRAPHY,ibathy_topo,CASE_3D
 
   use meshfem3D_par,only: &
     RHO_OCEANS
@@ -807,6 +816,25 @@
 
   integer :: ispec,i,j,k,iglob,ispec2D
 
+  logical :: do_ocean_load
+
+  ! initializes
+  do_ocean_load = .false.
+
+  ! note: old version (5.1.5)
+  ! only for models where 3D crustal stretching was used (even without topography?)
+  if( USE_VERSION_5_1_5 ) then
+    if( CASE_3D ) then
+      do_ocean_load = .true.
+    endif
+  else
+    ! note: new version:
+    ! for 3D Earth with topography, compute local height of oceans
+    if( TOPOGRAPHY ) then
+      do_ocean_load = .true.
+    endif
+  endif
+
   ! create ocean load mass matrix for degrees of freedom at ocean bottom
   rmass_ocean_load(:) = 0._CUSTOM_REAL
 
@@ -824,14 +852,8 @@
     do j = 1,NGLLY
       do i = 1,NGLLX
 
-        ! note: old version (5.1.4)
-        ! only for models where 3D crustal stretching was used (even without topography?)
-        !if( CASE_3D ) then
-
-        ! note: new version:
         ! for 3D Earth with topography, compute local height of oceans
-        if( TOPOGRAPHY ) then
-
+        if( do_ocean_load ) then
 
           ! get coordinates of current point
           xval = xstore(i,j,k,ispec)
@@ -841,17 +863,29 @@
           ! map to latitude and longitude for bathymetry routine
           ! slightly move points to avoid roundoff problem when exactly on the polar axis
           call xyz_2_rthetaphi_dble(xval,yval,zval,rval,theta,phi)
-!! DK DK Jul 2013: added a test to only do this if we are on the axis
-          if(abs(theta) > 89.99d0) then
-            theta = theta + 0.0000001d0
-            phi = phi + 0.0000001d0
+
+          if( USE_VERSION_5_1_5 ) then
+            !continue
+          else
+            ! adds small margins
+  !! DK DK Jul 2013: added a test to only do this if we are on the axis
+            if(abs(theta) > 89.99d0) then
+              theta = theta + 0.0000001d0
+              phi = phi + 0.0000001d0
+            endif
           endif
+
           call reduce(theta,phi)
 
           ! convert the geocentric colatitude to a geographic colatitude
-          if( .not. ASSUME_PERFECT_SPHERE) then
+          if( USE_VERSION_5_1_5 ) then
             theta = PI_OVER_TWO - &
-              datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+                datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+          else
+            if( .not. ASSUME_PERFECT_SPHERE) then
+              theta = PI_OVER_TWO - &
+                datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+            endif
           endif
 
           ! get geographic latitude and longitude in degrees
@@ -897,5 +931,5 @@
   ! add regular mass matrix to ocean load contribution
   rmass_ocean_load(:) = rmass_ocean_load(:) + rmassz(:)
 
-
   end subroutine create_mass_matrices_ocean_load
+

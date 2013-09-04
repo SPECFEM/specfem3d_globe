@@ -34,7 +34,7 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_VERSION_5_1_5
 
   use meshfem3D_par,only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
@@ -96,14 +96,18 @@
     !          nevertheless its moho depth should be set and will be used in linear stretching
     if( moho < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
 
-    ! limits moho depth to a threshold value to avoid stretching problems
-    if( moho < MOHO_MINIMUM ) then
-      print*,'moho value exceeds minimum: ',moho,MOHO_MINIMUM,'in km: ',moho*R_EARTH_KM
-      moho = MOHO_MINIMUM
-    endif
-    if( moho > MOHO_MAXIMUM ) then
-      print*,'moho value exceeds maximum: ',moho,MOHO_MAXIMUM,'in km: ',moho*R_EARTH_KM
-      moho = MOHO_MAXIMUM
+    if( USE_VERSION_5_1_5 ) then
+      ! continue
+    else
+      ! limits moho depth to a threshold value to avoid stretching problems
+      if( moho < MOHO_MINIMUM ) then
+        print*,'moho value exceeds minimum: ',moho,MOHO_MINIMUM,'in km: ',moho*R_EARTH_KM
+        moho = MOHO_MINIMUM
+      endif
+      if( moho > MOHO_MAXIMUM ) then
+        print*,'moho value exceeds maximum: ',moho,MOHO_MAXIMUM,'in km: ',moho*R_EARTH_KM
+        moho = MOHO_MAXIMUM
+      endif
     endif
 
     ! radius of moho depth (normalized)

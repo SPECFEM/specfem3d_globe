@@ -32,11 +32,12 @@
                                         accel_crust_mantle, &
                                         phase_is_inner, &
                                         R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                        R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
                                         alphaval,betaval,gammaval, &
-                                        factor_common,vnspec)
+                                        factor_common,vnspec,is_backward_field)
 
   use constants_solver
 
@@ -44,7 +45,7 @@
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    COMPUTE_AND_STORE_STRAIN
+    COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle,only: &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
@@ -87,6 +88,8 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
@@ -99,12 +102,14 @@
   ! inner/outer element run flag
   logical :: phase_is_inner
 
+  logical :: is_backward_field
+
   ! local parameters
 
   ! for attenuation
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ)   :: factor_common_c44_muv
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ)   :: factor_common_c44_muv
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
@@ -804,53 +809,25 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
     if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
-
-! use Runge-Kutta scheme to march in time
-      do i_SLS = 1,N_SLS
-
-! get coefficients for that standard linear solid
-! IMPROVE we use mu_v here even if there is some anisotropy
-! IMPROVE we should probably use an average value instead
-
-        ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-        if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-          if(ANISOTROPIC_3D_MANTLE_VAL) then
-            factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
-          else
-            factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-          endif
-        else
-          if(ANISOTROPIC_3D_MANTLE_VAL) then
-            factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
-          else
-            factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-          endif
-        endif
-
-!        do i_memory = 1,5
-!          R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * &
-!                    R_memory(i_memory,i_SLS,:,:,:,ispec) + &
-!                    factor_common_c44_muv * &
-!                    (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + &
-!                    gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-!        enddo
-
-        R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-              (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-
-        R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-              (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-
-        R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-              (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-
-        R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-              (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-
-        R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-              (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-
-      enddo
+      ! updates R_memory
+      if( USE_LDDRK ) then
+        call compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                                 R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                                 ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                                 c44store,muvstore, &
+                                                 epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                                 epsilondev_xz,epsilondev_yz, &
+                                                 epsilondev_loc, &
+                                                 deltat)
+      else
+        call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                           ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                           alphaval,betaval,gammaval, &
+                                           c44store,muvstore, &
+                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                           epsilondev_xz,epsilondev_yz, &
+                                           epsilondev_loc,is_backward_field)
+      endif
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme

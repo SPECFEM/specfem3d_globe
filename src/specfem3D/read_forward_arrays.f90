@@ -40,7 +40,10 @@
   integer :: ier
   character(len=150) outputname
 
-  ! checks
+  ! checks if anything to do
+  if( UNDO_ATTENUATION ) return
+
+  ! checks run/checkpoint number
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
@@ -57,9 +60,6 @@
     ! Last run may be a bit larger
     it_end = NSTEP
   endif
-
-  ! checks if anything to do
-  if( UNDO_ATTENUATION ) return
 
   ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
@@ -113,53 +113,6 @@
     endif
   endif
 
-  ! initializes backward/reconstructed arrays
-  if (SIMULATION_TYPE == 3) then
-    ! initializes wavefields
-    b_displ_crust_mantle = 0._CUSTOM_REAL
-    b_veloc_crust_mantle = 0._CUSTOM_REAL
-    b_accel_crust_mantle = 0._CUSTOM_REAL
-
-    b_displ_inner_core = 0._CUSTOM_REAL
-    b_veloc_inner_core = 0._CUSTOM_REAL
-    b_accel_inner_core = 0._CUSTOM_REAL
-
-    b_displ_outer_core = 0._CUSTOM_REAL
-    b_veloc_outer_core = 0._CUSTOM_REAL
-    b_accel_outer_core = 0._CUSTOM_REAL
-
-    b_epsilondev_xx_crust_mantle = 0._CUSTOM_REAL
-    b_epsilondev_yy_crust_mantle = 0._CUSTOM_REAL
-    b_epsilondev_xy_crust_mantle = 0._CUSTOM_REAL
-    b_epsilondev_xz_crust_mantle = 0._CUSTOM_REAL
-    b_epsilondev_yz_crust_mantle = 0._CUSTOM_REAL
-
-    b_epsilondev_xx_inner_core = 0._CUSTOM_REAL
-    b_epsilondev_yy_inner_core = 0._CUSTOM_REAL
-    b_epsilondev_xy_inner_core = 0._CUSTOM_REAL
-    b_epsilondev_xz_inner_core = 0._CUSTOM_REAL
-    b_epsilondev_yz_inner_core = 0._CUSTOM_REAL
-
-    if (ROTATION_VAL) then
-      b_A_array_rotation = 0._CUSTOM_REAL
-      b_B_array_rotation = 0._CUSTOM_REAL
-    endif
-
-    if (ATTENUATION_VAL) then
-      b_R_xx_crust_mantle = 0._CUSTOM_REAL
-      b_R_yy_crust_mantle = 0._CUSTOM_REAL
-      b_R_xy_crust_mantle = 0._CUSTOM_REAL
-      b_R_xz_crust_mantle = 0._CUSTOM_REAL
-      b_R_yz_crust_mantle = 0._CUSTOM_REAL
-
-      b_R_xx_inner_core = 0._CUSTOM_REAL
-      b_R_yy_inner_core = 0._CUSTOM_REAL
-      b_R_xy_inner_core = 0._CUSTOM_REAL
-      b_R_xz_inner_core = 0._CUSTOM_REAL
-      b_R_yz_inner_core = 0._CUSTOM_REAL
-    endif
-  endif
-
   end subroutine read_forward_arrays_startrun
 
 !
@@ -181,6 +134,10 @@
   integer :: ier
   character(len=150) outputname
 
+  ! checks if anything to do
+  if( UNDO_ATTENUATION ) return
+
+  ! reads in file data
   if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
     call read_forward_arrays_adios()
   else
@@ -205,19 +162,17 @@
     read(IIN) b_veloc_outer_core
     read(IIN) b_accel_outer_core
 
-    if( .not. UNDO_ATTENUATION ) then
-      read(IIN) b_epsilondev_xx_crust_mantle
-      read(IIN) b_epsilondev_yy_crust_mantle
-      read(IIN) b_epsilondev_xy_crust_mantle
-      read(IIN) b_epsilondev_xz_crust_mantle
-      read(IIN) b_epsilondev_yz_crust_mantle
+    read(IIN) b_epsilondev_xx_crust_mantle
+    read(IIN) b_epsilondev_yy_crust_mantle
+    read(IIN) b_epsilondev_xy_crust_mantle
+    read(IIN) b_epsilondev_xz_crust_mantle
+    read(IIN) b_epsilondev_yz_crust_mantle
 
-      read(IIN) b_epsilondev_xx_inner_core
-      read(IIN) b_epsilondev_yy_inner_core
-      read(IIN) b_epsilondev_xy_inner_core
-      read(IIN) b_epsilondev_xz_inner_core
-      read(IIN) b_epsilondev_yz_inner_core
-    endif
+    read(IIN) b_epsilondev_xx_inner_core
+    read(IIN) b_epsilondev_yy_inner_core
+    read(IIN) b_epsilondev_xy_inner_core
+    read(IIN) b_epsilondev_xz_inner_core
+    read(IIN) b_epsilondev_yz_inner_core
 
     if (ROTATION_VAL) then
       read(IIN) b_A_array_rotation
@@ -288,7 +243,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_forward_arrays_undoatt(iteration_on_subset)
+  subroutine read_forward_arrays_undoatt()
 
 ! reads in saved wavefields
 
@@ -299,13 +254,16 @@
 
   implicit none
 
-  integer :: iteration_on_subset
-
   ! local parameters
+  integer :: iteration_on_subset_tmp
   integer :: ier
   character(len=150) :: outputname
 
-  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
+  ! current subset iteration
+  iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
+
+  ! reads in saved wavefield
+  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
   open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for reading')
 

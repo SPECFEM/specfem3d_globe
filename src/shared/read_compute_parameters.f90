@@ -107,15 +107,7 @@
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
-  call get_timestep_and_layers(DT,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-                          NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,&
-                          NER_600_400,NER_670_600,NER_771_670, &
-                          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                          NER_TOP_CENTRAL_CUBE_ICB,R_CENTRAL_CUBE, &
-                          NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-                          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-                          ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
-                          ANISOTROPIC_INNER_CORE)
+  call get_timestep_and_layers(NEX_MAX)
 
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
@@ -130,7 +122,9 @@
   endif
 
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+  endif
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
@@ -138,9 +132,10 @@
 
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
-  if(HDUR_MOVIE <= TINYVAL) &
+  if(HDUR_MOVIE <= TINYVAL) then
     HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
+  endif
 
   ! checks parameters
   call rcp_check_parameters()
@@ -306,6 +301,10 @@
 
   if(UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'MOVIE_VOLUME_TYPE == 4 is not implemented for UNDO_ATTENUATION in order to save memory'
+
+  !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
+  if( UNDO_ATTENUATION .and. NUMBER_OF_RUNS /= 1) &
+    stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATTENUATION'
 
   if(UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'

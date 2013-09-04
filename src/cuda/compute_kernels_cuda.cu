@@ -247,6 +247,11 @@ TRACE("compute_kernels_cm_cuda");
                                                    mp->NSPEC_CRUST_MANTLE,
                                                    deltat);
 
+  // checks if strain is available
+  if( mp->undo_attenuation ){
+    exit_on_error("compute_kernels_cm_cuda not implemented yet for UNDO_ATTENUATION");
+  }
+
   if(! mp->anisotropic_kl){
     // isotropic kernels
     compute_kernels_iso_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,
@@ -323,6 +328,12 @@ void FC_FUNC_(compute_kernels_ic_cuda,
                                                    mp->d_rho_kl_inner_core,
                                                    mp->NSPEC_INNER_CORE,
                                                    deltat);
+
+  // checks if strain is available
+  if( mp->undo_attenuation ){
+    exit_on_error("compute_kernels_ic_cuda not implemented yet for UNDO_ATTENUATION");
+  }
+
   // isotropic kernels (shear, bulk)
   compute_kernels_iso_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_inner_core,
                                                    mp->d_epsilondev_yy_inner_core,

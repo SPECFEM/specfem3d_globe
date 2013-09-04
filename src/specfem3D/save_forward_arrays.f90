@@ -125,19 +125,17 @@
       write(IOUT) veloc_outer_core
       write(IOUT) accel_outer_core
 
-      if( .not. UNDO_ATTENUATION ) then
-        write(IOUT) epsilondev_xx_crust_mantle
-        write(IOUT) epsilondev_yy_crust_mantle
-        write(IOUT) epsilondev_xy_crust_mantle
-        write(IOUT) epsilondev_xz_crust_mantle
-        write(IOUT) epsilondev_yz_crust_mantle
+      write(IOUT) epsilondev_xx_crust_mantle
+      write(IOUT) epsilondev_yy_crust_mantle
+      write(IOUT) epsilondev_xy_crust_mantle
+      write(IOUT) epsilondev_xz_crust_mantle
+      write(IOUT) epsilondev_yz_crust_mantle
 
-        write(IOUT) epsilondev_xx_inner_core
-        write(IOUT) epsilondev_yy_inner_core
-        write(IOUT) epsilondev_xy_inner_core
-        write(IOUT) epsilondev_xz_inner_core
-        write(IOUT) epsilondev_yz_inner_core
-      endif
+      write(IOUT) epsilondev_xx_inner_core
+      write(IOUT) epsilondev_yy_inner_core
+      write(IOUT) epsilondev_xy_inner_core
+      write(IOUT) epsilondev_xz_inner_core
+      write(IOUT) epsilondev_yz_inner_core
 
       if (ROTATION_VAL) then
         write(IOUT) A_array_rotation
@@ -168,7 +166,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_forward_arrays_undoatt(iteration_on_subset)
+  subroutine save_forward_arrays_undoatt()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -177,55 +175,52 @@
 
   implicit none
 
-  integer :: iteration_on_subset
-
   ! local parameters
+  integer :: iteration_on_subset_tmp
   integer :: ier
   character(len=150) :: outputname
 
-  ! save files to local disk or tape system if restart file
-  if(NUMBER_OF_RUNS > 1) stop 'NUMBER_OF_RUNS > 1 is not support for undoing attenuation'
+  ! current subset iteration
+  iteration_on_subset_tmp = iteration_on_subset
 
-  ! save last frame of the forward simulation
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
-    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
+  ! saves frame of the forward simulation
 
-    write(IOUT) displ_crust_mantle
-    write(IOUT) veloc_crust_mantle
-    write(IOUT) accel_crust_mantle
+  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+  open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
 
-    write(IOUT) displ_inner_core
-    write(IOUT) veloc_inner_core
-    write(IOUT) accel_inner_core
+  write(IOUT) displ_crust_mantle
+  write(IOUT) veloc_crust_mantle
+  write(IOUT) accel_crust_mantle
 
-    write(IOUT) displ_outer_core
-    write(IOUT) veloc_outer_core
-    write(IOUT) accel_outer_core
+  write(IOUT) displ_inner_core
+  write(IOUT) veloc_inner_core
+  write(IOUT) accel_inner_core
 
-    if (ROTATION_VAL) then
-      write(IOUT) A_array_rotation
-      write(IOUT) B_array_rotation
-    endif
+  write(IOUT) displ_outer_core
+  write(IOUT) veloc_outer_core
+  write(IOUT) accel_outer_core
 
-    if (ATTENUATION_VAL) then
-      write(IOUT) R_xx_crust_mantle
-      write(IOUT) R_yy_crust_mantle
-      write(IOUT) R_xy_crust_mantle
-      write(IOUT) R_xz_crust_mantle
-      write(IOUT) R_yz_crust_mantle
-
-      write(IOUT) R_xx_inner_core
-      write(IOUT) R_yy_inner_core
-      write(IOUT) R_xy_inner_core
-      write(IOUT) R_xz_inner_core
-      write(IOUT) R_yz_inner_core
-    endif
-
-    close(IOUT)
-
+  if (ROTATION_VAL) then
+    write(IOUT) A_array_rotation
+    write(IOUT) B_array_rotation
   endif
+
+  if (ATTENUATION_VAL) then
+    write(IOUT) R_xx_crust_mantle
+    write(IOUT) R_yy_crust_mantle
+    write(IOUT) R_xy_crust_mantle
+    write(IOUT) R_xz_crust_mantle
+    write(IOUT) R_yz_crust_mantle
+
+    write(IOUT) R_xx_inner_core
+    write(IOUT) R_yy_inner_core
+    write(IOUT) R_xy_inner_core
+    write(IOUT) R_xz_inner_core
+    write(IOUT) R_yz_inner_core
+  endif
+
+  close(IOUT)
 
   end subroutine save_forward_arrays_undoatt
 

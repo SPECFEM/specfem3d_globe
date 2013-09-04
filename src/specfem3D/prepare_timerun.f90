@@ -97,8 +97,14 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for preparing timerun in seconds = ',sngl(tCPU)
     write(IMAIN,*)
+    write(IMAIN,*)
     write(IMAIN,*) 'time loop:'
     write(IMAIN,*)
+    if(USE_LDDRK) then
+      write(IMAIN,*) '              scheme:         LDDRK with',NSTAGE_TIME_SCHEME,'stages'
+    else
+      write(IMAIN,*) '              scheme:         Newmark'
+    endif
     write(IMAIN,*) '           time step: ',sngl(DT),' s'
     write(IMAIN,*) 'number of time steps: ',NSTEP
     write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
@@ -176,6 +182,8 @@
     write(IMAIN,*)
     if(ROTATION_VAL) then
       write(IMAIN,*) 'incorporating rotation'
+      if( EXACT_MASS_MATRIX_FOR_ROTATION ) &
+        write(IMAIN,*) 'using exact mass matrix for rotation'
     else
       write(IMAIN,*) 'no rotation'
     endif
@@ -212,10 +220,19 @@
   implicit none
 
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing mass matrices."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing mass matrices"
     call flush_IMAIN()
   endif
+
+  ! mass matrices
+  !
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
 
   ! mass matrices need to be assembled with MPI here once and for all
   call prepare_timerun_rmass_assembly()
@@ -227,50 +244,50 @@
       call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
 
+  ! checks mass matrices
+
   ! crust/mantle
-  ! checks C*deltat/2 contribution to the mass matrices on Stacey edges
-  if( .not. USE_LDDRK ) then
-    if( ( NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS ) .or. &
-        ( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) ) then
-       if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
-            call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
-       if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
-            call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
-    endif
-    ! checks mass matrices for rotation
-    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-      .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM > 0)then
-      if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
-           call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
-      if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
-           call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle')
-    endif
-  endif
+  if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassx')
+  if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassy')
   if(minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
-       call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassz')
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassx')
+    if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassy')
+    if(minval(b_rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassz')
+  endif
 
   ! inner core
   ! checks mass matrices for rotation
-  if( .not. USE_LDDRK ) then
-    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. NGLOB_XY_IC > 0) then
-       if(minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
-            call exit_MPI(myrank,'negative mass matrix term for the rmassx_inner_core')
-       if(minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
-            call exit_MPI(myrank,'negative mass matrix term for the rmassy_inner_core')
-       if( SIMULATION_TYPE == 3 .and. NGLOB_XY_IC > 0 ) then
-         if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
-              call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
-         if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
-              call exit_MPI(myrank,'negative mass matrix term for the b_rmassy_inner_core')
-       endif
-    endif
+  if(minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core rmassx')
+  if(minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core rmassy')
+  if(minval(rmassz_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core rmassz')
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
+    if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_rmassy_inner_core')
+    if(minval(b_rmassz_inner_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_rmassz_inner_core')
   endif
-  if(minval(rmass_inner_core) <= 0._CUSTOM_REAL) &
-       call exit_MPI(myrank,'negative mass matrix term for the inner core')
 
   ! outer core
   if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
-       call exit_MPI(myrank,'negative mass matrix term for the outer core')
+    call exit_MPI(myrank,'negative mass matrix term for the outer core')
+  if( SIMULATION_TYPE == 3 ) then
+    if(minval(b_rmass_outer_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the outer core b_rmass')
+  endif
 
   ! mass matrix inversions
   ! for efficiency, invert final mass matrix once and for all on each slice
@@ -279,31 +296,28 @@
 
   ! mass matrices on Stacey edges
   ! crust/mantle
-  if( .not. USE_LDDRK ) then
-    if(((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) ) then
-       rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
-       rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
-    endif
-    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-      .and. SIMULATION_TYPE == 3 .and. NGLOB_XY_CM > 0)then
+  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) ) then
+     rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
+     rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+  endif
+  if( SIMULATION_TYPE == 3 ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
       b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
       b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
     endif
   endif
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
   ! inner core
-  if(.not. USE_LDDRK)then
-    if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. NGLOB_XY_IC > 0) then
-       rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
-       rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
-       if(SIMULATION_TYPE == 3 .and. NGLOB_XY_IC > 0)then
-         b_rmassx_inner_core = 1._CUSTOM_REAL / b_rmassx_inner_core
-         b_rmassy_inner_core = 1._CUSTOM_REAL / b_rmassy_inner_core
-       endif
-    endif
+  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+     rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
+     rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
+     if( SIMULATION_TYPE == 3 ) then
+       b_rmassx_inner_core = 1._CUSTOM_REAL / b_rmassx_inner_core
+       b_rmassy_inner_core = 1._CUSTOM_REAL / b_rmassy_inner_core
+     endif
   endif
-  rmass_inner_core = 1._CUSTOM_REAL / rmass_inner_core
+  rmassz_inner_core = 1._CUSTOM_REAL / rmassz_inner_core
   ! outer core
   rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
 
@@ -333,9 +347,14 @@
   endif
 
   ! crust and mantle
-  if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
-     (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. NGLOB_CRUST_MANTLE > 0 &
-      .and. (.not. USE_LDDRK)) then
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                           rmassz_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
+
+  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. NGLOB_CRUST_MANTLE > 0 ) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -349,9 +368,8 @@
                            my_neighbours_crust_mantle)
   endif
 
-  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-    .and. .not. USE_LDDRK .and. NGLOB_XY_CM > 0)then
-    if( SIMULATION_TYPE == 3 ) then
+  if( SIMULATION_TYPE == 3 ) then
+    if( (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) .and. NGLOB_XY_CM > 0)then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -366,64 +384,60 @@
     endif
   endif
 
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
-                        rmassz_crust_mantle, &
-                        num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
-                        my_neighbours_crust_mantle)
 
 
   ! outer core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                        rmass_outer_core, &
-                        num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                        nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
-                        my_neighbours_outer_core)
+                           rmass_outer_core, &
+                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                           nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                           my_neighbours_outer_core)
 
   ! inner core
-  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-     .and. (.not. USE_LDDRK) .and. NGLOB_XY_IC > 0)then
-
-    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                          rmassx_inner_core, &
-                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                          nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
-                          my_neighbours_inner_core)
-
-    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                          rmassy_inner_core, &
-                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                          nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
-                          my_neighbours_inner_core)
-
-    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC > 0)then
-      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                            b_rmassx_inner_core, &
-                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
-                            my_neighbours_inner_core)
-
-      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                            b_rmassy_inner_core, &
-                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
-                            my_neighbours_inner_core)
-    endif
-
-  endif
-
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                        rmass_inner_core, &
-                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                        nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
-                        my_neighbours_inner_core)
+                           rmassz_inner_core, &
+                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                           nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                           my_neighbours_inner_core)
 
+  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                             rmassx_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             my_neighbours_inner_core)
+
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                             rmassy_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             my_neighbours_inner_core)
+
+    if( SIMULATION_TYPE == 3 ) then
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                               b_rmassx_inner_core, &
+                               num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               my_neighbours_inner_core)
+
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                               b_rmassy_inner_core, &
+                               num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               my_neighbours_inner_core)
+    endif
+  endif
 
   ! mass matrix including central cube
   if(INCLUDE_CENTRAL_CUBE) then
     ! suppress fictitious mass matrix elements in central cube
     ! because the slices do not compute all their spectral elements in the cube
-    where(rmass_inner_core(:) <= 0.0_CUSTOM_REAL) rmass_inner_core = 1.0_CUSTOM_REAL
+    where(rmassz_inner_core(:) <= 0.0_CUSTOM_REAL) rmassz_inner_core = 1.0_CUSTOM_REAL
+
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+      where(rmassx_inner_core(:) <= 0.0_CUSTOM_REAL) rmassx_inner_core = 1.0_CUSTOM_REAL
+      where(rmassy_inner_core(:) <= 0.0_CUSTOM_REAL) rmassy_inner_core = 1.0_CUSTOM_REAL
+    endif
   endif
 
   call sync_all()
@@ -498,12 +512,11 @@
 
   ! user output
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing movie surface."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing movie surface"
     call flush_IMAIN()
   endif
 
-  ! only output corners 
+  ! only output corners
   ! note: for noise tomography, must NOT be coarse (have to be saved on all gll points)
   if( MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0 ) then
     ! checks setup
@@ -581,8 +594,7 @@
   integer :: ier
 
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing movie volume."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing movie volume"
     call flush_IMAIN()
   endif
 
@@ -655,8 +667,7 @@
   implicit none
 
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing constants."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing constants"
     call flush_IMAIN()
   endif
 
@@ -705,9 +716,6 @@
       endif
     endif
 
-    A_array_rotation = 0._CUSTOM_REAL
-    B_array_rotation = 0._CUSTOM_REAL
-
     if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
         b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
@@ -718,6 +726,13 @@
   else
     two_omega_earth = 0._CUSTOM_REAL
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
+  endif
+
+  if(UNDO_ATTENUATION) then
+   b_deltat = deltat
+   b_deltatover2 = deltatover2
+   b_deltatsqover2 = deltatsqover2
+   b_two_omega_earth = two_omega_earth
   endif
 
   call sync_all()
@@ -743,8 +758,7 @@
   integer :: int_radius,idoubling,nspl_gravity
 
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing gravity arrays."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing gravity arrays"
     call flush_IMAIN()
   endif
 
@@ -847,8 +861,7 @@
 
   ! get and store PREM attenuation model
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing attenuation."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing attenuation"
     call flush_IMAIN()
   endif
 
@@ -1005,6 +1018,20 @@
    endif
   endif
 
+  if( USE_LDDRK ) then
+    if(CUSTOM_REAL == SIZE_REAL) then
+      tau_sigma_CUSTOM_REAL(:) = sngl(tau_sigma_dble(:))
+    else
+      tau_sigma_CUSTOM_REAL(:) = tau_sigma_dble(:)
+    endif
+  endif
+
+  if(UNDO_ATTENUATION) then
+   b_alphaval = alphaval
+   b_betaval = betaval
+   b_gammaval = gammaval
+  endif
+
   ! synchronizes processes
   call sync_all()
 
@@ -1027,33 +1054,32 @@
 
   ! local parameters
   integer :: ier
+  real(kind=CUSTOM_REAL) :: init_value
 
   if(myrank == 0 ) then
-    write(IMAIN,*) "initializing wavefields."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing wavefields"
     call flush_IMAIN()
   endif
 
+  ! put negligible initial value to avoid very slow underflow trapping
+  if(FIX_UNDERFLOW_PROBLEM) then
+    init_value = VERYSMALLVAL
+  else
+    init_value = 0._CUSTOM_REAL
+  endif
 
   ! initialize arrays to zero
-  displ_crust_mantle(:,:) = 0._CUSTOM_REAL
+  displ_crust_mantle(:,:) = init_value
   veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
   accel_crust_mantle(:,:) = 0._CUSTOM_REAL
 
-  displ_outer_core(:) = 0._CUSTOM_REAL
+  displ_outer_core(:) = init_value
   veloc_outer_core(:) = 0._CUSTOM_REAL
   accel_outer_core(:) = 0._CUSTOM_REAL
 
-  displ_inner_core(:,:) = 0._CUSTOM_REAL
+  displ_inner_core(:,:) = init_value
   veloc_inner_core(:,:) = 0._CUSTOM_REAL
   accel_inner_core(:,:) = 0._CUSTOM_REAL
-
-  ! put negligible initial value to avoid very slow underflow trapping
-  if(FIX_UNDERFLOW_PROBLEM) then
-    displ_crust_mantle(:,:) = VERYSMALLVAL
-    displ_outer_core(:) = VERYSMALLVAL
-    displ_inner_core(:,:) = VERYSMALLVAL
-  endif
 
   ! if doing benchmark runs to measure scaling of the code,
   ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
@@ -1071,6 +1097,7 @@
     accel_inner_core(:,:) = 1._CUSTOM_REAL
   endif
 
+  ! sensitivity kernels
   if (SIMULATION_TYPE == 3) then
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
@@ -1120,75 +1147,62 @@
 
   ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
   ! crust/mantle
-  eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_yz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+  eps_trace_over_3_crust_mantle(:,:,:,:) = init_value
+  epsilondev_xx_crust_mantle(:,:,:,:) = init_value
+  epsilondev_yy_crust_mantle(:,:,:,:) = init_value
+  epsilondev_xy_crust_mantle(:,:,:,:) = init_value
+  epsilondev_xz_crust_mantle(:,:,:,:) = init_value
+  epsilondev_yz_crust_mantle(:,:,:,:) = init_value
 
   ! backward/reconstructed strain fields
-  if( .not. UNDO_ATTENUATION ) then
-    allocate(b_epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-             b_epsilondev_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-             b_epsilondev_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-             b_epsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-             b_epsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-             b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
+  if( SIMULATION_TYPE == 3 ) then
+    if( UNDO_ATTENUATION ) then
+      ! for undo_attenuation, whenever strain is needed it will be computed locally.
+      ! pointers are using the allocated arrays for adjoint strain, however values stored in those arrays will be overwritten
+      ! crust/mantle
+      b_epsilondev_xx_crust_mantle => epsilondev_xx_crust_mantle
+      b_epsilondev_yy_crust_mantle => epsilondev_yy_crust_mantle
+      b_epsilondev_xy_crust_mantle => epsilondev_xy_crust_mantle
+      b_epsilondev_xz_crust_mantle => epsilondev_xz_crust_mantle
+      b_epsilondev_yz_crust_mantle => epsilondev_yz_crust_mantle
+      b_eps_trace_over_3_crust_mantle => eps_trace_over_3_crust_mantle
+      ! inner core
+      b_epsilondev_xx_inner_core => epsilondev_xx_inner_core
+      b_epsilondev_yy_inner_core => epsilondev_yy_inner_core
+      b_epsilondev_xy_inner_core => epsilondev_xy_inner_core
+      b_epsilondev_xz_inner_core => epsilondev_xz_inner_core
+      b_epsilondev_yz_inner_core => epsilondev_yz_inner_core
+      b_eps_trace_over_3_inner_core => eps_trace_over_3_inner_core
+    else
+      ! allocates actual arrays
+      allocate(b_epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
 
-    allocate(b_epsilondev_xx_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-             b_epsilondev_yy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-             b_epsilondev_xy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-             b_epsilondev_xz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-             b_epsilondev_yz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-             b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
-  else
-    ! dummy arrays
-    allocate(b_epsilondev_xx_crust_mantle(1,1,1,1), &
-             b_epsilondev_yy_crust_mantle(1,1,1,1), &
-             b_epsilondev_xy_crust_mantle(1,1,1,1), &
-             b_epsilondev_xz_crust_mantle(1,1,1,1), &
-             b_epsilondev_yz_crust_mantle(1,1,1,1), &
-             b_eps_trace_over_3_crust_mantle(1,1,1,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
-
-    allocate(b_epsilondev_xx_inner_core(1,1,1,1), &
-             b_epsilondev_yy_inner_core(1,1,1,1), &
-             b_epsilondev_xy_inner_core(1,1,1,1), &
-             b_epsilondev_xz_inner_core(1,1,1,1), &
-             b_epsilondev_yz_inner_core(1,1,1,1), &
-             b_eps_trace_over_3_inner_core(1,1,1,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
+      allocate(b_epsilondev_xx_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_yy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_xy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_xz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_yz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
+    endif
   endif
+  ! to switch between simulation type 1 mode and simulation type 3 mode
+  ! in exact undoing of attenuation
+  undo_att_sim_type_3 = .false.
 
   ! inner core
-  eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xx_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_yy_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xy_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xz_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_yz_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-
-
-
-  if(FIX_UNDERFLOW_PROBLEM) then
-    ! crust/mantle
-    eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    epsilondev_xx_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    epsilondev_yy_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    epsilondev_xy_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    epsilondev_xz_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    epsilondev_yz_crust_mantle(:,:,:,:) = VERYSMALLVAL
-    ! inner core
-    eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
-    epsilondev_xx_inner_core(:,:,:,:) = VERYSMALLVAL
-    epsilondev_yy_inner_core(:,:,:,:) = VERYSMALLVAL
-    epsilondev_xy_inner_core(:,:,:,:) = VERYSMALLVAL
-    epsilondev_xz_inner_core(:,:,:,:) = VERYSMALLVAL
-    epsilondev_yz_inner_core(:,:,:,:) = VERYSMALLVAL
-  endif
+  eps_trace_over_3_inner_core(:,:,:,:) = init_value
+  epsilondev_xx_inner_core(:,:,:,:) = init_value
+  epsilondev_yy_inner_core(:,:,:,:) = init_value
+  epsilondev_xy_inner_core(:,:,:,:) = init_value
+  epsilondev_xz_inner_core(:,:,:,:) = init_value
+  epsilondev_yz_inner_core(:,:,:,:) = init_value
 
   if (COMPUTE_AND_STORE_STRAIN) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
@@ -1203,31 +1217,255 @@
 
   ! clear memory variables if attenuation
   if(ATTENUATION_VAL) then
-    R_xx_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_yy_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_xy_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_xz_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_yz_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    R_xx_crust_mantle(:,:,:,:,:) = init_value
+    R_yy_crust_mantle(:,:,:,:,:) = init_value
+    R_xy_crust_mantle(:,:,:,:,:) = init_value
+    R_xz_crust_mantle(:,:,:,:,:) = init_value
+    R_yz_crust_mantle(:,:,:,:,:) = init_value
 
-    R_xx_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_yy_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_xy_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_xz_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    R_yz_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+    R_xx_inner_core(:,:,:,:,:) = init_value
+    R_yy_inner_core(:,:,:,:,:) = init_value
+    R_xy_inner_core(:,:,:,:,:) = init_value
+    R_xz_inner_core(:,:,:,:,:) = init_value
+    R_yz_inner_core(:,:,:,:,:) = init_value
+  endif
 
-    if(FIX_UNDERFLOW_PROBLEM) then
-      R_xx_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      R_yy_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      R_xy_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      R_xz_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      R_yz_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+  if(ROTATION_VAL) then
+    A_array_rotation = 0._CUSTOM_REAL
+    B_array_rotation = 0._CUSTOM_REAL
+  endif
 
-      R_xx_inner_core(:,:,:,:,:) = VERYSMALLVAL
-      R_yy_inner_core(:,:,:,:,:) = VERYSMALLVAL
-      R_xy_inner_core(:,:,:,:,:) = VERYSMALLVAL
-      R_xz_inner_core(:,:,:,:,:) = VERYSMALLVAL
-      R_yz_inner_core(:,:,:,:,:) = VERYSMALLVAL
+  ! initializes backward/reconstructed arrays
+  if (SIMULATION_TYPE == 3) then
+    ! initializes wavefields
+    b_displ_crust_mantle = 0._CUSTOM_REAL
+    b_veloc_crust_mantle = 0._CUSTOM_REAL
+    b_accel_crust_mantle = 0._CUSTOM_REAL
+
+    b_displ_inner_core = 0._CUSTOM_REAL
+    b_veloc_inner_core = 0._CUSTOM_REAL
+    b_accel_inner_core = 0._CUSTOM_REAL
+
+    b_displ_outer_core = 0._CUSTOM_REAL
+    b_veloc_outer_core = 0._CUSTOM_REAL
+    b_accel_outer_core = 0._CUSTOM_REAL
+
+    b_epsilondev_xx_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_yy_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_xy_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_xz_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_yz_crust_mantle = 0._CUSTOM_REAL
+
+    b_epsilondev_xx_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_yy_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_xy_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_xz_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_yz_inner_core = 0._CUSTOM_REAL
+
+    if (ROTATION_VAL) then
+      b_A_array_rotation = 0._CUSTOM_REAL
+      b_B_array_rotation = 0._CUSTOM_REAL
     endif
+
+    if (ATTENUATION_VAL) then
+      b_R_xx_crust_mantle = 0._CUSTOM_REAL
+      b_R_yy_crust_mantle = 0._CUSTOM_REAL
+      b_R_xy_crust_mantle = 0._CUSTOM_REAL
+      b_R_xz_crust_mantle = 0._CUSTOM_REAL
+      b_R_yz_crust_mantle = 0._CUSTOM_REAL
+
+      b_R_xx_inner_core = 0._CUSTOM_REAL
+      b_R_yy_inner_core = 0._CUSTOM_REAL
+      b_R_xy_inner_core = 0._CUSTOM_REAL
+      b_R_xz_inner_core = 0._CUSTOM_REAL
+      b_R_yz_inner_core = 0._CUSTOM_REAL
+    endif
+  endif
+
+  ! runge-kutta time scheme
+  if( USE_LDDRK )then
+
+    ! checks
+    if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
+        stop 'error: LDDRK is not implemented for adjoint tomography'
+
+    ! number of stages for scheme
+    NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
+
+    ! scheme wavefields
+    allocate(displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_crust_mantle_lddrk'
+    allocate(veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_crust_mantle_lddrk'
+    allocate(displ_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_outer_core_lddrk'
+    allocate(veloc_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_outer_core_lddrk'
+    allocate(displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_inner_core_lddrk'
+    allocate(veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_inner_core_lddrk'
+
+    displ_crust_mantle_lddrk(:,:) = init_value
+    veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+
+    displ_outer_core_lddrk(:) = init_value
+    veloc_outer_core_lddrk(:) = 0._CUSTOM_REAL
+
+    displ_inner_core_lddrk(:,:) = init_value
+    veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+
+    if( SIMULATION_TYPE == 3 ) then
+      ! scheme adjoint wavefields
+      allocate(b_displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_crust_mantle_lddrk'
+      allocate(b_veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_crust_mantle_lddrk'
+      allocate(b_displ_outer_core_lddrk(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_outer_core_lddrk'
+      allocate(b_veloc_outer_core_lddrk(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_outer_core_lddrk'
+      allocate(b_displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_inner_core_lddrk'
+      allocate(b_veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_inner_core_lddrk'
+      b_displ_crust_mantle_lddrk(:,:) = init_value
+      b_veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+      b_displ_outer_core_lddrk(:) = init_value
+      b_veloc_outer_core_lddrk(:) = 0._CUSTOM_REAL
+      b_displ_inner_core_lddrk(:,:) = init_value
+      b_veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+    endif
+
+    ! rotation in fluid outer core
+    allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+    if (ROTATION_VAL) then
+      A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+      B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+    endif
+    if( SIMULATION_TYPE == 3 ) then
+      allocate(b_A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
+      allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
+      if (ROTATION_VAL) then
+        b_A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+        b_B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+      endif
+    endif
+
+    ! attenuation memory variables
+    ! crust/mantle
+    allocate(R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    ! inner core
+    allocate(R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+    if(ATTENUATION_VAL) then
+      R_xx_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_yy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_xy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_xz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_yz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+
+      R_xx_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_yy_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_xy_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_xz_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_yz_inner_core_lddrk(:,:,:,:,:) = init_value
+    endif
+    if( SIMULATION_TYPE == 3 ) then
+      ! crust/mantle
+      allocate(b_R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+      ! inner core
+      allocate(b_R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+      if(ATTENUATION_VAL) then
+        b_R_xx_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_yy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_xy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_xz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_yz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+
+        b_R_xx_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_yy_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_xy_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_xz_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_yz_inner_core_lddrk(:,:,:,:,:) = init_value
+      endif
+    endif
+
+  else
+
+    ! default Newmark time scheme
+
+    ! only 1 stage for Newmark time scheme
+    NSTAGE_TIME_SCHEME = 1
+
+    ! dummy arrays needed for passing as function arguments
+    allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+    allocate(R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    allocate(R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+    if( SIMULATION_TYPE == 3 ) then
+      allocate(b_A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
+      allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
+      allocate(b_R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_crust_mantle_lddrk'
+      allocate(b_R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_inner_core_lddrk'
+    endif
+
   endif
 
   call sync_all()
@@ -1536,8 +1774,7 @@
   if ( NOISE_TOMOGRAPHY /= 0 ) then
 
     if(myrank == 0 ) then
-      write(IMAIN,*) "preparing noise arrays."
-      write(IMAIN,*)
+      write(IMAIN,*) "preparing noise arrays"
       call flush_IMAIN()
     endif
 
@@ -1594,8 +1831,7 @@
 
   ! user output
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing Fields and Constants on GPU Device."
-    write(IMAIN,*)
+    write(IMAIN,*) "preparing Fields and Constants on GPU Device"
     call flush_IMAIN()
   endif
 
@@ -1934,7 +2170,7 @@
                                 etax_inner_core,etay_inner_core,etaz_inner_core, &
                                 gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
                                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                                rmass_inner_core, &
+                                rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                                 ibool_inner_core, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &

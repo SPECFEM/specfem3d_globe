@@ -29,6 +29,8 @@
 
   program xspecfem3D
 
+  use specfem_par
+
   implicit none
 
 !=======================================================================!
@@ -461,7 +463,11 @@
   call prepare_timerun()
 
   ! steps through time iterations
-  call iterate_time()
+  if( UNDO_ATTENUATION ) then
+    call iterate_time_undoatt()
+  else
+    call iterate_time()
+  endif
 
   ! saves last time frame and finishes kernel calculations
   call finalize_simulation()

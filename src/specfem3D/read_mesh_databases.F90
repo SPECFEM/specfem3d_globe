@@ -169,6 +169,8 @@
   allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
 
+  ! b_rmassx and b_rmassy will be different to rmassx and rmassy
+  ! needs new arrays
   allocate(b_rmassx_crust_mantle(NGLOB_XY_CM), &
            b_rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if(ier /= 0) stop 'error allocating b_rmassx, b_rmassy in crust_mantle'
@@ -227,6 +229,35 @@
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
   deallocate(dummy_idoubling)
+
+  ! mass matrix corrections
+  if( .not. ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+             (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) ) then
+    ! uses single mass matrix without correction
+    ! frees pointer memory
+    deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+    ! re-associates with corresponding rmassz
+    rmassx_crust_mantle => rmassz_crust_mantle(:)
+    rmassy_crust_mantle => rmassz_crust_mantle(:)
+  endif
+
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    ! associates mass matrix used for backward/reconstructed wavefields
+    b_rmassz_crust_mantle => rmassz_crust_mantle
+    ! checks if we can take rmassx and rmassy (only differs for rotation correction)
+    if( .not. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+      ! frees pointer memory
+      deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+      ! re-associates with corresponding rmassx,rmassy
+      b_rmassx_crust_mantle => rmassx_crust_mantle(:)
+      b_rmassy_crust_mantle => rmassy_crust_mantle(:)
+    endif
+  else
+    ! b_rmassx,b_rmassy not used anymore
+    deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+  endif
+
 
   end subroutine read_mesh_databases_CM
 
@@ -340,6 +371,12 @@
         & iboolmax does not equal nglob in outer core')
   endif
 
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    ! associates mass matrix used for backward/reconstructed wavefields
+    b_rmass_outer_core => rmass_outer_core
+  endif
+
   end subroutine read_mesh_databases_OC
 
 !
@@ -391,9 +428,10 @@
            rmassy_inner_core(NGLOB_XY_IC),stat=ier)
   if(ier /= 0) stop 'error allocating rmassx, rmassy in inner_core'
 
-  allocate(rmass_inner_core(NGLOB_INNER_CORE),stat=ier)
+  allocate(rmassz_inner_core(NGLOB_INNER_CORE),stat=ier)
   if(ier /= 0) stop 'error allocating rmass in inner core'
 
+  ! b_rmassx and b_rmassy maybe different to rmassx,rmassy
   allocate(b_rmassx_inner_core(NGLOB_XY_IC), &
            b_rmassy_inner_core(NGLOB_XY_IC),stat=ier)
   if(ier /= 0) stop 'error allocating b_rmassx, b_rmassy in inner_core'
@@ -418,7 +456,7 @@
               c44store_inner_core,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              rmassx_inner_core,rmassy_inner_core,rmass_inner_core,rmass_ocean_load, &
+              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
               b_rmassx_inner_core,b_rmassy_inner_core)
   else
@@ -440,7 +478,7 @@
               c44store_inner_core,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              rmassx_inner_core,rmassy_inner_core,rmass_inner_core,rmass_ocean_load, &
+              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,rmass_ocean_load, &
               READ_KAPPA_MU,READ_TISO, &
               b_rmassx_inner_core,b_rmassy_inner_core)
   endif
@@ -450,6 +488,33 @@
   ! check that the number of points in this slice is correct
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+
+  ! mass matrix corrections
+  if( .not. ( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) ) then
+    ! uses single mass matrix without correction
+    ! frees pointer memory
+    deallocate(rmassx_inner_core,rmassy_inner_core)
+    ! re-associates with corresponding rmassz
+    rmassx_inner_core => rmassz_inner_core(:)
+    rmassy_inner_core => rmassz_inner_core(:)
+  endif
+
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    ! associates mass matrix used for backward/reconstructed wavefields
+    b_rmassz_inner_core => rmassz_inner_core
+    ! checks if we can take rmassx and rmassy (only differs for rotation correction)
+    if( .not. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+      ! frees pointer memory
+      deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+      ! re-associates with corresponding rmassx,rmassy
+      b_rmassx_inner_core => rmassx_inner_core
+      b_rmassy_inner_core => rmassy_inner_core
+    endif
+  else
+    ! b_rmassx,b_rmassy not used anymore
+    deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+  endif
 
   end subroutine read_mesh_databases_IC
 

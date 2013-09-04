@@ -48,7 +48,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   use specfem_par,only: &
     ABSORBING_CONDITIONS,TRANSVERSE_ISOTROPY, &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+    EXACT_MASS_MATRIX_FOR_ROTATION
 
   implicit none
 
@@ -392,10 +392,9 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   !call adios_perform_reads(adios_handle, adios_err)
   !call check_adios_err(myrank,adios_err)
 
-  if(.not. USE_LDDRK)then
-    if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
 
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
@@ -421,22 +420,20 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
       rmassz, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  if(.not. USE_LDDRK)then
-    if((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
-      local_dim = nglob_xy
-      start(1) = local_dim*myrank; count(1) = local_dim
-      sel_num = sel_num+1
-      sel => selections(sel_num)
-      call adios_selection_boundingbox (sel , 1, start, count)
+  if( (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+    local_dim = nglob_xy
+    start(1) = local_dim*myrank; count(1) = local_dim
+    sel_num = sel_num+1
+    sel => selections(sel_num)
+    call adios_selection_boundingbox (sel , 1, start, count)
 
-      call adios_schedule_read(adios_handle, sel, "b_rmassx/array", 0, 1, &
-          b_rmassx, adios_err)
-      call check_adios_err(myrank,adios_err)
-      call adios_schedule_read(adios_handle, sel, "b_rmassy/array", 0, 1, &
-          b_rmassy, adios_err)
-      call check_adios_err(myrank,adios_err)
-    endif
+    call adios_schedule_read(adios_handle, sel, "b_rmassx/array", 0, 1, &
+        b_rmassx, adios_err)
+    call check_adios_err(myrank,adios_err)
+    call adios_schedule_read(adios_handle, sel, "b_rmassy/array", 0, 1, &
+        b_rmassy, adios_err)
+    call check_adios_err(myrank,adios_err)
   endif
 
   !call adios_perform_reads(adios_handle, adios_err)

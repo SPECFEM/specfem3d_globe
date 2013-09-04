@@ -32,6 +32,7 @@
                                             accel_inner_core, &
                                             phase_is_inner, &
                                             R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                            R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                             epsilondev_xz,epsilondev_yz, &
                                             epsilon_trace_over_3,&
@@ -45,7 +46,7 @@
   use specfem_par,only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    COMPUTE_AND_STORE_STRAIN
+    COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_innercore,only: &
     xstore => xstore_inner_core,ystore => ystore_inner_core,zstore => zstore_inner_core, &
@@ -88,6 +89,9 @@
 
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
+
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
@@ -337,9 +341,9 @@
               epsilon_trace_over_3(i,j,k,ispec_strain) = templ
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+              epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+              epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+              epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
             endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -685,7 +689,11 @@
         do j=1,NGLLY
           do i=1,NGLLX
             iglob = ibool(i,j,k,ispec)
-            accel_inner_core(:,iglob) = accel_inner_core(:,iglob) + sum_terms(:,i,j,k)
+            ! do NOT use array syntax ":" for the three statements below
+            ! otherwise most compilers will not be able to vectorize the outer loop
+            accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,i,j,k)
+            accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,i,j,k)
+            accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,i,j,k)
           enddo
         enddo
       enddo
@@ -706,16 +714,25 @@
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
-
         ! updates R_memory
-        call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                      vnspec,factor_common, &
-                                      alphaval,betaval,gammaval, &
-                                      muvstore, &
-                                      epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                      epsilondev_xz,epsilondev_yz, &
-                                      epsilondev_loc,is_backward_field)
-
+        if( USE_LDDRK ) then
+          call compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                                   R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                                   ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                                   muvstore, &
+                                                   epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                                   epsilondev_xz,epsilondev_yz, &
+                                                   epsilondev_loc, &
+                                                   deltat)
+        else
+          call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                             ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                             alphaval,betaval,gammaval, &
+                                             muvstore, &
+                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                             epsilondev_xz,epsilondev_yz, &
+                                             epsilondev_loc,is_backward_field)
+        endif
       endif
 
       ! save deviatoric strain for Runge-Kutta scheme

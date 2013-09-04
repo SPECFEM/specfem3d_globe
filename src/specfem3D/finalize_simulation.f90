@@ -142,19 +142,82 @@
     call save_kernels_source_derivatives()
   endif
 
+  ! vtk visualization
+  if( VTK_MODE ) then
+    ! closes vtk window
+    if(myrank == 0 ) call finish_vtkwindow()
+  endif
+
   ! frees dynamically allocated memory
+  call finalize_simulation_cleanup()
+
+  ! close the main output file
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'End of the simulation'
+    write(IMAIN,*)
+    call flush_IMAIN()
+    close(IMAIN)
+  endif
+
+  ! synchronize all the processes to make sure everybody has finished
+  call sync_all()
+
+  if (ADIOS_ENABLED) then
+    call adios_cleanup()
+  endif
+  end subroutine finalize_simulation
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine finalize_simulation_cleanup()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+  use specfem_par_movie
+  implicit none
 
   ! mass matrices
-  deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
-  deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+  ! crust/mantle
   deallocate(rmassz_crust_mantle)
+  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+    deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+  else
+    nullify(rmassx_crust_mantle,rmassy_crust_mantle)
+  endif
+  if(SIMULATION_TYPE == 3 ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+    else
+      nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+    endif
+    nullify(b_rmassz_crust_mantle)
+  endif
 
+  ! outer core
   deallocate(rmass_outer_core)
+  if(SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
 
-  deallocate(rmassx_inner_core,rmassy_inner_core)
-  deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
-  deallocate(rmass_inner_core)
-
+  ! inner core
+  deallocate(rmassz_inner_core)
+  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+    deallocate(rmassx_inner_core,rmassy_inner_core)
+  else
+    nullify(rmassx_inner_core,rmassy_inner_core)
+  endif
+  if(SIMULATION_TYPE == 3 ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+    else
+      nullify(b_rmassx_inner_core,b_rmassy_inner_core)
+    endif
+    nullify(b_rmassz_inner_core)
+  endif
 
   ! mpi buffers
   deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
@@ -213,7 +276,6 @@
   deallocate(station_name,network_name, &
             stlat,stlon,stele,stbur)
   deallocate(nu,number_receiver_global)
-
   if( nrec_local > 0 ) then
     deallocate(hxir_store, &
               hetar_store, &
@@ -224,6 +286,7 @@
   endif
   deallocate(seismograms)
 
+  ! kernels
   if (SIMULATION_TYPE == 3) then
     if( APPROXIMATE_HESS_KL ) then
       deallocate(hess_kl_crust_mantle)
@@ -249,9 +312,6 @@
 
   ! vtk visualization
   if( VTK_MODE ) then
-    ! closes/cleans up vtk window
-    if(myrank == 0 ) call finish_vtkwindow()
-
     ! frees memory
     deallocate(vtkdata,vtkmask)
     if( NPROCTOT_VAL > 1 ) then
@@ -260,19 +320,4 @@
     endif
   endif
 
-  ! close the main output file
-  if(myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'End of the simulation'
-    write(IMAIN,*)
-    call flush_IMAIN()
-    close(IMAIN)
-  endif
-
-  ! synchronize all the processes to make sure everybody has finished
-  call sync_all()
-
-  if (ADIOS_ENABLED) then
-    call adios_cleanup()
-  endif
-  end subroutine finalize_simulation
+  end subroutine finalize_simulation_cleanup

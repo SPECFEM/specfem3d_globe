@@ -512,4 +512,260 @@
 
   end subroutine compute_stacey_crust_mantle_backward
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_stacey_crust_mantle_backward_undoatt()
+
+! stacey conditions for backward/reconstructed wavefields in UNDO_ATTENUATION case
+
+  use constants_solver
+
+  use specfem_par,only: &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+    wgllwgll_xz,wgllwgll_yz
+
+  use specfem_par,only: GPU_MODE,Mesh_pointer
+
+  use specfem_par_crustmantle, only: &
+    b_veloc_crust_mantle,b_accel_crust_mantle, &
+    ibool_crust_mantle, &
+    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+    normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
+    normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+    rho_vp_crust_mantle,rho_vs_crust_mantle, &
+    ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+    ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+    nimin_crust_mantle,nimax_crust_mantle, &
+    njmin_crust_mantle,njmax_crust_mantle, &
+    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+    nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+    absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
+    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: weight
+  real(kind=CUSTOM_REAL) :: vn,vx,vy,vz,nx,ny,nz,tx,ty,tz
+  integer :: i,j,k,ispec,iglob,ispec2D
+  !integer :: reclen1,reclen2
+
+  ! note: we use C functions for I/O as they still have a better performance than
+  !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
+  !           comes very close (only  ~ 4 % slower ).
+  !
+  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           file access (by process rank modulo 8) showed that the following,
+  !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
+
+  ! checks
+  if( SIMULATION_TYPE /= 3 ) return
+  if( SAVE_FORWARD ) return
+
+  ! daniel debug
+  if( GPU_MODE ) stop 'error compute_stacey_crust_mantle_backward_undoatt not implemented yet for GPU simulations'
+
+  ! crust & mantle
+
+  !   xmin
+  ! if two chunks exclude this face for one of them
+  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+
+    if ( .NOT. GPU_MODE) then
+      ! on CPU
+      do ispec2D=1,nspec2D_xmin_crust_mantle
+
+        ispec=ibelm_xmin_crust_mantle(ispec2D)
+
+        ! exclude elements that are not on absorbing edges
+        if(nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
+
+        i=1
+        do k=nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
+          do j=njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
+            iglob=ibool_crust_mantle(i,j,k,ispec)
+
+            vx = b_veloc_crust_mantle(1,iglob)
+            vy = b_veloc_crust_mantle(2,iglob)
+            vz = b_veloc_crust_mantle(3,iglob)
+
+            nx=normal_xmin_crust_mantle(1,j,k,ispec2D)
+            ny=normal_xmin_crust_mantle(2,j,k,ispec2D)
+            nz=normal_xmin_crust_mantle(3,j,k,ispec2D)
+
+            vn=vx*nx+vy*ny+vz*nz
+
+            tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+            ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+            tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+
+            weight=jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - tx*weight
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - ty*weight
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - tz*weight
+
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
+                                                                absorb_xmin_crust_mantle, &
+                                                                0) ! <= xmin
+    endif
+
+  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
+
+  !   xmax
+  ! if two chunks exclude this face for one of them
+  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+
+    if(.NOT. GPU_MODE ) then
+      ! on CPU
+      do ispec2D=1,nspec2D_xmax_crust_mantle
+
+        ispec=ibelm_xmax_crust_mantle(ispec2D)
+
+        ! exclude elements that are not on absorbing edges
+        if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
+
+        i=NGLLX
+        do k=nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
+          do j=njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
+            iglob=ibool_crust_mantle(i,j,k,ispec)
+
+            vx = b_veloc_crust_mantle(1,iglob)
+            vy = b_veloc_crust_mantle(2,iglob)
+            vz = b_veloc_crust_mantle(3,iglob)
+
+            nx=normal_xmax_crust_mantle(1,j,k,ispec2D)
+            ny=normal_xmax_crust_mantle(2,j,k,ispec2D)
+            nz=normal_xmax_crust_mantle(3,j,k,ispec2D)
+
+            vn=vx*nx+vy*ny+vz*nz
+
+            tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+            ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+            tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+
+            weight=jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - tx*weight
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - ty*weight
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - tz*weight
+
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
+                                                                absorb_xmax_crust_mantle, &
+                                                                1) ! <= xmin
+    endif
+
+  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
+
+  !   ymin
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D=1,nspec2D_ymin_crust_mantle
+
+      ispec=ibelm_ymin_crust_mantle(ispec2D)
+
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
+
+      j=1
+      do k=nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
+        do i=nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
+          iglob=ibool_crust_mantle(i,j,k,ispec)
+
+          vx = b_veloc_crust_mantle(1,iglob)
+          vy = b_veloc_crust_mantle(2,iglob)
+          vz = b_veloc_crust_mantle(3,iglob)
+
+          nx=normal_ymin_crust_mantle(1,i,k,ispec2D)
+          ny=normal_ymin_crust_mantle(2,i,k,ispec2D)
+          nz=normal_ymin_crust_mantle(3,i,k,ispec2D)
+
+          vn=vx*nx+vy*ny+vz*nz
+
+          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+
+          weight=jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+          b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - tx*weight
+          b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - ty*weight
+          b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - tz*weight
+
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
+                                                              absorb_ymin_crust_mantle, &
+                                                              2) ! <= ymin
+  endif
+
+  !   ymax
+
+  if( .NOT. GPU_MODE ) then
+    ! on CPU
+    do ispec2D=1,nspec2D_ymax_crust_mantle
+
+      ispec=ibelm_ymax_crust_mantle(ispec2D)
+
+      ! exclude elements that are not on absorbing edges
+      if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
+
+      j=NGLLY
+      do k=nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
+        do i=nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
+          iglob=ibool_crust_mantle(i,j,k,ispec)
+
+          vx = b_veloc_crust_mantle(1,iglob)
+          vy = b_veloc_crust_mantle(2,iglob)
+          vz = b_veloc_crust_mantle(3,iglob)
+
+          nx=normal_ymax_crust_mantle(1,i,k,ispec2D)
+          ny=normal_ymax_crust_mantle(2,i,k,ispec2D)
+          nz=normal_ymax_crust_mantle(3,i,k,ispec2D)
+
+          vn=vx*nx+vy*ny+vz*nz
+
+          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+
+          weight=jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+          b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - tx*weight
+          b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - ty*weight
+          b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - tz*weight
+
+        enddo
+      enddo
+    enddo
+
+  else
+    ! on GPU
+    if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
+                                                              absorb_ymax_crust_mantle, &
+                                                              3) ! <= ymax
+  endif
+
+  end subroutine compute_stacey_crust_mantle_backward_undoatt
 

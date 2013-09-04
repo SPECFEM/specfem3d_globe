@@ -56,7 +56,7 @@
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -305,7 +305,7 @@
     ! copy the theoretical number of points for the second pass
     nglob = nglob_theor
 
-    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
+    if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
       select case(iregion_code)
       case( IREGION_CRUST_MANTLE )
         nglob_xy = nglob
@@ -316,15 +316,13 @@
        nglob_xy = 1
     endif
 
-    if( .not. USE_LDDRK )then
-      if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
-        select case(iregion_code)
-        case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
-           nglob_xy = nglob
-        case( IREGION_OUTER_CORE )
-           nglob_xy = 1
-        endselect
-      endif
+    if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      select case(iregion_code)
+      case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
+         nglob_xy = nglob
+      case( IREGION_OUTER_CORE )
+         nglob_xy = 1
+      endselect
     endif
 
     allocate(rmassx(nglob_xy), &
