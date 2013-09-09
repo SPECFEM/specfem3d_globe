@@ -237,9 +237,15 @@ typedef struct mesh_ {
   realw* d_kappavstore_crust_mantle; realw* d_muvstore_crust_mantle;
   realw* d_kappahstore_crust_mantle; realw* d_muhstore_crust_mantle;
   realw* d_eta_anisostore_crust_mantle;
+
+  // mass matrices
   realw* d_rmassx_crust_mantle;
   realw* d_rmassy_crust_mantle;
   realw* d_rmassz_crust_mantle;
+  realw* d_b_rmassx_crust_mantle;
+  realw* d_b_rmassy_crust_mantle;
+  realw* d_b_rmassz_crust_mantle;
+
 
   // global indexing
   int* d_ibool_crust_mantle;
@@ -348,7 +354,9 @@ typedef struct mesh_ {
 
   // model parameters
   realw* d_rhostore_outer_core; realw* d_kappavstore_outer_core;
+
   realw* d_rmass_outer_core;
+  realw* d_b_rmass_outer_core;
 
   // global indexing
   int* d_ibool_outer_core;
@@ -411,9 +419,13 @@ typedef struct mesh_ {
   // model parameters
   realw* d_rhostore_inner_core;
   realw* d_kappavstore_inner_core; realw* d_muvstore_inner_core;
+
   realw* d_rmassx_inner_core;
   realw* d_rmassy_inner_core;
   realw* d_rmassz_inner_core;
+  realw* d_b_rmassx_inner_core;
+  realw* d_b_rmassy_inner_core;
+  realw* d_b_rmassz_inner_core;
 
   // global indexing
   int* d_ibool_inner_core;
@@ -553,6 +565,7 @@ typedef struct mesh_ {
   int anisotropic_3D_mantle;
   int gravity;
   int rotation;
+  int exact_mass_matrix_for_rotation;
   int oceans;
   int anisotropic_inner_core;
   int save_boundary_mesh;

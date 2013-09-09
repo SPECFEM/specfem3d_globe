@@ -327,13 +327,13 @@
   if(.NOT. GPU_MODE) then
     ! on CPU
     ! crust/mantle region
-    call it_multiply_accel_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
-                                   two_omega_earth, &
-                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
+    call multiply_accel_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
+                                two_omega_earth, &
+                                rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
     ! inner core region
-    call it_multiply_accel_elastic(NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
-                                   two_omega_earth, &
-                                   rmassx_inner_core,rmassy_inner_core,rmassz_inner_core)
+    call multiply_accel_elastic(NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
+                                two_omega_earth, &
+                                rmassx_inner_core,rmassy_inner_core,rmassz_inner_core)
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
@@ -349,11 +349,11 @@
                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                   rmass_ocean_load,normal_top_crust_mantle, &
                                   ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                  updated_dof_ocean_load,NGLOB_XY_CM, &
+                                  updated_dof_ocean_load, &
                                   NSPEC2D_TOP(IREGION_CRUST_MANTLE) )
     else
       ! on GPU
-      call compute_coupling_ocean_cuda(Mesh_pointer,NCHUNKS_VAL,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+      call compute_coupling_ocean_cuda(Mesh_pointer,NCHUNKS_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
                                        1) ! <- 1 == forward arrays
     endif
   endif
@@ -706,13 +706,13 @@
     ! on CPU
     ! adjoint / kernel runs
     ! crust/mantle region
-    call it_multiply_accel_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                   b_two_omega_earth, &
-                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle)
+    call multiply_accel_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                b_two_omega_earth, &
+                                b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle)
     ! inner core region
-    call it_multiply_accel_elastic(NGLOB_INNER_CORE,b_veloc_inner_core,b_accel_inner_core, &
-                                   b_two_omega_earth, &
-                                   b_rmassx_inner_core,b_rmassy_inner_core,b_rmassz_inner_core)
+    call multiply_accel_elastic(NGLOB_INNER_CORE,b_veloc_inner_core,b_accel_inner_core, &
+                                b_two_omega_earth, &
+                                b_rmassx_inner_core,b_rmassy_inner_core,b_rmassz_inner_core)
   else
      ! on GPU
      ! includes FORWARD_OR_ADJOINT == 3
@@ -728,11 +728,11 @@
                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle, &
                                   rmass_ocean_load,normal_top_crust_mantle, &
                                   ibool_crust_mantle,ibelm_top_crust_mantle, &
-                                  updated_dof_ocean_load,NGLOB_XY_CM, &
+                                  updated_dof_ocean_load, &
                                   NSPEC2D_TOP(IREGION_CRUST_MANTLE) )
     else
       ! on GPU
-      call compute_coupling_ocean_cuda(Mesh_pointer,NCHUNKS_VAL,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
+      call compute_coupling_ocean_cuda(Mesh_pointer,NCHUNKS_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
                                        3) ! <- 3 == backward/reconstructed arrays
     endif
   endif

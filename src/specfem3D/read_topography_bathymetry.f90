@@ -37,6 +37,7 @@
   ! local parameters
   integer :: ier
   ! timing
+  double precision :: tCPU
   double precision, external :: wtime
 
   ! get MPI starting time

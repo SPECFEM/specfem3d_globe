@@ -204,7 +204,7 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-  call it_multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
+  call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
 
   ! time schemes
   if( USE_LDDRK ) then
@@ -425,7 +425,7 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-  call it_multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
+  call multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
 
   ! time schemes
   if( USE_LDDRK ) then

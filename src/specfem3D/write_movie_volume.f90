@@ -46,11 +46,12 @@
     iNIT = 1
   endif
 
-  ipoints_3dmovie=0
+  ! initializes movie points
+  ipoints_3dmovie = 0
   num_ibool_3dmovie(:) = -99
   ispecel_3dmovie = 0
-  mask_ibool(:)=.false.
-  mask_3dmovie(:,:,:,:)=.false.
+  mask_ibool(:) = .false.
+  mask_3dmovie(:,:,:,:) = .false.
 
   ! create name of database
   write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
@@ -72,23 +73,28 @@
        ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
        ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) ) ) then
       ispecel_3dmovie=ispecel_3dmovie+1
+
       do k=1,NGLLZ,iNIT
         do j=1,NGLLY,iNIT
           do i=1,NGLLX,iNIT
             iglob    = ibool_crust_mantle(i,j,k,ispec)
+
             if(.not. mask_ibool(iglob)) then
               ipoints_3dmovie = ipoints_3dmovie + 1
+
               mask_ibool(iglob)=.true.
               mask_3dmovie(i,j,k,ispec)=.true.
               num_ibool_3dmovie(iglob)= ipoints_3dmovie
             endif
+
           enddo !i
         enddo !j
       enddo !k
+
     endif !in region
   enddo !ispec
-  npoints_3dmovie=ipoints_3dmovie
-  nspecel_3dmovie=ispecel_3dmovie
+  npoints_3dmovie = ipoints_3dmovie
+  nspecel_3dmovie = ispecel_3dmovie
 
   write(IOUT,*) npoints_3dmovie, nspecel_3dmovie
   close(IOUT)
@@ -163,42 +169,55 @@
 
   if(NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
+  ! stepping
   if(MOVIE_COARSE) then
     iNIT = NGLLX-1
   else
     iNIT = 1
   endif
 
-  ipoints_3dmovie=0
-  do ispec=1,NSPEC_CRUST_MANTLE
-    do k=1,NGLLZ,iNIT
-      do j=1,NGLLY,iNIT
-        do i=1,NGLLX,iNIT
-          if(mask_3dmovie(i,j,k,ispec)) then
-            ipoints_3dmovie=ipoints_3dmovie+1
-            iglob= ibool_crust_mantle(i,j,k,ispec)
-            rval     = xstore_crust_mantle(iglob)
+  ! loops over all elements
+  ipoints_3dmovie = 0
+  do ispec = 1,NSPEC_CRUST_MANTLE
+
+    do k = 1,NGLLZ,iNIT
+      do j = 1,NGLLY,iNIT
+        do i = 1,NGLLX,iNIT
+
+          ! only store points once
+          if( mask_3dmovie(i,j,k,ispec) ) then
+            ! point increment
+            ipoints_3dmovie = ipoints_3dmovie + 1
+
+            ! gets point position
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            rval = xstore_crust_mantle(iglob)
             thetaval = ystore_crust_mantle(iglob)
-            phival   = zstore_crust_mantle(iglob)
+            phival = zstore_crust_mantle(iglob)
+
             !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
             call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
-            store_val3D_x(ipoints_3dmovie)=xval
-            store_val3D_y(ipoints_3dmovie)=yval
-            store_val3D_z(ipoints_3dmovie)=zval
-            store_val3D_mu(ipoints_3dmovie)=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
+
+            store_val3D_x(ipoints_3dmovie) = xval
+            store_val3D_y(ipoints_3dmovie) = yval
+            store_val3D_z(ipoints_3dmovie) = zval
+            store_val3D_mu(ipoints_3dmovie) = muvstore_crust_mantle_3dmovie(i,j,k,ispec)
+
             st = sin(thetaval)
             ct = cos(thetaval)
             sp = sin(phival)
             cp = cos(phival)
-            nu_3dmovie(1,1,ipoints_3dmovie)=-ct*cp
-            nu_3dmovie(1,2,ipoints_3dmovie)=-ct*sp
-            nu_3dmovie(1,3,ipoints_3dmovie)=st
-            nu_3dmovie(2,1,ipoints_3dmovie)=-sp
-            nu_3dmovie(2,2,ipoints_3dmovie)=cp
-            nu_3dmovie(2,3,ipoints_3dmovie)=0.d0
-            nu_3dmovie(3,1,ipoints_3dmovie)=st*cp
-            nu_3dmovie(3,2,ipoints_3dmovie)=st*sp
-            nu_3dmovie(3,3,ipoints_3dmovie)=ct
+
+            nu_3dmovie(1,1,ipoints_3dmovie) = -ct*cp
+            nu_3dmovie(1,2,ipoints_3dmovie) = -ct*sp
+            nu_3dmovie(1,3,ipoints_3dmovie) = st
+            nu_3dmovie(2,1,ipoints_3dmovie) = -sp
+            nu_3dmovie(2,2,ipoints_3dmovie) = cp
+            nu_3dmovie(2,3,ipoints_3dmovie) = 0.d0
+            nu_3dmovie(3,1,ipoints_3dmovie) = st*cp
+            nu_3dmovie(3,2,ipoints_3dmovie) = st*sp
+            nu_3dmovie(3,3,ipoints_3dmovie) = ct
           endif !mask_3dmovie
         enddo  !i
       enddo  !j
@@ -208,29 +227,30 @@
   write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
 
   open(unit=IOUT,file=trim(prname)//'movie3D_x.bin',status='unknown',form='unformatted')
-  if(npoints_3dmovie>0) then
+  if( npoints_3dmovie > 0 ) then
     write(IOUT) store_val3D_x(1:npoints_3dmovie)
   endif
   close(IOUT)
   open(unit=IOUT,file=trim(prname)//'movie3D_y.bin',status='unknown',form='unformatted')
-  if(npoints_3dmovie>0) then
+  if( npoints_3dmovie > 0 ) then
     write(IOUT) store_val3D_y(1:npoints_3dmovie)
    endif
   close(IOUT)
 
   open(unit=IOUT,file=trim(prname)//'movie3D_z.bin',status='unknown',form='unformatted')
-  if(npoints_3dmovie>0) then
+  if( npoints_3dmovie > 0 ) then
     write(IOUT) store_val3D_z(1:npoints_3dmovie)
   endif
   close(IOUT)
 
   open(unit=IOUT,file=trim(prname)//'ascii_output.txt',status='unknown')
-  if(npoints_3dmovie>0) then
+  if( npoints_3dmovie > 0 ) then
     do i=1,npoints_3dmovie
       write(IOUT,*) store_val3D_x(i),store_val3D_y(i),store_val3D_z(i),store_val3D_mu(i)
     enddo
   endif
   close(IOUT)
+
   open(unit=IOUT,file=trim(prname)//'movie3D_elements.bin',status='unknown',form='unformatted')
   ispecele=0
  !  open(unit=IOUT,file=trim(prname)//'movie3D_elements.txt',status='unknown')
@@ -263,6 +283,7 @@
             n7 = num_ibool_3dmovie(iglob7)-1
             n8 = num_ibool_3dmovie(iglob8)-1
             write(IOUT) n1,n2,n3,n4,n5,n6,n7,n8
+            ! text output
             !  write(57,*) n1,n2,n3,n4,n5,n6,n7,n8
             !  endif !mask3dmovie
           enddo !i

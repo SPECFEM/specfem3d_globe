@@ -34,6 +34,7 @@
 
   ! local parameters
   ! timing
+  double precision :: tCPU
   double precision, external :: wtime
 
   ! get MPI starting time
@@ -353,8 +354,8 @@
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                            my_neighbours_crust_mantle)
 
-  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. NGLOB_CRUST_MANTLE > 0 ) then
+  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -369,7 +370,7 @@
   endif
 
   if( SIMULATION_TYPE == 3 ) then
-    if( (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) .and. NGLOB_XY_CM > 0)then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -1192,9 +1193,6 @@
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
     endif
   endif
-  ! to switch between simulation type 1 mode and simulation type 3 mode
-  ! in exact undoing of attenuation
-  undo_att_sim_type_3 = .false.
 
   ! inner core
   eps_trace_over_3_inner_core(:,:,:,:) = init_value
@@ -1861,7 +1859,7 @@
                                   SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                   OCEANS_VAL, &
                                   GRAVITY_VAL, &
-                                  ROTATION_VAL, &
+                                  ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
                                   ATTENUATION_VAL,UNDO_ATTENUATION, &
                                   PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                   COMPUTE_AND_STORE_STRAIN, &
@@ -2117,9 +2115,8 @@
                                  kappavstore_crust_mantle,muvstore_crust_mantle, &
                                  kappahstore_crust_mantle,muhstore_crust_mantle, &
                                  eta_anisostore_crust_mantle, &
-                                 rmassx_crust_mantle, &
-                                 rmassy_crust_mantle, &
-                                 rmassz_crust_mantle, &
+                                 rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                 b_rmassx_crust_mantle,b_rmassy_crust_mantle, &
                                  ibool_crust_mantle, &
                                  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                  ispec_is_tiso_crust_mantle, &
@@ -2171,6 +2168,7 @@
                                 gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
                                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
                                 rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                                b_rmassx_inner_core,b_rmassy_inner_core, &
                                 ibool_inner_core, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &

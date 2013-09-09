@@ -52,28 +52,8 @@
   ! checks
   if( .not. UNDO_ATTENUATION ) return
 
-  ! synchronize all processes to make sure everybody is ready to start time loop
-  call sync_all()
-
-  if(myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Starting time iteration loop in undoing attenuation...'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
-  ! create an empty file to monitor the start of the simulation
-  if(myrank == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop_undoatt.txt',status='unknown',action='write')
-    write(IOUT,*) 'hello, starting time loop'
-    close(IOUT)
-  endif
-
+  ! allocates buffers
   if( SIMULATION_TYPE == 3 ) then
-    ! to switch between simulation type 1 mode and simulation type 3 mode
-    ! in exact undoing of attenuation
-    undo_att_sim_type_3 = .true.
-
     !! DK DK to Daniel, July 2013: in the case of GPU_MODE it will be *crucial* to leave these arrays on the host
     !! i.e. on the CPU, in order to be able to use all the (unused) memory of the host for them, since they are
     !! (purposely) huge and designed to use almost all the memory available (by carefully optimizing the
@@ -93,6 +73,23 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_inner_core_store_buffer')
   endif
 
+  ! synchronize all processes to make sure everybody is ready to start time loop
+  call sync_all()
+
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Starting time iteration loop in undoing attenuation...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! create an empty file to monitor the start of the simulation
+  if(myrank == 0) then
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop_undoatt.txt',status='unknown',action='write')
+    write(IOUT,*) 'hello, starting time loop'
+    close(IOUT)
+  endif
+
   ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
   seismo_current = 0
@@ -103,7 +100,6 @@
   ! *********************************************************
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
-
 
   it = 0
   do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
@@ -127,20 +123,22 @@
       seismo_current_temp = seismo_current
     endif
 
-    ! forward and adjoint simulations
-    if(SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 2) then
+    ! time loop within this iteration subset
+    select case( SIMULATION_TYPE )
+    case( 1, 2 )
+      ! forward and adjoint simulations
 
       ! subset loop
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
 
-        do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+        ! simulation status output and stability check
+        if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+          call check_stability()
+        endif
 
-          ! simulation status output and stability check
-          if((mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) .and. istage == 1) then
-            call check_stability()
-          endif
+        do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if(USE_LDDRK)then
             ! update displacement using runge-kutta time scheme
@@ -180,21 +178,25 @@
 
       enddo ! subset loop
 
-    else if( SIMULATION_TYPE == 3 ) then
+    case( 3 )
       ! kernel simulations
 
       ! reconstructs forward wavefield based on last stored wavefield data
+      !
+      ! note: we step forward in time here, starting from last snapshot.
+      !       the newly computed, reconstructed forward wavefields (b_displ_..) get stored in buffers.
+
       ! subset loop
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
 
-        do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+        ! simulation status output and stability check
+        if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+          call check_stability_backward()
+        endif
 
-          ! simulation status output and stability check
-          if((mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) .and. istage == 1) then
-            call check_stability()
-          endif
+        do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if(USE_LDDRK)then
             ! update displacement using runge-kutta time scheme
@@ -212,11 +214,6 @@
           call compute_forces_viscoelastic_backward()
 
         enddo ! istage
-
-        ! write the seismograms with time shift
-        if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) ) then
-          call write_seismograms()
-        endif
 
         ! stores wavefield in buffers
         b_displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
@@ -236,6 +233,7 @@
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         ! reads backward/reconstructed wavefield from buffers
+        ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         ! crust/mantle
         do i = 1, NDIM
           do j =1,NGLOB_CRUST_MANTLE_ADJOINT
@@ -256,12 +254,12 @@
 
         it = it + 1
 
-        do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+        ! simulation status output and stability check
+        if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+          call check_stability()
+        endif
 
-          ! simulation status output and stability check
-          if((mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) .and. istage == 1) then
-            call check_stability()
-          endif
+        do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if(USE_LDDRK)then
             ! update displacement using runge-kutta time scheme
@@ -291,7 +289,7 @@
 
       enddo ! subset loop
 
-    endif ! SIMULATION_TYPE == 3
+    end select ! SIMULATION_TYPE
 
   enddo   ! end of main time loop
 
@@ -307,7 +305,7 @@
                b_displ_inner_core_store_buffer)
   endif
 
-  call it_print_elapsed_time()
+  call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if(GPU_MODE) call it_transfer_from_GPU()

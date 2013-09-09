@@ -54,43 +54,22 @@
     ! computes traces at interpolated receiver locations
     select case( SIMULATION_TYPE )
     case( 1 )
-      call compute_seismograms(nrec_local,nrec,displ_crust_mantle, &
-                                nu,hxir_store,hetar_store,hgammar_store, &
-                                scale_displ,ibool_crust_mantle, &
-                                ispec_selected_rec,number_receiver_global, &
-                                seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                                seismograms)
-
+      call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
+                               seismo_current,seismograms)
     case( 2 )
-      call compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
-                    eps_trace_over_3_crust_mantle, &
-                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                    nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                    hxir_store,hetar_store,hgammar_store, &
-                    hpxir_store,hpetar_store,hpgammar_store, &
-                    tshift_cmt,hdur_gaussian,DT,t0,scale_displ, &
-                    hprime_xx,hprime_yy,hprime_zz, &
-                    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                    moment_der,sloc_der,stshift_der,shdur_der, &
-                    NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms,deltat, &
-                    ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
-                    NSTEP,it,nit_written)
-
+      call compute_seismograms_adjoint(displ_crust_mantle, &
+                                       eps_trace_over_3_crust_mantle, &
+                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                       nit_written, &
+                                       moment_der,sloc_der,stshift_der,shdur_der, &
+                                       seismograms)
     case( 3 )
-      call compute_seismograms_backward(nrec_local,nrec,b_displ_crust_mantle, &
-                                nu,hxir_store,hetar_store,hgammar_store, &
-                                scale_displ,ibool_crust_mantle, &
-                                ispec_selected_rec,number_receiver_global, &
-                                seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                                seismograms)
-
+      call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
+                               seismo_current,seismograms)
     end select
 
   endif ! nrec_local
-
 
   ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
@@ -98,15 +77,7 @@
     ! writes out seismogram files
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
 
-      ! stores seismograms in right order
-      if( UNDO_ATTENUATION .and. SIMULATION_TYPE == 3) then
-        call compute_seismograms_undoatt(seismo_current,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms)
-      endif
-
-      ! writes out seismogram files
-      if( .not. undo_att_sim_type_3 ) then
-        call write_seismograms_to_file()
-      endif
+      call write_seismograms_to_file()
 
       ! user output
       if(myrank==0) then
@@ -118,14 +89,11 @@
     else if( SIMULATION_TYPE == 2 ) then
       if( nrec_local > 0 ) &
         call write_adj_seismograms(nit_written)
-        nit_written = it
+      nit_written = it
     endif
 
     ! resets current seismogram position
-    if( .not. undo_att_sim_type_3 ) then
-      seismo_offset = seismo_offset + seismo_current
-    endif
-
+    seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
 
   endif
@@ -159,7 +127,6 @@
 
   integer :: iproc,sender,irec_local,irec,ier,receiver
   integer :: nrec_local_received
-  integer :: nrec_tot_found
   integer :: total_seismos,total_seismos_local
   integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=256) :: sisname
@@ -170,16 +137,13 @@
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if(ier /= 0) call exit_mpi(myrank,'error while allocating one temporary seismogram')
 
-  ! check that the sum of the number of receivers in each slice is nrec
-  call sum_all_i(nrec_local,nrec_tot_found)
-  if(myrank == 0 .and. nrec_tot_found /= nrec) &
-      call exit_MPI(myrank,'total number of receivers is incorrect')
-
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
-  ! all the processes write their local seismograms themselves
+  ! writes out seismograms
   if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
+
+    ! all the processes write their local seismograms themselves
 
     write_time_begin = wtime()
 
@@ -234,9 +198,10 @@
       call flush_IMAIN()
     endif
 
-  ! now only the master process does the writing of seismograms and
-  ! collects the data from all other processes
   else ! WRITE_SEISMOGRAMS_BY_MASTER
+
+    ! now only the master process does the writing of seismograms and
+    ! collects the data from all other processes
 
     write_time_begin = wtime()
 
@@ -285,16 +250,18 @@
       ! loop on all the slices
       do iproc = 0,NPROCTOT_VAL-1
 
-       ! communicates only with processes which contain local receivers
+       ! communicates only with processes which contain local receivers (to minimize mpi chatter)
        if( islice_num_rec_local(iproc) == 0 ) cycle
 
        ! receive except from proc 0, which is me and therefore I already have this value
        sender = iproc
-       if(iproc /= 0) then
-         call recv_singlei(nrec_local_received,sender,itag)
-         if(nrec_local_received < 0) call exit_MPI(myrank,'error while receiving local number of receivers')
-       else
+       if(iproc == 0) then
+         ! master is current slice
          nrec_local_received = nrec_local
+       else
+         ! receives info from slave processes
+         call recv_singlei(nrec_local_received,sender,itag)
+         if(nrec_local_received <= 0) call exit_MPI(myrank,'error while receiving local number of receivers')
        endif
        if (nrec_local_received > 0) then
          do irec_local = 1,nrec_local_received
@@ -304,6 +271,7 @@
              irec = number_receiver_global(irec_local)
              one_seismogram(:,:) = seismograms(:,irec_local,:)
            else
+             ! receives info from slave processes
              call recv_singlei(irec,sender,itag)
              if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
              call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
@@ -329,8 +297,9 @@
 
     else  ! on the nodes, send the seismograms to the master
       receiver = 0
-      call send_singlei(nrec_local,receiver,itag)
+      ! only sends if this slice contains receiver stations
       if (nrec_local > 0) then
+        call send_singlei(nrec_local,receiver,itag)
         do irec_local = 1,nrec_local
           ! get global number of that receiver
           irec = number_receiver_global(irec_local)
@@ -368,18 +337,15 @@
           ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
           myrank,nrec, &
           station_name,network_name,stlat,stlon,stele,stbur, &
-          DT,seismo_offset,seismo_current,it_end, &
+          DT,t0, &
+          seismo_offset,seismo_current,it_end, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
           OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           MODEL,OUTPUT_FILES
 
   use specfem_par,only: &
-          hdur=>t0,yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC, &
-          tshift_cmt=>t_cmt_SAC,t_shift=>t_shift_SAC, &
-          elat=>elat_SAC,elon=>elon_SAC,depth=>depth_SAC, &
-          event_name=>event_name_SAC,cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,&
-          cmt_depth=>cmt_depth_SAC,cmt_hdur=>cmt_hdur_SAC
+          cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
 
   implicit none
 
@@ -389,15 +355,21 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
   integer :: iorientation,length_station_name,length_network_name
+
   character(len=4) :: chn
   character(len=256) :: sisname,sisname_big_file
   character(len=2) :: bic
+
   ! variables used for calculation of backazimuth and
   ! rotation of components if ROTATE_SEISMOGRAMS=.true.
   integer :: ior_start,ior_end
   double precision :: backaz
-  real(kind=CUSTOM_REAL) :: phi,cphi,sphi
+  double precision :: phi
+  real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
+
+  ! initializes
+  seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
 
   ! get band code
   call band_instrument_code(DT,bic)
@@ -412,24 +384,25 @@
 
   do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
 
-    if(iorientation == 1) then
+    select case( iorientation )
+    case( 1 )
       !chn = 'LHN'
       chn = bic(1:2)//'N'
-    else if(iorientation == 2) then
+    case( 2 )
       !chn = 'LHE'
       chn = bic(1:2)//'E'
-    else if(iorientation == 3) then
+    case( 3 )
       !chn = 'LHZ'
       chn = bic(1:2)//'Z'
-    else if(iorientation == 4) then
+    case( 4 )
       !chn = 'LHR'
       chn = bic(1:2)//'R'
-    else if(iorientation == 5) then
+    case( 5 )
       !chn = 'LHT'
       chn = bic(1:2)//'T'
-    else
+    case default
       call exit_MPI(myrank,'incorrect channel value')
-    endif
+    end select
 
     if (iorientation == 4 .or. iorientation == 5) then        ! LMU BS BS
 
@@ -439,11 +412,11 @@
       call get_backazimuth(cmt_lat,cmt_lon,stlat(irec),stlon(irec),backaz)
 
       phi = backaz
-      if (phi>180.) then
-         phi = phi-180.
-      else if (phi<180.) then
-         phi = phi+180.
-      else if (phi==180.) then
+      if (phi>180.d0) then
+         phi = phi-180.d0
+      else if (phi<180.d0) then
+         phi = phi+180.d0
+      else if (phi==180.d0) then
          phi = backaz
       endif
 
@@ -492,26 +465,12 @@
                    network_name(irec)(1:length_network_name),chn
 
     ! SAC output format
-    if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then
-      call write_output_SAC(seismogram_tmp,irec, &
-              station_name,network_name,stlat,stlon,stele,stbur,nrec, &
-              ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-              yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
-              elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
-              OUTPUT_FILES, &
-              OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,MODEL, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-              iorientation,phi,chn,sisname)
-    endif ! OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY
+    if( OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) &
+      call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
 
     ! ASCII output format
-    if(OUTPUT_SEISMOS_ASCII_TEXT) then
-      call write_output_ASCII(seismogram_tmp, &
-              DT,hdur,OUTPUT_FILES, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank, &
-              iorientation,sisname,sisname_big_file)
-    endif  ! OUTPUT_SEISMOS_ASCII_TEXT
+    if(OUTPUT_SEISMOS_ASCII_TEXT) &
+      call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
 
   enddo ! do iorientation
 
@@ -620,16 +579,18 @@
 !
 
  subroutine band_instrument_code(DT,bic)
-  ! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
-  ! based on the IRIS convention (first two letters of channel codes which were LH(Z/E/N) previously).
-  ! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes)of
-  ! SEM seismograms governed by their sampling rate.
-  ! Instrument code (second letter in channel codes) is fixed to "X" which is assigned by IRIS for synthetic seismograms.
-  ! See the manual for further explanations!
-  ! Ebru, November 2010
+
+! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
+! based on the IRIS convention (first two letters of channel codes which were LH(Z/E/N) previously).
+! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes)of
+! SEM seismograms governed by their sampling rate.
+! Instrument code (second letter in channel codes) is fixed to "X" which is assigned by IRIS for synthetic seismograms.
+! See the manual for further explanations!
+! Ebru, November 2010
+
   implicit none
-  double precision DT
-  character(len=2) bic
+  double precision :: DT
+  character(len=2) :: bic
 
   if (DT >= 1.0d0)  bic = 'LX'
   if (DT < 1.0d0 .and. DT > 0.1d0) bic = 'MX'

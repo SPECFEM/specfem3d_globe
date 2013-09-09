@@ -36,6 +36,7 @@
 
   ! local parameters
   ! timing
+  double precision :: tCPU
   double precision, external :: wtime
 
   ! get MPI starting time
@@ -148,6 +149,10 @@
   ! sets number of top elements for surface movies & noise tomography
   NSPEC_TOP = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
 
+  ! allocates dummy array
+  allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy idoubling in crust_mantle')
+
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
   ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
@@ -157,17 +162,10 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
 
-  ! allocates dummy array
-  allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy idoubling in crust_mantle')
-
   ! allocates mass matrices
   allocate(rmassx_crust_mantle(NGLOB_XY_CM), &
            rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if(ier /= 0) stop 'error allocating rmassx, rmassy in crust_mantle'
-
-  allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
-  if(ier /= 0) stop 'error allocating rmassz in crust_mantle'
 
   ! b_rmassx and b_rmassy will be different to rmassx and rmassy
   ! needs new arrays
@@ -231,8 +229,11 @@
   deallocate(dummy_idoubling)
 
   ! mass matrix corrections
-  if( .not. ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-             (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) ) then
+  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+    ! mass matrices differ for rmassx,rmassy
+    ! continue
+  else
     ! uses single mass matrix without correction
     ! frees pointer memory
     deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
@@ -246,7 +247,10 @@
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmassz_crust_mantle => rmassz_crust_mantle
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
-    if( .not. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      ! mass matrices differ for b_rmassx,b_rmassy
+      ! continue
+    else
       ! frees pointer memory
       deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
       ! re-associates with corresponding rmassx,rmassy
@@ -256,6 +260,7 @@
   else
     ! b_rmassx,b_rmassy not used anymore
     deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+    nullify(b_rmassz_crust_mantle)
   endif
 
 
@@ -303,16 +308,7 @@
           stat=ier)
   if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec/idoubling in outer core'
 
-  ! allocates mass matrices in this slice (will be fully assembled in the solver)
-  !
-  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  !
-  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
-  if(ier /= 0) stop 'error allocating rmass in outer core'
+  ! reads in mesh arrays
 
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
@@ -333,7 +329,7 @@
               dummy_array,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-              dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
+              dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
               READ_KAPPA_MU,READ_TISO, &
               dummy_rmass,dummy_rmass)
   else
@@ -355,7 +351,7 @@
               dummy_array,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-              dummy_rmass,dummy_rmass,rmass_outer_core,rmass_ocean_load, &
+              dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
               READ_KAPPA_MU,READ_TISO, &
               dummy_rmass,dummy_rmass)
   endif
@@ -375,6 +371,8 @@
   if( SIMULATION_TYPE == 3 ) then
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmass_outer_core => rmass_outer_core
+  else
+    nullify(b_rmass_outer_core)
   endif
 
   end subroutine read_mesh_databases_OC
@@ -428,9 +426,6 @@
            rmassy_inner_core(NGLOB_XY_IC),stat=ier)
   if(ier /= 0) stop 'error allocating rmassx, rmassy in inner_core'
 
-  allocate(rmassz_inner_core(NGLOB_INNER_CORE),stat=ier)
-  if(ier /= 0) stop 'error allocating rmass in inner core'
-
   ! b_rmassx and b_rmassy maybe different to rmassx,rmassy
   allocate(b_rmassx_inner_core(NGLOB_XY_IC), &
            b_rmassy_inner_core(NGLOB_XY_IC),stat=ier)
@@ -456,7 +451,7 @@
               c44store_inner_core,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,rmass_ocean_load, &
+              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
               READ_KAPPA_MU,READ_TISO, &
               b_rmassx_inner_core,b_rmassy_inner_core)
   else
@@ -478,7 +473,7 @@
               c44store_inner_core,dummy_array,dummy_array, &
               dummy_array,dummy_array,dummy_array, &
               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,rmass_ocean_load, &
+              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
               READ_KAPPA_MU,READ_TISO, &
               b_rmassx_inner_core,b_rmassy_inner_core)
   endif
@@ -490,7 +485,10 @@
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
   ! mass matrix corrections
-  if( .not. ( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) ) then
+  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+    ! uses corrected mass matrices
+    ! continue
+  else
     ! uses single mass matrix without correction
     ! frees pointer memory
     deallocate(rmassx_inner_core,rmassy_inner_core)
@@ -504,7 +502,10 @@
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmassz_inner_core => rmassz_inner_core
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
-    if( .not. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      ! uses corrected mass matrices
+      ! continue
+    else
       ! frees pointer memory
       deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
       ! re-associates with corresponding rmassx,rmassy
@@ -514,6 +515,12 @@
   else
     ! b_rmassx,b_rmassy not used anymore
     deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+    ! use dummy pointers used for passing as function arguments
+    ! associates mass matrix used for backward/reconstructed wavefields
+    !b_rmassz_inner_core => rmassz_inner_core
+    !b_rmassx_inner_core => rmassz_inner_core
+    !b_rmassy_inner_core => rmassz_inner_core
+    nullify(b_rmassz_inner_core)
   endif
 
   end subroutine read_mesh_databases_IC

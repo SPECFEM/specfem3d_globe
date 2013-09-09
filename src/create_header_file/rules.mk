@@ -67,7 +67,11 @@ create_header_file_SHARED_OBJECTS = \
 
 ${OUTPUT}/values_from_mesher.h: $E/xcreate_header_file $B/DATA/Par_file
 	@-rm -f $@
+	@echo ""
+	@echo "running xcreate_header_file..."
+	@echo ""
 	$E/xcreate_header_file
+	@echo ""
 	@test -f $@
 
 #######################################

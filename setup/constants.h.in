@@ -236,7 +236,7 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
-!*********************************************************************************************************
+!************************************************************
 ! added these parameters for the GPU version of the solver with mesh coloring
 
 ! add mesh coloring for the GPU + MPI implementation
@@ -276,12 +276,10 @@
 !! (uncomment desired resolution)
 ! old version
 ! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
-  logical, parameter :: USE_VERSION_5_1_5 = .true.
-!  integer, parameter :: CUSTOM_REAL_ATT = CUSTOM_REAL
+!  logical, parameter :: USE_VERSION_5_1_5 = .true.
 ! new version
-! new version uses full 3d attenuation, double precision for attenuation arrays (Qmu_store, tau_e_store)
-!!  logical, parameter :: USE_VERSION_5_1_5 = .false.
-!!  integer,parameter :: CUSTOM_REAL_ATT = SIZE_DOUBLE
+! new version uses optional full 3d attenuation
+  logical, parameter :: USE_VERSION_5_1_5 = .false.
 
 
 

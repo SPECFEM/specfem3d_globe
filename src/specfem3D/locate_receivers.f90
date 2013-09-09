@@ -104,7 +104,7 @@
   double precision gammax,gammay,gammaz
 
   ! timer MPI
-  double precision time_start,tCPU
+  double precision :: time_start,tCPU
 
   ! use dynamic allocation
   double precision, dimension(:), allocatable :: final_distance

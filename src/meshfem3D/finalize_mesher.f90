@@ -35,6 +35,7 @@
 
   ! local parameters
   ! timing
+  double precision :: tCPU
   double precision, external :: wtime
 
   !--- print number of points and elements in the mesh for each region

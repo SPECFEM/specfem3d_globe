@@ -134,7 +134,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* ABSORBING_CONDITIONS_f,
                                         int* OCEANS_f,
                                         int* GRAVITY_f,
-                                        int* ROTATION_f,
+                                        int* ROTATION_f,int* EXACT_MASS_MATRIX_FOR_ROTATION_f,
                                         int* ATTENUATION_f,int* UNDO_ATTENUATION_f,
                                         int* USE_ATTENUATION_MIMIC_f,
                                         int* USE_3D_ATTENUATION_ARRAYS_f,
@@ -236,6 +236,7 @@ void FC_FUNC_(prepare_constants_device,
   mp->oceans = *OCEANS_f;
   mp->gravity = *GRAVITY_f;
   mp->rotation = *ROTATION_f;
+  mp->exact_mass_matrix_for_rotation = *EXACT_MASS_MATRIX_FOR_ROTATION_f;
 
   mp->attenuation = *ATTENUATION_f;
   mp->undo_attenuation = *UNDO_ATTENUATION_f;
@@ -1085,9 +1086,8 @@ void FC_FUNC_(prepare_crust_mantle_device,
                                           realw* h_kappav, realw* h_muv,
                                           realw* h_kappah, realw* h_muh,
                                           realw* h_eta_aniso,
-                                          realw* h_rmassx,
-                                          realw* h_rmassy,
-                                          realw* h_rmassz,
+                                          realw* h_rmassx,realw* h_rmassy,realw* h_rmassz,
+                                          realw* h_b_rmassx,realw* h_b_rmassy,
                                           int* h_ibool,
                                           realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                           int* h_ispec_is_tiso,
@@ -1361,7 +1361,7 @@ void FC_FUNC_(prepare_crust_mantle_device,
 
   // mass matrices
   copy_todevice_realw((void**)&mp->d_rmassz_crust_mantle,h_rmassz,size_glob);
-  if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+  if( (*NCHUNKS_VAL != 6 && mp->absorbing_conditions) || ( mp->rotation && mp->exact_mass_matrix_for_rotation)){
     copy_todevice_realw((void**)&mp->d_rmassx_crust_mantle,h_rmassx,size_glob);
     copy_todevice_realw((void**)&mp->d_rmassy_crust_mantle,h_rmassy,size_glob);
   }else{
@@ -1369,8 +1369,18 @@ void FC_FUNC_(prepare_crust_mantle_device,
     mp->d_rmassy_crust_mantle = mp->d_rmassz_crust_mantle;
   }
 
-  // kernels
+  // kernel simulations
   if( mp->simulation_type == 3 ){
+    mp->d_b_rmassz_crust_mantle = mp->d_rmassz_crust_mantle;
+    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+      copy_todevice_realw((void**)&mp->d_b_rmassx_crust_mantle,h_b_rmassx,size_glob);
+      copy_todevice_realw((void**)&mp->d_b_rmassy_crust_mantle,h_b_rmassy,size_glob);
+    }else{
+      mp->d_b_rmassx_crust_mantle = mp->d_rmassx_crust_mantle;
+      mp->d_b_rmassy_crust_mantle = mp->d_rmassy_crust_mantle;
+    }
+
+    // kernels
     size = NGLL3*(mp->NSPEC_CRUST_MANTLE);
 
     // density kernel
@@ -1575,8 +1585,12 @@ void FC_FUNC_(prepare_outer_core_device,
   // mass matrix
   copy_todevice_realw((void**)&mp->d_rmass_outer_core,h_rmass,size_glob);
 
-  // kernels
+  // kernel simulations
   if( mp->simulation_type == 3 ){
+    // mass matrix
+    mp->d_b_rmass_outer_core = mp->d_rmass_outer_core;
+
+    //kernels
     size = NGLL3*(mp->NSPEC_OUTER_CORE);
 
     // density kernel
@@ -1615,6 +1629,7 @@ void FC_FUNC_(prepare_inner_core_device,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav, realw* h_muv,
                                          realw* h_rmassx,realw* h_rmassy,realw* h_rmassz,
+                                         realw* h_b_rmassx,realw* h_b_rmassy,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          realw *c11store,realw *c12store,realw *c13store,
@@ -1791,12 +1806,28 @@ void FC_FUNC_(prepare_inner_core_device,
   #endif
 
   // mass matrix
-  copy_todevice_realw((void**)&mp->d_rmassx_inner_core,h_rmassx,size_glob);
-  copy_todevice_realw((void**)&mp->d_rmassy_inner_core,h_rmassy,size_glob);
   copy_todevice_realw((void**)&mp->d_rmassz_inner_core,h_rmassz,size_glob);
+  if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+    copy_todevice_realw((void**)&mp->d_rmassx_inner_core,h_rmassx,size_glob);
+    copy_todevice_realw((void**)&mp->d_rmassy_inner_core,h_rmassy,size_glob);
+  }else{
+    mp->d_rmassx_inner_core = mp->d_rmassz_inner_core;
+    mp->d_rmassy_inner_core = mp->d_rmassz_inner_core;
+  }
 
-  // kernels
+  // kernel simulations
   if( mp->simulation_type == 3 ){
+    // mass matrices
+    mp->d_b_rmassz_inner_core = mp->d_rmassz_inner_core;
+    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+      copy_todevice_realw((void**)&mp->d_b_rmassx_inner_core,h_b_rmassx,size_glob);
+      copy_todevice_realw((void**)&mp->d_b_rmassy_inner_core,h_b_rmassy,size_glob);
+    }else{
+      mp->d_b_rmassx_inner_core = mp->d_rmassx_inner_core;
+      mp->d_b_rmassy_inner_core = mp->d_rmassy_inner_core;
+    }
+
+    // kernels
     size = NGLL3*(mp->NSPEC_INNER_CORE);
 
     // density kernel

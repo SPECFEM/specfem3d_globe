@@ -254,6 +254,9 @@
 
   ! produces simulations compatible with old globe version 5.1.5
   if( USE_VERSION_5_1_5 ) then
+    print*
+    print*,'**************'
+    print*,'using globe version 5.1.5 compatible simulation parameters'
     if( .not. ATTENUATION_1D_WITH_3D_STORAGE ) then
       print*,'setting ATTENUATION_1D_WITH_3D_STORAGE to .true. for compatibility with globe version 5.1.5 '
       ATTENUATION_1D_WITH_3D_STORAGE = .true.
@@ -270,6 +273,8 @@
       print*,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
       EXACT_MASS_MATRIX_FOR_ROTATION = .false.
     endif
+    print*,'**************'
+    print*
   endif
 
 !----------------------------------------------
@@ -296,8 +301,8 @@
   if( EXACT_MASS_MATRIX_FOR_ROTATION .and. GPU_MODE ) &
     stop 'EXACT_MASS_MATRIX_FOR_ROTATION support not implemented yet for GPU simulations'
 
-  if( UNDO_ATTENUATION ) &
-    stop 'UNDO_ATTENUATION support not implemented yet'
+  !if( UNDO_ATTENUATION ) &
+  !  stop 'UNDO_ATTENUATION support not implemented yet'
   if( UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
   if( UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &

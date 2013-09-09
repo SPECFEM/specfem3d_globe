@@ -71,12 +71,12 @@
 
   do it = it_begin,it_end
 
-    do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+    ! simulation status output and stability check
+    if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+      call check_stability()
+    endif
 
-      ! simulation status output and stability check
-      if((mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) .and. istage == 1) then
-        call check_stability()
-      endif
+    do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
       if(USE_LDDRK)then
         ! update displacement using runge-kutta time scheme
@@ -93,9 +93,15 @@
       ! elastic solver for crust/mantle and inner core
       call compute_forces_viscoelastic()
 
-      ! kernel simulations (forward and adjoint wavefields)
-      if( SIMULATION_TYPE == 3 ) then
-        ! reconstructs forward wavefields based on last stored wavefield data
+    enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
+
+    ! kernel simulations (forward and adjoint wavefields)
+    if( SIMULATION_TYPE == 3 ) then
+
+      ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
+
+      ! reconstructs forward wavefields based on last stored wavefield data
+      do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
         if(USE_LDDRK)then
           ! update displacement using runge-kutta time scheme
@@ -111,12 +117,9 @@
 
         ! elastic solver for crust/mantle and inner core
         call compute_forces_viscoelastic_backward()
-      endif
 
-    enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
+      enddo
 
-    ! kernel simulations (forward and adjoint wavefields)
-    if( SIMULATION_TYPE == 3 ) then
       ! restores last time snapshot saved for backward/reconstruction of wavefields
       ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
       !          and adjoint sources will become more complicated
@@ -127,7 +130,8 @@
 
       ! adjoint simulations: kernels
       call compute_kernels()
-    endif
+
+    endif ! kernel simulations
 
     ! write the seismograms with time shift
     if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) ) then
@@ -154,124 +158,12 @@
   !---- end of time iteration loop
   !
 
-  call it_print_elapsed_time()
+  call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if(GPU_MODE) call it_transfer_from_GPU()
 
   end subroutine iterate_time
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine it_multiply_accel_elastic(NGLOB,veloc,accel, &
-                                       two_omega_earth, &
-                                       rmassx,rmassy,rmassz)
-
-! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
-
-  use constants_solver,only: CUSTOM_REAL,NDIM
-
-  implicit none
-
-  integer :: NGLOB
-
-  ! velocity & acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc,accel
-
-  real(kind=CUSTOM_REAL) :: two_omega_earth
-
-  ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmassx,rmassy,rmassz
-
-  ! local parameters
-  integer :: i
-
-  ! note: mass matrices
-  !
-  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
-  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-  !
-  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-
-  ! updates acceleration w/ rotation in elastic region
-
-  ! see input call, differs for corrected mass matrices for rmassx,rmassy,rmassz
-  do i=1,NGLOB
-    accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
-    accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
-    accel(3,i) = accel(3,i)*rmassz(i)
-  enddo
-
-  end subroutine it_multiply_accel_elastic
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine it_multiply_accel_acoustic(NGLOB,accel,rmass)
-
-! multiplies acceleration with inverse of mass matrix in outer core region
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer :: NGLOB
-
-  ! velocity & acceleration
-  ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: accel
-
-  ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass
-
-  ! local parameters
-  integer :: i
-
-  ! note: mass matrices for fluid region has no stacey or rotation correction
-  !       it is also the same for forward and backward/reconstructed wavefields
-
-  do i=1,NGLOB
-    accel(i) = accel(i)*rmass(i)
-  enddo
-
-  end subroutine it_multiply_accel_acoustic
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-
-  subroutine it_print_elapsed_time()
-
-  use specfem_par
-  implicit none
-
-  ! local parameters
-  integer :: ihours,iminutes,iseconds,int_tCPU
-  ! timing
-  double precision, external :: wtime
-
-  if(myrank == 0) then
-    ! elapsed time since beginning of the simulation
-    tCPU = wtime() - time_start
-
-    int_tCPU = int(tCPU)
-    ihours = int_tCPU / 3600
-    iminutes = (int_tCPU - 3600*ihours) / 60
-    iseconds = int_tCPU - 3600*ihours - 60*iminutes
-    write(IMAIN,*) 'Time-Loop Complete. Timing info:'
-    write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    call flush_IMAIN()
-  endif
-
-  end subroutine it_print_elapsed_time
 
 
 !
@@ -354,7 +246,10 @@
 
   end subroutine it_transfer_from_GPU
 
-!=====================================================================
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 
   subroutine it_update_vtkwindow()

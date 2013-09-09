@@ -25,6 +25,7 @@
 !
 !=====================================================================
 
+
   subroutine check_stability()
 
 ! computes the maximum of the norm of the displacement
@@ -59,7 +60,10 @@
   real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   ! timer MPI
-  double precision :: tCPU,t_remain,t_total
+  double precision :: tCPU
+  double precision, external :: wtime
+  double precision :: time
+  double precision :: t_remain,t_total
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
@@ -78,8 +82,6 @@
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week, &
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer, external :: idaywk
-  ! timing
-  double precision, external :: wtime
 
   double precision,parameter :: scale_displ = R_EARTH
 
@@ -193,9 +195,12 @@
     iminutes_total = (int_t_total - 3600*ihours_total) / 60
     iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
 
+    ! current time (in seconds)
+    time = dble(it-1)*DT - t0
+
     ! user output
     write(IMAIN,*) 'Time step # ',it
-    write(IMAIN,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
+    write(IMAIN,*) 'Time: ',sngl((time)/60.d0),' minutes'
 
     ! rescale maximum displacement to correct dimensions
     Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
@@ -363,6 +368,133 @@
 !------------------------------------------------------------------------------------------------------------------
 !
 
+  subroutine check_stability_backward()
+
+! only for backward/reconstructed wavefield
+
+  use constants,only: CUSTOM_REAL,IMAIN,R_EARTH, &
+    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
+    STABILITY_THRESHOLD
+
+  use specfem_par,only: &
+    GPU_MODE,Mesh_pointer, &
+    SIMULATION_TYPE,time_start,DT,t0, &
+    NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
+    myrank
+
+  use specfem_par_crustmantle,only: b_displ_crust_mantle
+  use specfem_par_innercore,only: b_displ_inner_core
+  use specfem_par_outercore,only: b_displ_outer_core
+
+  implicit none
+
+  ! local parameters
+  ! maximum of the norm of the displacement and of the potential in the fluid
+  real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  ! timer MPI
+  double precision :: tCPU
+  double precision, external :: wtime
+  double precision :: time
+  integer :: ihours,iminutes,iseconds,int_tCPU
+
+  integer :: it_run,nstep_run
+  logical :: SHOW_SEPARATE_RUN_INFORMATION
+
+  double precision,parameter :: scale_displ = R_EARTH
+
+  ! checks if anything to do
+  if( SIMULATION_TYPE /= 3 ) return
+
+  ! compute maximum of norm of displacement in each slice
+  if( .not. GPU_MODE) then
+    ! on CPU
+    b_Usolidnorm = max( &
+           maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
+                        b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
+           maxval(sqrt(b_displ_inner_core(1,:)**2  &
+                      + b_displ_inner_core(2,:)**2 &
+                      + b_displ_inner_core(3,:)**2)))
+
+    b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+  else
+    ! on GPU
+    call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
+    call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
+  endif
+
+  if(b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
+    call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
+  if(b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
+    call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
+
+  ! compute the maximum of the maxima for all the slices using an MPI reduction
+  call max_all_cr(b_Usolidnorm,b_Usolidnorm_all)
+  call max_all_cr(b_Ufluidnorm,b_Ufluidnorm_all)
+
+  if(myrank == 0) then
+
+    ! this is in the case of restart files, when a given run consists of several partial runs
+    ! information about the current run only
+    SHOW_SEPARATE_RUN_INFORMATION = ( NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS )
+    it_run = it - it_begin + 1
+    nstep_run = it_end - it_begin + 1
+
+    ! elapsed time since beginning of the simulation
+    tCPU = wtime() - time_start
+
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+
+    ! no further time estimation since only partially computed solution yet...
+
+    ! current time (in seconds)
+    time = dble(it-1)*DT - t0
+
+    ! user output
+    write(IMAIN,*) 'Time step for back propagation # ',it
+    write(IMAIN,*) 'Time: ',sngl((time)/60.d0),' minutes'
+
+    ! rescale maximum displacement to correct dimensions
+    b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
+    write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
+    write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+
+    write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
+    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+
+    if (SHOW_SEPARATE_RUN_INFORMATION) then
+      write(IMAIN,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
+      write(IMAIN,*) 'Time steps done in total = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining for this run = ',it_end - it
+      write(IMAIN,*) 'Time steps remaining for all runs = ',NSTEP - it
+    else
+      write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+    endif
+    write(IMAIN,*)
+
+    ! flushes file buffer for main output file (IMAIN)
+    call flush_IMAIN()
+
+    ! check stability of the code, exit if unstable
+    ! negative values can occur with some compilers when the unstable value is greater
+    ! than the greatest possible floating-point number of the machine
+    if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+      call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
+    if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+      call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
+
+  endif
+
+  end subroutine check_stability_backward
+
+!
+!------------------------------------------------------------------------------------------------------------------
+!
+
   subroutine write_timestamp_file(Usolidnorm_all,Ufluidnorm_all,b_Usolidnorm_all,b_Ufluidnorm_all, &
                                   tCPU,ihours,iminutes,iseconds, &
                                   t_remain,ihours_remain,iminutes_remain,iseconds_remain, &
@@ -491,3 +623,37 @@
   close(IOUT)
 
   end subroutine write_timestamp_file
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine print_elapsed_time()
+
+  use specfem_par,only: time_start,IMAIN,myrank
+  implicit none
+
+  ! local parameters
+  integer :: ihours,iminutes,iseconds,int_tCPU
+  ! timing
+  double precision :: tCPU
+  double precision, external :: wtime
+
+  if(myrank == 0) then
+    ! elapsed time since beginning of the simulation
+    tCPU = wtime() - time_start
+
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+    write(IMAIN,*) 'Time-Loop Complete. Timing info:'
+    write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
+    write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    call flush_IMAIN()
+  endif
+
+  end subroutine print_elapsed_time
+

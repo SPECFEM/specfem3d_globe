@@ -160,17 +160,21 @@
 
   ! Newmark time scheme update
   if(FORCE_VECTORIZATION_VAL) then
+
     do i=1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
       accel(i,1) = 0._CUSTOM_REAL
     enddo
+
   else
+
     do i=1,NGLOB
       displ(:,i) = displ(:,i) + deltat * veloc(:,i) + deltatsqover2 * accel(:,i)
       veloc(:,i) = veloc(:,i) + deltatover2 * accel(:,i)
       accel(:,i) = 0._CUSTOM_REAL
     enddo
+
   endif
 
   end subroutine update_displ_elastic
@@ -393,7 +397,7 @@
   if(FORCE_VECTORIZATION_VAL) then
 
     do i=1,NGLOB_CM * NDIM
-      veloc_crust_mantle(i,i) = veloc_crust_mantle(i,i) + deltatover2*accel_crust_mantle(i,i)
+      veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
 
   else

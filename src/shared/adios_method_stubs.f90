@@ -36,6 +36,8 @@
   subroutine adios_setup()
   end subroutine
 
+! for xmeshfem3D compilation
+
   subroutine crm_save_mesh_files_adios()
   end subroutine
 
@@ -43,6 +45,9 @@
   end subroutine
 
   subroutine save_arrays_solver_adios()
+  end subroutine
+
+  subroutine save_arrays_solver_boundary_adios()
   end subroutine
 
   subroutine save_mpi_arrays_adios()

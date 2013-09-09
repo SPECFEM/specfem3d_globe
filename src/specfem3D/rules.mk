@@ -43,11 +43,8 @@ specfem3D_OBJECTS = \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
 	$O/get_event_info.solver.o \
-	$O/multiply_arrays_source.solver.o \
 	$O/netlib_specfun_erf.solver.o \
 	$O/recompute_jacobian.solver.o \
-	$O/write_output_ASCII.solver.o \
-	$O/write_output_SAC.solver.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
@@ -81,6 +78,7 @@ specfem3D_OBJECTS += \
 	$O/locate_receivers.solverstatic.o \
 	$O/locate_regular_points.solverstatic.o \
 	$O/locate_sources.solverstatic.o \
+	$O/multiply_arrays_source.solverstatic.o \
 	$O/noise_tomography.solverstatic.o \
 	$O/prepare_timerun.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
@@ -98,6 +96,8 @@ specfem3D_OBJECTS += \
 	$O/write_movie_output.solverstatic.o \
 	$O/write_movie_volume.solverstatic.o \
 	$O/write_movie_surface.solverstatic.o \
+	$O/write_output_ASCII.solverstatic.o \
+	$O/write_output_SAC.solverstatic.o \
 	$O/write_seismograms.solverstatic.o \
 	$(EMPTY_MACRO)
 
@@ -135,6 +135,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_c_binary.cc.o \
+	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
 ###
@@ -237,14 +238,18 @@ ifeq ($(CUDA5),yes)
 
 ## cuda 5 version
 ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
+	@echo ""
 	@echo "building xspecfem3D with CUDA 5 support"
+	@echo ""
 	${NVCCLINK} -o $(cuda_DEVICE_OBJ) $(cuda_OBJECTS)
 	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
 else
 
 ## cuda 4 version
 ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
+	@echo ""
 	@echo "building xspecfem3D with CUDA 4 support"
+	@echo ""
 	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK)
 endif
 
@@ -252,7 +257,9 @@ else
 
 ## non-cuda version
 ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
+	@echo ""
 	@echo "building xspecfem3D without CUDA support"
+	@echo ""
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
