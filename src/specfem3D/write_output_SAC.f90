@@ -34,7 +34,6 @@
 
   use specfem_par,only: &
           ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
-          myrank,nrec, &
           station_name,network_name,stlat,stlon,stele,stbur, &
           DT,t0, &
           seismo_offset,seismo_current,it_end, &

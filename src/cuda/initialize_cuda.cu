@@ -30,10 +30,6 @@
 #include <cuda.h>
 #include <cublas.h>
 
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
-
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -115,7 +111,26 @@ void FC_FUNC_(initialize_cuda_device,
     //MPI_Barrier(MPI_COMM_WORLD);
 
     // sets active device
+#ifdef CUDA_DEVICE_ID
+    // uses fixed device id when compile with e.g.: -DCUDA_DEVICE_ID=1
+    device = CUDA_DEVICE_ID;
+    if(myrank == 0 ) printf("setting cuda devices with id = %d for all processes by -DCUDA_DEVICE_ID\n\n",device);
+
+    cudaSetDevice( device );
+    exit_on_cuda_error("cudaSetDevice has invalid device");
+
+    // double check that device was  properly selected
+    cudaGetDevice(&device);
+    if( device != CUDA_DEVICE_ID ){
+       printf("error rank: %d devices: %d \n",myrank,device_count);
+       printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",CUDA_DEVICE_ID,device);
+       exit_on_error("CUDA set/get device error: device id conflict \n");
+    }
+#else
+    // device changes for different mpi processes according to number of device per node
+    // (assumes that number of devices per node is the same for different compute nodes)
     device = myrank % device_count;
+
     cudaSetDevice( device );
     exit_on_cuda_error("cudaSetDevice has invalid device");
 
@@ -126,6 +141,7 @@ void FC_FUNC_(initialize_cuda_device,
        printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",myrank%device_count,device);
        exit_on_error("CUDA set/get device error: device id conflict \n");
     }
+#endif
   }
 
   // returns a handle to the active device

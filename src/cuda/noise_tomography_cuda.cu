@@ -30,9 +30,9 @@
 #include <cuda.h>
 #include <cublas.h>
 
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
+//#ifdef WITH_MPI
+//#include <mpi.h>
+//#endif
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -42,6 +42,7 @@
 
 
 /* ----------------------------------------------------------------------------------------------- */
+//unused routines...
 /*
 extern "C"
 void FC_FUNC_(fortranflush,FORTRANFLUSH)(int* rank){

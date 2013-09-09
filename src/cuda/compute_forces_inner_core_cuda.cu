@@ -328,7 +328,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          realw* epsilon_trace_over_3,
                                          int SIMULATION_TYPE,
                                          int ATTENUATION,
-                                         int USE_ATTENUATION_MIMIC,
+                                         int PARTIAL_PHYS_DISPERSION_ONLY,
                                          int USE_3D_ATTENUATION_ARRAYS,
                                          realw* one_minus_sum_beta,realw* factor_common,
                                          realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
@@ -678,7 +678,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       sigma_yz = mul*duzdyl_plus_duydzl;
     }
 
-    if(ATTENUATION && ( ! USE_ATTENUATION_MIMIC ) ){
+    if(ATTENUATION && ( ! PARTIAL_PHYS_DISPERSION_ONLY ) ){
       // subtracts memory variables if attenuation
       compute_element_ic_att_stress(tx,working_element,
                                     R_xx,R_yy,R_xy,R_xz,R_yz,
@@ -891,7 +891,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
 #endif // MESH_COLORING
 
     // update memory variables based upon the Runge-Kutta scheme
-    if( ATTENUATION && ! USE_ATTENUATION_MIMIC ){
+    if( ATTENUATION && ! PARTIAL_PHYS_DISPERSION_ONLY ){
       compute_element_ic_att_memory(tx,working_element,
                                 d_muv,
                                 factor_common,alphaval,betaval,gammaval,
@@ -1005,7 +1005,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                              d_epsilon_trace_over_3,
                                              mp->simulation_type,
                                              mp->attenuation,
-                                             mp->use_attenuation_mimic,
+                                             mp->partial_phys_dispersion_only,
                                              mp->use_3d_attenuation_arrays,
                                              d_one_minus_sum_beta,
                                              d_factor_common,
@@ -1053,7 +1053,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 d_b_epsilon_trace_over_3,
                                                 mp->simulation_type,
                                                 mp->attenuation,
-                                                mp->use_attenuation_mimic,
+                                                mp->partial_phys_dispersion_only,
                                                 mp->use_3d_attenuation_arrays,
                                                 d_one_minus_sum_beta,
                                                 d_factor_common,

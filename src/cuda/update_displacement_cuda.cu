@@ -67,14 +67,14 @@ __global__ void UpdateDispVeloc_kernel(realw* displ,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(it_update_displacement_ic_cuda,
-              IT_UPDATE_DISPLACMENT_IC_CUDA)(long* Mesh_pointer_f,
-                                             realw* deltat_F,
-                                             realw* deltatsqover2_F,
-                                             realw* deltatover2_F,
-                                             int* FORWARD_OR_ADJOINT) {
+void FC_FUNC_(update_displacement_ic_cuda,
+              UPDATE_DISPLACMENT_IC_CUDA)(long* Mesh_pointer_f,
+                                          realw* deltat_F,
+                                          realw* deltatsqover2_F,
+                                          realw* deltatover2_F,
+                                          int* FORWARD_OR_ADJOINT) {
 
-TRACE("it_update_displacement_ic_cuda");
+TRACE("update_displacement_ic_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
 
@@ -112,7 +112,7 @@ TRACE("it_update_displacement_ic_cuda");
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("it_update_displacement_ic_cuda");
+  exit_on_cuda_error("update_displacement_ic_cuda");
 #endif
 }
 
@@ -124,14 +124,14 @@ TRACE("it_update_displacement_ic_cuda");
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(it_update_displacement_cm_cuda,
-              IT_UPDATE_DISPLACMENT_CM_CUDA)(long* Mesh_pointer_f,
-                                             realw* deltat_F,
-                                             realw* deltatsqover2_F,
-                                             realw* deltatover2_F,
-                                             int* FORWARD_OR_ADJOINT) {
+void FC_FUNC_(update_displacement_cm_cuda,
+              UPDATE_DISPLACMENT_CM_CUDA)(long* Mesh_pointer_f,
+                                          realw* deltat_F,
+                                          realw* deltatsqover2_F,
+                                          realw* deltatover2_F,
+                                          int* FORWARD_OR_ADJOINT) {
 
-  TRACE("it_update_displacement_cm_cuda");
+  TRACE("update_displacement_cm_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
 
@@ -169,7 +169,7 @@ void FC_FUNC_(it_update_displacement_cm_cuda,
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("it_update_displacement_cm_cuda");
+  exit_on_cuda_error("update_displacement_cm_cuda");
 #endif
 }
 
@@ -212,14 +212,14 @@ __global__ void UpdatePotential_kernel(realw* potential_acoustic,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(it_update_displacement_oc_cuda,
-              IT_UPDATE_DISPLACEMENT_OC_cuda)(long* Mesh_pointer_f,
-                                              realw* deltat_F,
-                                              realw* deltatsqover2_F,
-                                              realw* deltatover2_F,
-                                              int* FORWARD_OR_ADJOINT) {
+void FC_FUNC_(update_displacement_oc_cuda,
+              UPDATE_DISPLACEMENT_OC_cuda)(long* Mesh_pointer_f,
+                                           realw* deltat_F,
+                                           realw* deltatsqover2_F,
+                                           realw* deltatover2_F,
+                                           int* FORWARD_OR_ADJOINT) {
 
-  TRACE("it_update_displacement_oc_cuda");
+  TRACE("update_displacement_oc_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
 
@@ -256,7 +256,7 @@ void FC_FUNC_(it_update_displacement_oc_cuda,
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("it_update_displacement_oc_cuda");
+  exit_on_cuda_error("update_displacement_oc_cuda");
 #endif
 }
 

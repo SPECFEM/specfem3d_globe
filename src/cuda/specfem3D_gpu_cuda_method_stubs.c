@@ -271,48 +271,6 @@ void FC_FUNC_(initialize_cuda_device,
 
 
 //
-// src/cuda/it_update_displacement_cuda.cu
-//
-
-void FC_FUNC_(it_update_displacement_ic_cuda,
-              IT_UPDATE_DISPLACMENT_IC_CUDA)(long* Mesh_pointer_f,
-                                             realw* deltat_F,
-                                             realw* deltatsqover2_F,
-                                             realw* deltatover2_F,
-                                             int* FORWARD_OR_ADJOINT) {} 
-
-void FC_FUNC_(it_update_displacement_cm_cuda,
-              IT_UPDATE_DISPLACMENT_CM_CUDA)(long* Mesh_pointer_f,
-                                             realw* deltat_F,
-                                             realw* deltatsqover2_F,
-                                             realw* deltatover2_F,
-                                             int* FORWARD_OR_ADJOINT) {} 
-
-void FC_FUNC_(it_update_displacement_oc_cuda,
-              IT_UPDATE_DISPLACEMENT_OC_cuda)(long* Mesh_pointer_f,
-                                              realw* deltat_F,
-                                              realw* deltatsqover2_F,
-                                              realw* deltatover2_F,
-                                              int* FORWARD_OR_ADJOINT) {} 
-
-void FC_FUNC_(update_accel_3_a_cuda,
-              UPDATE_ACCEL_3_A_CUDA)(long* Mesh_pointer,
-                                     realw* deltatover2_F,
-                                     int* NCHUNKS_VAL,
-                                     int* FORWARD_OR_ADJOINT) {} 
-
-void FC_FUNC_(update_veloc_3_b_cuda,
-              UPDATE_VELOC_3_B_CUDA)(long* Mesh_pointer,
-                                     realw* deltatover2_F,
-                                     int* FORWARD_OR_ADJOINT) {} 
-
-void FC_FUNC_(kernel_3_outer_core_cuda,
-              KERNEL_3_OUTER_CORE_CUDA)(long* Mesh_pointer,
-                                        realw* deltatover2_F,
-                                        int* FORWARD_OR_ADJOINT) {} 
-
-
-//
 // src/cuda/noise_tomography_cuda.cu
 //
 
@@ -349,39 +307,31 @@ void FC_FUNC_(prepare_constants_device,
               PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
                                         int* myrank_f,
                                         int* h_NGLLX,
-                                        realw* h_hprime_xx,
-                                        realw* h_hprimewgll_xx,
+                                        realw* h_hprime_xx,realw* h_hprimewgll_xx,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
                                         realw* h_sourcearrays,
                                         int* h_islice_selected_source,int* h_ispec_selected_source,
+                                        int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* h_number_receiver_global,
                                         int* h_islice_selected_rec,int* h_ispec_selected_rec,
-                                        int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
                                         int* NSPEC_CRUST_MANTLE_STRAIN_ONLY,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* NSPEC_INNER_CORE_STRAIN_ONLY,
-                                        int* SIMULATION_TYPE,
-                                        int* NOISE_TOMOGRAPHY,
-                                        int* SAVE_FORWARD_f,
-                                        int* ABSORBING_CONDITIONS_f,
-                                        int* OCEANS_f,
-                                        int* GRAVITY_f,
+                                        int* SIMULATION_TYPE,int* NOISE_TOMOGRAPHY,
+                                        int* SAVE_FORWARD_f,int* ABSORBING_CONDITIONS_f,
+                                        int* OCEANS_f,int* GRAVITY_f,
                                         int* ROTATION_f,int* EXACT_MASS_MATRIX_FOR_ROTATION_f,
                                         int* ATTENUATION_f,int* UNDO_ATTENUATION_f,
-                                        int* USE_ATTENUATION_MIMIC_f,
-                                        int* USE_3D_ATTENUATION_ARRAYS_f,
+                                        int* PARTIAL_PHYS_DISPERSION_ONLY_f,int* USE_3D_ATTENUATION_ARRAYS_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
-                                        int* ANISOTROPIC_3D_MANTLE_f,
-                                        int* ANISOTROPIC_INNER_CORE_f,
+                                        int* ANISOTROPIC_3D_MANTLE_f,int* ANISOTROPIC_INNER_CORE_f,
                                         int* SAVE_BOUNDARY_MESH_f,
                                         int* USE_MESH_COLORING_GPU_f,
-                                        int* ANISOTROPIC_KL_f,
-                                        int* APPROXIMATE_HESS_KL_f,
-                                        realw* deltat_f,
-                                        realw* b_deltat_f) {} 
+                                        int* ANISOTROPIC_KL_f,int* APPROXIMATE_HESS_KL_f,
+                                        realw* deltat_f,realw* b_deltat_f) {} 
 
 void FC_FUNC_(prepare_fields_rotation_device,
               PREPARE_FIELDS_ROTATION_DEVICE)(long* Mesh_pointer_f,
@@ -789,6 +739,48 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
               TRANSFER_KERNELS_HESS_CM_TOHOST)(long* Mesh_pointer,
                                               realw* h_hess_kl,
                                               int* NSPEC) {} 
+
+
+//
+// src/cuda/update_displacement_cuda.cu
+//
+
+void FC_FUNC_(update_displacement_ic_cuda,
+              UPDATE_DISPLACMENT_IC_CUDA)(long* Mesh_pointer_f,
+                                          realw* deltat_F,
+                                          realw* deltatsqover2_F,
+                                          realw* deltatover2_F,
+                                          int* FORWARD_OR_ADJOINT) {} 
+
+void FC_FUNC_(update_displacement_cm_cuda,
+              UPDATE_DISPLACMENT_CM_CUDA)(long* Mesh_pointer_f,
+                                          realw* deltat_F,
+                                          realw* deltatsqover2_F,
+                                          realw* deltatover2_F,
+                                          int* FORWARD_OR_ADJOINT) {} 
+
+void FC_FUNC_(update_displacement_oc_cuda,
+              UPDATE_DISPLACEMENT_OC_cuda)(long* Mesh_pointer_f,
+                                           realw* deltat_F,
+                                           realw* deltatsqover2_F,
+                                           realw* deltatover2_F,
+                                           int* FORWARD_OR_ADJOINT) {} 
+
+void FC_FUNC_(update_accel_3_a_cuda,
+              UPDATE_ACCEL_3_A_CUDA)(long* Mesh_pointer,
+                                     realw* deltatover2_F,
+                                     int* NCHUNKS_VAL,
+                                     int* FORWARD_OR_ADJOINT) {} 
+
+void FC_FUNC_(update_veloc_3_b_cuda,
+              UPDATE_VELOC_3_B_CUDA)(long* Mesh_pointer,
+                                     realw* deltatover2_F,
+                                     int* FORWARD_OR_ADJOINT) {} 
+
+void FC_FUNC_(kernel_3_outer_core_cuda,
+              KERNEL_3_OUTER_CORE_CUDA)(long* Mesh_pointer,
+                                        realw* deltatover2_F,
+                                        int* FORWARD_OR_ADJOINT) {} 
 
 
 //

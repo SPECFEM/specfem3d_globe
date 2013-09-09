@@ -44,10 +44,10 @@ cuda_OBJECTS = \
 	$O/compute_stacey_acoustic_cuda.cuda.o \
 	$O/compute_stacey_elastic_cuda.cuda.o \
 	$O/initialize_cuda.cuda.o \
-	$O/it_update_displacement_cuda.cuda.o \
 	$O/noise_tomography_cuda.cuda.o \
 	$O/prepare_mesh_constants_cuda.cuda.o \
 	$O/transfer_fields_cuda.cuda.o \
+	$O/update_displacement_cuda.cuda.o \
 	$O/write_seismograms_cuda.cuda.o \
 	$O/save_and_compare_cpu_vs_gpu.cudacc.o \
 	$(EMPTY_MACRO)

@@ -1829,7 +1829,7 @@
 
   ! user output
   if(myrank == 0 ) then
-    write(IMAIN,*) "preparing Fields and Constants on GPU Device"
+    write(IMAIN,*) "preparing fields and constants on GPU devices:"
     call flush_IMAIN()
   endif
 
@@ -1841,33 +1841,31 @@
 
   ! prepares general fields on GPU
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
-                                  hprime_xx, &
-                                  hprimewgll_xx, &
-                                  wgllwgll_xy, wgllwgll_xz, wgllwgll_yz, &
-                                  NSOURCES, nsources_local, &
-                                  sourcearrays, &
-                                  islice_selected_source,ispec_selected_source, &
-                                  number_receiver_global, &
-                                  islice_selected_rec,ispec_selected_rec, &
-                                  nrec, nrec_local, nadj_rec_local, &
-                                  NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                                  NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
-                                  NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-                                  NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                                  NSPEC_INNER_CORE_STRAIN_ONLY, &
-                                  SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
-                                  SAVE_FORWARD,ABSORBING_CONDITIONS, &
-                                  OCEANS_VAL, &
-                                  GRAVITY_VAL, &
-                                  ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
-                                  ATTENUATION_VAL,UNDO_ATTENUATION, &
-                                  PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
-                                  COMPUTE_AND_STORE_STRAIN, &
-                                  ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
-                                  SAVE_BOUNDARY_MESH, &
-                                  USE_MESH_COLORING_GPU, &
-                                  ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
-                                  deltat,b_deltat)
+                                hprime_xx,hprimewgll_xx, &
+                                wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
+                                NSOURCES, nsources_local, &
+                                sourcearrays, &
+                                islice_selected_source,ispec_selected_source, &
+                                nrec, nrec_local, nadj_rec_local, &
+                                number_receiver_global, &
+                                islice_selected_rec,ispec_selected_rec, &
+                                NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                                NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+                                NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+                                NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                NSPEC_INNER_CORE_STRAIN_ONLY, &
+                                SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
+                                SAVE_FORWARD,ABSORBING_CONDITIONS, &
+                                OCEANS_VAL,GRAVITY_VAL, &
+                                ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
+                                ATTENUATION_VAL,UNDO_ATTENUATION, &
+                                PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
+                                COMPUTE_AND_STORE_STRAIN, &
+                                ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
+                                SAVE_BOUNDARY_MESH, &
+                                USE_MESH_COLORING_GPU, &
+                                ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
+                                deltat,b_deltat)
 
   ! prepares rotation arrays
   if( ROTATION_VAL ) then

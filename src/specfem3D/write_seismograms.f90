@@ -334,15 +334,12 @@
 
   use constants_solver
   use specfem_par,only: &
-          ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
-          myrank,nrec, &
-          station_name,network_name,stlat,stlon,stele,stbur, &
-          DT,t0, &
-          seismo_offset,seismo_current,it_end, &
+          myrank, &
+          station_name,network_name,stlat,stlon, &
+          DT, &
+          seismo_current, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-          OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
-          MODEL,OUTPUT_FILES
+          OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   use specfem_par,only: &
           cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
