@@ -34,7 +34,7 @@
 
   use specfem_par,only: &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    nrec,nrec_local, &
+    nrec_local, &
     nu,hxir_store,hetar_store,hgammar_store, &
     ispec_selected_rec,number_receiver_global, &
     scale_displ
@@ -117,7 +117,7 @@
 
   use specfem_par,only: &
     NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,UNDO_ATTENUATION, &
-    NSOURCES,nrec_local, &
+    nrec_local, &
     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
     hxir_store,hpxir_store,hetar_store,hpetar_store,hgammar_store,hpgammar_store, &
     tshift_cmt,hdur_gaussian, &

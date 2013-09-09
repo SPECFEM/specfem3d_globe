@@ -30,10 +30,6 @@
 #include <cuda.h>
 #include <cublas.h>
 
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
-
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -114,39 +110,31 @@ void FC_FUNC_(prepare_constants_device,
               PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
                                         int* myrank_f,
                                         int* h_NGLLX,
-                                        realw* h_hprime_xx,
-                                        realw* h_hprimewgll_xx,
+                                        realw* h_hprime_xx,realw* h_hprimewgll_xx,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
                                         realw* h_sourcearrays,
                                         int* h_islice_selected_source,int* h_ispec_selected_source,
+                                        int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* h_number_receiver_global,
                                         int* h_islice_selected_rec,int* h_ispec_selected_rec,
-                                        int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
                                         int* NSPEC_CRUST_MANTLE_STRAIN_ONLY,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* NSPEC_INNER_CORE_STRAIN_ONLY,
-                                        int* SIMULATION_TYPE,
-                                        int* NOISE_TOMOGRAPHY,
-                                        int* SAVE_FORWARD_f,
-                                        int* ABSORBING_CONDITIONS_f,
-                                        int* OCEANS_f,
-                                        int* GRAVITY_f,
+                                        int* SIMULATION_TYPE,int* NOISE_TOMOGRAPHY,
+                                        int* SAVE_FORWARD_f,int* ABSORBING_CONDITIONS_f,
+                                        int* OCEANS_f,int* GRAVITY_f,
                                         int* ROTATION_f,int* EXACT_MASS_MATRIX_FOR_ROTATION_f,
                                         int* ATTENUATION_f,int* UNDO_ATTENUATION_f,
-                                        int* USE_ATTENUATION_MIMIC_f,
-                                        int* USE_3D_ATTENUATION_ARRAYS_f,
+                                        int* PARTIAL_PHYS_DISPERSION_ONLY_f,int* USE_3D_ATTENUATION_ARRAYS_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
-                                        int* ANISOTROPIC_3D_MANTLE_f,
-                                        int* ANISOTROPIC_INNER_CORE_f,
+                                        int* ANISOTROPIC_3D_MANTLE_f,int* ANISOTROPIC_INNER_CORE_f,
                                         int* SAVE_BOUNDARY_MESH_f,
                                         int* USE_MESH_COLORING_GPU_f,
-                                        int* ANISOTROPIC_KL_f,
-                                        int* APPROXIMATE_HESS_KL_f,
-                                        realw* deltat_f,
-                                        realw* b_deltat_f) {
+                                        int* ANISOTROPIC_KL_f,int* APPROXIMATE_HESS_KL_f,
+                                        realw* deltat_f,realw* b_deltat_f) {
 
   TRACE("prepare_constants_device");
 
@@ -240,7 +228,7 @@ void FC_FUNC_(prepare_constants_device,
 
   mp->attenuation = *ATTENUATION_f;
   mp->undo_attenuation = *UNDO_ATTENUATION_f;
-  mp->use_attenuation_mimic = *USE_ATTENUATION_MIMIC_f;
+  mp->partial_phys_dispersion_only = *PARTIAL_PHYS_DISPERSION_ONLY_f;
   mp->use_3d_attenuation_arrays = *USE_3D_ATTENUATION_ARRAYS_f;
 
   mp->compute_and_store_strain = *COMPUTE_AND_STORE_STRAIN_f;
@@ -503,7 +491,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
 
   copy_todevice_realw((void**)&mp->d_one_minus_sum_beta_crust_mantle,one_minus_sum_beta_crust_mantle,R_size2);
 
-  if( ! mp->use_attenuation_mimic ){
+  if( ! mp->partial_phys_dispersion_only ){
     // common factor
     copy_todevice_realw((void**)&mp->d_factor_common_crust_mantle,factor_common_crust_mantle,R_size3);
     // memory variables
@@ -515,7 +503,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
   }
 
   if(mp->simulation_type == 3 ){
-    if( ! mp->use_attenuation_mimic ){
+    if( ! mp->partial_phys_dispersion_only ){
       // memory variables
       copy_todevice_realw((void**)&mp->d_b_R_xx_crust_mantle,b_R_xx_crust_mantle,R_size1);
       copy_todevice_realw((void**)&mp->d_b_R_yy_crust_mantle,b_R_yy_crust_mantle,R_size1);
@@ -537,7 +525,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
 
   copy_todevice_realw((void**)&mp->d_one_minus_sum_beta_inner_core,one_minus_sum_beta_inner_core,R_size2);
 
-  if( ! mp->use_attenuation_mimic ){
+  if( ! mp->partial_phys_dispersion_only ){
     // common factor
     copy_todevice_realw((void**)&mp->d_factor_common_inner_core,factor_common_inner_core,R_size3);
     // memory variables
@@ -549,7 +537,7 @@ void FC_FUNC_(prepare_fields_attenuat_device,
   }
 
   if(mp->simulation_type == 3 ){
-    if( ! mp->use_attenuation_mimic ){
+    if( ! mp->partial_phys_dispersion_only ){
       // memory variables
       copy_todevice_realw((void**)&mp->d_b_R_xx_inner_core,b_R_xx_inner_core,R_size1);
       copy_todevice_realw((void**)&mp->d_b_R_yy_inner_core,b_R_yy_inner_core,R_size1);
@@ -1931,7 +1919,7 @@ TRACE("prepare_cleanup_device");
   if( mp->attenuation ){
     cudaFree(mp->d_one_minus_sum_beta_crust_mantle);
     cudaFree(mp->d_one_minus_sum_beta_inner_core);
-    if( ! mp->use_attenuation_mimic ){
+    if( ! mp->partial_phys_dispersion_only ){
       cudaFree(mp->d_factor_common_crust_mantle);
       cudaFree(mp->d_R_xx_crust_mantle);
       cudaFree(mp->d_R_yy_crust_mantle);

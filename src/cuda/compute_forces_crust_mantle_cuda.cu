@@ -715,7 +715,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           realw* epsilon_trace_over_3,
                                           int SIMULATION_TYPE,
                                           int ATTENUATION,
-                                          int USE_ATTENUATION_MIMIC,
+                                          int PARTIAL_PHYS_DISPERSION_ONLY,
                                           int USE_3D_ATTENUATION_ARRAYS,
                                           realw* one_minus_sum_beta,realw* factor_common,
                                           realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
@@ -1056,7 +1056,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       }
     } // ! end of test whether isotropic or anisotropic element
 
-    if(ATTENUATION && (! USE_ATTENUATION_MIMIC ) ){
+    if(ATTENUATION && (! PARTIAL_PHYS_DISPERSION_ONLY ) ){
       // subtracts memory variables if attenuation
       compute_element_cm_att_stress(tx,working_element,
                                     R_xx,R_yy,R_xy,R_xz,R_yz,
@@ -1255,7 +1255,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 #endif // MESH_COLORING
 
     // update memory variables based upon the Runge-Kutta scheme
-    if( ATTENUATION && ( ! USE_ATTENUATION_MIMIC ) ){
+    if( ATTENUATION && ( ! PARTIAL_PHYS_DISPERSION_ONLY ) ){
 
       compute_element_cm_att_memory(tx,working_element,
                                     d_muvstore,
@@ -1377,7 +1377,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                 d_epsilon_trace_over_3,
                                                 mp->simulation_type,
                                                 mp->attenuation,
-                                                mp->use_attenuation_mimic,
+                                                mp->partial_phys_dispersion_only,
                                                 mp->use_3d_attenuation_arrays,
                                                 d_one_minus_sum_beta,d_factor_common,
                                                 d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
@@ -1427,7 +1427,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                    d_b_epsilon_trace_over_3,
                                                    mp->simulation_type,
                                                    mp->attenuation,
-                                                   mp->use_attenuation_mimic,
+                                                   mp->partial_phys_dispersion_only,
                                                    mp->use_3d_attenuation_arrays,
                                                    d_one_minus_sum_beta,d_factor_common,
                                                    d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,

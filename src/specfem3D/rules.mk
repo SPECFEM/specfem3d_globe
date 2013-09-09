@@ -155,10 +155,10 @@ cuda_OBJECTS = \
 	$O/compute_stacey_acoustic_cuda.cuda.o \
 	$O/compute_stacey_elastic_cuda.cuda.o \
 	$O/initialize_cuda.cuda.o \
-	$O/it_update_displacement_cuda.cuda.o \
 	$O/noise_tomography_cuda.cuda.o \
 	$O/prepare_mesh_constants_cuda.cuda.o \
 	$O/transfer_fields_cuda.cuda.o \
+	$O/update_displacement_cuda.cuda.o \
 	$O/write_seismograms_cuda.cuda.o \
 	$O/save_and_compare_cpu_vs_gpu.cudacc.o \
 	$(EMPTY_MACRO)
@@ -243,6 +243,8 @@ ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 	@echo ""
 	${NVCCLINK} -o $(cuda_DEVICE_OBJ) $(cuda_OBJECTS)
 	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
+	@echo ""
+
 else
 
 ## cuda 4 version
@@ -251,6 +253,8 @@ ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 	@echo "building xspecfem3D with CUDA 4 support"
 	@echo ""
 	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+	@echo ""
+
 endif
 
 else
@@ -264,6 +268,7 @@ ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 ## DK DK add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
 	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
+	@echo ""
 
 endif
 

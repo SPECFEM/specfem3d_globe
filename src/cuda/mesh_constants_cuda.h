@@ -558,7 +558,7 @@ typedef struct mesh_ {
 
   int attenuation;
   int undo_attenuation;
-  int use_attenuation_mimic;
+  int partial_phys_dispersion_only;
   int use_3d_attenuation_arrays;
 
   int compute_and_store_strain;

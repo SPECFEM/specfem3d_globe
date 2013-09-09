@@ -49,6 +49,11 @@ void save_to_max_surface_file_(float* maxval) {
 #endif
   sprintf(filename,"maxval_surface_proc_%03d.dat",rank);
   fp = fopen(filename,"a+");
+  if( fp == NULL ){
+    printf("FILE ERROR:%s\n",(char*) strerror(errno));
+    perror("file error\n");
+    exit(1);
+  }
   fprintf(fp,"%e\n",*maxval);
   fclose(fp);
 }
@@ -63,6 +68,11 @@ void save_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
     sprintf(filename, "debug_output_gpu_%d.dat",*id);
   }
   fp = fopen(filename, "wb");
+  if( fp == NULL ){
+    printf("FILE ERROR:%s\n",(char*) strerror(errno));
+    perror("file error\n");
+    exit(1);
+  }
   printf("writing vector, vector[0]=%e\n",vector[0]);
   fwrite(vector, sizeof(float), *size, fp);
   fclose(fp);
@@ -79,6 +89,11 @@ void save_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
     sprintf(filename, "debug_output_gpu_%d.dat",*id);
   }
   fp = fopen(filename, "wb");
+  if( fp == NULL ){
+    printf("FILE ERROR:%s\n",(char*) strerror(errno));
+    perror("file error\n");
+    exit(1);
+  }
   fwrite(vector, sizeof(int), *size, fp);
   fclose(fp);
 
@@ -89,6 +104,8 @@ void get_max_from_surface_file_(int* nodes_per_iterationf,int* NSTEP) {
   int nodes_per_iteration = *nodes_per_iterationf;
   char filename[BUFSIZ];
   int procid;
+  size_t res;
+
 #ifdef WITH_MPI
   MPI_Comm_rank(MPI_COMM_WORLD,&procid);
 #else
@@ -99,9 +116,7 @@ void get_max_from_surface_file_(int* nodes_per_iterationf,int* NSTEP) {
   FILE* fp; int it;
   printf("Opening %s for analysis\n",filename);
   fp = fopen(filename,"rb");
-  //char* errorstr;
-  if(fp == 0) {
-    //errorstr = (char*) strerror(errno);
+  if(fp == NULL) {
     printf("FILE ERROR:%s\n",(char*) strerror(errno));
     perror("file error\n");
     exit(1);
@@ -114,7 +129,8 @@ void get_max_from_surface_file_(int* nodes_per_iterationf,int* NSTEP) {
   for(it=0;it<*NSTEP;it++) {
     int pos = (sizeof(float)*nodes_per_iteration)*(it);
     fseek(fp,pos,SEEK_SET);
-    fread(vector,sizeof(float),nodes_per_iteration,fp);
+    res = fread(vector,sizeof(float),nodes_per_iteration,fp);
+    if (res != nodes_per_iteration) {printf ("Reading error:%s\n",(char*) strerror(errno)); exit (1);}
     for(i=0;i<nodes_per_iteration;i++) {
       max_val = MAX(max_val,vector[i]);
     }
@@ -176,19 +192,20 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
 
   char* cpu_file = "/scratch/eiger/rietmann/SPECFEM3D/in_out_files/DATABASES_MPI/cpu_proc000001_surface_movie";
   char* gpu_file = "/scratch/eiger/rietmann/SPECFEM3D/in_out_files/DATABASES_MPI/cpu_v2_proc000001_surface_movie";
+  size_t res;
 
   FILE* fp_cpu;
   fp_cpu = fopen(cpu_file,"rb");
   //char* errorstr;
-  if(fp_cpu == 0) {
+  if(fp_cpu == NULL) {
     //errorstr = (char*) strerror(errno);
     //printf("CPU FILE ERROR:%s\n",errorstr);
     printf("CPU FILE ERROR:%s\n",(char*) strerror(errno));
     perror("cpu file error\n");
   }
+
   FILE* fp_gpu;
   fp_gpu = fopen(gpu_file,"rb");
-
   if(fp_gpu == NULL) {
     //errorstr = (char*) strerror(errno);
     //printf("GPU FILE ERROR:%s\n",errorstr);
@@ -208,8 +225,12 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
     fseek(fp_gpu,pos,SEEK_SET);
 
     int number_of_nodes = *bytes_per_iteration/sizeof(float);
-    fread(cpu_vector,sizeof(float),number_of_nodes,fp_cpu);
-    fread(gpu_vector,sizeof(float),number_of_nodes,fp_gpu);
+    res = fread(cpu_vector,sizeof(float),number_of_nodes,fp_cpu);
+    if (res != number_of_nodes) {printf ("Reading error:%s\n",(char*) strerror(errno)); exit (1);}
+
+    res = fread(gpu_vector,sizeof(float),number_of_nodes,fp_gpu);
+    if (res != number_of_nodes) {printf ("Reading error:%s\n",(char*) strerror(errno)); exit (1);}
+
     int size = number_of_nodes;
     float gpu_min_val=10;
     float gpu_max_val=0;
@@ -240,6 +261,8 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
 void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
   FILE* fp;
   char cmp_filename[BUFSIZ];
+  size_t res;
+
   float* compare_vector = (float*)malloc(*size*sizeof(float));
   if(*cpu_or_gpu == 0) { //swap gpu/cpu for compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
@@ -247,13 +270,15 @@ void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
   else {
     sprintf(cmp_filename, "debug_output_cpu_%d.dat",*id);
   }
-  fopen(cmp_filename, "rb");
+
+  fp = fopen(cmp_filename, "rb");
   /* read the values */
-  if((fp=fopen(cmp_filename, "rb"))==NULL) {
+  if( fp == NULL ) {
     printf("Cannot open comparison file %s.\n",cmp_filename);
     exit(1);
   }
-  if(fread(compare_vector, sizeof(float), *size, fp) != *size) {
+  res = fread(compare_vector, sizeof(float), *size, fp);
+  if(res != *size) {
     if(feof(fp))
        printf("Premature end of file.");
     else
@@ -284,6 +309,8 @@ void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
 void compare_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
   FILE* fp;
   char cmp_filename[BUFSIZ];
+  size_t res;
+
   int* compare_vector = (int*)malloc(*size*sizeof(int));
   if(*cpu_or_gpu == 0) { //swap gpu/cpu for compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
@@ -291,13 +318,14 @@ void compare_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
   else {
     sprintf(cmp_filename, "debug_output_cpu_%d.dat",*id);
   }
-  fopen(cmp_filename, "rb");
+  fp = fopen(cmp_filename, "rb");
   /* read the values */
-  if((fp=fopen(cmp_filename, "rb"))==NULL) {
+  if( fp == NULL ) {
     printf("Cannot open comparison file %s.\n",cmp_filename);
     exit(1);
   }
-  if(fread(compare_vector, sizeof(int), *size, fp) != *size) {
+  res = fread(compare_vector, sizeof(int), *size, fp);
+  if(res != *size) {
     if(feof(fp))
        printf("Premature end of file.");
     else
