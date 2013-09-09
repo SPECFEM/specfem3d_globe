@@ -716,19 +716,19 @@
   integer :: ier
 
   ! define local to global receiver numbering mapping
-  ! needs to be allocate for subroutine calls (even if nrec_local == 0)
+  ! needs to be allocated for subroutine calls (even if nrec_local == 0)
   allocate(number_receiver_global(nrec_local),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating global receiver numbering')
 
   ! allocates receiver interpolators
   if (nrec_local > 0) then
-    ! allocate Lagrange interpolators for receivers
+    ! allocates Lagrange interpolators for receivers
     allocate(hxir_store(nrec_local,NGLLX), &
             hetar_store(nrec_local,NGLLY), &
             hgammar_store(nrec_local,NGLLZ),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver interpolators')
 
-    ! define and store Lagrange interpolators at all the receivers
+    ! defines and stores Lagrange interpolators at all the receivers
     if (SIMULATION_TYPE == 2) then
       nadj_hprec_local = nrec_local
     else
@@ -750,7 +750,7 @@
                       hxir_store,hetar_store,hgammar_store, &
                       nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
-    ! allocate seismogram array
+    ! allocates seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
@@ -758,7 +758,7 @@
       ! adjoint seismograms
       allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating adjoint seismograms'
-      ! allocate Frechet derivatives array
+      ! allocates Frechet derivatives array
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
@@ -769,11 +769,11 @@
       shdur_der(:) = 0._CUSTOM_REAL
 
     endif
-    ! initialize seismograms
+    ! initializes seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
     nit_written = 0
   else
-    ! allocate dummy array since we need it to pass as argument e.g. in write_seismograms() routine
+    ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     if( ier /= 0) stop 'error while allocating zero seismograms'

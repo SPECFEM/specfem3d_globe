@@ -169,7 +169,7 @@
   integer :: numelem_total
 
   ! timer MPI
-  double precision :: time_start,tCPU
+  double precision :: time_start
 
   ! addressing for all the slices
   integer, dimension(:), allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice

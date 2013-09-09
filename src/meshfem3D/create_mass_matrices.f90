@@ -48,7 +48,7 @@
 
   use meshfem3D_par,only: &
     NCHUNKS,ABSORBING_CONDITIONS, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,INCLUDE_CENTRAL_CUBE
 
   use create_regions_mesh_par,only: &
     wxgll,wygll,wzgll
@@ -186,7 +186,7 @@
   endif
 
   ! check that mass matrix is positive
-  if( iregion_code == IREGION_INNER_CORE ) then
+  if( iregion_code == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
     ! note: in fictitious elements mass matrix is still zero
     if(minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
     ! check that the additional mass matrices are positive, if they exist

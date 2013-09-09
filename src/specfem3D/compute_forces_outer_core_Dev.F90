@@ -95,7 +95,6 @@
   integer :: i,j,k
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) :: sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
@@ -124,6 +123,13 @@
   integer :: num_elements,ispec_p
   integer :: iphase
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sum_terms
+#else
+  real(kind=CUSTOM_REAL) :: sum_terms
+#endif
+
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
@@ -144,7 +150,44 @@
     ispec = phase_ispec_inner(ispec_p,iphase)
 
     ! only compute element which belong to current phase (inner or outer elements)
+#ifdef FORCE_VECTORIZATION
+    do ijk=1,NGLLCUBE
+      iglob = ibool(ijk,1,1,ispec)
 
+      ! get a local copy of the potential field
+      dummyx_loc(ijk,1,1) = displfluid(iglob)
+
+      ! pre-computes factors
+      ! use mesh coordinates to get theta and phi
+      ! x y z contain r theta phi
+      radius = dble(xstore(iglob))
+      theta = dble(ystore(iglob))
+      phi = dble(zstore(iglob))
+
+      cos_theta = dcos(theta)
+      sin_theta = dsin(theta)
+      cos_phi = dcos(phi)
+      sin_phi = dsin(phi)
+
+      int_radius = nint(radius * R_EARTH_KM * 10.d0)
+
+      if( .not. GRAVITY_VAL ) then
+        ! grad(rho)/rho in Cartesian components
+        displ_times_grad_x_ln_rho(ijk,1,1) = dummyx_loc(ijk,1,1) &
+              * sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
+        displ_times_grad_y_ln_rho(ijk,1,1) = dummyx_loc(ijk,1,1) &
+              * sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
+        displ_times_grad_z_ln_rho(ijk,1,1) = dummyx_loc(ijk,1,1) &
+              * cos_theta * d_ln_density_dr_table(int_radius)
+      else
+        ! Cartesian components of the gravitational acceleration
+        ! integrate and multiply by rho / Kappa
+        temp_gxl(ijk,1,1) = sin_theta*cos_phi
+        temp_gyl(ijk,1,1) = sin_theta*sin_phi
+        temp_gzl(ijk,1,1) = cos_theta
+      endif
+    enddo
+#else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -186,6 +229,7 @@
         enddo
       enddo
     enddo
+#endif
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -401,8 +445,8 @@
       enddo
     enddo
 
-#ifdef FORCE_VECTORIZATION
     ! sum contributions from each element to the global mesh and add gravity term
+#ifdef FORCE_VECTORIZATION
     do ijk=1,NGLLCUBE
       sum_terms(ijk,1,1) = - (wgllwgll_yz_3D(ijk,1,1)*newtempx1(ijk,1,1) &
                             + wgllwgll_xz_3D(ijk,1,1)*newtempx2(ijk,1,1) &
@@ -426,10 +470,25 @@
     enddo
     ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
-      do ijk = 1,NGLLCUBE
-        A_array_rotation(ijk,1,1,ispec) = A_array_rotation(ijk,1,1,ispec) + source_euler_A(ijk,1,1)
-        B_array_rotation(ijk,1,1,ispec) = B_array_rotation(ijk,1,1,ispec) + source_euler_B(ijk,1,1)
-      enddo
+      if(USE_LDDRK) then
+        ! use the source saved above
+        do ijk = 1,NGLLCUBE
+          A_array_rotation_lddrk(ijk,1,1,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(ijk,1,1,ispec) &
+                                                  + source_euler_A(ijk,1,1)
+          A_array_rotation(ijk,1,1,ispec) = A_array_rotation(ijk,1,1,ispec) &
+                                            + BETA_LDDRK(istage) * A_array_rotation_lddrk(ijk,1,1,ispec)
+
+          B_array_rotation_lddrk(ijk,1,1,ispec) = ALPHA_LDDRK(istage) * B_array_rotation_lddrk(ijk,1,1,ispec) &
+                                                  + source_euler_B(ijk,1,1)
+          B_array_rotation(ijk,1,1,ispec) = B_array_rotation(ijk,1,1,ispec) &
+                                            + BETA_LDDRK(istage) * B_array_rotation_lddrk(ijk,1,1,ispec)
+        enddo
+      else
+        do ijk = 1,NGLLCUBE
+          A_array_rotation(ijk,1,1,ispec) = A_array_rotation(ijk,1,1,ispec) + source_euler_A(ijk,1,1)
+          B_array_rotation(ijk,1,1,ispec) = B_array_rotation(ijk,1,1,ispec) + source_euler_B(ijk,1,1)
+        enddo
+      endif
     endif
 #else
     ! sum contributions from each element to the global mesh and add gravity term

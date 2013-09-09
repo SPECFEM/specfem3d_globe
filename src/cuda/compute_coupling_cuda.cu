@@ -608,7 +608,6 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
               COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f,
                                            int* NCHUNKS_VAL,
                                            int* exact_mass_matrix_for_rotation,
-                                           int* use_lddrk,
                                            int* FORWARD_OR_ADJOINT) {
 
   TRACE("compute_coupling_ocean_cuda");
@@ -628,8 +627,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if( ( *NCHUNKS_VAL != 6 && mp->absorbing_conditions || (mp->rotation && *exact_mass_matrix_for_rotation)) &&
-      ! *use_lddrk ){
+  if( ( *NCHUNKS_VAL != 6 && mp->absorbing_conditions) || (mp->rotation && *exact_mass_matrix_for_rotation) ){
     // uses corrected mass matrices
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
@@ -643,9 +641,9 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
     }else if( *FORWARD_OR_ADJOINT == 3){
       // for backward/reconstructed potentials
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
-                                                           mp->d_rmassx_crust_mantle,
-                                                           mp->d_rmassy_crust_mantle,
-                                                           mp->d_rmassz_crust_mantle,
+                                                           mp->d_b_rmassx_crust_mantle,
+                                                           mp->d_b_rmassy_crust_mantle,
+                                                           mp->d_b_rmassz_crust_mantle,
                                                            mp->d_rmass_ocean_load,
                                                            mp->npoin_oceans,
                                                            mp->d_ibool_ocean_load,
@@ -665,9 +663,9 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
     }else if( *FORWARD_OR_ADJOINT == 3){
       // for backward/reconstructed potentials
       compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
-                                                           mp->d_rmassz_crust_mantle,
-                                                           mp->d_rmassz_crust_mantle,
-                                                           mp->d_rmassz_crust_mantle,
+                                                           mp->d_b_rmassz_crust_mantle,
+                                                           mp->d_b_rmassz_crust_mantle,
+                                                           mp->d_b_rmassz_crust_mantle,
                                                            mp->d_rmass_ocean_load,
                                                            mp->npoin_oceans,
                                                            mp->d_ibool_ocean_load,

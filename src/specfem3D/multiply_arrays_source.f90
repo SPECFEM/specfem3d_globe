@@ -25,11 +25,109 @@
 !
 !=====================================================================
 
+
 ! we put these multiplications in a separate routine AND IN A SEPARATE FILE because otherwise
 ! some compilers try to unroll the six loops above and take forever to compile
 
 ! we leave this in a separate file otherwise many compilers perform subroutine inlining when
 ! two subroutines are in the same file and one calls the other
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! elastic domains
+!
+!-------------------------------------------------------------------------------------------------
+
+
+  subroutine multiply_accel_elastic(NGLOB,veloc,accel, &
+                                    two_omega_earth, &
+                                    rmassx,rmassy,rmassz)
+
+! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
+
+  use constants_solver,only: CUSTOM_REAL,NDIM
+
+  implicit none
+
+  integer :: NGLOB
+
+  ! velocity & acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc,accel
+
+  real(kind=CUSTOM_REAL) :: two_omega_earth
+
+  ! mass matrices
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmassx,rmassy,rmassz
+
+  ! local parameters
+  integer :: i
+
+  ! note: mass matrices
+  !
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
+  ! updates acceleration w/ rotation in elastic region
+
+  ! see input call, differs for corrected mass matrices for rmassx,rmassy,rmassz
+  do i=1,NGLOB
+    accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
+    accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
+    accel(3,i) = accel(3,i)*rmassz(i)
+  enddo
+
+  end subroutine multiply_accel_elastic
+
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! acoustic/fluid domains
+!
+!-------------------------------------------------------------------------------------------------
+
+
+  subroutine multiply_accel_acoustic(NGLOB,accel,rmass)
+
+! multiplies acceleration with inverse of mass matrix in outer core region
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer :: NGLOB
+
+  ! velocity & acceleration
+  ! crust/mantle region
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: accel
+
+  ! mass matrices
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass
+
+  ! local parameters
+  integer :: i
+
+  ! note: mass matrices for fluid region has no stacey or rotation correction
+  !       it is also the same for forward and backward/reconstructed wavefields
+
+  do i=1,NGLOB
+    accel(i) = accel(i)*rmass(i)
+  enddo
+
+  end subroutine multiply_accel_acoustic
+
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! interpolated source arrays
+!
+!-------------------------------------------------------------------------------------------------
 
   subroutine multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
                   G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
@@ -78,7 +176,9 @@
 
   end subroutine multiply_arrays_source
 
-!================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
 
@@ -104,3 +204,4 @@
   enddo
 
   end subroutine multiply_arrays_adjoint
+

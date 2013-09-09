@@ -183,7 +183,6 @@
 
   ! mass matrices
   ! crust/mantle
-  deallocate(rmassz_crust_mantle)
   if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
     deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
@@ -200,11 +199,9 @@
   endif
 
   ! outer core
-  deallocate(rmass_outer_core)
   if(SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
 
   ! inner core
-  deallocate(rmassz_inner_core)
   if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
     deallocate(rmassx_inner_core,rmassy_inner_core)
   else

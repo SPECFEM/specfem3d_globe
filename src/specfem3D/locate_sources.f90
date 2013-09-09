@@ -132,7 +132,7 @@
   double precision :: sec
 
   ! timer MPI
-  double precision time_start,tCPU
+  double precision :: time_start,tCPU
   double precision, external :: wtime
 
   character(len=150) :: OUTPUT_FILES

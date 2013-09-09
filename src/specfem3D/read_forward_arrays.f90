@@ -40,9 +40,6 @@
   integer :: ier
   character(len=150) outputname
 
-  ! checks if anything to do
-  if( UNDO_ATTENUATION ) return
-
   ! checks run/checkpoint number
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
@@ -60,6 +57,10 @@
     ! Last run may be a bit larger
     it_end = NSTEP
   endif
+
+  ! checks if anything to do
+  ! undoing attenuation doesn't support the following checkpointing
+  if( UNDO_ATTENUATION ) return
 
   ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
@@ -264,7 +265,13 @@
 
   ! reads in saved wavefield
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
-  open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+
+  ! debug
+  !if(myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
+
+  ! opens corresponding snapshot file for reading
+  open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
+       status='old',action='read',form='unformatted',iostat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for reading')
 
   read(IIN) b_displ_crust_mantle

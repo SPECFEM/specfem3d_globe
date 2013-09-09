@@ -67,6 +67,7 @@ shared_OBJECTS = \
 	$O/save_header_file.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_c_binary.cc.o \
+	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
 ADIOS_OBJECTS = \
