@@ -2161,23 +2161,23 @@
   ! inner core region
   if(myrank == 0 ) write(IMAIN,*) "  loading inner core region"
   call prepare_inner_core_device(Mesh_pointer, &
-                                xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                                rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
-                                b_rmassx_inner_core,b_rmassy_inner_core, &
-                                ibool_inner_core, &
-                                xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-                                c33store_inner_core,c44store_inner_core, &
-                                idoubling_inner_core, &
-                                num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                                nspec_outer_inner_core,nspec_inner_inner_core, &
-                                NSPEC2D_TOP(IREGION_INNER_CORE), &
-                                ibelm_top_inner_core, &
-                                num_colors_outer_inner_core,num_colors_inner_inner_core, &
-                                num_elem_colors_inner_core)
+                                 xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                 etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                 gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                                 rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                                 b_rmassx_inner_core,b_rmassy_inner_core, &
+                                 ibool_inner_core, &
+                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                                 c33store_inner_core,c44store_inner_core, &
+                                 idoubling_inner_core, &
+                                 num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                                 nspec_outer_inner_core,nspec_inner_inner_core, &
+                                 NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                 ibelm_top_inner_core, &
+                                 num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                                 num_elem_colors_inner_core)
 
   ! transfer forward and backward fields to device with initial values
   if(myrank == 0 ) write(IMAIN,*) "  transfering initial wavefield"

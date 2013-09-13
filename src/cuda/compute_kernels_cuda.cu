@@ -223,19 +223,18 @@ extern "C"
 void FC_FUNC_(compute_kernels_cm_cuda,
               COMPUTE_KERNELS_CM_CUDA)(long* Mesh_pointer,realw* deltat_f) {
 
-TRACE("compute_kernels_cm_cuda");
+  TRACE("compute_kernels_cm_cuda");
+  // debug
+  DEBUG_EMPTY_BACKWARD();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   int blocksize = NGLL3;
   realw deltat = *deltat_f;
 
-  int num_blocks_x = mp->NSPEC_CRUST_MANTLE;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->NSPEC_CRUST_MANTLE,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
@@ -311,12 +310,9 @@ void FC_FUNC_(compute_kernels_ic_cuda,
   int blocksize = NGLL3;
   realw deltat = *deltat_f;
 
-  int num_blocks_x = mp->NSPEC_INNER_CORE;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->NSPEC_INNER_CORE,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
@@ -532,12 +528,8 @@ TRACE("compute_kernels_oc_cuda");
   int blocksize = NGLL3; // NGLLX*NGLLY*NGLLZ
   realw deltat = *deltat_f;
 
-  int num_blocks_x = mp->NSPEC_OUTER_CORE;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->NSPEC_OUTER_CORE,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
@@ -624,12 +616,8 @@ void FC_FUNC_(compute_kernels_strgth_noise_cu,
 
   realw deltat = *deltat_f;
 
-  int num_blocks_x = mp->nspec2D_top_crust_mantle;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->nspec2D_top_crust_mantle,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLL2,1,1);
@@ -702,12 +690,8 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   int blocksize = NGLL3; // NGLLX*NGLLY*NGLLZ
   realw deltat = *deltat_f;
 
-  int num_blocks_x = mp->NSPEC_CRUST_MANTLE;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->NSPEC_CRUST_MANTLE,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);

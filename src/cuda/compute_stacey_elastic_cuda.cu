@@ -252,12 +252,9 @@ TRACE("compute_stacey_elastic_cuda");
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
 
-  int num_blocks_x = num_abs_boundary_faces;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(num_abs_boundary_faces,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
@@ -401,7 +398,7 @@ void FC_FUNC_(compute_stacey_elastic_backward_cuda,
                                                     realw* absorb_field,
                                                     int* itype) {
 
-TRACE("compute_stacey_elastic_backward_cuda");
+  TRACE("compute_stacey_elastic_backward_cuda");
 
   int num_abs_boundary_faces;
   int* d_abs_boundary_ispec;
@@ -456,21 +453,16 @@ TRACE("compute_stacey_elastic_backward_cuda");
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
 
-  int num_blocks_x = num_abs_boundary_faces;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(num_abs_boundary_faces,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
   // adjoint simulations: needs absorbing boundary buffer
-  if( num_abs_boundary_faces > 0 ){
-    // copies array to GPU
-    print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_field,absorb_field,
-                                       NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
-  }
+  // copies array to GPU
+  print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_field,absorb_field,
+                                     NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
 
   // absorbing boundary contributions
   compute_stacey_elastic_backward_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
@@ -486,6 +478,120 @@ TRACE("compute_stacey_elastic_backward_cuda");
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_stacey_elastic_backward_cuda");
+#endif
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// undo_attenuation simulation: stacey for backward/reconstructed wavefield
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(compute_stacey_elastic_undoatt_cuda,
+              COMPUTE_STACEY_ELASTIC_UNDOATT_CUDA)(long* Mesh_pointer_f,
+                                                   int* itype) {
+
+  TRACE("compute_stacey_elastic_undoatt_cuda");
+
+  int num_abs_boundary_faces;
+  int* d_abs_boundary_ispec;
+  realw* d_abs_boundary_normal;
+  realw* d_abs_boundary_jacobian2D;
+  realw* d_wgllwgll;
+  realw* d_b_absorb_field = NULL;
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  // checks if anything to do
+  if( mp->simulation_type /= 3 ) return;
+  if( mp->save_forward ) return;
+
+  // absorbing boundary type
+  int interface_type = *itype;
+  switch( interface_type ){
+    case 0:
+      // xmin
+      num_abs_boundary_faces = mp->nspec2D_xmin_crust_mantle;
+      d_abs_boundary_ispec = mp->d_ibelm_xmin_crust_mantle;
+      d_abs_boundary_normal = mp->d_normal_xmin_crust_mantle;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmin_crust_mantle;
+      d_wgllwgll = mp->d_wgllwgll_yz;
+      break;
+
+    case 1:
+      // xmax
+      num_abs_boundary_faces = mp->nspec2D_xmax_crust_mantle;
+      d_abs_boundary_ispec = mp->d_ibelm_xmax_crust_mantle;
+      d_abs_boundary_normal = mp->d_normal_xmax_crust_mantle;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmax_crust_mantle;
+      d_wgllwgll = mp->d_wgllwgll_yz;
+      break;
+
+    case 2:
+      // ymin
+      num_abs_boundary_faces = mp->nspec2D_ymin_crust_mantle;
+      d_abs_boundary_ispec = mp->d_ibelm_ymin_crust_mantle;
+      d_abs_boundary_normal = mp->d_normal_ymin_crust_mantle;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_crust_mantle;
+      d_wgllwgll = mp->d_wgllwgll_xz;
+      break;
+
+    case 3:
+      // ymax
+      num_abs_boundary_faces = mp->nspec2D_ymax_crust_mantle;
+      d_abs_boundary_ispec = mp->d_ibelm_ymax_crust_mantle;
+      d_abs_boundary_normal = mp->d_normal_ymax_crust_mantle;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_crust_mantle;
+      d_wgllwgll = mp->d_wgllwgll_xz;
+      break;
+
+    default:
+      exit_on_cuda_error("compute_stacey_elastic_undoatt_cuda: unknown interface type");
+      break;
+  }
+
+  // checks if anything to do
+  if( num_abs_boundary_faces == 0 ) return;
+
+  // way 1
+  // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
+  //int blocksize = 32;
+
+  // way 2: seems sligthly faster
+  // > NGLLSQUARE==NGLL2==25, no further check inside kernel
+  int blocksize = NGLL2;
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(num_abs_boundary_faces,&num_blocks_x,&num_blocks_y);
+
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(blocksize,1,1);
+
+  // absorbing boundary contributions
+  compute_stacey_elastic_kernel<<<grid,threads>>>(mp->d_b_veloc_crust_mantle,
+                                                  mp->d_b_accel_crust_mantle,
+                                                  interface_type,
+                                                  num_abs_boundary_faces,
+                                                  d_abs_boundary_ispec,
+                                                  mp->d_nkmin_xi_crust_mantle,
+                                                  mp->d_nkmin_eta_crust_mantle,
+                                                  mp->d_njmin_crust_mantle,
+                                                  mp->d_njmax_crust_mantle,
+                                                  mp->d_nimin_crust_mantle,
+                                                  mp->d_nimax_crust_mantle,
+                                                  d_abs_boundary_normal,
+                                                  d_abs_boundary_jacobian2D,
+                                                  d_wgllwgll,
+                                                  mp->d_ibool_crust_mantle,
+                                                  mp->d_rho_vp_crust_mantle,
+                                                  mp->d_rho_vs_crust_mantle,
+                                                  mp->save_forward,
+                                                  d_b_absorb_field);
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("compute_stacey_elastic_undoatt_cuda");
 #endif
 }
 

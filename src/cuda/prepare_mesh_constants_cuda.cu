@@ -912,6 +912,11 @@ void FC_FUNC_(prepare_mpi_buffers_device,
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_crust_mantle),
                                        NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle)*sizeof(realw)),4004);
+    if( mp->simulation_type == 3){
+      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_crust_mantle),
+                                        NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle)*sizeof(realw)),4004);
+    }
+
   }
 
   // inner core mesh
@@ -927,6 +932,11 @@ void FC_FUNC_(prepare_mpi_buffers_device,
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_inner_core),
                                        NDIM*(mp->max_nibool_interfaces_ic)*(mp->num_interfaces_inner_core)*sizeof(realw)),4004);
+    if( mp->simulation_type == 3){
+      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_inner_core),
+                                        NDIM*(mp->max_nibool_interfaces_ic)*(mp->num_interfaces_inner_core)*sizeof(realw)),4004);
+    }
+
   }
 
   // outer core mesh
@@ -943,6 +953,10 @@ void FC_FUNC_(prepare_mpi_buffers_device,
     // allocates mpi buffer for exchange with cpu
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core),
                                        (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw)),4004);
+    if( mp->simulation_type == 3){
+      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_outer_core),
+                                        (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw)),4004);
+    }
   }
 }
 
@@ -1318,6 +1332,13 @@ void FC_FUNC_(prepare_crust_mantle_device,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_crust_mantle),sizeof(realw)*size),4011);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_crust_mantle),sizeof(realw)*size),4012);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_crust_mantle),sizeof(realw)*size),4013);
+    // debug
+    #if DEBUG_BACKWARD_SIMULATIONS == 1
+    //debugging with empty arrays
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_crust_mantle,0,sizeof(realw)*size),5111);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_crust_mantle,0,sizeof(realw)*size),5111);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_crust_mantle,0,sizeof(realw)*size),5111);
+    #endif
   }
 
   #ifdef USE_TEXTURES_FIELDS
@@ -1522,26 +1543,32 @@ void FC_FUNC_(prepare_outer_core_device,
   mp->nspec2D_top_outer_core = *NSPEC2D_TOP_OC;
   mp->nspec2D_bottom_outer_core = *NSPEC2D_BOTTOM_OC;
 
-  int size_toc = NGLL2*(mp->nspec2D_top_outer_core);
   copy_todevice_int((void**)&mp->d_ibelm_top_outer_core,h_ibelm_top_outer_core,mp->nspec2D_top_outer_core);
+  int size_toc = NGLL2*(mp->nspec2D_top_outer_core);
   copy_todevice_realw((void**)&mp->d_jacobian2D_top_outer_core,h_jacobian2D_top_outer_core,size_toc);
   copy_todevice_realw((void**)&mp->d_normal_top_outer_core,h_normal_top_outer_core,NDIM*size_toc);
 
-  int size_boc = NGLL2*(mp->nspec2D_bottom_outer_core);
   copy_todevice_int((void**)&mp->d_ibelm_bottom_outer_core,h_ibelm_bottom_outer_core,mp->nspec2D_bottom_outer_core);
+  int size_boc = NGLL2*(mp->nspec2D_bottom_outer_core);
   copy_todevice_realw((void**)&mp->d_jacobian2D_bottom_outer_core,h_jacobian2D_bottom_outer_core,size_boc);
   copy_todevice_realw((void**)&mp->d_normal_bottom_outer_core,h_normal_bottom_outer_core,NDIM*size_boc);
 
   // wavefield
-  int size = mp->NGLOB_OUTER_CORE;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_outer_core),sizeof(realw)*size),5001);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc_outer_core),sizeof(realw)*size),5002);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_outer_core),sizeof(realw)*size),5003);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_outer_core),sizeof(realw)*size_glob),5001);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc_outer_core),sizeof(realw)*size_glob),5002);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel_outer_core),sizeof(realw)*size_glob),5003);
   // backward/reconstructed wavefield
   if( mp->simulation_type == 3 ){
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_outer_core),sizeof(realw)*size),5011);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_outer_core),sizeof(realw)*size),5022);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_outer_core),sizeof(realw)*size),5033);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_outer_core),sizeof(realw)*size_glob),5011);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_outer_core),sizeof(realw)*size_glob),5022);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_outer_core),sizeof(realw)*size_glob),5033);
+    // debug
+    #if DEBUG_BACKWARD_SIMULATIONS == 1
+    //debugging with empty arrays
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_outer_core,0,sizeof(realw)*size_glob),5111);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_outer_core,0,sizeof(realw)*size_glob),5111);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_outer_core,0,sizeof(realw)*size_glob),5111);
+    #endif
   }
 
   #ifdef USE_TEXTURES_FIELDS
@@ -1551,21 +1578,21 @@ void FC_FUNC_(prepare_outer_core_device,
       print_CUDA_error_if_any(cudaGetTextureReference(&mp->d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
       cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<realw>();
       print_CUDA_error_if_any(cudaBindTexture(0, mp->d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
-                                              &channelDesc1, sizeof(realw)*size), 5021);
+                                              &channelDesc1, sizeof(realw)*size_glob), 5021);
 
       const textureReference* d_accel_oc_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
       cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<realw>();
       print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
-                                              &channelDesc2, sizeof(realw)*size), 5023);
+                                              &channelDesc2, sizeof(realw)*size_glob), 5023);
     #else
       cudaChannelFormatDesc channelDesc1 = cudaCreateChannelDesc<float>();
       print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_oc_tex, mp->d_displ_outer_core,
-                                              &channelDesc1, sizeof(realw)*size), 5021);
+                                              &channelDesc1, sizeof(realw)*size_glob), 5021);
 
       cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float>();
       print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_oc_tex, mp->d_accel_outer_core,
-                                              &channelDesc2, sizeof(realw)*size), 5023);
+                                              &channelDesc2, sizeof(realw)*size_glob), 5023);
     #endif
   }
   #endif
@@ -1579,7 +1606,7 @@ void FC_FUNC_(prepare_outer_core_device,
     mp->d_b_rmass_outer_core = mp->d_rmass_outer_core;
 
     //kernels
-    size = NGLL3*(mp->NSPEC_OUTER_CORE);
+    int size = NGLL3*(mp->NSPEC_OUTER_CORE);
 
     // density kernel
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rho_kl_outer_core),
@@ -1750,6 +1777,8 @@ void FC_FUNC_(prepare_inner_core_device,
 
   mp->nspec_outer_inner_core = *nspec_outer;
   mp->nspec_inner_inner_core = *nspec_inner;
+
+  // boundary elements on top
   mp->nspec2D_top_inner_core = *NSPEC2D_TOP_IC;
   copy_todevice_int((void**)&mp->d_ibelm_top_inner_core,h_ibelm_top_inner_core,mp->nspec2D_top_inner_core);
 
@@ -1763,6 +1792,13 @@ void FC_FUNC_(prepare_inner_core_device,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_inner_core),sizeof(realw)*size),6011);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_inner_core),sizeof(realw)*size),6012);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_inner_core),sizeof(realw)*size),6013);
+    // debug
+    #if DEBUG_BACKWARD_SIMULATIONS == 1
+    // debugging with empty arrays
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_inner_core,0,sizeof(realw)*size),5111);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_inner_core,0,sizeof(realw)*size),5111);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_inner_core,0,sizeof(realw)*size),5111);
+    #endif
   }
 
   #ifdef USE_TEXTURES_FIELDS
@@ -2074,16 +2110,19 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_nibool_interfaces_crust_mantle);
     cudaFree(mp->d_ibool_interfaces_crust_mantle);
     cudaFree(mp->d_send_accel_buffer_crust_mantle);
+    if( mp->simulation_type == 3 ) cudaFree(mp->d_b_send_accel_buffer_crust_mantle);
   }
   if( mp->num_interfaces_inner_core > 0 ){
     cudaFree(mp->d_nibool_interfaces_inner_core);
     cudaFree(mp->d_ibool_interfaces_inner_core);
     cudaFree(mp->d_send_accel_buffer_inner_core);
+    if( mp->simulation_type == 3 ) cudaFree(mp->d_b_send_accel_buffer_inner_core);
   }
   if( mp->num_interfaces_outer_core > 0 ){
     cudaFree(mp->d_nibool_interfaces_outer_core);
     cudaFree(mp->d_ibool_interfaces_outer_core);
     cudaFree(mp->d_send_accel_buffer_outer_core);
+    if( mp->simulation_type == 3 ) cudaFree(mp->d_b_send_accel_buffer_outer_core);
   }
 
   //------------------------------------------

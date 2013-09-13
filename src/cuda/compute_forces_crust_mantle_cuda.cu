@@ -713,7 +713,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
                                           realw* epsilondev_xz,realw* epsilondev_yz,
                                           realw* epsilon_trace_over_3,
-                                          int SIMULATION_TYPE,
                                           int ATTENUATION,
                                           int PARTIAL_PHYS_DISPERSION_ONLY,
                                           int USE_3D_ATTENUATION_ARRAYS,
@@ -862,7 +861,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
   if (active) {
 
 #ifndef MANUALLY_UNROLLED_LOOPS
-
     tempx1l = 0.f;
     tempx2l = 0.f;
     tempx3l = 0.f;
@@ -891,7 +889,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
         tempy3l += s_dummyy_loc[l*NGLL2+J*NGLLX+I]*fac3;
         tempz3l += s_dummyz_loc[l*NGLL2+J*NGLLX+I]*fac3;
     }
-
 #else
 
     tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
@@ -1305,6 +1302,13 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                           realw* d_R_xy,
                           realw* d_R_xz,
                           realw* d_R_yz,
+                          realw* d_c11store,realw* d_c12store,realw* d_c13store,
+                          realw* d_c14store,realw* d_c15store,realw* d_c16store,
+                          realw* d_c22store,realw* d_c23store,realw* d_c24store,
+                          realw* d_c25store,realw* d_c26store,realw* d_c33store,
+                          realw* d_c34store,realw* d_c35store,realw* d_c36store,
+                          realw* d_c44store,realw* d_c45store,realw* d_c46store,
+                          realw* d_c55store,realw* d_c56store,realw* d_c66store,
                           realw* d_b_epsilondev_xx,
                           realw* d_b_epsilondev_yy,
                           realw* d_b_epsilondev_xy,
@@ -1316,30 +1320,21 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                           realw* d_b_R_xy,
                           realw* d_b_R_xz,
                           realw* d_b_R_yz,
-                          realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                          realw* d_c14store,realw* d_c15store,realw* d_c16store,
-                          realw* d_c22store,realw* d_c23store,realw* d_c24store,
-                          realw* d_c25store,realw* d_c26store,realw* d_c33store,
-                          realw* d_c34store,realw* d_c35store,realw* d_c36store,
-                          realw* d_c44store,realw* d_c45store,realw* d_c46store,
-                          realw* d_c55store,realw* d_c56store,realw* d_c66store){
+                          int FORWARD_OR_ADJOINT){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before kernel Kernel_2_crust_mantle");
 #endif
 
-  /* if the grid can handle the number of blocks, we let it be 1D */
-  /* grid_2_x = nb_elem_color; */
-  /* nb_elem_color is just how many blocks we are computing now */
-
-  int num_blocks_x = nb_blocks_to_compute;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  // if the grid can handle the number of blocks, we let it be 1D
+  // grid_2_x = nb_elem_color;
+  // nb_elem_color is just how many blocks we are computing now
 
   int blocksize = NGLL3_PADDED;
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(nb_blocks_to_compute,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
@@ -1350,56 +1345,57 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventCreate(&stop);
   // cudaEventRecord( start, 0 );
 
-  Kernel_2_crust_mantle_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                                mp->NGLOB_CRUST_MANTLE,
-                                                d_ibool,
-                                                d_ispec_is_tiso,
-                                                mp->d_phase_ispec_inner_crust_mantle,
-                                                mp->num_phase_ispec_crust_mantle,
-                                                d_iphase,
-                                                mp->deltat,
-                                                mp->use_mesh_coloring_gpu,
-                                                mp->d_displ_crust_mantle,
-                                                mp->d_veloc_crust_mantle,
-                                                mp->d_accel_crust_mantle,
-                                                d_xix, d_xiy, d_xiz,
-                                                d_etax, d_etay, d_etaz,
-                                                d_gammax, d_gammay, d_gammaz,
-                                                mp->d_hprime_xx,
-                                                mp->d_hprimewgll_xx,
-                                                mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                                d_kappavstore, d_muvstore,
-                                                d_kappahstore, d_muhstore,
-                                                d_eta_anisostore,
-                                                mp->compute_and_store_strain,
-                                                d_epsilondev_xx,d_epsilondev_yy,d_epsilondev_xy,
-                                                d_epsilondev_xz,d_epsilondev_yz,
-                                                d_epsilon_trace_over_3,
-                                                mp->simulation_type,
-                                                mp->attenuation,
-                                                mp->partial_phys_dispersion_only,
-                                                mp->use_3d_attenuation_arrays,
-                                                d_one_minus_sum_beta,d_factor_common,
-                                                d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
-                                                mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
-                                                mp->anisotropic_3D_mantle,
-                                                d_c11store,d_c12store,d_c13store,
-                                                d_c14store,d_c15store,d_c16store,
-                                                d_c22store,d_c23store,d_c24store,
-                                                d_c25store,d_c26store,d_c33store,
-                                                d_c34store,d_c35store,d_c36store,
-                                                d_c44store,d_c45store,d_c46store,
-                                                d_c55store,d_c56store,d_c66store,
-                                                mp->gravity,
-                                                mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
-                                                mp->d_minus_gravity_table,
-                                                mp->d_minus_deriv_gravity_table,
-                                                mp->d_density_table,
-                                                mp->d_wgll_cube,
-                                                mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
+  if( FORWARD_OR_ADJOINT == 1 ){
+    Kernel_2_crust_mantle_impl<<<grid,threads>>>(nb_blocks_to_compute,
+                                                  mp->NGLOB_CRUST_MANTLE,
+                                                  d_ibool,
+                                                  d_ispec_is_tiso,
+                                                  mp->d_phase_ispec_inner_crust_mantle,
+                                                  mp->num_phase_ispec_crust_mantle,
+                                                  d_iphase,
+                                                  mp->deltat,
+                                                  mp->use_mesh_coloring_gpu,
+                                                  mp->d_displ_crust_mantle,
+                                                  mp->d_veloc_crust_mantle,
+                                                  mp->d_accel_crust_mantle,
+                                                  d_xix, d_xiy, d_xiz,
+                                                  d_etax, d_etay, d_etaz,
+                                                  d_gammax, d_gammay, d_gammaz,
+                                                  mp->d_hprime_xx,
+                                                  mp->d_hprimewgll_xx,
+                                                  mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                  d_kappavstore, d_muvstore,
+                                                  d_kappahstore, d_muhstore,
+                                                  d_eta_anisostore,
+                                                  mp->compute_and_store_strain,
+                                                  d_epsilondev_xx,d_epsilondev_yy,d_epsilondev_xy,
+                                                  d_epsilondev_xz,d_epsilondev_yz,
+                                                  d_epsilon_trace_over_3,
+                                                  mp->attenuation,
+                                                  mp->partial_phys_dispersion_only,
+                                                  mp->use_3d_attenuation_arrays,
+                                                  d_one_minus_sum_beta,d_factor_common,
+                                                  d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
+                                                  mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
+                                                  mp->anisotropic_3D_mantle,
+                                                  d_c11store,d_c12store,d_c13store,
+                                                  d_c14store,d_c15store,d_c16store,
+                                                  d_c22store,d_c23store,d_c24store,
+                                                  d_c25store,d_c26store,d_c33store,
+                                                  d_c34store,d_c35store,d_c36store,
+                                                  d_c44store,d_c45store,d_c46store,
+                                                  d_c55store,d_c56store,d_c66store,
+                                                  mp->gravity,
+                                                  mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
+                                                  mp->d_minus_gravity_table,
+                                                  mp->d_minus_deriv_gravity_table,
+                                                  mp->d_density_table,
+                                                  mp->d_wgll_cube,
+                                                  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
+  }else if( FORWARD_OR_ADJOINT == 3 ){
+    // debug
+    DEBUG_EMPTY_BACKWARD();
 
-
-  if(mp->simulation_type == 3) {
     Kernel_2_crust_mantle_impl<<< grid,threads>>>(nb_blocks_to_compute,
                                                    mp->NGLOB_CRUST_MANTLE,
                                                    d_ibool,
@@ -1425,7 +1421,6 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                    d_b_epsilondev_xx,d_b_epsilondev_yy,d_b_epsilondev_xy,
                                                    d_b_epsilondev_xz,d_b_epsilondev_yz,
                                                    d_b_epsilon_trace_over_3,
-                                                   mp->simulation_type,
                                                    mp->attenuation,
                                                    mp->partial_phys_dispersion_only,
                                                    mp->use_3d_attenuation_arrays,
@@ -1469,7 +1464,8 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
 extern "C"
 void FC_FUNC_(compute_forces_crust_mantle_cuda,
               COMPUTE_FORCES_CRUST_MANTLE_CUDA)(long* Mesh_pointer_f,
-                                                int* iphase) {
+                                                int* iphase,
+                                                int* FORWARD_OR_ADJOINT_f) {
 
   TRACE("compute_forces_crust_mantle_cuda");
 
@@ -1478,6 +1474,8 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
 //  double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
+
+  int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   int num_elements;
 
@@ -1563,15 +1561,9 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                             *iphase,
                             mp->d_ibool_crust_mantle + offset_nonpadded,
                             mp->d_ispec_is_tiso_crust_mantle + offset_ispec,
-                            mp->d_xix_crust_mantle + offset,
-                            mp->d_xiy_crust_mantle + offset,
-                            mp->d_xiz_crust_mantle + offset,
-                            mp->d_etax_crust_mantle + offset,
-                            mp->d_etay_crust_mantle + offset,
-                            mp->d_etaz_crust_mantle + offset,
-                            mp->d_gammax_crust_mantle + offset,
-                            mp->d_gammay_crust_mantle + offset,
-                            mp->d_gammaz_crust_mantle + offset,
+                            mp->d_xix_crust_mantle + offset,mp->d_xiy_crust_mantle + offset,mp->d_xiz_crust_mantle + offset,
+                            mp->d_etax_crust_mantle + offset,mp->d_etay_crust_mantle + offset,mp->d_etaz_crust_mantle + offset,
+                            mp->d_gammax_crust_mantle + offset,mp->d_gammay_crust_mantle + offset,mp->d_gammaz_crust_mantle + offset,
                             mp->d_kappavstore_crust_mantle + offset,
                             mp->d_muvstore_crust_mantle + offset,
                             mp->d_kappahstore_crust_mantle + offset,
@@ -1590,6 +1582,13 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                             mp->d_R_xy_crust_mantle + offset_nonpadded_att1,
                             mp->d_R_xz_crust_mantle + offset_nonpadded_att1,
                             mp->d_R_yz_crust_mantle + offset_nonpadded_att1,
+                            mp->d_c11store_crust_mantle + offset,mp->d_c12store_crust_mantle + offset,mp->d_c13store_crust_mantle + offset,
+                            mp->d_c14store_crust_mantle + offset,mp->d_c15store_crust_mantle + offset,mp->d_c16store_crust_mantle + offset,
+                            mp->d_c22store_crust_mantle + offset,mp->d_c23store_crust_mantle + offset,mp->d_c24store_crust_mantle + offset,
+                            mp->d_c25store_crust_mantle + offset,mp->d_c26store_crust_mantle + offset,mp->d_c33store_crust_mantle + offset,
+                            mp->d_c34store_crust_mantle + offset,mp->d_c35store_crust_mantle + offset,mp->d_c36store_crust_mantle + offset,
+                            mp->d_c44store_crust_mantle + offset,mp->d_c45store_crust_mantle + offset,mp->d_c46store_crust_mantle + offset,
+                            mp->d_c55store_crust_mantle + offset,mp->d_c56store_crust_mantle + offset,mp->d_c66store_crust_mantle + offset,
                             mp->d_b_epsilondev_xx_crust_mantle + offset_nonpadded,
                             mp->d_b_epsilondev_yy_crust_mantle + offset_nonpadded,
                             mp->d_b_epsilondev_xy_crust_mantle + offset_nonpadded,
@@ -1601,27 +1600,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                             mp->d_b_R_xy_crust_mantle + offset_nonpadded_att1,
                             mp->d_b_R_xz_crust_mantle + offset_nonpadded_att1,
                             mp->d_b_R_yz_crust_mantle + offset_nonpadded_att1,
-                            mp->d_c11store_crust_mantle + offset,
-                            mp->d_c12store_crust_mantle + offset,
-                            mp->d_c13store_crust_mantle + offset,
-                            mp->d_c14store_crust_mantle + offset,
-                            mp->d_c15store_crust_mantle + offset,
-                            mp->d_c16store_crust_mantle + offset,
-                            mp->d_c22store_crust_mantle + offset,
-                            mp->d_c23store_crust_mantle + offset,
-                            mp->d_c24store_crust_mantle + offset,
-                            mp->d_c25store_crust_mantle + offset,
-                            mp->d_c26store_crust_mantle + offset,
-                            mp->d_c33store_crust_mantle + offset,
-                            mp->d_c34store_crust_mantle + offset,
-                            mp->d_c35store_crust_mantle + offset,
-                            mp->d_c36store_crust_mantle + offset,
-                            mp->d_c44store_crust_mantle + offset,
-                            mp->d_c45store_crust_mantle + offset,
-                            mp->d_c46store_crust_mantle + offset,
-                            mp->d_c55store_crust_mantle + offset,
-                            mp->d_c56store_crust_mantle + offset,
-                            mp->d_c66store_crust_mantle + offset);
+                            FORWARD_OR_ADJOINT);
 
       // for padded and aligned arrays
       offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -1650,7 +1629,6 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
   }else{
 
     // no mesh coloring: uses atomic updates
-
     Kernel_2_crust_mantle(num_elements,mp,
                           *iphase,
                           mp->d_ibool_crust_mantle,
@@ -1674,6 +1652,13 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                           mp->d_R_xy_crust_mantle,
                           mp->d_R_xz_crust_mantle,
                           mp->d_R_yz_crust_mantle,
+                          mp->d_c11store_crust_mantle,mp->d_c12store_crust_mantle,mp->d_c13store_crust_mantle,
+                          mp->d_c14store_crust_mantle,mp->d_c15store_crust_mantle,mp->d_c16store_crust_mantle,
+                          mp->d_c22store_crust_mantle,mp->d_c23store_crust_mantle,mp->d_c24store_crust_mantle,
+                          mp->d_c25store_crust_mantle,mp->d_c26store_crust_mantle,mp->d_c33store_crust_mantle,
+                          mp->d_c34store_crust_mantle,mp->d_c35store_crust_mantle,mp->d_c36store_crust_mantle,
+                          mp->d_c44store_crust_mantle,mp->d_c45store_crust_mantle,mp->d_c46store_crust_mantle,
+                          mp->d_c55store_crust_mantle,mp->d_c56store_crust_mantle,mp->d_c66store_crust_mantle,
                           mp->d_b_epsilondev_xx_crust_mantle,
                           mp->d_b_epsilondev_yy_crust_mantle,
                           mp->d_b_epsilondev_xy_crust_mantle,
@@ -1685,13 +1670,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
                           mp->d_b_R_xy_crust_mantle,
                           mp->d_b_R_xz_crust_mantle,
                           mp->d_b_R_yz_crust_mantle,
-                          mp->d_c11store_crust_mantle,mp->d_c12store_crust_mantle,mp->d_c13store_crust_mantle,
-                          mp->d_c14store_crust_mantle,mp->d_c15store_crust_mantle,mp->d_c16store_crust_mantle,
-                          mp->d_c22store_crust_mantle,mp->d_c23store_crust_mantle,mp->d_c24store_crust_mantle,
-                          mp->d_c25store_crust_mantle,mp->d_c26store_crust_mantle,mp->d_c33store_crust_mantle,
-                          mp->d_c34store_crust_mantle,mp->d_c35store_crust_mantle,mp->d_c36store_crust_mantle,
-                          mp->d_c44store_crust_mantle,mp->d_c45store_crust_mantle,mp->d_c46store_crust_mantle,
-                          mp->d_c55store_crust_mantle,mp->d_c56store_crust_mantle,mp->d_c66store_crust_mantle);
+                          FORWARD_OR_ADJOINT);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

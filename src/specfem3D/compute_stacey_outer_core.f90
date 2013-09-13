@@ -548,9 +548,6 @@
   if( SIMULATION_TYPE /= 3 ) return
   if( SAVE_FORWARD ) return
 
-  ! daniel debug
-  if( GPU_MODE ) stop 'error compute_stacey_outer_core_backward_undoatt not implemented yet for GPU simulations'
-
   ! outer core
 
   !   xmin
@@ -583,9 +580,7 @@
 
     else
       ! on GPU
-      if( nspec2D_xmin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
-                                                                absorb_xmin_outer_core, &
-                                                                4) ! <= xmin
+      if( nspec2D_xmin_outer_core > 0 ) call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,4) ! <= xmin
     endif
 
   endif
@@ -620,9 +615,7 @@
 
     else
       ! on GPU
-      if( nspec2D_xmax_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
-                                                                absorb_xmax_outer_core, &
-                                                                5) ! <= xmax
+      if( nspec2D_xmax_outer_core > 0 ) call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,5) ! <= xmax
     endif
 
   endif
@@ -655,9 +648,7 @@
 
   else
     ! on GPU
-    if( nspec2D_ymin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
-                                                              absorb_ymin_outer_core, &
-                                                              6) ! <= ymin
+    if( nspec2D_ymin_outer_core > 0 ) call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,6) ! <= ymin
   endif
 
   !   ymax
@@ -688,9 +679,7 @@
 
   else
     ! on GPU
-    if( nspec2D_ymax_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
-                                                              absorb_ymax_outer_core, &
-                                                              7) ! <= ymax
+    if( nspec2D_ymax_outer_core > 0 ) call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,7) ! <= ymax
   endif
 
   ! zmin
@@ -720,9 +709,7 @@
 
   else
     ! on GPU
-    if( nspec2D_zmin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
-                                                              absorb_zmin_outer_core, &
-                                                              8) ! <= zmin
+    if( nspec2D_zmin_outer_core > 0 ) call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,8) ! <= zmin
   endif
 
   end subroutine compute_stacey_outer_core_backward_undoatt

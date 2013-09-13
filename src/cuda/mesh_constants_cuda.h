@@ -70,19 +70,45 @@
 #define PRINT5(var,offset) // for(i=0;i<10;i++) printf("var(%d)=%f\n",i,var[offset+i]);
 #endif
 
+// daniel debug: run backward simulations with empty arrays to check
+#define DEBUG_BACKWARD_SIMULATIONS 0
+#if DEBUG_BACKWARD_SIMULATIONS == 1
+#define DEBUG_EMPTY_BACKWARD() return;
+#else
+#define DEBUG_EMPTY_BACKWARD()
+#endif
+
+
+// error checking after cuda function calls
+#define ENABLE_VERY_SLOW_ERROR_CHECKING
+
 // maximum function
 #define MAX(x,y)                    (((x) < (y)) ? (y) : (x))
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// type of "working" variables: see also CUSTOM_REAL
+// double precision temporary variables leads to 10% performance decrease
+// in Kernel_2_impl (not very much..)
+typedef float realw;
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
 // utility functions: defined in check_fields_cuda.cu
+
+/* ----------------------------------------------------------------------------------------------- */
+
 double get_time();
 void get_free_memory(double* free_db, double* used_db, double* total_db);
 void print_CUDA_error_if_any(cudaError_t err, int num);
 void pause_for_debugger(int pause);
 void exit_on_cuda_error(char* kernel_name);
 void exit_on_error(char* info);
-
-// error checking after cuda function calls
-#define ENABLE_VERY_SLOW_ERROR_CHECKING
+void synchronize_cuda();
+void synchronize_mpi();
+void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y);
+realw get_device_array_maximum_value(realw* array,int size);
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -118,14 +144,6 @@ void exit_on_error(char* info);
 #define R_EARTH_KM 6371.0f
 // uncomment line below for PREM with oceans
 //#define R_EARTH_KM 6368.0f
-
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// type of "working" variables: see also CUSTOM_REAL
-// double precision temporary variables leads to 10% performance decrease
-// in Kernel_2_impl (not very much..)
-typedef float realw;
 
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -246,7 +264,6 @@ typedef struct mesh_ {
   realw* d_b_rmassy_crust_mantle;
   realw* d_b_rmassz_crust_mantle;
 
-
   // global indexing
   int* d_ibool_crust_mantle;
   int* d_ispec_is_tiso_crust_mantle;
@@ -282,12 +299,6 @@ typedef struct mesh_ {
   realw* d_displ_crust_mantle; realw* d_veloc_crust_mantle; realw* d_accel_crust_mantle;
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_crust_mantle; realw* d_b_veloc_crust_mantle; realw* d_b_accel_crust_mantle;
-
-//#ifdef USE_TEXTURES_FIELDS
-//  // Texture references for fast non-coalesced scattered access
-//  const textureReference* d_displ_cm_tex_ref_ptr;
-//  const textureReference* d_accel_cm_tex_ref_ptr;
-//#endif
 
   // attenuation
   realw* d_R_xx_crust_mantle;
@@ -370,12 +381,6 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_outer_core; realw* d_b_veloc_outer_core; realw* d_b_accel_outer_core;
 
-//#ifdef USE_TEXTURES_FIELDS
-//  // Texture references for fast non-coalesced scattered access
-//  const textureReference* d_displ_oc_tex_ref_ptr;
-//  const textureReference* d_accel_oc_tex_ref_ptr;
-//#endif
-
   // kernels
   realw* d_rho_kl_outer_core;
   realw* d_alpha_kl_outer_core;
@@ -447,12 +452,6 @@ typedef struct mesh_ {
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_inner_core; realw* d_b_veloc_inner_core; realw* d_b_accel_inner_core;
 
-//#ifdef USE_TEXTURES_FIELDS
-//  // Texture references for fast non-coalesced scattered access
-//  const textureReference* d_displ_ic_tex_ref_ptr;
-//  const textureReference* d_accel_ic_tex_ref_ptr;
-//#endif
-
   // attenuation
   realw* d_R_xx_inner_core;
   realw* d_R_yy_inner_core;
@@ -465,7 +464,6 @@ typedef struct mesh_ {
   realw* d_b_R_xy_inner_core;
   realw* d_b_R_xz_inner_core;
   realw* d_b_R_yz_inner_core;
-
 
   realw* d_factor_common_inner_core;
   realw* d_one_minus_sum_beta_inner_core;
@@ -533,11 +531,6 @@ typedef struct mesh_ {
   realw* d_hprime_xx;
   //realw* d_hprime_yy; // only needed if NGLLX != NGLLY != NGLLZ
   //realw* d_hprime_zz; // only needed if NGLLX != NGLLY != NGLLZ
-
-//#ifdef USE_TEXTURES_CONSTANTS
-//  const textureReference* d_hprime_xx_tex_ptr;
-//  realw* d_hprime_xx_tex;
-//#endif
 
   realw* d_hprimewgll_xx;
   //realw* d_hprimewgll_yy; // only needed if NGLLX != NGLLY != NGLLZ
@@ -635,19 +628,25 @@ typedef struct mesh_ {
   int max_nibool_interfaces_cm;
   int* d_nibool_interfaces_crust_mantle;
   int* d_ibool_interfaces_crust_mantle;
+
   realw* d_send_accel_buffer_crust_mantle;
+  realw* d_b_send_accel_buffer_crust_mantle;
 
   int num_interfaces_inner_core;
   int max_nibool_interfaces_ic;
   int* d_nibool_interfaces_inner_core;
   int* d_ibool_interfaces_inner_core;
+
   realw* d_send_accel_buffer_inner_core;
+  realw* d_b_send_accel_buffer_inner_core;
 
   int num_interfaces_outer_core;
   int max_nibool_interfaces_oc;
   int* d_nibool_interfaces_outer_core;
   int* d_ibool_interfaces_outer_core;
+
   realw* d_send_accel_buffer_outer_core;
+  realw* d_b_send_accel_buffer_outer_core;
 
   // ------------------------------------------------------------------ //
   // absorbing boundaries

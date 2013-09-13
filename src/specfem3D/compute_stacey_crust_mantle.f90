@@ -128,8 +128,8 @@
     else
       ! on GPU
       if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                                absorb_xmin_crust_mantle, &
-                                                                0) ! <= xmin
+                                                                           absorb_xmin_crust_mantle, &
+                                                                           0) ! <= xmin
     endif
 
     ! writes absorbing boundary values
@@ -190,8 +190,8 @@
     else
       ! on GPU
       if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                                absorb_xmax_crust_mantle, &
-                                                                1) ! <= xmin
+                                                                           absorb_xmax_crust_mantle, &
+                                                                           1) ! <= xmin
     endif
 
 
@@ -251,8 +251,8 @@
   else
     ! on GPU
     if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                              absorb_ymin_crust_mantle, &
-                                                              2) ! <= ymin
+                                                                         absorb_ymin_crust_mantle, &
+                                                                         2) ! <= ymin
   endif
 
   ! writes absorbing boundary values
@@ -309,8 +309,8 @@
   else
     ! on GPU
     if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                              absorb_ymax_crust_mantle, &
-                                                              3) ! <= ymax
+                                                                         absorb_ymax_crust_mantle, &
+                                                                         3) ! <= ymax
   endif
 
   ! writes absorbing boundary values
@@ -401,8 +401,8 @@
     else
       ! on GPU
       if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
-                                                                absorb_xmin_crust_mantle, &
-                                                                0) ! <= xmin
+                                                                                    absorb_xmin_crust_mantle, &
+                                                                                    0) ! <= xmin
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
@@ -438,8 +438,8 @@
     else
       ! on GPU
       if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
-                                                                absorb_xmax_crust_mantle, &
-                                                                1) ! <= xmin
+                                                                                    absorb_xmax_crust_mantle, &
+                                                                                    1) ! <= xmin
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
@@ -473,8 +473,8 @@
   else
     ! on GPU
     if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
-                                                              absorb_ymin_crust_mantle, &
-                                                              2) ! <= ymin
+                                                                                  absorb_ymin_crust_mantle, &
+                                                                                  2) ! <= ymin
   endif
 
   !   ymax
@@ -506,8 +506,8 @@
   else
     ! on GPU
     if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_backward_cuda(Mesh_pointer, &
-                                                              absorb_ymax_crust_mantle, &
-                                                              3) ! <= ymax
+                                                                                  absorb_ymax_crust_mantle, &
+                                                                                  3) ! <= ymax
   endif
 
   end subroutine compute_stacey_crust_mantle_backward
@@ -542,9 +542,7 @@
     njmin_crust_mantle,njmax_crust_mantle, &
     nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
     nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
-    absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
-    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle
+    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
 
   implicit none
 
@@ -565,9 +563,6 @@
   ! checks
   if( SIMULATION_TYPE /= 3 ) return
   if( SAVE_FORWARD ) return
-
-  ! daniel debug
-  if( GPU_MODE ) stop 'error compute_stacey_crust_mantle_backward_undoatt not implemented yet for GPU simulations'
 
   ! crust & mantle
 
@@ -615,9 +610,7 @@
 
     else
       ! on GPU
-      if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                                absorb_xmin_crust_mantle, &
-                                                                0) ! <= xmin
+      if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_cuda(Mesh_pointer,0) ! <= xmin
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
@@ -666,9 +659,7 @@
 
     else
       ! on GPU
-      if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                                absorb_xmax_crust_mantle, &
-                                                                1) ! <= xmin
+      if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_cuda(Mesh_pointer,1) ! <= xmin
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
@@ -715,9 +706,7 @@
 
   else
     ! on GPU
-    if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                              absorb_ymin_crust_mantle, &
-                                                              2) ! <= ymin
+    if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_cuda(Mesh_pointer,2) ! <= ymin
   endif
 
   !   ymax
@@ -762,9 +751,7 @@
 
   else
     ! on GPU
-    if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
-                                                              absorb_ymax_crust_mantle, &
-                                                              3) ! <= ymax
+    if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_cuda(Mesh_pointer,3) ! <= ymax
   endif
 
   end subroutine compute_stacey_crust_mantle_backward_undoatt
