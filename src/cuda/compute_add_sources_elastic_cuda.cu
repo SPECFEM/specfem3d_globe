@@ -86,12 +86,12 @@ __global__ void compute_add_sources_kernel(realw* accel,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(compute_add_sources_el_cuda,
-              COMPUTE_ADD_SOURCES_EL_CUDA)(long* Mesh_pointer_f,
-                                           int* NSOURCESf,
-                                           double* h_stf_pre_compute) {
+void FC_FUNC_(compute_add_sources_cuda,
+              COMPUTE_ADD_SOURCES_CUDA)(long* Mesh_pointer_f,
+                                        int* NSOURCESf,
+                                        double* h_stf_pre_compute) {
 
-  TRACE("compute_add_sources_el_cuda");
+  TRACE("compute_add_sources_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -100,18 +100,15 @@ void FC_FUNC_(compute_add_sources_el_cuda,
 
   int NSOURCES = *NSOURCESf;
 
-  int num_blocks_x = NSOURCES;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(NSOURCES,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLLX,NGLLX,NGLLX);
 
   // copies source time function buffer values to GPU
   print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute,h_stf_pre_compute,
-                                     NSOURCES*sizeof(double),cudaMemcpyHostToDevice),18);
+                                     NSOURCES*sizeof(double),cudaMemcpyHostToDevice),71018);
 
   // adds source contributions
   compute_add_sources_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
@@ -124,7 +121,7 @@ void FC_FUNC_(compute_add_sources_el_cuda,
                                                NSOURCES);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_sources_kernel");
+  exit_on_cuda_error("compute_add_sources_cuda");
 #endif
 }
 
@@ -135,11 +132,13 @@ void FC_FUNC_(compute_add_sources_el_cuda,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(compute_add_sources_el_s3_cuda,
-              COMPUTE_ADD_SOURCES_EL_S3_CUDA)(long* Mesh_pointer_f,
-                                              int* NSOURCESf,
-                                              double* h_stf_pre_compute) {
-  TRACE("compute_add_sources_el_s3_cuda");
+void FC_FUNC_(compute_add_sources_backward_cuda,
+              COMPUTE_ADD_SOURCES_BACKWARD_CUDA)(long* Mesh_pointer_f,
+                                                 int* NSOURCESf,
+                                                 double* h_stf_pre_compute) {
+  TRACE("compute_add_sources_backward_cuda");
+  // debug
+  DEBUG_EMPTY_BACKWARD();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -148,18 +147,15 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
 
   int NSOURCES = *NSOURCESf;
 
-  int num_blocks_x = NSOURCES;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(NSOURCES,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLLX,NGLLX,NGLLX);
 
   // copies source time function buffer values to GPU
   print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute,h_stf_pre_compute,
-                                     NSOURCES*sizeof(double),cudaMemcpyHostToDevice),19);
+                                     NSOURCES*sizeof(double),cudaMemcpyHostToDevice),71019);
 
   compute_add_sources_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                mp->d_ibool_crust_mantle,
@@ -171,7 +167,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
                                                NSOURCES);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_sources_el_s3_cuda");
+  exit_on_cuda_error("compute_add_sources_backward_cuda");
 #endif
 }
 
@@ -182,13 +178,13 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
-                                                     int nrec,
-                                                     realw* adj_sourcearrays,
-                                                     int* ibool,
-                                                     int* ispec_selected_rec,
-                                                     int* pre_computed_irec,
-                                                     int nadj_rec_local) {
+__global__ void compute_add_sources_adjoint_cuda_kernel(realw* accel,
+                                                        int nrec,
+                                                        realw* adj_sourcearrays,
+                                                        int* ibool,
+                                                        int* ispec_selected_rec,
+                                                        int* pre_computed_irec,
+                                                        int nadj_rec_local) {
 
   int ispec,iglob;
   int irec,i,j,k;
@@ -220,28 +216,24 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(add_sources_el_sim_type_2_or_3,
-              ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
-                                              int* nrec,
-                                              realw* h_adj_sourcearrays,
-                                              int* h_islice_selected_rec,
-                                              int* h_ispec_selected_rec,
-                                              int* time_index) {
+void FC_FUNC_(compute_add_sources_adjoint_cuda,
+              COMPUTE_ADD_SOURCES_ADJOINT_CUDA)(long* Mesh_pointer,
+                                                int* nrec,
+                                                realw* h_adj_sourcearrays,
+                                                int* h_islice_selected_rec,
+                                                int* h_ispec_selected_rec,
+                                                int* time_index) {
 
-  TRACE("add_sources_el_sim_type_2_or_3");
+  TRACE("compute_add_sources_adjoint_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // check if anything to do
   if( mp->nadj_rec_local == 0 ) return;
 
-  // make sure grid dimension is less than MAXIMUM_GRID_DIM in x dimension
-  int num_blocks_x = mp->nadj_rec_local;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLLX,NGLLX,NGLLX);
 
@@ -284,23 +276,23 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   if( irec_local != mp->nadj_rec_local) exit_on_error("irec_local not equal to nadj_rec_local\n");
 
   // copies extracted array values onto GPU
-  cudaMemcpy(mp->d_adj_sourcearrays, mp->h_adj_sourcearrays_slice,
-             (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw),cudaMemcpyHostToDevice);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_adj_sourcearrays, mp->h_adj_sourcearrays_slice,
+                                     (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw),cudaMemcpyHostToDevice),71000);
 
 
   // the irec_local variable needs to be precomputed (as
   // h_pre_comp..), because normally it is in the loop updating accel,
   // and due to how it's incremented, it cannot be parallelized
-  add_sources_el_SIM_TYPE_2_OR_3_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
-                                                         *nrec,
-                                                         mp->d_adj_sourcearrays,
-                                                         mp->d_ibool_crust_mantle,
-                                                         mp->d_ispec_selected_rec,
-                                                         mp->d_pre_computed_irec,
-                                                         mp->nadj_rec_local);
+  compute_add_sources_adjoint_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
+                                                            *nrec,
+                                                            mp->d_adj_sourcearrays,
+                                                            mp->d_ibool_crust_mantle,
+                                                            mp->d_ispec_selected_rec,
+                                                            mp->d_pre_computed_irec,
+                                                            mp->nadj_rec_local);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("add_sources_SIM_TYPE_2_OR_3_kernel");
+  exit_on_cuda_error("compute_add_sources_adjoint_cuda");
 #endif
 }
 

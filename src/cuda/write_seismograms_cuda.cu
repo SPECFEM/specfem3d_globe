@@ -105,12 +105,9 @@ TRACE("write_seismograms_transfer_from_device");
 
   int blocksize = NGLL3;
 
-  int num_blocks_x = mp->nrec_local;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->nrec_local,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
@@ -162,12 +159,9 @@ void write_seismograms_transfer_scalar_from_device(Mesh* mp,
 
   int blocksize = NGLL3;
 
-  int num_blocks_x = mp->nrec_local;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->nrec_local,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 

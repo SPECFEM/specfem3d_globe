@@ -155,12 +155,9 @@ TRACE("noise_transfer_surface_to_host");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
 
-  int num_blocks_x = mp->nspec2D_top_crust_mantle;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->nspec2D_top_crust_mantle,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLL2,1,1);
 
@@ -305,12 +302,9 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
-  int num_blocks_x = mp->nspec2D_top_crust_mantle;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->nspec2D_top_crust_mantle,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLL2,1,1);
 

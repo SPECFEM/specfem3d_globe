@@ -133,7 +133,7 @@
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM=0
-    call compute_add_sources_el_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
+    call compute_add_sources_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
   endif
 
 
@@ -288,9 +288,9 @@
 
   else
     ! on GPU
-    call add_sources_el_sim_type_2_or_3(Mesh_pointer,nrec,adj_sourcearrays, &
-                                       islice_selected_rec,ispec_selected_rec, &
-                                       iadj_vec(it))
+    call compute_add_sources_adjoint_cuda(Mesh_pointer,nrec,adj_sourcearrays, &
+                                          islice_selected_rec,ispec_selected_rec, &
+                                          iadj_vec(it))
   endif
 
   end subroutine compute_add_sources_adjoint
@@ -414,7 +414,7 @@
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM=0)
-    call compute_add_sources_el_s3_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
+    call compute_add_sources_backward_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
   endif
 
   end subroutine compute_add_sources_backward

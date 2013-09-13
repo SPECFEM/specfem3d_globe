@@ -333,7 +333,8 @@
         if(GRAVITY_VAL) then
           pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
-                           + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
+                             + displ_inner_core(2,iglob_inner_core)*ny &
+                             + displ_inner_core(3,iglob_inner_core)*nz))
         else
           pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
         endif
@@ -425,8 +426,8 @@
           ! we divide by rmass_crust_mantle() which is 1 / M
           ! we use the total force which includes the Coriolis term above
           force_normal_comp = accel_crust_mantle(1,iglob)*nx / rmassx_crust_mantle(iglob) &
-                           + accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) &
-                           + accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)
+                            + accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) &
+                            + accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)
 
           additional_term_x = (rmass_ocean_load(iglob) - rmassx_crust_mantle(iglob)) * force_normal_comp
           additional_term_y = (rmass_ocean_load(iglob) - rmassy_crust_mantle(iglob)) * force_normal_comp

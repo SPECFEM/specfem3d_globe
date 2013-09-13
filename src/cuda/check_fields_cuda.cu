@@ -212,6 +212,45 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
 
 /* ----------------------------------------------------------------------------------------------- */
 
+void synchronize_cuda(){
+#if CUDA_VERSION >= 4000
+    cudaDeviceSynchronize();
+#else
+    cudaThreadSynchronize();
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void synchronize_mpi(){
+#ifdef WITH_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+
+void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y) {
+
+// Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
+// If an additional row is added, the row length is cut in
+// half. If the block count is odd, there will be 1 too many blocks,
+// which must be managed at runtime with an if statement.
+
+  *num_blocks_x = num_blocks;
+  *num_blocks_y = 1;
+
+  while(*num_blocks_x > MAXIMUM_GRID_DIM) {
+    *num_blocks_x = (int) ceil(*num_blocks_x * 0.5f);
+    *num_blocks_y = *num_blocks_y * 2;
+  }
+
+  return;
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
 void get_free_memory(double* free_db, double* used_db, double* total_db) {
 
   // gets memory usage in byte
@@ -285,6 +324,56 @@ void FC_FUNC_(get_free_device_memory,
 
 /* ----------------------------------------------------------------------------------------------- */
 
+// Auxiliary functions
+
+/* ----------------------------------------------------------------------------------------------- */
+
+/*
+__global__ void memset_to_realw_kernel(realw* array, int size, realw value){
+
+  unsigned int tid = threadIdx.x;
+  unsigned int bx = blockIdx.y*gridDim.x+blockIdx.x;
+  unsigned int i = tid + bx*blockDim.x;
+
+  if( i < size ){
+    array[i] = *value;
+  }
+}
+*/
+
+/* ----------------------------------------------------------------------------------------------- */
+
+realw get_device_array_maximum_value(realw* array, int size){
+
+// get maximum of array on GPU by copying over to CPU and handle it there
+
+  realw max = 0.0f;
+
+  // checks if anything to do
+  if( size > 0 ){
+    realw* h_array;
+
+    // explicitly wait for cuda kernels to finish
+    // (cudaMemcpy implicitly synchronizes all other cuda operations)
+    synchronize_cuda();
+
+    h_array = (realw*)calloc(size,sizeof(realw));
+    print_CUDA_error_if_any(cudaMemcpy(h_array,array,sizeof(realw)*size,cudaMemcpyDeviceToHost),33001);
+
+    // finds maximum value in array
+    max = h_array[0];
+    for( int i=1; i < size; i++){
+      if( abs(h_array[i]) > max ) max = abs(h_array[i]);
+    }
+    free(h_array);
+  }
+  return max;
+}
+
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
 // scalar arrays (acoustic/fluid outer core)
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -340,7 +429,7 @@ extern "C"
 void FC_FUNC_(check_norm_acoustic_from_device,
               CHECK_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
                                                   long* Mesh_pointer_f,
-                                                  int* SIMULATION_TYPE) {
+                                                  int* FORWARD_OR_ADJOINT) {
 
 TRACE("check_norm_acoustic_from_device");
   //double start_time = get_time();
@@ -390,22 +479,19 @@ TRACE("check_norm_acoustic_from_device");
   int size = mp->NGLOB_OUTER_CORE;
 
   int size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
-  int num_blocks_x = size_padded/blocksize;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
 
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+  int num_blocks_x,num_blocks_y;
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if(*SIMULATION_TYPE == 1 ){
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  if(*FORWARD_OR_ADJOINT == 1 ){
     get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_displ_outer_core,size,d_max);
-  }else if(*SIMULATION_TYPE == 3 ){
+  }else if(*FORWARD_OR_ADJOINT == 3 ){
     get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_b_displ_outer_core,size,d_max);
   }
 
@@ -513,7 +599,7 @@ extern "C"
 void FC_FUNC_(check_norm_elastic_from_device,
               CHECK_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
                                               long* Mesh_pointer_f,
-                                              int* SIMULATION_TYPE) {
+                                              int* FORWARD_OR_ADJOINT) {
 
   TRACE("check_norm_elastic_from_device");
   //double start_time = get_time();
@@ -522,7 +608,6 @@ void FC_FUNC_(check_norm_elastic_from_device,
 
   realw max,max_crust_mantle,max_inner_core;
   realw *d_max;
-  int num_blocks_x,num_blocks_y;
   int size,size_padded;
   dim3 grid,threads;
 
@@ -535,22 +620,19 @@ void FC_FUNC_(check_norm_elastic_from_device,
   size = mp->NGLOB_CRUST_MANTLE;
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
-  num_blocks_x = size_padded/blocksize;
-  num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
 
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+  int num_blocks_x,num_blocks_y;
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   grid = dim3(num_blocks_x,num_blocks_y);
   threads = dim3(blocksize,1,1);
 
-  if(*SIMULATION_TYPE == 1 ){
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  if(*FORWARD_OR_ADJOINT == 1 ){
     get_maximum_vector_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,size,d_max);
-  }else if(*SIMULATION_TYPE == 3 ){
+  }else if(*FORWARD_OR_ADJOINT == 3 ){
     get_maximum_vector_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,size,d_max);
   }
 
@@ -573,22 +655,18 @@ void FC_FUNC_(check_norm_elastic_from_device,
   size = mp->NGLOB_INNER_CORE;
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
-  num_blocks_x = size_padded/blocksize;
-  num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
 
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   grid = dim3(num_blocks_x,num_blocks_y);
   threads = dim3(blocksize,1,1);
 
-  if(*SIMULATION_TYPE == 1 ){
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  if(*FORWARD_OR_ADJOINT == 1 ){
     get_maximum_vector_kernel<<<grid,threads>>>(mp->d_displ_inner_core,size,d_max);
-  }else if(*SIMULATION_TYPE == 3 ){
+  }else if(*FORWARD_OR_ADJOINT == 3 ){
     get_maximum_vector_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,size,d_max);
   }
 
@@ -632,10 +710,9 @@ void FC_FUNC_(check_norm_strain_from_device,
 
   realw max,max_eps;
   realw *d_max;
-  int num_blocks_x,num_blocks_y;
+  int num_blocks_x, num_blocks_y;
   int size,size_padded;
-  dim3 grid;
-  dim3 threads;
+  dim3 grid,threads;
 
   // launch simple reduction kernel
   realw* h_max;
@@ -645,18 +722,14 @@ void FC_FUNC_(check_norm_strain_from_device,
   size = NGLL3*(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
-  num_blocks_x = size_padded/blocksize;
-  num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
 
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   grid = dim3(num_blocks_x,num_blocks_y);
   threads = dim3(blocksize,1,1);
+
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
 
   max = 0.0f;
 
@@ -681,18 +754,14 @@ void FC_FUNC_(check_norm_strain_from_device,
   size = NGLL3*(mp->NSPEC_CRUST_MANTLE);
 
   size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
-  num_blocks_x = size_padded/blocksize;
-  num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
 
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   grid = dim3(num_blocks_x,num_blocks_y);
   threads = dim3(blocksize,1,1);
+
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
 
   max_eps = 0.0f;
 

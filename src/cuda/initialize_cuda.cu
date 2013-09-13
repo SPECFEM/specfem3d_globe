@@ -88,7 +88,7 @@ void FC_FUNC_(initialize_cuda_device,
   // Gets number of GPU devices
   device_count = 0;
   cudaGetDeviceCount(&device_count);
-  exit_on_cuda_error("CUDA runtime error: cudaGetDeviceCount failed\ncheck if driver and runtime libraries work together\nexiting...\n");
+  exit_on_cuda_error("CUDA runtime error: cudaGetDeviceCount failed\n\nplease check if driver and runtime libraries work together\nor on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multiple MPI processes\n\nexiting...\n");
 
   // returns device count to fortran
   if (device_count == 0) exit_on_error("CUDA runtime error: there is no device supporting CUDA\n");

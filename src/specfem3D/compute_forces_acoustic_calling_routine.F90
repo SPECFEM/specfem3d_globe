@@ -204,7 +204,16 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-  call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
+
+  if(.NOT. GPU_MODE) then
+    ! on CPU
+    call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
+  else
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 1
+    call multiply_accel_acoustic_cuda(Mesh_pointer,1)
+  endif
+
 
   ! time schemes
   if( USE_LDDRK ) then
@@ -407,25 +416,32 @@
       if(.NOT. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                              b_accel_outer_core, &
-                              b_buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
-                              max_nibool_interfaces_oc, &
-                              nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                              b_request_send_scalar_oc,b_request_recv_scalar_oc)
+                                   b_accel_outer_core, &
+                                   b_buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
+                                   max_nibool_interfaces_oc, &
+                                   nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                   b_request_send_scalar_oc,b_request_recv_scalar_oc)
       else
         ! on GPU
         call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
-                              b_buffer_recv_scalar_outer_core, &
-                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                              b_request_send_scalar_oc,b_request_recv_scalar_oc, &
-                              3) ! <-- 3 == adjoint b_accel
+                                            b_buffer_recv_scalar_outer_core, &
+                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                            b_request_send_scalar_oc,b_request_recv_scalar_oc, &
+                                            3) ! <-- 3 == adjoint b_accel
       endif
     endif ! iphase == 1
 
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-  call multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
+  if(.NOT. GPU_MODE) then
+    ! on CPU
+    call multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
+  else
+    ! on GPU
+    ! includes FORWARD_OR_ADJOINT == 3
+    call multiply_accel_acoustic_cuda(Mesh_pointer,3)
+  endif
 
   ! time schemes
   if( USE_LDDRK ) then

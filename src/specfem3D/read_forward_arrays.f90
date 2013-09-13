@@ -198,6 +198,7 @@
 
   ! transfers fields onto GPU
   if(GPU_MODE) then
+    ! transfers initialized wavefields to GPU device
     call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
                                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                                     Mesh_pointer)
@@ -209,7 +210,7 @@
     call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
                                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                                     Mesh_pointer)
-
+    ! strain
     if( .not. UNDO_ATTENUATION ) then
       call transfer_b_strain_cm_to_device(Mesh_pointer, &
                                     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle, &
@@ -221,20 +222,20 @@
                                     b_epsilondev_xy_inner_core,b_epsilondev_xz_inner_core, &
                                     b_epsilondev_yz_inner_core)
     endif
-
+    ! rotation
     if (ROTATION_VAL) then
       call transfer_b_rotation_to_device(Mesh_pointer,b_A_array_rotation,b_B_array_rotation)
     endif
-
+    ! attenuation memory variables
     if (ATTENUATION_VAL) then
       call transfer_b_rmemory_cm_to_device(Mesh_pointer, &
-                                    b_R_xx_crust_mantle,b_R_yy_crust_mantle, &
-                                    b_R_xy_crust_mantle,b_R_xz_crust_mantle, &
-                                    b_R_yz_crust_mantle)
+                                           b_R_xx_crust_mantle,b_R_yy_crust_mantle, &
+                                           b_R_xy_crust_mantle,b_R_xz_crust_mantle, &
+                                           b_R_yz_crust_mantle)
       call transfer_b_rmemory_ic_to_device(Mesh_pointer, &
-                                    b_R_xx_inner_core,b_R_yy_inner_core, &
-                                    b_R_xy_inner_core,b_R_xz_inner_core, &
-                                    b_R_yz_inner_core)
+                                           b_R_xx_inner_core,b_R_yy_inner_core, &
+                                           b_R_xy_inner_core,b_R_xz_inner_core, &
+                                           b_R_yz_inner_core)
     endif
   endif
 

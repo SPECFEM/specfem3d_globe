@@ -48,11 +48,16 @@ __global__ void prepare_boundary_potential_on_device(realw* d_potential_dot_dot_
                                                      int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
+  int iglob,iloc;
 
   for( int iinterface=0; iinterface < num_interfaces; iinterface++) {
     if(id<d_nibool_interfaces[iinterface]) {
-      d_send_potential_dot_dot_buffer[(id + max_nibool_interfaces*iinterface)] =
-        d_potential_dot_dot_acoustic[(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)];
+
+      iloc = id + max_nibool_interfaces*iinterface;
+      iglob = d_ibool_interfaces[iloc] - 1;
+
+      // fills buffer
+      d_send_potential_dot_dot_buffer[iloc] = d_potential_dot_dot_acoustic[iglob];
     }
   }
 
@@ -77,12 +82,9 @@ void FC_FUNC_(transfer_boun_pot_from_device,
 
   int blocksize = BLOCKSIZE_TRANSFER;
   int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_oc))/((double)blocksize)))*blocksize;
-  int num_blocks_x = size_padded/blocksize;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
@@ -94,19 +96,28 @@ void FC_FUNC_(transfer_boun_pot_from_device,
                                                            mp->max_nibool_interfaces_oc,
                                                            mp->d_nibool_interfaces_outer_core,
                                                            mp->d_ibool_interfaces_outer_core);
+
+    print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_send_accel_buffer_outer_core,
+                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
+                                       cudaMemcpyDeviceToHost),98000);
+
   }
   else if(*FORWARD_OR_ADJOINT == 3) {
+    // debug
+    DEBUG_EMPTY_BACKWARD();
+
     prepare_boundary_potential_on_device<<<grid,threads>>>(mp->d_b_accel_outer_core,
-                                                           mp->d_send_accel_buffer_outer_core,
+                                                           mp->d_b_send_accel_buffer_outer_core,
                                                            mp->num_interfaces_outer_core,
                                                            mp->max_nibool_interfaces_oc,
                                                            mp->d_nibool_interfaces_outer_core,
                                                            mp->d_ibool_interfaces_outer_core);
-  }
 
-  print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_send_accel_buffer_outer_core,
-                                     (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
-                                     cudaMemcpyDeviceToHost),98000);
+    print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_b_send_accel_buffer_outer_core,
+                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
+                                       cudaMemcpyDeviceToHost),98001);
+
+  }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_boundary_kernel");
@@ -125,11 +136,17 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
                                                       int* d_ibool_interfaces) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
+  int iglob,iloc;
 
   for( int iinterface=0; iinterface < num_interfaces; iinterface++) {
     if(id<d_nibool_interfaces[iinterface]) {
-      atomicAdd(&d_potential_dot_dot_acoustic[(d_ibool_interfaces[id+max_nibool_interfaces*iinterface]-1)],
-                d_send_potential_dot_dot_buffer[(id + max_nibool_interfaces*iinterface)]);
+
+      iloc = id + max_nibool_interfaces*iinterface;
+
+      iglob = d_ibool_interfaces[iloc]-1;
+
+      // assembles values
+      atomicAdd(&d_potential_dot_dot_acoustic[iglob],d_send_potential_dot_dot_buffer[iloc]);
     }
   }
 }
@@ -151,25 +168,22 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
   // checks if anything to do
   if( mp->num_interfaces_outer_core == 0 ) return;
 
-  // copies scalar buffer onto GPU
-  cudaMemcpy(mp->d_send_accel_buffer_outer_core, buffer_recv_scalar,
-             (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
-             cudaMemcpyHostToDevice);
-
   // assembles on GPU
   int blocksize = BLOCKSIZE_TRANSFER;
   int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_oc)/((double)blocksize)))*blocksize;
-  int num_blocks_x = size_padded/blocksize;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
   if(*FORWARD_OR_ADJOINT == 1) {
+    // copies scalar buffer onto GPU
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_outer_core, buffer_recv_scalar,
+                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
+                                       cudaMemcpyHostToDevice),99000);
+
     //assemble forward field
     assemble_boundary_potential_on_device<<<grid,threads>>>(mp->d_accel_outer_core,
                                                             mp->d_send_accel_buffer_outer_core,
@@ -179,9 +193,17 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
                                                             mp->d_ibool_interfaces_outer_core);
   }
   else if(*FORWARD_OR_ADJOINT == 3) {
+    // debug
+    DEBUG_EMPTY_BACKWARD();
+
+    // copies scalar buffer onto GPU
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer_outer_core, buffer_recv_scalar,
+                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
+                                       cudaMemcpyHostToDevice),99001);
+
     //assemble reconstructed/backward field
     assemble_boundary_potential_on_device<<<grid,threads>>>(mp->d_b_accel_outer_core,
-                                                            mp->d_send_accel_buffer_outer_core,
+                                                            mp->d_b_send_accel_buffer_outer_core,
                                                             mp->num_interfaces_outer_core,
                                                             mp->max_nibool_interfaces_oc,
                                                             mp->d_nibool_interfaces_outer_core,

@@ -819,18 +819,18 @@
   endif
 
   allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-          request_send_vector_cm(num_interfaces_crust_mantle), &
-          request_recv_vector_cm(num_interfaces_crust_mantle), &
-          stat=ier)
+           buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+           request_send_vector_cm(num_interfaces_crust_mantle), &
+           request_recv_vector_cm(num_interfaces_crust_mantle), &
+           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
 
   if( SIMULATION_TYPE == 3 ) then
     allocate(b_buffer_send_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-            b_buffer_recv_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-            b_request_send_vector_cm(num_interfaces_crust_mantle), &
-            b_request_recv_vector_cm(num_interfaces_crust_mantle), &
-            stat=ier)
+             b_buffer_recv_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+             b_request_send_vector_cm(num_interfaces_crust_mantle), &
+             b_request_recv_vector_cm(num_interfaces_crust_mantle), &
+             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_cm etc.')
   endif
 
@@ -842,18 +842,18 @@
   endif
 
   allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-          buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-          request_send_scalar_oc(num_interfaces_outer_core), &
-          request_recv_scalar_oc(num_interfaces_outer_core), &
-          stat=ier)
+           buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
+           request_send_scalar_oc(num_interfaces_outer_core), &
+           request_recv_scalar_oc(num_interfaces_outer_core), &
+           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
 
   if( SIMULATION_TYPE == 3 ) then
     allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-            b_buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-            b_request_send_scalar_oc(num_interfaces_outer_core), &
-            b_request_recv_scalar_oc(num_interfaces_outer_core), &
-            stat=ier)
+             b_buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
+             b_request_send_scalar_oc(num_interfaces_outer_core), &
+             b_request_recv_scalar_oc(num_interfaces_outer_core), &
+             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_outer_core etc.')
   endif
 
@@ -865,18 +865,18 @@
   endif
 
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-          buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-          request_send_vector_ic(num_interfaces_inner_core), &
-          request_recv_vector_ic(num_interfaces_inner_core), &
-          stat=ier)
+           buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
+           request_send_vector_ic(num_interfaces_inner_core), &
+           request_recv_vector_ic(num_interfaces_inner_core), &
+           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_inner_core etc.')
 
   if( SIMULATION_TYPE == 3 ) then
     allocate(b_buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-            b_buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
-            b_request_send_vector_ic(num_interfaces_inner_core), &
-            b_request_recv_vector_ic(num_interfaces_inner_core), &
-            stat=ier)
+             b_buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
+             b_request_send_vector_ic(num_interfaces_inner_core), &
+             b_request_recv_vector_ic(num_interfaces_inner_core), &
+             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_inner_core etc.')
   endif
 

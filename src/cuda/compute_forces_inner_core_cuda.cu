@@ -326,7 +326,6 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                          realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
                                          realw* epsilondev_xz,realw* epsilondev_yz,
                                          realw* epsilon_trace_over_3,
-                                         int SIMULATION_TYPE,
                                          int ATTENUATION,
                                          int PARTIAL_PHYS_DISPERSION_ONLY,
                                          int USE_3D_ATTENUATION_ARRAYS,
@@ -937,6 +936,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                          realw* d_R_xy,
                          realw* d_R_xz,
                          realw* d_R_yz,
+                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
+                         realw* d_c33store,realw* d_c44store,
                          realw* d_b_epsilondev_xx,
                          realw* d_b_epsilondev_yy,
                          realw* d_b_epsilondev_xy,
@@ -948,25 +949,21 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                          realw* d_b_R_xy,
                          realw* d_b_R_xz,
                          realw* d_b_R_yz,
-                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                         realw* d_c33store,realw* d_c44store){
+                         int FORWARD_OR_ADJOINT){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before kernel Kernel_2_inner_core");
 #endif
 
-  /* if the grid can handle the number of blocks, we let it be 1D */
-  /* grid_2_x = nb_elem_color; */
-  /* nb_elem_color is just how many blocks we are computing now */
-
-  int num_blocks_x = nb_blocks_to_compute;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  // if the grid can handle the number of blocks, we let it be 1D
+  // grid_2_x = nb_elem_color;
+  // nb_elem_color is just how many blocks we are computing now
 
   int blocksize = NGLL3_PADDED;
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(nb_blocks_to_compute,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
@@ -976,55 +973,55 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventCreate(&start);
   // cudaEventCreate(&stop);
   // cudaEventRecord( start, 0 );
+  if( FORWARD_OR_ADJOINT == 1 ){
+    Kernel_2_inner_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
+                                               mp->NGLOB_INNER_CORE,
+                                               d_ibool,
+                                               d_idoubling,
+                                               mp->d_phase_ispec_inner_inner_core,
+                                               mp->num_phase_ispec_inner_core,
+                                               d_iphase,
+                                               mp->deltat,
+                                               mp->use_mesh_coloring_gpu,
+                                               mp->d_displ_inner_core,
+                                               mp->d_veloc_inner_core,
+                                               mp->d_accel_inner_core,
+                                               d_xix, d_xiy, d_xiz,
+                                               d_etax, d_etay, d_etaz,
+                                               d_gammax, d_gammay, d_gammaz,
+                                               mp->d_hprime_xx,
+                                               mp->d_hprimewgll_xx,
+                                               mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                               d_kappav, d_muv,
+                                               mp->compute_and_store_strain,
+                                               d_epsilondev_xx,
+                                               d_epsilondev_yy,
+                                               d_epsilondev_xy,
+                                               d_epsilondev_xz,
+                                               d_epsilondev_yz,
+                                               d_epsilon_trace_over_3,
+                                               mp->attenuation,
+                                               mp->partial_phys_dispersion_only,
+                                               mp->use_3d_attenuation_arrays,
+                                               d_one_minus_sum_beta,
+                                               d_factor_common,
+                                               d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
+                                               mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
+                                               mp->anisotropic_inner_core,
+                                               d_c11store,d_c12store,d_c13store,
+                                               d_c33store,d_c44store,
+                                               mp->gravity,
+                                               mp->d_xstore_inner_core,mp->d_ystore_inner_core,mp->d_zstore_inner_core,
+                                               mp->d_minus_gravity_table,
+                                               mp->d_minus_deriv_gravity_table,
+                                               mp->d_density_table,
+                                               mp->d_wgll_cube,
+                                               mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                               mp->NSPEC_INNER_CORE);
+  }else if( FORWARD_OR_ADJOINT == 3 ){
+    // debug
+    DEBUG_EMPTY_BACKWARD();
 
-  Kernel_2_inner_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                             mp->NGLOB_INNER_CORE,
-                                             d_ibool,
-                                             d_idoubling,
-                                             mp->d_phase_ispec_inner_inner_core,
-                                             mp->num_phase_ispec_inner_core,
-                                             d_iphase,
-                                             mp->deltat,
-                                             mp->use_mesh_coloring_gpu,
-                                             mp->d_displ_inner_core,
-                                             mp->d_veloc_inner_core,
-                                             mp->d_accel_inner_core,
-                                             d_xix, d_xiy, d_xiz,
-                                             d_etax, d_etay, d_etaz,
-                                             d_gammax, d_gammay, d_gammaz,
-                                             mp->d_hprime_xx,
-                                             mp->d_hprimewgll_xx,
-                                             mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                             d_kappav, d_muv,
-                                             mp->compute_and_store_strain,
-                                             d_epsilondev_xx,
-                                             d_epsilondev_yy,
-                                             d_epsilondev_xy,
-                                             d_epsilondev_xz,
-                                             d_epsilondev_yz,
-                                             d_epsilon_trace_over_3,
-                                             mp->simulation_type,
-                                             mp->attenuation,
-                                             mp->partial_phys_dispersion_only,
-                                             mp->use_3d_attenuation_arrays,
-                                             d_one_minus_sum_beta,
-                                             d_factor_common,
-                                             d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
-                                             mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
-                                             mp->anisotropic_inner_core,
-                                             d_c11store,d_c12store,d_c13store,
-                                             d_c33store,d_c44store,
-                                             mp->gravity,
-                                             mp->d_xstore_inner_core,mp->d_ystore_inner_core,mp->d_zstore_inner_core,
-                                             mp->d_minus_gravity_table,
-                                             mp->d_minus_deriv_gravity_table,
-                                             mp->d_density_table,
-                                             mp->d_wgll_cube,
-                                             mp->NSPEC_INNER_CORE_STRAIN_ONLY,
-                                             mp->NSPEC_INNER_CORE);
-
-
-  if(mp->simulation_type == 3) {
     Kernel_2_inner_core_impl<<< grid,threads>>>(nb_blocks_to_compute,
                                                 mp->NGLOB_INNER_CORE,
                                                 d_ibool,
@@ -1051,7 +1048,6 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 d_b_epsilondev_xz,
                                                 d_b_epsilondev_yz,
                                                 d_b_epsilon_trace_over_3,
-                                                mp->simulation_type,
                                                 mp->attenuation,
                                                 mp->partial_phys_dispersion_only,
                                                 mp->use_3d_attenuation_arrays,
@@ -1092,7 +1088,8 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
 extern "C"
 void FC_FUNC_(compute_forces_inner_core_cuda,
               COMPUTE_FORCES_INNER_CORE_CUDA)(long* Mesh_pointer_f,
-                                              int* iphase) {
+                                              int* iphase,
+                                              int* FORWARD_OR_ADJOINT_f) {
 
   TRACE("compute_forces_inner_core_cuda");
 
@@ -1101,6 +1098,8 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
+
+  int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   int num_elements;
 
@@ -1231,15 +1230,9 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                           *iphase,
                           mp->d_ibool_inner_core + offset_nonpadded,
                           mp->d_idoubling_inner_core + offset_ispec,
-                          mp->d_xix_inner_core + offset,
-                          mp->d_xiy_inner_core + offset,
-                          mp->d_xiz_inner_core + offset,
-                          mp->d_etax_inner_core + offset,
-                          mp->d_etay_inner_core + offset,
-                          mp->d_etaz_inner_core + offset,
-                          mp->d_gammax_inner_core + offset,
-                          mp->d_gammay_inner_core + offset,
-                          mp->d_gammaz_inner_core + offset,
+                          mp->d_xix_inner_core + offset,mp->d_xiy_inner_core + offset,mp->d_xiz_inner_core + offset,
+                          mp->d_etax_inner_core + offset,mp->d_etay_inner_core + offset,mp->d_etaz_inner_core + offset,
+                          mp->d_gammax_inner_core + offset,mp->d_gammay_inner_core + offset,mp->d_gammaz_inner_core + offset,
                           mp->d_kappavstore_inner_core + offset,
                           mp->d_muvstore_inner_core + offset,
                           mp->d_epsilondev_xx_inner_core + offset_nonpadded,
@@ -1255,6 +1248,11 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                           mp->d_R_xy_inner_core + offset_nonpadded_att1,
                           mp->d_R_xz_inner_core + offset_nonpadded_att1,
                           mp->d_R_yz_inner_core + offset_nonpadded_att1,
+                          mp->d_c11store_inner_core + offset,
+                          mp->d_c12store_inner_core + offset,
+                          mp->d_c13store_inner_core + offset,
+                          mp->d_c33store_inner_core + offset,
+                          mp->d_c44store_inner_core + offset,
                           mp->d_b_epsilondev_xx_inner_core + offset_nonpadded,
                           mp->d_b_epsilondev_yy_inner_core + offset_nonpadded,
                           mp->d_b_epsilondev_xy_inner_core + offset_nonpadded,
@@ -1266,11 +1264,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                           mp->d_b_R_xy_inner_core + offset_nonpadded_att1,
                           mp->d_b_R_xz_inner_core + offset_nonpadded_att1,
                           mp->d_b_R_yz_inner_core + offset_nonpadded_att1,
-                          mp->d_c11store_inner_core + offset,
-                          mp->d_c12store_inner_core + offset,
-                          mp->d_c13store_inner_core + offset,
-                          mp->d_c33store_inner_core + offset,
-                          mp->d_c44store_inner_core + offset);
+                          FORWARD_OR_ADJOINT);
 
       // for padded and aligned arrays
       offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -1320,6 +1314,8 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                         mp->d_R_xy_inner_core,
                         mp->d_R_xz_inner_core,
                         mp->d_R_yz_inner_core,
+                        mp->d_c11store_inner_core,mp->d_c12store_inner_core,mp->d_c13store_inner_core,
+                        mp->d_c33store_inner_core,mp->d_c44store_inner_core,
                         mp->d_b_epsilondev_xx_inner_core,
                         mp->d_b_epsilondev_yy_inner_core,
                         mp->d_b_epsilondev_xy_inner_core,
@@ -1331,8 +1327,7 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
                         mp->d_b_R_xy_inner_core,
                         mp->d_b_R_xz_inner_core,
                         mp->d_b_R_yz_inner_core,
-                        mp->d_c11store_inner_core,mp->d_c12store_inner_core,mp->d_c13store_inner_core,
-                        mp->d_c33store_inner_core,mp->d_c44store_inner_core);
+                        FORWARD_OR_ADJOINT);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

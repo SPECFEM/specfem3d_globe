@@ -341,9 +341,7 @@
     enddo
 
     ! adding contributions of neighbours
-    call transfer_asmbl_pot_to_device(Mesh_pointer, &
-                                    buffer_recv_scalar, &
-                                    FORWARD_OR_ADJOINT)
+    call transfer_asmbl_pot_to_device(Mesh_pointer,buffer_recv_scalar,FORWARD_OR_ADJOINT)
 
     ! note: adding contributions of neighbours has been done just above for cuda
     !do iinterface = 1, num_interfaces

@@ -78,17 +78,16 @@
      ! send messages
      do iinterface = 1, num_interfaces
         call isend_cr(buffer_send_vector(1,1,iinterface), &
-             NDIM*nibool_interfaces(iinterface), &
-             my_neighbours(iinterface), &
-             itag, &
-             request_send_vector(iinterface) &
-             )
+                      NDIM*nibool_interfaces(iinterface), &
+                      my_neighbours(iinterface), &
+                      itag, &
+                      request_send_vector(iinterface))
+
         call irecv_cr(buffer_recv_vector(1,1,iinterface), &
-             NDIM*nibool_interfaces(iinterface), &
-             my_neighbours(iinterface), &
-             itag, &
-             request_recv_vector(iinterface) &
-             )
+                      NDIM*nibool_interfaces(iinterface), &
+                      my_neighbours(iinterface), &
+                      itag, &
+                      request_recv_vector(iinterface))
      enddo
 
   endif
@@ -136,7 +135,7 @@
   integer :: FORWARD_OR_ADJOINT
 
   ! local parameters
-  integer iinterface
+  integer :: iinterface
 
   ! send only if more than one partition
   if(NPROC > 1) then
@@ -144,24 +143,23 @@
     ! preparation of the contribution between partitions using MPI
     ! transfers mpi buffers to CPU
     call transfer_boun_accel_from_device(Mesh_pointer, &
-                                        buffer_send_vector,&
-                                        IREGION,FORWARD_OR_ADJOINT)
+                                         buffer_send_vector,&
+                                         IREGION,FORWARD_OR_ADJOINT)
 
-     ! send messages
-     do iinterface = 1, num_interfaces
-        call isend_cr(buffer_send_vector(1,1,iinterface), &
-             NDIM*nibool_interfaces(iinterface), &
-             my_neighbours(iinterface), &
-             itag, &
-             request_send_vector(iinterface) &
-             )
-        call irecv_cr(buffer_recv_vector(1,1,iinterface), &
-             NDIM*nibool_interfaces(iinterface), &
-             my_neighbours(iinterface), &
-             itag, &
-             request_recv_vector(iinterface) &
-             )
-     enddo
+    ! send messages
+    do iinterface = 1, num_interfaces
+      call isend_cr(buffer_send_vector(1,1,iinterface), &
+                    NDIM*nibool_interfaces(iinterface), &
+                    my_neighbours(iinterface), &
+                    itag, &
+                    request_send_vector(iinterface))
+
+      call irecv_cr(buffer_recv_vector(1,1,iinterface), &
+                    NDIM*nibool_interfaces(iinterface), &
+                    my_neighbours(iinterface), &
+                    itag, &
+                    request_recv_vector(iinterface))
+    enddo
 
   endif
 
@@ -252,8 +250,7 @@
 
   integer :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: &
-       buffer_recv_vector
+  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: buffer_recv_vector
   integer, dimension(num_interfaces) :: request_send_vector,request_recv_vector
 
   integer :: IREGION
@@ -275,8 +272,8 @@
 
     ! adding contributions of neighbours
     call transfer_asmbl_accel_to_device(Mesh_pointer, &
-                                      buffer_recv_vector, &
-                                      IREGION,FORWARD_OR_ADJOINT)
+                                        buffer_recv_vector, &
+                                        IREGION,FORWARD_OR_ADJOINT)
 
     ! This step is done via previous function transfer_and_assemble...
     ! do iinterface = 1, num_interfaces

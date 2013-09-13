@@ -474,24 +474,17 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   exit_on_cuda_error("before outer_core kernel Kernel_2");
 #endif
 
-  /* if the grid can handle the number of blocks, we let it be 1D */
-  /* grid_2_x = nb_elem_color; */
-  /* nb_elem_color is just how many blocks we are computing now */
-
-  int num_blocks_x = nb_blocks_to_compute;
-  int num_blocks_y = 1;
-  while(num_blocks_x > MAXIMUM_GRID_DIM) {
-    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
-    num_blocks_y = num_blocks_y*2;
-  }
+  // if the grid can handle the number of blocks, we let it be 1D
+  // grid_2_x = nb_elem_color;
+  // nb_elem_color is just how many blocks we are computing now
 
   int blocksize = NGLL3_PADDED;
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(nb_blocks_to_compute,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
-
-  // 2d grid
-  //int threads_2 = NGLL3_PADDED;//BLOCK_SIZE_K2;
-  //dim3 grid_2(num_blocks_x,num_blocks_y);
 
   // Cuda timing
   // cudaEvent_t start, stop;
@@ -502,60 +495,63 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
 
   if( FORWARD_OR_ADJOINT == 1 ){
     Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                                          mp->NGLOB_OUTER_CORE,
-                                                          d_ibool,
-                                                          mp->d_phase_ispec_inner_outer_core,
-                                                          mp->num_phase_ispec_outer_core,
-                                                          d_iphase,
-                                                          mp->use_mesh_coloring_gpu,
-                                                          mp->d_displ_outer_core,
-                                                          mp->d_accel_outer_core,
-                                                          d_xix, d_xiy, d_xiz,
-                                                          d_etax, d_etay, d_etaz,
-                                                          d_gammax, d_gammay, d_gammaz,
-                                                          mp->d_hprime_xx,
-                                                          mp->d_hprimewgll_xx,
-                                                          mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                                          mp->gravity,
-                                                          mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
-                                                          mp->d_d_ln_density_dr_table,
-                                                          mp->d_minus_rho_g_over_kappa_fluid,
-                                                          mp->d_wgll_cube,
-                                                          mp->rotation,
-                                                          time,
-                                                          mp->two_omega_earth,
-                                                          mp->deltat,
-                                                          d_A_array_rotation,
-                                                          d_B_array_rotation,
-                                                          mp->NSPEC_OUTER_CORE);
+                                                mp->NGLOB_OUTER_CORE,
+                                                d_ibool,
+                                                mp->d_phase_ispec_inner_outer_core,
+                                                mp->num_phase_ispec_outer_core,
+                                                d_iphase,
+                                                mp->use_mesh_coloring_gpu,
+                                                mp->d_displ_outer_core,
+                                                mp->d_accel_outer_core,
+                                                d_xix, d_xiy, d_xiz,
+                                                d_etax, d_etay, d_etaz,
+                                                d_gammax, d_gammay, d_gammaz,
+                                                mp->d_hprime_xx,
+                                                mp->d_hprimewgll_xx,
+                                                mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                mp->gravity,
+                                                mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
+                                                mp->d_d_ln_density_dr_table,
+                                                mp->d_minus_rho_g_over_kappa_fluid,
+                                                mp->d_wgll_cube,
+                                                mp->rotation,
+                                                time,
+                                                mp->two_omega_earth,
+                                                mp->deltat,
+                                                d_A_array_rotation,
+                                                d_B_array_rotation,
+                                                mp->NSPEC_OUTER_CORE);
   }else if( FORWARD_OR_ADJOINT == 3 ){
+    // debug
+    DEBUG_EMPTY_BACKWARD();
+
     Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                                            mp->NGLOB_OUTER_CORE,
-                                                            d_ibool,
-                                                            mp->d_phase_ispec_inner_outer_core,
-                                                            mp->num_phase_ispec_outer_core,
-                                                            d_iphase,
-                                                            mp->use_mesh_coloring_gpu,
-                                                            mp->d_b_displ_outer_core,
-                                                            mp->d_b_accel_outer_core,
-                                                            d_xix, d_xiy, d_xiz,
-                                                            d_etax, d_etay, d_etaz,
-                                                            d_gammax, d_gammay, d_gammaz,
-                                                            mp->d_hprime_xx,
-                                                            mp->d_hprimewgll_xx,
-                                                            mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                                            mp->gravity,
-                                                            mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
-                                                            mp->d_d_ln_density_dr_table,
-                                                            mp->d_minus_rho_g_over_kappa_fluid,
-                                                            mp->d_wgll_cube,
-                                                            mp->rotation,
-                                                            time,
-                                                            mp->b_two_omega_earth,
-                                                            mp->b_deltat,
-                                                            d_b_A_array_rotation,
-                                                            d_b_B_array_rotation,
-                                                            mp->NSPEC_OUTER_CORE);
+                                                mp->NGLOB_OUTER_CORE,
+                                                d_ibool,
+                                                mp->d_phase_ispec_inner_outer_core,
+                                                mp->num_phase_ispec_outer_core,
+                                                d_iphase,
+                                                mp->use_mesh_coloring_gpu,
+                                                mp->d_b_displ_outer_core,
+                                                mp->d_b_accel_outer_core,
+                                                d_xix, d_xiy, d_xiz,
+                                                d_etax, d_etay, d_etaz,
+                                                d_gammax, d_gammay, d_gammaz,
+                                                mp->d_hprime_xx,
+                                                mp->d_hprimewgll_xx,
+                                                mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
+                                                mp->gravity,
+                                                mp->d_xstore_outer_core,mp->d_ystore_outer_core,mp->d_zstore_outer_core,
+                                                mp->d_d_ln_density_dr_table,
+                                                mp->d_minus_rho_g_over_kappa_fluid,
+                                                mp->d_wgll_cube,
+                                                mp->rotation,
+                                                time,
+                                                mp->b_two_omega_earth,
+                                                mp->b_deltat,
+                                                d_b_A_array_rotation,
+                                                d_b_B_array_rotation,
+                                                mp->NSPEC_OUTER_CORE);
   }
 
   // cudaEventRecord( stop, 0 );
@@ -583,7 +579,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
               COMPUTE_FORCES_OUTER_CORE_CUDA)(long* Mesh_pointer_f,
                                               int* iphase,
                                               realw* time_f,
-                                              int* FORWARD_OR_ADJOINT) {
+                                              int* FORWARD_OR_ADJOINT_f) {
 
   TRACE("compute_forces_outer_core_cuda");
 
@@ -592,7 +588,10 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
+
   realw time = *time_f;
+
+  int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   int num_elements;
 
@@ -612,7 +611,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
 
     int nb_colors,nb_blocks_to_compute;
     int istart;
-    int color_offset,color_offset_nonpadded;
+    int offset,offset_nonpadded;
 
     // sets up color loop
     if( mp->NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE ){
@@ -622,16 +621,16 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
         istart = 0;
 
         // array offsets
-        color_offset = 0;
-        color_offset_nonpadded = 0;
+        offset = 0;
+        offset_nonpadded = 0;
       }else{
         // inner element colors (start after outer elements)
         nb_colors = mp->num_colors_outer_outer_core + mp->num_colors_inner_outer_core;
         istart = mp->num_colors_outer_outer_core;
 
         // array offsets (inner elements start after outer ones)
-        color_offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
-        color_offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
+        offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
+        offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
       }
     }else{
 
@@ -643,16 +642,16 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
         istart = 0;
 
         // array offsets
-        color_offset = 0;
-        color_offset_nonpadded = 0;
+        offset = 0;
+        offset_nonpadded = 0;
       }else{
         // inner element colors (start after outer elements)
         nb_colors = 1;
         istart = 0;
 
         // array offsets (inner elements start after outer ones)
-        color_offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
-        color_offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
+        offset = mp->nspec_outer_outer_core * NGLL3_PADDED;
+        offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
       }
     }
 
@@ -668,27 +667,21 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
 
       Kernel_2_outer_core(nb_blocks_to_compute,mp,
                           *iphase,
-                          mp->d_ibool_outer_core + color_offset_nonpadded,
-                          mp->d_xix_outer_core + color_offset,
-                          mp->d_xiy_outer_core + color_offset,
-                          mp->d_xiz_outer_core + color_offset,
-                          mp->d_etax_outer_core + color_offset,
-                          mp->d_etay_outer_core + color_offset,
-                          mp->d_etaz_outer_core + color_offset,
-                          mp->d_gammax_outer_core + color_offset,
-                          mp->d_gammay_outer_core + color_offset,
-                          mp->d_gammaz_outer_core + color_offset,
+                          mp->d_ibool_outer_core + offset_nonpadded,
+                          mp->d_xix_outer_core + offset,mp->d_xiy_outer_core + offset,mp->d_xiz_outer_core + offset,
+                          mp->d_etax_outer_core + offset,mp->d_etay_outer_core + offset,mp->d_etaz_outer_core + offset,
+                          mp->d_gammax_outer_core + offset,mp->d_gammay_outer_core + offset,mp->d_gammaz_outer_core + offset,
                           time,
-                          mp->d_A_array_rotation + color_offset_nonpadded,
-                          mp->d_B_array_rotation + color_offset_nonpadded,
-                          mp->d_b_A_array_rotation + color_offset_nonpadded,
-                          mp->d_b_B_array_rotation + color_offset_nonpadded,
-                          *FORWARD_OR_ADJOINT);
+                          mp->d_A_array_rotation + offset_nonpadded,
+                          mp->d_B_array_rotation + offset_nonpadded,
+                          mp->d_b_A_array_rotation + offset_nonpadded,
+                          mp->d_b_B_array_rotation + offset_nonpadded,
+                          FORWARD_OR_ADJOINT);
 
       // for padded and aligned arrays
-      color_offset += nb_blocks_to_compute * NGLL3_PADDED;
+      offset += nb_blocks_to_compute * NGLL3_PADDED;
       // for no-aligned arrays
-      color_offset_nonpadded += nb_blocks_to_compute * NGLL3;
+      offset_nonpadded += nb_blocks_to_compute * NGLL3;
     }
 
   }else{
@@ -705,7 +698,7 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
                         mp->d_B_array_rotation,
                         mp->d_b_A_array_rotation,
                         mp->d_b_B_array_rotation,
-                        *FORWARD_OR_ADJOINT);
+                        FORWARD_OR_ADJOINT);
 
   }
 
