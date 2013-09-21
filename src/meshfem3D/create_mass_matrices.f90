@@ -176,7 +176,7 @@
 
   ! then make the corrections to the copied mass matrices if needed
   if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
-    call create_mass_matrices_rotation(myrank,nspec,ibool,idoubling,iregion_code)
+    call create_mass_matrices_rotation(nspec,ibool,idoubling,iregion_code)
   endif
 
   ! absorbing boundaries
@@ -210,9 +210,8 @@
 
   ! save ocean load mass matrix as well if oceans
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
-    call create_mass_matrices_ocean_load(myrank,nspec,ibool,xstore,ystore,zstore,NSPEC2D_TOP)
+    call create_mass_matrices_ocean_load(nspec,ibool,xstore,ystore,zstore,NSPEC2D_TOP)
   endif
-
 
   end subroutine create_mass_matrices
 
@@ -221,7 +220,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine create_mass_matrices_rotation(myrank,nspec,ibool,idoubling,iregion_code)
+  subroutine create_mass_matrices_rotation(nspec,ibool,idoubling,iregion_code)
 
 ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
 ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
@@ -242,7 +241,7 @@
 
   implicit none
 
-  integer :: myrank
+!!!!!!!!!!!  integer :: myrank
 
   integer :: nspec
 
@@ -780,7 +779,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine create_mass_matrices_ocean_load(myrank,nspec,ibool,xstore,ystore,zstore,NSPEC2D_TOP)
+  subroutine create_mass_matrices_ocean_load(nspec,ibool,xstore,ystore,zstore,NSPEC2D_TOP)
 
   use constants
 
@@ -799,7 +798,7 @@
 
   implicit none
 
-  integer :: myrank
+!!!!!!!!!!!  integer :: myrank
 
   integer :: nspec
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool

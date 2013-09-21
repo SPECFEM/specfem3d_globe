@@ -790,13 +790,13 @@
           if(.not. mask_point(ibool_number)) then
             if( .not. ALL_THRESHOLD_OFF ) then
               if(USE_OPENDX) then
-                write(11,"(f7.4)") field_display(ilocnum+ieoff)
+                write(11,"(f11.4)") field_display(ilocnum+ieoff)
               else
-                write(11,"(i10,1x,f7.2)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+                write(11,"(i10,1x,f11.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif
             else
               if(USE_OPENDX) then
-                write(11,"(e7.4)") field_display(ilocnum+ieoff)
+                write(11,"(e11.4)") field_display(ilocnum+ieoff)
               else
                 ! format spezifier has problems w/ very small values
                 !write(11,"(i10,1x,e7.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)

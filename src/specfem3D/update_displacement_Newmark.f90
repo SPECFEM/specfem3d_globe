@@ -227,7 +227,7 @@
   if(.NOT. GPU_MODE) then
     ! on CPU
     call update_veloc_acoustic(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
-                               deltatover2,rmass_outer_core)
+                               deltatover2) !!!!!! ,rmass_outer_core)
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
@@ -253,7 +253,7 @@
     ! on CPU
     ! adjoint / kernel runs
     call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
-                               b_deltatover2,b_rmass_outer_core)
+                               b_deltatover2) !!!!!! ,b_rmass_outer_core)
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
@@ -267,7 +267,7 @@
 !
 
   subroutine update_veloc_acoustic(NGLOB,veloc_outer_core,accel_outer_core, &
-                                  deltatover2,rmass_outer_core)
+                                  deltatover2) !!!! ,rmass_outer_core)
 
 ! updates acceleration and velocity in outer core
 
@@ -281,7 +281,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_outer_core
+!!!!!  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_outer_core
 
   real(kind=CUSTOM_REAL) :: deltatover2
 

@@ -38,7 +38,7 @@
                                            alphaval,betaval,gammaval, &
                                            c44store,muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-                                           epsilondev_loc,is_backward_field)
+                                           epsilondev_loc) !!!!!!!!!!!!!!!!! ,is_backward_field)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -83,7 +83,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
-  logical :: is_backward_field
+!!!!!!!!!!!!!!!  logical :: is_backward_field
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
@@ -140,7 +140,7 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
                                                  c44store,muvstore, &
-                                                 epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
 ! crust mantle
@@ -185,8 +185,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+!   epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -263,7 +263,7 @@
                                            alphaval,betaval,gammaval, &
                                            muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-                                           epsilondev_loc,is_backward_field)
+                                           epsilondev_loc) !!!!!!!!!!!!! ,is_backward_field)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -305,7 +305,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
-  logical :: is_backward_field
+!!!!!!!!!!!  logical :: is_backward_field
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
@@ -364,7 +364,7 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
                                                  muvstore, &
-                                                 epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
 ! inner core
@@ -405,9 +405,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
-    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+! real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
+! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+!   epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 

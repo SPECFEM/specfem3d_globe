@@ -87,7 +87,7 @@ program combine_vol_data_vtk
 
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 7
-    call getarg(i,arg(i))
+    call get_command_argument(i,arg(i))
     if (i < 7 .and. trim(arg(i)) == '') then
       print *, ' '
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '

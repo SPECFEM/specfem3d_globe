@@ -28,7 +28,7 @@
   subroutine compute_forces_inner_core( NSPEC,NGLOB,NSPEC_ATT, &
                                         deltat, &
                                         displ_inner_core, &
-                                        veloc_inner_core, &
+!                                       veloc_inner_core, &
                                         accel_inner_core, &
                                         phase_is_inner, &
                                         R_xx,R_yy,R_xy,R_xz,R_yz, &
@@ -37,7 +37,7 @@
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3,&
                                         alphaval,betaval,gammaval,factor_common, &
-                                        vnspec,is_backward_field)
+                                        vnspec) !!!!!!!!!!!!!!!!!!!  ,is_backward_field)
 
   use constants_solver
 
@@ -71,7 +71,7 @@
 
   ! displacement, velocity and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_inner_core
+! real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_inner_core
 
   ! for attenuation
@@ -95,7 +95,7 @@
   ! inner/outer element run flag
   logical :: phase_is_inner
 
-  logical :: is_backward_field
+!!!!!!!!!!!!!!!!  logical :: is_backward_field
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
@@ -562,8 +562,8 @@
                                                    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                    ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                                    muvstore, &
-                                                   epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                                   epsilondev_xz,epsilondev_yz, &
+!                                                  epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+!                                                  epsilondev_xz,epsilondev_yz, &
                                                    epsilondev_loc, &
                                                    deltat)
         else
@@ -573,7 +573,7 @@
                                              muvstore, &
                                              epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                              epsilondev_xz,epsilondev_yz, &
-                                             epsilondev_loc,is_backward_field)
+                                             epsilondev_loc) !!!!!!!!!!!! ,is_backward_field)
         endif
       endif
 
