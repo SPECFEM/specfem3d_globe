@@ -470,7 +470,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call sync_all()
+  call synchronize_all()
   ! checks dimensions
   if( lnspec /= nspec ) then
     print*,'error file dimension: nspec in file = ',lnspec, &

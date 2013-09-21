@@ -231,7 +231,7 @@ subroutine read_intermediate_forward_arrays_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call sync_all()
+  call synchronize_all()
 
 end subroutine read_intermediate_forward_arrays_adios
 
@@ -437,6 +437,6 @@ subroutine read_forward_arrays_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call sync_all()
+  call synchronize_all()
 
 end subroutine read_forward_arrays_adios

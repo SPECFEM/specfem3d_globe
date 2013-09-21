@@ -795,7 +795,7 @@
 !
 
   ! synchronize all the processes to make sure all the buffers are ready
-  call sync_all()
+  call synchronize_all()
 
   ! gather information about all the messages on all processes
   do imsg = 1,NUMMSGS_FACES
@@ -823,7 +823,7 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
-  call sync_all()
+  call synchronize_all()
 
 !
 !---- generate the 8 message patterns sharing a corner of valence 3

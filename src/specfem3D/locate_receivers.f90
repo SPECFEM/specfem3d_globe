@@ -844,7 +844,7 @@
 
   endif    ! end of section executed by main process only
 
-  call sync_all()
+  call synchronize_all()
 
   ! deallocate arrays
   deallocate(epidist)
@@ -882,7 +882,7 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
-  call sync_all()
+  call synchronize_all()
 
   end subroutine locate_receivers
 

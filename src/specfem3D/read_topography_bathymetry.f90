@@ -74,7 +74,7 @@
   endif
 
   ! user output
-  call sync_all()
+  call synchronize_all()
   if( myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL .or. ELLIPTICITY_VAL)) then
     ! elapsed time since beginning of mesh generation
     tCPU = wtime() - time_start

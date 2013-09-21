@@ -568,7 +568,7 @@
     ! end of loop on all the sources
     enddo
     ! synchronizes processes
-    call sync_all()
+    call synchronize_all()
 
     ! now gather information from all the nodes
     call gather_all_i(ispec_selected_source_subset,NSOURCES_SUBSET_current_size, &
@@ -752,7 +752,7 @@
     ! closing sr_tmp.vtk
     close(IOVTK)
   endif
-  call sync_all()
+  call synchronize_all()
 
   ! main process broadcasts the results to all the slices
   call bcast_all_i(islice_selected_source,NSOURCES)
@@ -778,7 +778,7 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
-  call sync_all()
+  call synchronize_all()
 
   end subroutine locate_sources
 

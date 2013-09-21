@@ -163,7 +163,7 @@
   endif
 
   ! synchronize all the processes to make sure everybody has finished
-  call sync_all()
+  call synchronize_all()
 
   if (ADIOS_ENABLED) then
     call adios_cleanup()

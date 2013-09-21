@@ -89,7 +89,7 @@
   if( VTK_MODE ) call prepare_vtk_window()
 
   ! synchronize all the processes
-  call sync_all()
+  call synchronize_all()
 
   ! user output
   if( myrank == 0 ) then
@@ -441,7 +441,7 @@
     endif
   endif
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_rmass_assembly
 
@@ -576,7 +576,7 @@
     call flush_IMAIN()
   endif
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_movie_surface
 
@@ -652,7 +652,7 @@
   if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
       call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_movie_volume
 
@@ -736,7 +736,7 @@
    b_two_omega_earth = two_omega_earth
   endif
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_constants
 
@@ -830,7 +830,7 @@
 
   endif
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_gravity
 
@@ -1034,7 +1034,7 @@
   endif
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_attenuation
 
@@ -1466,7 +1466,7 @@
 
   endif
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine prepare_timerun_init_wavefield
 
@@ -1795,7 +1795,7 @@
 
     call check_parameters_noise()
 
-    call sync_all()
+    call synchronize_all()
 
   endif
 
@@ -2205,7 +2205,7 @@
   endif
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   ! outputs GPU usage to files for all processes
   call output_free_device_memory(myrank)
@@ -2283,7 +2283,7 @@
     print*
     print*,"vtk:"
   endif
-  call sync_all()
+  call synchronize_all()
 
   ! to avoid compiler warnings
   !NPROC = NPROCTOT_VAL
@@ -2294,7 +2294,7 @@
     print*,"  vtk source sphere:"
     call prepare_vtksource(vtkdata_source_x,vtkdata_source_y,vtkdata_source_z)
   endif
-  call sync_all()
+  call synchronize_all()
 
   ! mask
   allocate(vtkmask(NGLOB_CRUST_MANTLE),stat=ier)
@@ -2556,7 +2556,7 @@
       if(myrank == 0 ) deallocate(free_x_all,free_y_all,free_z_all,free_conn_all)
     endif
   endif ! VTK_SHOW_FREESURFACE
-  call sync_all()
+  call synchronize_all()
 
   ! volume data
   if( VTK_SHOW_VOLUME ) then
@@ -2831,7 +2831,7 @@
       if(myrank == 0 ) deallocate(vol_x_all,vol_y_all,vol_z_all,vol_conn_all)
     endif
   endif ! VTK_SHOW_VOLUME
-  call sync_all()
+  call synchronize_all()
 
   ! user output
   !if( myrank == 0 ) then

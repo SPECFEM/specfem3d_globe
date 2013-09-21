@@ -44,7 +44,7 @@
   volume_total = ZERO
 
   ! make sure everybody is synchronized
-  call sync_all()
+  call synchronize_all()
 
   !----
   !----  loop on all the regions of the mesh
@@ -113,7 +113,7 @@
     deallocate(is_on_a_slice_edge)
 
     ! make sure everybody is synchronized
-    call sync_all()
+    call synchronize_all()
 
   ! end of loop on all the regions
   enddo

@@ -123,7 +123,7 @@
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
   ! initializes arrays
-  call sync_all()
+  call synchronize_all()
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...allocating arrays '
@@ -135,7 +135,7 @@
 
 
   ! initialize number of layers
-  call sync_all()
+  call synchronize_all()
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...setting up layers '
@@ -144,7 +144,7 @@
   call crm_setup_layers(iregion_code,nspec,ipass,NEX_PER_PROC_ETA)
 
   !  creates mesh elements
-  call sync_all()
+  call synchronize_all()
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  ...creating mesh elements '
@@ -159,7 +159,7 @@
   select case(ipass)
   case( 1 )
     ! creates ibool index array for projection from local to global points
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating global addressing'
@@ -169,7 +169,7 @@
 
 
     ! create MPI buffers
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating MPI buffers'
@@ -188,7 +188,7 @@
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
     ! precomputes jacobian for 2d absorbing boundary surfaces
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...precomputing jacobian'
@@ -209,7 +209,7 @@
               xigll,yigll,zigll)
 
     ! create chunk buffers if more than one chunk
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating chunk buffers'
@@ -227,7 +227,7 @@
               xyz1D_leftxi_righteta,xyz1D_rightxi_righteta)
 
     ! setup mpi communication interfaces
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...preparing MPI interfaces'
@@ -245,7 +245,7 @@
     deallocate(iboolcorner)
 
     ! sets up inner/outer element arrays
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...element inner/outer separation '
@@ -254,7 +254,7 @@
     call setup_inner_outer(iregion_code)
 
     ! sets up mesh coloring
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...element mesh coloring '
@@ -286,7 +286,7 @@
 
 
     ! creates mass matrix
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...creating mass matrix'
@@ -353,7 +353,7 @@
                               NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
     ! save the binary files
-    call sync_all()
+    call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...saving binary files'
@@ -388,7 +388,7 @@
     ! boundary mesh for MOHO, 400 and 670 discontinuities
     if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
       ! user output
-      call sync_all()
+      call synchronize_all()
       if( myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...saving boundary mesh files'
@@ -416,7 +416,7 @@
     ! create AVS or DX mesh data for the slices
     if(SAVE_MESH_FILES) then
       ! user output
-      call sync_all()
+      call synchronize_all()
       if( myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...saving AVS mesh files'

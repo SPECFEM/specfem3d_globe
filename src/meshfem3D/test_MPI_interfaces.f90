@@ -61,7 +61,7 @@
   !    enddo
   !    print*
   !  endif
-  !  call sync_all()
+  !  call synchronize_all()
   !enddo
 
   ! checks maximum number of interface points
@@ -165,7 +165,7 @@
       call send_i(nibool_interfaces(1:num_interfaces),num_interfaces,0,itag)
     endif
   endif
-  call sync_all()
+  call synchronize_all()
 
   ! checks if addressing is okay
   if( myrank == 0 ) then
@@ -224,7 +224,7 @@
     deallocate(dummy_i)
     deallocate(test_interfaces)
   endif
-  call sync_all()
+  call synchronize_all()
 
   end subroutine test_MPI_neighbours
 
@@ -341,7 +341,7 @@
   deallocate(test_flag_vector)
   deallocate(valence)
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine test_MPI_cm
 
@@ -450,7 +450,7 @@
   deallocate(test_flag)
   deallocate(valence)
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine test_MPI_oc
 
@@ -562,6 +562,6 @@
   deallocate(test_flag_vector)
   deallocate(valence)
 
-  call sync_all()
+  call synchronize_all()
 
   end subroutine test_MPI_ic

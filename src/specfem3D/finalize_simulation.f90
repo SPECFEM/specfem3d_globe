@@ -35,7 +35,7 @@
   implicit none
 
   ! synchronize all processes, waits until all processes have written their seismograms
-  call sync_all()
+  call synchronize_all()
 
   ! closes Stacey absorbing boundary snapshots
   if( ABSORBING_CONDITIONS ) then
@@ -161,7 +161,7 @@
   endif
 
   ! synchronize all the processes to make sure everybody has finished
-  call sync_all()
+  call synchronize_all()
 
   if (ADIOS_ENABLED) then
     call adios_cleanup()

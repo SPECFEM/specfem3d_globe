@@ -59,7 +59,7 @@
   endif
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -204,7 +204,7 @@
   call initialize_simulation_check()
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   ! counts receiver stations
   if (SIMULATION_TYPE == 1) then
@@ -251,7 +251,7 @@
   !endif
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   end subroutine initialize_simulation
 
@@ -470,7 +470,7 @@
   call initialize_cuda_device(myrank,ncuda_devices)
 
   ! collects min/max of local devices found for statistics
-  call sync_all()
+  call synchronize_all()
   call min_all_i(ncuda_devices,ncuda_devices_min)
   call max_all_i(ncuda_devices,ncuda_devices_max)
 

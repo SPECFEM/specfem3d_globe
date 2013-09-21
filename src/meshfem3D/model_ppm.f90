@@ -756,7 +756,7 @@
   deallocate(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   if (myrank == 0) write(IMAIN, *) 'distributing locations, jacobians and model values ...'
-  call sync_all()
+  call synchronize_all()
 
   ! get location/jacobian info from slices
   allocate( slice_x(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
@@ -842,7 +842,7 @@
   enddo
 
   ! get the global maximum value of the original kernel file
-  !call sync_all()
+  !call synchronize_all()
   !call max_all_cr(maxval(abs(muvstore(:,:,:,:))), max_old)
 
   if (myrank == 0) write(IMAIN, *) 'start looping over elements and points for smoothing ...'
@@ -1048,14 +1048,14 @@
   !if (myrank == 0) write(IMAIN, *) 'Maximum data value before smoothing = ', max_old
 
   ! the maximum value for the smoothed kernel
-  !call sync_all()
+  !call synchronize_all()
   !call max_all_cr(maxval(abs(muvstore(:,:,:,:))), max_new)
 
   !if (myrank == 0) then
   !  write(IMAIN, *) 'Maximum data value after smoothing = ', max_new
   !  write(IMAIN, *)
   !endif
-  !call sync_all()
+  !call synchronize_all()
 
   end subroutine
 

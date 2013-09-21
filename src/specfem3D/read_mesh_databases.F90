@@ -95,7 +95,7 @@
 #endif
 
   ! user output
-  call sync_all()
+  call synchronize_all()
   if( myrank == 0 ) then
     ! elapsed time since beginning of mesh generation
     tCPU = wtime() - time_start
@@ -903,7 +903,7 @@
     call flush_IMAIN()
   endif
   ! synchronizes MPI processes
-  call sync_all()
+  call synchronize_all()
 
   end subroutine read_mesh_databases_MPI
 

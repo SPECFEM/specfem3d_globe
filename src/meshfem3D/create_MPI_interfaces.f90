@@ -184,7 +184,7 @@
   end select
 
   ! synchronize processes
-  call sync_all()
+  call synchronize_all()
 
   end subroutine cmi_allocate_addressing
 
@@ -246,7 +246,7 @@
   end select
 
   ! synchronize processes
-  call sync_all()
+  call synchronize_all()
 
   end subroutine cmi_get_addressing
 
@@ -411,7 +411,7 @@
         write(IMAIN,*) 'including central cube'
         call flush_IMAIN()
       endif
-      call sync_all()
+      call synchronize_all()
 
       ! allocates boundary indexing arrays for central cube
       allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &

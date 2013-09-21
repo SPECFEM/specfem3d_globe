@@ -919,7 +919,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call sync_all()
+  call synchronize_all()
 
 end subroutine read_mesh_databases_MPI_CM_adios
 
@@ -1102,7 +1102,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call sync_all()
+  call synchronize_all()
 
 end subroutine read_mesh_databases_MPI_OC_adios
 
@@ -1287,7 +1287,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call sync_all()
+  call synchronize_all()
 
 end subroutine read_mesh_databases_MPI_IC_adios
 

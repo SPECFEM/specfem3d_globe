@@ -114,7 +114,7 @@
   end select
 
   ! synchronizes MPI processes
-  call sync_all()
+  call synchronize_all()
 
   end subroutine setup_MPI_interfaces
 
@@ -233,7 +233,7 @@
                         ibool_interfaces_crust_mantle(1:nibool_interfaces_crust_mantle(i),i), &
                         nibool_interfaces_crust_mantle(i),filename)
     enddo
-    call sync_all()
+    call synchronize_all()
   endif
 
   ! checks addressing
@@ -364,7 +364,7 @@
                         ibool_interfaces_outer_core(1:nibool_interfaces_outer_core(i),i), &
                         nibool_interfaces_outer_core(i),filename)
     enddo
-    call sync_all()
+    call synchronize_all()
   endif
 
   ! checks addressing
@@ -460,7 +460,7 @@
                             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                             ibool, &
                             idoubling,filename)
-    call sync_all()
+    call synchronize_all()
   endif
 
   ! including central cube
@@ -504,7 +504,7 @@
   !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
   !                          xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
   !  endif
-  !  call sync_all()
+  !  call synchronize_all()
   !enddo
 
   ! gets new interfaces for inner_core without central cube yet
@@ -556,7 +556,7 @@
                         ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
                         nibool_interfaces_inner_core(i),filename)
     enddo
-    call sync_all()
+    call synchronize_all()
   endif
 
   ! checks addressing
