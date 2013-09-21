@@ -233,7 +233,7 @@
 
       ! executes an external script on the node
       if( RUN_EXTERNAL_SCRIPT ) then
-        call sync_all()
+        call synchronize_all()
         if( myrank == 0 ) then
           write(system_command,"('./',a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(script_name),it,it
           !print*,trim(system_command)

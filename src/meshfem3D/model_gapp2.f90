@@ -215,11 +215,11 @@
   if(theta>=PI) then
      ia = na
   else
-     ia = theta / dtheta + 1
+     ia = int(theta / dtheta) + 1
   endif
   ! longitude
   if(phi < 0.0d0) phi = phi + 2.*PI
-  io=phi / dphi + 1
+  io=int(phi / dphi) + 1
   if(io>no) io=io-no
 
   ! velocity and density perturbations

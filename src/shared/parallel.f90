@@ -87,7 +87,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine sync_all()
+  subroutine synchronize_all()
 
   use mpi
 
@@ -102,7 +102,7 @@
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(rank,'error synchronize MPI processes')
 
-  end subroutine sync_all
+  end subroutine synchronize_all
 
 !
 !-------------------------------------------------------------------------------------------------

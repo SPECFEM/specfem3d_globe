@@ -53,7 +53,7 @@
     if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
     call flush_IMAIN()
   endif
-  call sync_all()
+  call synchronize_all()
 
   ! frees arrays
   deallocate(theta_source,phi_source)

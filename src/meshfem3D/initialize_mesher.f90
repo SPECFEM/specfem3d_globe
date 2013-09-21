@@ -76,7 +76,7 @@
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   ! compute rotation matrix from Euler angles
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS

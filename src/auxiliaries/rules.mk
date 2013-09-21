@@ -108,17 +108,17 @@ ${E}/xconvolve_source_timefunction: $O/convolve_source_timefunction.aux.o
 ${E}/xcombine_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_AVS_DX $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o
 
-${E}/xcombine_paraview_strain_data: $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_paraview_strain_data  $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
+${E}/xcombine_paraview_strain_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_paraview_strain_data $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
 
-${E}/xcombine_vol_data: $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data  $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o
+${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o
 
-${E}/xcombine_vol_data_vtk: $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk  $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o
+${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o
 
-${E}/xcombine_surf_data: $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_surf_data  $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
+${E}/xcombine_surf_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_surf_data $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
 
 ${E}/xcreate_movie_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_AVS_DX.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xcreate_movie_AVS_DX $(auxiliaries_SHARED_OBJECTS) $O/create_movie_AVS_DX.aux.o

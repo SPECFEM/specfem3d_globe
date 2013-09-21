@@ -30,9 +30,10 @@ program combine_vol_data
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 
+  use constants
+
   implicit none
 
-  include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
@@ -141,16 +142,24 @@ program combine_vol_data
 
   ! resolution
   read(arg(6),*) ires
-  di = 0; dj = 0; dk = 0
+  di = 0
+  dj = 0
+  dk = 0
   if (ires == 0) then
     HIGH_RESOLUTION_MESH = .false.
-    di = NGLLX-1; dj = NGLLY-1; dk = NGLLZ-1
+    di = NGLLX-1
+    dj = NGLLY-1
+    dk = NGLLZ-1
   else if( ires == 1 ) then
     HIGH_RESOLUTION_MESH = .true.
-    di = 1; dj = 1; dk = 1
+    di = 1
+    dj = 1
+    dk = 1
   else if( ires == 2 ) then
     HIGH_RESOLUTION_MESH = .false.
-    di = (NGLLX-1)/2.0; dj = (NGLLY-1)/2.0; dk = (NGLLZ-1)/2.0
+    di = int((NGLLX-1)/2.0)
+    dj = int((NGLLY-1)/2.0)
+    dk = int((NGLLZ-1)/2.0)
   endif
   if( HIGH_RESOLUTION_MESH ) then
     print *, ' high resolution ', HIGH_RESOLUTION_MESH
@@ -1008,40 +1017,4 @@ end program combine_vol_data
          (coef2**3 - coef2)*spline_coefficients(index_higher))*((xpoint(index_higher) - xpoint(index_lower))**2)/6.d0
 
   end subroutine spline_evaluation
-
-!
-! ------------------------------------------------------------------------------------------------
-!
-
-! copy from rthetaphi_xyz.f90 to avoid compiling issues
-
-
-  subroutine xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-
-! convert x y z to r theta phi, double precision call
-
-  use constants
-
-  implicit none
-
-  double precision x,y,z,r,theta,phi
-  double precision xmesh,ymesh,zmesh
-
-  xmesh = x
-  ymesh = y
-  zmesh = z
-
-  if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-  if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
-
-  theta = datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
-
-  if(xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
-  if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
-
-  phi = datan2(ymesh,xmesh)
-
-  r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
-
-  end subroutine xyz_2_rthetaphi_dble
 
