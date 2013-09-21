@@ -28,7 +28,7 @@
   subroutine compute_forces_crust_mantle_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_crust_mantle, &
-                                              veloc_crust_mantle, &
+!                                             veloc_crust_mantle, &
                                               accel_crust_mantle, &
                                               phase_is_inner, &
                                               R_xx,R_yy,R_xy,R_xz,R_yz, &
@@ -86,7 +86,7 @@
 
   ! displacement, velocity and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle
+! real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_crust_mantle
 
   ! variable sized array variables
@@ -497,8 +497,8 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                                  c44store,muvstore, &
-                                                 epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                                 epsilondev_xz,epsilondev_yz, &
+!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+!                                                epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
       else
@@ -508,7 +508,7 @@
                                            c44store,muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                            epsilondev_xz,epsilondev_yz, &
-                                           epsilondev_loc,is_backward_field)
+                                           epsilondev_loc) !!!!!!!!!!!!!!! ,is_backward_field)
       endif
     endif
 
