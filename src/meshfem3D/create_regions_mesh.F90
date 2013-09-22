@@ -950,7 +950,7 @@
       ! user output
       write(IMAIN,'(a,f5.1,a,a,i2.2,a,i2.2,a,i2.2,a)') &
         "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
-        "    time: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
+        "    current clock time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
 
       ! flushes I/O buffer
       call flush_IMAIN()
