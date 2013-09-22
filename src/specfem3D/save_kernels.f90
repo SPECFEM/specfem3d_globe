@@ -696,8 +696,9 @@
 ! the components of the elastic tensor in spherical coordinates
 ! by eq. (A.1) of Chen & Tromp, GJI 168 (2007)
 
+  use constants
+
   implicit none
-  include  "constants.h"
 
   real(kind=CUSTOM_REAL), intent(in) :: theta_in,phi_in
 
