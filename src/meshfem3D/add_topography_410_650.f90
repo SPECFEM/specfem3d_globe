@@ -51,12 +51,28 @@
   do ia = 1,NGNOD
 
 ! convert to r theta phi
+!! DK DK old
+!   call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+!   call reduce(theta,phi)
+!! DK DK new
+    ! gets elevation of point
+    ! convert to r theta phi
+    ! slightly move points to avoid roundoff problem when exactly on the polar axis
     call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+    theta = theta + 0.0000001d0
+    phi = phi + 0.0000001d0
     call reduce(theta,phi)
 
-! get colatitude and longitude in degrees
-    xcolat = sngl(theta*RADIANS_TO_DEGREES)
-    xlon = sngl(phi*RADIANS_TO_DEGREES)
+!! DK DK old
+! get colatitude in degrees
+!   xcolat = sngl(theta*RADIANS_TO_DEGREES)  !! DK DK bug here, confusion between theta and PI_OVER_TWO - theta
+
+!! DK DK new
+    ! convert the geocentric colatitude to a geographic colatitude in degrees
+    xcolat = sngl((PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))) * RADIANS_TO_DEGREES)
+
+    ! get geographic longitude in degrees
+    xlon = sngl(phi * RADIANS_TO_DEGREES)
 
 ! compute topography on 410 and 650 at current point
     call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
@@ -101,7 +117,6 @@
   ! JAN08, 2010
   subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
 
-
   use constants
   use meshfem3D_par,only: R220,R400,R670,R771
 
@@ -125,13 +140,24 @@
      do j = 1,NGLLY
         do i = 1,NGLLX
 
+        ! gets elevation of point
         ! convert to r theta phi
+        ! slightly move points to avoid roundoff problem when exactly on the polar axis
         call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
+        theta = theta + 0.0000001d0
+        phi = phi + 0.0000001d0
         call reduce(theta,phi)
 
-        ! get colatitude and longitude in degrees
-        xcolat = sngl(theta*RADIANS_TO_DEGREES)
-        xlon = sngl(phi*RADIANS_TO_DEGREES)
+!! DK DK old
+! get colatitude in degrees
+!       xcolat = sngl(theta*RADIANS_TO_DEGREES)  !! DK DK bug here, confusion between theta and PI_OVER_TWO - theta
+
+!! DK DK new
+        ! convert the geocentric colatitude to a geographic colatitude in degrees
+        xcolat = sngl((PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))) * RADIANS_TO_DEGREES)
+
+        ! get geographic longitude in degrees
+        xlon = sngl(phi * RADIANS_TO_DEGREES)
 
         ! compute topography on 410 and 650 at current point
         call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)

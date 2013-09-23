@@ -216,11 +216,12 @@
     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
     if( USE_GLL ) then
       ! stretches every gll point accordingly
-      call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
-
+!! DK DK commented this out because it makes the mesher crash
+!! DK DK       call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
     else
       ! stretches anchor points only, interpolates gll points later on
-      call add_topography_410_650(myrank,xelm,yelm,zelm)
+!! DK DK commented this out because it makes the mesher crash
+!! DK DK       call add_topography_410_650(myrank,xelm,yelm,zelm)
     endif
   endif
 

@@ -51,10 +51,12 @@
 
 ! convert to r theta phi
     call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+    theta = theta + 0.0000001d0
+    phi = phi + 0.0000001d0
     call reduce(theta,phi)
 
 ! compute topography on ICB; the routine subtopo_icb needs to be supplied by the user
-!    call subtopo_icb(theta,phi,topoicb)
+!   call subtopo_icb(theta,phi,topoicb)
     topoicb = 0.0d0
 
 ! non-dimensionalize the topography, which is in km
