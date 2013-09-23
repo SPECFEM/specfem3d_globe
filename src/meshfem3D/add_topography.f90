@@ -129,7 +129,6 @@
            phi = phi + 0.0000001d0
            call reduce(theta,phi)
 
-
            ! convert the geocentric colatitude to a geographic colatitude
            colat = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
 
@@ -145,14 +144,12 @@
 
            ! stretching topography between d220 and the surface
            gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
-           !
 
            ! add elevation to all the points of that element
            ! also make sure factor makes sense
            if(gamma < -0.02 .or. gamma > 1.02) then
                 call exit_MPI(myrank,'incorrect value of factor for topography gll points')
            endif
-           !
 
            ! since not all GLL points are exactlly at R220, use a small
            ! tolerance for R220 detection
