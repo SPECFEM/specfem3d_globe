@@ -47,6 +47,9 @@
   double precision r,theta,phi
   double precision gamma
 
+!! DK DK added this safety test for now
+  stop 'there is a currently a bug in this routine, it makes the mesher crash'
+
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
@@ -134,6 +137,9 @@
 
   double precision r,theta,phi
   double precision gamma
+
+!! DK DK added this safety test for now
+  stop 'there is a currently a bug in this routine, it makes the mesher crash'
 
   ! we loop on all GLL points of the element
   do k = 1,NGLLZ
