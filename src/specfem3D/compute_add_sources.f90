@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,74 +25,47 @@
 !
 !=====================================================================
 
-  subroutine compute_add_sources(myrank,NSOURCES, &
-                                accel_crust_mantle,sourcearrays, &
-                                DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source,istage,USE_LDDRK)
+  subroutine compute_add_sources()
+
+  use specfem_par
+  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank,NSOURCES
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    accel_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
-
-  double precision, dimension(NSOURCES) :: tshift_cmt,hdur_gaussian
-
-  double precision :: DT,t0
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
-  integer :: it
-
-  ! needed for point force sources
-  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-  double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
-  double precision, dimension(NSOURCES) :: hdur
 
   ! local parameters
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   integer :: isource,i,j,k,iglob,ispec
   double precision :: f0
+  double precision, dimension(NSOURCES) :: stf_pre_compute
 
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
-! for LDDRK
-  integer :: istage
-  logical :: USE_LDDRK
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    do isource = 1,NSOURCES
 
-  do isource = 1,NSOURCES
+      ! add only if this proc carries the source
+      if(myrank == islice_selected_source(isource)) then
 
+        if(USE_FORCE_POINT_SOURCE) then
 
-    ! add only if this proc carries the source
-    if(myrank == islice_selected_source(isource)) then
+          ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+          iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+                         nint(eta_source(isource)), &
+                         nint(gamma_source(isource)), &
+                         ispec_selected_source(isource))
 
-      if(USE_FORCE_POINT_SOURCE) then
+          f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
-        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-        iglob = ibool_crust_mantle(nint(xi_source(isource)), &
-                       nint(eta_source(isource)), &
-                       nint(gamma_source(isource)), &
-                       ispec_selected_source(isource))
-
-        f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
-
-        ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-        if(USE_LDDRK)then
-          stf_used = FACTOR_FORCE_SOURCE * &
+          ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
+          if(USE_LDDRK)then
+            stf_used = FACTOR_FORCE_SOURCE * &
                      comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
-        else
-          stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
-        endif
+          else
+            stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+          endif
 
           ! we use a force in a single direction along one of the components:
           !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
@@ -100,13 +73,13 @@
           accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob)  &
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
-      else
-        if(USE_LDDRK)then
-          stf = comp_source_time_function(dble(it-1)*DT + &
-                                          dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
         else
-          stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
-        endif
+          if(USE_LDDRK)then
+            stf = comp_source_time_function(dble(it-1)*DT + &
+                                            dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          else
+            stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          endif
 
           !     distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
@@ -125,15 +98,44 @@
                 accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
                   + sourcearrays(:,i,j,k,isource)*stf_used
 
+              enddo
             enddo
           enddo
-        enddo
 
         endif ! USE_FORCE_POINT_SOURCE
 
-    endif
+      endif
 
-  enddo
+    enddo
+
+  else
+    ! on GPU
+    ! prepares buffer with source time function values, to be copied onto GPU
+    if(USE_FORCE_POINT_SOURCE) then
+      do isource = 1,NSOURCES
+        if(USE_LDDRK)then
+          stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * &
+                     comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
+        else
+          stf_pre_compute(isource) = &
+                      FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
+        endif
+      enddo
+    else
+      do isource = 1,NSOURCES
+        if(USE_LDDRK)then
+          stf_pre_compute(isource) = comp_source_time_function(dble(it-1)*DT + &
+                                            dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        else
+          stf_pre_compute(isource) = &
+            comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        endif
+      enddo
+    endif
+    ! adds sources: only implements SIMTYPE=1 and NOISE_TOM=0
+    call compute_add_sources_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
+  endif
+
 
   end subroutine compute_add_sources
 
@@ -141,51 +143,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_add_sources_adjoint(myrank,nrec, &
-                                nadj_rec_local,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
-                                accel_crust_mantle,adj_sourcearrays, &
-                                nu,xi_receiver,eta_receiver,gamma_receiver, &
-                                xigll,yigll,zigll,ibool_crust_mantle, &
-                                islice_selected_rec,ispec_selected_rec, &
-                                NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
-                                it,it_begin,station_name,network_name,DT)
+  subroutine compute_add_sources_adjoint()
+
+  use specfem_par
+  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank,nrec,nadj_rec_local,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC
-
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    accel_crust_mantle
-
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC) :: &
-    adj_sourcearrays
-
-  double precision, dimension(NDIM,NDIM,nrec) :: nu
-  double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
-  double precision :: DT
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-
-  integer NSTEP_SUB_ADJ
-  integer, dimension(NSTEP_SUB_ADJ) :: iadjsrc_len
-  integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc ! to read input in chunks
-  integer, dimension(NSTEP) :: iadj_vec
-
-  integer :: it,it_begin,itime
-
-  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
-
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearray
-  integer :: irec,irec_local,i,j,k,iglob,it_sub_adj
+  integer :: irec,irec_local,i,j,k,iglob,it_sub_adj,itime
   character(len=150) :: adj_source_file
   logical :: ibool_read_adj_arrays
 
@@ -236,8 +203,11 @@
 
   endif
 
-  irec_local = 0
-  do irec = 1,nrec
+  ! adds adjoint sources
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    irec_local = 0
+    do irec = 1,nrec
 
       ! adds source (only if this proc carries the source)
       if(myrank == islice_selected_rec(irec)) then
@@ -316,6 +286,12 @@
 
     enddo
 
+  else
+    ! on GPU
+    call compute_add_sources_adjoint_cuda(Mesh_pointer,nrec,adj_sourcearrays, &
+                                          islice_selected_rec,ispec_selected_rec, &
+                                          iadj_vec(it))
+  endif
 
   end subroutine compute_add_sources_adjoint
 
@@ -323,46 +299,34 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
-                                b_accel_crust_mantle,sourcearrays, &
-                                DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it, &
-                                hdur,xi_source,eta_source,gamma_source,nu_source)
+  subroutine compute_add_sources_backward()
 
+  use specfem_par
+  use specfem_par_crustmantle,only: b_accel_crust_mantle,ibool_crust_mantle
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank,NSOURCES,NSTEP
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_accel_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
-
-  double precision, dimension(NSOURCES) :: tshift_cmt,hdur_gaussian
-
-  double precision :: DT,t0
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
-  integer :: it
-  ! needed for point force sources
-  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-  double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
-  double precision, dimension(NSOURCES) :: hdur
 
   ! local parameters
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   integer :: isource,i,j,k,iglob,ispec
   double precision :: f0
+  double precision, dimension(NSOURCES) :: stf_pre_compute
 
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
-  do isource = 1,NSOURCES
+  integer :: it_tmp
+
+  ! iteration step
+  if( UNDO_ATTENUATION ) then
+    it_tmp = iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1
+  else
+    it_tmp = it
+  endif
+
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    do isource = 1,NSOURCES
 
       !   add the source (only if this proc carries the source)
       if(myrank == islice_selected_source(isource)) then
@@ -379,55 +343,55 @@
         !       in the first (it=1) time loop.
         !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
 
-      if(USE_FORCE_POINT_SOURCE) then
+        if(USE_FORCE_POINT_SOURCE) then
 
-         ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-         iglob = ibool_crust_mantle(nint(xi_source(isource)), &
-                       nint(eta_source(isource)), &
-                       nint(gamma_source(isource)), &
-                       ispec_selected_source(isource))
+           ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+           iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+                         nint(eta_source(isource)), &
+                         nint(gamma_source(isource)), &
+                         ispec_selected_source(isource))
 
-         f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
-         !if (it == 1 .and. myrank == 0) then
-         !   write(IMAIN,*) 'using a source of dominant frequency ',f0
-         !   write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
-         !   write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-         !endif
+           !if (it == 1 .and. myrank == 0) then
+           !   write(IMAIN,*) 'using a source of dominant frequency ',f0
+           !   write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
+           !   write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
+           !endif
 
-         ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-         stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),f0)
+           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
+           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
 
-         ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
-         ! note: time step is now at NSTEP-it
-         b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob)  &
-                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+           ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
+           ! note: time step is now at NSTEP-it
+           b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob)  &
+                              + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
-      else
-
-        ! see note above: time step corresponds now to NSTEP-it
-        stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
-
-        !     distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          stf_used = sngl(stf)
         else
-          stf_used = stf
-        endif
 
-        !     add source array
-        ispec = ispec_selected_source(isource)
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              iglob = ibool_crust_mantle(i,j,k,ispec)
+          ! see note above: time step corresponds now to NSTEP-it
+          stf = comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
 
-              b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
-                + sourcearrays(:,i,j,k,isource)*stf_used
+          !     distinguish between single and double precision for reals
+          if(CUSTOM_REAL == SIZE_REAL) then
+            stf_used = sngl(stf)
+          else
+            stf_used = stf
+          endif
 
+          !     add source array
+          ispec = ispec_selected_source(isource)
+          do k=1,NGLLZ
+            do j=1,NGLLY
+              do i=1,NGLLX
+                iglob = ibool_crust_mantle(i,j,k,ispec)
+
+                b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
+                  + sourcearrays(:,i,j,k,isource)*stf_used
+
+              enddo
             enddo
           enddo
-        enddo
 
         endif ! USE_FORCE_POINT_SOURCE
 
@@ -435,5 +399,22 @@
 
     enddo
 
-  end subroutine compute_add_sources_backward
+  else
+    ! on GPU
+    ! prepares buffer with source time function values, to be copied onto GPU
+    if(USE_FORCE_POINT_SOURCE) then
+      do isource = 1,NSOURCES
+        stf_pre_compute(isource) = &
+          FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
+      enddo
+    else
+      do isource = 1,NSOURCES
+        stf_pre_compute(isource) = &
+          comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+      enddo
+    endif
+    ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM=0)
+    call compute_add_sources_backward_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
+  endif
 
+  end subroutine compute_add_sources_backward

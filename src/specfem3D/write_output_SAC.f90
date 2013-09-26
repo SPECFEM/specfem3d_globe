@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,60 +25,48 @@
 !
 !=====================================================================
 
-  subroutine write_output_SAC(seismogram_tmp,irec, &
-              station_name,network_name,stlat,stlon,stele,stbur,nrec, &
-              ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-              yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
-              elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
-              OUTPUT_FILES, &
-              OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, MODEL, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-              iorientation,phi,chn,sisname)
+  subroutine write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
 
 ! SAC headers have new format
 ! by Ebru
 
+  use constants
+
+  use specfem_par,only: &
+          ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
+          station_name,network_name,stlat,stlon,stele,stbur, &
+          DT,t0, &
+          seismo_offset,seismo_current,it_end, &
+          OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+          NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+          MODEL,OUTPUT_FILES
+
+  use specfem_par,only: &
+          yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC, &
+          tshift_cmt=>t_cmt_SAC,t_shift=>t_shift_SAC, &
+          elat=>elat_SAC,elon=>elon_SAC,depth=>depth_SAC, &
+          event_name=>event_name_SAC,cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,&
+          cmt_depth=>cmt_depth_SAC,cmt_hdur=>cmt_hdur_SAC
+
+
   implicit none
-
-  include "constants.h"
-
-  integer nrec,it_end
-
-  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
-  integer NEX_XI
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES
+  integer :: irec
+  integer :: iorientation
 
-  double precision hdur,DT
+  character(len=256) :: sisname
+  character(len=4) :: chn
 
-  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
-
-  integer irec
-  integer iorientation
-
-  character(len=4) chn
-  character(len=256) sisname
-  character(len=150) OUTPUT_FILES,MODEL
-
-  double precision tshift_cmt,t_shift,elat,elon,depth
-  double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
-  double precision, dimension(nrec) :: stlat,stlon,stele,stbur
-  integer yr,jda,ho,mi
-  double precision sec
-  character(len=20) event_name
-
-  ! flags to determine seismogram type
-  logical OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY
-
-  real(kind=CUSTOM_REAL) phi
-  double precision :: phi_dble
+  double precision :: phi
 
 ! local parameters
-  integer time_sec,isample
-  character(len=256) sisname_2
+  double precision :: btime
+  integer :: time_sec,isample
+  character(len=256) :: sisname_2
+
+  ! SAC header variables
   real DELTA
   real DEPMIN
   real DEPMAX
@@ -122,8 +110,8 @@
   real BYSAC
   ! end SAC header variables
 
-  double precision shortest_period
-  double precision value1,value2, value3,value4,value5
+  double precision :: shortest_period
+  double precision :: value1,value2, value3,value4,value5
   logical, external :: is_leap_year
 
   !----------------------------------------------------------------
@@ -173,10 +161,14 @@
   SCALE_F= 1000000000  ! factor for y-value, set to 10e9, so that values are in nm
   ODELTA = undef       ! increment from delta
 
-  B      = sngl((seismo_offset)*DT-hdur + tshift_cmt) ! [REQUIRED]
+  ! begin time
+  btime = (seismo_offset)*DT - t0 + tshift_cmt
+
+  B      = sngl(btime) ! [REQUIRED]
   E      = BYSAC       ! [REQUIRED]
   O      = 0  !
   A      = undef  !###
+
   !station values:
   STLA = stlat(irec)
   STLO = stlon(irec)
@@ -194,7 +186,7 @@
 
   ! by Ebru
   ! SAC headers will have new format
-  USER0  = cmt_hdur !half duration from CMT file if not changed to hdur=0.d0 (point source)
+  USER0  = cmt_hdur !half duration from CMT file if not changed to t0=0.d0 (point source)
 
   ! USER1 and USER2 slots are used for the shortest and longest periods at which
   ! simulations are accurate, respectively.
@@ -216,7 +208,7 @@
   !USER0  = elat
   !USER1  = elon
   !USER2  = depth
-  !USER3  = cmt_hdur !half duration from CMT if not changed to hdur=0.d0 (point source)
+  !USER3  = cmt_hdur !half duration from CMT if not changed to t0=0.d0 (point source)
 
   ! just to avoid compiler warning
   value1 = elat
@@ -253,26 +245,24 @@
     CMPAZ  = 0.00
     CMPINC = 0.00
   else if(iorientation == 4) then !R
-    phi_dble = phi
-    CMPAZ = sngl(modulo(phi_dble,360.d0)) ! phi is calculated above (see call distaz())
+    CMPAZ = sngl(modulo(phi,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   else if(iorientation == 5) then !T
-    phi_dble = phi
-    CMPAZ = sngl(modulo(phi_dble+90.d0,360.d0)) ! phi is calculated above (see call distaz())
+    CMPAZ = sngl(modulo(phi+90.d0,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   endif
   !----------------end format G15.7--------
 
   ! date and time:
-  NZYEAR =yr
-  NZJDAY =jda
-  NZHOUR =ho
-  NZMIN  =mi
+  NZYEAR = yr
+  NZJDAY = jda
+  NZHOUR = ho
+  NZMIN  = mi
 
   ! adds time-shift to get the CMT time in the headers as origin time of events
   ! by Ebru
-  NZSEC  =int(sec+t_shift)
-  NZMSEC =int((sec+t_shift-int(sec+t_shift))*1000)
+  NZSEC  = int(sec+t_shift)
+  NZMSEC = int((sec+t_shift-int(sec+t_shift))*1000)
 
   !NZSEC  =int(sec)
   !NZMSEC =int((sec-int(sec))*1000)

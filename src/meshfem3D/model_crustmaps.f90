@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -39,72 +39,80 @@
 ! main author: Matthias Meschede (meschede@princeton.edu)
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_crustmaps_broadcast(myrank,GC_V)
+  module model_crustmaps_par
+
+  ! General Crustmaps parameters
+  integer, parameter :: CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
+  integer, parameter :: NLAYERS_CRUSTMAP = 5
+
+  ! model_crustmaps_variables combined crustal maps
+  double precision, dimension(:,:,:),allocatable :: thickness,density,velocp,velocs
+
+  double precision,dimension(:),allocatable :: thicknessnp,densitynp, &
+    velocpnp,velocsnp,thicknesssp,densitysp,velocpsp,velocssp
+
+  end module model_crustmaps_par
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine model_crustmaps_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_crustmaps_par
 
   implicit none
 
-  include "constants.h"
-
   integer :: myrank
-
-  !model_crustmaps_variables
-  type model_crustmaps_variables
-    sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
-
-    double precision thicknessnp(NLAYERS_CRUSTMAP)
-    double precision densitynp(NLAYERS_CRUSTMAP)
-    double precision velocpnp(NLAYERS_CRUSTMAP)
-    double precision velocsnp(NLAYERS_CRUSTMAP)
-    double precision thicknesssp(NLAYERS_CRUSTMAP)
-    double precision densitysp(NLAYERS_CRUSTMAP)
-    double precision velocpsp(NLAYERS_CRUSTMAP)
-    double precision velocssp(NLAYERS_CRUSTMAP)
-
-  end type model_crustmaps_variables
-  type (model_crustmaps_variables) GC_V
-  !model_crustmaps_variables
 
   ! local parameters
   integer :: ier
 
+  ! allocates model arrays
+  allocate(thickness(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+          density(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+          velocp(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+          velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustmaps arrays')
+
+  allocate(thicknessnp(NLAYERS_CRUSTMAP), &
+          densitynp(NLAYERS_CRUSTMAP), &
+          velocpnp(NLAYERS_CRUSTMAP), &
+          velocsnp(NLAYERS_CRUSTMAP), &
+          thicknesssp(NLAYERS_CRUSTMAP), &
+          densitysp(NLAYERS_CRUSTMAP), &
+          velocpsp(NLAYERS_CRUSTMAP), &
+          velocssp(NLAYERS_CRUSTMAP), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustmaps np/sp arrays')
+
   ! master reads in crust maps
-  if(myrank == 0) call read_general_crustmap(GC_V)
+  if(myrank == 0) call read_general_crustmap()
 
   ! broadcasts values to all processes
-  call MPI_BCAST(GC_V%thickness,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%velocp,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%velocs,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%density,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP, &
-    MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thickness,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocp,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocs,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
+  call bcast_all_dp(density,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
 
   ! north pole
-  call MPI_BCAST(GC_V%thicknessnp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%densitynp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%velocpnp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%velocsnp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%densitynp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thicknessnp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitynp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocpnp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocsnp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitynp,NLAYERS_CRUSTMAP)
 
   ! south pole
-  call MPI_BCAST(GC_V%thicknesssp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%densitysp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%velocpsp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%velocssp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(GC_V%densitysp,NLAYERS_CRUSTMAP,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thicknesssp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitysp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocpsp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(velocssp,NLAYERS_CRUSTMAP)
+  call bcast_all_dp(densitysp,NLAYERS_CRUSTMAP)
 
   end subroutine model_crustmaps_broadcast
 
@@ -114,80 +122,58 @@
 
 ! read general crustmap by Matthias Meschede
 
-  subroutine read_general_crustmap(GC_V)
+  subroutine read_general_crustmap()
+
+  use constants
+  use model_crustmaps_par
 
   implicit none
-  include "constants.h"
 
-! Matthias Meschede
- !model_crustmaps_variables
-  type model_crustmaps_variables
-    sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
+  integer :: i,l
 
-    double precision thicknessnp(NLAYERS_CRUSTMAP)
-    double precision densitynp(NLAYERS_CRUSTMAP)
-    double precision velocpnp(NLAYERS_CRUSTMAP)
-    double precision velocsnp(NLAYERS_CRUSTMAP)
-    double precision thicknesssp(NLAYERS_CRUSTMAP)
-    double precision densitysp(NLAYERS_CRUSTMAP)
-    double precision velocpsp(NLAYERS_CRUSTMAP)
-    double precision velocssp(NLAYERS_CRUSTMAP)
+  do l=1,NLAYERS_CRUSTMAP
+    ! file index: from 3 to 7
+    i = l + 2
 
-  end type model_crustmaps_variables
-  type (model_crustmaps_variables) GC_V
-  !model_crustmaps_variables
-
-  integer i,l
-
-  do i=3,7
-    l = i - 2
-    call read_general_crustmap_layer(GC_V%thickness(:,:,l), 't', i)
-    call read_general_crustmap_layer(GC_V%density(:,:,l),   'r', i)
-    call read_general_crustmap_layer(GC_V%velocp(:,:,l),    'p', i)
-    call read_general_crustmap_layer(GC_V%velocs(:,:,l),    's', i)
+    call read_general_crustmap_layer(thickness(:,:,l), 't', i)
+    call read_general_crustmap_layer(density(:,:,l),   'r', i)
+    call read_general_crustmap_layer(velocp(:,:,l),    'p', i)
+    call read_general_crustmap_layer(velocs(:,:,l),    's', i)
   enddo
 
-  GC_V%thicknessnp(:) = 0.0
-  GC_V%thicknesssp(:) = 0.0
-  GC_V%densitynp(:) = 0.0
-  GC_V%densitysp(:) = 0.0
-  GC_V%velocpnp(:) = 0.0
-  GC_V%velocpsp(:) = 0.0
-  GC_V%velocsnp(:) = 0.0
-  GC_V%velocssp(:) = 0.0
+  ! north pole / south pole
+  thicknessnp(:) = ZERO
+  thicknesssp(:) = ZERO
+  densitynp(:) = ZERO
+  densitysp(:) = ZERO
+  velocpnp(:) = ZERO
+  velocpsp(:) = ZERO
+  velocsnp(:) = ZERO
+  velocssp(:) = ZERO
 
   !compute average values for north and southpole
   do l=1,NLAYERS_CRUSTMAP
     do i=1,360*CRUSTMAP_RESOLUTION
-      GC_V%thicknessnp(l) =  GC_V%thicknessnp(l)+GC_V%thickness(1,i,l)
-      GC_V%thicknesssp(l) = GC_V%thicknesssp(l)+GC_V%thickness(180*CRUSTMAP_RESOLUTION,i,l)
-      GC_V%densitynp(l) = GC_V%densitynp(l)+GC_V%density(1,i,l)
-      GC_V%densitysp(l) = GC_V%densitysp(l)+GC_V%density(180*CRUSTMAP_RESOLUTION,i,l)
-      GC_V%velocpnp(l) = GC_V%velocpnp(l)+GC_V%velocp(1,i,l)
-      GC_V%velocpsp(l) = GC_V%velocpsp(l)+GC_V%velocp(180*CRUSTMAP_RESOLUTION,i,l)
-      GC_V%velocsnp(l) = GC_V%velocsnp(l)+GC_V%velocs(1,i,l)
-      GC_V%velocssp(l) = GC_V%velocssp(l)+GC_V%velocs(180*CRUSTMAP_RESOLUTION,i,l)
+      thicknessnp(l) =  thicknessnp(l)+thickness(1,i,l)
+      thicknesssp(l) = thicknesssp(l)+thickness(180*CRUSTMAP_RESOLUTION,i,l)
+      densitynp(l) = densitynp(l)+density(1,i,l)
+      densitysp(l) = densitysp(l)+density(180*CRUSTMAP_RESOLUTION,i,l)
+      velocpnp(l) = velocpnp(l)+velocp(1,i,l)
+      velocpsp(l) = velocpsp(l)+velocp(180*CRUSTMAP_RESOLUTION,i,l)
+      velocsnp(l) = velocsnp(l)+velocs(1,i,l)
+      velocssp(l) = velocssp(l)+velocs(180*CRUSTMAP_RESOLUTION,i,l)
     enddo
-    GC_V%thicknessnp(l) = GC_V%thicknessnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%thicknesssp(l) = GC_V%thicknesssp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%densitynp(l) = GC_V%densitynp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%densitysp(l) = GC_V%densitysp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%velocpnp(l) = GC_V%velocpnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%velocpsp(l) = GC_V%velocpsp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%velocsnp(l) = GC_V%velocsnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
-    GC_V%velocssp(l) = GC_V%velocssp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    thicknessnp(l) = thicknessnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    thicknesssp(l) = thicknesssp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    densitynp(l) = densitynp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    densitysp(l) = densitysp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    velocpnp(l) = velocpnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    velocpsp(l) = velocpsp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    velocsnp(l) = velocsnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
+    velocssp(l) = velocssp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
 
-!    print *,'thicknessnp(',l,')',GC_V%thicknessnp(l)
+!    print *,'thicknessnp(',l,')',thicknessnp(l)
   enddo
-
 
   end subroutine read_general_crustmap
 
@@ -197,8 +183,10 @@
 
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
+  use constants
+  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
+
   implicit none
-  include "constants.h"
 
   double precision, intent(out), &
     dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION)&
@@ -220,6 +208,8 @@
   open(unit=1,file=trim(eucrust),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(eucrust), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model crustmap')
   endif
 
@@ -230,45 +220,22 @@
 
   end subroutine read_general_crustmap_layer
 
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,found_crust,GC_V,elem_in_crust)
+  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
 
 ! Matthias Meschede
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 
+  use constants
+  use model_crustmaps_par
+
   implicit none
-  include "constants.h"
-
-!Matthias Meschede
- !model_crustmaps_variables
-  type model_crustmaps_variables
-    sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
-
-    double precision thicknessnp(NLAYERS_CRUSTMAP)
-    double precision densitynp(NLAYERS_CRUSTMAP)
-    double precision velocpnp(NLAYERS_CRUSTMAP)
-    double precision velocsnp(NLAYERS_CRUSTMAP)
-    double precision thicknesssp(NLAYERS_CRUSTMAP)
-    double precision densitysp(NLAYERS_CRUSTMAP)
-    double precision velocpsp(NLAYERS_CRUSTMAP)
-    double precision velocssp(NLAYERS_CRUSTMAP)
-
-  end type model_crustmaps_variables
-  type (model_crustmaps_variables) GC_V
-  !model_crustmaps_variables
-
 
   double precision :: lat,lon,x,vp,vs,rho,moho
   logical :: found_crust,elem_in_crust
@@ -276,7 +243,7 @@
   double precision :: x3,x4,x5,x6,x7,scaleval
   double precision,dimension(NLAYERS_CRUSTMAP) :: vps,vss,rhos,thicks
 
-  call read_crustmaps(lat,lon,vps,vss,rhos,thicks,GC_V)
+  call read_crustmaps(lat,lon,vps,vss,rhos,thicks)
 
   x3 = (R_EARTH-thicks(1)*1000.0d0)/R_EARTH
   h_sed = thicks(1) + thicks(2)
@@ -337,43 +304,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_crustmaps(lat,lon,velp,vels,rhos,thicks,GC_V)
+  subroutine read_crustmaps(lat,lon,velp,vels,rhos,thicks)
 
 ! crustal vp and vs in km/s, layer thickness in km
 
-  implicit none
+  use constants
+  use model_crustmaps_par
 
-  include "constants.h"
+  implicit none
 
   ! argument variables
   double precision lat,lon
   double precision rhos(5),thicks(5),velp(5),vels(5)
-
-! Matthias Meschede
- !model_crustmaps_variables
-  type model_crustmaps_variables
-    sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
-      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
-
-    double precision thicknessnp(NLAYERS_CRUSTMAP)
-    double precision densitynp(NLAYERS_CRUSTMAP)
-    double precision velocpnp(NLAYERS_CRUSTMAP)
-    double precision velocsnp(NLAYERS_CRUSTMAP)
-    double precision thicknesssp(NLAYERS_CRUSTMAP)
-    double precision densitysp(NLAYERS_CRUSTMAP)
-    double precision velocpsp(NLAYERS_CRUSTMAP)
-    double precision velocssp(NLAYERS_CRUSTMAP)
-
-  end type model_crustmaps_variables
-  type (model_crustmaps_variables) GC_V
-  !model_crustmaps_variables
 
   !-------------------------------
   ! work-around to avoid jacobian problems when stretching mesh elements;
@@ -500,38 +442,38 @@
     if(iupcolat==0) then
       ! north pole
       do i=1,NLAYERS_CRUSTMAP
-       thickl(i)=weightul*GC_V%thicknessnp(i)+weightur*GC_V%thicknessnp(i)+&
-                 weightll*GC_V%thickness(1,ileftlng,i)+weightlr*GC_V%thickness(1,irightlng,i)
+       thickl(i)=weightul*thicknessnp(i)+weightur*thicknessnp(i)+&
+                 weightll*thickness(1,ileftlng,i)+weightlr*thickness(1,irightlng,i)
 
-       rhol(i)=weightul*GC_V%densitynp(i)+weightur*GC_V%densitynp(i)+&
-               weightll*GC_V%density(1,ileftlng,i)+weightlr*GC_V%density(1,irightlng,i)
-       velpl(i)=weightul*GC_V%velocpnp(i)+weightur*GC_V%velocpnp(i)+&
-               weightll*GC_V%velocp(1,ileftlng,i)+weightlr*GC_V%velocp(1,irightlng,i)
-       velsl(i)=weightul*GC_V%velocsnp(i)+weightur*GC_V%velocsnp(i)+&
-               weightll*GC_V%velocs(1,ileftlng,i)+weightlr*GC_V%velocs(1,irightlng,i)
+       rhol(i)=weightul*densitynp(i)+weightur*densitynp(i)+&
+               weightll*density(1,ileftlng,i)+weightlr*density(1,irightlng,i)
+       velpl(i)=weightul*velocpnp(i)+weightur*velocpnp(i)+&
+               weightll*velocp(1,ileftlng,i)+weightlr*velocp(1,irightlng,i)
+       velsl(i)=weightul*velocsnp(i)+weightur*velocsnp(i)+&
+               weightll*velocs(1,ileftlng,i)+weightlr*velocs(1,irightlng,i)
       enddo
     else if(iupcolat==180*CRUSTMAP_RESOLUTION) then
       ! south pole
       do i=1,NLAYERS_CRUSTMAP
-       thickl(i)=weightul*GC_V%thickness(iupcolat,ileftlng,i)+weightur*GC_V%thickness(iupcolat,irightlng,i)+&
-                 weightll*GC_V%thicknesssp(i)+weightlr*GC_V%thicknesssp(i)
-       rhol(i)=weightul*GC_V%density(iupcolat,ileftlng,i)+weightur*GC_V%density(iupcolat,irightlng,i)+&
-               weightll*GC_V%densitysp(i)+weightlr*GC_V%densitysp(i)
-       velpl(i)=weightul*GC_V%velocp(iupcolat,ileftlng,i)+weightur*GC_V%velocp(iupcolat,irightlng,i)+&
-               weightll*GC_V%velocpsp(i)+weightlr*GC_V%velocpsp(i)
-       velsl(i)=weightul*GC_V%velocs(iupcolat,ileftlng,i)+weightur*GC_V%velocs(iupcolat,irightlng,i)+&
-               weightll*GC_V%velocssp(i)+weightlr*GC_V%velocssp(i)
+       thickl(i)=weightul*thickness(iupcolat,ileftlng,i)+weightur*thickness(iupcolat,irightlng,i)+&
+                 weightll*thicknesssp(i)+weightlr*thicknesssp(i)
+       rhol(i)=weightul*density(iupcolat,ileftlng,i)+weightur*density(iupcolat,irightlng,i)+&
+               weightll*densitysp(i)+weightlr*densitysp(i)
+       velpl(i)=weightul*velocp(iupcolat,ileftlng,i)+weightur*velocp(iupcolat,irightlng,i)+&
+               weightll*velocpsp(i)+weightlr*velocpsp(i)
+       velsl(i)=weightul*velocs(iupcolat,ileftlng,i)+weightur*velocs(iupcolat,irightlng,i)+&
+               weightll*velocssp(i)+weightlr*velocssp(i)
       enddo
     else
       do i=1,NLAYERS_CRUSTMAP
-       thickl(i)=weightul*GC_V%thickness(iupcolat,ileftlng,i)+weightur*GC_V%thickness(iupcolat,irightlng,i)+&
-                 weightll*GC_V%thickness(iupcolat+1,ileftlng,i)+weightlr*GC_V%thickness(iupcolat+1,irightlng,i)
-       rhol(i)=weightul*GC_V%density(iupcolat,ileftlng,i)+weightur*GC_V%density(iupcolat,irightlng,i)+&
-               weightll*GC_V%density(iupcolat+1,ileftlng,i)+weightlr*GC_V%density(iupcolat+1,irightlng,i)
-       velpl(i)=weightul*GC_V%velocp(iupcolat,ileftlng,i)+weightur*GC_V%velocp(iupcolat,irightlng,i)+&
-               weightll*GC_V%velocp(iupcolat+1,ileftlng,i)+weightlr*GC_V%velocp(iupcolat+1,irightlng,i)
-       velsl(i)=weightul*GC_V%velocs(iupcolat,ileftlng,i)+weightur*GC_V%velocs(iupcolat,irightlng,i)+&
-               weightll*GC_V%velocs(iupcolat+1,ileftlng,i)+weightlr*GC_V%velocs(iupcolat+1,irightlng,i)
+       thickl(i)=weightul*thickness(iupcolat,ileftlng,i)+weightur*thickness(iupcolat,irightlng,i)+&
+                 weightll*thickness(iupcolat+1,ileftlng,i)+weightlr*thickness(iupcolat+1,irightlng,i)
+       rhol(i)=weightul*density(iupcolat,ileftlng,i)+weightur*density(iupcolat,irightlng,i)+&
+               weightll*density(iupcolat+1,ileftlng,i)+weightlr*density(iupcolat+1,irightlng,i)
+       velpl(i)=weightul*velocp(iupcolat,ileftlng,i)+weightur*velocp(iupcolat,irightlng,i)+&
+               weightll*velocp(iupcolat+1,ileftlng,i)+weightlr*velocp(iupcolat+1,irightlng,i)
+       velsl(i)=weightul*velocs(iupcolat,ileftlng,i)+weightur*velocs(iupcolat,irightlng,i)+&
+               weightll*velocs(iupcolat+1,ileftlng,i)+weightlr*velocs(iupcolat+1,irightlng,i)
     !   thicks(i)=1.0
     !   rhos(i)=1.0
     !   velp(i)=1.0
@@ -565,9 +507,10 @@
 
   subroutine ibilinearmap(lat,lng,iupcolat,ileftlng,weightup,weightleft)
 
-  implicit none
+  use constants
+  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
 
-  include "constants.h"
+  implicit none
 
   ! argument variables
   double precision weightup,weightleft

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,13 +25,11 @@
 !
 !=====================================================================
 
-  subroutine create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz, &
+  subroutine create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,&
-                        R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                         shape3D,rmin,rmax,rhostore,dvpstore,&
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
@@ -39,9 +37,9 @@
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
-                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
+                        nspec_ani,nspec_stacey, &
+                        rho_vp,rho_vs,xigll,yigll,zigll, &
+                        ispec_is_tiso)
 
 ! creates the inner core cube of the mesh
 
@@ -56,10 +54,9 @@
 
   integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
-  integer NPROC_XI,NPROC_ETA,ATT1,ATT2,ATT3
+  integer NPROC_XI,NPROC_ETA
 
-  double precision R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,&
-    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER
+  double precision R_CENTRAL_CUBE
 
 ! arrays with the mesh in double precision
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -109,28 +106,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
   integer ispec
-  integer iproc_xi,iproc_eta,ichunk
-
-! attenuation
-  integer :: nspec_att
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,nspec_att) :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision  T_c_source
-
-  logical :: ACTUALLY_STORE_ARRAYS,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
+  integer iproc_xi,iproc_eta,ichunk,ipass
 
   logical, dimension(nspec) :: ispec_is_tiso
 
@@ -243,7 +219,7 @@
 
         ! determine where we cut the central cube to share it between CHUNK_AB & CHUNK_AB_ANTIPODE
         ! in the case of mod(NPROC_XI,2)/=0, the cut is asymetric and the bigger part is for CHUNK_AB
-        if (mod(NPROC_XI,2)/=0) then
+        if (mod(NPROC_XI,2)/=0 .and. NPROC_XI > 1) then
           if (ichunk == CHUNK_AB) then
             nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*floor(NPROC_XI/2.d0)
           else if (ichunk == CHUNK_AB_ANTIPODE) then
@@ -268,10 +244,8 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-        call compute_element_properties(ispec,iregion_code,idoubling, &
-                         xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
-                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+        call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
+                         xstore,ystore,zstore,nspec,myrank, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -279,9 +253,9 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
-                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE)
+                         nspec_ani,nspec_stacey, &
+                         rho_vp,rho_vs, &
+                         xigll,yigll,zigll,ispec_is_tiso)
       enddo
     enddo
   enddo

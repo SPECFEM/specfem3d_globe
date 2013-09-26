@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@
 !        xstore,ystore,zstore ----- input GLL point coordinate
 !        xigll,yigll,zigll ----- gll points position
 !        ispec,nspec       ----- element number
-!        ACTUALLY_STORE_ARRAYS   ------ save array or not
 
 ! output: xixstore,xiystore,xizstore,
 !         etaxstore,etaystore,etazstore,
@@ -42,14 +41,14 @@
 
 
   subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
-                                ispec,nspec,ACTUALLY_STORE_ARRAYS,&
+                                ispec,nspec,&
                                 xixstore,xiystore,xizstore, &
                                 etaxstore,etaystore,etazstore, &
                                 gammaxstore,gammaystore,gammazstore)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! input parameter
   integer::myrank,ispec,nspec
@@ -59,7 +58,6 @@
   double precision, dimension(NGLLX):: xigll
   double precision, dimension(NGLLY):: yigll
   double precision, dimension(NGLLZ):: zigll
-  logical :: ACTUALLY_STORE_ARRAYS
 
   ! output results
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
@@ -200,28 +198,26 @@
 
         ! resave the derivatives and the jacobian
         ! distinguish between single and double precision for reals
-        if (ACTUALLY_STORE_ARRAYS) then
-          if(CUSTOM_REAL == SIZE_REAL) then
-            xixstore(i,j,k,ispec) = sngl(xix)
-            xiystore(i,j,k,ispec) = sngl(xiy)
-            xizstore(i,j,k,ispec) = sngl(xiz)
-            etaxstore(i,j,k,ispec) = sngl(etax)
-            etaystore(i,j,k,ispec) = sngl(etay)
-            etazstore(i,j,k,ispec) = sngl(etaz)
-            gammaxstore(i,j,k,ispec) = sngl(gammax)
-            gammaystore(i,j,k,ispec) = sngl(gammay)
-            gammazstore(i,j,k,ispec) = sngl(gammaz)
-          else
-            xixstore(i,j,k,ispec) = xix
-            xiystore(i,j,k,ispec) = xiy
-            xizstore(i,j,k,ispec) = xiz
-            etaxstore(i,j,k,ispec) = etax
-            etaystore(i,j,k,ispec) = etay
-            etazstore(i,j,k,ispec) = etaz
-            gammaxstore(i,j,k,ispec) = gammax
-            gammaystore(i,j,k,ispec) = gammay
-            gammazstore(i,j,k,ispec) = gammaz
-          endif
+        if(CUSTOM_REAL == SIZE_REAL) then
+          xixstore(i,j,k,ispec) = sngl(xix)
+          xiystore(i,j,k,ispec) = sngl(xiy)
+          xizstore(i,j,k,ispec) = sngl(xiz)
+          etaxstore(i,j,k,ispec) = sngl(etax)
+          etaystore(i,j,k,ispec) = sngl(etay)
+          etazstore(i,j,k,ispec) = sngl(etaz)
+          gammaxstore(i,j,k,ispec) = sngl(gammax)
+          gammaystore(i,j,k,ispec) = sngl(gammay)
+          gammazstore(i,j,k,ispec) = sngl(gammaz)
+        else
+          xixstore(i,j,k,ispec) = xix
+          xiystore(i,j,k,ispec) = xiy
+          xizstore(i,j,k,ispec) = xiz
+          etaxstore(i,j,k,ispec) = etax
+          etaystore(i,j,k,ispec) = etay
+          etazstore(i,j,k,ispec) = etaz
+          gammaxstore(i,j,k,ispec) = gammax
+          gammaystore(i,j,k,ispec) = gammay
+          gammazstore(i,j,k,ispec) = gammaz
         endif
       enddo
     enddo
@@ -247,9 +243,9 @@
                                 xelm2D,yelm2D,zelm2D,xigll,yigll,&
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! input parameters
   integer::myrank,ispecb,NSPEC2DMAX_AB,NGLLA,NGLLB

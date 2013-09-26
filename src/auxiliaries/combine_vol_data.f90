@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -30,10 +30,11 @@ program combine_vol_data
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 
+  use constants
+
   implicit none
 
-  include 'constants.h'
-  include 'OUTPUT_FILES/values_from_mesher.h'
+  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
   integer  iregion, ir, irs, ire, ires, pfd, efd
@@ -62,7 +63,7 @@ program combine_vol_data
   ! note:
   !  if one wants to remove the topography and ellipticity distortion, you would run the mesher again
   !  but turning the flags: TOPOGRAPHY and ELLIPTICITY to .false.
-  !  then, use those as topo files: proc***_array_dims.txt and proc***_solver_data_2.bin
+  !  then, use those as topo files: proc***_solver_data.bin
   !  of course, this would also work by just turning ELLIPTICITY to .false. so that the CORRECT_ELLIPTICITY below
   !  becomes unneccessary
   !
@@ -141,16 +142,24 @@ program combine_vol_data
 
   ! resolution
   read(arg(6),*) ires
-  di = 0; dj = 0; dk = 0
+  di = 0
+  dj = 0
+  dk = 0
   if (ires == 0) then
     HIGH_RESOLUTION_MESH = .false.
-    di = NGLLX-1; dj = NGLLY-1; dk = NGLLZ-1
+    di = NGLLX-1
+    dj = NGLLY-1
+    dk = NGLLZ-1
   else if( ires == 1 ) then
     HIGH_RESOLUTION_MESH = .true.
-    di = 1; dj = 1; dk = 1
+    di = 1
+    dj = 1
+    dk = 1
   else if( ires == 2 ) then
     HIGH_RESOLUTION_MESH = .false.
-    di = (NGLLX-1)/2.0; dj = (NGLLY-1)/2.0; dk = (NGLLZ-1)/2.0
+    di = int((NGLLX-1)/2.0)
+    dj = int((NGLLY-1)/2.0)
+    dk = int((NGLLZ-1)/2.0)
   endif
   if( HIGH_RESOLUTION_MESH ) then
     print *, ' high resolution ', HIGH_RESOLUTION_MESH
@@ -185,15 +194,15 @@ program combine_vol_data
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
 
-      dimension_file = trim(prname_topo) //'array_dims.txt'
-      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
+      dimension_file = trim(prname_topo) //'solver_data.bin'
+      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
-      read(27,*) nspec(it)
-      read(27,*) nglob(it)
+      read(27) nspec(it)
+      read(27) nglob(it)
       close(27)
 
       if (HIGH_RESOLUTION_MESH) then
@@ -245,7 +254,7 @@ program combine_vol_data
       print *
 
       ! topology file
-      topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
+      topo_file = trim(prname_topo) // 'solver_data.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
@@ -256,6 +265,8 @@ program combine_vol_data
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
+      read(28) nspec(it)
+      read(28) nglob(it)
       read(28) xstore(1:nglob(it))
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))
@@ -479,9 +490,9 @@ end program combine_vol_data
 
   subroutine reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   real(kind=CUSTOM_REAL) :: x,y,z
   integer nspl
@@ -524,9 +535,9 @@ end program combine_vol_data
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
 
@@ -675,9 +686,9 @@ end program combine_vol_data
   subroutine prem_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -1006,40 +1017,4 @@ end program combine_vol_data
          (coef2**3 - coef2)*spline_coefficients(index_higher))*((xpoint(index_higher) - xpoint(index_lower))**2)/6.d0
 
   end subroutine spline_evaluation
-
-!
-! ------------------------------------------------------------------------------------------------
-!
-
-! copy from rthetaphi_xyz.f90 to avoid compiling issues
-
-
-  subroutine xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-
-! convert x y z to r theta phi, double precision call
-
-  implicit none
-
-  include "constants.h"
-
-  double precision x,y,z,r,theta,phi
-  double precision xmesh,ymesh,zmesh
-
-  xmesh = x
-  ymesh = y
-  zmesh = z
-
-  if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-  if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
-
-  theta = datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
-
-  if(xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
-  if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
-
-  phi = datan2(ymesh,xmesh)
-
-  r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
-
-  end subroutine xyz_2_rthetaphi_dble
 

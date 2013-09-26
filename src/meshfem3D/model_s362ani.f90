@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -42,20 +42,7 @@
 ! calculated using REF as the 1D reference model.
 !--------------------------------------------------------------------------------------------------
 
-
-  subroutine model_s362ani_broadcast(myrank,THREE_D_MODEL,numker,numhpa,ihpa,&
-                              lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
-                              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
-
-! standard routine to setup model
-
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-
-  integer THREE_D_MODEL
+  module model_s362ani_par
 
   ! used for 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
   integer, parameter :: maxker=200
@@ -64,68 +51,92 @@
   integer, parameter :: maxver=1000
   integer, parameter :: maxhpa=2
 
-  integer numker
-  integer numhpa !,numcof
-  integer ihpa !,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-  integer itpspl(maxcoe,maxhpa)
+  real(kind=4),dimension(:,:),allocatable :: conpt,xlaspl,xlospl,radspl,coe
+  real(kind=4),dimension(:),allocatable :: vercof,vercofd
 
-  !integer nconpt(maxhpa),iver
-  !integer iconpt(maxver,maxhpa)
-  !real(kind=4) conpt(maxver,maxhpa)
+  real(kind=4),dimension(:,:),allocatable :: ylmcof
+  real(kind=4),dimension(:),allocatable :: wk1,wk2,wk3
 
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-  character(len=80) hsplfl(maxhpa)
-  character(len=40) dskker(maxker)
+  integer, dimension(maxhpa) :: lmxhpa,itypehpa,numcoe,nconpt
 
-  !real(kind=4) vercof(maxker)
-  !real(kind=4) vercofd(maxker)
+  integer,dimension(:,:),allocatable :: itpspl,iconpt
+  integer,dimension(:),allocatable :: ihpakern,ivarkern
 
-  !real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  !real(kind=4) wk1(maxl+1)
-  !real(kind=4) wk2(maxl+1)
-  !real(kind=4) wk3(maxl+1)
+  integer :: iver
+  integer :: numker
+  integer :: numhpa,numcof
+  integer :: ihpa,lmax,nylm
 
-  character(len=80) kerstr
-  character(len=40) varstr(maxker)
-  character(len=80) refmdl
+  character(len=80) :: kerstr
+  character(len=80) :: refmdl
+  character(len=40) :: varstr(maxker)
+  character(len=80) :: hsplfl(maxhpa)
+  character(len=40) :: dskker(maxker)
+
+  end module model_s362ani_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_s362ani_broadcast(myrank,THREE_D_MODEL)
+
+! standard routine to setup model
+
+  use constants
+  use model_s362ani_par
+
+  implicit none
 
   integer :: myrank
+  integer :: THREE_D_MODEL
   integer :: ier
+
+  ! allocates model arrays
+  allocate(conpt(maxver,maxhpa), &
+          xlaspl(maxcoe,maxhpa), &
+          xlospl(maxcoe,maxhpa), &
+          radspl(maxcoe,maxhpa), &
+          coe(maxcoe,maxker), &
+          vercof(maxker), &
+          vercofd(maxker), &
+          ylmcof((maxl+1)**2,maxhpa), &
+          wk1(maxl+1), &
+          wk2(maxl+1), &
+          wk3(maxl+1), &
+          itpspl(maxcoe,maxhpa), &
+          iconpt(maxver,maxhpa), &
+          ihpakern(maxker), &
+          ivarkern(maxker), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating s362ani arrays')
 
   ! master process
   if(myrank == 0) call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-                          THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
-                          numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
-                          xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+                          THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
 
-  call MPI_BCAST(numker,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(numhpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ihpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lmxhpa,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(itypehpa,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ihpakern,maxker,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(numcoe,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ivarkern,maxker,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(itpspl,maxcoe*maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(numker,1)
+  call bcast_all_i(numhpa,1)
+  call bcast_all_i(ihpa,1)
+  call bcast_all_i(lmxhpa,maxhpa)
+  call bcast_all_i(itypehpa,maxhpa)
+  call bcast_all_i(ihpakern,maxker)
+  call bcast_all_i(numcoe,maxhpa)
+  call bcast_all_i(ivarkern,maxker)
+  call bcast_all_i(itpspl,maxcoe*maxhpa)
 
-  call MPI_BCAST(xlaspl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(xlospl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(radspl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(coe,maxcoe*maxker,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call bcast_all_r(xlaspl,maxcoe*maxhpa)
+  call bcast_all_r(xlospl,maxcoe*maxhpa)
+  call bcast_all_r(radspl,maxcoe*maxhpa)
+  call bcast_all_r(coe,maxcoe*maxker)
 
-  call MPI_BCAST(hsplfl,80*maxhpa,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(dskker,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(kerstr,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(refmdl,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch_array(hsplfl,maxhpa,80)
+  call bcast_all_ch_array(dskker,maxker,40)
+
+  call bcast_all_ch(kerstr,80)
+  call bcast_all_ch(refmdl,80)
+
+  call bcast_all_ch(varstr,maxker,40)
 
   end subroutine model_s362ani_broadcast
 
@@ -135,9 +146,9 @@
 
   subroutine read_model_s362ani(THREE_D_MODEL, &
               THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
-              numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
-              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+
+  use model_s362ani_par
 
   implicit none
 
@@ -150,35 +161,6 @@
   logical exists
   integer numvar
   integer ierror
-
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa
-  integer ihpa
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-  integer itpspl(maxcoe,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-  character(len=80) hsplfl(maxhpa)
-  character(len=40) dskker(maxker)
-
-  character(len=80) kerstr
-  character(len=80) refmdl
-  character(len=40) varstr(maxker)
-
-! -------------------------------------
 
   lu=1                    ! --- log unit: input 3-D model
   if(THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI) then
@@ -950,8 +932,9 @@
     xlaspl,xlospl,xraspl,ixlspl,coef, &
     hsplfile,refmodel,kernstri,desckern)
 
+  use constants
+
   implicit none
-  include "constants.h"
 
   integer, parameter :: mxhpar=2
   integer, parameter :: mxkern=200
@@ -985,8 +968,11 @@
   open(lu,file=filename,status='old',action='read',iostat=ios)
   if ( ios /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(filename), '": ', ios
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model s362ani')
   endif
+
   do while (ios == 0)
   read(lu,"(a)",iostat=ios) string
   lstr=len_trim(string)
@@ -1096,9 +1082,9 @@
 
   subroutine splcon(xlat,xlon,nver,verlat,verlon,verrad,ncon,icon,con)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in) :: nver
   integer, intent(out) :: ncon
@@ -1168,49 +1154,13 @@
 !
 
 
-! --- evaluate perturbations in percent
+! --- evaluate perturbations in per cent
 
-  subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
-    numker,numhpa,numcof,ihpa,lmax,nylm, &
-    lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-    nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+  subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+
+  use model_s362ani_par
 
   implicit none
-
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-  real(kind=4) vercof(maxker)
-  real(kind=4) vercofd(maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=80) kerstr
-  character(len=40) varstr(maxker)
 
   real(kind=4) :: xcolat,xlon,xrad
   real(kind=4) :: dvsh,dvsv,dvph,dvpv
@@ -1356,44 +1306,11 @@
 
 ! --- evaluate depressions of the 410- and 650-km discontinuities in km
 
-  subroutine subtopo(xcolat,xlon,topo410,topo650, &
-                     numker,numhpa,numcof,ihpa,lmax,nylm, &
-                     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                     coe,ylmcof,wk1,wk2,wk3,varstr)
+  subroutine model_s362ani_subtopo(xcolat,xlon,topo410,topo650)
+
+  use model_s362ani_par
 
   implicit none
-
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=40) varstr(maxker)
 
   real(kind=4) :: xcolat,xlon
   real(kind=4) :: topo410,topo650
@@ -1492,7 +1409,7 @@
   topo410=valu(1)
   topo650=valu(2)
 
-  end subroutine subtopo
+  end subroutine model_s362ani_subtopo
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1856,6 +1773,8 @@
 
   subroutine ylm(XLAT,XLON,LMAX,Y,WK1,WK2,WK3)
 
+  use model_s362ani_par,only : maxl
+
   implicit none
 
   complex TEMP,FAC,DFAC
@@ -1869,7 +1788,6 @@
 !
   real(kind=4) WK1(LMAX+1),WK2(LMAX+1),WK3(LMAX+1)
   real(kind=4) XLAT,XLON
-  integer, parameter :: maxl=72
   real(kind=4),dimension((maxl+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
 
   real(kind=4), parameter :: RADIAN = 57.2957795

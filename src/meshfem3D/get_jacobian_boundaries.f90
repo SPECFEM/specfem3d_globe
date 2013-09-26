@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -38,9 +38,9 @@
               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,xigll,yigll,zigll)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: nspec,myrank
   integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
@@ -463,9 +463,9 @@
   subroutine compute_jacobian_2D(myrank,ispecb,xelm,yelm,zelm,dershape2D, &
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! generic routine that accepts any polynomial degree in each direction
 

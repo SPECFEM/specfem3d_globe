@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -26,10 +26,8 @@
 !=====================================================================
 
 ! compute several rheological and geometrical properties for a given spectral element
-  subroutine compute_element_properties(ispec,iregion_code,idoubling, &
-                         xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
-                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+  subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
+                         xstore,ystore,zstore,nspec,myrank, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -37,27 +35,25 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
-                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE)
+                         nspec_ani,nspec_stacey, &
+                         rho_vp,rho_vs,&
+                         xigll,yigll,zigll,ispec_is_tiso)
 
   use meshfem3D_models_par
 
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer ispec,nspec,nspec_stacey,ATT1,ATT2,ATT3
-
-  logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
-
-  double precision RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,&
-    R400,R120,R80,RMIDDLE_CRUST,ROCEAN,RMOHO_FICTITIOUS_IN_MESHER
+  integer ispec,nspec,nspec_stacey
 
 ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
 ! code for the four regions of the mesh
   integer :: iregion_code
+
+! meshing phase
+  integer :: ipass
 
 ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
@@ -91,24 +87,6 @@
 ! Stacey, indices for Clayton-Engquist absorbing conditions
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
-! attenuation
-  integer :: nspec_att
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,nspec_att) :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision :: T_c_source
-
   ! Parameters used to calculate Jacobian based upon 125 GLL points
   double precision :: xigll(NGLLX)
   double precision :: yigll(NGLLY)
@@ -136,11 +114,11 @@
 
         ! differentiate between regional and global meshing
         if( REGIONAL_MOHO_MESH ) then
-          call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER, &
-                                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+          call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+                                              elem_in_crust,elem_in_mantle)
         else
-          call moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER, &
-                                          R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+          call moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+                                          elem_in_crust,elem_in_mantle)
         endif
       else
         ! element below 220km
@@ -198,19 +176,20 @@
                                     xstore,ystore,zstore,shape3D)
 
   ! computes velocity/density/... values for the chosen Earth model
-  call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
-                      kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                      rhostore,dvpstore,nspec_ani, &
-                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                      nspec_stacey,rho_vp,rho_vs, &
-                      xstore,ystore,zstore, &
-                      rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
-                      R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                      tau_s,tau_e_store,Qmu_store,T_c_source, &
-                      ATT1,ATT2,ATT3,size(tau_e_store,5), &
-                      ABSORBING_CONDITIONS,ATTENUATION_1D_WITH_3D_STORAGE,elem_in_crust,elem_in_mantle)
+  ! (only needed for second meshing phase)
+  if( ipass == 2 ) then
+    call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
+                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                   rhostore,dvpstore,nspec_ani, &
+                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                   nspec_stacey,rho_vp,rho_vs, &
+                   xstore,ystore,zstore, &
+                   rmin,rmax, &
+                   elem_in_crust,elem_in_mantle)
+
+  endif
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   ! note:  using gll points to capture them results in a slightly more accurate mesh.
@@ -224,10 +203,10 @@
       ! stretches mesh between surface and R220 accordingly
       if( USE_GLL ) then
         ! stretches every gll point accordingly
-        call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo,R220)
+        call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo)
       else
         ! stretches anchor points only, interpolates gll points later on
-        call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+        call add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
       endif
     endif
   endif
@@ -237,19 +216,12 @@
     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
     if( USE_GLL ) then
       ! stretches every gll point accordingly
-      call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec,R220,R400,R670,R771, &
-                                      numker,numhpa,numcof,ihpa,lmax,nylm, &
-                                      lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                                      nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                                      coe,ylmcof,wk1,wk2,wk3,varstr)
-
+!! DK DK commented this out because it makes the mesher crash
+!! DK DK       call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
     else
       ! stretches anchor points only, interpolates gll points later on
-      call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
-                                      numker,numhpa,numcof,ihpa,lmax,nylm, &
-                                      lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                                      nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                                      coe,ylmcof,wk1,wk2,wk3,varstr)
+!! DK DK commented this out because it makes the mesher crash
+!! DK DK       call add_topography_410_650(myrank,xelm,yelm,zelm)
     endif
   endif
 
@@ -289,11 +261,14 @@
                                       xstore,ystore,zstore,shape3D)
 
   ! updates jacobian
-  call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
-                                ispec,nspec,ACTUALLY_STORE_ARRAYS,&
+  ! (only needed for second meshing phase)
+  if( ipass == 2 ) then
+    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
+                                ispec,nspec,&
                                 xixstore,xiystore,xizstore,&
                                 etaxstore,etaystore,etazstore,&
                                 gammaxstore,gammaystore,gammazstore)
+  endif
 
   end subroutine compute_element_properties
 
@@ -304,9 +279,9 @@
   subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                       xstore,ystore,zstore,shape3D)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: ispec,nspec
 

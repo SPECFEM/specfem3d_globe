@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,10 +34,9 @@
                         RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
                         R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
 
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   character(len=150) MODEL
 
@@ -86,10 +85,9 @@
                         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
                         OCEANS,TOPOGRAPHY)
 
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   character(len=150) MODEL
 
@@ -394,7 +392,7 @@
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ONE_CRUST = .true.
-    REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
     ! note: after call to this routine we will set
@@ -452,6 +450,7 @@
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
+
   end subroutine get_model_parameters_flags
 
 !
@@ -468,9 +467,9 @@
                                   HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
 
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 ! parameters read from parameter file
   integer REFERENCE_1D_MODEL

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,24 +25,22 @@
 !
 !=====================================================================
 
-  subroutine compute_arrays_source(ispec_selected_source, &
-                                   xi_source,eta_source,gamma_source,sourcearray, &
+  subroutine compute_arrays_source(sourcearray, &
+                                   xi_source,eta_source,gamma_source, &
                                    Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                                    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                                   xigll,yigll,zigll,nspec)
+                                   xigll,yigll,zigll)
+
+  use constants
 
   implicit none
 
-  include "constants.h"
-
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
-
-  integer ispec_selected_source,nspec
 
   double precision :: xi_source,eta_source,gamma_source
   double precision :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xix,xiy,xiz,etax,etay,etaz, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: xix,xiy,xiz,etax,etay,etaz, &
         gammax,gammay,gammaz
 
   ! Gauss-Lobatto-Legendre points of integration and weights
@@ -67,15 +65,27 @@
     do l=1,NGLLY
       do k=1,NGLLX
 
-        xixd    = dble(xix(k,l,m,ispec_selected_source))
-        xiyd    = dble(xiy(k,l,m,ispec_selected_source))
-        xizd    = dble(xiz(k,l,m,ispec_selected_source))
-        etaxd   = dble(etax(k,l,m,ispec_selected_source))
-        etayd   = dble(etay(k,l,m,ispec_selected_source))
-        etazd   = dble(etaz(k,l,m,ispec_selected_source))
-        gammaxd = dble(gammax(k,l,m,ispec_selected_source))
-        gammayd = dble(gammay(k,l,m,ispec_selected_source))
-        gammazd = dble(gammaz(k,l,m,ispec_selected_source))
+        if( CUSTOM_REAL == SIZE_REAL ) then
+          xixd    = dble(xix(k,l,m))
+          xiyd    = dble(xiy(k,l,m))
+          xizd    = dble(xiz(k,l,m))
+          etaxd   = dble(etax(k,l,m))
+          etayd   = dble(etay(k,l,m))
+          etazd   = dble(etaz(k,l,m))
+          gammaxd = dble(gammax(k,l,m))
+          gammayd = dble(gammay(k,l,m))
+          gammazd = dble(gammaz(k,l,m))
+        else
+          xixd    = xix(k,l,m)
+          xiyd    = xiy(k,l,m)
+          xizd    = xiz(k,l,m)
+          etaxd   = etax(k,l,m)
+          etayd   = etay(k,l,m)
+          etazd   = etaz(k,l,m)
+          gammaxd = gammax(k,l,m)
+          gammayd = gammay(k,l,m)
+          gammazd = gammaz(k,l,m)
+        endif
 
         G11(k,l,m) = Mxx*xixd+Mxy*xiyd+Mxz*xizd
         G12(k,l,m) = Mxx*etaxd+Mxy*etayd+Mxz*etazd
@@ -122,9 +132,9 @@
       xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
       NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! input -- notice here NSTEP_BLOCK is different from the NSTEP in the main program
 ! instead NSTEP_BLOCK = iadjsrc_len(it_sub_adj), the length of this specific block

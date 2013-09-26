@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,140 +25,55 @@
 !
 !=====================================================================
 
-  subroutine broadcast_computed_parameters(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-                NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-                NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-                NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-                MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-                DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-                CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-                RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-                MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-                RMOHO_FICTITIOUS_IN_MESHER, &
-                MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-                SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
-                SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT, &
-                OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-                LOCAL_PATH,MODEL, &
-                NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
-                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-                ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
-                this_region_has_a_doubling,rmins,rmaxs, &
-                ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-                HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-                ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-                ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY, &
-                SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
-          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
-          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
-          ATT1,ATT2,ATT3,ATT4,ATT5,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
+  subroutine broadcast_computed_parameters(myrank)
 
-  use mpi
+  use constants
+  use shared_parameters
 
   implicit none
 
-  include "constants.h"
-  include "precision.h"
-
-  integer myrank
-
-  ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION, &
-          ATT1,ATT2,ATT3,ATT4,ATT5
-
-  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-          RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT
-
-  logical MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
-          OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
-          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE,&
-          SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
-          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
-          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,&
-          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE
-
-  character(len=150) LOCAL_PATH,MODEL
-
-  ! parameters to be computed based upon parameters above read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
-      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-      NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-      NGLOB
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array,ner
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
-  integer ratio_divide_central_cube
-
-  ! for the cut doublingbrick improvement
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-
-  ! mesh model parameters
-  integer REFERENCE_1D_MODEL,THREE_D_MODEL
-
-  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-    HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-    ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-    ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE
+  integer,intent(in) :: myrank
 
   ! local parameters
-  double precision, dimension(32) :: bcast_double_precision
-  integer, dimension(45) :: bcast_integer
-  logical, dimension(53) :: bcast_logical
-  integer ier
+  ! broadcast parameter arrays
+  integer, parameter :: nparam_i = 44
+  integer, dimension(nparam_i) :: bcast_integer
+
+  integer, parameter :: nparam_l = 54
+  logical, dimension(nparam_l) :: bcast_logical
+
+  integer, parameter :: nparam_dp = 32
+  double precision, dimension(nparam_dp) :: bcast_double_precision
+
+  ! initializes containers
+  bcast_integer(:) = 0
+  bcast_logical(:) = .false.
+  bcast_double_precision(:) = 0.d0
 
   ! master process prepares broadcasting arrays
-  if (myrank==0) then
-    ! count the total number of sources in the CMTSOLUTION file
-    call count_number_of_sources(NSOURCES)
-
+  if( myrank == 0 ) then
     ! funny way to pass parameters in arrays from master to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
     bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
             NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-            NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-            NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-            NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-            NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
-            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
+            NER_TOP_CENTRAL_CUBE_ICB, &
+            NEX_XI,NEX_ETA, &
+            NPROC_XI,NPROC_ETA, &
+            NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            NTSTEP_BETWEEN_READ_ADJSRC, &
+            NSTEP,NSOURCES, &
+            NTSTEP_BETWEEN_FRAMES, &
+            NTSTEP_BETWEEN_OUTPUT_INFO, &
+            NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
+            SIMULATION_TYPE, &
+            REFERENCE_1D_MODEL,THREE_D_MODEL, &
+            NPROC,NPROCTOT, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
-            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NSOURCES,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION, &
-            ATT1,ATT2,ATT3,ATT4,ATT5/)
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
+            NOISE_TOMOGRAPHY, &
+            NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
@@ -169,11 +84,15 @@
             CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
             HONOR_1D_SPHERICAL_MOHO,MOVIE_COARSE, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
-            ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE,&
-            SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
-            USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
-            USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-            ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,&
+            ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
+            SAVE_REGULAR_KL, &
+            PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
+            USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
+            ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
+            USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK, &
+            GPU_MODE, &
+            ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+            ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
             EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -185,39 +104,48 @@
   endif
 
   ! broadcasts the information read on the master to the nodes
-  call MPI_BCAST(bcast_integer,45,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(bcast_double_precision,32,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(bcast_logical,53,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(bcast_integer,nparam_i)
+  call bcast_all_l(bcast_logical,nparam_l)
+  call bcast_all_dp(bcast_double_precision,nparam_dp)
 
   ! broadcasts non-single value parameters
-  call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ner,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(doubling_index,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(r_bottom,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(r_top,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(rmins,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(this_region_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC2D_XI,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC2D_ETA,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC2D_BOTTOM,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC2D_TOP,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSPEC1D_RADIAL,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NGLOB1D_RADIAL,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NGLOB2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NGLOB2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NGLOB,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(LOCAL_PATH,150)
+  call bcast_all_ch(LOCAL_TMP_PATH,150)
+  call bcast_all_ch(MODEL,150)
+
+  call bcast_all_i(ner,MAX_NUMBER_OF_MESH_LAYERS)
+  call bcast_all_i(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS)
+  call bcast_all_i(doubling_index,MAX_NUMBER_OF_MESH_LAYERS)
+
+  call bcast_all_dp(r_bottom,MAX_NUMBER_OF_MESH_LAYERS)
+  call bcast_all_dp(r_top,MAX_NUMBER_OF_MESH_LAYERS)
+  call bcast_all_dp(rmins,MAX_NUMBER_OF_MESH_LAYERS)
+  call bcast_all_dp(rmaxs,MAX_NUMBER_OF_MESH_LAYERS)
+
+  call bcast_all_l(this_region_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS)
+
+  call bcast_all_i(NSPEC,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC2D_XI,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC2D_ETA,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC2DMAX_XMIN_XMAX,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC2DMAX_YMIN_YMAX,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC2D_BOTTOM,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC2D_TOP,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC1D_RADIAL,MAX_NUM_REGIONS)
+  call bcast_all_i(NGLOB1D_RADIAL,MAX_NUM_REGIONS)
+  call bcast_all_i(NGLOB2DMAX_XMIN_XMAX,MAX_NUM_REGIONS)
+  call bcast_all_i(NGLOB2DMAX_YMIN_YMAX,MAX_NUM_REGIONS)
+  call bcast_all_i(NGLOB,MAX_NUM_REGIONS)
+  call bcast_all_i(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE)
+  call bcast_all_i(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
+  call bcast_all_i(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
+
+  ! debug
+  !print*,'rank:',myrank,'bcast_integer:',bcast_integer(:)
+  !print*
 
   ! non-master processes set their parameters
-  if (myrank /= 0) then
+  if( myrank /= 0 ) then
 
     ! please, be careful with ordering and counting here
     ! integers
@@ -258,14 +186,13 @@
     MOVIE_VOLUME_TYPE = bcast_integer(35)
     MOVIE_START = bcast_integer(36)
     MOVIE_STOP = bcast_integer(37)
-    NSOURCES = bcast_integer(38)
-    NOISE_TOMOGRAPHY = bcast_integer(39)
-    NT_DUMP_ATTENUATION = bcast_integer(40)
-    ATT1 = bcast_integer(41)
-    ATT2 = bcast_integer(42)
-    ATT3 = bcast_integer(43)
-    ATT4 = bcast_integer(44)
-    ATT5 = bcast_integer(45)
+    NOISE_TOMOGRAPHY = bcast_integer(38)
+    NT_DUMP_ATTENUATION = bcast_integer(39)
+    ATT1 = bcast_integer(40)
+    ATT2 = bcast_integer(41)
+    ATT3 = bcast_integer(42)
+    ATT4 = bcast_integer(43)
+    ATT5 = bcast_integer(44)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -318,9 +245,10 @@
     ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(48)
     ADIOS_FOR_MPI_ARRAYS = bcast_logical(49)
     ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(50)
-    ADIOS_FOR_AVS_DX = bcast_logical(51)
-    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(52)
-    ATTENUATION_1D_WITH_3D_STORAGE = bcast_logical(53)
+    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(51)
+    ADIOS_FOR_AVS_DX = bcast_logical(52)
+    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(53)
+    ATTENUATION_1D_WITH_3D_STORAGE = bcast_logical(54)
 
     ! double precisions
     DT = bcast_double_precision(1)

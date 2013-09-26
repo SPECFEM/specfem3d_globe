@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,47 +34,65 @@
 ! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated.
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_s20rts_broadcast(myrank,S20RTS_V)
+  module model_s20rts_par
+
+  ! three_d_mantle_model_constants
+  integer, parameter :: NK_20 = 20
+  integer, parameter :: NS_20 = 20
+
+  ! model_s20rts_variables
+  !a = positive m  (radial, theta, phi) --> (k,l,m) (maybe other way around??)
+  !b = negative m  (radial, theta, phi) --> (k,l,-m)
+  double precision,dimension(:,:,:),allocatable :: &
+    S20RTS_V_dvs_a,S20RTS_V_dvs_b,S20RTS_V_dvp_a,S20RTS_V_dvp_b
+
+  ! splines
+  double precision,dimension(:),allocatable :: S20RTS_V_spknt
+  double precision,dimension(:,:),allocatable :: S20RTS_V_qq0
+  double precision,dimension(:,:,:),allocatable :: S20RTS_V_qq
+
+  end module model_s20rts_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_s20rts_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_s20rts_par
 
   implicit none
-
-  include "constants.h"
-
-! model_s20rts_variables s20rts
-  type model_s20rts_variables
-    sequence
-    double precision dvs_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvs_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision spknt(NK_20+1)
-    double precision qq0(NK_20+1,NK_20+1)
-    double precision qq(3,NK_20+1,NK_20+1)
-  end type model_s20rts_variables
-
-  type (model_s20rts_variables) S20RTS_V
-! model_s20rts_variables
 
   integer :: myrank
 
   ! local parameters
   integer :: ier
 
+  ! allocates memory
+  allocate(S20RTS_V_dvs_a(0:NK_20,0:NS_20,0:NS_20), &
+          S20RTS_V_dvs_b(0:NK_20,0:NS_20,0:NS_20), &
+          S20RTS_V_dvp_a(0:NK_20,0:NS_20,0:NS_20), &
+          S20RTS_V_dvp_b(0:NK_20,0:NS_20,0:NS_20), &
+          S20RTS_V_spknt(NK_20+1), &
+          S20RTS_V_qq0(NK_20+1,NK_20+1), &
+          S20RTS_V_qq(3,NK_20+1,NK_20+1), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating S20RTS_V arrays')
+
   ! the variables read are declared and stored in structure S20RTS_V
-  if(myrank == 0) call read_model_s20rts(S20RTS_V)
+  if(myrank == 0) call read_model_s20rts()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(S20RTS_V%dvs_a,(NK_20+1)*(NS_20+1)*(NS_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S20RTS_V%dvs_b,(NK_20+1)*(NS_20+1)*(NS_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S20RTS_V%dvp_a,(NK_20+1)*(NS_20+1)*(NS_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S20RTS_V%dvp_b,(NK_20+1)*(NS_20+1)*(NS_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S20RTS_V%spknt,NK_20+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S20RTS_V%qq0,(NK_20+1)*(NK_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(S20RTS_V%qq,3*(NK_20+1)*(NK_20+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(S20RTS_V_dvs_a,(NK_20+1)*(NS_20+1)*(NS_20+1))
+  call bcast_all_dp(S20RTS_V_dvs_b,(NK_20+1)*(NS_20+1)*(NS_20+1))
+  call bcast_all_dp(S20RTS_V_dvp_a,(NK_20+1)*(NS_20+1)*(NS_20+1))
+  call bcast_all_dp(S20RTS_V_dvp_b,(NK_20+1)*(NS_20+1)*(NS_20+1))
+  call bcast_all_dp(S20RTS_V_spknt,NK_20+1)
+  call bcast_all_dp(S20RTS_V_qq0,(NK_20+1)*(NK_20+1))
+  call bcast_all_dp(S20RTS_V_qq,3*(NK_20+1)*(NK_20+1))
 
   end subroutine model_s20rts_broadcast
 
@@ -82,26 +100,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_model_s20rts(S20RTS_V)
+  subroutine read_model_s20rts()
+
+  use constants
+  use model_s20rts_par
 
   implicit none
-
-  include "constants.h"
-
-! model_s20rts_variables
-  type model_s20rts_variables
-    sequence
-    double precision dvs_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvs_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision spknt(NK_20+1)
-    double precision qq0(NK_20+1,NK_20+1)
-    double precision qq(3,NK_20+1,NK_20+1)
-  end type model_s20rts_variables
-
-  type (model_s20rts_variables) S20RTS_V
-! model_s20rts_variables
 
   ! local parameters
   integer :: k,l,m,ier
@@ -117,7 +121,7 @@
 
   do k=0,NK_20
     do l=0,NS_20
-      read(10,*) S20RTS_V%dvs_a(k,l,0),(S20RTS_V%dvs_a(k,l,m),S20RTS_V%dvs_b(k,l,m),m=1,l)
+      read(10,*) S20RTS_V_dvs_a(k,l,0),(S20RTS_V_dvs_a(k,l,m),S20RTS_V_dvs_b(k,l,m),m=1,l)
     enddo
   enddo
   close(10)
@@ -128,45 +132,31 @@
 
   do k=0,NK_20
     do l=0,12
-      read(10,*) S20RTS_V%dvp_a(k,l,0),(S20RTS_V%dvp_a(k,l,m),S20RTS_V%dvp_b(k,l,m),m=1,l)
+      read(10,*) S20RTS_V_dvp_a(k,l,0),(S20RTS_V_dvp_a(k,l,m),S20RTS_V_dvp_b(k,l,m),m=1,l)
     enddo
     do l=13,NS_20
-      S20RTS_V%dvp_a(k,l,0) = 0.0d0
+      S20RTS_V_dvp_a(k,l,0) = 0.0d0
       do m=1,l
-        S20RTS_V%dvp_a(k,l,m) = 0.0d0
-        S20RTS_V%dvp_b(k,l,m) = 0.0d0
+        S20RTS_V_dvp_a(k,l,m) = 0.0d0
+        S20RTS_V_dvp_b(k,l,m) = 0.0d0
       enddo
     enddo
   enddo
   close(10)
 
   ! set up the splines used as radial basis functions by Ritsema
-  call s20rts_splhsetup(S20RTS_V)
+  call s20rts_splhsetup()
 
   end subroutine read_model_s20rts
 
 !---------------------------
 
-  subroutine mantle_s20rts(radius,theta,phi,dvs,dvp,drho,S20RTS_V)
+  subroutine mantle_s20rts(radius,theta,phi,dvs,dvp,drho)
+
+  use constants
+  use model_s20rts_par
 
   implicit none
-
-  include "constants.h"
-
-! model_s20rts_variables
-  type model_s20rts_variables
-    sequence
-    double precision dvs_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvs_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision spknt(NK_20+1)
-    double precision qq0(NK_20+1,NK_20+1)
-    double precision qq(3,NK_20+1,NK_20+1)
-  end type model_s20rts_variables
-
-  type (model_s20rts_variables) S20RTS_V
-! model_s20rts_variables
 
   double precision :: radius,theta,phi,dvs,dvp,drho
 
@@ -196,7 +186,7 @@
 
   xr=-1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   do k=0,NK_20
-    radial_basis(k)=s20rts_rsple(1,NK_20+1,S20RTS_V%spknt(1),S20RTS_V%qq0(1,NK_20+1-k),S20RTS_V%qq(1,1,NK_20+1-k),xr)
+    radial_basis(k)=s20rts_rsple(1,NK_20+1,S20RTS_V_spknt(1),S20RTS_V_qq0(1,NK_20+1-k),S20RTS_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
   do l=0,NS_20
@@ -207,8 +197,8 @@
     dvs_alm=0.0d0
     dvp_alm=0.0d0
     do k=0,NK_20
-      dvs_alm=dvs_alm+radial_basis(k)*S20RTS_V%dvs_a(k,l,0)
-      dvp_alm=dvp_alm+radial_basis(k)*S20RTS_V%dvp_a(k,l,0)
+      dvs_alm=dvs_alm+radial_basis(k)*S20RTS_V_dvs_a(k,l,0)
+      dvp_alm=dvp_alm+radial_basis(k)*S20RTS_V_dvp_a(k,l,0)
     enddo
     dvs=dvs+dvs_alm*x(1)
     dvp=dvp+dvp_alm*x(1)
@@ -219,10 +209,10 @@
       dvs_blm=0.0d0
       dvp_blm=0.0d0
       do k=0,NK_20
-        dvs_alm=dvs_alm+radial_basis(k)*S20RTS_V%dvs_a(k,l,m)
-        dvp_alm=dvp_alm+radial_basis(k)*S20RTS_V%dvp_a(k,l,m)
-        dvs_blm=dvs_blm+radial_basis(k)*S20RTS_V%dvs_b(k,l,m)
-        dvp_blm=dvp_blm+radial_basis(k)*S20RTS_V%dvp_b(k,l,m)
+        dvs_alm=dvs_alm+radial_basis(k)*S20RTS_V_dvs_a(k,l,m)
+        dvp_alm=dvp_alm+radial_basis(k)*S20RTS_V_dvp_a(k,l,m)
+        dvs_blm=dvs_blm+radial_basis(k)*S20RTS_V_dvs_b(k,l,m)
+        dvp_blm=dvp_blm+radial_basis(k)*S20RTS_V_dvp_b(k,l,m)
       enddo
       dvs=dvs+(dvs_alm*dcos(dble(m)*phi)+dvs_blm*dsin(dble(m)*phi))*x(m+1)
       dvp=dvp+(dvp_alm*dcos(dble(m)*phi)+dvp_blm*dsin(dble(m)*phi))*x(m+1)
@@ -238,63 +228,50 @@
 !----------------------------------
 !
 
-  subroutine s20rts_splhsetup(S20RTS_V)
+  subroutine s20rts_splhsetup()
+
+  use constants
+  use model_s20rts_par
 
   implicit none
-  include "constants.h"
-
-! model_s20rts_variables
-  type model_s20rts_variables
-    sequence
-    double precision dvs_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvs_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_a(0:NK_20,0:NS_20,0:NS_20)
-    double precision dvp_b(0:NK_20,0:NS_20,0:NS_20)
-    double precision spknt(NK_20+1)
-    double precision qq0(NK_20+1,NK_20+1)
-    double precision qq(3,NK_20+1,NK_20+1)
-  end type model_s20rts_variables
-
-  type (model_s20rts_variables) S20RTS_V
-! model_s20rts_variables
 
   ! local parameters
   integer :: i,j
   double precision :: qqwk(3,NK_20+1)
 
-  S20RTS_V%spknt(1) = -1.00000d0
-  S20RTS_V%spknt(2) = -0.78631d0
-  S20RTS_V%spknt(3) = -0.59207d0
-  S20RTS_V%spknt(4) = -0.41550d0
-  S20RTS_V%spknt(5) = -0.25499d0
-  S20RTS_V%spknt(6) = -0.10909d0
-  S20RTS_V%spknt(7) = 0.02353d0
-  S20RTS_V%spknt(8) = 0.14409d0
-  S20RTS_V%spknt(9) = 0.25367d0
-  S20RTS_V%spknt(10) = 0.35329d0
-  S20RTS_V%spknt(11) = 0.44384d0
-  S20RTS_V%spknt(12) = 0.52615d0
-  S20RTS_V%spknt(13) = 0.60097d0
-  S20RTS_V%spknt(14) = 0.66899d0
-  S20RTS_V%spknt(15) = 0.73081d0
-  S20RTS_V%spknt(16) = 0.78701d0
-  S20RTS_V%spknt(17) = 0.83810d0
-  S20RTS_V%spknt(18) = 0.88454d0
-  S20RTS_V%spknt(19) = 0.92675d0
-  S20RTS_V%spknt(20) = 0.96512d0
-  S20RTS_V%spknt(21) = 1.00000d0
+  S20RTS_V_spknt(1) = -1.00000d0
+  S20RTS_V_spknt(2) = -0.78631d0
+  S20RTS_V_spknt(3) = -0.59207d0
+  S20RTS_V_spknt(4) = -0.41550d0
+  S20RTS_V_spknt(5) = -0.25499d0
+  S20RTS_V_spknt(6) = -0.10909d0
+  S20RTS_V_spknt(7) = 0.02353d0
+  S20RTS_V_spknt(8) = 0.14409d0
+  S20RTS_V_spknt(9) = 0.25367d0
+  S20RTS_V_spknt(10) = 0.35329d0
+  S20RTS_V_spknt(11) = 0.44384d0
+  S20RTS_V_spknt(12) = 0.52615d0
+  S20RTS_V_spknt(13) = 0.60097d0
+  S20RTS_V_spknt(14) = 0.66899d0
+  S20RTS_V_spknt(15) = 0.73081d0
+  S20RTS_V_spknt(16) = 0.78701d0
+  S20RTS_V_spknt(17) = 0.83810d0
+  S20RTS_V_spknt(18) = 0.88454d0
+  S20RTS_V_spknt(19) = 0.92675d0
+  S20RTS_V_spknt(20) = 0.96512d0
+  S20RTS_V_spknt(21) = 1.00000d0
 
   do i=1,NK_20+1
     do j=1,NK_20+1
       if(i == j) then
-        S20RTS_V%qq0(j,i)=1.0d0
+        S20RTS_V_qq0(j,i)=1.0d0
       else
-        S20RTS_V%qq0(j,i)=0.0d0
+        S20RTS_V_qq0(j,i)=0.0d0
       endif
     enddo
   enddo
   do i=1,NK_20+1
-    call s20rts_rspln(1,NK_20+1,S20RTS_V%spknt(1),S20RTS_V%qq0(1,i),S20RTS_V%qq(1,1,i),qqwk(1,1))
+    call s20rts_rspln(1,NK_20+1,S20RTS_V_spknt(1),S20RTS_V_qq0(1,i),S20RTS_V_qq(1,1,i),qqwk(1,1))
   enddo
 
   end subroutine s20rts_splhsetup

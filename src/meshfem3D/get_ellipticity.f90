@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@
 
   subroutine get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
   double precision xelm(NGNOD)
@@ -61,20 +61,20 @@
 
   enddo
 
+  end subroutine get_ellipticity
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-  end subroutine get_ellipticity
 
   !> Hejun
   ! get ellipticity according to GLL points
   ! JAN08, 2010
   subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer nspl
   integer::ispec,nspec

@@ -1,13 +1,13 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 #          --------------------------------------------------
 #
 #          Main authors: Dimitri Komatitsch and Jeroen Tromp
 #                        Princeton University, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            April 2011
+#                            August 2013
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,25 +32,30 @@ compute_optimized_dumping_undo_att_TARGETS = \
 	$(EMPTY_MACRO)
 
 compute_optimized_dumping_undo_att_OBJECTS = \
-	$O/compute_optimized_dumping_undo_att.o \
+	$O/compute_optimized_dumping_undo_att.optdump.o \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
 compute_optimized_dumping_undo_att_SHARED_OBJECTS = \
-	$O/auto_ner.o \
-	$O/count_number_of_sources.o \
-	$O/euler_angles.o \
-	$O/force_ftz.o \
-	$O/get_model_parameters.o \
-	$O/get_value_parameters.o \
-	$O/memory_eval.o \
-	$O/param_reader.o \
-	$O/read_compute_parameters.o \
-	$O/read_parameter_file.o \
-	$O/read_value_parameters.o \
-	$O/reduce.o \
-	$O/rthetaphi_xyz.o \
-	$O/save_header_file.o \
+	$O/shared_par.shared.o \
+	$O/auto_ner.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_number_of_sources.shared.o \
+	$O/count_points.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/euler_angles.shared.o \
+	$O/force_ftz.cc.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/get_value_parameters.shared.o \
+	$O/memory_eval.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/save_header_file.shared.o \
 	$(EMPTY_MACRO)
 
 #######################################
@@ -59,12 +64,12 @@ compute_optimized_dumping_undo_att_SHARED_OBJECTS = \
 #### rules for executables
 ####
 
-${E}/xcompute_optimized_dumping_undo_att: $(compute_optimized_dumping_undo_att_OBJECTS) $(compute_optimized_dumping_undo_att_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o ${E}/xcompute_optimized_dumping_undo_att $(compute_optimized_dumping_undo_att_OBJECTS) $(compute_optimized_dumping_undo_att_SHARED_OBJECTS)
+${E}/xcompute_optimized_dumping_undo_att: $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
+	${FCCOMPILE_CHECK} -o ${E}/xcompute_optimized_dumping_undo_att $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
 
 ## uses MPI compiler to link executable instead (usedful for cross-compilation)
-#${E}/xcompute_optimized_dumping_undo_att: $(compute_optimized_dumping_undo_att_OBJECTS) $(compute_optimized_dumping_undo_att_SHARED_OBJECTS)
-#	${MPIFCCOMPILE_CHECK} -o ${E}/xcompute_optimized_dumping_undo_att $(compute_optimized_dumping_undo_att_OBJECTS) $(compute_optimized_dumping_undo_att_SHARED_OBJECTS)
+#${E}/xcompute_optimized_dumping_undo_att: $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
+#	${MPIFCCOMPILE_CHECK} -o ${E}/xcompute_optimized_dumping_undo_att $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
 
 #######################################
 
@@ -76,10 +81,6 @@ $(compute_optimized_dumping_undo_att_OBJECTS): S := ${S_TOP}/src/compute_optimiz
 #### rule for each .o file below
 ####
 
-##
-## compute_optimized_dumping_undo_att objects
-##
-
-$O/compute_optimized_dumping_undo_att.o: $S/compute_optimized_dumping_undo_att.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_optimized_dumping_undo_att.o ${FCFLAGS_f90} $S/compute_optimized_dumping_undo_att.f90
+$O/%.optdump.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

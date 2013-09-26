@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,36 +27,33 @@
 
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
-  subroutine save_header_file(NSPEC,NGLOB,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
-                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY, &
-                        OCEANS,ATTENUATION,ATTENUATION_3D, &
-                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-                        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
-                        CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-                        static_memory_size, &
-                        NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                        NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                        NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-                        NPROC_XI,NPROC_ETA, &
-                        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                        NSPEC_INNER_CORE_ATTENUATION, &
-                        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                        NSPEC_CRUST_MANTLE_ADJOINT, &
-                        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                        MOVIE_VOLUME,SAVE_REGULAR_KL,NOISE_TOMOGRAPHY, &
-                        ATT1,ATT2,ATT3,ATT4,ATT5,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
-                        SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION, &
-                        ATTENUATION_1D_WITH_3D_STORAGE)
+  subroutine save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
+                              NSOURCES, &
+                              static_memory_size, &
+                              NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                              NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+                              NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                              NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                              NSPEC_INNER_CORE_ATTENUATION, &
+                              NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                              NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                              NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                              NSPEC_CRUST_MANTLE_ADJOINT, &
+                              NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                              NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                              NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                              NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
 
+! daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
+!              for SIMULATION_TYPE == 1 or equal to NSPEC_CRUST_MANTLE for SIMULATION_TYPE == 3 or SAVE_FORWARD set to .true.
+!              the value is determined in routine memory_eval() and passed here as argument.
 !
+!              thus, in order to be able to run a kernel simulation, users still have to re-compile the binaries with the right
+!              parameters set in Par_file otherwise the kernel runs will crash.
+!
+!              there is hardly another way of this usage when trying to take advantage of static compilation for the solver.
+!              please ignore the following remark:
 ! ****************************************************************************************************
 ! IMPORTANT: this routine must *NOT* use flag SIMULATION_TYPE (nor SAVE_FORWARD), i.e. none of the parameters it computes
 ! should depend on SIMULATION_TYPE, because most users do not recompile the code nor rerun the mesher
@@ -66,29 +63,35 @@
 ! ****************************************************************************************************
 !
 
-  implicit none
+  use constants
+  use shared_parameters,only: TOPOGRAPHY, &
+    TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    ELLIPTICITY,GRAVITY,ROTATION, &
+    OCEANS,ATTENUATION,ATTENUATION_3D, &
+    ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+    INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
+    CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
+    NSTEP,NEX_XI,NEX_ETA, &
+    NPROC_XI,NPROC_ETA, &
+    SAVE_REGULAR_KL, &
+    PARTIAL_PHYS_DISPERSION_ONLY, &
+    ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION, &
+    ATTENUATION_1D_WITH_3D_STORAGE, &
+    ATT1,ATT2,ATT3,ATT4,ATT5, &
+    MOVIE_VOLUME
 
-  include "constants.h"
+  implicit none
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
-  integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP,NOISE_TOMOGRAPHY
+  integer :: NPROC,NPROCTOT,NSOURCES
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE, &
-          SAVE_REGULAR_KL,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,PARTIAL_PHYS_DISPERSION_ONLY, &
-          SAVE_SOURCE_MASK,ABSORBING_CONDITIONS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE
-
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
-          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   ! static memory size needed by the solver
   double precision :: static_memory_size
 
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+  integer, dimension(MAX_NUM_REGIONS) :: &
         NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
-  integer :: NPROC_XI,NPROC_ETA
-  integer :: NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
@@ -102,10 +105,9 @@
          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-         NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB, &
-         NGLOB_XY_CM, NGLOB_XY_IC
+         NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
 
-  logical :: MOVIE_VOLUME
+  integer :: NGLOB_XY_CM, NGLOB_XY_IC
 
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
@@ -118,7 +120,6 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: ATT1,ATT2,ATT3,ATT4,ATT5
   integer :: ier
   character(len=150) HEADER_FILE
 
@@ -352,23 +353,26 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = ',NSPEC_OUTER_CORE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
 
-  if(ANISOTROPIC_KL) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
-  endif
+  ! unused... (dynamic allocation used)
+  !if(ANISOTROPIC_KL) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
+  !endif
 
-  if(APPROXIMATE_HESS_KL) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
-  endif
+  ! unused... (dynamic allocation used)
+  !if(APPROXIMATE_HESS_KL) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
+  !endif
 
-  if(NOISE_TOMOGRAPHY > 0) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
-  endif
+  ! unused... (dynamic allocation used)
+  !if(NOISE_TOMOGRAPHY > 0) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
+  !endif
 
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = ',NGLOB_CRUST_MANTLE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = ',NGLOB_OUTER_CORE_ADJOINT
@@ -464,50 +468,13 @@
   else
     write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.'
   endif
-
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_CM = ',NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_OC = ',NGLOB1D_RADIAL(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_IC = ',NGLOB1D_RADIAL(IREGION_INNER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_CM = ',NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_OC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XMIN_XMAX_IC = ',NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_CM = ',NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_OC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NPROC_XI_VAL = ',NPROC_XI
   write(IOUT,*) 'integer, parameter :: NPROC_ETA_VAL = ',NPROC_ETA
   write(IOUT,*) 'integer, parameter :: NCHUNKS_VAL = ',NCHUNKS
   write(IOUT,*) 'integer, parameter :: NPROCTOT_VAL = ',NPROCTOT
   write(IOUT,*)
-
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_CM_VAL = ', &
-            max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_OC_VAL = ', &
-            max(NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE))
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_IC_VAL = ', &
-            max(NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE))
-
-  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
-    NCORNERSCHUNKS = 1
-    NUM_FACES = 1
-    NUM_MSG_TYPES = 1
-  else if(NCHUNKS == 3) then
-    NCORNERSCHUNKS = 1
-    NUM_FACES = 1
-    NUM_MSG_TYPES = 3
-  else if(NCHUNKS == 6) then
-    NCORNERSCHUNKS = 8
-    NUM_FACES = 4
-    NUM_MSG_TYPES = 3
-  else
-    stop 'error nchunks in save_header_file()'
-  endif
-
-  write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_VAL = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
-  write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
   write(IOUT,*) 'integer, parameter :: ATT1_VAL = ',ATT1
   write(IOUT,*) 'integer, parameter :: ATT2_VAL = ',ATT2
@@ -577,12 +544,13 @@
   endif
   write(IOUT,*)
 
-  if (SAVE_SOURCE_MASK) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = NSPEC_CRUST_MANTLE'
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
-  endif
-  write(IOUT,*)
+  ! unused... (dynamic allocation used)
+  !if (SAVE_SOURCE_MASK) then
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = NSPEC_CRUST_MANTLE'
+  !else
+  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
+  !endif
+  !write(IOUT,*)
 
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
@@ -594,17 +562,15 @@
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
 
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
+  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
   else
      NGLOB_XY_CM = 1
   endif
 
-  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    if(ROTATION) then
-      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-    endif
+  if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+    NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+    NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
   endif
 
   write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM = ',NGLOB_XY_CM

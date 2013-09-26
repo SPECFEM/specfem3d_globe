@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,11 +25,7 @@
 !
 !=====================================================================
 
-  subroutine write_output_ASCII(seismogram_tmp, &
-              DT,hdur,OUTPUT_FILES, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank, &
-              iorientation,sisname,sisname_big_file)
+  subroutine write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
 
 ! save seismograms in text format with no subsampling.
 ! Because we do not subsample the output, this can result in large files
@@ -37,35 +33,34 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
+  use constants,only: CUSTOM_REAL,SIZE_REAL,IOUT,C_LDDRK
+
+  use specfem_par,only: &
+    DT,t0,NSTEP, &
+    seismo_offset,seismo_current, &
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS,OUTPUT_FILES,SIMULATION_TYPE, &
+    SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
+    myrank
+
   implicit none
-
-  include "constants.h"
-
-  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
-  integer myrank
-  double precision hdur,DT
-
-  integer iorientation
-
-  character(len=256) sisname,sisname_big_file
-  character(len=150) OUTPUT_FILES
-
-  ! save all seismograms in one large combined file instead of one file per seismogram
-  ! to avoid overloading shared non-local file systems such as GPFS for instance
-  logical SAVE_ALL_SEISMOS_IN_ONE_FILE
-  logical USE_BINARY_FOR_LARGE_FILE
+  integer :: iorientation
+  character(len=256) :: sisname,sisname_big_file
 
   ! local parameters
-  integer ier,isample
-  character(len=256) sisname_2
-  double precision value
-
+  integer :: it
+  integer :: ier,isample
+  double precision :: value
+  double precision :: time
+  character(len=256) :: sisname_2
 
   ! add .ascii extension to seismogram file name for ASCII seismograms
   write(sisname_2,"('/',a,'.ascii')") trim(sisname)
+
+  ! save all seismograms in one large combined file instead of one file per seismogram
+  ! to avoid overloading shared non-local file systems such as GPFS for instance
 
   ! create one large file instead of one small file per station to avoid file system overload
   if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
@@ -87,21 +82,34 @@
 
   ! subtract half duration of the source to make sure travel time is correct
   do isample = 1,seismo_current
+
+    ! seismogram value
     value = dble(seismogram_tmp(iorientation,isample))
 
+    ! current time increment
+    it = seismo_offset + isample
+
+    ! current time
+    if( SIMULATION_TYPE == 3 ) then
+      time = dble(NSTEP-it)*DT - t0
+    else
+      time = dble(it-1)*DT - t0
+    endif
+
+    ! writes out to file
     if(SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
       ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT) sngl(dble(seismo_offset+isample-1)*DT - hdur),sngl(value)
+        write(IOUT) sngl(time),sngl(value)
       else
-        write(IOUT) dble(seismo_offset+isample-1)*DT - hdur,value
+        write(IOUT) time,value
       endif
     else
       ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT,*) sngl(dble(seismo_offset+isample-1)*DT - hdur),' ',sngl(value)
+        write(IOUT,*) sngl(time),' ',sngl(value)
       else
-        write(IOUT,*) dble(seismo_offset+isample-1)*DT - hdur,' ',value
+        write(IOUT,*) time,' ',value
       endif
     endif
   enddo

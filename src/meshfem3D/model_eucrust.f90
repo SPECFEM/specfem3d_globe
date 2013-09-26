@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,71 +33,69 @@
 ! Geophysical Research Letters, 35: p. L05313.208
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_eucrust_broadcast(myrank,EUCM_V)
+  module model_eucrust_par
+
+  ! EUcrust
+  double precision, dimension(:),allocatable :: eucrust_lat,eucrust_lon,&
+      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
+      eucrust_basement,eucrust_ucdepth
+  integer :: num_eucrust
+
+  end module model_eucrust_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_eucrust_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_eucrust_par
 
   implicit none
-
-  include "constants.h"
-
-  ! EUcrust
-  type model_eucrust_variables
-    sequence
-    double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
-      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
-      eucrust_basement,eucrust_ucdepth
-    integer :: num_eucrust
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_eucrust_variables
-  type (model_eucrust_variables) EUCM_V
 
   integer :: myrank
   integer :: ier
 
   ! EUcrust07 Vp crustal structure
-  if( myrank == 0 ) call read_EuCrust(EUCM_V)
+  if( myrank == 0 ) call read_EuCrust()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(EUCM_V%num_eucrust,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(num_eucrust,1)
 
   ! allocates on all other processes
   if( myrank /= 0 ) then
-    allocate(EUCM_V%eucrust_vp_uppercrust(EUCM_V%num_eucrust),EUCM_V%eucrust_vp_lowercrust(EUCM_V%num_eucrust),&
-            EUCM_V%eucrust_mohodepth(EUCM_V%num_eucrust),EUCM_V%eucrust_basement(EUCM_V%num_eucrust),&
-            EUCM_V%eucrust_ucdepth(EUCM_V%num_eucrust), EUCM_V%eucrust_lon(EUCM_V%num_eucrust),&
-            EUCM_V%eucrust_lat(EUCM_V%num_eucrust))
+    allocate(eucrust_vp_uppercrust(num_eucrust), &
+            eucrust_vp_lowercrust(num_eucrust),&
+            eucrust_mohodepth(num_eucrust), &
+            eucrust_basement(num_eucrust),&
+            eucrust_ucdepth(num_eucrust), &
+            eucrust_lon(num_eucrust),&
+            eucrust_lat(num_eucrust), &
+            stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating EUcrust arrays')
   endif
 
-  call MPI_BCAST(EUCM_V%eucrust_lat(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EUCM_V%eucrust_lon(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EUCM_V%eucrust_vp_uppercrust(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EUCM_V%eucrust_vp_lowercrust(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EUCM_V%eucrust_mohodepth(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EUCM_V%eucrust_basement(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EUCM_V%eucrust_ucdepth(1:EUCM_V%num_eucrust),EUCM_V%num_eucrust,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(eucrust_lat(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_lon(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_vp_uppercrust(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_vp_lowercrust(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_mohodepth(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_basement(1:num_eucrust),num_eucrust)
+  call bcast_all_dp(eucrust_ucdepth(1:num_eucrust),num_eucrust)
 
   end subroutine model_eucrust_broadcast
 
 !----------------------------------------------------------------------------------------------------
 
-  subroutine read_EuCrust(EUCM_V)
+  subroutine read_EuCrust()
+
+  use constants
+  use model_eucrust_par
 
   implicit none
-
-  include "constants.h"
-
-  type model_eucrust_variables
-    sequence
-    double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
-      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
-      eucrust_basement,eucrust_ucdepth
-    integer :: num_eucrust
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_eucrust_variables
-  type (model_eucrust_variables) EUCM_V
 
   ! local variables
   character(len=80):: line
@@ -107,25 +105,32 @@
   double precision:: upper_lower_depth,moho_depth,lat,lon
 
   ! original file size entries
-  EUCM_V%num_eucrust = 36058
+  num_eucrust = 36058
 
   ! only on master we allocate these arrays here
-  allocate(EUCM_V%eucrust_vp_uppercrust(EUCM_V%num_eucrust),EUCM_V%eucrust_vp_lowercrust(EUCM_V%num_eucrust),&
-        EUCM_V%eucrust_mohodepth(EUCM_V%num_eucrust),EUCM_V%eucrust_basement(EUCM_V%num_eucrust),&
-        EUCM_V%eucrust_ucdepth(EUCM_V%num_eucrust), EUCM_V%eucrust_lon(EUCM_V%num_eucrust),&
-        EUCM_V%eucrust_lat(EUCM_V%num_eucrust))
+  allocate(eucrust_vp_uppercrust(num_eucrust), &
+          eucrust_vp_lowercrust(num_eucrust),&
+          eucrust_mohodepth(num_eucrust), &
+          eucrust_basement(num_eucrust),&
+          eucrust_ucdepth(num_eucrust), &
+          eucrust_lon(num_eucrust),&
+          eucrust_lat(num_eucrust), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(0,'error allocating EUcrust arrays on master')
 
-  EUCM_V%eucrust_vp_uppercrust(:) = ZERO
-  EUCM_V%eucrust_vp_lowercrust(:) = ZERO
-  EUCM_V%eucrust_mohodepth(:) = ZERO
-  EUCM_V%eucrust_basement(:) = ZERO
-  EUCM_V%eucrust_ucdepth(:) = ZERO
+  eucrust_vp_uppercrust(:) = ZERO
+  eucrust_vp_lowercrust(:) = ZERO
+  eucrust_mohodepth(:) = ZERO
+  eucrust_basement(:) = ZERO
+  eucrust_ucdepth(:) = ZERO
 
   ! opens data file
   call get_value_string(filename, 'model.eu', 'DATA/eucrust-07/ds01.txt')
   open(unit=11,file=filename,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model eucrust')
   endif
 
@@ -141,13 +146,13 @@
     read(line,*)lon,lat,vp_uppercrust,vp_lowercrust,vp_avg,topo,basement,upper_lower_depth,moho_depth
 
     ! stores moho values
-    EUCM_V%eucrust_lon(i) = lon
-    EUCM_V%eucrust_lat(i) = lat
-    EUCM_V%eucrust_vp_uppercrust(i) = vp_uppercrust
-    EUCM_V%eucrust_vp_lowercrust(i) = vp_lowercrust
-    EUCM_V%eucrust_mohodepth(i) = moho_depth
-    EUCM_V%eucrust_basement(i) = basement
-    EUCM_V%eucrust_ucdepth(i) = upper_lower_depth
+    eucrust_lon(i) = lon
+    eucrust_lat(i) = lat
+    eucrust_vp_uppercrust(i) = vp_uppercrust
+    eucrust_vp_lowercrust(i) = vp_lowercrust
+    eucrust_mohodepth(i) = moho_depth
+    eucrust_basement(i) = basement
+    eucrust_ucdepth(i) = upper_lower_depth
 
   enddo
   close(11)
@@ -158,19 +163,11 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_eucrust(lat,lon,x,vp,found_crust,EUCM_V)
+  subroutine model_eucrust(lat,lon,x,vp,found_crust)
+
+  use model_eucrust_par
 
   implicit none
-
-  type model_eucrust_variables
-    sequence
-    double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
-      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
-      eucrust_basement,eucrust_ucdepth
-    integer :: num_eucrust
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_eucrust_variables
-  type (model_eucrust_variables) EUCM_V
 
   double precision :: lat,lon,x,vp
   logical :: found_crust
@@ -192,10 +189,10 @@
   if( lat < lat_min .or. lat > lat_max ) return
 
   ! smoothing over 1.0 degrees
-  call eu_cap_smoothing(lat,lon,x,vp,found_crust,EUCM_V)
+  call eu_cap_smoothing(lat,lon,x,vp,found_crust)
 
   ! without smoothing
-  !vp = crust_eu(lat,lon,x,vp,found_crust,EUCM_V)
+  !vp = crust_eu(lat,lon,x,vp,found_crust)
 
   end subroutine model_eucrust
 
@@ -203,23 +200,14 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  double precision function crust_eu(lat,lon,x,vp,found_crust,EUCM_V)
+  double precision function crust_eu(lat,lon,x,vp,found_crust)
 
 ! returns Vp at the specific location lat/lon
 
+  use constants
+  use model_eucrust_par
+
   implicit none
-
-  include "constants.h"
-
-  type model_eucrust_variables
-    sequence
-    double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
-      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
-      eucrust_basement,eucrust_ucdepth
-    integer :: num_eucrust
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_eucrust_variables
-  type (model_eucrust_variables) EUCM_V
 
   double precision :: lat,lon,x,vp !,vs,rho,moho
   logical :: found_crust
@@ -246,13 +234,13 @@
 
   ! search
   do i=1,ilons-1
-    if( lon >= EUCM_V%eucrust_lon(i) .and. lon < EUCM_V%eucrust_lon(i+1) ) then
+    if( lon >= eucrust_lon(i) .and. lon < eucrust_lon(i+1) ) then
           do j=0,ilats-1
-            if(lat>=EUCM_V%eucrust_lat(i+j*ilons) .and. lat<EUCM_V%eucrust_lat(i+(j+1)*ilons)) then
+            if(lat>=eucrust_lat(i+j*ilons) .and. lat<eucrust_lat(i+(j+1)*ilons)) then
 
-              h_basement = EUCM_V%eucrust_basement(i+j*ilons)
-              h_uc = EUCM_V%eucrust_ucdepth(i+j*ilons)
-              h_moho = EUCM_V%eucrust_mohodepth(i+j*ilons)
+              h_basement = eucrust_basement(i+j*ilons)
+              h_uc = eucrust_ucdepth(i+j*ilons)
+              h_moho = eucrust_mohodepth(i+j*ilons)
 
               x3=(R_EARTH - h_basement*1000.0d0)/R_EARTH
               x4=(R_EARTH - h_uc*1000.0d0)/R_EARTH
@@ -265,17 +253,17 @@
                 ! above sediment basement, returns average upper crust value
                 ! since no special sediment values are given
                 found_crust = .true.
-                vp = EUCM_V%eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+                vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
                 crust_eu = vp
                 return
               else if( x > x4 ) then
                 found_crust = .true.
-                vp = EUCM_V%eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+                vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
                 crust_eu = vp
                 return
               else if( x > x5 ) then
                 found_crust = .true.
-                vp = EUCM_V%eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+                vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
                 crust_eu = vp
                 return
               endif
@@ -290,31 +278,22 @@
 !
 !--------------------------------------------------------------------------------------------------
 !
-  subroutine eu_cap_smoothing(lat,lon,radius,value,found,EUCM_V)
+  subroutine eu_cap_smoothing(lat,lon,radius,value,found)
 
 ! smooths with a cap of size CAP (in degrees)
 ! using NTHETA points in the theta direction (latitudal)
 ! and NPHI in the phi direction (longitudal).
 ! The cap is rotated to the North Pole.
 
-  implicit none
+  use constants
+  use model_eucrust_par
 
-  include "constants.h"
+  implicit none
 
   ! argument variables
   double precision lat,lon,radius
   double precision :: value
   logical :: found
-
-  type model_eucrust_variables
-    sequence
-    double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
-      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
-      eucrust_basement,eucrust_ucdepth
-    integer :: num_eucrust
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_eucrust_variables
-  type (model_eucrust_variables) EUCM_V
 
   integer, parameter :: NTHETA = 4
   integer, parameter :: NPHI = 10
@@ -344,7 +323,7 @@
   !call get_crust_structure(crustaltype,velp,vels,rho,thick,code,thlr,velocp,velocs,dens,ier)
 
   !  uncomment the following line to use as is, without smoothing
-  !  value = func(lat,lon,x,value,found,EUCM_V)
+  !  value = func(lat,lon,x,value,found)
   !  return
 
   theta = (90.0-lat)*DEGREES_TO_RADIANS
@@ -424,7 +403,7 @@
   ! integrates value
   value = 0.0d0
   do i=1,npoints
-    valuel = crust_eu(xlat(i),xlon(i),radius,value,found,EUCM_V)
+    valuel = crust_eu(xlat(i),xlon(i),radius,value,found)
     value = value + weight(i)*valuel
   enddo
 

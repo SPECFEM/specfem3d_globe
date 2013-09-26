@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -45,10 +45,6 @@
 ! set to SIZE_REAL to run in single precision
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
-
-! this for non blocking assembly
-  integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
-  integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 
 !*********************************************************************************************************
 
@@ -240,13 +236,8 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
-!*********************************************************************************************************
+!************************************************************
 ! added these parameters for the GPU version of the solver with mesh coloring
-
-! sort outer elements first and then inner elements
-! in order to use non blocking MPI to overlap communications
-  logical, parameter :: SORT_MESH_INNER_OUTER = .true.
-  integer, parameter :: NGNOD_HEXAHEDRA = 8
 
 ! add mesh coloring for the GPU + MPI implementation
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
@@ -276,6 +267,21 @@
   real, parameter :: KL_REG_MAX_LON = 360.0
   real, parameter :: KL_REG_MIN_LAT = -90.0
   real, parameter :: KL_REG_MAX_LAT = +90.0
+
+!!-----------------------------------------------------------
+!!
+!! new version compatibility
+!!
+!!-----------------------------------------------------------
+!! (uncomment desired resolution)
+! old version
+! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
+!  logical, parameter :: USE_VERSION_5_1_5 = .true.
+! new version
+! new version uses optional full 3d attenuation
+  logical, parameter :: USE_VERSION_5_1_5 = .false.
+
+
 
 !!-----------------------------------------------------------
 !!
@@ -501,12 +507,12 @@
 ! number of faces a given slice can share with other slices
 ! this is at most 2, except when there is only once slice per chunk
 ! in which case it is 4
-  integer, parameter :: NUMFACES_SHARED = 2 !!!!!  DK DK removed support for one slice only, was 4
+  integer, parameter :: NUMFACES_SHARED = 4
 
 ! number of corners a given slice can share with other slices
 ! this is at most 1, except when there is only once slice per chunk
 ! in which case it is 4
-  integer, parameter :: NUMCORNERS_SHARED = 1 !!!!!!  DK DK removed support for one slice only, was 4
+  integer, parameter :: NUMCORNERS_SHARED = 4
 
 ! number of slaves per corner
   integer, parameter :: NUMSLAVES = 2
@@ -558,32 +564,6 @@
 !!
 !!-----------------------------------------------------------
 
-! number of layers in DATA/1066a/1066a.dat
-  integer, parameter :: NR_1066A = 160
-
-! number of layers in ak135-F
-  integer, parameter :: NR_AK135F_NO_MUD = 136
-
-! number of layers in DATA/s362ani/REF
-  integer, parameter :: NR_REF = 750
-
-! number of layers in DATA/Lebedev_sea99 1D model
-  integer, parameter :: NR_SEA1D = 163
-
-! three_d_mantle_model_constants
-  integer, parameter :: NK_20 = 20,NS_20 = 20,NS_40 = 40, ND = 1
-
-! heterogen_mantle_model_constants
-  integer, parameter :: N_R = 256,N_THETA = 256,N_PHI = 256
-
-! Japan 3D model (Zhao, 1994) constants
-  integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
-  integer, parameter :: MKA=2101,MKB=2101
-
-! QRFSI12 constants
-  integer,parameter :: NKQ=8,MAXL_Q=12
-  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
-
 ! The meaningful range of Zhao et al. (1994) model is as follows:
 !        latitude : 32 - 45 N
 !        longitude: 130-145 E
@@ -594,30 +574,6 @@
   double precision,parameter :: LON_MAX = 145.d0
   double precision,parameter :: LON_MIN = 130.d0
   double precision,parameter :: DEP_MAX = 500.d0
-
-! crustal_model_constants
-! crustal model parameters for crust2.0
-  integer, parameter :: NKEYS_CRUST = 359
-  integer, parameter :: NLAYERS_CRUST = 8
-  integer, parameter :: NCAP_CRUST = 180
-
-! General Crustmaps parameters
-  integer, parameter :: CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
-  integer, parameter :: NLAYERS_CRUSTMAP = 5
-
-! parameters for EPCRUST , from Molinari & Morelli model(2011)
-!       latitude :  9.0N - 89.5N
-!       longitude:  56.0W - 70.0E
-  character(len=*), parameter :: PATHNAME_EPCRUST = 'DATA/epcrust/EPcrust_0_5.txt'
-  integer, parameter :: EPCRUST_NLON = 253, EPCRUST_NLAT = 162, EPCRUST_NLAYER = 3
-  double precision, parameter :: EPCRUST_LON_MIN = -56.0d0
-  double precision, parameter :: EPCRUST_LON_MAX =  70.0d0
-  double precision, parameter :: EPCRUST_LAT_MIN =   9.0d0
-  double precision, parameter :: EPCRUST_LAT_MAX =  89.5d0
-  double precision, parameter :: EPCRUST_SAMPLE = 0.5d0
-  logical, parameter :: flag_smooth_epcrust = .true.
-  integer, parameter :: NTHETA_EP = 4, NPHI_EP = 20
-  double precision, parameter :: cap_degree_EP = 0.2d0
 
 ! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@
 
   subroutine add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer myrank
 
@@ -51,10 +51,12 @@
 
 ! convert to r theta phi
     call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+    theta = theta + 0.0000001d0
+    phi = phi + 0.0000001d0
     call reduce(theta,phi)
 
 ! compute topography on ICB; the routine subtopo_icb needs to be supplied by the user
-!    call subtopo_icb(theta,phi,topoicb)
+!   call subtopo_icb(theta,phi,topoicb)
     topoicb = 0.0d0
 
 ! non-dimensionalize the topography, which is in km

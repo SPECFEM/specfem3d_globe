@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,162 +25,208 @@
 !
 !=====================================================================
 
-subroutine save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
-                    NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                    displ_inner_core,veloc_inner_core,accel_inner_core, &
-                    displ_outer_core,veloc_outer_core,accel_outer_core, &
-                    R_memory_crust_mantle,R_memory_inner_core, &
-                    A_array_rotation,B_array_rotation, &
-                    LOCAL_PATH)
+!> Save the values of the arrays used for forward simulations.
+!!
+!! Two different options allow to save arrays used for forward simulations.
+!!   - setting SAVE_FORWARD to true. That save the last frame.
+!!   - setting NUMBERS_OF_RUNS to 2 or 3. This save intermadiate frame to
+!!     restart the remaining of the simulation later.
+!! Moreover, one can choose to save these arrays with the help of the ADIOS
+!! library. Set ADIOS_FOR_FORWARD_ARRAYS to true in the Par_file for this
+!! feature.
+  subroutine save_forward_arrays()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  integer SIMULATION_TYPE
-  logical SAVE_FORWARD
-  integer NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-    displ_inner_core,veloc_inner_core,accel_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
-    displ_outer_core,veloc_outer_core,accel_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
-    R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
-    R_memory_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
-
-  character(len=150) LOCAL_PATH
-
   ! local parameters
+  integer :: ier
   character(len=150) outputname
+
+  ! checks if anything to do
+  if( UNDO_ATTENUATION ) return
 
   ! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
-    write(55) displ_crust_mantle
-    write(55) veloc_crust_mantle
-    write(55) accel_crust_mantle
-    write(55) displ_inner_core
-    write(55) veloc_inner_core
-    write(55) accel_inner_core
-    write(55) displ_outer_core
-    write(55) veloc_outer_core
-    write(55) accel_outer_core
-    write(55) A_array_rotation
-    write(55) B_array_rotation
-    write(55) R_memory_crust_mantle
-    write(55) R_memory_inner_core
-    close(55)
+    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+      call save_intermediate_forward_arrays_adios()
+    else
+      write(outputname,"('dump_all_arrays',i6.6)") myrank
+      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file dump_all_arrays*** for writing')
+
+      write(IOUT) displ_crust_mantle
+      write(IOUT) veloc_crust_mantle
+      write(IOUT) accel_crust_mantle
+
+      write(IOUT) displ_inner_core
+      write(IOUT) veloc_inner_core
+      write(IOUT) accel_inner_core
+
+      write(IOUT) displ_outer_core
+      write(IOUT) veloc_outer_core
+      write(IOUT) accel_outer_core
+
+      write(IOUT) epsilondev_xx_crust_mantle
+      write(IOUT) epsilondev_yy_crust_mantle
+      write(IOUT) epsilondev_xy_crust_mantle
+      write(IOUT) epsilondev_xz_crust_mantle
+      write(IOUT) epsilondev_yz_crust_mantle
+
+      write(IOUT) epsilondev_xx_inner_core
+      write(IOUT) epsilondev_yy_inner_core
+      write(IOUT) epsilondev_xy_inner_core
+      write(IOUT) epsilondev_xz_inner_core
+      write(IOUT) epsilondev_yz_inner_core
+
+      write(IOUT) A_array_rotation
+      write(IOUT) B_array_rotation
+
+      write(IOUT) R_xx_crust_mantle
+      write(IOUT) R_yy_crust_mantle
+      write(IOUT) R_xy_crust_mantle
+      write(IOUT) R_xz_crust_mantle
+      write(IOUT) R_yz_crust_mantle
+
+      write(IOUT) R_xx_inner_core
+      write(IOUT) R_yy_inner_core
+      write(IOUT) R_xy_inner_core
+      write(IOUT) R_xz_inner_core
+      write(IOUT) R_yz_inner_core
+
+      close(IOUT)
+    endif
   endif
 
   ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
-    write(55) displ_crust_mantle
-    write(55) veloc_crust_mantle
-    write(55) accel_crust_mantle
-    write(55) displ_inner_core
-    write(55) veloc_inner_core
-    write(55) accel_inner_core
-    write(55) displ_outer_core
-    write(55) veloc_outer_core
-    write(55) accel_outer_core
-    if (ROTATION_VAL) then
-      write(55) A_array_rotation
-      write(55) B_array_rotation
+    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+      call save_forward_arrays_adios()
+    else
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
+      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='unknown', &
+          form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_forward_arrays** for writing')
+
+      write(IOUT) displ_crust_mantle
+      write(IOUT) veloc_crust_mantle
+      write(IOUT) accel_crust_mantle
+
+      write(IOUT) displ_inner_core
+      write(IOUT) veloc_inner_core
+      write(IOUT) accel_inner_core
+
+      write(IOUT) displ_outer_core
+      write(IOUT) veloc_outer_core
+      write(IOUT) accel_outer_core
+
+      write(IOUT) epsilondev_xx_crust_mantle
+      write(IOUT) epsilondev_yy_crust_mantle
+      write(IOUT) epsilondev_xy_crust_mantle
+      write(IOUT) epsilondev_xz_crust_mantle
+      write(IOUT) epsilondev_yz_crust_mantle
+
+      write(IOUT) epsilondev_xx_inner_core
+      write(IOUT) epsilondev_yy_inner_core
+      write(IOUT) epsilondev_xy_inner_core
+      write(IOUT) epsilondev_xz_inner_core
+      write(IOUT) epsilondev_yz_inner_core
+
+      if (ROTATION_VAL) then
+        write(IOUT) A_array_rotation
+        write(IOUT) B_array_rotation
+      endif
+
+      if (ATTENUATION_VAL) then
+         write(IOUT) R_xx_crust_mantle
+         write(IOUT) R_yy_crust_mantle
+         write(IOUT) R_xy_crust_mantle
+         write(IOUT) R_xz_crust_mantle
+         write(IOUT) R_yz_crust_mantle
+
+         write(IOUT) R_xx_inner_core
+         write(IOUT) R_yy_inner_core
+         write(IOUT) R_xy_inner_core
+         write(IOUT) R_xz_inner_core
+         write(IOUT) R_yz_inner_core
+      endif
+
+      close(IOUT)
     endif
-    if (ATTENUATION_VAL) then
-      write(55) R_memory_crust_mantle
-      write(55) R_memory_inner_core
-    endif
-    close(55)
   endif
 
-end subroutine save_forward_arrays
+  end subroutine save_forward_arrays
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-subroutine save_forward_arrays_undoatt(myrank,SIMULATION_TYPE,SAVE_FORWARD,NUMBER_OF_RUNS, &
-                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                    displ_inner_core,veloc_inner_core,accel_inner_core, &
-                    displ_outer_core,veloc_outer_core,accel_outer_core, &
-                    R_memory_crust_mantle,R_memory_inner_core, &
-                    A_array_rotation,B_array_rotation, &
-                    LOCAL_PATH,iteration_on_subset)
+  subroutine save_forward_arrays_undoatt()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  integer SIMULATION_TYPE
-  logical SAVE_FORWARD
-  integer NUMBER_OF_RUNS
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-    displ_inner_core,veloc_inner_core,accel_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
-    displ_outer_core,veloc_outer_core,accel_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
-    R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
-    R_memory_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
-
-  character(len=150) LOCAL_PATH
-
-  integer iteration_on_subset
-
   ! local parameters
-  character(len=150) outputname
+  integer :: iteration_on_subset_tmp
+  integer :: ier
+  character(len=150) :: outputname
 
+  ! current subset iteration
+  iteration_on_subset_tmp = iteration_on_subset
 
-  ! save files to local disk or tape system if restart file
-  if(NUMBER_OF_RUNS > 1) stop 'NUMBER_OF_RUNS > 1 is not support for undoing attenuation'
+  ! saves frame of the forward simulation
 
-  ! save last frame of the forward simulation
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
-    write(55) displ_crust_mantle
-    write(55) veloc_crust_mantle
-    write(55) accel_crust_mantle
-    write(55) displ_inner_core
-    write(55) veloc_inner_core
-    write(55) accel_inner_core
-    write(55) displ_outer_core
-    write(55) veloc_outer_core
-    write(55) accel_outer_core
-    if (ROTATION_VAL) then
-      write(55) A_array_rotation
-      write(55) B_array_rotation
-    endif
-    if (ATTENUATION_VAL) then
-      write(55) R_memory_crust_mantle
-      write(55) R_memory_inner_core
-    endif
-    close(55)
+  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+
+  ! debug
+  !if(myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
+
+  open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname, &
+       status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
+
+  write(IOUT) displ_crust_mantle
+  write(IOUT) veloc_crust_mantle
+  write(IOUT) accel_crust_mantle
+
+  write(IOUT) displ_inner_core
+  write(IOUT) veloc_inner_core
+  write(IOUT) accel_inner_core
+
+  write(IOUT) displ_outer_core
+  write(IOUT) veloc_outer_core
+  write(IOUT) accel_outer_core
+
+  if (ROTATION_VAL) then
+    write(IOUT) A_array_rotation
+    write(IOUT) B_array_rotation
   endif
 
-end subroutine save_forward_arrays_undoatt
+  if (ATTENUATION_VAL) then
+    write(IOUT) R_xx_crust_mantle
+    write(IOUT) R_yy_crust_mantle
+    write(IOUT) R_xy_crust_mantle
+    write(IOUT) R_xz_crust_mantle
+    write(IOUT) R_yz_crust_mantle
+
+    write(IOUT) R_xx_inner_core
+    write(IOUT) R_yy_inner_core
+    write(IOUT) R_xy_inner_core
+    write(IOUT) R_xz_inner_core
+    write(IOUT) R_yz_inner_core
+  endif
+
+  close(IOUT)
+
+  end subroutine save_forward_arrays_undoatt
+
 

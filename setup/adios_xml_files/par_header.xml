@@ -5,7 +5,7 @@
     <!--*** Solver information ***-->
     <attribute name="code_name"       path="/solver_info" value="SPECFEM3D_GLOBE" type="string"/>
     <attribute name="version_name"    path="/solver_info" value="SUNFLOWER"       type="string"/>
-    <attribute name="version_number"  path="/solver_info" value="5.1"             type="string"/>
+    <attribute name="version_number"  path="/solver_info" value="6.0"             type="string"/>
     <!--************************************************************-->
     <!--*** Values read from DATA/Par_file ***-->
     <!-- double precision variables -->
@@ -52,7 +52,6 @@
     <var name="PRINT_SOURCE_TIME_FUNCTION"   path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="SAVE_MESH_FILES"              path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="ATTENUATION"                  path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="ATTENUATION_NEW"              path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="ABSORBING_CONDITIONS"         path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="SAVE_FORWARD"                 path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="OUTPUT_SEISMOS_ASCII_TEXT"    path="/specfem3D_globe_parameter_file" type="byte"/>

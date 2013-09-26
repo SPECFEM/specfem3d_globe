@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,8 +34,11 @@
   subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
                   mask_noise_out)
+
+  use constants
+
   implicit none
-  include "constants.h"
+
   ! input parameters
   real(kind=CUSTOM_REAL) :: xcoord_in,ycoord_in,zcoord_in
   ! output parameters
@@ -73,39 +76,16 @@
 ! subroutine for NOISE TOMOGRAPHY
 ! read parameters
 
-  subroutine read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
-                                   islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
-                                   noise_sourcearray,xigll,yigll,zigll,nspec_top, &
-                                   NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
-                                   xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                   irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
+  subroutine read_parameters_noise()
 
-  use mpi
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
 
   implicit none
 
-  include "precision.h"
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: myrank, nrec, NSTEP, nmovie_points, nspec_top, NIT
-  integer, dimension(nrec) :: islice_selected_rec
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  double precision, dimension(nrec)  :: xi_receiver,eta_receiver,gamma_receiver
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
-  double precision, dimension(NDIM,NDIM,nrec) :: nu
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  ! output parameters
-  integer :: irec_master_noise
-  real(kind=CUSTOM_REAL) :: noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP)
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise,mask_noise
   ! local parameters
-  integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ios, ier
+  integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ios
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
   character(len=150) :: filename
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
@@ -190,12 +170,12 @@
 
   ! gather info on master proc
   ispec = nmovie_points
-  call MPI_GATHER(val_x,ispec,CUSTOM_MPI_TYPE,val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_y,ispec,CUSTOM_MPI_TYPE,val_y_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_z,ispec,CUSTOM_MPI_TYPE,val_z_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_ux,ispec,CUSTOM_MPI_TYPE,val_ux_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_uy,ispec,CUSTOM_MPI_TYPE,val_uy_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(val_uz,ispec,CUSTOM_MPI_TYPE,val_uz_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call gather_all_cr(val_x,ispec,val_x_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_y,ispec,val_y_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_z,ispec,val_z_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_ux,ispec,val_ux_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_uy,ispec,val_uy_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_uz,ispec,val_uz_all,ispec,NPROCTOT_VAL)
 
   ! save maks_noise data to disk in home directory
   ! this file can be viewed the same way as surface movie data (xcreate_movie_AVS_DX)
@@ -226,23 +206,13 @@
 ! subroutine for NOISE TOMOGRAPHY
 ! check for consistency of the parameters
 
-  subroutine check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
-                                    NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
-                                    SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
-                                    MOVIE_COARSE,LOCAL_PATH,NSPEC_TOP,NSTEP)
+  subroutine check_parameters_noise()
+
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  ! input parameters
-  integer :: myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NSPEC_TOP,NSTEP
-  logical :: SAVE_FORWARD,ROTATE_SEISMOGRAMS_RT,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
-            USE_BINARY_FOR_LARGE_FILE,MOVIE_COARSE
-  character(len=150) :: LOCAL_PATH
-
-  ! output parameters
   ! local parameters
   integer :: reclen,ier
   integer(kind=8) :: filesize
@@ -260,7 +230,7 @@
      WRITE(IOUT_NOISE,*) 'You are running simulations using NOISE TOMOGRAPHY techniques.'
      WRITE(IOUT_NOISE,*) 'Please make sure you understand the procedures before you have a try.'
      WRITE(IOUT_NOISE,*) 'Displacements everywhere at the free surface are saved every timestep,'
-     WRITE(IOUT_NOISE,*) 'so make sure that LOCAL_PATH in DATA/Par_file is not global.'
+     WRITE(IOUT_NOISE,*) 'so make sure that LOCAL_TMP_PATH in DATA/Par_file is not global.'
      WRITE(IOUT_NOISE,*) 'Otherwise the disk storage may be a serious issue, as is the speed of I/O.'
      WRITE(IOUT_NOISE,*) 'Also make sure that NO earthquakes are included,'
      WRITE(IOUT_NOISE,*) 'i.e., set moment tensor to be ZERO in CMTSOLUTION'
@@ -306,14 +276,14 @@
      filesize = filesize*NSTEP
 
      write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-     if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(9,trim(LOCAL_PATH)//trim(outputname), &
-                                      len_trim(trim(LOCAL_PATH)//trim(outputname)), &
+     if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
+                                      len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), &
                                       filesize)
-     if (NOISE_TOMOGRAPHY==2) call open_file_abs_r(9,trim(LOCAL_PATH)//trim(outputname), &
-                                      len_trim(trim(LOCAL_PATH)//trim(outputname)), &
+     if (NOISE_TOMOGRAPHY==2) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
+                                      len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), &
                                       filesize)
-     if (NOISE_TOMOGRAPHY==3) call open_file_abs_r(9,trim(LOCAL_PATH)//trim(outputname), &
-                                      len_trim(trim(LOCAL_PATH)//trim(outputname)), &
+     if (NOISE_TOMOGRAPHY==3) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
+                                      len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), &
                                       filesize)
   endif
 
@@ -330,9 +300,11 @@
   subroutine compute_arrays_source_noise(myrank, &
                                          xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
                                          xigll,yigll,zigll,NSTEP)
+
+  use constants_solver
+
   implicit none
-  include 'constants.h'
-  include "OUTPUT_FILES/values_from_mesher.h"
+
   ! input parameters
   integer :: myrank, NSTEP
   double precision, dimension(NGLLX) :: xigll
@@ -418,27 +390,25 @@
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
 ! add noise spectrum to the location of master receiver
-  subroutine add_source_master_rec_noise(myrank,nrec, &
-                                NSTEP,accel_crust_mantle,noise_sourcearray, &
-                                ibool_crust_mantle,islice_selected_rec,ispec_selected_rec, &
-                                it,irec_master_noise)
+
+  subroutine noise_add_source_master_rec()
+
+! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
+! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
+! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
+! now this must be manually set in DATA/CMTSOLUTION, by USERS.
+
+  use specfem_par
+  use specfem_par_crustmantle
+
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: myrank,nrec,NSTEP, irec_master_noise
-  integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle  ! both input and output
-  ! output parameters
-
   ! local parameters
-  integer :: i,j,k,iglob,it
-
+  integer :: i,j,k,iglob
 
   ! adds noise source (only if this proc carries the noise)
+  if( .not. GPU_MODE ) then
+    ! on CPU
     if(myrank == islice_selected_rec(irec_master_noise)) then
       ! adds noise source contributions
       do k=1,NGLLZ
@@ -450,9 +420,14 @@
           enddo
         enddo
       enddo
+    endif
+
+  else
+    ! on GPU
+    call noise_add_source_master_rec_cu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)
   endif
 
-  end subroutine add_source_master_rec_noise
+  end subroutine noise_add_source_master_rec
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -470,26 +445,19 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-!!!!! improved version !!!!!
-  subroutine noise_save_surface_movie(displ_crust_mantle, &
-                    ibelm_top_crust_mantle,ibool_crust_mantle, &
-                    nspec_top,noise_surface_movie,it)
-  implicit none
+  subroutine noise_save_surface_movie()
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: nspec_top,it
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) ::  displ_crust_mantle
-  ! output parameters
+  use specfem_par
+  use specfem_par_crustmantle
+
+  implicit none
 
   ! local parameters
   integer :: ispec2D,ispec,i,j,k,iglob
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
 
   ! get coordinates of surface mesh and surface displacement
+  if( .not. GPU_MODE ) then
+    ! on CPU
     do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
       ispec = ibelm_top_crust_mantle(ispec2D)
       k = NGLLZ
@@ -500,6 +468,10 @@
         enddo
       enddo
     enddo
+  else
+    ! on GPU
+    call noise_transfer_surface_to_host(Mesh_pointer,noise_surface_movie)
+  endif
 
   ! save surface motion to disk
   call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
@@ -524,35 +496,28 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-!!!!! improved version !!!!!
-  subroutine noise_read_add_surface_movie(nmovie_points,accel_crust_mantle, &
-                  normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                  ibelm_top_crust_mantle,ibool_crust_mantle, &
-                  nspec_top,noise_surface_movie, &
-                  it,jacobian2D_top_crust_mantle,wgllwgll_xy)
+  subroutine noise_read_add_surface_movie(NGLOB_AB,accel,it_index)
+
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: nspec_top,it,nmovie_points
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle ! both input and output
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  ! output parameters
+  integer :: NGLOB_AB
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_AB),intent(inout) :: accel
+
+  integer,intent(in) :: it_index
+
   ! local parameters
   integer :: ipoin,ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL) :: eta
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
 
   ! read surface movie
-  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP,it_index)
 
   ! get coordinates of surface mesh and surface displacement
+  if( .not. GPU_MODE ) then
+    ! on CPU
     ipoin = 0
     do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
       ispec = ibelm_top_crust_mantle(ispec2D)
@@ -569,19 +534,24 @@
                 noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
                 noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
 
-          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) &
+          accel(1,iglob) = accel(1,iglob) &
                             + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
                               * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) &
+          accel(2,iglob) = accel(2,iglob) &
                             + eta * mask_noise(ipoin) * normal_y_noise(ipoin) &
                               * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) &
+          accel(3,iglob) = accel(3,iglob) &
                             + eta * mask_noise(ipoin) * normal_z_noise(ipoin) &
                               * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
         enddo
       enddo
 
     enddo
+
+  else
+    ! on GPU
+    call noise_add_surface_movie_cuda(Mesh_pointer,noise_surface_movie)
+  endif
 
   end subroutine noise_read_add_surface_movie
 
@@ -600,31 +570,16 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-!!!!! improved version !!!!!
-  subroutine compute_kernels_strength_noise(nmovie_points,ibool_crust_mantle, &
-                          Sigma_kl_crust_mantle,displ_crust_mantle,deltat,it, &
-                          normal_x_noise,normal_y_noise,normal_z_noise, &
-                          nspec_top,noise_surface_movie, &
-                          ibelm_top_crust_mantle)
+  subroutine compute_kernels_strength_noise()
+
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: it,nspec_top,nmovie_points
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL) :: deltat
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise
-  ! output parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_NOISE) :: &
-    Sigma_kl_crust_mantle
   ! local parameters
   integer :: i,j,k,ispec,iglob,ipoin,ispec2D
   real(kind=CUSTOM_REAL) :: eta
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
 
   ! read surface movie, needed for Sigma_kl_crust_mantle
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
@@ -632,6 +587,8 @@
   ! noise source strength kernel
   ! to keep similar structure to other kernels, the source strength kernel is saved as a volumetric kernel
   ! but only updated at the surface, because the noise is generated there
+  if( .not. GPU_MODE ) then
+    ! on CPU
     ipoin = 0
     do ispec2D = 1, NSPEC_TOP
       ispec = ibelm_top_crust_mantle(ispec2D)
@@ -656,6 +613,11 @@
       enddo
     enddo
 
+  else
+    ! on GPU
+    call compute_kernels_strgth_noise_cu(Mesh_pointer,noise_surface_movie,deltat)
+  endif
+
   end subroutine compute_kernels_strength_noise
 
 !
@@ -664,22 +626,18 @@
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 3: save noise source strength kernel
-  subroutine save_kernels_strength_noise(myrank,LOCAL_PATH,Sigma_kl_crust_mantle)
+
+  subroutine save_kernels_strength_noise()
+
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer myrank
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT_NOISE) :: Sigma_kl_crust_mantle
-  character(len=150) :: LOCAL_PATH
-  ! output parameters
   ! local parameters
-  character(len=150) :: prname
   integer :: ier
 
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
   open(unit=IOUT_NOISE,file=trim(prname)//'Sigma_kernel.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)

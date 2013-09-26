@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,447 +25,651 @@
 !
 !=====================================================================
 
-  subroutine prepare_timerun_rmass(myrank,rmass_ocean_load,rmassx_crust_mantle,rmassy_crust_mantle, &
-                      rmassz_crust_mantle,rmass_outer_core,rmass_inner_core, &
-                      iproc_xi,iproc_eta,ichunk,addressing, &
-                      iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
-                      iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-                      npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-                      iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-                      iboolleft_xi_outer_core,iboolright_xi_outer_core, &
-                      iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-                      npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-                      iboolfaces_outer_core,iboolcorner_outer_core, &
-                      iboolleft_xi_inner_core,iboolright_xi_inner_core, &
-                      iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-                      npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-                      iboolfaces_inner_core,iboolcorner_inner_core, &
-                      iprocfrom_faces,iprocto_faces,imsg_type, &
-                      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                      buffer_send_faces_scalar,buffer_received_faces_scalar, &
-                      buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                      NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS,ABSORBING_CONDITIONS, &
-                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,npoin2D_max_all_CM_IC, &
-                      SIMULATION_TYPE,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
-                      b_rmassx_crust_mantle,b_rmassy_crust_mantle,&
-                      rmassx_inner_core,rmassy_inner_core,&
-                      b_rmassx_inner_core,b_rmassy_inner_core)
+  subroutine prepare_timerun()
 
-  use mpi
+  use specfem_par
+  use specfem_par_movie
 
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank,npoin2D_max_all_CM_IC
-  integer SIMULATION_TYPE
-
-  logical ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_CM) :: b_rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassx_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassx_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY_IC) :: b_rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
-
-  integer ichunk,iproc_xi,iproc_eta
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-
-  ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
-
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
-
-  integer, dimension(NGLOB2DMAX_XY_CM_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
-  integer, dimension(NGLOB2DMAX_XY_OC_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
-  integer, dimension(NGLOB2DMAX_XY_IC_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
-
-  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
-  integer npoin2D_faces_outer_core(NUMFACES_SHARED)
-  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
-
-  ! indirect addressing for each corner of the chunks
-  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
-  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
-  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
-
-  ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
-  ! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-  ! buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_CM_VAL) ::  &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
-
-  ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: &
-    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar
-
-  integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
-
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-
   ! local parameters
-  integer :: ier
+  ! timing
+  double precision :: tCPU
+  double precision, external :: wtime
 
-  ! synchronize all the processes before assembling the mass matrix
-  ! to make sure all the nodes have finished to read their databases
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  ! get MPI starting time
+  time_start = wtime()
+
+  ! user output infos
+  call prepare_timerun_user_output()
+
+  ! sets up mass matrices
+  call prepare_timerun_mass_matrices()
+
+  ! convert x/y/z into r/theta/phi spherical coordinates
+  call prepare_timerun_convert_coord()
+
+  ! allocate files to save movies
+  ! for noise tomography, number of movie points (nmovie_points) needed for 'surface movie'
+  if( MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
+    call prepare_timerun_movie_surface()
+  endif
+
+  ! output point and element information for 3D movies
+  if( MOVIE_VOLUME ) call prepare_timerun_movie_volume()
+
+  ! sets up time increments and rotation constants
+  call prepare_timerun_constants()
+
+  ! precomputes gravity factors
+  call prepare_timerun_gravity()
+
+  ! precomputes attenuation factors
+  call prepare_timerun_attenuation()
+
+  ! initializes arrays
+  call prepare_timerun_init_wavefield()
+
+  ! reads files back from local disk or MT tape system if restart file
+  ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
+  !          will be read in the time loop after the Newmark time scheme update.
+  !          this makes indexing and timing easier to match with adjoint wavefields indexing.
+  call read_forward_arrays_startrun()
+
+  ! prepares stacey boundary arrays for re-construction of wavefields
+  if( ABSORBING_CONDITIONS ) call prepare_timerun_stacey()
+
+  ! prepares noise simulations
+  call prepare_timerun_noise()
+
+  ! prepares GPU arrays
+  if( GPU_MODE ) call prepare_timerun_GPU()
+
+  ! prepares vtk window visualization
+  if( VTK_MODE ) call prepare_vtk_window()
+
+  ! synchronize all the processes
+  call synchronize_all()
+
+  ! user output
+  if( myrank == 0 ) then
+    ! elapsed time since beginning of mesh generation
+    tCPU = wtime() - time_start
+    write(IMAIN,*)
+    write(IMAIN,*) 'Elapsed time for preparing timerun in seconds = ',sngl(tCPU)
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'time loop:'
+    write(IMAIN,*)
+    if(USE_LDDRK) then
+      write(IMAIN,*) '              scheme:         LDDRK with',NSTAGE_TIME_SCHEME,'stages'
+    else
+      write(IMAIN,*) '              scheme:         Newmark'
+    endif
+    write(IMAIN,*) '           time step: ',sngl(DT),' s'
+    write(IMAIN,*) 'number of time steps: ',NSTEP
+    write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
+    write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+    ! daniel: total time estimation
+    !  average time per element per time step:
+    !     global simulations:
+    !       isotropic models              ~ dt = 3.1857107305545455e-05
+    !       transverse isotropic models   ~ dt = 3.7492335549202518e-05
+    !                                            4.2252082718299598e-05 w/ attenuation (intel xeon @ 2.67GHz)
+    !                                            1.0069202789238270e-04 w/ simulation_type==3 (intel xeon @ 2.67GHz)
+    !     regional simulations:
+    !       transverse isotropic models   ~ dt = 4.3039939919998860e-05 w/ attenuation (intel xeon @ 2.67GHz)
+    !                                            7.6099242919530619e-05 (intel xeon @ 2.27GHz)
+    !
+    !  total time per time step:
+    !     T_total = dt * total_number_of_elements
+    !
+    !     (total_number_of_elements are listed in values_from_mesher.h)
+    !
+    !  total time using nproc processes (slices) for NSTEP time steps:
+    !     T_simulation = T_total * NSTEP / nproc
+
+  endif
+
+  end subroutine prepare_timerun
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_user_output()
+
+  use specfem_par
+  implicit none
+
+  ! user output
+  if(myrank == 0) then
+
+    write(IMAIN,*)
+    write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
+    write(IMAIN,*)
+
+    write(IMAIN,*)
+    if(OCEANS_VAL) then
+      write(IMAIN,*) 'incorporating the oceans using equivalent load'
+    else
+      write(IMAIN,*) 'no oceans'
+    endif
+
+    write(IMAIN,*)
+    if(ELLIPTICITY_VAL) then
+      write(IMAIN,*) 'incorporating ellipticity'
+    else
+      write(IMAIN,*) 'no ellipticity'
+    endif
+
+    write(IMAIN,*)
+    if(TOPOGRAPHY) then
+      write(IMAIN,*) 'incorporating surface topography'
+    else
+      write(IMAIN,*) 'no surface topography'
+    endif
+
+    write(IMAIN,*)
+    if(GRAVITY_VAL) then
+      write(IMAIN,*) 'incorporating self-gravitation (Cowling approximation)'
+    else
+      write(IMAIN,*) 'no self-gravitation'
+    endif
+
+    write(IMAIN,*)
+    if(ROTATION_VAL) then
+      write(IMAIN,*) 'incorporating rotation'
+      if( EXACT_MASS_MATRIX_FOR_ROTATION ) &
+        write(IMAIN,*) 'using exact mass matrix for rotation'
+    else
+      write(IMAIN,*) 'no rotation'
+    endif
+
+    write(IMAIN,*)
+    if(ATTENUATION_VAL) then
+      write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
+      if(ATTENUATION_3D_VAL) &
+        write(IMAIN,*) 'using 3D attenuation model'
+      if(PARTIAL_PHYS_DISPERSION_ONLY_VAL ) &
+        write(IMAIN,*) 'mimicking effects on velocity only'
+    else
+      write(IMAIN,*) 'no attenuation'
+    endif
+
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine prepare_timerun_user_output
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_mass_matrices()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+  implicit none
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing mass matrices"
+    call flush_IMAIN()
+  endif
+
+  ! mass matrices
+  !
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+  ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
+
+  ! mass matrices need to be assembled with MPI here once and for all
+  call prepare_timerun_rmass_assembly()
+
+  ! checks that all the mass matrices are positive
+  ! ocean load
+  if(OCEANS_VAL) then
+    if(minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the oceans')
+  endif
+
+  ! checks mass matrices
+
+  ! crust/mantle
+  if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassx')
+  if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassy')
+  if(minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassz')
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassx')
+    if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassy')
+    if(minval(b_rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassz')
+  endif
+
+  ! inner core
+  ! checks mass matrices for rotation
+  if(minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core rmassx')
+  if(minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core rmassy')
+  if(minval(rmassz_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core rmassz')
+  ! kernel simulations
+  if( SIMULATION_TYPE == 3 ) then
+    if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
+    if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_rmassy_inner_core')
+    if(minval(b_rmassz_inner_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the b_rmassz_inner_core')
+  endif
+
+  ! outer core
+  if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the outer core')
+  if( SIMULATION_TYPE == 3 ) then
+    if(minval(b_rmass_outer_core) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the outer core b_rmass')
+  endif
+
+  ! mass matrix inversions
+  ! for efficiency, invert final mass matrix once and for all on each slice
+  ! ocean load
+  if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
+
+  ! mass matrices on Stacey edges
+  ! crust/mantle
+  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) ) then
+     rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
+     rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
+  endif
+  if( SIMULATION_TYPE == 3 ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+      b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
+      b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
+    endif
+  endif
+  rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
+  ! inner core
+  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+     rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
+     rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
+     if( SIMULATION_TYPE == 3 ) then
+       b_rmassx_inner_core = 1._CUSTOM_REAL / b_rmassx_inner_core
+       b_rmassy_inner_core = 1._CUSTOM_REAL / b_rmassy_inner_core
+     endif
+  endif
+  rmassz_inner_core = 1._CUSTOM_REAL / rmassz_inner_core
+  ! outer core
+  rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
+
+  end subroutine prepare_timerun_mass_matrices
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_rmass_assembly()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+  implicit none
 
   ! the mass matrix needs to be assembled with MPI here once and for all
 
   ! ocean load
   if (OCEANS_VAL) then
-    call assemble_MPI_scalar_block(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                        rmass_ocean_load, &
+                        num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                        my_neighbours_crust_mantle)
   endif
 
   ! crust and mantle
-  if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
-     (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. NGLOB_CRUST_MANTLE > 0 &
-      .and. (.not. USE_LDDRK)) then
-     call assemble_MPI_scalar_block(myrank,rmassx_crust_mantle,NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                           rmassz_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
 
-     call assemble_MPI_scalar_block(myrank,rmassy_crust_mantle,NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                           rmassx_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
+
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                           rmassy_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
   endif
 
-  call assemble_MPI_scalar_block(myrank,rmassz_crust_mantle,NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+  if( SIMULATION_TYPE == 3 ) then
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
+                           b_rmassx_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
 
- if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-    .and. .not. USE_LDDRK .and. NGLOB_XY_CM > 0)then
-    if(SIMULATION_TYPE == 3)then
-       call assemble_MPI_scalar_block(myrank,b_rmassx_crust_mantle,NGLOB_XY_CM, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
-      call assemble_MPI_scalar_block(myrank,b_rmassy_crust_mantle,NGLOB_XY_CM, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY_CM_VAL,NCHUNKS_VAL)
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
+                           b_rmassy_crust_mantle, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           my_neighbours_crust_mantle)
     endif
- endif
+  endif
+
+
 
   ! outer core
-  call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL)
-
-  if(ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION &
-     .and. (.not. USE_LDDRK) .and. NGLOB_XY_IC > 0)then
-    ! inner core
-    call assemble_MPI_scalar_block(myrank,rmassx_inner_core,NGLOB_XY_IC, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
-
-   call assemble_MPI_scalar_block(myrank,rmassy_inner_core,NGLOB_XY_IC, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
-
-    if(SIMULATION_TYPE == 3  .and. NGLOB_XY_IC > 0)then
-      call assemble_MPI_scalar_block(myrank,b_rmassx_inner_core,NGLOB_XY_IC, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
-
-      call assemble_MPI_scalar_block(myrank,b_rmassy_inner_core,NGLOB_XY_IC, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
-
-    endif
-
-  endif
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+                           rmass_outer_core, &
+                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                           nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                           my_neighbours_outer_core)
 
   ! inner core
-  call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY_IC_VAL,NCHUNKS_VAL)
+  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                           rmassz_inner_core, &
+                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                           nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                           my_neighbours_inner_core)
 
-  if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
+  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                             rmassx_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             my_neighbours_inner_core)
 
-  end subroutine prepare_timerun_rmass
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                             rmassy_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             my_neighbours_inner_core)
 
-!
-!-------------------------------------------------------------------------------------------------
-!
+    if( SIMULATION_TYPE == 3 ) then
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                               b_rmassx_inner_core, &
+                               num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               my_neighbours_inner_core)
 
-  subroutine prepare_timerun_centralcube(myrank,rmass_inner_core, &
-                      iproc_xi,iproc_eta,ichunk, &
-                      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM, &
-                      addressing,ibool_inner_core,idoubling_inner_core, &
-                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                      nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-                      nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
-                      ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
-                      ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
-                      nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
-                      npoin2D_cube_from_slices,receiver_cube_from_slices, &
-                      sender_from_slices_to_cube,ibool_central_cube, &
-                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                               b_rmassy_inner_core, &
+                               num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               my_neighbours_inner_core)
+    endif
+  endif
 
-  use mpi
+  ! mass matrix including central cube
+  if(INCLUDE_CENTRAL_CUBE) then
+    ! suppress fictitious mass matrix elements in central cube
+    ! because the slices do not compute all their spectral elements in the cube
+    where(rmassz_inner_core(:) <= 0.0_CUSTOM_REAL) rmassz_inner_core = 1.0_CUSTOM_REAL
 
-  implicit none
+    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+      where(rmassx_inner_core(:) <= 0.0_CUSTOM_REAL) rmassx_inner_core = 1.0_CUSTOM_REAL
+      where(rmassy_inner_core(:) <= 0.0_CUSTOM_REAL) rmassy_inner_core = 1.0_CUSTOM_REAL
+    endif
+  endif
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  call synchronize_all()
 
-  integer myrank
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
-
-  integer ichunk,iproc_xi,iproc_eta
-
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: &
-        xstore_inner_core,ystore_inner_core,zstore_inner_core
-
-  integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-    nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
-
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
-  integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
-
-  integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
-    npoin2D_cube_from_slices,receiver_cube_from_slices
-
-  integer, dimension(non_zero_nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
-  integer, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices) :: ibool_central_cube
-  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices,buffer_slices2
-  double precision, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM) :: &
-    buffer_all_cube_from_slices
-
-  ! local parameters
-  integer :: ndim_assemble
-
-  ! create buffers to assemble with the central cube
-  call create_central_cube_buffers(myrank,iproc_xi,iproc_eta,ichunk, &
-               NPROC_XI_VAL,NPROC_ETA_VAL,NCHUNKS_VAL,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-               NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-               NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-               addressing,ibool_inner_core,idoubling_inner_core, &
-               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-               nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-               nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
-               ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
-               ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
-               nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
-               receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
-               buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
-
-  if(myrank == 0) write(IMAIN,*) 'done including central cube'
-
-  ! the mass matrix to assemble is a scalar, not a vector
-  ndim_assemble = 1
-
-  ! use these buffers to assemble the inner core mass matrix with the central cube
-  call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-               npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
-               buffer_slices, buffer_slices2, ibool_central_cube, &
-               receiver_cube_from_slices, ibool_inner_core, &
-               idoubling_inner_core, NSPEC_INNER_CORE, &
-               ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-               NGLOB_INNER_CORE,rmass_inner_core,ndim_assemble)
-
-  ! suppress fictitious mass matrix elements in central cube
-  ! because the slices do not compute all their spectral elements in the cube
-  where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1._CUSTOM_REAL
-
-  end subroutine prepare_timerun_centralcube
+  end subroutine prepare_timerun_rmass_assembly
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_timerun_constants(myrank,NSTEP, &
-                    DT,t0,scale_t,scale_t_inv,scale_displ,scale_veloc, &
-                    deltat,deltatover2,deltatsqover2, &
-                    b_deltat,b_deltatover2,b_deltatsqover2, &
-                    two_omega_earth,A_array_rotation,B_array_rotation, &
-                    b_two_omega_earth, SIMULATION_TYPE)
+  subroutine prepare_timerun_convert_coord()
 
-! precomputes constants for time integration
+! converts x/y/z into r/theta/phi spherical coordinates
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  ! local parameters
+  integer :: i
+  real(kind=CUSTOM_REAL) :: rval,thetaval,phival
 
-  integer myrank,NSTEP
+  ! change x, y, z to r, theta and phi once and for all
+  ! IMPROVE dangerous: old name kept (xstore ystore zstore) for new values
 
-  double precision DT
-  double precision t0
+  ! convert in the crust and mantle
+  do i = 1,NGLOB_CRUST_MANTLE
+    call xyz_2_rthetaphi(xstore_crust_mantle(i), &
+                        ystore_crust_mantle(i), &
+                        zstore_crust_mantle(i),rval,thetaval,phival)
+    xstore_crust_mantle(i) = rval
+    ystore_crust_mantle(i) = thetaval
+    zstore_crust_mantle(i) = phival
+  enddo
 
+  ! convert in the outer core
+  do i = 1,NGLOB_OUTER_CORE
+    call xyz_2_rthetaphi(xstore_outer_core(i), &
+                        ystore_outer_core(i), &
+                        zstore_outer_core(i),rval,thetaval,phival)
+    xstore_outer_core(i) = rval
+    ystore_outer_core(i) = thetaval
+    zstore_outer_core(i) = phival
+  enddo
 
-  double precision scale_t,scale_t_inv,scale_displ,scale_veloc
+  ! convert in the inner core
+  do i = 1,NGLOB_INNER_CORE
+    call xyz_2_rthetaphi(xstore_inner_core(i), &
+                        ystore_inner_core(i), &
+                        zstore_inner_core(i),rval,thetaval,phival)
+    xstore_inner_core(i) = rval
+    ystore_inner_core(i) = thetaval
+    zstore_inner_core(i) = phival
+  enddo
 
-  real(kind=CUSTOM_REAL) deltat,deltatover2,deltatsqover2
-  real(kind=CUSTOM_REAL) b_deltat,b_deltatover2,b_deltatsqover2
+  end subroutine prepare_timerun_convert_coord
 
-  real(kind=CUSTOM_REAL) two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-  real(kind=CUSTOM_REAL) b_two_omega_earth
+  subroutine prepare_timerun_movie_surface()
 
-  integer SIMULATION_TYPE
+  use specfem_par
+  use specfem_par_movie
+  implicit none
 
   ! local parameters
+  integer :: ier
 
+  ! user output
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing movie surface"
+    call flush_IMAIN()
+  endif
+
+  ! only output corners
+  ! note: for noise tomography, must NOT be coarse (have to be saved on all gll points)
+  if( MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0 ) then
+    ! checks setup
+    if(NGLLX /= NGLLY) &
+      call exit_MPI(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
+    ! number of points
+    nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    NIT = NGLLX - 1
+  else
+    ! number of points
+    nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    NIT = 1
+  endif
+
+  ! checks exact number of points nmovie_points
+  call movie_surface_count_points()
+
+  ! those arrays are not neccessary for noise tomography, so only allocate them in MOVIE_SURFACE case
+  if( MOVIE_SURFACE ) then
+    ! writes out movie point locations to file
+    call write_movie_surface_mesh()
+
+    ! allocates movie surface arrays for wavefield values
+    allocate(store_val_ux(nmovie_points), &
+             store_val_uy(nmovie_points), &
+             store_val_uz(nmovie_points),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface arrays')
+
+    ! allocates arrays for gathering wavefield values
+    if( myrank == 0 ) then
+      ! only master needs full arrays
+      allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
+               store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
+               store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    else
+      ! slave processes only need dummy arrays
+      allocate(store_val_ux_all(1,1), &
+               store_val_uy_all(1,1), &
+               store_val_uz_all(1,1),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    endif
+  endif
+
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Movie surface:'
+    write(IMAIN,*) '  Writing to moviedata*** files in output directory'
+    if(MOVIE_VOLUME_TYPE == 5) then
+      write(IMAIN,*) '  movie output: displacement'
+    else
+      write(IMAIN,*) '  movie output: velocity'
+    endif
+    write(IMAIN,*) '  time steps every: ',NTSTEP_BETWEEN_FRAMES
+    call flush_IMAIN()
+  endif
+
+  call synchronize_all()
+
+  end subroutine prepare_timerun_movie_surface
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_movie_volume()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
+  implicit none
+
+  ! local parameters
+  integer :: ier
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing movie volume"
+    call flush_IMAIN()
+  endif
+
+  ! checks
+  ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
+  ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
+  if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) &
+    stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
+  if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
+    stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
+
+  ! counts total number of points for movie file output
+  call movie_volume_count_points()
+
+  allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
+
+  call write_movie_volume_mesh()
 
   if(myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '           time step: ',sngl(DT),' s'
-    write(IMAIN,*) 'number of time steps: ',NSTEP
-    write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
-    write(IMAIN,*) 'start time:',sngl(-t0),' seconds'
+    write(IMAIN,*) 'Movie volume:'
+    write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
+    select case( MOVIE_VOLUME_TYPE )
+    case( 1 )
+      write(IMAIN,*) '  movie output: strains'
+    case( 2 )
+      write(IMAIN,*) '  movie output: time integral of strains'
+    case( 3 )
+      write(IMAIN,*) '  movie output: potency or integral of strain'
+    case( 4 )
+      write(IMAIN,*) '  movie output: divergence and curl'
+    case( 5 )
+      write(IMAIN,*) '  movie output: displacement'
+    case( 6 )
+      write(IMAIN,*) '  movie output: velocity'
+    case( 7 )
+      write(IMAIN,*) '  movie output: norm of displacement'
+    case( 8 )
+      write(IMAIN,*) '  movie output: norm of velocity'
+    case( 9 )
+      write(IMAIN,*) '  movie output: norm of acceleration'
+    case default
+      call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
+    end select
     write(IMAIN,*)
+    write(IMAIN,*) '  depth(T,B):',MOVIE_TOP,MOVIE_BOTTOM
+    write(IMAIN,*) '  lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
+    write(IMAIN,*) '  lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
+    write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
+    call flush_IMAIN()
+  endif
+
+  if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
+      call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
+
+  call synchronize_all()
+
+  end subroutine prepare_timerun_movie_volume
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_constants()
+
+! precomputes constants for time integration
+
+  use specfem_par
+  implicit none
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing constants"
+    call flush_IMAIN()
   endif
 
   ! define constants for the time integration
@@ -513,9 +717,6 @@
       endif
     endif
 
-    A_array_rotation = 0._CUSTOM_REAL
-    B_array_rotation = 0._CUSTOM_REAL
-
     if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
         b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
@@ -528,39 +729,27 @@
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
 
+  if(UNDO_ATTENUATION) then
+   b_deltat = deltat
+   b_deltatover2 = deltatover2
+   b_deltatsqover2 = deltatsqover2
+   b_two_omega_earth = two_omega_earth
+  endif
+
+  call synchronize_all()
+
   end subroutine prepare_timerun_constants
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_timerun_gravity(myrank, &
-                    minus_g_cmb,minus_g_icb, &
-                    minus_gravity_table,minus_deriv_gravity_table, &
-                    density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid, &
-                    ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+  subroutine prepare_timerun_gravity()
 
 ! precomputes gravity factors
 
+  use specfem_par
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  real(kind=CUSTOM_REAL) minus_g_cmb,minus_g_icb
-
-  ! lookup table every km for gravity
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
-    minus_deriv_gravity_table,density_table, &
-    d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
-
-  logical ONE_CRUST
-
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME, &
-    R80,R220,R400,R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   ! local parameters
   double precision :: rspl_gravity(NR),gspl(NR),gspl2(NR)
@@ -568,6 +757,11 @@
   double precision :: g_cmb_dble,g_icb_dble
   double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
   integer :: int_radius,idoubling,nspl_gravity
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing gravity arrays"
+    call flush_IMAIN()
+  endif
 
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
   ! get density and velocity from PREM model using dummy doubling flag
@@ -636,95 +830,66 @@
 
   endif
 
+  call synchronize_all()
+
   end subroutine prepare_timerun_gravity
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_timerun_attenuation(myrank, &
-                factor_scale_crust_mantle,one_minus_sum_beta_crust_mantle,factor_common_crust_mantle, &
-                factor_scale_inner_core,one_minus_sum_beta_inner_core,factor_common_inner_core, &
-                c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-                c22store_crust_mantle,c23store_crust_mantle, &
-                c33store_crust_mantle,c44store_crust_mantle, &
-                c55store_crust_mantle,c66store_crust_mantle, &
-                muvstore_crust_mantle,muhstore_crust_mantle,ispec_is_tiso_crust_mantle, &
-                muvstore_inner_core, &
-                SIMULATION_TYPE,MOVIE_VOLUME,muvstore_crust_mantle_3dmovie, &
-                c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-                c33store_inner_core,c44store_inner_core, &
-                alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
-                deltat,b_deltat,LOCAL_PATH,tau_sigma_dble)
+  subroutine prepare_timerun_attenuation()
 
   ! precomputes attenuation factors
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_movie,only: muvstore_crust_mantle_3dmovie
+
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  ! memory variables and standard linear solids for attenuation
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: &
-         one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: &
-         one_minus_sum_beta_inner_core, factor_scale_inner_core
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: factor_common_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_common_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
-      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-      c22store_crust_mantle,c23store_crust_mantle, &
-      c33store_crust_mantle,c44store_crust_mantle, &
-      c55store_crust_mantle,c66store_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        muvstore_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
-        muhstore_crust_mantle
-  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
-        muvstore_inner_core
-
-  integer SIMULATION_TYPE
-  logical MOVIE_VOLUME
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
-        c11store_inner_core,c33store_inner_core,c12store_inner_core, &
-        c13store_inner_core,c44store_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval, betaval, gammaval
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
-
-  real(kind=CUSTOM_REAL) deltat,b_deltat
-
-  character(len=150) LOCAL_PATH
 
   ! local parameters
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
-  double precision, dimension(N_SLS) :: tau_sigma_dble
 
   double precision :: scale_factor,scale_factor_minus_one
   real(kind=CUSTOM_REAL) :: mul
   integer :: ispec,i,j,k
-  character(len=150) :: prname
+  character(len=150) :: prname_l
+
+  ! checks if attenuation is on and anything to do
+  if( .not. ATTENUATION_VAL ) return
 
   ! get and store PREM attenuation model
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing attenuation"
+    call flush_IMAIN()
+  endif
 
+  ! reads in attenuation values
   ! CRUST_MANTLE ATTENUATION
-  call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  call get_attenuation_model_3D(myrank, prname, one_minus_sum_beta_crust_mantle, &
-           factor_common_crust_mantle,factor_scale_crust_mantle,tau_sigma_dble,NSPEC_CRUST_MANTLE)
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call create_name_database_adios(prname_l, IREGION_CRUST_MANTLE, LOCAL_PATH)
+  else
+    call create_name_database(prname_l, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+  endif
+  call get_attenuation_model_3D(myrank, prname_l, &
+                                one_minus_sum_beta_crust_mantle, &
+                                factor_common_crust_mantle, &
+                                factor_scale_crust_mantle,tau_sigma_dble, &
+                                NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
-  call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-  call get_attenuation_model_3D(myrank, prname, one_minus_sum_beta_inner_core, &
-           factor_common_inner_core,factor_scale_inner_core,tau_sigma_dble,NSPEC_INNER_CORE)
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call create_name_database_adios(prname_l, IREGION_INNER_CORE, LOCAL_PATH)
+  else
+    call create_name_database(prname_l, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+  endif
+  call get_attenuation_model_3D(myrank, prname_l, &
+                                one_minus_sum_beta_inner_core, &
+                                factor_common_inner_core, &
+                                factor_scale_inner_core,tau_sigma_dble, &
+                                NSPEC_INNER_CORE)
 
   ! if attenuation is on, shift PREM to right frequency
   ! rescale mu in PREM to average frequency for attenuation
@@ -746,7 +911,7 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
             scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
           else
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
@@ -776,8 +941,8 @@
                     + scale_factor_minus_one * mul
           else
             if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
-              ! store the original value of \mu to comput \mu*\eps
-              muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
+              ! store the original value of \mu to compute \mu*\eps
+              muvstore_crust_mantle_3dmovie(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec)
             endif
 
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
@@ -800,13 +965,15 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-            scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
+          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+            scale_factor = factor_scale_inner_core(i,j,k,ispec)
           else
-            scale_factor_minus_one = factor_scale_inner_core(1,1,1,ispec) - 1.0
+            scale_factor = factor_scale_inner_core(1,1,1,ispec)
           endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
+            scale_factor_minus_one = scale_factor - 1.d0
+
             mul = muvstore_inner_core(i,j,k,ispec)
             c11store_inner_core(i,j,k,ispec) = c11store_inner_core(i,j,k,ispec) &
                     + FOUR_THIRDS * scale_factor_minus_one * mul
@@ -820,11 +987,7 @@
                     + scale_factor_minus_one * mul
           endif
 
-          if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
-          else
-            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,ispec)
-          endif
+          muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * scale_factor
 
         enddo
       enddo
@@ -856,4 +1019,1826 @@
    endif
   endif
 
+  if( USE_LDDRK ) then
+    if(CUSTOM_REAL == SIZE_REAL) then
+      tau_sigma_CUSTOM_REAL(:) = sngl(tau_sigma_dble(:))
+    else
+      tau_sigma_CUSTOM_REAL(:) = tau_sigma_dble(:)
+    endif
+  endif
+
+  if(UNDO_ATTENUATION) then
+   b_alphaval = alphaval
+   b_betaval = betaval
+   b_gammaval = gammaval
+  endif
+
+  ! synchronizes processes
+  call synchronize_all()
+
   end subroutine prepare_timerun_attenuation
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_init_wavefield()
+
+! initializes arrays
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+  use specfem_par_movie
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  real(kind=CUSTOM_REAL) :: init_value
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing wavefields"
+    call flush_IMAIN()
+  endif
+
+  ! put negligible initial value to avoid very slow underflow trapping
+  if(FIX_UNDERFLOW_PROBLEM) then
+    init_value = VERYSMALLVAL
+  else
+    init_value = 0._CUSTOM_REAL
+  endif
+
+  ! initialize arrays to zero
+  displ_crust_mantle(:,:) = init_value
+  veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
+  accel_crust_mantle(:,:) = 0._CUSTOM_REAL
+
+  displ_outer_core(:) = init_value
+  veloc_outer_core(:) = 0._CUSTOM_REAL
+  accel_outer_core(:) = 0._CUSTOM_REAL
+
+  displ_inner_core(:,:) = init_value
+  veloc_inner_core(:,:) = 0._CUSTOM_REAL
+  accel_inner_core(:,:) = 0._CUSTOM_REAL
+
+  ! if doing benchmark runs to measure scaling of the code,
+  ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+  if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+    displ_crust_mantle(:,:) = 1._CUSTOM_REAL
+    veloc_crust_mantle(:,:) = 1._CUSTOM_REAL
+    accel_crust_mantle(:,:) = 1._CUSTOM_REAL
+
+    displ_outer_core(:) = 1._CUSTOM_REAL
+    veloc_outer_core(:) = 1._CUSTOM_REAL
+    accel_outer_core(:) = 1._CUSTOM_REAL
+
+    displ_inner_core(:,:) = 1._CUSTOM_REAL
+    veloc_inner_core(:,:) = 1._CUSTOM_REAL
+    accel_inner_core(:,:) = 1._CUSTOM_REAL
+  endif
+
+  ! sensitivity kernels
+  if (SIMULATION_TYPE == 3) then
+    rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+
+    ! noise strength kernel
+    if (NOISE_TOMOGRAPHY == 3) then
+      allocate( Sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise sigma kernel')
+      Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    endif
+
+    ! approximate hessian
+    if( APPROXIMATE_HESS_KL ) then
+      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating hessian')
+      hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    endif
+
+    ! For anisotropic kernels (in crust_mantle only)
+    if( ANISOTROPIC_KL ) then
+      allocate( cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating full cijkl kernel in crust_mantle')
+      cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    endif
+
+    rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+
+    rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+
+    div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+
+    ! deviatoric kernel check
+    if( deviatoric_outercore) then
+      nspec_beta_kl_outer_core = NSPEC_OUTER_CORE_ADJOINT
+    else
+      nspec_beta_kl_outer_core = 1
+    endif
+    allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating beta outercore')
+    beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  endif
+
+  ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
+  ! crust/mantle
+  eps_trace_over_3_crust_mantle(:,:,:,:) = init_value
+  epsilondev_xx_crust_mantle(:,:,:,:) = init_value
+  epsilondev_yy_crust_mantle(:,:,:,:) = init_value
+  epsilondev_xy_crust_mantle(:,:,:,:) = init_value
+  epsilondev_xz_crust_mantle(:,:,:,:) = init_value
+  epsilondev_yz_crust_mantle(:,:,:,:) = init_value
+
+  ! backward/reconstructed strain fields
+  if( SIMULATION_TYPE == 3 ) then
+    if( UNDO_ATTENUATION ) then
+      ! for undo_attenuation, whenever strain is needed it will be computed locally.
+      ! pointers are using the allocated arrays for adjoint strain, however values stored in those arrays will be overwritten
+      ! crust/mantle
+      b_epsilondev_xx_crust_mantle => epsilondev_xx_crust_mantle
+      b_epsilondev_yy_crust_mantle => epsilondev_yy_crust_mantle
+      b_epsilondev_xy_crust_mantle => epsilondev_xy_crust_mantle
+      b_epsilondev_xz_crust_mantle => epsilondev_xz_crust_mantle
+      b_epsilondev_yz_crust_mantle => epsilondev_yz_crust_mantle
+      b_eps_trace_over_3_crust_mantle => eps_trace_over_3_crust_mantle
+      ! inner core
+      b_epsilondev_xx_inner_core => epsilondev_xx_inner_core
+      b_epsilondev_yy_inner_core => epsilondev_yy_inner_core
+      b_epsilondev_xy_inner_core => epsilondev_xy_inner_core
+      b_epsilondev_xz_inner_core => epsilondev_xz_inner_core
+      b_epsilondev_yz_inner_core => epsilondev_yz_inner_core
+      b_eps_trace_over_3_inner_core => eps_trace_over_3_inner_core
+    else
+      ! allocates actual arrays
+      allocate(b_epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_epsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+               b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
+
+      allocate(b_epsilondev_xx_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_yy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_xy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_xz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_epsilondev_yz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+               b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
+    endif
+  endif
+
+  ! inner core
+  eps_trace_over_3_inner_core(:,:,:,:) = init_value
+  epsilondev_xx_inner_core(:,:,:,:) = init_value
+  epsilondev_yy_inner_core(:,:,:,:) = init_value
+  epsilondev_xy_inner_core(:,:,:,:) = init_value
+  epsilondev_xz_inner_core(:,:,:,:) = init_value
+  epsilondev_yz_inner_core(:,:,:,:) = init_value
+
+  if (COMPUTE_AND_STORE_STRAIN) then
+    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
+      Iepsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_xy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_xz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_yz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
+    endif
+  endif
+
+  ! clear memory variables if attenuation
+  if(ATTENUATION_VAL) then
+    R_xx_crust_mantle(:,:,:,:,:) = init_value
+    R_yy_crust_mantle(:,:,:,:,:) = init_value
+    R_xy_crust_mantle(:,:,:,:,:) = init_value
+    R_xz_crust_mantle(:,:,:,:,:) = init_value
+    R_yz_crust_mantle(:,:,:,:,:) = init_value
+
+    R_xx_inner_core(:,:,:,:,:) = init_value
+    R_yy_inner_core(:,:,:,:,:) = init_value
+    R_xy_inner_core(:,:,:,:,:) = init_value
+    R_xz_inner_core(:,:,:,:,:) = init_value
+    R_yz_inner_core(:,:,:,:,:) = init_value
+  endif
+
+  if(ROTATION_VAL) then
+    A_array_rotation = 0._CUSTOM_REAL
+    B_array_rotation = 0._CUSTOM_REAL
+  endif
+
+  ! initializes backward/reconstructed arrays
+  if (SIMULATION_TYPE == 3) then
+    ! initializes wavefields
+    b_displ_crust_mantle = 0._CUSTOM_REAL
+    b_veloc_crust_mantle = 0._CUSTOM_REAL
+    b_accel_crust_mantle = 0._CUSTOM_REAL
+
+    b_displ_inner_core = 0._CUSTOM_REAL
+    b_veloc_inner_core = 0._CUSTOM_REAL
+    b_accel_inner_core = 0._CUSTOM_REAL
+
+    b_displ_outer_core = 0._CUSTOM_REAL
+    b_veloc_outer_core = 0._CUSTOM_REAL
+    b_accel_outer_core = 0._CUSTOM_REAL
+
+    b_epsilondev_xx_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_yy_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_xy_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_xz_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_yz_crust_mantle = 0._CUSTOM_REAL
+
+    b_epsilondev_xx_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_yy_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_xy_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_xz_inner_core = 0._CUSTOM_REAL
+    b_epsilondev_yz_inner_core = 0._CUSTOM_REAL
+
+    if (ROTATION_VAL) then
+      b_A_array_rotation = 0._CUSTOM_REAL
+      b_B_array_rotation = 0._CUSTOM_REAL
+    endif
+
+    if (ATTENUATION_VAL) then
+      b_R_xx_crust_mantle = 0._CUSTOM_REAL
+      b_R_yy_crust_mantle = 0._CUSTOM_REAL
+      b_R_xy_crust_mantle = 0._CUSTOM_REAL
+      b_R_xz_crust_mantle = 0._CUSTOM_REAL
+      b_R_yz_crust_mantle = 0._CUSTOM_REAL
+
+      b_R_xx_inner_core = 0._CUSTOM_REAL
+      b_R_yy_inner_core = 0._CUSTOM_REAL
+      b_R_xy_inner_core = 0._CUSTOM_REAL
+      b_R_xz_inner_core = 0._CUSTOM_REAL
+      b_R_yz_inner_core = 0._CUSTOM_REAL
+    endif
+  endif
+
+  ! runge-kutta time scheme
+  if( USE_LDDRK )then
+
+    ! checks
+    if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
+        stop 'error: LDDRK is not implemented for adjoint tomography'
+
+    ! number of stages for scheme
+    NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
+
+    ! scheme wavefields
+    allocate(displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_crust_mantle_lddrk'
+    allocate(veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_crust_mantle_lddrk'
+    allocate(displ_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_outer_core_lddrk'
+    allocate(veloc_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_outer_core_lddrk'
+    allocate(displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array displ_inner_core_lddrk'
+    allocate(veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_inner_core_lddrk'
+
+    displ_crust_mantle_lddrk(:,:) = init_value
+    veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+
+    displ_outer_core_lddrk(:) = init_value
+    veloc_outer_core_lddrk(:) = 0._CUSTOM_REAL
+
+    displ_inner_core_lddrk(:,:) = init_value
+    veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+
+    if( SIMULATION_TYPE == 3 ) then
+      ! scheme adjoint wavefields
+      allocate(b_displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_crust_mantle_lddrk'
+      allocate(b_veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_crust_mantle_lddrk'
+      allocate(b_displ_outer_core_lddrk(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_outer_core_lddrk'
+      allocate(b_veloc_outer_core_lddrk(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_outer_core_lddrk'
+      allocate(b_displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_inner_core_lddrk'
+      allocate(b_veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_inner_core_lddrk'
+      b_displ_crust_mantle_lddrk(:,:) = init_value
+      b_veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
+      b_displ_outer_core_lddrk(:) = init_value
+      b_veloc_outer_core_lddrk(:) = 0._CUSTOM_REAL
+      b_displ_inner_core_lddrk(:,:) = init_value
+      b_veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
+    endif
+
+    ! rotation in fluid outer core
+    allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+    if (ROTATION_VAL) then
+      A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+      B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+    endif
+    if( SIMULATION_TYPE == 3 ) then
+      allocate(b_A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
+      allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
+      if (ROTATION_VAL) then
+        b_A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+        b_B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
+      endif
+    endif
+
+    ! attenuation memory variables
+    ! crust/mantle
+    allocate(R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    ! inner core
+    allocate(R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+    if(ATTENUATION_VAL) then
+      R_xx_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_yy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_xy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_xz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+      R_yz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+
+      R_xx_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_yy_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_xy_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_xz_inner_core_lddrk(:,:,:,:,:) = init_value
+      R_yz_inner_core_lddrk(:,:,:,:,:) = init_value
+    endif
+    if( SIMULATION_TYPE == 3 ) then
+      ! crust/mantle
+      allocate(b_R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+      ! inner core
+      allocate(b_R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+      if(ATTENUATION_VAL) then
+        b_R_xx_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_yy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_xy_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_xz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+        b_R_yz_crust_mantle_lddrk(:,:,:,:,:) = init_value
+
+        b_R_xx_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_yy_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_xy_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_xz_inner_core_lddrk(:,:,:,:,:) = init_value
+        b_R_yz_inner_core_lddrk(:,:,:,:,:) = init_value
+      endif
+    endif
+
+  else
+
+    ! default Newmark time scheme
+
+    ! only 1 stage for Newmark time scheme
+    NSTAGE_TIME_SCHEME = 1
+
+    ! dummy arrays needed for passing as function arguments
+    allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+    allocate(R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    allocate(R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+             stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
+    if( SIMULATION_TYPE == 3 ) then
+      allocate(b_A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
+      allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
+      allocate(b_R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_crust_mantle_lddrk'
+      allocate(b_R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               b_R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+               stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_inner_core_lddrk'
+    endif
+
+  endif
+
+  call synchronize_all()
+
+  end subroutine prepare_timerun_init_wavefield
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_stacey()
+
+! sets up arrays for Stacey conditions
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_outercore
+
+  implicit none
+  ! local parameters
+  integer :: ier
+  integer :: nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
+  integer :: nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
+  integer(kind=8) :: filesize
+
+  ! sets up absorbing boundary buffer arrays
+
+  ! crust_mantle
+
+  ! create name of database
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+  ! allocates buffers
+  if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_xmin_cm = nspec2D_xmin_crust_mantle
+  else
+    nabs_xmin_cm = 1
+  endif
+  allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmin_cm),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
+
+  if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_xmax_cm = nspec2D_xmax_crust_mantle
+  else
+    nabs_xmax_cm = 1
+  endif
+  allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmax_cm),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
+
+  if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_ymin_cm = nspec2D_ymin_crust_mantle
+  else
+    nabs_ymin_cm = 1
+  endif
+  allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymin_cm),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
+
+  if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_ymax_cm = nspec2D_ymax_crust_mantle
+  else
+    nabs_ymax_cm = 1
+  endif
+  allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymax_cm),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
+
+  ! file I/O for re-construction of wavefields
+  if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
+
+    ! total file size
+    filesize = reclen_xmin_crust_mantle
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
+                          filesize)
+    endif
+  endif
+  if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
+
+    ! total file size
+    filesize = reclen_xmax_crust_mantle
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          filesize)
+    endif
+  endif
+  if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
+
+    ! total file size
+    filesize = reclen_ymin_crust_mantle
+    filesize = filesize*NSTEP
+
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(2,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(2,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          filesize)
+    endif
+  endif
+  if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
+
+    ! total file size
+    filesize = reclen_ymax_crust_mantle
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          filesize)
+    endif
+  endif
+
+
+  ! outer_core
+
+  ! create name of database
+  call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+
+  ! allocates buffers
+  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_xmin_oc = nspec2D_xmin_outer_core
+  else
+    nabs_xmin_oc = 1
+  endif
+  allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nabs_xmin_oc),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
+
+  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_xmax_oc = nspec2D_xmax_outer_core
+  else
+    nabs_xmax_oc = 1
+  endif
+  allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nabs_xmax_oc),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
+
+  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_ymin_oc = nspec2D_ymin_outer_core
+  else
+    nabs_ymin_oc = 1
+  endif
+  allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nabs_ymin_oc),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
+
+  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_ymax_oc = nspec2D_ymax_outer_core
+  else
+    nabs_ymax_oc = 1
+  endif
+  allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
+
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_zmin_oc = nspec2D_zmin_outer_core
+  else
+    nabs_zmin_oc = 1
+  endif
+  allocate(absorb_zmin_outer_core(NGLLX,NGLLY,nabs_zmin_oc),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb zmin')
+
+  ! file I/O for re-construction of wavefields
+  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
+
+    ! total file size
+    filesize = reclen_xmin_outer_core
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(4,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(4,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          filesize)
+    endif
+  endif
+  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
+
+    ! total file size
+    filesize = reclen_xmax_outer_core
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(5,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(5,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          filesize)
+   endif
+  endif
+  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
+
+    ! total file size
+    filesize = reclen_ymin_outer_core
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(6,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(6,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          filesize)
+    endif
+  endif
+  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+
+    ! size of single record
+    reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
+
+    ! total file size
+    filesize = reclen_ymax_outer_core
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(7,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(7,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          filesize)
+    endif
+  endif
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
+
+    ! size of single record
+    reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * nspec2D_zmin_outer_core)
+
+    ! total file size
+    filesize = reclen_zmin
+    filesize = filesize*NSTEP
+
+    if (SIMULATION_TYPE == 3) then
+      call open_file_abs_r(8,trim(prname)//'absorb_zmin.bin',len_trim(trim(prname)//'absorb_zmin.bin'), &
+                          filesize)
+    else
+      call open_file_abs_w(8,trim(prname)//'absorb_zmin.bin',len_trim(trim(prname)//'absorb_zmin.bin'), &
+                          filesize)
+    endif
+  endif
+
+  end subroutine prepare_timerun_stacey
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_noise()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
+  implicit none
+  ! local parameters
+  integer :: ier
+
+  ! NOISE TOMOGRAPHY
+  if ( NOISE_TOMOGRAPHY /= 0 ) then
+
+    if(myrank == 0 ) then
+      write(IMAIN,*) "preparing noise arrays"
+      call flush_IMAIN()
+    endif
+
+    allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
+             normal_x_noise(nmovie_points), &
+             normal_y_noise(nmovie_points), &
+             normal_z_noise(nmovie_points), &
+             mask_noise(nmovie_points), &
+             noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
+
+    noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+    normal_x_noise(:)            = 0._CUSTOM_REAL
+    normal_y_noise(:)            = 0._CUSTOM_REAL
+    normal_z_noise(:)            = 0._CUSTOM_REAL
+    mask_noise(:)                = 0._CUSTOM_REAL
+    noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
+
+    call read_parameters_noise()
+
+    call check_parameters_noise()
+
+    call synchronize_all()
+
+  endif
+
+  end subroutine prepare_timerun_noise
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_GPU()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+  use specfem_par_movie
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  integer :: i,j,k,ispec,ispec2D,ipoin,iglob
+  real :: free_mb,used_mb,total_mb
+  ! dummy custom_real variables to convert from double precision
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable:: cr_wgll_cube
+  real(kind=CUSTOM_REAL),dimension(:),allocatable:: &
+    cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
+    cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
+    cr_density_table
+  logical :: USE_3D_ATTENUATION_ARRAYS
+
+  ! user output
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing fields and constants on GPU devices:"
+    call flush_IMAIN()
+  endif
+
+  if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+    USE_3D_ATTENUATION_ARRAYS = .true.
+  else
+    USE_3D_ATTENUATION_ARRAYS = .false.
+  endif
+
+  ! prepares general fields on GPU
+  call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
+                                hprime_xx,hprimewgll_xx, &
+                                wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
+                                NSOURCES, nsources_local, &
+                                sourcearrays, &
+                                islice_selected_source,ispec_selected_source, &
+                                nrec, nrec_local, nadj_rec_local, &
+                                number_receiver_global, &
+                                islice_selected_rec,ispec_selected_rec, &
+                                NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                                NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+                                NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+                                NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                NSPEC_INNER_CORE_STRAIN_ONLY, &
+                                SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
+                                SAVE_FORWARD,ABSORBING_CONDITIONS, &
+                                OCEANS_VAL,GRAVITY_VAL, &
+                                ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
+                                ATTENUATION_VAL,UNDO_ATTENUATION, &
+                                PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
+                                COMPUTE_AND_STORE_STRAIN, &
+                                ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
+                                SAVE_BOUNDARY_MESH, &
+                                USE_MESH_COLORING_GPU, &
+                                ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
+                                deltat,b_deltat)
+
+  ! prepares rotation arrays
+  if( ROTATION_VAL ) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading rotation arrays"
+
+    call prepare_fields_rotation_device(Mesh_pointer, &
+                                       two_omega_earth, &
+                                       A_array_rotation,B_array_rotation, &
+                                       b_two_omega_earth, &
+                                       b_A_array_rotation,b_B_array_rotation, &
+                                       NSPEC_OUTER_CORE_ROTATION)
+  endif
+
+  ! prepares arrays related to gravity
+  ! note: GPU will use only single-precision (or double precision) for all calculations
+  !          we convert to wgll_cube to custom real (by default single-precision),
+  !          using implicit conversion
+  if(myrank == 0 ) write(IMAIN,*) "  loading non-gravity/gravity arrays"
+
+  allocate(cr_d_ln_density_dr_table(NRAD_GRAVITY), &
+          cr_minus_rho_g_over_kappa_fluid(NRAD_GRAVITY), &
+          cr_minus_gravity_table(NRAD_GRAVITY), &
+          cr_minus_deriv_gravity_table(NRAD_GRAVITY), &
+          cr_density_table(NRAD_GRAVITY), &
+          stat=ier)
+  if( ier /= 0 ) stop 'error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
+
+  allocate(cr_wgll_cube(NGLLX,NGLLY,NGLLZ),stat=ier)
+  if( ier /= 0 ) stop 'error allocating cr_wgll_cube'
+
+  if(CUSTOM_REAL == SIZE_REAL) then
+    ! d_ln_density_dr_table needed for no gravity case
+    cr_d_ln_density_dr_table(:) = sngl(d_ln_density_dr_table(:))
+    ! these are needed for gravity cases only
+    cr_minus_rho_g_over_kappa_fluid(:) = sngl(minus_rho_g_over_kappa_fluid(:))
+    cr_minus_gravity_table(:) = sngl(minus_gravity_table(:))
+    cr_minus_deriv_gravity_table(:) = sngl(minus_deriv_gravity_table(:))
+    cr_density_table(:) = sngl(density_table(:))
+    cr_wgll_cube(:,:,:) = sngl(wgll_cube(:,:,:))
+  else
+    ! d_ln_density_dr_table needed for no gravity case
+    cr_d_ln_density_dr_table(:) = d_ln_density_dr_table(:)
+    ! these are needed for gravity cases only
+    cr_minus_rho_g_over_kappa_fluid(:) = minus_rho_g_over_kappa_fluid(:)
+    cr_minus_gravity_table(:) = minus_gravity_table(:)
+    cr_minus_deriv_gravity_table(:) = minus_deriv_gravity_table(:)
+    cr_density_table(:) = density_table(:)
+    cr_wgll_cube(:,:,:) = wgll_cube(:,:,:)
+  endif
+
+  ! prepares on GPU
+  call prepare_fields_gravity_device(Mesh_pointer, &
+                                    cr_d_ln_density_dr_table, &
+                                    cr_minus_rho_g_over_kappa_fluid, &
+                                    cr_minus_gravity_table, &
+                                    cr_minus_deriv_gravity_table, &
+                                    cr_density_table, &
+                                    cr_wgll_cube, &
+                                    NRAD_GRAVITY, &
+                                    minus_g_icb,minus_g_cmb, &
+                                    RHO_BOTTOM_OC,RHO_TOP_OC)
+
+  deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
+            cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
+            cr_density_table)
+  deallocate(cr_wgll_cube)
+
+  ! prepares attenuation arrays
+  if( ATTENUATION_VAL ) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading attenuation"
+
+    call prepare_fields_attenuat_device(Mesh_pointer, &
+                                        R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
+                                        R_xz_crust_mantle,R_yz_crust_mantle, &
+                                        b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
+                                        b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
+                                        factor_common_crust_mantle, &
+                                        one_minus_sum_beta_crust_mantle, &
+                                        R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+                                        R_xz_inner_core,R_yz_inner_core, &
+                                        b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
+                                        b_R_xz_inner_core,b_R_yz_inner_core, &
+                                        factor_common_inner_core, &
+                                        one_minus_sum_beta_inner_core, &
+                                        alphaval,betaval,gammaval, &
+                                        b_alphaval,b_betaval,b_gammaval)
+  endif
+
+
+  ! prepares attenuation arrays
+  if( COMPUTE_AND_STORE_STRAIN ) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading strain"
+
+    call prepare_fields_strain_device(Mesh_pointer, &
+                                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                    b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
+                                    b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
+                                    eps_trace_over_3_crust_mantle, &
+                                    b_eps_trace_over_3_crust_mantle, &
+                                    epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
+                                    epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
+                                    b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
+                                    b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
+                                    eps_trace_over_3_inner_core, &
+                                    b_eps_trace_over_3_inner_core)
+  endif
+
+  ! prepares absorbing arrays
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading absorbing boundaries"
+
+    call prepare_fields_absorb_device(Mesh_pointer, &
+                                    nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+                                    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+                                    NSPEC2DMAX_XMIN_XMAX_CM,NSPEC2DMAX_YMIN_YMAX_CM, &
+                                    nimin_crust_mantle,nimax_crust_mantle, &
+                                    njmin_crust_mantle,njmax_crust_mantle, &
+                                    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+                                    ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+                                    ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+                                    normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
+                                    normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+                                    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+                                    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+                                    rho_vp_crust_mantle,rho_vs_crust_mantle,  &
+                                    nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+                                    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+                                    nspec2D_zmin_outer_core, &
+                                    NSPEC2DMAX_XMIN_XMAX_OC,NSPEC2DMAX_YMIN_YMAX_OC, &
+                                    nimin_outer_core,nimax_outer_core, &
+                                    njmin_outer_core,njmax_outer_core, &
+                                    nkmin_xi_outer_core,nkmin_eta_outer_core, &
+                                    ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
+                                    ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+                                    jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+                                    jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
+                                    vp_outer_core)
+
+  endif
+
+  ! prepares MPI interfaces
+  if(myrank == 0 ) write(IMAIN,*) "  loading mpi interfaces"
+
+  call prepare_mpi_buffers_device(Mesh_pointer, &
+                                num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                                nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                nibool_interfaces_outer_core,ibool_interfaces_outer_core)
+
+  ! prepares fields on GPU for noise simulations
+  if ( NOISE_TOMOGRAPHY > 0 ) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading noise arrays"
+
+    call prepare_fields_noise_device(Mesh_pointer,NSPEC_TOP, &
+                                    NSTEP, &
+                                    ibelm_top_crust_mantle, &
+                                    noise_sourcearray, &
+                                    normal_x_noise,normal_y_noise,normal_z_noise, &
+                                    mask_noise,jacobian2D_top_crust_mantle)
+
+  endif
+
+  ! prepares oceans arrays
+  if ( OCEANS_VAL ) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
+
+    ! prepares gpu arrays for coupling with oceans
+    !
+    ! note: handling of coupling on gpu is slightly different than in CPU routine to avoid using a mutex
+    !          to update acceleration; tests so far have shown, that with a simple mutex implementation
+    !          the results differ between successive runs (probably still due to some race conditions?)
+    !          here we now totally avoid mutex usage and still update each global point only once
+
+    ! counts global points on surface to oceans
+    updated_dof_ocean_load(:) = .false.
+    ipoin = 0
+    do ispec2D = 1,nspec_top
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      k = NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ! get global point number
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          if(.not. updated_dof_ocean_load(iglob)) then
+            ipoin = ipoin + 1
+            updated_dof_ocean_load(iglob) = .true.
+          endif
+        enddo
+      enddo
+    enddo
+
+    ! allocates arrays with all global points on ocean surface
+    npoin_oceans = ipoin
+    allocate(ibool_ocean_load(npoin_oceans), &
+            normal_ocean_load(NDIM,npoin_oceans), &
+            rmass_ocean_load_selected(npoin_oceans), &
+            stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating oceans arrays')
+
+    ! fills arrays for coupling surface at oceans
+    updated_dof_ocean_load(:) = .false.
+    ipoin = 0
+    do ispec2D = 1,nspec_top
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      k = NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ! get global point number
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          if(.not. updated_dof_ocean_load(iglob)) then
+            ipoin = ipoin + 1
+            ! fills arrays
+            ibool_ocean_load(ipoin) = iglob
+            rmass_ocean_load_selected(ipoin) = rmass_ocean_load(iglob)
+            normal_ocean_load(:,ipoin) = normal_top_crust_mantle(:,i,j,ispec2D)
+            ! masks this global point
+            updated_dof_ocean_load(iglob) = .true.
+          endif
+        enddo
+      enddo
+    enddo
+
+    ! prepares arrays on GPU
+    call prepare_oceans_device(Mesh_pointer,npoin_oceans, &
+                              ibool_ocean_load, &
+                              rmass_ocean_load_selected, &
+                              normal_ocean_load)
+
+    ! frees memory
+    deallocate(ibool_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
+
+  endif
+
+  ! crust/mantle region
+  if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
+
+  call prepare_crust_mantle_device(Mesh_pointer, &
+                                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                 etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                 rhostore_crust_mantle, &
+                                 kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                 kappahstore_crust_mantle,muhstore_crust_mantle, &
+                                 eta_anisostore_crust_mantle, &
+                                 rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                 b_rmassx_crust_mantle,b_rmassy_crust_mantle, &
+                                 ibool_crust_mantle, &
+                                 xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                                 ispec_is_tiso_crust_mantle, &
+                                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+                                 c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+                                 c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+                                 c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+                                 c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+                                 c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                 num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                                 nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
+                                 NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
+                                 ibelm_bottom_crust_mantle, &
+                                 NCHUNKS_VAL, &
+                                 num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
+                                 num_elem_colors_crust_mantle)
+
+
+  ! outer core region
+  if(myrank == 0 ) write(IMAIN,*) "  loading outer core region"
+  call prepare_outer_core_device(Mesh_pointer, &
+                                xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                                etax_outer_core,etay_outer_core,etaz_outer_core, &
+                                gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                                rhostore_outer_core,kappavstore_outer_core, &
+                                rmass_outer_core, &
+                                ibool_outer_core, &
+                                xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                                num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                                nspec_outer_outer_core,nspec_inner_outer_core, &
+                                NSPEC2D_TOP(IREGION_OUTER_CORE), &
+                                NSPEC2D_BOTTOM(IREGION_OUTER_CORE), &
+                                normal_top_outer_core, &
+                                normal_bottom_outer_core, &
+                                jacobian2D_top_outer_core, &
+                                jacobian2D_bottom_outer_core, &
+                                ibelm_top_outer_core, &
+                                ibelm_bottom_outer_core, &
+                                num_colors_outer_outer_core,num_colors_inner_outer_core, &
+                                num_elem_colors_outer_core)
+
+
+  ! inner core region
+  if(myrank == 0 ) write(IMAIN,*) "  loading inner core region"
+  call prepare_inner_core_device(Mesh_pointer, &
+                                 xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                 etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                 gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                                 rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                                 b_rmassx_inner_core,b_rmassy_inner_core, &
+                                 ibool_inner_core, &
+                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                                 c33store_inner_core,c44store_inner_core, &
+                                 idoubling_inner_core, &
+                                 num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                                 nspec_outer_inner_core,nspec_inner_inner_core, &
+                                 NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                 ibelm_top_inner_core, &
+                                 num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                                 num_elem_colors_inner_core)
+
+  ! transfer forward and backward fields to device with initial values
+  if(myrank == 0 ) write(IMAIN,*) "  transfering initial wavefield"
+  call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                                   Mesh_pointer)
+
+  call transfer_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
+                                   Mesh_pointer)
+
+  call transfer_fields_oc_to_device(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
+                                   Mesh_pointer)
+
+  if(SIMULATION_TYPE == 3) then
+    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                    Mesh_pointer)
+
+    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE, &
+                                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                    Mesh_pointer)
+
+    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
+                                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                                    Mesh_pointer)
+  endif
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  ! outputs GPU usage to files for all processes
+  call output_free_device_memory(myrank)
+
+  ! outputs usage for main process
+  if( myrank == 0 ) then
+    ! gets memory usage for main process
+    call get_free_device_memory(free_mb,used_mb,total_mb)
+    ! outputs info
+    write(IMAIN,*)
+    write(IMAIN,*)"  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
+    write(IMAIN,*)"             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
+    write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine prepare_timerun_GPU
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! VTK visualization
+
+  subroutine prepare_vtk_window()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
+
+  implicit none
+
+  ! local parameters
+  integer :: i,j,k,iglob,ispec,inum,ier
+  integer :: id1,id2,id3,id4,id5,id6,id7,id8
+  integer :: ispec2D,NIT_res
+
+  ! free surface points
+  integer :: free_np,free_nspec
+  real, dimension(:),allocatable :: free_x,free_y,free_z
+  integer, dimension(:,:),allocatable :: free_conn
+  integer, dimension(:),allocatable :: free_perm
+  ! gather arrays for multi-mpi simulations
+  real, dimension(:),allocatable :: free_x_all,free_y_all,free_z_all
+  integer, dimension(:,:),allocatable :: free_conn_all
+  integer, dimension(:),allocatable :: free_conn_offset_all,free_conn_nspec_all
+  integer, dimension(:),allocatable :: free_points_all,free_offset_all
+  integer :: free_np_all,free_nspec_all
+
+  ! volume points
+  integer :: vol_np,vol_nspec
+  real, dimension(:),allocatable :: vol_x,vol_y,vol_z
+  integer, dimension(:,:),allocatable :: vol_conn
+  integer, dimension(:),allocatable :: vol_perm
+  ! gather arrays for multi-mpi simulations
+  real, dimension(:),allocatable :: vol_x_all,vol_y_all,vol_z_all
+  integer, dimension(:,:),allocatable :: vol_conn_all
+  integer, dimension(:),allocatable :: vol_conn_offset_all,vol_conn_nspec_all
+  integer :: vol_nspec_all,ispec_start,ispec_end
+  real(kind=CUSTOM_REAL),dimension(1):: dummy
+  integer,dimension(1):: dummy_i
+
+  real(kind=CUSTOM_REAL) :: x,y,z
+
+  !-----------------------------------------------------------------------
+  ! user parameter
+  logical, parameter :: VTK_USE_HIRES         = .false.
+  logical, parameter :: VTK_SHOW_FREESURFACE  = .true.
+  logical, parameter :: VTK_SHOW_VOLUME       = .true.
+  !-----------------------------------------------------------------------
+
+  ! user output
+  if( myrank == 0 ) then
+    print*
+    print*,"vtk:"
+  endif
+  call synchronize_all()
+
+  ! to avoid compiler warnings
+  !NPROC = NPROCTOT_VAL
+
+  ! adds source
+  if( myrank == 0 ) then
+    ! user output
+    print*,"  vtk source sphere:"
+    call prepare_vtksource(vtkdata_source_x,vtkdata_source_y,vtkdata_source_z)
+  endif
+  call synchronize_all()
+
+  ! mask
+  allocate(vtkmask(NGLOB_CRUST_MANTLE),stat=ier)
+  if( ier /= 0 ) stop 'error allocating arrays'
+
+  if( VTK_USE_HIRES ) then
+    NIT_res = 1
+  else
+    NIT_res = NGLLX - 1
+  endif
+
+  ! free surface
+  if( VTK_SHOW_FREESURFACE ) then
+    ! user output
+    if( myrank == 0 ) then
+      print*,"  vtk free surface:"
+      print*,"    free surface elements    : ",NSPEC_TOP
+    endif
+
+    ! counts global free surface points
+    vtkmask(:) = .false.
+
+    ! determines number of global points on surface
+    do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      ! in case of global, NCHUNKS_VAL == 6 simulations, be aware that for
+      ! the cubed sphere, the mapping changes for different chunks,
+      ! i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates.
+      ! for future consideration, like in create_movie_GMT_global.f90 ...
+      k = NGLLZ
+      ! loop on all the points inside the element
+      do j = 1,NGLLY,NIT_res
+        do i = 1,NGLLX,NIT_res
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          vtkmask(iglob) = .true.
+        enddo
+      enddo
+    enddo
+
+    ! loads free surface into data
+    free_np = count(vtkmask(:))
+
+    ! user output
+    if( myrank == 0 ) print*,"    loading surface points: ",free_np
+
+    allocate(free_x(free_np),free_y(free_np),free_z(free_np),stat=ier)
+    if( ier /= 0 ) stop 'error allocating arrays'
+
+    ! permutation array
+    allocate(free_perm(NGLOB_CRUST_MANTLE),stat=ier)
+    if( ier /= 0 ) stop 'error allocating arrays'
+
+    free_perm(:) = 0
+    inum = 0
+    do iglob = 1,NGLOB_CRUST_MANTLE
+      if( vtkmask(iglob) .eqv. .true. ) then
+        inum = inum + 1
+        ! note: xstore/ystore/zstore have changed coordinates to r/theta/phi,
+        !       converts back to x/y/z
+        call rthetaphi_2_xyz(x,y,z,xstore_crust_mantle(iglob), &
+                             ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
+
+        free_x(inum) = x
+        free_y(inum) = y
+        free_z(inum) = z
+        ! stores permutation
+        free_perm(iglob) = inum
+      endif
+    enddo
+    if( inum /= free_np) stop 'error free_np count in loading free surface points'
+
+    ! hi/low resolution
+    if( VTK_USE_HIRES ) then
+      ! point connectivity
+      free_nspec = NSPEC_TOP*(NGLLX-1)*(NGLLY-1)
+
+      allocate(free_conn(4,free_nspec),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      inum = 0
+      free_conn(:,:) = -1
+      do ispec2D = 1,NSPEC_TOP
+        ispec = ibelm_top_crust_mantle(ispec2D)
+        k = NGLLZ
+        do j = 1, NGLLY-1
+          do i = 1, NGLLX-1
+            ! indices of corner points
+            id1 = free_perm(ibool_crust_mantle(i,j,k,ispec))
+            id2 = free_perm(ibool_crust_mantle(i+1,j,k,ispec))
+            id3 = free_perm(ibool_crust_mantle(i+1,j+1,k,ispec))
+            id4 = free_perm(ibool_crust_mantle(i,j+1,k,ispec))
+            ! note: indices for vtk start at 0
+            inum = inum+1
+            free_conn(1,inum) = id1 - 1
+            free_conn(2,inum) = id2 - 1
+            free_conn(3,inum) = id3 - 1
+            free_conn(4,inum) = id4 - 1
+          enddo
+        enddo
+      enddo
+    else
+      ! point connectivity
+      free_nspec = NSPEC_TOP
+
+      allocate(free_conn(4,free_nspec),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      inum = 0
+      free_conn(:,:) = -1
+      do ispec2D = 1,NSPEC_TOP
+        ispec = ibelm_top_crust_mantle(ispec2D)
+        ! indices of corner points
+        id1 = free_perm(ibool_crust_mantle(1,1,NGLLZ,ispec))
+        id2 = free_perm(ibool_crust_mantle(NGLLX,1,NGLLZ,ispec))
+        id3 = free_perm(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec))
+        id4 = free_perm(ibool_crust_mantle(1,NGLLY,NGLLZ,ispec))
+        ! note: indices for vtk start at 0
+        inum = inum + 1
+        free_conn(1,inum) = id1 - 1
+        free_conn(2,inum) = id2 - 1
+        free_conn(3,inum) = id3 - 1
+        free_conn(4,inum) = id4 - 1
+      enddo
+    endif
+    if( minval(free_conn(:,:)) < 0) stop 'error vtk free surface point connectivity'
+
+    ! gathers data from all mpi processes
+    if( NPROC > 1 ) then
+      ! multiple mpi processes
+
+      ! user output
+      !if( myrank == 0 ) print*,"    gathering all mpi infos... "
+
+      ! number of volume points for all partitions together
+      call sum_all_i(free_np,free_np_all)
+      if( myrank == 0 ) print*,"    all freesurface points: ",free_np_all
+
+      ! gathers point infos
+      allocate(free_points_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      free_points_all(:) = 0
+      call gather_all_i(free_np,1,free_points_all,1,NPROC)
+
+      ! array offsets
+      allocate(free_offset_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      free_offset_all(1) = 0
+      do i = 2, NPROC
+        free_offset_all(i) = sum(free_points_all(1:i-1))
+      enddo
+
+      ! number of volume elements
+      call sum_all_i(free_nspec,free_nspec_all)
+      if( myrank == 0 ) print*,"    all freesurface elements: ",free_nspec_all
+
+      ! freesurface elements
+      allocate(free_conn_nspec_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      free_conn_nspec_all(:) = 0
+      call gather_all_i(4*free_nspec,1,free_conn_nspec_all,1,NPROC)
+
+      ! array offsets
+      allocate(free_conn_offset_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      free_conn_offset_all(1) = 0
+      do i = 2, NPROC
+        free_conn_offset_all(i) = sum(free_conn_nspec_all(1:i-1))
+      enddo
+
+      ! global data arrays (only needed on master process)
+      if( myrank == 0 ) then
+        ! gather locations
+        allocate(free_x_all(free_np_all), &
+                 free_y_all(free_np_all), &
+                 free_z_all(free_np_all),stat=ier )
+        if(ier /= 0 ) stop 'error allocating free_x_all,... arrays'
+
+        free_x_all(:) = 0.0
+        free_y_all(:) = 0.0
+        free_z_all(:) = 0.0
+
+        ! connectivity
+        allocate(free_conn_all(4,free_nspec_all),stat=ier)
+        if(ier /= 0 ) stop 'error allocating free_conn_all array'
+        free_conn_all(:,:) = 0
+      endif
+
+      if( myrank == 0 ) then
+        ! locations
+        !if( myrank == 0 ) print*,"    locations..."
+        call gatherv_all_cr(free_x,free_np, &
+                            free_x_all,free_points_all,free_offset_all, &
+                            free_np_all,NPROC)
+        call gatherv_all_cr(free_y,free_np, &
+                            free_y_all,free_points_all,free_offset_all, &
+                            free_np_all,NPROC)
+        call gatherv_all_cr(free_z,free_np, &
+                            free_z_all,free_points_all,free_offset_all, &
+                            free_np_all,NPROC)
+
+        ! connectivity
+        !if( myrank == 0 ) print*,"    connectivity..."
+        call gatherv_all_i(free_conn,4*free_nspec, &
+                           free_conn_all,free_conn_nspec_all,free_conn_offset_all, &
+                           free_nspec_all,NPROC)
+
+        ! shifts connectivity ids for all additional slices
+        do i = 2, NPROC
+          ! divides by 4 to get nspec numbers
+          ispec_start = free_conn_offset_all(i)/4 + 1
+          ispec_end = free_conn_offset_all(i)/4 + free_conn_nspec_all(i)/4
+          do ispec = ispec_start,ispec_end
+            free_conn_all(:,ispec) = free_conn_all(:,ispec) + free_offset_all(i)
+          enddo
+        enddo
+
+        !if( myrank == 0 ) print*,"    preparing vtk field..."
+
+        ! adds free surface to vtk window
+        call prepare_vtkfreesurface(free_np_all,free_x_all,free_y_all,free_z_all, &
+                                    free_nspec_all,free_conn_all)
+
+      else
+        ! all other process just send data
+        ! locations
+        call gatherv_all_cr(free_x,free_np, &
+                            dummy,free_points_all,free_offset_all, &
+                            1,NPROC)
+        call gatherv_all_cr(free_y,free_np, &
+                            dummy,free_points_all,free_offset_all, &
+                            1,NPROC)
+        call gatherv_all_cr(free_z,free_np, &
+                            dummy,free_points_all,free_offset_all, &
+                            1,NPROC)
+        ! connectivity
+        call gatherv_all_i(free_conn,4*free_nspec, &
+                            dummy_i,free_conn_nspec_all,free_conn_offset_all, &
+                            1,NPROC)
+
+      endif
+    else
+      ! serial run
+      ! creates vtk freesurface actor
+      call prepare_vtkfreesurface(free_np,free_x,free_y,free_z, &
+                                  free_nspec,free_conn)
+
+    endif
+
+    ! frees memory
+    deallocate(free_x,free_y,free_z)
+    deallocate(free_conn,free_perm)
+    if( NPROC > 1 ) then
+      deallocate(free_conn_nspec_all,free_conn_offset_all)
+      deallocate(free_points_all,free_offset_all)
+      if(myrank == 0 ) deallocate(free_x_all,free_y_all,free_z_all,free_conn_all)
+    endif
+  endif ! VTK_SHOW_FREESURFACE
+  call synchronize_all()
+
+  ! volume data
+  if( VTK_SHOW_VOLUME ) then
+    ! user output
+    if( myrank == 0 ) then
+      print*,"  vtk volume:"
+      print*,"    spectral elements    : ",NSPEC_CRUST_MANTLE
+    endif
+
+    ! sets new point mask
+    vtkmask(:) = .false.
+    do ispec = 1,NSPEC_CRUST_MANTLE
+      ! hi/low resolution
+      ! loops only over points
+      do k = 1,NGLLZ,NIT_res
+        do j = 1,NGLLY,NIT_res
+          do i = 1,NGLLX,NIT_res
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+            ! sets mask
+            vtkmask(iglob) = .true.
+          enddo
+        enddo
+      enddo
+    enddo
+    vol_np = count(vtkmask(:))
+
+    ! loads volume data arrays
+    if( myrank == 0 ) print*,"    loading volume points: ",vol_np
+
+    allocate(vol_x(vol_np),vol_y(vol_np),vol_z(vol_np),stat=ier)
+    if( ier /= 0 ) stop 'error allocating arrays'
+
+    ! permutation array
+    allocate(vol_perm(NGLOB_CRUST_MANTLE),stat=ier)
+    if( ier /= 0 ) stop 'error allocating arrays'
+
+    vol_perm(:) = 0
+    inum = 0
+    do iglob = 1,NGLOB_CRUST_MANTLE
+      if( vtkmask(iglob) .eqv. .true. ) then
+        inum = inum + 1
+        ! note: xstore/ystore/zstore have changed coordinates to r/theta/phi,
+        !       converts back to x/y/z
+        call rthetaphi_2_xyz(x,y,z,xstore_crust_mantle(iglob), &
+                             ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
+        vol_x(inum) = x
+        vol_y(inum) = y
+        vol_z(inum) = z
+        ! stores permutation
+        vol_perm(iglob) = inum
+      endif
+    enddo
+    if( inum /= vol_np) stop 'error vol_np count in loading volume points'
+
+    ! hi/low resolution
+    if( VTK_USE_HIRES ) then
+      ! point connectivity
+      vol_nspec = NSPEC_CRUST_MANTLE*(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+
+      allocate(vol_conn(8,vol_nspec),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      inum = 0
+      vol_conn(:,:) = -1
+      do ispec = 1,NSPEC_CRUST_MANTLE
+        do k = 1, NGLLZ-1
+          do j = 1, NGLLY-1
+            do i = 1, NGLLX-1
+              ! indices of corner points
+              id1 = vol_perm(ibool_crust_mantle(i,j,k,ispec))
+              id2 = vol_perm(ibool_crust_mantle(i+1,j,k,ispec))
+              id3 = vol_perm(ibool_crust_mantle(i+1,j+1,k,ispec))
+              id4 = vol_perm(ibool_crust_mantle(i,j+1,k,ispec))
+
+              id5 = vol_perm(ibool_crust_mantle(i,j,k+1,ispec))
+              id6 = vol_perm(ibool_crust_mantle(i+1,j,k+1,ispec))
+              id7 = vol_perm(ibool_crust_mantle(i+1,j+1,k+1,ispec))
+              id8 = vol_perm(ibool_crust_mantle(i,j+1,k+1,ispec))
+
+              ! note: indices for vtk start at 0
+              inum = inum+1
+              vol_conn(1,inum) = id1 - 1
+              vol_conn(2,inum) = id2 - 1
+              vol_conn(3,inum) = id3 - 1
+              vol_conn(4,inum) = id4 - 1
+              vol_conn(5,inum) = id5 - 1
+              vol_conn(6,inum) = id6 - 1
+              vol_conn(7,inum) = id7 - 1
+              vol_conn(8,inum) = id8 - 1
+            enddo
+          enddo
+        enddo
+      enddo
+    else
+      ! point connectivity
+      vol_nspec = NSPEC_CRUST_MANTLE
+
+      allocate(vol_conn(8,vol_nspec),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      vol_conn(:,:) = -1
+      do ispec = 1,NSPEC_CRUST_MANTLE
+        ! indices of corner points
+        id1 = vol_perm(ibool_crust_mantle(1,1,1,ispec))
+        id2 = vol_perm(ibool_crust_mantle(NGLLX,1,1,ispec))
+        id3 = vol_perm(ibool_crust_mantle(NGLLX,NGLLY,1,ispec))
+        id4 = vol_perm(ibool_crust_mantle(1,NGLLY,1,ispec))
+
+        id5 = vol_perm(ibool_crust_mantle(1,1,NGLLZ,ispec))
+        id6 = vol_perm(ibool_crust_mantle(NGLLX,1,NGLLZ,ispec))
+        id7 = vol_perm(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec))
+        id8 = vol_perm(ibool_crust_mantle(1,NGLLY,NGLLZ,ispec))
+
+        ! note: indices for vtk start at 0
+        vol_conn(1,ispec) = id1 - 1
+        vol_conn(2,ispec) = id2 - 1
+        vol_conn(3,ispec) = id3 - 1
+        vol_conn(4,ispec) = id4 - 1
+        vol_conn(5,ispec) = id5 - 1
+        vol_conn(6,ispec) = id6 - 1
+        vol_conn(7,ispec) = id7 - 1
+        vol_conn(8,ispec) = id8 - 1
+      enddo
+    endif
+    if( minval(vol_conn(:,:)) < 0) stop 'error vtk volume point connectivity'
+
+    ! allocates local data array
+    allocate(vtkdata(vol_np),stat=ier)
+    if( ier /= 0 ) stop 'error allocating arrays'
+
+    vtkdata(:) = 0.0
+
+    ! gathers data from all mpi processes
+    if( NPROC > 1 ) then
+      ! multiple mpi processes
+
+      ! user output
+      !if( myrank == 0 ) print*,"    gathering all mpi infos... "
+
+      ! number of volume points for all partitions together
+      call sum_all_i(vol_np,vtkdata_numpoints_all)
+      if( myrank == 0 ) print*,"    all volume points: ",vtkdata_numpoints_all
+
+      ! gathers point infos
+      allocate(vtkdata_points_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      vtkdata_points_all(:) = 0
+      call gather_all_i(vol_np,1,vtkdata_points_all,1,NPROC)
+
+      ! array offsets
+      allocate(vtkdata_offset_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      vtkdata_offset_all(1) = 0
+      do i = 2, NPROC
+        vtkdata_offset_all(i) = sum(vtkdata_points_all(1:i-1))
+      enddo
+
+      ! number of volume elements
+      call sum_all_i(vol_nspec,vol_nspec_all)
+      if( myrank == 0 ) print*,"    all volume elements: ",vol_nspec_all
+
+      ! volume elements
+      allocate(vol_conn_nspec_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      vol_conn_nspec_all(:) = 0
+      call gather_all_i(8*vol_nspec,1,vol_conn_nspec_all,1,NPROC)
+
+      ! array offsets
+      allocate(vol_conn_offset_all(NPROC),stat=ier)
+      if( ier /= 0 ) stop 'error allocating arrays'
+
+      vol_conn_offset_all(1) = 0
+      do i = 2, NPROC
+        vol_conn_offset_all(i) = sum(vol_conn_nspec_all(1:i-1))
+      enddo
+
+      ! global data arrays (only needed on master process)
+      if( myrank == 0 ) then
+        ! point data
+        allocate(vtkdata_all(vtkdata_numpoints_all),stat=ier)
+        if(ier /= 0 ) stop 'error allocating vtkdata_all array'
+
+        vtkdata_all(:) = 0.0
+
+        ! gather locations
+        allocate(vol_x_all(vtkdata_numpoints_all), &
+                 vol_y_all(vtkdata_numpoints_all), &
+                 vol_z_all(vtkdata_numpoints_all),stat=ier )
+        if(ier /= 0 ) stop 'error allocating vol_x_all,... arrays'
+
+        vol_x_all(:) = 0.0
+        vol_y_all(:) = 0.0
+        vol_z_all(:) = 0.0
+
+        ! connectivity
+        allocate(vol_conn_all(8,vol_nspec_all),stat=ier)
+        if(ier /= 0 ) stop 'error allocating vol_conn_all array'
+
+        vol_conn_all(:,:) = 0
+
+      endif
+
+      if( myrank == 0 ) then
+        ! locations
+        !if( myrank == 0 ) print*,"    locations..."
+        call gatherv_all_cr(vol_x,vol_np, &
+                            vol_x_all,vtkdata_points_all,vtkdata_offset_all, &
+                            vtkdata_numpoints_all,NPROC)
+        call gatherv_all_cr(vol_y,vol_np, &
+                            vol_y_all,vtkdata_points_all,vtkdata_offset_all, &
+                            vtkdata_numpoints_all,NPROC)
+        call gatherv_all_cr(vol_z,vol_np, &
+                            vol_z_all,vtkdata_points_all,vtkdata_offset_all, &
+                            vtkdata_numpoints_all,NPROC)
+
+        ! connectivity
+        !if( myrank == 0 ) print*,"    connectivity..."
+        call gatherv_all_i(vol_conn,8*vol_nspec, &
+                           vol_conn_all,vol_conn_nspec_all,vol_conn_offset_all, &
+                           vol_nspec_all,NPROC)
+
+        ! shifts connectivity ids for all additional slices
+        do i = 2, NPROC
+          ! divides by 8 to get nspec numbers
+          ispec_start = vol_conn_offset_all(i)/8 + 1
+          ispec_end = vol_conn_offset_all(i)/8 + vol_conn_nspec_all(i)/8
+          do ispec = ispec_start,ispec_end
+            vol_conn_all(:,ispec) = vol_conn_all(:,ispec) + vtkdata_offset_all(i)
+          enddo
+        enddo
+
+        !if( myrank == 0 ) print*,"    preparing vtk field..."
+
+        ! adds total volume wavefield to vtk window
+        call prepare_vtkfield(vtkdata_numpoints_all,vol_x_all,vol_y_all,vol_z_all, &
+                              vol_nspec_all,vol_conn_all)
+
+      else
+        ! all other process just send data
+        ! locations
+        call gatherv_all_cr(vol_x,vol_np, &
+                            dummy,vtkdata_points_all,vtkdata_offset_all, &
+                            1,NPROC)
+        call gatherv_all_cr(vol_y,vol_np, &
+                            dummy,vtkdata_points_all,vtkdata_offset_all, &
+                            1,NPROC)
+        call gatherv_all_cr(vol_z,vol_np, &
+                            dummy,vtkdata_points_all,vtkdata_offset_all, &
+                            1,NPROC)
+        ! connectivity
+        call gatherv_all_i(vol_conn,8*vol_nspec, &
+                            dummy_i,vol_conn_nspec_all,vol_conn_offset_all, &
+                            1,NPROC)
+      endif
+
+    else
+      ! serial run
+      !if( myrank == 0 ) print*,"    preparing vtk field..."
+
+      ! adds volume wavefield to vtk window
+      call prepare_vtkfield(vol_np,vol_x,vol_y,vol_z,vol_nspec,vol_conn)
+    endif
+
+    ! frees memory
+    deallocate(vol_x,vol_y,vol_z)
+    deallocate(vol_conn,vol_perm)
+    if( NPROC > 1 ) then
+      deallocate(vol_conn_nspec_all,vol_conn_offset_all)
+      if(myrank == 0 ) deallocate(vol_x_all,vol_y_all,vol_z_all,vol_conn_all)
+    endif
+  endif ! VTK_SHOW_VOLUME
+  call synchronize_all()
+
+  ! user output
+  !if( myrank == 0 ) then
+  !  print*
+  !  print*,"  vtk visualization preparation done"
+  !  print*
+  !endif
+
+  end subroutine prepare_vtk_window
+

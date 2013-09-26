@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -59,148 +59,159 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_jp3d_broadcast(myrank,JP3DM_V)
+  module model_jp3d_par
+
+  ! Japan 3D model (Zhao, 1994) constants
+  integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
+  integer, parameter :: MKA=2101,MKB=2101
+
+  ! JP3DM_V arrays: vmod3d
+  double precision,dimension(:),allocatable :: JP3DM_PNA,JP3DM_RNA,JP3DM_HNA, &
+    JP3DM_PNB,JP3DM_RNB,JP3DM_HNB
+  double precision,dimension(:,:,:),allocatable :: JP3DM_VELAP,JP3DM_VELBP
+  ! discon
+  double precision,dimension(:),allocatable :: JP3DM_PN,JP3DM_RRN
+  double precision,dimension(:,:),allocatable :: JP3DM_DEPA,JP3DM_DEPB,JP3DM_DEPC
+  ! locate
+  double precision :: JP3DM_PLA
+  double precision :: JP3DM_RLA
+  double precision :: JP3DM_HLA
+  double precision :: JP3DM_PLB
+  double precision :: JP3DM_RLB
+  double precision :: JP3DM_HLB
+  ! weight
+  double precision,dimension(:),allocatable :: JP3DM_WV
+  ! prhfd
+  double precision :: JP3DM_P
+  double precision :: JP3DM_R
+  double precision :: JP3DM_H
+  double precision :: JP3DM_PF
+  double precision :: JP3DM_RF
+  double precision :: JP3DM_HF
+  double precision :: JP3DM_PF1
+  double precision :: JP3DM_RF1
+  double precision :: JP3DM_HF1
+  double precision :: JP3DM_PD
+  double precision :: JP3DM_RD
+  double precision :: JP3DM_HD
+  ! jpmodv
+  double precision,dimension(:),allocatable :: JP3DM_VP,JP3DM_VS,JP3DM_RA,JP3DM_DEPJ
+  ! locate integers
+  integer,dimension(:),allocatable :: JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA, &
+    JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB
+
+  ! vmod3D integers
+  integer :: JP3DM_NPA
+  integer :: JP3DM_NRA
+  integer :: JP3DM_NHA
+  integer :: JP3DM_NPB
+  integer :: JP3DM_NRB
+  integer :: JP3DM_NHB
+  ! weight integers
+  integer :: JP3DM_IP
+  integer :: JP3DM_JP
+  integer :: JP3DM_KP
+  integer :: JP3DM_IP1
+  integer :: JP3DM_JP1
+  integer :: JP3DM_KP1
+
+  end module model_jp3d_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_jp3d_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
-
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
 
   integer :: myrank
   integer :: ier
 
+  ! allocates arrays
+! model_jp3d_variables
+  allocate(JP3DM_PNA(MPA),JP3DM_RNA(MRA),JP3DM_HNA(MHA), &
+          JP3DM_PNB(MPB),JP3DM_RNB(MRB),JP3DM_HNB(MHB), &
+          JP3DM_VELAP(MPA,MRA,MHA), &
+          JP3DM_VELBP(MPB,MRB,MHB), &
+          JP3DM_PN(51),JP3DM_RRN(63), &
+          JP3DM_DEPA(51,63),JP3DM_DEPB(51,63),JP3DM_DEPC(51,63), &
+          JP3DM_WV(8),JP3DM_VP(29),JP3DM_VS(29), &
+          JP3DM_RA(29),JP3DM_DEPJ(29), &
+          JP3DM_IPLOCA(MKA),JP3DM_IRLOCA(MKA), &
+          JP3DM_IHLOCA(MKA),JP3DM_IPLOCB(MKB), &
+          JP3DM_IRLOCB(MKB),JP3DM_IHLOCB(MKB), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating JP3D arrays')
+
   ! master reads in values
-  if(myrank == 0) call read_jp3d_iso_zhao_model(JP3DM_V)
+  if(myrank == 0) call read_jp3d_iso_zhao_model()
 
   ! JP3DM_V
-  call MPI_BCAST(JP3DM_V%NPA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%NRA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%NHA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%NPB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%NRB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%NHB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PNA,MPA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RNA,MRA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HNA,MHA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PNB,MPB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RNB,MRB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HNB,MHB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%VELAP,MPA*MRA*MHA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%VELBP,MPB*MRB*MHB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PN,51,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RRN,63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%DEPA,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%DEPB,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%DEPC,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IPLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IRLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IHLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IPLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IRLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IHLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%JP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%KP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%IP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%JP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%KP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%WV,8,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%P,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%R,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%H,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%PD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%HD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%VP,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%VS,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(JP3DM_V%DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(JP3DM_NPA,1)
+  call bcast_all_i(JP3DM_NRA,1)
+  call bcast_all_i(JP3DM_NHA,1)
+  call bcast_all_i(JP3DM_NPB,1)
+  call bcast_all_i(JP3DM_NRB,1)
+  call bcast_all_i(JP3DM_NHB,1)
+
+  call bcast_all_dp(JP3DM_PNA,MPA)
+  call bcast_all_dp(JP3DM_RNA,MRA)
+  call bcast_all_dp(JP3DM_HNA,MHA)
+  call bcast_all_dp(JP3DM_PNB,MPB)
+  call bcast_all_dp(JP3DM_RNB,MRB)
+  call bcast_all_dp(JP3DM_HNB,MHB)
+  call bcast_all_dp(JP3DM_VELAP,MPA*MRA*MHA)
+  call bcast_all_dp(JP3DM_VELBP,MPB*MRB*MHB)
+  call bcast_all_dp(JP3DM_PN,51)
+  call bcast_all_dp(JP3DM_RRN,63)
+  call bcast_all_dp(JP3DM_DEPA,51*63)
+  call bcast_all_dp(JP3DM_DEPB,51*63)
+  call bcast_all_dp(JP3DM_DEPC,51*63)
+
+  call bcast_all_i(JP3DM_IPLOCA,MKA)
+  call bcast_all_i(JP3DM_IRLOCA,MKA)
+  call bcast_all_i(JP3DM_IHLOCA,MKA)
+  call bcast_all_i(JP3DM_IPLOCB,MKB)
+  call bcast_all_i(JP3DM_IRLOCB,MKB)
+  call bcast_all_i(JP3DM_IHLOCB,MKB)
+
+  call bcast_all_dp(JP3DM_PLA,1)
+  call bcast_all_dp(JP3DM_RLA,1)
+  call bcast_all_dp(JP3DM_HLA,1)
+  call bcast_all_dp(JP3DM_PLB,1)
+  call bcast_all_dp(JP3DM_RLB,1)
+  call bcast_all_dp(JP3DM_HLB,1)
+
+  call bcast_all_i(JP3DM_IP,1)
+  call bcast_all_i(JP3DM_JP,1)
+  call bcast_all_i(JP3DM_KP,1)
+  call bcast_all_i(JP3DM_IP1,1)
+  call bcast_all_i(JP3DM_JP1,1)
+  call bcast_all_i(JP3DM_KP1,1)
+
+  call bcast_all_dp(JP3DM_WV,8)
+  call bcast_all_dp(JP3DM_P,1)
+  call bcast_all_dp(JP3DM_R,1)
+  call bcast_all_dp(JP3DM_H,1)
+  call bcast_all_dp(JP3DM_PF,1)
+  call bcast_all_dp(JP3DM_RF,1)
+  call bcast_all_dp(JP3DM_HF,1)
+  call bcast_all_dp(JP3DM_PF1,1)
+  call bcast_all_dp(JP3DM_RF1,1)
+  call bcast_all_dp(JP3DM_HF1,1)
+  call bcast_all_dp(JP3DM_PD,1)
+  call bcast_all_dp(JP3DM_RD,1)
+  call bcast_all_dp(JP3DM_HD,1)
+  call bcast_all_dp(JP3DM_VP,29)
+  call bcast_all_dp(JP3DM_VS,29)
+  call bcast_all_dp(JP3DM_RA,29)
+  call bcast_all_dp(JP3DM_DEPJ,29)
 
   end subroutine model_jp3d_broadcast
 
@@ -208,88 +219,19 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_jp3d_iso_zhao_model(JP3DM_V)
+  subroutine read_jp3d_iso_zhao_model()
+
+  use constants
+  use model_jp3d_par
 
   implicit none
-
-  include "constants.h"
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
 
   OPEN(2,FILE="DATA/Zhao_JP_model/m3d1341")
   OPEN(3,FILE="DATA/Zhao_JP_model/datadis")
 
-  CALL INPUTJP(JP3DM_V)
-  CALL INPUT1(JP3DM_V)
-  CALL INPUT2(JP3DM_V)
+  CALL INPUTJP()
+  CALL INPUT1()
+  CALL INPUT2()
 
   end subroutine read_jp3d_iso_zhao_model
 
@@ -297,81 +239,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
+  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
+
+  use constants
+  use model_jp3d_par
+
   implicit none
-
-  include "constants.h"
-
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
 
   logical found_crust
   double precision :: radius,theta,phi,vp,vs,dvs,dvp,rho
@@ -386,9 +259,9 @@
   HE = (ONE - radius)*R_EARTH_KM
 !  calculate depths of the Conrad, the Moho and
 !  the plate boundary beneath the location (PHI,RAM)
-  CALL HLAY(PE,RE,H1,1,JP3DM_V)
-  CALL HLAY(PE,RE,H2,2,JP3DM_V)
-  CALL HLAY(PE,RE,H3,3,JP3DM_V)
+  CALL HLAY(PE,RE,H1,1)
+  CALL HLAY(PE,RE,H2,2)
+  CALL HLAY(PE,RE,H3,3)
 !   when LAY = 1, the focus is in the upper crust;
 !   when LAY = 2, the focus is in the lower crust;
 !   when LAY = 3, the focus is in the mantle wedge;
@@ -405,9 +278,9 @@
      LAY = 4
   endif
 
-  CALL VEL1D(HE,vp,LAY,1,JP3DM_V)
-  CALL VEL1D(HE,vs,LAY,2,JP3DM_V)
-  CALL VEL3(PE,RE,HE,dvp,LAY,JP3DM_V)
+  CALL VEL1D(HE,vp,LAY,1)
+  CALL VEL1D(HE,vs,LAY,2)
+  CALL VEL3(PE,RE,HE,dvp,LAY)
 
   dvp = 0.01d0*dvp
   dvs = 1.5d0*dvp
@@ -437,91 +310,26 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE INPUT1(JP3DM_V)
+  SUBROUTINE INPUT1()
+
+  use constants
+  use model_jp3d_par
 
   implicit none
 
-  include "constants.h"
-
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-
 100     FORMAT(3I3)
-      READ(2,100)  JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA
-      CALL PUT1(JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%VELAP)
-      READ(2,100)  JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB
-      CALL PUT1(JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB,JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,JP3DM_V%VELBP)
-      CALL BLDMAP(JP3DM_V)
-      RETURN
-    END SUBROUTINE INPUT1
+
+  READ(2,100)  JP3DM_NPA,JP3DM_NRA,JP3DM_NHA
+
+  CALL PUT1(JP3DM_NPA,JP3DM_NRA,JP3DM_NHA,JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,JP3DM_VELAP)
+
+  READ(2,100)  JP3DM_NPB,JP3DM_NRB,JP3DM_NHB
+
+  CALL PUT1(JP3DM_NPB,JP3DM_NRB,JP3DM_NHB,JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,JP3DM_VELBP)
+  CALL BLDMAP()
+
+  RETURN
+  END SUBROUTINE INPUT1
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -550,95 +358,26 @@
 !
 !---------------------------------------------------------------------------------------------
 !
-  SUBROUTINE INPUT2(JP3DM_V)
+  SUBROUTINE INPUT2()
+
+  use constants
+  use model_jp3d_par
 
   implicit none
 
-  include "constants.h"
-
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-
   integer :: NP,NNR,I,J
+
   READ(3,100)  NP,NNR
-  READ(3,110) (JP3DM_V%PN(I),I=1,NP)
-  READ(3,120) (JP3DM_V%RRN(I),I=1,NNR)
+  READ(3,110) (JP3DM_PN(I),I=1,NP)
+  READ(3,120) (JP3DM_RRN(I),I=1,NNR)
   DO 1  I = NP,1,-1
-      READ(3,130) (JP3DM_V%DEPA(I,J),J=1,NNR)
+      READ(3,130) (JP3DM_DEPA(I,J),J=1,NNR)
 1     CONTINUE
   DO 2  I = NP,1,-1
-      READ(3,130) (JP3DM_V%DEPB(I,J),J=1,NNR)
+      READ(3,130) (JP3DM_DEPB(I,J),J=1,NNR)
 2     CONTINUE
   DO 3  I = NP,1,-1
-      READ(3,130) (JP3DM_V%DEPC(I,J),J=1,NNR)
+      READ(3,130) (JP3DM_DEPC(I,J),J=1,NNR)
 3     CONTINUE
 
 100   FORMAT(2I6)
@@ -653,88 +392,20 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE BLDMAP(JP3DM_V)
+  SUBROUTINE BLDMAP()
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
+  CALL LOCX(JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,JP3DM_NPA,JP3DM_NRA,JP3DM_NHA,MKA, &
+           JP3DM_PLA,JP3DM_RLA,JP3DM_HLA,JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA)
+  CALL LOCX(JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,JP3DM_NPB,JP3DM_NRB,JP3DM_NHB,MKB, &
+           JP3DM_PLB,JP3DM_RLB,JP3DM_HLB,JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB)
 
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-
-      CALL LOCX(JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,MKA, &
-           JP3DM_V%PLA,JP3DM_V%RLA,JP3DM_V%HLA,JP3DM_V%IPLOCA,JP3DM_V%IRLOCA,JP3DM_V%IHLOCA)
-      CALL LOCX(JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB,MKB, &
-           JP3DM_V%PLB,JP3DM_V%RLB,JP3DM_V%HLB,JP3DM_V%IPLOCB,JP3DM_V%IRLOCB,JP3DM_V%IHLOCB)
-      RETURN
-      END
+  RETURN
+  END
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -779,203 +450,71 @@
 !-------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE VEL3(PE,RE,HE,V,LAY,JP3DM_V)
+  SUBROUTINE VEL3(PE,RE,HE,V,LAY)
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
+  double precision :: PE,RE,HE,V
 
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
+  integer :: LAY
 
-       double precision :: PE,RE,HE,V
+  JP3DM_P     = 90.0-PE/DEGREES_TO_RADIANS
+  JP3DM_R     = RE/DEGREES_TO_RADIANS
+  JP3DM_H     = HE
+  IF(LAY<=3)       THEN
+     CALL PRHF(JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA,JP3DM_PLA,JP3DM_RLA,JP3DM_HLA, &
+          JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,MPA,MRA,MHA,MKA)
+  ELSE IF(LAY==4)  THEN
+     CALL PRHF(JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB,JP3DM_PLB,JP3DM_RLB,JP3DM_HLB, &
+          JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,MPB,MRB,MHB,MKB)
+  ELSE
+  endif
 
-       integer :: LAY
+  JP3DM_WV(1) = JP3DM_PF1*JP3DM_RF1*JP3DM_HF1
+  JP3DM_WV(2) = JP3DM_PF*JP3DM_RF1*JP3DM_HF1
+  JP3DM_WV(3) = JP3DM_PF1*JP3DM_RF*JP3DM_HF1
+  JP3DM_WV(4) = JP3DM_PF*JP3DM_RF*JP3DM_HF1
+  JP3DM_WV(5) = JP3DM_PF1*JP3DM_RF1*JP3DM_HF
+  JP3DM_WV(6) = JP3DM_PF*JP3DM_RF1*JP3DM_HF
+  JP3DM_WV(7) = JP3DM_PF1*JP3DM_RF*JP3DM_HF
+  JP3DM_WV(8) = JP3DM_PF*JP3DM_RF*JP3DM_HF
 
-        JP3DM_V%P     = 90.0-PE/DEGREES_TO_RADIANS
-        JP3DM_V%R     = RE/DEGREES_TO_RADIANS
-        JP3DM_V%H     = HE
-        IF(LAY<=3)       THEN
-           CALL PRHF(JP3DM_V%IPLOCA,JP3DM_V%IRLOCA,JP3DM_V%IHLOCA,JP3DM_V%PLA,JP3DM_V%RLA,JP3DM_V%HLA, &
-                JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,MPA,MRA,MHA,MKA,JP3DM_V)
-        ELSE IF(LAY==4)  THEN
-           CALL PRHF(JP3DM_V%IPLOCB,JP3DM_V%IRLOCB,JP3DM_V%IHLOCB,JP3DM_V%PLB,JP3DM_V%RLB,JP3DM_V%HLB, &
-                JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,MPB,MRB,MHB,MKB,JP3DM_V)
-        ELSE
-        endif
-        JP3DM_V%WV(1) = JP3DM_V%PF1*JP3DM_V%RF1*JP3DM_V%HF1
-        JP3DM_V%WV(2) = JP3DM_V%PF*JP3DM_V%RF1*JP3DM_V%HF1
-        JP3DM_V%WV(3) = JP3DM_V%PF1*JP3DM_V%RF*JP3DM_V%HF1
-        JP3DM_V%WV(4) = JP3DM_V%PF*JP3DM_V%RF*JP3DM_V%HF1
-        JP3DM_V%WV(5) = JP3DM_V%PF1*JP3DM_V%RF1*JP3DM_V%HF
-        JP3DM_V%WV(6) = JP3DM_V%PF*JP3DM_V%RF1*JP3DM_V%HF
-        JP3DM_V%WV(7) = JP3DM_V%PF1*JP3DM_V%RF*JP3DM_V%HF
-        JP3DM_V%WV(8) = JP3DM_V%PF*JP3DM_V%RF*JP3DM_V%HF
-        !   calculate velocity
-        IF(LAY<=3)      THEN
-           CALL VABPS(MPA,MRA,MHA,JP3DM_V%VELAP,V,JP3DM_V)
-        ELSE IF(LAY==4) THEN
-           CALL VABPS(MPB,MRB,MHB,JP3DM_V%VELBP,V,JP3DM_V)
-        ELSE
-        endif
+  !   calculate velocity
+  IF(LAY<=3)      THEN
+     CALL VABPS(MPA,MRA,MHA,JP3DM_VELAP,V)
+  ELSE IF(LAY==4) THEN
+     CALL VABPS(MPB,MRB,MHB,JP3DM_VELBP,V)
+  ELSE
+  endif
 
-        RETURN
-      END SUBROUTINE VEL3
+  RETURN
+  END SUBROUTINE VEL3
 
 !
 !---------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE VABPS(MP,MR,MH,V,VEL,JP3DM_V)
+  SUBROUTINE VABPS(MP,MR,MH,V,VEL)
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
+  double precision :: VEL
+  integer :: MP,MR,MH
+  double precision :: V(MP,MR,MH)
 
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
+  VEL = JP3DM_WV(1)*V(JP3DM_IP,JP3DM_JP,JP3DM_KP)  + JP3DM_WV(2)*V(JP3DM_IP1,JP3DM_JP,JP3DM_KP) &
+      + JP3DM_WV(3)*V(JP3DM_IP,JP3DM_JP1,JP3DM_KP) + JP3DM_WV(4)*V(JP3DM_IP1,JP3DM_JP1,JP3DM_KP) &
+      + JP3DM_WV(5)*V(JP3DM_IP,JP3DM_JP,JP3DM_KP1) + JP3DM_WV(6)*V(JP3DM_IP1,JP3DM_JP,JP3DM_KP1) &
+      + JP3DM_WV(7)*V(JP3DM_IP,JP3DM_JP1,JP3DM_KP1)+ JP3DM_WV(8)*V(JP3DM_IP1,JP3DM_JP1,JP3DM_KP1)
 
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-      double precision :: VEL
-      integer :: MP,MR,MH
-      double precision :: V(MP,MR,MH)
-      VEL = JP3DM_V%WV(1)*V(JP3DM_V%IP,JP3DM_V%JP,JP3DM_V%KP)  + JP3DM_V%WV(2)*V(JP3DM_V%IP1,JP3DM_V%JP,JP3DM_V%KP) &
-          + JP3DM_V%WV(3)*V(JP3DM_V%IP,JP3DM_V%JP1,JP3DM_V%KP) + JP3DM_V%WV(4)*V(JP3DM_V%IP1,JP3DM_V%JP1,JP3DM_V%KP) &
-          + JP3DM_V%WV(5)*V(JP3DM_V%IP,JP3DM_V%JP,JP3DM_V%KP1) + JP3DM_V%WV(6)*V(JP3DM_V%IP1,JP3DM_V%JP,JP3DM_V%KP1) &
-          + JP3DM_V%WV(7)*V(JP3DM_V%IP,JP3DM_V%JP1,JP3DM_V%KP1)+ JP3DM_V%WV(8)*V(JP3DM_V%IP1,JP3DM_V%JP1,JP3DM_V%KP1)
-      RETURN
-      END
+  RETURN
+  END
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -998,203 +537,71 @@
 !
 
   SUBROUTINE PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
-                      PNX,RNX,HNX,MPX,MRX,MHX,MKX,JP3DM_V)
+                      PNX,RNX,HNX,MPX,MRX,MHX,MKX)
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
+  integer :: MPX,MRX,MHX,MKX
+  integer ::  IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
+  double precision :: PNX(MPX),RNX(MRX),HNX(MHX)
+  double precision :: PLX,RLX,HLX
 
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
-
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-
-        integer :: MPX,MRX,MHX,MKX
-        integer ::  IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
-        double precision :: PNX(MPX),RNX(MRX),HNX(MHX)
-        double precision :: PLX,RLX,HLX
-      CALL LIMIT(PNX(1),PNX(MPX),JP3DM_V%P)
-      CALL LIMIT(RNX(1),RNX(MRX),JP3DM_V%R)
-      CALL LIMIT(HNX(1),HNX(MHX),JP3DM_V%H)
-      CALL INTMAP(JP3DM_V%P*100.0,IPLOCX,MKX,PLX,JP3DM_V%IP)
-      CALL INTMAP(JP3DM_V%R*100.0,IRLOCX,MKX,RLX,JP3DM_V%JP)
-      CALL INTMAP(JP3DM_V%H,IHLOCX,MKX,HLX,JP3DM_V%KP)
-      JP3DM_V%IP1   = JP3DM_V%IP+1
-      JP3DM_V%JP1   = JP3DM_V%JP+1
-      JP3DM_V%KP1   = JP3DM_V%KP+1
-      JP3DM_V%PD    = PNX(JP3DM_V%IP1)-PNX(JP3DM_V%IP)
-      JP3DM_V%RD    = RNX(JP3DM_V%JP1)-RNX(JP3DM_V%JP)
-      JP3DM_V%HD    = HNX(JP3DM_V%KP1)-HNX(JP3DM_V%KP)
-      JP3DM_V%PF    = (JP3DM_V%P-PNX(JP3DM_V%IP))/JP3DM_V%PD
-      JP3DM_V%RF    = (JP3DM_V%R-RNX(JP3DM_V%JP))/JP3DM_V%RD
-      JP3DM_V%HF    = (JP3DM_V%H-HNX(JP3DM_V%KP))/JP3DM_V%HD
-      JP3DM_V%PF1   = 1.0-JP3DM_V%PF
-      JP3DM_V%RF1   = 1.0-JP3DM_V%RF
-      JP3DM_V%HF1   = 1.0-JP3DM_V%HF
-      RETURN
-      END
+  CALL LIMIT(PNX(1),PNX(MPX),JP3DM_P)
+  CALL LIMIT(RNX(1),RNX(MRX),JP3DM_R)
+  CALL LIMIT(HNX(1),HNX(MHX),JP3DM_H)
+  CALL INTMAP(JP3DM_P*100.0,IPLOCX,MKX,PLX,JP3DM_IP)
+  CALL INTMAP(JP3DM_R*100.0,IRLOCX,MKX,RLX,JP3DM_JP)
+  CALL INTMAP(JP3DM_H,IHLOCX,MKX,HLX,JP3DM_KP)
+  JP3DM_IP1   = JP3DM_IP+1
+  JP3DM_JP1   = JP3DM_JP+1
+  JP3DM_KP1   = JP3DM_KP+1
+  JP3DM_PD    = PNX(JP3DM_IP1)-PNX(JP3DM_IP)
+  JP3DM_RD    = RNX(JP3DM_JP1)-RNX(JP3DM_JP)
+  JP3DM_HD    = HNX(JP3DM_KP1)-HNX(JP3DM_KP)
+  JP3DM_PF    = (JP3DM_P-PNX(JP3DM_IP))/JP3DM_PD
+  JP3DM_RF    = (JP3DM_R-RNX(JP3DM_JP))/JP3DM_RD
+  JP3DM_HF    = (JP3DM_H-HNX(JP3DM_KP))/JP3DM_HD
+  JP3DM_PF1   = 1.0-JP3DM_PF
+  JP3DM_RF1   = 1.0-JP3DM_RF
+  JP3DM_HF1   = 1.0-JP3DM_HF
+  RETURN
+  END
 
 !
 !----------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE HLAY(PE,RE,HE,IJK,JP3DM_V)
+  SUBROUTINE HLAY(PE,RE,HE,IJK)
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
+  double precision :: PE,RE,HE,WV1,WV2,WV3,WV4,P,R,PF,RF,PF1,RF1
+  integer :: IJK,J,J1,I,I1
 
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-        double precision :: PE,RE,HE,WV1,WV2,WV3,WV4,P,R,PF,RF,PF1,RF1
-        integer :: IJK,J,J1,I,I1
-        P = 90.0-PE/DEGREES_TO_RADIANS
-        R = RE/DEGREES_TO_RADIANS
-        CALL LIMIT(JP3DM_V%PN(1),JP3DM_V%PN(51),P)
-        CALL LIMIT(JP3DM_V%RRN(1),JP3DM_V%RRN(63),R)
+  P = 90.0-PE/DEGREES_TO_RADIANS
+  R = RE/DEGREES_TO_RADIANS
+
+  CALL LIMIT(JP3DM_PN(1),JP3DM_PN(51),P)
+  CALL LIMIT(JP3DM_RRN(1),JP3DM_RRN(63),R)
+
         DO 1 I = 1,50
            I1     = I+1
-           IF(P>=JP3DM_V%PN(I).AND.P<JP3DM_V%PN(I1)) GO TO 11
+           IF(P>=JP3DM_PN(I).AND.P<JP3DM_PN(I1)) GO TO 11
 1          CONTINUE
 11         CONTINUE
            DO 2 J = 1,62
               J1     = J+1
-              IF(R>=JP3DM_V%RRN(J).AND.R<JP3DM_V%RRN(J1)) GO TO 22
+              IF(R>=JP3DM_RRN(J).AND.R<JP3DM_RRN(J1)) GO TO 22
 2             CONTINUE
 22            CONTINUE
-              PF    = (P-JP3DM_V%PN(I))/(JP3DM_V%PN(I1)-JP3DM_V%PN(I))
-              RF    = (R-JP3DM_V%RRN(J))/(JP3DM_V%RRN(J1)-JP3DM_V%RRN(J))
+              PF    = (P-JP3DM_PN(I))/(JP3DM_PN(I1)-JP3DM_PN(I))
+              RF    = (R-JP3DM_RRN(J))/(JP3DM_RRN(J1)-JP3DM_RRN(J))
               PF1   = 1.0-PF
               RF1   = 1.0-RF
               WV1   = PF1*RF1
@@ -1202,14 +609,14 @@
               WV3   = PF1*RF
               WV4   = PF*RF
               IF(IJK==1)       THEN
-                 HE  = WV1*JP3DM_V%DEPA(I,J)  + WV2*JP3DM_V%DEPA(I1,J) &
-                      + WV3*JP3DM_V%DEPA(I,J1) + WV4*JP3DM_V%DEPA(I1,J1)
+                 HE  = WV1*JP3DM_DEPA(I,J)  + WV2*JP3DM_DEPA(I1,J) &
+                      + WV3*JP3DM_DEPA(I,J1) + WV4*JP3DM_DEPA(I1,J1)
               ELSE IF(IJK==2)  THEN
-                 HE  = WV1*JP3DM_V%DEPB(I,J)  + WV2*JP3DM_V%DEPB(I1,J) &
-                      + WV3*JP3DM_V%DEPB(I,J1) + WV4*JP3DM_V%DEPB(I1,J1)
+                 HE  = WV1*JP3DM_DEPB(I,J)  + WV2*JP3DM_DEPB(I1,J) &
+                      + WV3*JP3DM_DEPB(I,J1) + WV4*JP3DM_DEPB(I1,J1)
               ELSE IF(IJK==3)  THEN
-                 HE  = WV1*JP3DM_V%DEPC(I,J)  + WV2*JP3DM_V%DEPC(I1,J) &
-                      + WV3*JP3DM_V%DEPC(I,J1) + WV4*JP3DM_V%DEPC(I1,J1)
+                 HE  = WV1*JP3DM_DEPC(I,J)  + WV2*JP3DM_DEPC(I1,J) &
+                      + WV3*JP3DM_DEPC(I,J1) + WV4*JP3DM_DEPC(I1,J1)
               ELSE
               endif
   RETURN
@@ -1234,99 +641,33 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  SUBROUTINE VEL1D(HE,V,LAY,IPS,JP3DM_V)
+
+  SUBROUTINE VEL1D(HE,V,LAY,IPS)
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
+  integer :: IPS,LAY
+  double precision :: HE,V,VM,HM
 
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-
-      integer :: IPS,LAY
-      double precision :: HE,V,VM,HM
-      IF(LAY==1)      THEN
-        V    = 6.0
-        IF(IPS==2)    V = 3.5
-      ELSE IF(LAY==2) THEN
-        V    = 6.7
-        IF(IPS==2)    V = 3.8
-      ELSE IF(LAY>=3) THEN
-        HM   = 40.0
-        IF(HE<HM)    THEN
-          CALL JPMODEL(IPS,HM,VM,JP3DM_V)
-          V  = VM-(HM-HE)*0.003
-        ELSE
-          CALL JPMODEL(IPS,HE,V,JP3DM_V)
-        endif
-      ELSE
-      endif
+  IF(LAY==1)      THEN
+    V    = 6.0
+    IF(IPS==2)    V = 3.5
+  ELSE IF(LAY==2) THEN
+    V    = 6.7
+    IF(IPS==2)    V = 3.8
+  ELSE IF(LAY>=3) THEN
+    HM   = 40.0
+    IF(HE<HM)    THEN
+      CALL JPMODEL(IPS,HM,VM)
+      V  = VM-(HM-HE)*0.003
+    ELSE
+      CALL JPMODEL(IPS,HE,V)
+    endif
+  ELSE
+  endif
 
   RETURN
   END
@@ -1335,99 +676,34 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE INPUTJP(JP3DM_V)
+  SUBROUTINE INPUTJP()
+
+  use constants
+  use model_jp3d_par
+
   implicit none
 
-  include "constants.h"
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
+  double precision :: VP1(29),VS1(29),RA1(29)
+  integer :: L
 
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-      double precision :: VP1(29),VS1(29),RA1(29)
-      integer :: L
-      DATA VP1/7.75, 7.94, 8.13, 8.33, 8.54, 8.75, 8.97, &
-               9.50, 9.91,10.26,10.55,10.99,11.29,11.50, &
-              11.67,11.85,12.03,12.20,12.37,12.54,12.71, &
-              12.87,13.02,13.16,13.32,13.46,13.60,13.64,13.64/
-      DATA VS1/4.353,4.444,4.539,4.638,4.741,4.850,4.962, &
-               5.227,5.463,5.670,5.850,6.125,6.295,6.395, &
-               6.483,6.564,6.637,6.706,6.770,6.833,6.893, &
-               6.953,7.012,7.074,7.137,7.199,7.258,7.314,7.304/
-      DATA RA1/1.00,0.99,0.98,0.97,0.96,0.95,0.94,0.93, &
-               0.92,0.91,0.90,0.88,0.86,0.84,0.82,0.80, &
-               0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.64, &
-               0.62,0.60,0.58,0.56,0.55/
-      DO 1 L  = 1,29
-      JP3DM_V%VP(L)   = VP1(L)
-      JP3DM_V%VS(L)   = VS1(L)
-      JP3DM_V%RA(L)   = RA1(L)
-      JP3DM_V%DEPJ(L) = 40.0+6325.59*(1.0-RA1(L))
+  DATA VP1/7.75, 7.94, 8.13, 8.33, 8.54, 8.75, 8.97, &
+           9.50, 9.91,10.26,10.55,10.99,11.29,11.50, &
+          11.67,11.85,12.03,12.20,12.37,12.54,12.71, &
+          12.87,13.02,13.16,13.32,13.46,13.60,13.64,13.64/
+  DATA VS1/4.353,4.444,4.539,4.638,4.741,4.850,4.962, &
+           5.227,5.463,5.670,5.850,6.125,6.295,6.395, &
+           6.483,6.564,6.637,6.706,6.770,6.833,6.893, &
+           6.953,7.012,7.074,7.137,7.199,7.258,7.314,7.304/
+  DATA RA1/1.00,0.99,0.98,0.97,0.96,0.95,0.94,0.93, &
+           0.92,0.91,0.90,0.88,0.86,0.84,0.82,0.80, &
+           0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.64, &
+           0.62,0.60,0.58,0.56,0.55/
+
+  DO 1 L  = 1,29
+    JP3DM_VP(L)   = VP1(L)
+    JP3DM_VS(L)   = VS1(L)
+    JP3DM_RA(L)   = RA1(L)
+    JP3DM_DEPJ(L) = 40.0+6325.59*(1.0-RA1(L))
 1     CONTINUE
 
   RETURN
@@ -1436,97 +712,32 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  SUBROUTINE JPMODEL(IPS,H,V,JP3DM_V)
+
+  SUBROUTINE JPMODEL(IPS,H,V)
+
+  use constants
+  use model_jp3d_par
 
   implicit none
 
-  include "constants.h"
-! model_jp3d_variables
-  type model_jp3d_variables
-    sequence
-    ! vmod3d
-    double precision :: PNA(MPA)
-    double precision :: RNA(MRA)
-    double precision :: HNA(MHA)
-    double precision :: PNB(MPB)
-    double precision :: RNB(MRB)
-    double precision :: HNB(MHB)
-    double precision :: VELAP(MPA,MRA,MHA)
-    double precision :: VELBP(MPB,MRB,MHB)
-    ! discon
-    double precision :: PN(51)
-    double precision :: RRN(63)
-    double precision :: DEPA(51,63)
-    double precision :: DEPB(51,63)
-    double precision :: DEPC(51,63)
-    ! locate
-    double precision :: PLA
-    double precision :: RLA
-    double precision :: HLA
-    double precision :: PLB
-    double precision :: RLB
-    double precision :: HLB
-    ! weight
-    double precision :: WV(8)
-    ! prhfd
-    double precision :: P
-    double precision :: R
-    double precision :: H
-    double precision :: PF
-    double precision :: RF
-    double precision :: HF
-    double precision :: PF1
-    double precision :: RF1
-    double precision :: HF1
-    double precision :: PD
-    double precision :: RD
-    double precision :: HD
-    ! jpmodv
-    double precision :: VP(29)
-    double precision :: VS(29)
-    double precision :: RA(29)
-    double precision :: DEPJ(29)
-    ! locate integers
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
-    ! vmod3D integers
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
-    ! weight integers
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
-  end type model_jp3d_variables
+  integer :: IPS,K,K1
+  double precision :: H1,H2,H12,H,V
 
-  type (model_jp3d_variables) JP3DM_V
-! model_jp3d_variables
-      integer :: IPS,K,K1
-      double precision :: H1,H2,H12,H,V
-      DO 2 K = 1,28
+  DO 2 K = 1,28
       K1     = K+1
-      H1     = JP3DM_V%DEPJ(K)
-      H2     = JP3DM_V%DEPJ(K1)
+      H1     = JP3DM_DEPJ(K)
+      H2     = JP3DM_DEPJ(K1)
       IF(H>=H1.AND.H<H2) GO TO 3
 2     CONTINUE
 3     CONTINUE
-      H12    = (H-H1)/(H2-H1)
-      IF(IPS==1)  THEN
-         V   = (JP3DM_V%VP(K1)-JP3DM_V%VP(K))*H12+JP3DM_V%VP(K)
-      ELSE
-         V   = (JP3DM_V%VS(K1)-JP3DM_V%VS(K))*H12+JP3DM_V%VS(K)
-      endif
-      RETURN
-      END
 
+  H12    = (H-H1)/(H2-H1)
+  IF(IPS==1)  THEN
+     V   = (JP3DM_VP(K1)-JP3DM_VP(K))*H12+JP3DM_VP(K)
+  ELSE
+     V   = (JP3DM_VS(K1)-JP3DM_VS(K))*H12+JP3DM_VS(K)
+  endif
+
+  RETURN
+  END
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,75 +25,31 @@
 !
 !=====================================================================
 
-  subroutine read_forward_arrays_startrun(myrank,NSTEP, &
-                    SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-                    it_begin,it_end, &
-                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                    displ_inner_core,veloc_inner_core,accel_inner_core, &
-                    displ_outer_core,veloc_outer_core,accel_outer_core, &
-                    R_memory_crust_mantle,R_memory_inner_core, &
-                    A_array_rotation,B_array_rotation, &
-                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                    b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
+  subroutine read_forward_arrays_startrun()
 
 ! reads in saved wavefields
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
   ! local parameters
+  integer :: ier
   character(len=150) outputname
 
-  integer myrank,NSTEP
-
-  integer SIMULATION_TYPE
-
-  integer NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,it_begin,it_end
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-    displ_inner_core,veloc_inner_core,accel_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
-    displ_outer_core,veloc_outer_core,accel_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
-    R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
-    R_memory_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
-    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
-    b_R_memory_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
-    b_R_memory_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
-    b_A_array_rotation,b_B_array_rotation
-
-  character(len=150) LOCAL_PATH
-
-  ! define correct time steps if restart files
+  ! checks run/checkpoint number
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
-  if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
-  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
+  if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
+    stop 'incorrect run number'
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
+    stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
+  ! define correct time steps if restart files
+  ! set start/end steps for time iteration loop
   it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1
   if (NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     it_end = NUMBER_OF_THIS_RUN * (NSTEP / NUMBER_OF_RUNS)
@@ -102,49 +58,59 @@
     it_end = NSTEP
   endif
 
+  ! checks if anything to do
+  ! undoing attenuation doesn't support the following checkpointing
+  if( UNDO_ATTENUATION ) return
+
   ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
-    write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
-    read(55) displ_crust_mantle
-    read(55) veloc_crust_mantle
-    read(55) accel_crust_mantle
-    read(55) displ_inner_core
-    read(55) veloc_inner_core
-    read(55) accel_inner_core
-    read(55) displ_outer_core
-    read(55) veloc_outer_core
-    read(55) accel_outer_core
-    read(55) A_array_rotation
-    read(55) B_array_rotation
-    read(55) R_memory_crust_mantle
-    read(55) R_memory_inner_core
-    close(55)
-  endif
+    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+      call read_intermediate_forward_arrays_adios()
+    else
+      write(outputname,"('dump_all_arrays',i6.6)") myrank
+      open(unit=IIN,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening file dump_all_arrays*** for reading')
 
-  ! initializes backward/reconstructed arrays
-  if (SIMULATION_TYPE == 3) then
-    ! initializes wavefields
-    b_displ_crust_mantle = 0._CUSTOM_REAL
-    b_veloc_crust_mantle = 0._CUSTOM_REAL
-    b_accel_crust_mantle = 0._CUSTOM_REAL
+      read(IIN) displ_crust_mantle
+      read(IIN) veloc_crust_mantle
+      read(IIN) accel_crust_mantle
 
-    b_displ_inner_core = 0._CUSTOM_REAL
-    b_veloc_inner_core = 0._CUSTOM_REAL
-    b_accel_inner_core = 0._CUSTOM_REAL
+      read(IIN) displ_inner_core
+      read(IIN) veloc_inner_core
+      read(IIN) accel_inner_core
 
-    b_displ_outer_core = 0._CUSTOM_REAL
-    b_veloc_outer_core = 0._CUSTOM_REAL
-    b_accel_outer_core = 0._CUSTOM_REAL
+      read(IIN) displ_outer_core
+      read(IIN) veloc_outer_core
+      read(IIN) accel_outer_core
 
-    if (ROTATION_VAL) then
-      b_A_array_rotation = 0._CUSTOM_REAL
-      b_B_array_rotation = 0._CUSTOM_REAL
-    endif
+      read(IIN) epsilondev_xx_crust_mantle
+      read(IIN) epsilondev_yy_crust_mantle
+      read(IIN) epsilondev_xy_crust_mantle
+      read(IIN) epsilondev_xz_crust_mantle
+      read(IIN) epsilondev_yz_crust_mantle
 
-    if (ATTENUATION_VAL) then
-      b_R_memory_crust_mantle = 0._CUSTOM_REAL
-      b_R_memory_inner_core = 0._CUSTOM_REAL
+      read(IIN) epsilondev_xx_inner_core
+      read(IIN) epsilondev_yy_inner_core
+      read(IIN) epsilondev_xy_inner_core
+      read(IIN) epsilondev_xz_inner_core
+      read(IIN) epsilondev_yz_inner_core
+
+      read(IIN) A_array_rotation
+      read(IIN) B_array_rotation
+
+      read(IIN) R_xx_crust_mantle
+      read(IIN) R_yy_crust_mantle
+      read(IIN) R_xy_crust_mantle
+      read(IIN) R_xz_crust_mantle
+      read(IIN) R_yz_crust_mantle
+
+      read(IIN) R_xx_inner_core
+      read(IIN) R_yy_inner_core
+      read(IIN) R_xy_inner_core
+      read(IIN) R_xz_inner_core
+      read(IIN) R_yz_inner_core
+
+      close(IIN)
     endif
   endif
 
@@ -154,64 +120,124 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_forward_arrays(myrank, &
-                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                    b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
+  subroutine read_forward_arrays()
 
 ! reads in saved wavefields to reconstruct/backward wavefield
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  ! backward/reconstructed wavefields
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
-    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
-    b_R_memory_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
-    b_R_memory_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
-    b_A_array_rotation,b_B_array_rotation
-
-  character(len=150) LOCAL_PATH
-
   ! local parameters
+  integer :: ier
   character(len=150) outputname
 
-  write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-  open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
-  read(55) b_displ_crust_mantle
-  read(55) b_veloc_crust_mantle
-  read(55) b_accel_crust_mantle
-  read(55) b_displ_inner_core
-  read(55) b_veloc_inner_core
-  read(55) b_accel_inner_core
-  read(55) b_displ_outer_core
-  read(55) b_veloc_outer_core
-  read(55) b_accel_outer_core
-  if (ROTATION_VAL) then
-    read(55) b_A_array_rotation
-    read(55) b_B_array_rotation
+  ! checks if anything to do
+  if( UNDO_ATTENUATION ) return
+
+  ! reads in file data
+  if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+    call read_forward_arrays_adios()
+  else
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
+    open(unit=IIN,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
+          status='old',action='read',form='unformatted',iostat=ier)
+    if( ier /= 0 ) then
+      print*,'error: opening proc_****_save_forward_arrays.bin'
+      print*,'path: ',trim(LOCAL_TMP_PATH)//'/'//outputname
+      call exit_mpi(myrank,'error open file save_forward_arrays.bin')
+    endif
+
+    read(IIN) b_displ_crust_mantle
+    read(IIN) b_veloc_crust_mantle
+    read(IIN) b_accel_crust_mantle
+
+    read(IIN) b_displ_inner_core
+    read(IIN) b_veloc_inner_core
+    read(IIN) b_accel_inner_core
+
+    read(IIN) b_displ_outer_core
+    read(IIN) b_veloc_outer_core
+    read(IIN) b_accel_outer_core
+
+    read(IIN) b_epsilondev_xx_crust_mantle
+    read(IIN) b_epsilondev_yy_crust_mantle
+    read(IIN) b_epsilondev_xy_crust_mantle
+    read(IIN) b_epsilondev_xz_crust_mantle
+    read(IIN) b_epsilondev_yz_crust_mantle
+
+    read(IIN) b_epsilondev_xx_inner_core
+    read(IIN) b_epsilondev_yy_inner_core
+    read(IIN) b_epsilondev_xy_inner_core
+    read(IIN) b_epsilondev_xz_inner_core
+    read(IIN) b_epsilondev_yz_inner_core
+
+    if (ROTATION_VAL) then
+      read(IIN) b_A_array_rotation
+      read(IIN) b_B_array_rotation
+    endif
+
+    if (ATTENUATION_VAL) then
+       read(IIN) b_R_xx_crust_mantle
+       read(IIN) b_R_yy_crust_mantle
+       read(IIN) b_R_xy_crust_mantle
+       read(IIN) b_R_xz_crust_mantle
+       read(IIN) b_R_yz_crust_mantle
+
+       read(IIN) b_R_xx_inner_core
+       read(IIN) b_R_yy_inner_core
+       read(IIN) b_R_xy_inner_core
+       read(IIN) b_R_xz_inner_core
+       read(IIN) b_R_yz_inner_core
+    endif
+    close(IIN)
+  endif ! ADIOS_FOR_FORWARD_ARRAYS
+
+  ! transfers fields onto GPU
+  if(GPU_MODE) then
+    ! transfers initialized wavefields to GPU device
+    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                    Mesh_pointer)
+
+    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE, &
+                                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                    Mesh_pointer)
+
+    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
+                                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                                    Mesh_pointer)
+    ! strain
+    if( .not. UNDO_ATTENUATION ) then
+      call transfer_b_strain_cm_to_device(Mesh_pointer, &
+                                    b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle, &
+                                    b_epsilondev_xy_crust_mantle,b_epsilondev_xz_crust_mantle, &
+                                    b_epsilondev_yz_crust_mantle)
+
+      call transfer_b_strain_ic_to_device(Mesh_pointer, &
+                                    b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core, &
+                                    b_epsilondev_xy_inner_core,b_epsilondev_xz_inner_core, &
+                                    b_epsilondev_yz_inner_core)
+    endif
+    ! rotation
+    if (ROTATION_VAL) then
+      call transfer_b_rotation_to_device(Mesh_pointer,b_A_array_rotation,b_B_array_rotation)
+    endif
+    ! attenuation memory variables
+    if (ATTENUATION_VAL) then
+      call transfer_b_rmemory_cm_to_device(Mesh_pointer, &
+                                           b_R_xx_crust_mantle,b_R_yy_crust_mantle, &
+                                           b_R_xy_crust_mantle,b_R_xz_crust_mantle, &
+                                           b_R_yz_crust_mantle)
+      call transfer_b_rmemory_ic_to_device(Mesh_pointer, &
+                                           b_R_xx_inner_core,b_R_yy_inner_core, &
+                                           b_R_xy_inner_core,b_R_xz_inner_core, &
+                                           b_R_yz_inner_core)
+    endif
   endif
-  if (ATTENUATION_VAL) then
-    read(55) b_R_memory_crust_mantle
-    read(55) b_R_memory_inner_core
-  endif
-  close(55)
 
   end subroutine read_forward_arrays
 
@@ -219,65 +245,68 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_forward_arrays_undoatt(myrank, &
-                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                    b_R_memory_crust_mantle,b_R_memory_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH,iteration_on_subset)
+  subroutine read_forward_arrays_undoatt()
 
 ! reads in saved wavefields
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  ! local parameters
+  integer :: iteration_on_subset_tmp
+  integer :: ier
+  character(len=150) :: outputname
 
-  integer myrank
+  ! current subset iteration
+  iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
 
-  ! backward/reconstructed wavefields
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
-    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
+  ! reads in saved wavefield
+  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
-    b_R_memory_crust_mantle
+  ! debug
+  !if(myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
-    b_R_memory_inner_core
+  ! opens corresponding snapshot file for reading
+  open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
+       status='old',action='read',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for reading')
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
-    b_A_array_rotation,b_B_array_rotation
+  read(IIN) b_displ_crust_mantle
+  read(IIN) b_veloc_crust_mantle
+  read(IIN) b_accel_crust_mantle
 
-  character(len=150) LOCAL_PATH
+  read(IIN) b_displ_inner_core
+  read(IIN) b_veloc_inner_core
+  read(IIN) b_accel_inner_core
 
-  integer iteration_on_subset
+  read(IIN) b_displ_outer_core
+  read(IIN) b_veloc_outer_core
+  read(IIN) b_accel_outer_core
 
-  !local parameters
-  character(len=150) outputname
-
-  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset,'.bin'
-  open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
-  read(55) b_displ_crust_mantle
-  read(55) b_veloc_crust_mantle
-  read(55) b_accel_crust_mantle
-  read(55) b_displ_inner_core
-  read(55) b_veloc_inner_core
-  read(55) b_accel_inner_core
-  read(55) b_displ_outer_core
-  read(55) b_veloc_outer_core
-  read(55) b_accel_outer_core
   if (ROTATION_VAL) then
-    read(55) b_A_array_rotation
-    read(55) b_B_array_rotation
+    read(IIN) b_A_array_rotation
+    read(IIN) b_B_array_rotation
   endif
+
   if (ATTENUATION_VAL) then
-    read(55) b_R_memory_crust_mantle
-    read(55) b_R_memory_inner_core
+    read(IIN) b_R_xx_crust_mantle
+    read(IIN) b_R_yy_crust_mantle
+    read(IIN) b_R_xy_crust_mantle
+    read(IIN) b_R_xz_crust_mantle
+    read(IIN) b_R_yz_crust_mantle
+
+    read(IIN) b_R_xx_inner_core
+    read(IIN) b_R_yy_inner_core
+    read(IIN) b_R_xy_inner_core
+    read(IIN) b_R_xz_inner_core
+    read(IIN) b_R_yz_inner_core
   endif
-  close(55)
+
+  close(IIN)
 
   end subroutine read_forward_arrays_undoatt
+

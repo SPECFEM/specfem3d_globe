@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,64 +33,16 @@
 !!!!!! VERY IMPORTANT
 !!!!!! VERY IMPORTANT
 
-  subroutine read_parameter_file(OUTPUT_FILES, &
-                                LOCAL_PATH,MODEL, &
-                                NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-                                NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-                                NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-                                MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-                                NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read, &
-                                ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-                                CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-                                HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM,RECORD_LENGTH_IN_MINUTES, &
-                                MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG,&
-                                ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-                                MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-                                RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-                                SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
-                                OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                                ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-                                SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY,&
-                                SAVE_REGULAR_KL,PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION,NT_DUMP_ATTENUATION, &
-          USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
-          USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-          ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX,RATIO_BY_WHICH_TO_INCREASE_IT, &
-          EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
+  subroutine read_parameter_file()
+
+  use constants
+  use shared_input_parameters
 
   implicit none
 
-  include "constants.h"
-
-  ! parameters read from parameter file
-  integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY,NT_DUMP_ATTENUATION
-
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
-          HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM, &
-          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,&
-          MOVIE_SOUTH_DEG,RECORD_LENGTH_IN_MINUTES,RATIO_BY_WHICH_TO_INCREASE_IT
-
-  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
-         MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
-         RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-         SAVE_MESH_FILES,ATTENUATION, &
-         ABSORBING_CONDITIONS,SAVE_FORWARD, &
-         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,SAVE_REGULAR_KL, &
-         PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
-         USE_LDDRK,INCREASE_CFL_FOR_LDDRK,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
-         USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK,GPU_MODE,ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-         ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_AVS_DX, &
-         EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE
-
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
-
 ! local variables
   integer :: ierr
+  integer, external :: err_occurred
 
   ! gets the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -108,16 +60,28 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_FORWARD'
   call read_value_integer(NCHUNKS, 'mesher.NCHUNKS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NCHUNKS'
-  call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'mesher.ANGULAR_WIDTH_XI_IN_DEGREES', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_XI...'
-  call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'mesher.ANGULAR_WIDTH_ETA_IN_DEGREES', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_ETA...'
-  call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'mesher.CENTER_LATITUDE_IN_DEGREES', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: CENTER_LATITUDE...'
-  call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'mesher.CENTER_LONGITUDE_IN_DEGREES', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: CENTER_LONGITUDE...'
-  call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'mesher.GAMMA_ROTATION_AZIMUTH', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: GAMMA_ROTATION...'
+
+  if( NCHUNKS == 6 ) then
+    ! global simulations
+    ANGULAR_WIDTH_XI_IN_DEGREES = 90.d0
+    ANGULAR_WIDTH_ETA_IN_DEGREES = 90.d0
+    CENTER_LATITUDE_IN_DEGREES = 0.d0
+    CENTER_LONGITUDE_IN_DEGREES = 0.d0
+    GAMMA_ROTATION_AZIMUTH = 0.d0
+  else
+    ! 1/2-chunk simulations
+    call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'mesher.ANGULAR_WIDTH_XI_IN_DEGREES', ierr)
+    if (ierr /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_XI...'
+    call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'mesher.ANGULAR_WIDTH_ETA_IN_DEGREES', ierr)
+    if (ierr /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_ETA...'
+    call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'mesher.CENTER_LATITUDE_IN_DEGREES', ierr)
+    if (ierr /= 0) stop 'an error occurred while reading the parameter file: CENTER_LATITUDE...'
+    call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'mesher.CENTER_LONGITUDE_IN_DEGREES', ierr)
+    if (ierr /= 0) stop 'an error occurred while reading the parameter file: CENTER_LONGITUDE...'
+    call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'mesher.GAMMA_ROTATION_AZIMUTH', ierr)
+    if (ierr /= 0) stop 'an error occurred while reading the parameter file: GAMMA_ROTATION...'
+  endif
+
   ! number of elements at the surface along the two sides of the first chunk
   call read_value_integer(NEX_XI_read, 'mesher.NEX_XI', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NEX_XI'
@@ -127,6 +91,8 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NPROC_XI'
   call read_value_integer(NPROC_ETA_read, 'mesher.NPROC_ETA', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NPROC_ETA'
+
+  ! physical parameters
   call read_value_logical(OCEANS, 'model.OCEANS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: OCEANS'
   call read_value_logical(ELLIPTICITY, 'model.ELLIPTICITY', ierr)
@@ -139,13 +105,17 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ROTATION'
   call read_value_logical(ATTENUATION, 'model.ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION'
+
   call read_value_logical(ABSORBING_CONDITIONS, 'solver.ABSORBING_CONDITIONS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ABSORBING_CONDITIONS'
+
   ! define the velocity model
   call read_value_string(MODEL, 'model.MODEL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MODEL'
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
+
+  ! attenuation parameters
   call read_value_logical(ATTENUATION_1D_WITH_3D_STORAGE, 'solver.ATTENUATION_1D_WITH_3D_STORAGE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION_1D_WITH_3D_STORAGE'
   call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'solver.PARTIAL_PHYS_DISPERSION_ONLY', ierr)
@@ -155,17 +125,19 @@
   call read_value_integer(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP_ATTENUATION'
 
+  ! mass matrix corrections
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'solver.EXACT_MASS_MATRIX_FOR_ROTATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
-! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
-  if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
 
+  ! low-memory runge-kutta time scheme
   call read_value_logical(USE_LDDRK, 'solver.USE_LDDRK', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: USE_LDDRK'
   call read_value_logical(INCREASE_CFL_FOR_LDDRK, 'solver.INCREASE_CFL_FOR_LDDRK', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: INCREASE_CFL_FOR_LDDRK'
   call read_value_double_precision(RATIO_BY_WHICH_TO_INCREASE_IT, 'solver.RATIO_BY_WHICH_TO_INCREASE_IT', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RATIO_BY_WHICH_TO_INCREASE_IT'
+
+  ! movie options
   call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MOVIE_SURFACE'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME', ierr)
@@ -194,20 +166,30 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MOVIE_START'
   call read_value_integer(MOVIE_STOP, 'solver.MOVIE_STOP', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: MOVIE_STOP'
+
+  ! run checkpointing
   call read_value_logical(SAVE_MESH_FILES, 'mesher.SAVE_MESH_FILES', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_MESH_FILES'
   call read_value_integer(NUMBER_OF_RUNS, 'solver.NUMBER_OF_RUNS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_RUNS'
   call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_THIS_RUN'
+
+  ! data file output directories
   call read_value_string(LOCAL_PATH, 'LOCAL_PATH', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: LOCAL_PATH'
+  call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: LOCAL_TMP_PATH'
+
+  ! user output
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_INFO'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_SEISMOS'
   call read_value_integer(NTSTEP_BETWEEN_READ_ADJSRC, 'solver.NTSTEP_BETWEEN_READ_ADJSRC', ierr)
   if (ierr /= 0) return
+
+  ! seismogram output
   call read_value_logical(OUTPUT_SEISMOS_ASCII_TEXT, 'solver.OUTPUT_SEISMOS_ASCII_TEXT', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_SIESMOS_ASCII_TEXT'
   call read_value_logical(OUTPUT_SEISMOS_SAC_ALPHANUM, 'solver.OUTPUT_SEISMOS_SAC_ALPHANUM', ierr)
@@ -226,6 +208,8 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECEIVERS_CAN_BE_BURIED'
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: PRINT_SOURCE_TIME_FUNCTION'
+
+  ! adjoint kernels
   call read_value_logical(ANISOTROPIC_KL, 'solver.ANISOTROPIC_KL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ANISOTROPIC_KL'
   call read_value_logical(SAVE_TRANSVERSE_KL_ONLY, 'solver.SAVE_TRANSVERSE_KL_ONLY', ierr)
@@ -239,32 +223,120 @@
   call read_value_logical(SAVE_REGULAR_KL, 'solver.SAVE_REGULAR_KL', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: SAVE_REGULAR_KL'
 
+  ! GPU simulations
   call read_value_logical(GPU_MODE, 'solver.GPU_MODE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_MODE'
 
-!! DK DK July 2013: temporary, the time for Daniel Peter to merge his GPU implementation
-! if(GPU_MODE) stop 'GPU_MODE not implemented yet'
-  if(GPU_MODE) print *,'GPU_MODE not implemented yet'
-
+  ! ADIOS file format output
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_ENABLED'
-
-!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  if(ADIOS_ENABLED) stop 'ADIOS support not implemented yet'
-
   call read_value_logical(ADIOS_FOR_FORWARD_ARRAYS, 'solver.ADIOS_FOR_FORWARD_ARRAYS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_FORWARD_ARRAYS'
-
   call read_value_logical(ADIOS_FOR_MPI_ARRAYS, 'solver.ADIOS_FOR_MPI_ARRAYS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_MPI_ARRAYS'
-
   call read_value_logical(ADIOS_FOR_ARRAYS_SOLVER, 'solver.ADIOS_FOR_ARRAYS_SOLVER', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_ARRAYS_SOLVER'
-
+  call read_value_logical(ADIOS_FOR_SOLVER_MESHFILES, 'solver.ADIOS_FOR_SOLVER_MESHFILES', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_SOLVER_MESHFILES'
   call read_value_logical(ADIOS_FOR_AVS_DX, 'solver.ADIOS_FOR_AVS_DX', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_AVS_DX'
 
-  ! close parameter file
+  ! closes parameter file
   call close_parameter_file()
 
+  ! checks
+  if(err_occurred() /= 0) then
+    stop 'an error occurred while reading the parameter file'
+  endif
+
+  ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
+  if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+
+  ! produces simulations compatible with old globe version 5.1.5
+  if( USE_VERSION_5_1_5 ) then
+    print*
+    print*,'**************'
+    print*,'using globe version 5.1.5 compatible simulation parameters'
+    if( .not. ATTENUATION_1D_WITH_3D_STORAGE ) then
+      print*,'setting ATTENUATION_1D_WITH_3D_STORAGE to .true. for compatibility with globe version 5.1.5 '
+      ATTENUATION_1D_WITH_3D_STORAGE = .true.
+    endif
+    if( UNDO_ATTENUATION ) then
+      print*,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
+      UNDO_ATTENUATION = .false.
+    endif
+    if( USE_LDDRK ) then
+      print*,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
+      USE_LDDRK = .false.
+    endif
+    if( EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      print*,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
+      EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+    endif
+    print*,'**************'
+    print*
+  endif
+
+!----------------------------------------------
+!
+! status of implementation
+!
+!----------------------------------------------
+!daniel debug:
+! please remove these security checks only after validating new features
+
+!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
+  if( ADIOS_ENABLED ) &
+    stop 'ADIOS_ENABLED support not implemented yet'
+  if( ADIOS_ENABLED .and. GPU_MODE ) &
+    stop 'ADIOS_ENABLED support not implemented yet'
+
+  !if( USE_LDDRK ) &
+  !  stop 'USE_LDDRK support not implemented yet'
+  if( USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
+    stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
+  if( USE_LDDRK .and. GPU_MODE ) &
+    stop 'USE_LDDRK support not implemented yet for GPU simulations'
+
+  if( EXACT_MASS_MATRIX_FOR_ROTATION .and. GPU_MODE ) &
+    stop 'EXACT_MASS_MATRIX_FOR_ROTATION support not implemented yet for GPU simulations'
+
+  !if( UNDO_ATTENUATION ) &
+  !  stop 'UNDO_ATTENUATION support not implemented yet'
+  if( UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
+  if( UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
+  if( UNDO_ATTENUATION .and. GPU_MODE ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for GPU simulations'
+  if( UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
+
+
   end subroutine read_parameter_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+! unused...
+!
+!  subroutine read_gpu_mode(GPU_MODE)
+!
+!  use constants
+!  implicit none
+!
+!  logical :: GPU_MODE
+!
+!  ! initializes flags
+!  GPU_MODE = .false.
+!
+!  ! opens file Par_file
+!  call open_parameter_file()
+!
+!  call read_value_logical(GPU_MODE, 'solver.GPU_MODE')
+!
+!  ! close parameter file
+!  call close_parameter_file()
+!
+!  end subroutine read_gpu_mode
+!

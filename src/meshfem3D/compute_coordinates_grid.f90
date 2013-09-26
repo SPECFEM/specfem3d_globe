@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@
                r_top,r_bottom,ner,ilayer,ichunk,rotation_matrix,NCHUNKS,&
                INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision, dimension(NGNOD) :: xelm,yelm,zelm,offset_x,offset_y,offset_z
 
@@ -283,9 +283,9 @@
                   xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
                   iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube,ny_central_cube,nz_central_cube,radius_cube)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer :: ix,iy,iz,iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube,ny_central_cube,nz_central_cube
 

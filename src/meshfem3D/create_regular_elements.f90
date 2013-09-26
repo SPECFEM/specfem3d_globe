@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,9 +33,7 @@
                     xstore,ystore,zstore, &
                     iaddx,iaddy,iaddz,xigll,yigll,zigll, &
                     shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                    RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                    INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
                     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -45,15 +43,15 @@
                     gammaxstore,gammaystore,gammazstore,&
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
-                    stretch_tab,ACTUALLY_STORE_ARRAYS, &
+                    stretch_tab, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
+                    ispec_is_tiso)
+
 
 ! adds a regular spectral element to the different regions of the mesh
 
@@ -66,7 +64,7 @@
   integer iregion_code
   ! correct number of spectral elements in each block depending on chunk type
   integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
-  integer NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ATT1,ATT2,ATT3
+  integer NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
   integer :: ner_without_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
@@ -89,10 +87,7 @@
 ! 2D shape functions and their derivatives
   double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
-
-  double precision RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
+  logical INCLUDE_CENTRAL_CUBE
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision rmin,rmax
@@ -127,25 +122,6 @@
   double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
   integer iproc_xi,iproc_eta
 
-! attenuation
-  integer :: nspec_att
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,nspec_att) :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,nspec_att) :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision T_c_source
-
 ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
@@ -154,8 +130,6 @@
   logical :: USE_ONE_LAYER_SB
 
   double precision, dimension(2,ner(1)) :: stretch_tab
-
-  logical :: ACTUALLY_STORE_ARRAYS
 
 ! Boundary Mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
@@ -264,10 +238,8 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-        call compute_element_properties(ispec,iregion_code,idoubling, &
-                         xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
-                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+        call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
+                         xstore,ystore,zstore,nspec,myrank, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -275,9 +247,9 @@
                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey,ATT1,ATT2,ATT3,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                         rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS, &
-                         xigll,yigll,zigll,ispec_is_tiso,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE)
+                         nspec_ani,nspec_stacey, &
+                         rho_vp,rho_vs, &
+                         xigll,yigll,zigll,ispec_is_tiso)
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then

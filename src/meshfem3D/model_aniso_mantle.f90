@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -40,41 +40,46 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_aniso_mantle_broadcast(myrank,AMM_V)
+  module model_aniso_mantle_par
+
+  ! model_aniso_mantle_variables
+  double precision,dimension(:,:,:,:),allocatable :: AMM_V_beta
+  double precision,dimension(:),allocatable :: AMM_V_pro
+  integer :: AMM_V_npar1
+
+  end module model_aniso_mantle_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_aniso_mantle_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_aniso_mantle_par
 
   implicit none
-
-  include "constants.h"
-
-  ! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-
-  type (model_aniso_mantle_variables) AMM_V
-  ! model_aniso_mantle_variables
 
   integer :: myrank
 
   ! local parameters
   integer :: ier
 
+  ! allocates model arrays
+  allocate(AMM_V_beta(14,34,37,73), &
+          AMM_V_pro(47), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating AMM_V arrays')
+
   ! the variables read are declared and stored in structure AMM_V
-  if(myrank == 0) call read_aniso_mantle_model(AMM_V)
+  if(myrank == 0) call read_aniso_mantle_model()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
+  call bcast_all_i(AMM_V_npar1,1)
+  call bcast_all_dp(AMM_V_beta,14*34*37*73)
+  call bcast_all_dp(AMM_V_pro,47)
 
   end subroutine model_aniso_mantle_broadcast
 
@@ -84,24 +89,12 @@
 
   subroutine model_aniso_mantle(r,theta,phi,rho, &
                                c11,c12,c13,c14,c15,c16, &
-                               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-    AMM_V)
+                               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+  use constants
+  use model_aniso_mantle_par
 
   implicit none
-
-  include "constants.h"
-
-! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-
-  type (model_aniso_mantle_variables) AMM_V
-! model_aniso_mantle_variables
 
   double precision :: r,theta,phi
   double precision :: rho
@@ -123,7 +116,7 @@
 ! assign the local (d_ij) or global (c_ij) anisotropic parameters.
 ! The c_ij are the coefficients in the global
 ! reference frame used in SPECFEM3D.
-  call build_cij(AMM_V%pro,AMM_V%npar1,rho,AMM_V%beta,r,colat,lon,&
+  call build_cij(AMM_V_pro,AMM_V_npar1,rho,AMM_V_beta,r,colat,lon,&
                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
                  d44,d45,d46,d55,d56,d66)
 
@@ -140,9 +133,9 @@
        d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
        d44,d45,d46,d55,d56,d66)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision :: pro(47)
   integer :: npar1
@@ -376,44 +369,36 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_aniso_mantle_model(AMM_V)
+  subroutine read_aniso_mantle_model()
+
+  use constants
+  use model_aniso_mantle_par
 
   implicit none
 
-  include "constants.h"
+  ! local parameters
+  integer :: nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
+  double precision :: xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
+  double precision :: ra(47),pari(14,47)
+  double precision,dimension(:,:,:,:),allocatable :: bet2 ! bet2(14,34,37,73)
+  double precision :: alph(73,37),ph(73,37)
+  integer :: ier
+  character(len=150) :: glob_prem3sm01, globpreman3sm01
 
-! model_aniso_mantle_variables
-  type model_aniso_mantle_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_aniso_mantle_variables
-
-  type (model_aniso_mantle_variables) AMM_V
-! model_aniso_mantle_variables
-
-  integer ier,nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
-  double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
-  double precision ra(47),pari(14,47)
-  double precision bet2(14,34,37,73)
-  double precision alph(73,37),ph(73,37)
-  character(len=150) glob_prem3sm01, globpreman3sm01
+  ! dynamic allocation
+  allocate(bet2(14,34,37,73),stat=ier)
+  if( ier /= 0 ) stop 'error allocating bet2 array'
 
   np1 = 1
   np2 = 34
-  AMM_V%npar1 = (np2 - np1 + 1)
+  AMM_V_npar1 = (np2 - np1 + 1)
 
 !
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
   call get_value_string(glob_prem3sm01, 'model.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
   open(19,file=glob_prem3sm01,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(glob_prem3sm01), '": ', ier
-    call exit_MPI(0, 'error model aniso mantle')
-  endif
+  if( ier /= 0 ) stop 'error opening file DATA/Montagner_model/glob-prem3sm01'
 
 !
 ! read the models
@@ -429,12 +414,12 @@
   nfin = 14
   do nf = 1,nfi0
     ipa = ipa + 1
-    do idep = 1,AMM_V%npar1
+    do idep = 1,AMM_V_npar1
       il = idep + np1 - 1
       read(19,"(2f4.0,2i3,f4.0)",end = 88) xinf,yinf,nx,ny,pxy
 
       ppp = 1.
-      read(19,"(f5.0,f8.4)",end = 88) AMM_V%pro(idep),ppp
+      read(19,"(f5.0,f8.4)",end = 88) AMM_V_pro(idep),ppp
 
       if(nf == 1) pari(nf,il) = ppp
       if(nf == 2) pari(nf,il) = ppp
@@ -442,7 +427,7 @@
       if(nf == 4) ppp = pari(nf,il)
       if(nf == 5) ppp = pari(nf,il)
       do ilat = 1,nx
-        read(19,"(17f7.2)",end = 88) (AMM_V%beta(ipa,idep,ilat,ilon),ilon = 1,ny)
+        read(19,"(17f7.2)",end = 88) (AMM_V_beta(ipa,idep,ilat,ilon),ilon = 1,ny)
 !
 ! calculation of A,C,F,L,N
 !
@@ -453,10 +438,10 @@
 !
         do ilon = 1,ny
           if(nf <= 3 .or. nf >= 6)then
-            bet2(ipa,idep,ilat,ilon) = AMM_V%beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
+            bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
           else
-            if(nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V%beta(ipa,idep,ilat,ilon)*0.01 + 1.
-            if(nf == 5)bet2(ipa,idep,ilat,ilon) = - AMM_V%beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if(nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if(nf == 5)bet2(ipa,idep,ilat,ilon) = - AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
           endif
         enddo
 
@@ -475,18 +460,15 @@
 !
   call get_value_string(globpreman3sm01, 'model.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
   open(unit=15,file=globpreman3sm01,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(globpreman3sm01), '": ', ier
-    call exit_MPI(0, 'error model aniso mantle')
-  endif
+  if( ier /= 0 ) stop 'error opening file DATA/Montagner_model/globpreman3sm01'
 
   do nf = 7,nfin,2
     ipa = nf
     ipa1 = ipa + 1
-    do idep = 1,AMM_V%npar1
+    do idep = 1,AMM_V_npar1
       il = idep + np1 - 1
       read(15,"(2f4.0,2i3,f4.0)",end = 888) xinf,yinf,nx,ny,pxy
-      read(15,"(f5.0,f8.4)",end = 888) AMM_V%pro(idep),ppp
+      read(15,"(f5.0,f8.4)",end = 888) AMM_V_pro(idep),ppp
       if(nf == 7) ppp = pari(2,il)
       if(nf == 9) ppp = pari(3,il)
       af = pari(6,il)*(pari(2,il) - 2.*pari(3,il))
@@ -504,8 +486,8 @@
       do ilat = 1,nx
         do ilon = 1,ny
           angle = 2.*DEGREES_TO_RADIANS*ph(ilon,ilat)
-          AMM_V%beta(ipa,idep,ilat,ilon) = alph(ilon,ilat)*ppp*0.01d0
-          AMM_V%beta(ipa1,idep,ilat,ilon) = ph(ilon,ilat)
+          AMM_V_beta(ipa,idep,ilat,ilon) = alph(ilon,ilat)*ppp*0.01d0
+          AMM_V_beta(ipa1,idep,ilat,ilon) = ph(ilon,ilat)
           bet2(ipa,idep,ilat,ilon) = alph(ilon,ilat)*dcos(angle)*ppp*0.01d0
           bet2(ipa1,idep,ilat,ilon) = alph(ilon,ilat)*dsin(angle)*ppp*0.01d0
         enddo
@@ -516,39 +498,41 @@
 
 888 close(15)
 
-  do idep = 1,AMM_V%npar1
+  do idep = 1,AMM_V_npar1
     do ilat = 1,nx
       do ilon = 1,ny
 
 ! rho
-        AMM_V%beta(1,idep,ilat,ilon) = bet2(1,idep,ilat,ilon)
+        AMM_V_beta(1,idep,ilat,ilon) = bet2(1,idep,ilat,ilon)
 
 ! A
-        AMM_V%beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
+        AMM_V_beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
         A=bet2(2,idep,ilat,ilon)
 
 !  C
-        AMM_V%beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
+        AMM_V_beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
 
 !  F
         A2L = A - 2.*bet2(3,idep,ilat,ilon)
-        AMM_V%beta(4,idep,ilat,ilon) = bet2(6,idep,ilat,ilon)*A2L
+        AMM_V_beta(4,idep,ilat,ilon) = bet2(6,idep,ilat,ilon)*A2L
 
 !  L
-        AMM_V%beta(5,idep,ilat,ilon) = bet2(3,idep,ilat,ilon)
+        AMM_V_beta(5,idep,ilat,ilon) = bet2(3,idep,ilat,ilon)
         AL = bet2(3,idep,ilat,ilon)
 
 !  N
-        AMM_V%beta(6,idep,ilat,ilon) = bet2(4,idep,ilat,ilon)*AL
+        AMM_V_beta(6,idep,ilat,ilon) = bet2(4,idep,ilat,ilon)*AL
 
 !  azimuthal terms
         do ipar = 7,14
-          AMM_V%beta(ipar,idep,ilat,ilon) = bet2(ipar,idep,ilat,ilon)
+          AMM_V_beta(ipar,idep,ilat,ilon) = bet2(ipar,idep,ilat,ilon)
         enddo
 
       enddo
     enddo
   enddo
+
+  deallocate(bet2)
 
   end subroutine read_aniso_mantle_model
 
@@ -560,14 +544,12 @@
 
   implicit none
 
-  include "constants.h"
-
 ! read the reference Earth model: rho, Vph, Vsv, XI, PHI, ETA
 ! array par(i,nlayer)
 ! output: array pari(ipar, nlayer): rho, A, L, xi-1, phi-1, eta-1
 
   integer i,j,k,ip,ifanis,idum1,idum2,idum3,nlayer,nout,neff,&
-          nband,nri,minlay,moho,kiti,ier
+          nband,nri,minlay,moho,kiti
   double precision pari(14,47),qkappa(47),qshear(47),par(6,47)
   double precision epa(14,47),ra(47),dcori(47),ri(47)
   double precision corpar(21,47)
@@ -578,85 +560,56 @@
      ifanis = 1
      nri = 47
 
-  call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
-  open(unit=13,file=Adrem119,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(Adrem119), '": ', ier
-    call exit_MPI(0, 'error model aniso mantle')
-  endif
+     call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
+     open(unit=13,file=Adrem119,status='old',action='read')
+     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
 
-  read(13,*,iostat=ier) nlayer,minlay,moho,nout,neff,nband,kiti,null
-  if (ier /= 0) then
-    close(13)
-    return
-  endif
+     if(kiti == 0) read(13,"(20a4)",end = 77) idum1
+     read(13,"(20a4)",end = 77) idum2
+     read(13,"(20a4)",end = 77) idum3
 
-  if (kiti == 0) then
-    read(13,"(20a4)",iostat=ier) idum1
-    if (ier /= 0) then
-      close(13)
-      return
-    endif
-  endif
-  read(13,"(20a4)",iostat=ier) idum2
-  if (ier /= 0) then
-    close(13)
-    return
-  endif
-  read(13,"(20a4)",iostat=ier) idum3
-  if (ier /= 0) then
-    close(13)
-    return
-  endif
+     do i = 1,nlayer
+       read(13,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
+     enddo
 
-  do i = 1,nlayer
-    read(13,"(4x,f11.1,8d12.5)",iostat=ier) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
-    if (ier /= 0) then
-      close(13)
-      return
-    endif
-  enddo
+     do i = 1,nlayer
+       ri(i) = 0.001*ra(i)
+     enddo
 
-  do i = 1,nlayer
-    ri(i) = 0.001*ra(i)
-  enddo
-
-  do i = 1,nlayer
-    rho = par(1,i)
-    pari(1,i) = rho
-! A : pari(2,i)
-    pari(2,i) = rho*(par(2,i)**2)
-    aa = pari(2,i)
-! L : pari(3,i)
-    pari(3,i) = rho*(par(3,i)**2)
-    al = pari(3,i)
-! Xi : pari(4,i)= (N-L)/L
-    an = al*par(4,i)
-    pari(4,i) = 0.
-    pari(4,i) = par(4,i) - 1.
-! Phi : pari(5,i)=(a-c)/a
-    pari(5,i) = - par(5,i) + 1.
-    ac = par(5,i)*aa
-! f : pari(4,i)
-    af = par(6,i)*(aa - 2.*al)
-    pari(6,i) = par(6,i)
-    do ip = 7,14
-      pari(ip,i) = 0.
-    enddo
-    vsv = 0.
-    vsh = 0.
-    if (al >= 0.0001 .and. an >= 0.0001) then
-      vsv = dsqrt(al/rho)
-      vsh = dsqrt(an/rho)
-    endif
-    vpv = dsqrt(ac/rho)
-    vph = dsqrt(aa/rho)
-  enddo
+     do i = 1,nlayer
+       rho = par(1,i)
+       pari(1,i) = rho
+!    A : pari(2,i)
+       pari(2,i) = rho*(par(2,i)**2)
+       aa = pari(2,i)
+!    L : pari(3,i)
+       pari(3,i) = rho*(par(3,i)**2)
+       al = pari(3,i)
+!    Xi : pari(4,i)= (N-L)/L
+       an = al*par(4,i)
+       pari(4,i) = 0.
+       pari(4,i) = par(4,i) - 1.
+!    Phi : pari(5,i)=(a-c)/a
+       pari(5,i) = - par(5,i) + 1.
+       ac = par(5,i)*aa
+!    f : pari(4,i)
+       af = par(6,i)*(aa - 2.*al)
+       pari(6,i) = par(6,i)
+       do ip = 7,14
+         pari(ip,i) = 0.
+       enddo
+       vsv = 0.
+       vsh = 0.
+       if(al < 0.0001 .or. an < 0.0001) goto 12
+       vsv = dsqrt(al/rho)
+       vsh = dsqrt(an/rho)
+ 12    vpv = dsqrt(ac/rho)
+       vph = dsqrt(aa/rho)
+     enddo
 
   red = 1.
   do i = 1,nlayer
-    read(13,"(15x,6e12.5,f11.1)",iostat=ier) (epa(j,i),j = 1,6),dcori(i)
-    if (ier /= 0) exit
+    read(13,"(15x,6e12.5,f11.1)",end = 77) (epa(j,i),j = 1,6),dcori(i)
     epa(7,i) = epa(2,i)
     epa(8,i) = epa(2,i)
     epa(9,i) = epa(3,i)
@@ -672,11 +625,11 @@
       epa(j,i) = red*epa(j,i)
     enddo
 
-    read(13,"(21f7.3)",iostat=ier) (corpar(j,i),j = 1,21)
-    if (ier /= 0) exit
+    read(13,"(21f7.3)",end = 77) (corpar(j,i),j = 1,21)
+
   enddo
 
-  close(13)
+77 close(13)
 
   end subroutine lecmod
 
@@ -688,9 +641,9 @@
                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   double precision theta,phi
   double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
