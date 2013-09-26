@@ -110,7 +110,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
       }
       else if(*FORWARD_OR_ADJOINT == 3) {
         // debug
-        DEBUG_EMPTY_BACKWARD();
+        DEBUG_BACKWARD_ASSEMBLY();
 
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                            mp->d_b_send_accel_buffer_crust_mantle,
@@ -157,7 +157,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
       }
       else if(*FORWARD_OR_ADJOINT == 3) {
         // debug
-        DEBUG_EMPTY_BACKWARD();
+        DEBUG_BACKWARD_ASSEMBLY();
 
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_inner_core,
                                                            mp->d_b_send_accel_buffer_inner_core,
@@ -249,7 +249,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       }
       else if(*FORWARD_OR_ADJOINT == 3) {
         // debug
-        DEBUG_EMPTY_BACKWARD();
+        DEBUG_BACKWARD_ASSEMBLY();
 
         // copies vector buffer values to GPU
         print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer_crust_mantle, buffer_recv_vector,
@@ -299,7 +299,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       }
       else if(*FORWARD_OR_ADJOINT == 3) {
         // debug
-        DEBUG_EMPTY_BACKWARD();
+        DEBUG_BACKWARD_ASSEMBLY();
 
         // copies buffer values to GPU
         print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer_inner_core, buffer_recv_vector,

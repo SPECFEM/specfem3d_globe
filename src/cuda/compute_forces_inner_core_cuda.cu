@@ -1020,7 +1020,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                mp->NSPEC_INNER_CORE);
   }else if( FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_FORCES();
 
     Kernel_2_inner_core_impl<<< grid,threads>>>(nb_blocks_to_compute,
                                                 mp->NGLOB_INNER_CORE,

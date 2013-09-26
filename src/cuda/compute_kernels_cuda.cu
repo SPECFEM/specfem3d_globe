@@ -225,7 +225,7 @@ void FC_FUNC_(compute_kernels_cm_cuda,
 
   TRACE("compute_kernels_cm_cuda");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_KERNEL();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
