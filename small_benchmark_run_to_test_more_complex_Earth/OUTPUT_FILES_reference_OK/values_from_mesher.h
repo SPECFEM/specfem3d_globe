@@ -156,5 +156,5 @@
  integer, parameter :: NSPEC2D_CMB =            1
  integer, parameter :: NSPEC2D_ICB =            1
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
- logical, parameter :: USE_ATTENUATION_MIMIC = .false.
- logical, parameter :: COMPUTE_AND_STORE_STRAIN = .true. 
+ logical, parameter :: USE_ATTENUATION_MIMIC_VAL = .false.
+ logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .true.

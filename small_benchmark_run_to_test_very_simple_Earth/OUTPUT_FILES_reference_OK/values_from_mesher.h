@@ -178,7 +178,7 @@
  integer, parameter :: NSPEC2D_CMB =            1
  integer, parameter :: NSPEC2D_ICB =            1
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
- logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY = .false.
- logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.
+ logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.
+ logical, parameter :: COMPUTE_AND_STORE_STRAIN_VAL = .false.
  integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1
  integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1

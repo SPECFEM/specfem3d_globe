@@ -121,6 +121,8 @@ NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
 LOCAL_PATH                      =  /scratch/siemins/DATABASES_MPI.336749
+# temporary wavefield/kernel/movie files
+LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 100
@@ -193,5 +195,6 @@ ADIOS_ENABLED                   = .false.
 ADIOS_FOR_FORWARD_ARRAYS        = .true.
 ADIOS_FOR_MPI_ARRAYS            = .true.
 ADIOS_FOR_ARRAYS_SOLVER         = .true.
+ADIOS_FOR_SOLVER_MESHFILES      = .true.
 ADIOS_FOR_AVS_DX                = .true.
 

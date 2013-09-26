@@ -95,6 +95,8 @@ NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
 LOCAL_PATH                      = /scratch/yangl/DATABASES_MPI
+# temporary wavefield/kernel/movie files
+LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 10000
