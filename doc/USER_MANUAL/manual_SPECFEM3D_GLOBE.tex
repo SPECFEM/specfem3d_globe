@@ -322,12 +322,21 @@ convolution are too sensitive to roundoff noise) are the same down to roundoff n
 You can do this for instance with the example given in EXAMPLES/small\_benchmark\_run\_to\_test\_a\_new\_machine.\\
 
 If you run very large meshes on a relatively small number
-of processors, the memory size needed on each processor might become
-greater than 2 gigabytes, which is the upper limit for 32-bit addressing.
-In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' or \texttt{``-mcmodel=medium -shared-intel}''
+of processors, the static memory size needed on each processor might become
+greater than 2 gigabytes, which is the upper limit for 32-bit addressing
+(dynamic memory allocation is always OK, even beyond the 2 GB limit; only static memory has a problem).
+In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' (if you do not use the Intel ifort / icc compiler)
+or \texttt{``-mcmodel=medium -shared-intel}'' (if you use the Intel ifort / icc compiler)
 to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
-on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
+on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.
+\textbf{BEWARE that using \texttt{``-mcmodel=medium -shared-intel}'' is known for currently leading to incorrect seismograms,
+at least when flag ATTENUATION is on (and maybe even without), at least in the case of the Intel ifort / icc compiler.
+This likely comes from intrinsic functions such as size() that return and integer8 instead of an integer4, thus leading
+to incorrect results when used in function calls is the -i8 flag is not added to the compiler options;
+however, when adding -i8 the code does not compile because the MPI calls then refuse to compile (they need integer4 as arguments).
+Since most current users run the code with less than 2 GB of static memory per core, we have not investigated that problem carefully for now,
+and thus recommend that you do NOT use these compiler flags.}\\
 
 A summary of the most important configuration variables follows.
 
@@ -1294,33 +1303,6 @@ The file created by \texttt{\small xcreate\_header\_file} is called
 details about the future simulation.
 
 
-\section{Checking the MPI Buffers (Optional)}
-
-The mesher writes MPI communication tables in the \texttt{OUTPUT\_FILES}
-subdirectory in the files \texttt{addressing.txt}, \texttt{list\_messages\_corners.txt}
-and \texttt{list\_messages\_faces.txt}, and MPI communication buffers
-to the local disks. Use the four serial codes
-
-\begin{lyxcode}
-check\_buffers\_2D.f90
-
-check\_buffers\_1D.f90
-
-check\_buffers\_faces\_chunks.f90
-
-check\_buffers\_corners\_chunks.f90~
-\end{lyxcode}
-to check that all the MPI buffers created by the mesher have been
-generated correctly. For example, typing `\texttt{make check\_buffers\_2D}'
-and then `\texttt{xcheck\_buffers\_2D}' checks the communication buffers
-between faces common to the mesh slices. `\texttt{xcheck\_buffers\_1D}'
-checks the communication buffers between edges common to the mesh
-slices. `\texttt{xcheck\_buffers\_faces\_chunks}' checks the communication
-buffers between faces common to the mesh chunks, i.e., the faces of
-the six blocks of the cubed-sphere mesh. `\texttt{xcheck\_buffers\_corners\_chunks}'
-checks the communication buffers between edges common to the mesh
-chunks, which must be treated separately in MPI because they are of
-valence 3 (i.e., they are shared between three chunks).
 
 Please note that running these codes is optional because no information
 needed by the solver is generated.

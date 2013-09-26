@@ -196,10 +196,6 @@ DEFAULT = \
 	xcompute_optimized_dumping_undo_att \
 	xmeshfem3D \
 	xspecfem3D \
-	xcheck_buffers_1D \
-	xcheck_buffers_2D \
-	xcheck_buffers_corners_chunks \
-	xcheck_buffers_faces_chunks \
 	xcombine_vol_data \
 	xcombine_vol_data_vtk \
 	xcombine_surf_data \
@@ -247,10 +243,6 @@ help:
 	@echo "    xspecfem3D"
 	@echo "    xcreate_header_file"
 	@echo "    xcompute_optimized_dumping_undo_att"
-	@echo "    xcheck_buffers_1D"
-	@echo "    xcheck_buffers_2D"
-	@echo "    xcheck_buffers_corners_chunks"
-	@echo "    xcheck_buffers_faces_chunks"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
 	@echo "    xcombine_surf_data"
