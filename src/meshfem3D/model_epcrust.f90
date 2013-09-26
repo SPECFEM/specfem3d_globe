@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -32,44 +32,64 @@
 ! GJI, 185 (1), pages 352-364
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_epcrust_broadcast(myrank,EPCRUST)
+  module model_epcrust_par
 
-  use mpi
+  ! parameters for EPCRUST , from Molinari & Morelli model(2011)
+  !       latitude :  9.0N - 89.5N
+  !       longitude:  56.0W - 70.0E
+  character(len=*), parameter :: PATHNAME_EPCRUST = 'DATA/epcrust/EPcrust_0_5.txt'
+
+  integer, parameter :: EPCRUST_NLON = 253, EPCRUST_NLAT = 162, EPCRUST_NLAYER = 3
+  double precision, parameter :: EPCRUST_LON_MIN = -56.0d0
+  double precision, parameter :: EPCRUST_LON_MAX =  70.0d0
+  double precision, parameter :: EPCRUST_LAT_MIN =   9.0d0
+  double precision, parameter :: EPCRUST_LAT_MAX =  89.5d0
+  double precision, parameter :: EPCRUST_SAMPLE = 0.5d0
+  logical, parameter :: flag_smooth_epcrust = .true.
+  integer, parameter :: NTHETA_EP = 4, NPHI_EP = 20
+  double precision, parameter :: cap_degree_EP = 0.2d0
+
+  ! arrays for EPCRUST 1.0
+  double precision,dimension(:,:),allocatable :: lon_ep,lat_ep,topo_ep
+  double precision,dimension(:,:,:),allocatable :: thickness_ep,vp_ep,vs_ep,rho_ep
+
+  end module model_epcrust_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_epcrust_broadcast(myrank)
+
+  use constants
+  use model_epcrust_par
 
   implicit none
 
-  include "constants.h"
-
-  type model_epcrust_variables
-    sequence
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT):: lon_ep,lat_ep,topo_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: thickness_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vp_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vs_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: rho_ep
-  end type model_epcrust_variables
-  type (model_epcrust_variables) EPCRUST
-
   integer :: myrank,ier
 
+  ! allocates arrays for model
+  allocate(lon_ep(EPCRUST_NLON,EPCRUST_NLAT), &
+          lat_ep(EPCRUST_NLON,EPCRUST_NLAT), &
+          topo_ep(EPCRUST_NLON,EPCRUST_NLAT), &
+          thickness_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+          vp_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+          vs_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+          rho_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating EPcrust arrays')
+
   ! read EPCRUST model on master
-  if(myrank == 0) call read_epcrust_model(EPCRUST)
+  if(myrank == 0) call read_epcrust_model()
 
   ! broadcast EPCRUST model
-  call MPI_BCAST(EPCRUST%lon_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EPCRUST%lat_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EPCRUST%topo_ep,EPCRUST_NLON*EPCRUST_NLAT, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EPCRUST%thickness_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EPCRUST%vp_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EPCRUST%vs_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(EPCRUST%rho_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER, &
-                MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(lon_ep,EPCRUST_NLON*EPCRUST_NLAT)
+  call bcast_all_dp(lat_ep,EPCRUST_NLON*EPCRUST_NLAT)
+  call bcast_all_dp(topo_ep,EPCRUST_NLON*EPCRUST_NLAT)
+  call bcast_all_dp(thickness_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
+  call bcast_all_dp(vp_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
+  call bcast_all_dp(vs_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
+  call bcast_all_dp(rho_ep,EPCRUST_NLON*EPCRUST_NLAT*EPCRUST_NLAYER)
 
   end subroutine model_epcrust_broadcast
 
@@ -77,21 +97,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_epcrust_model(EPCRUST)
+  subroutine read_epcrust_model()
+
+  use constants
+  use model_epcrust_par
 
   implicit none
-
-  include "constants.h"
-
-  type model_epcrust_variables
-    sequence
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT):: lon_ep,lat_ep,topo_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: thickness_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vp_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vs_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: rho_ep
-  end type model_epcrust_variables
-  type (model_epcrust_variables) EPCRUST
 
   character(len=150) EPCRUST_FNM
   character(len=150),dimension(15) :: header
@@ -103,6 +114,8 @@
   open(unit=1001,file=trim(EPCRUST_FNM),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(EPCRUST_FNM), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model epcrust')
   endif
 
@@ -112,13 +125,13 @@
     do ilon=1,EPCRUST_NLON
       read(1001,*) tmp
 
-      EPCRUST%lon_ep(ilon,jlat) = tmp(1)
-      EPCRUST%lat_ep(ilon,jlat) = tmp(2)
-      EPCRUST%topo_ep(ilon,jlat) = tmp(3)
-      EPCRUST%thickness_ep(ilon,jlat,1:3) = tmp(4:6)
-      EPCRUST%vp_ep(ilon,jlat,1:3) = tmp(7:9)
-      EPCRUST%vs_ep(ilon,jlat,1:3) = tmp(10:12)
-      EPCRUST%rho_ep(ilon,jlat,1:3) = tmp(13:15)
+      lon_ep(ilon,jlat) = tmp(1)
+      lat_ep(ilon,jlat) = tmp(2)
+      topo_ep(ilon,jlat) = tmp(3)
+      thickness_ep(ilon,jlat,1:3) = tmp(4:6)
+      vp_ep(ilon,jlat,1:3) = tmp(7:9)
+      vs_ep(ilon,jlat,1:3) = tmp(10:12)
+      rho_ep(ilon,jlat,1:3) = tmp(13:15)
     enddo
   enddo
   close(1001)
@@ -129,23 +142,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_epcrust(lat,lon,dep,vp,vs,rho,moho,found_crust,EPCRUST,elem_in_crust)
+  subroutine model_epcrust(lat,lon,dep,vp,vs,rho,moho,found_crust,elem_in_crust)
+
+  use constants
+  use model_epcrust_par
 
   implicit none
 
-  include "constants.h"
-
   ! INPUT & OUTPUT
-  type model_epcrust_variables
-    sequence
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT):: lon_ep,lat_ep,topo_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: thickness_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vp_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vs_ep
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: rho_ep
-  end type model_epcrust_variables
-  type (model_epcrust_variables) EPCRUST
-
   double precision:: lat, lon, dep, vp, vs, rho, moho
   logical :: found_crust, elem_in_crust
 
@@ -168,11 +172,11 @@
 
   if ( .not. flag_smooth_epcrust) then
     call ilon_jlat(lon,lat,ilon,jlat)
-    z0 = EPCRUST%topo_ep(ilon,jlat)
-    zsmooth(:) = EPCRUST%thickness_ep(ilon,jlat,:)
-    vpsmooth(:) = EPCRUST%vp_ep(ilon,jlat,:)
-    vssmooth(:) = EPCRUST%vs_ep(ilon,jlat,:)
-    rhosmooth(:) = EPCRUST%rho_ep(ilon,jlat,:)
+    z0 = topo_ep(ilon,jlat)
+    zsmooth(:) = thickness_ep(ilon,jlat,:)
+    vpsmooth(:) = vp_ep(ilon,jlat,:)
+    vssmooth(:) = vs_ep(ilon,jlat,:)
+    rhosmooth(:) = rho_ep(ilon,jlat,:)
   else
     call epcrust_smooth_base(lon,lat,x1,y1,weight)
     z0 = ZERO
@@ -185,11 +189,11 @@
       call ilon_jlat(x1(k),y1(k),ilon,jlat)
       weightl=weight(k)
 
-      z0=z0+weightl*EPCRUST%topo_ep(ilon,jlat)
-      zsmooth(:)=zsmooth(:)+weightl*EPCRUST%thickness_ep(ilon,jlat,:)
-      vpsmooth(:)=vpsmooth(:)+weightl*EPCRUST%vp_ep(ilon,jlat,:)
-      vssmooth(:)=vssmooth(:)+weightl*EPCRUST%vs_ep(ilon,jlat,:)
-      rhosmooth(:)=rhosmooth(:)+weightl*EPCRUST%rho_ep(ilon,jlat,:)
+      z0=z0+weightl*topo_ep(ilon,jlat)
+      zsmooth(:)=zsmooth(:)+weightl*thickness_ep(ilon,jlat,:)
+      vpsmooth(:)=vpsmooth(:)+weightl*vp_ep(ilon,jlat,:)
+      vssmooth(:)=vssmooth(:)+weightl*vs_ep(ilon,jlat,:)
+      rhosmooth(:)=rhosmooth(:)+weightl*rho_ep(ilon,jlat,:)
     enddo
   endif
 
@@ -247,8 +251,10 @@
 
   subroutine epcrust_smooth_base(x,y,x1,y1,weight)
 
+  use constants
+  use model_epcrust_par,only: NTHETA_EP,NPHI_EP,cap_degree_EP
+
   implicit none
-  include "constants.h"
 
   ! INPUT & OUTPUT
   double precision:: x, y
@@ -344,9 +350,12 @@
 
   subroutine ilon_jlat(lon,lat,ilon,jlat)
 
-  implicit none
+  use constants
+  use model_epcrust_par,only: &
+    EPCRUST_LON_MIN,EPCRUST_LAT_MAX,EPCRUST_SAMPLE, &
+    EPCRUST_NLON,EPCRUST_NLAT
 
-  include "constants.h"
+  implicit none
 
   double precision:: lon,lat
   integer:: ilon,jlat

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,12 +33,18 @@
                       c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                       nspec_stacey,rho_vp,rho_vs, &
                       xstore,ystore,zstore, &
-                      rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
-                      R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                      tau_s,tau_e_store,Qmu_store,T_c_source,ATT1,ATT2,ATT3,vnspec, &
-                      ABSORBING_CONDITIONS,ATTENUATION_1D_WITH_3D_STORAGE,elem_in_crust,elem_in_mantle)
+                      rmin,rmax, &
+                      elem_in_crust,elem_in_mantle)
+
+  use meshfem3D_par,only: &
+    RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
+    R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+    ABSORBING_CONDITIONS
 
   use meshfem3D_models_par
+
+  use create_regions_mesh_par2,only: &
+    Qmu_store,tau_e_store,tau_s,T_c_source
 
   implicit none
 
@@ -59,29 +65,7 @@
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision :: rmin,rmax,RCMB,RICB,R670,RMOHO, &
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
-
-  ! attenuation values
-  integer :: ATT1,ATT2,ATT3,vnspec
-  double precision, dimension(N_SLS) :: tau_s
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013: BEWARE, declared real(kind=CUSTOM_REAL) in trunk and
-!! DK DK to Daniel, Jul 2013: double precision in branch.
-!! DK DK to Daniel, Jul 2013 real custom is better, it works fine in the trunk and these arrays are really huge
-!! DK DK to Daniel, Jul 2013 in the crust_mantle region, thus let us not double their size
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-!! DK DK to Daniel, Jul 2013
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,vnspec) :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,vnspec) :: tau_e_store
-  double precision :: T_c_source
-
-  logical :: ABSORBING_CONDITIONS,ATTENUATION_1D_WITH_3D_STORAGE
+  double precision :: rmin,rmax
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
@@ -89,12 +73,12 @@
   ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
+
+  double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_e
 
-  ! local parameters
   double precision :: rho,dvp
   double precision :: vpv,vph,vsv,vsh,eta_aniso
-  double precision :: Qkappa,Qmu
   double precision :: r,r_prem,moho
   integer :: i,j,k
 
@@ -198,8 +182,8 @@
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
         if( ATTENUATION ) &
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
-                              tau_e,tau_s,T_c_source, &
-                              moho,Qmu,Qkappa,elem_in_crust) ! R80
+                                             tau_e,tau_s,T_c_source, &
+                                             moho,Qmu,Qkappa,elem_in_crust)
 
 ! define elastic parameters in the model
 
@@ -351,8 +335,6 @@
   use meshfem3D_models_par
 
   implicit none
-
-  !include "constants.h"
 
   integer idoubling,myrank
 

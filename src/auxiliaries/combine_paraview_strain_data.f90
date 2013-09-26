@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@ program combine_paraview_movie_data
 
   implicit none
 
-  include 'constants.h'
-  include 'OUTPUT_FILES/values_from_mesher.h'
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer fid,i,ipoint, ios, it,itstart,itstop,dit_movie
   integer iproc, num_node,  npoint_all, nelement_all

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -52,9 +52,9 @@
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer NEX_MAX
   double precision DT, WIDTH
@@ -66,6 +66,7 @@
   double precision P_VELOCITY_MAX     ! Located Near the inner Core Boundary
   double precision MAXIMUM_STABILITY_CONDITION
   double precision MIN_GLL_POINT_SPACING_5
+  double precision elem_size,min_grid_dx
 
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
   MAXIMUM_STABILITY_CONDITION     =     0.40d0
@@ -74,9 +75,19 @@
   P_VELOCITY_MAX                  = 11.02827d0
   MIN_GLL_POINT_SPACING_5         =   0.1730d0
 
-  DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_INNER_CORE) / &
-       ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
-       MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
+  ! element at inner core
+  elem_size = RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_INNER_CORE) / &
+                ( dble(NEX_MAX) / DOUBLING_INNER_CORE )
+
+  ! minimum grid point spacing
+  min_grid_dx = elem_size * MIN_GLL_POINT_SPACING_5
+
+  ! estimated time step
+  DT = min_grid_dx / P_VELOCITY_MAX * MAXIMUM_STABILITY_CONDITION
+
+  !DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
+  !     ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
+  !     MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
 
   end subroutine auto_time_stepping
 
@@ -85,9 +96,9 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
   double precision WIDTH, TMP
@@ -145,9 +156,9 @@
                       R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
                       HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision WIDTH
   integer NEX_MAX
@@ -256,9 +267,9 @@
 
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer NUM_REGIONS
   integer NEX
@@ -370,9 +381,9 @@
 
   subroutine compute_nex(nex_xi, rcube, alpha, ner)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision, parameter :: RICB_KM = 1221.0d0
 
@@ -517,9 +528,9 @@
 
   subroutine compute_coordinate_central_cube(ix,iy,nbx,nby,radius, alpha, x, y)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   integer ix, iy, nbx, nby
   double precision radius, alpha
@@ -549,9 +560,9 @@
 
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
   double precision, parameter :: RICB_KM = 1221.0d0
 

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -38,11 +38,9 @@
                                     elat,elon,depth,mb,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
-  use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
 !--- input or output arguments of the subroutine below
 
@@ -56,9 +54,6 @@
   double precision, intent(out) :: t_shift
 
   character(len=20), intent(out) :: event_name
-
-  ! local parameters
-  integer :: ier
 
   ! get event information for SAC header on the master
   if(myrank == 0) then
@@ -81,28 +76,28 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(yr,1)
+  call bcast_all_i(jda,1)
+  call bcast_all_i(ho,1)
+  call bcast_all_i(mi,1)
 
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(sec,1)
 
-  call MPI_BCAST(tshift_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(t_shift,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(tshift_cmt,1)
+  call bcast_all_dp(t_shift,1)
 
   ! event location given on first, PDE line
-  call MPI_BCAST(elat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(elon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(elat,1)
+  call bcast_all_dp(elon,1)
+  call bcast_all_dp(depth,1)
 
   ! cmt location given in CMT file
-  call MPI_BCAST(cmt_lat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_lon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(cmt_lat,1)
+  call bcast_all_dp(cmt_lon,1)
+  call bcast_all_dp(cmt_depth,1)
+  call bcast_all_dp(cmt_hdur,1)
 
-  call MPI_BCAST(event_name,20,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_ch(event_name,20)
 
   end subroutine get_event_info_parallel
 
@@ -120,9 +115,9 @@
                             elat_pde,elon_pde,depth_pde,mb,&
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
 !--- arguments of the subroutine below
 

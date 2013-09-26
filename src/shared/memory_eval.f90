@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,12 +27,10 @@
 
 ! compute the approximate amount of static memory needed to run the solver
 
-  subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
-                         TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION, &
-                         ONE_CRUST,doubling_index,this_region_has_a_doubling, &
+  subroutine memory_eval(doubling_index,this_region_has_a_doubling, &
                          ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                         ratio_sampling_array, &
-                         NSPEC,NGLOB,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+                         ratio_sampling_array,NPROCTOT, &
+                         NSPEC,NGLOB, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                          NSPEC_INNER_CORE_ATTENUATION, &
@@ -45,24 +43,30 @@
                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                         ATT1,ATT2,ATT3,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
-                         NCHUNKS,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,static_memory_size)
+                         NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+                         static_memory_size)
+
+  use constants
+  use shared_parameters,only: ATT1,ATT2,ATT3, &
+    APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
+    EXACT_MASS_MATRIX_FOR_ROTATION, &
+    OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
+    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY, &
+    ONE_CRUST,NCHUNKS, &
+    SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD
 
   implicit none
 
-  include "constants.h"
-
   ! input
-  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE,ATT1,ATT2,ATT3,NOISE_TOMOGRAPHY,NCHUNKS
-  logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             ROTATION, &
-             ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS, &
-             MOVIE_VOLUME,SAVE_FORWARD,APPROXIMATE_HESS_KL,ANISOTROPIC_KL,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION
-  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, NGLOB
+  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, NGLOB, &
+            NSPEC2D_BOTTOM,NSPEC2D_TOP
+
+  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
+  integer, intent(in) :: NPROCTOT
 
   ! output
   double precision, intent(out) :: static_memory_size
@@ -81,8 +85,10 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
   ! local variables
-  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso, &
-             NSPEC_CRUST_MANTLE_ADJOINT_HESS,NSPEC_CRUST_MANTLE_ADJOINT_NOISE,NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL, &
+  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso
+
+  integer :: NSPEC_CRUST_MANTLE_ADJOINT_HESS,NSPEC_CRUST_MANTLE_ADJOINT_NOISE, &
+             NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL, &
              NGLOB_XY_CM,NGLOB_XY_IC
 
   ! generate the elements in all the regions of the mesh
@@ -222,184 +228,231 @@
 
   static_memory_size = 0.d0
 
-! R_memory_crust_mantle
-  static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
+! crust/mantle
 
-! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  static_memory_size = static_memory_size + 2.d0*dble(ATT1)* &
-    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
+  ! ibool_crust_mantle
+  static_memory_size = static_memory_size + &
+    dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
 
-! factor_common_crust_mantle
-  static_memory_size = static_memory_size + dble(N_SLS)*dble(ATT1)* &
-    dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
+  ! xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
+  ! etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,
+  ! gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
+  static_memory_size = static_memory_size + &
+    9.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! R_memory_inner_core
-  static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
-    dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  ! xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rmass_crust_mantle
+  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+     ! three mass matrices for the crust and mantle region: rmassx, rmassy and rmassz
+     static_memory_size = static_memory_size + &
+          6.d0*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  else
+     ! one only keeps one mass matrix for the calculations: rmassz
+     static_memory_size = static_memory_size + &
+          4.d0*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  endif
 
-! one_minus_sum_beta_inner_core, factor_scale_inner_core
-  static_memory_size = static_memory_size + 2.d0*dble(ATT1)* &
-    dble(ATT2)*dble(ATT3)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  ! rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
+  static_memory_size = static_memory_size + &
+    3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ISO_MANTLE*dble(CUSTOM_REAL)
 
-! factor_common_inner_core
-  static_memory_size = static_memory_size + dble(N_SLS)*dble(ATT1)* &
-    dble(ATT2)*dble(ATT3)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  ! kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
+  static_memory_size = static_memory_size + &
+    3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_TISO_MANTLE*dble(CUSTOM_REAL)
 
-! xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
-! etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,
-! gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*9.d0*dble(CUSTOM_REAL)
+  ! c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,
+  ! c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle,
+  ! c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle,
+  ! c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle,
+  ! c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle,
+  ! c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle,
+  ! c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
+  static_memory_size = static_memory_size + &
+    21.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_MANTLE*dble(CUSTOM_REAL)
 
-! ibool_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
+  ! ispec_is_tiso_crust_mantle
+  static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 
-! xix_outer_core,xiy_outer_core,xiz_outer_core,
-! etax_outer_core,etay_outer_core,etaz_outer_core,
-! gammax_outer_core,gammay_outer_core,gammaz_outer_core
-! rhostore_outer_core,kappavstore_outer_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*11.d0*dble(CUSTOM_REAL)
+  ! displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
+  static_memory_size = static_memory_size + &
+    3.d0*dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! ibool_outer_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
+  ! attenuation arrays
+  ! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+  static_memory_size = static_memory_size +  &
+      2.d0*dble(ATT1)*dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
 
-! idoubling_crust_mantle is not used anymore (the array does not exist anymore)
-! idoubling_outer_core
-  static_memory_size = static_memory_size + NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
-! idoubling_inner_core
+  ! factor_common_crust_mantle
+  static_memory_size = static_memory_size +  &
+      dble(N_SLS)*dble(ATT1)*dble(ATT2)*dble(ATT3)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
+
+  ! R_memory_crust_mantle (R_xx, R_yy, ..)
+  static_memory_size = static_memory_size +  &
+    5.d0*dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUATION*dble(CUSTOM_REAL)
+
+  ! add arrays used to save strain for attenuation or for adjoint runs
+  ! epsilondev_crust_mantle
+  static_memory_size = static_memory_size + &
+    5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
+
+  ! eps_trace_over_3_crust_mantle
+  static_memory_size = static_memory_size + &
+    dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STRAIN_ONLY*dble(CUSTOM_REAL)
+
+  ! normal_bottom_crust_mantle
+  static_memory_size = static_memory_size + &
+    dble(NDIM)*dble(NGLLX)*dble(NGLLY)*NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+
+  ! normal_top_crust_mantle
+  static_memory_size = static_memory_size + &
+    dble(NDIM)*dble(NGLLX)*dble(NGLLY)*NSPEC2D_TOP(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+
+  ! rho_vp_crust_mantle,rho_vs_crust_mantle
+  static_memory_size = static_memory_size + &
+    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STACEY*dble(CUSTOM_REAL)
+
+! inner core
+
+  ! ibool_inner_core
+  static_memory_size = static_memory_size + &
+    dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*dble(SIZE_INTEGER)
+
+  ! xix_inner_core,xiy_inner_core,xiz_inner_core,
+  ! etax_inner_core,etay_inner_core,etaz_inner_core,
+  ! gammax_inner_core,gammay_inner_core,gammaz_inner_core,
+  ! rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
+  static_memory_size = static_memory_size + &
+    12.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+
+  ! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmassz_inner_core
+  static_memory_size = static_memory_size + &
+    4.d0*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+
+  ! c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core
+  static_memory_size = static_memory_size + &
+    5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_IC*dble(CUSTOM_REAL)
+
+  ! idoubling_inner_core
   static_memory_size = static_memory_size + NSPEC(IREGION_INNER_CORE)*dble(SIZE_INTEGER)
 
-! ispec_is_tiso_crust_mantle
-  static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
-! ispec_is_tiso_outer_core
+  ! displ_inner_core,veloc_inner_core,accel_inner_core
+  static_memory_size = static_memory_size + &
+    3.d0*dble(NDIM)*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+
+  ! attenuation arrays
+  ! one_minus_sum_beta_inner_core, factor_scale_inner_core
+  static_memory_size = static_memory_size +  &
+    2.d0*dble(ATT1)*dble(ATT2)*dble(ATT3)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+
+  ! factor_common_inner_core
+  static_memory_size = static_memory_size +  &
+    dble(N_SLS)*dble(ATT1)*dble(ATT2)*dble(ATT3)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+
+  ! R_memory_inner_core
+  static_memory_size = static_memory_size +  &
+    5.d0*dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+
+  ! add arrays used to save strain for attenuation or for adjoint runs
+  ! epsilondev_inner_core
+  static_memory_size = static_memory_size + &
+    5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
+
+  ! eps_trace_over_3_inner_core
+  static_memory_size = static_memory_size + &
+    dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STRAIN_ONLY*dble(CUSTOM_REAL)
+
+! outer core
+
+  ! ibool_outer_core
+  static_memory_size = static_memory_size + &
+    dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
+
+  ! xix_outer_core,xiy_outer_core,xiz_outer_core,
+  ! etax_outer_core,etay_outer_core,etaz_outer_core,
+  ! gammax_outer_core,gammay_outer_core,gammaz_outer_core
+  ! rhostore_outer_core,kappavstore_outer_core
+  static_memory_size = static_memory_size + &
+    11.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+
+  ! xstore_outer_core, ystore_outer_core, zstore_outer_core, rmass_outer_core,
+  ! displ_outer_core, veloc_outer_core, accel_outer_core
+  static_memory_size = static_memory_size + &
+    7.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+
+  ! vp_outer_core
+  static_memory_size = static_memory_size + &
+    dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_STACEY*dble(CUSTOM_REAL)
+
+  ! ispec_is_tiso_outer_core
   static_memory_size = static_memory_size + NSPEC(IREGION_OUTER_CORE)*dble(SIZE_LOGICAL)
-! ispec_is_tiso_inner_core
-  static_memory_size = static_memory_size + NSPEC(IREGION_INNER_CORE)*dble(SIZE_LOGICAL)
 
-! xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rmass_crust_mantle
-  static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*4.d0*dble(CUSTOM_REAL)
+! additional arrays
 
-! rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ISO_MANTLE*3.d0*dble(CUSTOM_REAL)
+  ! A_array_rotation,B_array_rotation
+  static_memory_size = static_memory_size + &
+    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROTATION*dble(CUSTOM_REAL)
 
-! kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_TISO_MANTLE*3.d0*dble(CUSTOM_REAL)
+  ! minus_gravity_table, &
+  ! minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
+  static_memory_size = static_memory_size + &
+    5.d0*NRAD_GRAVITY*dble(SIZE_DOUBLE)
 
-! c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,
-! c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle,
-! c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle,
-! c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle,
-! c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle,
-! c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle,
-! c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_MANTLE*21.d0*dble(CUSTOM_REAL)
+  ! rspl,espl,espl2
+  static_memory_size = static_memory_size + &
+    3.d0*NR*dble(SIZE_DOUBLE)
 
-! displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-  static_memory_size = static_memory_size + dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*3.d0*dble(CUSTOM_REAL)
+  ! OCEANS
+  ! rmass_ocean_load
+  static_memory_size = static_memory_size + &
+    NGLOB_CRUST_MANTLE_OCEANS*dble(CUSTOM_REAL)
 
-! xstore_outer_core, ystore_outer_core, zstore_outer_core, rmass_outer_core, displ_outer_core, veloc_outer_core, accel_outer_core
-  static_memory_size = static_memory_size + NGLOB(IREGION_OUTER_CORE)*7.d0*dble(CUSTOM_REAL)
+  ! updated_dof_ocean_load
+  static_memory_size = static_memory_size + &
+    NGLOB_CRUST_MANTLE_OCEANS*dble(SIZE_LOGICAL)
 
-! ibool_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*dble(SIZE_INTEGER)
+  ! ichunk_slice,iproc_xi_slice,iproc_eta_slice,addressing
+  static_memory_size = static_memory_size + &
+      4.d0*NPROCTOT*dble(SIZE_INTEGER)
 
-! xix_inner_core,xiy_inner_core,xiz_inner_core,
-! etax_inner_core,etay_inner_core,etaz_inner_core,
-! gammax_inner_core,gammay_inner_core,gammaz_inner_core,
-! rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*12.d0*dble(CUSTOM_REAL)
-
-! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmass_inner_core
-  static_memory_size = static_memory_size + NGLOB(IREGION_INNER_CORE)*4.d0*dble(CUSTOM_REAL)
-
-! c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_IC*5.d0*dble(CUSTOM_REAL)
-
-! displ_inner_core,veloc_inner_core,accel_inner_core
-  static_memory_size = static_memory_size + dble(NDIM)*NGLOB(IREGION_INNER_CORE)*3.d0*dble(CUSTOM_REAL)
-
-! A_array_rotation,B_array_rotation
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROTATION*2.d0*dble(CUSTOM_REAL)
-
-  if(ABSORBING_CONDITIONS) then
-! rho_vp_crust_mantle,rho_vs_crust_mantle
-    static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*2.d0*dble(CUSTOM_REAL)
-
-! vp_outer_core
-    static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+  if( TOPOGRAPHY ) then
+    ! ibathy_topo
+    static_memory_size = static_memory_size + &
+      NX_BATHY*NY_BATHY*dble(SIZE_INTEGER)
   endif
 
-  if(OCEANS) then
-! rmass_ocean_load
-    static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  if( MOVIE_VOLUME ) then
+    ! iepsilondev_.. crust_mantle
+    static_memory_size = static_memory_size + &
+      5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! updated_dof_ocean_load
-    static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
+    ! muvstore_crust_mantle_3dmovie
+    static_memory_size = static_memory_size + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+
+    ! mask_ibool
+    static_memory_size = static_memory_size + &
+      NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
+
   endif
 
-! add arrays used to save strain for attenuation or for adjoint runs
+! add arrays used for adjoint runs only (LQY: not very accurate)
 
-! epsilondev_crust_mantle
-  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
-
-! eps_trace_over_3_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
-
-! epsilondev_inner_core
-  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
-
-! eps_trace_over_3_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
-
-! add arrays used for adjoint runs
-
-! b_R_memory_crust_mantle
-!! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
-!!! b_epsilondev_crust_mantle
-!!! b_eps_trace_over_3_crust_mantle
-! rho_kl_crust_mantle,beta_kl_crust_mantle, alpha_kl_crust_mantle
-! static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
-  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
+  ! b_R_memory_crust_mantle
+  ! b_epsilondev_crust_mantle
+  ! b_eps_trace_over_3_crust_mantle
+  ! rho_kl_crust_mantle,beta_kl_crust_mantle, alpha_kl_crust_mantle
+  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
 
-! cijkl_kl_crust_mantle (full anisotropic kernels with 21 coefficients)
-  if(ANISOTROPIC_KL) then
-    NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = 1
-  endif
-  static_memory_size = static_memory_size + 21.d0* &
-      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL*dble(CUSTOM_REAL)
-
-! hess_kl_crust_mantle
-  if(APPROXIMATE_HESS_KL) then
-    NSPEC_CRUST_MANTLE_ADJOINT_HESS = NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    NSPEC_CRUST_MANTLE_ADJOINT_HESS = 1
-  endif
-  static_memory_size = static_memory_size + &
-      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_HESS*dble(CUSTOM_REAL)
-
-! Sigma_kl_crust_mantle
-  if(NOISE_TOMOGRAPHY > 0) then
-    NSPEC_CRUST_MANTLE_ADJOINT_NOISE = NSPEC_CRUST_MANTLE_ADJOINT
-  else
-    NSPEC_CRUST_MANTLE_ADJOINT_NOISE = 1
-  endif
-  static_memory_size = static_memory_size + &
-      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_NOISE*dble(CUSTOM_REAL)
-
+  ! b_div_displ_outer_core
   ! rho_kl_outer_core,alpha_kl_outer_core
   static_memory_size = static_memory_size + &
-    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
+    3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
   ! b_R_memory_inner_core
-!! ZN ZN this has now been suppressed to save as much memory as possible to undo attenuation
-!!! b_epsilondev_inner_core
-!!! b_eps_trace_over_3_inner_core
+  ! b_epsilondev_inner_core
+  ! b_eps_trace_over_3_inner_core
   ! rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
-! static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
-  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 3.d0)* &
+  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
   ! b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
@@ -410,6 +463,10 @@
   static_memory_size = static_memory_size + &
     3.d0*NGLOB_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
+  ! vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core
+  static_memory_size = static_memory_size + &
+    3.d0*dble(NDIM)*NGLOB_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
+
   ! b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
   static_memory_size = static_memory_size + &
     3.d0*dble(NDIM)*NGLOB_INNER_CORE_ADJOINT*dble(CUSTOM_REAL)
@@ -418,40 +475,67 @@
   static_memory_size = static_memory_size + &
     2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROT_ADJOINT*dble(CUSTOM_REAL)
 
+  ! cijkl_kl_crust_mantle (full anisotropic kernels with 21 coefficients)
+  if(ANISOTROPIC_KL) then
+    NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = 1
+  endif
+  static_memory_size = static_memory_size + 21.d0* &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL*dble(CUSTOM_REAL)
+
+  ! hess_kl_crust_mantle
+  if(APPROXIMATE_HESS_KL) then
+    NSPEC_CRUST_MANTLE_ADJOINT_HESS = NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    NSPEC_CRUST_MANTLE_ADJOINT_HESS = 1
+  endif
+  static_memory_size = static_memory_size + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_HESS*dble(CUSTOM_REAL)
+
+  ! Sigma_kl_crust_mantle
+  if(NOISE_TOMOGRAPHY > 0) then
+    NSPEC_CRUST_MANTLE_ADJOINT_NOISE = NSPEC_CRUST_MANTLE_ADJOINT
+  else
+    NSPEC_CRUST_MANTLE_ADJOINT_NOISE = 1
+  endif
+  static_memory_size = static_memory_size + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_NOISE*dble(CUSTOM_REAL)
+
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
-
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
-
-  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. .not. USE_LDDRK) then
+  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
   else
      NGLOB_XY_CM = 1
   endif
 
-  if(.not. USE_LDDRK .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    if(ROTATION) then
-      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
-      NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
-    endif
+  if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
+    NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
   endif
 
-! rmassx_crust_mantle,rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
+  ! rmassx_crust_mantle,rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
 
-! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
-  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
+  if( SIMULATION_TYPE == 3 ) then
+    ! b_rmassx_crust_mantle,b_rmassy_crust_mantle for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
+    static_memory_size = static_memory_size + 2.d0*NGLOB_XY_CM*4.d0*dble(CUSTOM_REAL)
+  endif
 
-! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
+  ! rmassx_inner_core,rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
   static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
 
-! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
-  static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
+  if( SIMULATION_TYPE == 3 ) then
+    ! b_rmassx_inner_core,b_rmassy_inner_core for EXACT_MASS_MATRIX_FOR_ROTATION and/or ABSORBING_CONDITIONS
+    static_memory_size = static_memory_size + 2.d0*NGLOB_XY_IC*4.d0*dble(CUSTOM_REAL)
+  endif
 
   end subroutine memory_eval
 

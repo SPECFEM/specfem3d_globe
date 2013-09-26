@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -30,12 +30,11 @@
                                        accel_outer_core, &
                                        normal_top_outer_core,jacobian2D_top_outer_core, &
                                        wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                                       nspec_top)
+                                       nspec2D_top)
+
+  use constants_solver
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle
@@ -52,14 +51,15 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
-  integer nspec_top
+  integer :: nspec2D_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,ispec_selected
 
   ! for surface elements exactly on the CMB
-  do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
+  do ispec2D = 1,nspec2D_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
+
     ispec = ibelm_top_outer_core(ispec2D)
     ispec_selected = ibelm_bottom_crust_mantle(ispec2D)
 
@@ -94,7 +94,6 @@
 
         ! update fluid acceleration/pressure
         accel_outer_core(iglob_oc) = accel_outer_core(iglob_oc) + weight*displ_n
-
       enddo
     enddo
   enddo
@@ -106,16 +105,15 @@
 !
 
   subroutine compute_coupling_fluid_ICB(displ_inner_core, &
-                            ibool_inner_core,ibelm_top_inner_core,  &
-                            accel_outer_core, &
-                            normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-                            wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                            nspec_bottom)
+                                        ibool_inner_core,ibelm_top_inner_core,  &
+                                        accel_outer_core, &
+                                        normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+                                        wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+                                        nspec_bottom)
+
+  use constants_solver
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
     displ_inner_core
@@ -132,7 +130,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
 
-  integer nspec_bottom
+  integer :: nspec_bottom
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
@@ -175,7 +173,6 @@
 
         ! update fluid acceleration/pressure
         accel_outer_core(iglob_oc) = accel_outer_core(iglob_oc) - weight*displ_n
-
       enddo
     enddo
   enddo
@@ -187,18 +184,17 @@
 !
 
   subroutine compute_coupling_CMB_fluid(displ_crust_mantle, &
-                            accel_crust_mantle, &
-                            ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                            accel_outer_core, &
-                            normal_top_outer_core,jacobian2D_top_outer_core, &
-                            wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                            RHO_TOP_OC,minus_g_cmb, &
-                            nspec_bottom)
+                                        accel_crust_mantle, &
+                                        ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                        accel_outer_core, &
+                                        normal_top_outer_core,jacobian2D_top_outer_core, &
+                                        wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                        RHO_TOP_OC,minus_g_cmb, &
+                                        nspec_bottom)
+
+  use constants_solver
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle,accel_crust_mantle
@@ -215,10 +211,10 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
-  double precision RHO_TOP_OC
-  real(kind=CUSTOM_REAL) minus_g_cmb
+  double precision :: RHO_TOP_OC
+  real(kind=CUSTOM_REAL) :: minus_g_cmb
 
-  integer nspec_bottom
+  integer :: nspec_bottom
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
@@ -263,7 +259,6 @@
         accel_crust_mantle(1,iglob_mantle) = accel_crust_mantle(1,iglob_mantle) + weight*nx*pressure
         accel_crust_mantle(2,iglob_mantle) = accel_crust_mantle(2,iglob_mantle) + weight*ny*pressure
         accel_crust_mantle(3,iglob_mantle) = accel_crust_mantle(3,iglob_mantle) + weight*nz*pressure
-
       enddo
     enddo
   enddo
@@ -275,19 +270,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_ICB_fluid(displ_inner_core, &
-                            accel_inner_core, &
-                            ibool_inner_core,ibelm_top_inner_core,  &
-                            accel_outer_core, &
-                            normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-                            wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                            RHO_BOTTOM_OC,minus_g_icb, &
-                            nspec_top)
+  subroutine compute_coupling_ICB_fluid(displ_inner_core,accel_inner_core, &
+                                        ibool_inner_core,ibelm_top_inner_core,  &
+                                        accel_outer_core, &
+                                        normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+                                        wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+                                        RHO_BOTTOM_OC,minus_g_icb, &
+                                        nspec2D_top)
+
+  use constants_solver
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
     displ_inner_core,accel_inner_core
@@ -304,17 +297,17 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
 
-  double precision RHO_BOTTOM_OC
-  real(kind=CUSTOM_REAL) minus_g_icb
+  double precision :: RHO_BOTTOM_OC
+  real(kind=CUSTOM_REAL) :: minus_g_icb
 
-  integer nspec_top
+  integer :: nspec2D_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_inner_core,ispec_selected
 
   ! for surface elements exactly on the ICB
-  do ispec2D = 1,nspec_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
+  do ispec2D = 1,nspec2D_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
 
     ispec = ibelm_top_inner_core(ispec2D)
     ispec_selected = ibelm_bottom_outer_core(ispec2D)
@@ -340,7 +333,8 @@
         if(GRAVITY_VAL) then
           pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
-                           + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
+                             + displ_inner_core(2,iglob_inner_core)*ny &
+                             + displ_inner_core(3,iglob_inner_core)*nz))
         else
           pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
         endif
@@ -363,19 +357,15 @@
 !
 
   subroutine compute_coupling_ocean(accel_crust_mantle, &
-                            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                            rmass_ocean_load,normal_top_crust_mantle, &
-                            ibool_crust_mantle,ibelm_top_crust_mantle, &
-                            updated_dof_ocean_load,NGLOB_XY, &
-                            nspec_top, &
-                            ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK)
+                                    rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
+                                    rmass_ocean_load,normal_top_crust_mantle, &
+                                    ibool_crust_mantle,ibelm_top_crust_mantle, &
+                                    updated_dof_ocean_load, &
+                                    nspec_top)
+
+  use constants_solver
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer :: NGLOB_XY
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
 
@@ -386,9 +376,9 @@
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_XY) :: rmassy_crust_mantle
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be pointers to it
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassy_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmassz_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
@@ -398,116 +388,63 @@
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
-  logical :: ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
 
-  integer nspec_top
+  integer :: nspec_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: force_normal_comp
   real(kind=CUSTOM_REAL) :: additional_term_x,additional_term_y,additional_term_z
-  real(kind=CUSTOM_REAL) :: additional_term
   real(kind=CUSTOM_REAL) :: nx,ny,nz
   integer :: i,j,k,ispec,ispec2D,iglob
 
   !   initialize the updates
   updated_dof_ocean_load(:) = .false.
 
-  if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) .and. (.not. USE_LDDRK)) then
+  ! for surface elements exactly at the top of the crust (ocean bottom)
+  do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_CRUST_MANTLE)
 
-     ! for surface elements exactly at the top of the crust (ocean bottom)
-     do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    ispec = ibelm_top_crust_mantle(ispec2D)
 
-        ispec = ibelm_top_crust_mantle(ispec2D)
+    ! only for DOFs exactly at the top of the crust (ocean bottom)
+    k = NGLLZ
 
-        ! only for DOFs exactly at the top of the crust (ocean bottom)
-        k = NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
-        do j = 1,NGLLY
-           do i = 1,NGLLX
+        ! get global point number
+        iglob = ibool_crust_mantle(i,j,k,ispec)
 
-              ! get global point number
-              iglob = ibool_crust_mantle(i,j,k,ispec)
+        ! only update once
+        if(.not. updated_dof_ocean_load(iglob)) then
 
-              ! only update once
-              if(.not. updated_dof_ocean_load(iglob)) then
+          ! get normal
+          nx = normal_top_crust_mantle(1,i,j,ispec2D)
+          ny = normal_top_crust_mantle(2,i,j,ispec2D)
+          nz = normal_top_crust_mantle(3,i,j,ispec2D)
 
-                 ! get normal
-                 nx = normal_top_crust_mantle(1,i,j,ispec2D)
-                 ny = normal_top_crust_mantle(2,i,j,ispec2D)
-                 nz = normal_top_crust_mantle(3,i,j,ispec2D)
+          ! make updated component of right-hand side
+          ! we divide by rmass_crust_mantle() which is 1 / M
+          ! we use the total force which includes the Coriolis term above
+          force_normal_comp = accel_crust_mantle(1,iglob)*nx / rmassx_crust_mantle(iglob) &
+                            + accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) &
+                            + accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)
 
-                 ! make updated component of right-hand side
-                 ! we divide by rmass_crust_mantle() which is 1 / M
-                 ! we use the total force which includes the Coriolis term above
-                 force_normal_comp = accel_crust_mantle(1,iglob)*nx / rmassx_crust_mantle(iglob) + &
-                      accel_crust_mantle(2,iglob)*ny / rmassy_crust_mantle(iglob) + &
-                      accel_crust_mantle(3,iglob)*nz / rmassz_crust_mantle(iglob)
+          additional_term_x = (rmass_ocean_load(iglob) - rmassx_crust_mantle(iglob)) * force_normal_comp
+          additional_term_y = (rmass_ocean_load(iglob) - rmassy_crust_mantle(iglob)) * force_normal_comp
+          additional_term_z = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * force_normal_comp
 
-                 additional_term_x = (rmass_ocean_load(iglob) - rmassx_crust_mantle(iglob)) * force_normal_comp
-                 additional_term_y = (rmass_ocean_load(iglob) - rmassy_crust_mantle(iglob)) * force_normal_comp
-                 additional_term_z = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * force_normal_comp
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term_x * nx
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term_y * ny
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term_z * nz
 
-                 accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term_x * nx
-                 accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term_y * ny
-                 accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term_z * nz
+          ! done with this point
+          updated_dof_ocean_load(iglob) = .true.
 
-                 ! done with this point
-                 updated_dof_ocean_load(iglob) = .true.
+        endif
 
-              endif
-
-           enddo
-        enddo
-     enddo
-
-  else
-
-     ! for surface elements exactly at the top of the crust (ocean bottom)
-     do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-
-        ispec = ibelm_top_crust_mantle(ispec2D)
-
-        ! only for DOFs exactly at the top of the crust (ocean bottom)
-        k = NGLLZ
-
-        do j = 1,NGLLY
-           do i = 1,NGLLX
-
-              ! get global point number
-              iglob = ibool_crust_mantle(i,j,k,ispec)
-
-              ! only update once
-              if(.not. updated_dof_ocean_load(iglob)) then
-
-                 ! get normal
-                 nx = normal_top_crust_mantle(1,i,j,ispec2D)
-                 ny = normal_top_crust_mantle(2,i,j,ispec2D)
-                 nz = normal_top_crust_mantle(3,i,j,ispec2D)
-
-                 ! make updated component of right-hand side
-                 ! we divide by rmass_crust_mantle() which is 1 / M
-                 ! we use the total force which includes the Coriolis term above
-                 force_normal_comp = (accel_crust_mantle(1,iglob)*nx + &
-                      accel_crust_mantle(2,iglob)*ny + &
-                      accel_crust_mantle(3,iglob)*nz) / rmassz_crust_mantle(iglob)
-
-                 additional_term = (rmass_ocean_load(iglob) - rmassz_crust_mantle(iglob)) * force_normal_comp
-
-                 accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term * nx
-                 accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term * ny
-                 accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term * nz
-
-                 ! done with this point
-                 updated_dof_ocean_load(iglob) = .true.
-
-              endif
-
-           enddo
-        enddo
-     enddo
-
-  endif
+      enddo
+    enddo
+  enddo
 
   end subroutine compute_coupling_ocean
 

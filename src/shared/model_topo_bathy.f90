@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,35 +33,34 @@
 ! by default (constants.h), it uses a smoothed ETOPO 4 dataset
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_topo_bathy_broadcast(myrank,ibathy_topo)
+  subroutine model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
   ! bathymetry and topography: use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  ! local parameters
-  integer :: ier
+  character(len=150) :: LOCAL_PATH
 
   if(myrank == 0) then
     ! user output
     write(IMAIN,*)
     write(IMAIN,*) 'incorporating topography'
+    call flush_IMAIN()
 
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
+    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
 
   end subroutine model_topo_bathy_broadcast
 
@@ -73,14 +72,16 @@
 !
 !---- read topography and bathymetry file once and for all
 !
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
+  real :: val
+  integer :: ival
   integer :: itopo_x,itopo_y,ier
   character(len=150) :: topo_bathy_file
   integer,parameter :: TOPO_MINIMUM = - 10000 ! (depth in m )
@@ -98,7 +99,28 @@
   ! reads in topography array
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
-      read(13,*) ibathy_topo(itopo_x,itopo_y)
+      read(13,*,iostat=ier) val
+
+      ! checks
+      if( ier /= 0 ) then
+        print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
+        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        call exit_mpi(0,'error reading topo_bathy file')
+      endif
+
+      ! converts to integer
+      ival = nint(val)
+
+      ! checks values
+      if( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
+        print*,'error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
+        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        call exit_mpi(0,'error reading topo_bathy file')
+      endif
+
+      ! stores in array
+      ibathy_topo(itopo_x,itopo_y) = ival
+
     enddo
   enddo
   close(13)
@@ -135,9 +157,9 @@
 
   subroutine save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
@@ -173,9 +195,9 @@
 
   subroutine read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
@@ -212,6 +234,7 @@
 
     ! user output
     write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+    call flush_IMAIN()
   endif
 
   end subroutine read_topo_bathy_database
@@ -226,9 +249,9 @@
 !---- get elevation or ocean depth in meters at a given latitude and longitude
 !
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! location latitude/longitude (in degree)
   double precision,intent(in):: xlat,xlon

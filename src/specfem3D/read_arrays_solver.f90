@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -28,24 +28,26 @@
 ! read arrays created by the mesher
 
   subroutine read_arrays_solver(iregion_code,myrank, &
-              rho_vp,rho_vs,xstore,ystore,zstore, &
-              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-              rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
-              nspec_iso,nspec_tiso,nspec_ani, &
-              c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-              c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-              c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-              ibool,idoubling,ispec_is_tiso,nglob_xy,nglob, &
-              rmassx,rmassy,rmassz,rmass_ocean_load,nspec, &
-              is_on_a_slice_edge,READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
-              ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS,&
-              EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
-              b_rmassx,b_rmassy)
+                                nspec,nglob,nglob_xy, &
+                                nspec_iso,nspec_tiso,nspec_ani, &
+                                rho_vp,rho_vs,xstore,ystore,zstore, &
+                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+                                c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                ibool,idoubling,ispec_is_tiso, &
+                                rmassx,rmassy,rmassz,rmass_ocean_load, &
+                                READ_KAPPA_MU,READ_TISO, &
+                                b_rmassx,b_rmassy)
+
+  use constants_solver
+  use specfem_par,only: &
+    ABSORBING_CONDITIONS, &
+    LOCAL_PATH,ABSORBING_CONDITIONS,&
+    EXACT_MASS_MATRIX_FOR_ROTATION
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: iregion_code,myrank
   integer :: nspec,nglob,nglob_xy
@@ -81,32 +83,55 @@
   ! mass matrices and additional ocean load mass matrix
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
-  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
-  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass_ocean_load
 
-  logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
+  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
   ! flags to know if we should read Vs and anisotropy arrays
-  logical :: READ_KAPPA_MU,READ_TISO,ABSORBING_CONDITIONS,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+  logical :: READ_KAPPA_MU,READ_TISO
 
-  character(len=150) :: LOCAL_PATH
 
   ! local parameters
-  integer :: ier
-
+  integer :: ier,lnspec,lnglob
   ! processor identification
   character(len=150) :: prname
-
-  ! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
+  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data.bin', &
         status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin')
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data.bin')
 
+  ! read coordinates of the mesh
+
+  read(IIN) lnspec
+  read(IIN) lnglob
+
+  ! checks dimensions
+  if( lnspec /= nspec ) then
+    close(IIN)
+    print*,'error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
+    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    call exit_mpi(myrank,'error dimensions in solver_data.bin')
+  endif
+  if( lnglob /= nglob ) then
+    close(IIN)
+    print*,'error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
+    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    call exit_mpi(myrank,'error dimensions in solver_data.bin')
+  endif
+
+  ! mesh coordinates
+  read(IIN) xstore
+  read(IIN) ystore
+  read(IIN) zstore
+
+  read(IIN) ibool
+  read(IIN) idoubling
+  read(IIN) ispec_is_tiso
+
+  ! local GLL points
   read(IIN) xix
   read(IIN) xiy
   read(IIN) xiz
@@ -124,14 +149,13 @@
   if(READ_KAPPA_MU) read(IIN) muvstore
 
   ! for anisotropy, gravity and rotation
-
-  if(TRANSVERSE_ISOTROPY .and. READ_TISO) then
+  if(TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
     read(IIN) kappahstore
     read(IIN) muhstore
     read(IIN) eta_anisostore
   endif
 
-  if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+  if(ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
     read(IIN) c11store
     read(IIN) c12store
     read(IIN) c13store
@@ -139,7 +163,7 @@
     read(IIN) c44store
   endif
 
-  if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if(ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
     read(IIN) c11store
     read(IIN) c12store
     read(IIN) c13store
@@ -165,14 +189,12 @@
 
   ! Stacey
   if(ABSORBING_CONDITIONS) then
-
     if(iregion_code == IREGION_CRUST_MANTLE) then
       read(IIN) rho_vp
       read(IIN) rho_vs
     else if(iregion_code == IREGION_OUTER_CORE) then
       read(IIN) rho_vp
     endif
-
   endif
 
   ! mass matrices
@@ -182,53 +204,27 @@
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
-!  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
-!     read(IIN) rmassx
-!     read(IIN) rmassy
-!  endif
-
-  if(.not. USE_LDDRK)then
-    if((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
-       read(IIN) rmassx
-       read(IIN) rmassy
-    endif
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+    read(IIN) rmassx
+    read(IIN) rmassy
   endif
 
   read(IIN) rmassz
 
-  if(.not. USE_LDDRK)then
-    if((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
-       read(IIN) b_rmassx
-       read(IIN) b_rmassy
-    endif
+  if( ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE))then
+    read(IIN) b_rmassx
+    read(IIN) b_rmassy
   endif
 
   ! read additional ocean load mass matrix
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
+  if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
   close(IIN) ! solver_data.bin
 
-! read coordinates of the mesh
-
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
-       status='old',action='read',form='unformatted')
-  read(IIN) xstore
-  read(IIN) ystore
-  read(IIN) zstore
-
-  read(IIN) ibool
-
-  read(IIN) idoubling
-
-  read(IIN) is_on_a_slice_edge
-
-  read(IIN) ispec_is_tiso
-
-  close(IIN)
 
   end subroutine read_arrays_solver
 

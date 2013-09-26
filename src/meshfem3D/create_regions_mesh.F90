@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,25 +25,13 @@
 !
 !=====================================================================
 
-  subroutine create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
-                          xstore,ystore,zstore,rmins,rmaxs, &
-                          iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
-                          volume_local,area_local_bottom,area_local_top, &
-                          nglob_theor,npointot, &
-                          NSTEP,DT, &
-                          NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+  subroutine create_regions_mesh(iregion_code, &
+                          nspec,nglob_theor,npointot, &
+                          NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                           NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
-                          NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-                          myrank,LOCAL_PATH,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
-                          SAVE_MESH_FILES,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
-                          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                          ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
-                          this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
-                          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta,USE_FULL_TISO_MANTLE, &
-                          ATT1,ATT2,ATT3,USE_LDDRK,EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE)
+                          offset_proc_xi,offset_proc_eta, &
+                          ipass)
 
 ! creates the different regions of the mesh
 
@@ -57,217 +45,459 @@
 ! ****************************************************************************************************
 !
 
-  use meshfem3D_models_par
+  use meshfem3D_par,only: &
+    ibool,idoubling,xstore,ystore,zstore, &
+    IMAIN,volume_total,myrank,LOCAL_PATH, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IFLAG_IN_FICTITIOUS_CUBE, &
+    NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
+    R_CENTRAL_CUBE,RICB,RCMB, &
+    MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
+    NGLOB1D_RADIAL_CORNER, &
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+    ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
-  use mpi
+  use meshfem3D_models_par,only: &
+    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
+    OCEANS
+
+  use create_MPI_interfaces_par, only: &
+    NGLOB1D_RADIAL_MAX,iboolcorner,iboolfaces, &
+    iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
+    ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+    ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+    xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+    xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
+
+  use create_regions_mesh_par
+  use create_regions_mesh_par2
+
+  use MPI_crust_mantle_par,only: &
+    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+  use MPI_outer_core_par,only: &
+    xstore_outer_core,ystore_outer_core,zstore_outer_core
+  use MPI_inner_core_par,only: &
+    xstore_inner_core,ystore_inner_core,zstore_inner_core
 
   implicit none
 
-  ! this to cut the doubling brick
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer :: offset_proc_xi,offset_proc_eta
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-
-  integer :: ner_without_doubling,ilayer,ilayer_loop, &
-               ifirst_region,ilast_region,ratio_divide_central_cube
-  integer, dimension(:), allocatable :: perm_layer
+  ! code for the four regions of the mesh
+  integer :: iregion_code
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_tiso,nspec_stacey,nspec_actually,nspec_att,ATT1,ATT2,ATT3
+  integer :: nspec
+  integer :: nglob_theor,npointot
 
-  integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS
+  integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+  integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP
 
-  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
-
-  integer NPROC_XI,NPROC_ETA
-
-  integer npointot
-
-  logical SAVE_MESH_FILES
-
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,USE_FULL_TISO_MANTLE,ATTENUATION_1D_WITH_3D_STORAGE
-
-  double precision R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO, &
-          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-          RMOHO_FICTITIOUS_IN_MESHER
-
-  double precision RHO_OCEANS
-
-  character(len=150) LOCAL_PATH,errmsg
-
-  ! arrays with the mesh in double precision
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  ! meshing parameters
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
-
-  ! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
-
-  ! code for the four regions of the mesh
-  integer iregion_code
-
-  ! Gauss-Lobatto-Legendre points and weights of integration
-  double precision, dimension(:), allocatable :: xigll,yigll,zigll,wxgll,wygll,wzgll
-
-  ! 3D shape functions and their derivatives
-  double precision, dimension(:,:,:,:), allocatable :: shape3D
-  double precision, dimension(:,:,:,:,:), allocatable :: dershape3D
-
-  ! 2D shape functions and their derivatives
-  double precision, dimension(:,:,:), allocatable :: shape2D_x,shape2D_y, &
-    shape2D_bottom,shape2D_top
-  double precision, dimension(:,:,:,:), allocatable :: dershape2D_x,dershape2D_y, &
-    dershape2D_bottom,dershape2D_top
-
-  integer, dimension(nspec) :: idoubling
-
-! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
-  ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
-  double precision rmin,rmax
-
-  ! for model density and anisotropy
-  integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,dvpstore, &
-    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-
-  ! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-  ! boundary locator
-  logical, dimension(:,:), allocatable :: iboun
-
-  ! arrays with mesh parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xixstore,xiystore,xizstore, &
-    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-  ! proc numbers for MPI
-  integer myrank
-
-  ! check area and volume of the final mesh
-  double precision area_local_bottom,area_local_top
-  double precision volume_local
-
-  ! variables for creating array ibool (some arrays also used for AVS or DX files)
-  integer, dimension(:), allocatable :: locval
-  logical, dimension(:), allocatable :: ifseg
-  double precision, dimension(:), allocatable :: xp,yp,zp
-
-  integer nglob,nglob_theor,ieoff,ilocnum,ier
-
-  ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz
-  integer :: nglob_xy
-
-  ! mass matrices for backward simulation when ROTATION is .true.
-  logical :: EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_rmassx,b_rmassy
-
-  ! mass matrix and bathymetry for ocean load
-  integer nglob_oceans
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
-
-  ! boundary parameters locator
-  integer, dimension(:), allocatable :: ibelm_xmin,ibelm_xmax, &
-    ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top
-
-  ! 2-D jacobians and normals
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    jacobian2D_xmin,jacobian2D_xmax, &
-    jacobian2D_ymin,jacobian2D_ymax,jacobian2D_bottom,jacobian2D_top
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top
-
-  ! MPI cut-planes parameters along xi and along eta
-  logical, dimension(:,:), allocatable :: iMPIcut_xi,iMPIcut_eta
-
-  ! Stacey, indices for Clayton-Engquist absorbing conditions
-  integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
-
-  ! name of the database file
-  character(len=150) prname
-
-  ! number of elements on the boundaries
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-
-  integer i,j,k,ispec
-  integer iproc_xi,iproc_eta,ichunk
-
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-
-  ! rotation matrix from Euler angles
-  double precision, dimension(NDIM,NDIM) :: rotation_matrix
-
-  ! attenuation
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: Qmu_store
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision  T_c_source
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  logical :: USE_ONE_LAYER_SB
-
-  integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
-    first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
-
-  double precision, dimension(:,:), allocatable :: stretch_tab
-
-  integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
+  integer :: offset_proc_xi,offset_proc_eta
 
   ! now perform two passes in this part to be able to save memory
-  integer :: ipass
+  integer,intent(in) :: ipass
 
-  logical :: ACTUALLY_STORE_ARRAYS
+  ! local parameters
+  integer :: ier
+  integer :: nglob
+  ! check area and volume of the final mesh
+  double precision :: area_local_bottom,area_local_top
+  double precision :: volume_local
 
-! added for color permutation
-  integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
-  integer, dimension(:), allocatable :: perm
-  integer, dimension(:), allocatable :: first_elem_number_in_this_color
-  integer, dimension(:), allocatable :: num_of_elems_in_this_color
-
-  integer :: icolor,ispec_counter
-  integer :: nspec_outer_min_global,nspec_outer_max_global
-
-  integer :: NSTEP
-  integer, save :: npoin2D_xi,npoin2D_eta
-  double precision :: DT
-
-  ! boundary mesh
-  integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
-  integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
-    ibelm_670_top,ibelm_670_bot
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho,normal_400,normal_670
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_moho,jacobian2D_400,jacobian2D_670
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
-    ispec2D_670_top,ispec2D_670_bot
-  double precision r_moho,r_400,r_670
-
-  ! flags for transverse isotropic elements
-  logical, dimension(:), allocatable :: ispec_is_tiso
-
-#ifdef USE_SERIAL_CASCADE_FOR_IOs
-  logical :: you_can_start_doing_IOs
-  integer msg_status(MPI_STATUS_SIZE)
-#endif
+  ! user output
+  if(myrank == 0 ) then
+    write(IMAIN,*)
+    select case(ipass)
+    case(1)
+      write(IMAIN,*) 'first pass'
+    case(2)
+      write(IMAIN,*) 'second pass'
+    case default
+      call exit_MPI(myrank,'error ipass value in create_regions_mesh')
+    end select
+    call flush_IMAIN()
+  endif
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+
+  ! initializes arrays
+  call synchronize_all()
+  if( myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '  ...allocating arrays '
+    call flush_IMAIN()
+  endif
+  call crm_allocate_arrays(iregion_code,nspec,ipass, &
+                          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+                          NSPEC2D_BOTTOM,NSPEC2D_TOP)
+
+
+  ! initialize number of layers
+  call synchronize_all()
+  if( myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '  ...setting up layers '
+    call flush_IMAIN()
+  endif
+  call crm_setup_layers(iregion_code,nspec,ipass,NEX_PER_PROC_ETA)
+
+  !  creates mesh elements
+  call synchronize_all()
+  if( myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '  ...creating mesh elements '
+    call flush_IMAIN()
+  endif
+  call crm_create_elements(iregion_code,nspec,ipass, &
+                          NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                          offset_proc_xi,offset_proc_eta)
+
+
+  ! only create global addressing and the MPI buffers in the first pass
+  select case(ipass)
+  case( 1 )
+    ! creates ibool index array for projection from local to global points
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...creating global addressing'
+      call flush_IMAIN()
+    endif
+    call crm_setup_indexing(nspec,nglob_theor,npointot)
+
+
+    ! create MPI buffers
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...creating MPI buffers'
+      call flush_IMAIN()
+    endif
+    call crm_setup_mpi_buffers(npointot,nspec,iregion_code)
+
+
+    ! sets up Stacey absorbing boundary indices
+    if(NCHUNKS /= 6) then
+      call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
+          njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
+          NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
+    endif
+
+  ! only create mass matrix and save all the final arrays in the second pass
+  case( 2 )
+    ! precomputes jacobian for 2d absorbing boundary surfaces
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...precomputing jacobian'
+      call flush_IMAIN()
+    endif
+    call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
+              dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+              jacobian2D_xmin,jacobian2D_xmax, &
+              jacobian2D_ymin,jacobian2D_ymax, &
+              jacobian2D_bottom,jacobian2D_top, &
+              normal_xmin,normal_xmax, &
+              normal_ymin,normal_ymax, &
+              normal_bottom,normal_top, &
+              NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
+              xigll,yigll,zigll)
+
+    ! create chunk buffers if more than one chunk
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...creating chunk buffers'
+      call flush_IMAIN()
+    endif
+    call create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
+                              xstore,ystore,zstore,nglob_theor, &
+                              NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
+                              NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code))
+
+    ! only deallocates after second pass
+    deallocate(ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+              ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+              xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+              xyz1D_leftxi_righteta,xyz1D_rightxi_righteta)
+
+    ! setup mpi communication interfaces
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...preparing MPI interfaces'
+      call flush_IMAIN()
+    endif
+    ! creates MPI interface arrays
+    call create_MPI_interfaces(iregion_code)
+
+    ! sets up MPI interface arrays
+    call setup_MPI_interfaces(iregion_code)
+
+    ! only deallocates after second pass
+    deallocate(iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta)
+    deallocate(iboolfaces)
+    deallocate(iboolcorner)
+
+    ! sets up inner/outer element arrays
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...element inner/outer separation '
+      call flush_IMAIN()
+    endif
+    call setup_inner_outer(iregion_code)
+
+    ! sets up mesh coloring
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...element mesh coloring '
+      call flush_IMAIN()
+    endif
+    call setup_color_perm(iregion_code)
+
+    ! frees allocated mesh memory
+    select case( iregion_code )
+    case( IREGION_CRUST_MANTLE )
+      deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+    case( IREGION_OUTER_CORE )
+      deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
+    case( IREGION_INNER_CORE )
+      deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
+    end select
+
+    !uncomment: adds model smoothing for point profile models
+    !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
+    !     call smooth_model(myrank, nproc_xi,nproc_eta,&
+    !        rho_vp,rho_vs,nspec_stacey, &
+    !        iregion_code,xixstore,xiystore,xizstore, &
+    !        etaxstore,etaystore,etazstore, &
+    !        gammaxstore,gammaystore,gammazstore, &
+    !        xstore,ystore,zstore,rhostore,dvpstore, &
+    !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+    !        nspec,HETEROGEN_3D_MANTLE, &
+    !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS )
+
+
+    ! creates mass matrix
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...creating mass matrix'
+      call flush_IMAIN()
+    endif
+
+    ! allocates mass matrices in this slice (will be fully assembled in the solver)
+    !
+    ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
+    ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+    ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+    !
+    ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+    ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+
+    ! copy the theoretical number of points for the second pass
+    nglob = nglob_theor
+
+    if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
+      select case(iregion_code)
+      case( IREGION_CRUST_MANTLE )
+        nglob_xy = nglob
+      case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
+        nglob_xy = 1
+      endselect
+    else
+       nglob_xy = 1
+    endif
+
+    if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+      select case(iregion_code)
+      case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
+         nglob_xy = nglob
+      case( IREGION_OUTER_CORE )
+         nglob_xy = 1
+      endselect
+    endif
+
+    allocate(rmassx(nglob_xy), &
+             rmassy(nglob_xy), &
+             stat=ier)
+    if(ier /= 0) stop 'error in allocate 21'
+
+    allocate(b_rmassx(nglob_xy), &
+             b_rmassy(nglob_xy),stat=ier)
+    if(ier /= 0) stop 'error in allocate b_21'
+
+    allocate(rmassz(nglob),stat=ier)
+    if(ier /= 0) stop 'error in allocate 22'
+
+    ! allocates ocean load mass matrix as well if oceans
+    if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
+      nglob_oceans = nglob
+    else
+      ! allocate dummy array if no oceans
+      nglob_oceans = 1
+    endif
+    allocate(rmass_ocean_load(nglob_oceans),stat=ier)
+    if(ier /= 0) stop 'error in allocate 22'
+
+    ! creating mass matrices in this slice (will be fully assembled in the solver)
+    call create_mass_matrices(myrank,nspec,nglob,idoubling,ibool, &
+                              iregion_code,xstore,ystore,zstore, &
+                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
+
+    ! save the binary files
+    call synchronize_all()
+    if( myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '  ...saving binary files'
+      call flush_IMAIN()
+    endif
+    ! saves mesh and model parameters
+    if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+      if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
+      call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
+                                    iregion_code,xstore,ystore,zstore,  &
+                                    NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+                                    NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    else
+      call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+                              iregion_code,xstore,ystore,zstore, &
+                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
+    endif
+
+    ! frees memory
+    deallocate(rmassx,rmassy,rmassz)
+    deallocate(b_rmassx,b_rmassy)
+    deallocate(rmass_ocean_load)
+    ! Stacey
+    if( NCHUNKS /= 6 ) deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+
+    ! saves MPI interface infos
+    call save_arrays_solver_MPI(iregion_code)
+
+    ! frees MPI arrays memory
+    call crm_free_MPI_arrays(iregion_code)
+
+    ! boundary mesh for MOHO, 400 and 670 discontinuities
+    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+      ! user output
+      call synchronize_all()
+      if( myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...saving boundary mesh files'
+        call flush_IMAIN()
+      endif
+      ! saves boundary file
+      if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+        call save_arrays_solver_boundary_adios()
+      else
+        call save_arrays_solver_boundary()
+      endif
+
+    endif
+
+    ! compute volume, bottom and top area of that part of the slice
+    call compute_volumes(volume_local,area_local_bottom,area_local_top, &
+        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+
+    ! computes total area and volume
+    call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
+        area_local_top, volume_local,volume_total, RCMB,RICB,R_CENTRAL_CUBE)
+
+    ! create AVS or DX mesh data for the slices
+    if(SAVE_MESH_FILES) then
+      ! user output
+      call synchronize_all()
+      if( myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...saving AVS mesh files'
+        call flush_IMAIN()
+      endif
+      call crm_save_mesh_files(nspec,npointot,iregion_code)
+    endif
+
+  case default
+    stop 'there cannot be more than two passes in mesh creation'
+
+  end select  ! end of test if first or second pass
+
+
+  ! deallocate these arrays after each pass
+  ! because they have a different size in each pass to save memory
+  deallocate(xixstore,xiystore,xizstore)
+  deallocate(etaxstore,etaystore,etazstore)
+  deallocate(gammaxstore,gammaystore,gammazstore)
+
+  ! deallocate arrays
+  deallocate(rhostore,dvpstore,kappavstore,kappahstore)
+  deallocate(muvstore,muhstore)
+  deallocate(eta_anisostore)
+  deallocate(ispec_is_tiso)
+  deallocate(c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+            c36store,c44store,c45store,c46store,c55store,c56store,c66store)
+  deallocate(iboun)
+  deallocate(ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
+  deallocate(ibelm_bottom,ibelm_top)
+  deallocate(jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax)
+  deallocate(jacobian2D_bottom,jacobian2D_top)
+  deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
+  deallocate(normal_bottom,normal_top)
+  deallocate(iMPIcut_xi,iMPIcut_eta)
+
+  deallocate(rho_vp,rho_vs)
+  deallocate(Qmu_store)
+  deallocate(tau_e_store)
+
+  deallocate(ibelm_moho_top,ibelm_moho_bot)
+  deallocate(ibelm_400_top,ibelm_400_bot)
+  deallocate(ibelm_670_top,ibelm_670_bot)
+  deallocate(normal_moho,normal_400,normal_670)
+
+  end subroutine create_regions_mesh
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine crm_allocate_arrays(iregion_code,nspec,ipass, &
+                                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+                                NSPEC2D_BOTTOM,NSPEC2D_TOP)
+
+  use constants
+
+  use meshfem3D_par,only: &
+    NCHUNKS,NUMCORNERS_SHARED,NUMFACES_SHARED, &
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+    NGLOB1D_RADIAL,NGLOB1D_RADIAL_CORNER, &
+    ATT1,ATT2,ATT3
+
+  use meshfem3D_models_par,only: &
+    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
+    SAVE_BOUNDARY_MESH,AM_V
+
+  use create_regions_mesh_par2
+  use create_MPI_interfaces_par
+
+  implicit none
+
+  integer,intent(in) :: iregion_code,nspec
+  integer,intent(in) :: ipass
+
+  integer,intent(in) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+  integer,intent(in) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
+
+  ! local parameters
+  integer :: ier
 
   ! new attenuation definition on all GLL points
   ! attenuation
@@ -276,39 +506,12 @@
     tau_s(:)   = AM_V%Qtau_s(:)
     nspec_att = nspec
   else
+    ! allocates dummy size arrays
     nspec_att = 1
   endif
   allocate(Qmu_store(ATT1,ATT2,ATT3,nspec_att), &
           tau_e_store(N_SLS,ATT1,ATT2,ATT3,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
-
-  ! Gauss-Lobatto-Legendre points of integration
-  allocate(xigll(NGLLX), &
-          yigll(NGLLY), &
-          zigll(NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocate 2'
-
-  ! Gauss-Lobatto-Legendre weights of integration
-  allocate(wxgll(NGLLX), &
-          wygll(NGLLY), &
-          wzgll(NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocate 3'
-
-  ! 3D shape functions and their derivatives
-  allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ), &
-          dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocate 4'
-
-  ! 2D shape functions and their derivatives
-  allocate(shape2D_x(NGNOD2D,NGLLY,NGLLZ), &
-          shape2D_y(NGNOD2D,NGLLX,NGLLZ), &
-          shape2D_bottom(NGNOD2D,NGLLX,NGLLY), &
-          shape2D_top(NGNOD2D,NGLLX,NGLLY), &
-          dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ), &
-          dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ), &
-          dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY), &
-          dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY),stat=ier)
-  if(ier /= 0) stop 'error in allocate 5'
 
   ! array with model density
   allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -323,9 +526,6 @@
           eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec), &
           ispec_is_tiso(nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 7'
-
-  ! initializes flags for transverse isotropic elements
-  ispec_is_tiso(:) = .false.
 
   ! Stacey absorbing boundaries
   if(NCHUNKS /= 6) then
@@ -398,26 +598,64 @@
   if(ier /= 0) stop 'error in allocate 13'
 
   ! Stacey
-  allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX), &
-          nimax(2,NSPEC2DMAX_YMIN_YMAX), &
-          njmin(2,NSPEC2DMAX_XMIN_XMAX), &
-          njmax(2,NSPEC2DMAX_XMIN_XMAX), &
-          nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
-          nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
-  if(ier /= 0) stop 'error in allocate 14'
+  if( ipass == 1 .and. NCHUNKS /= 6 ) then
+    allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX), &
+            nimax(2,NSPEC2DMAX_YMIN_YMAX), &
+            njmin(2,NSPEC2DMAX_XMIN_XMAX), &
+            njmax(2,NSPEC2DMAX_XMIN_XMAX), &
+            nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
+            nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
+    if(ier /= 0) stop 'error in allocate 14'
+  endif
 
   ! MPI cut-planes parameters along xi and along eta
   allocate(iMPIcut_xi(2,nspec), &
           iMPIcut_eta(2,nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 15'
 
+  ! MPI buffer indices
+  !
+  ! define maximum size for message buffers
+  ! use number of elements found in the mantle since it is the largest region
+  NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
+  ! 1-D buffers
+  NGLOB1D_RADIAL_MAX = maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:))
+
+  if( ipass == 1 ) then
+    allocate(iboolleft_xi(NGLOB2DMAX_XMIN_XMAX(iregion_code)), &
+            iboolright_xi(NGLOB2DMAX_XMIN_XMAX(iregion_code)), &
+            iboolleft_eta(NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
+            iboolright_eta(NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
+            stat=ier)
+    if(ier /= 0) stop 'error in allocate 15b'
+
+    allocate(ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX), &
+            ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX), &
+            ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX), &
+            ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX), &
+            stat=ier)
+    if(ier /= 0) stop 'error in allocate 15c'
+
+    allocate(xyz1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX,NDIM), &
+            xyz1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX,NDIM), &
+            xyz1D_leftxi_righteta(NGLOB1D_RADIAL_MAX,NDIM), &
+            xyz1D_rightxi_righteta(NGLOB1D_RADIAL_MAX,NDIM), &
+            stat=ier)
+    if(ier /= 0) stop 'error in allocate 15c'
+
+    allocate(iboolcorner(NGLOB1D_RADIAL(iregion_code),NUMCORNERS_SHARED), &
+            iboolfaces(NGLOB2DMAX_XY,NUMFACES_SHARED), &
+            stat=ier)
+    if(ier /= 0) stop 'error in allocate 15b'
+
+  endif
+
+
   ! store and save the final arrays only in the second pass
   ! therefore in the first pass some arrays can be allocated with a dummy size
   if(ipass == 1) then
-    ACTUALLY_STORE_ARRAYS = .false.
     nspec_actually = 1
   else
-    ACTUALLY_STORE_ARRAYS = .true.
     nspec_actually = nspec
   endif
   allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
@@ -452,8 +690,40 @@
           jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),stat=ier)
   if(ier /= 0) stop 'error in allocate 17'
 
-  ! initialize number of layers
-  call crm_initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
+  end subroutine crm_allocate_arrays
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine crm_setup_layers(iregion_code,nspec,ipass, &
+                              NEX_PER_PROC_ETA)
+
+  use meshfem3D_par,only: &
+    ibool,idoubling,is_on_a_slice_edge, &
+    xstore,ystore,zstore, &
+    myrank,NGLLX,NGLLY,NGLLZ, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    R670,RMOHO,R400,RMIDDLE_CRUST,MAX_NUMBER_OF_MESH_LAYERS, &
+    ner,r_top,r_bottom
+
+  use meshfem3D_models_par,only: &
+    CASE_3D,SUPPRESS_CRUSTAL_MESH,ONE_CRUST,REGIONAL_MOHO_MESH
+
+  use create_regions_mesh_par
+  use create_regions_mesh_par2
+
+  implicit none
+
+  integer,intent(in) :: iregion_code,nspec
+  integer,intent(in) :: ipass
+  integer :: NEX_PER_PROC_ETA
+
+  ! local parameters
+  integer :: i,ier
+
+  ! initializes element layers
+  call initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
                         shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
                         dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
                         iaddx,iaddy,iaddz,nspec,xstore,ystore,zstore,ibool,idoubling, &
@@ -510,15 +780,76 @@
     RMIDDLE_CRUST = stretch_tab(2,1)
   endif
 
-!----
-!----  creates mesh elements
-!----
+  end subroutine crm_setup_layers
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine crm_create_elements(iregion_code,nspec,ipass, &
+                                NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                offset_proc_xi,offset_proc_eta)
+
+! creates the different regions of the mesh
+
+  use meshfem3D_par,only: &
+    idoubling,is_on_a_slice_edge, &
+    xstore,ystore,zstore, &
+    IMAIN,myrank, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
+    NPROC_XI,NPROC_ETA,NCHUNKS, &
+    INCLUDE_CENTRAL_CUBE,R_CENTRAL_CUBE, &
+    MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
+    rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
+    rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+    ratio_sampling_array,doubling_index,this_region_has_a_doubling, &
+    ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+    ner,r_top,r_bottom
+
+  use meshfem3D_models_par,only: &
+    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
+    TRANSVERSE_ISOTROPY
+
+  use create_regions_mesh_par
+  use create_regions_mesh_par2
+
+  implicit none
+
+  integer,intent(in) :: iregion_code,nspec
+  integer,intent(in) :: ipass
+
+  integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+
+  integer :: offset_proc_xi,offset_proc_eta
+
+  ! local parameters
+  integer :: ispec,nspec_tiso
+  ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
+  double precision :: rmin,rmax
+  integer :: ner_without_doubling,ilayer,ilayer_loop
+  ! timing
+  double precision, external :: wtime
+  double precision :: time_start,tCPU
+  integer,dimension(8) :: tval
+
+  ! initializes flags for transverse isotropic elements
+  ispec_is_tiso(:) = .false.
+
+  ! get MPI starting time
+  time_start = wtime()
 
   ! loop on all the layers in this region of the mesh
   ispec = 0 ! counts all the elements in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
 
     ilayer = perm_layer(ilayer_loop)
+
+    ! user output
+    if(myrank == 0 ) then
+      write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
+                                   'out of ',ilast_region-ifirst_region+1
+      call flush_IMAIN()
+    endif
 
     ! determine the radii that define the shell
     rmin = rmins(ilayer)
@@ -556,9 +887,7 @@
                     xstore,ystore,zstore, &
                     iaddx,iaddy,iaddz,xigll,yigll,zigll, &
                     shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                    RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                    INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
                     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -568,15 +897,15 @@
                     gammaxstore,gammaystore,gammazstore,&
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
-                    stretch_tab,ACTUALLY_STORE_ARRAYS, &
+                    stretch_tab, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot,&
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
+                    ispec_is_tiso)
+
 
     ! mesh doubling elements
     if( this_region_has_a_doubling(ilayer) ) &
@@ -587,9 +916,7 @@
                     ner,ratio_sampling_array,r_top,r_bottom, &
                     xstore,ystore,zstore,xigll,yigll,zigll, &
                     shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
-                    RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
-                    R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+                    INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
                     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -599,27 +926,54 @@
                     gammaxstore,gammaystore,gammazstore,&
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
-                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB,ACTUALLY_STORE_ARRAYS, &
+                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                    ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
+                    ispec_is_tiso)
+
+    ! user output
+    if(myrank == 0 ) then
+      ! time estimate
+      tCPU = wtime() - time_start
+
+      ! outputs current time on system
+      call date_and_time(VALUES=tval)
+
+      ! debug: outputs remaining time (poor estimation)
+      !tCPU = (1.0-(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)) &
+      !          /(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)*tCPU*10.0
+
+      ! user output
+      write(IMAIN,'(a,f5.1,a,a,i2.2,a,i2.2,a,i2.2,a)') &
+        "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
+        "    current clock time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
+
+      ! flushes I/O buffer
+      call flush_IMAIN()
+    endif
 
   enddo ! of ilayer_loop
 
+  deallocate(stretch_tab)
+  deallocate(perm_layer)
+  deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
+
+  if(myrank == 0 ) write(IMAIN,*)
+
   ! define central cube in inner core
-  if(INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) &
-    call create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz, &
+  if(INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) then
+    ! user output
+    if(myrank == 0 ) write(IMAIN,*) '  creating central cube'
+
+    call create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,&
-                        R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                         shape3D,rmin,rmax,rhostore,dvpstore,&
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
@@ -627,9 +981,10 @@
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
-                        ispec_is_tiso,USE_FULL_TISO_MANTLE,ATT1,ATT2,ATT3,ATTENUATION_1D_WITH_3D_STORAGE)
+                        nspec_ani,nspec_stacey, &
+                        rho_vp,rho_vs,xigll,yigll,zigll, &
+                        ispec_is_tiso)
+  endif
 
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
@@ -648,792 +1003,298 @@
   ! for which communications cannot be overlapped with calculations
   where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) is_on_a_slice_edge = .false.
 
-  ! only create global addressing and the MPI buffers in the first pass
-  if(ipass == 1) then
-
-    !uncomment: adds model smoothing for point profile models
-    !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
-    !     call smooth_model(myrank, nproc_xi,nproc_eta,&
-    !        rho_vp,rho_vs,nspec_stacey, &
-    !        iregion_code,xixstore,xiystore,xizstore, &
-    !        etaxstore,etaystore,etazstore, &
-    !        gammaxstore,gammaystore,gammazstore, &
-    !        xstore,ystore,zstore,rhostore,dvpstore, &
-    !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
-    !        nspec,HETEROGEN_3D_MANTLE, &
-    !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
-
-    ! allocate memory for arrays
-    allocate(locval(npointot), &
-            ifseg(npointot), &
-            xp(npointot), &
-            yp(npointot), &
-            zp(npointot),stat=ier)
-    if(ier /= 0) stop 'error in allocate 20'
-
-    locval = 0
-    ifseg = .false.
-    xp = 0.d0
-    yp = 0.d0
-    zp = 0.d0
-
-    ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
-    ! these arrays and therefore destroy them
-    do ispec=1,nspec
-      ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
-      ilocnum = 0
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            ilocnum = ilocnum + 1
-            xp(ilocnum+ieoff) = xstore(i,j,k,ispec)
-            yp(ilocnum+ieoff) = ystore(i,j,k,ispec)
-            zp(ilocnum+ieoff) = zstore(i,j,k,ispec)
-          enddo
-        enddo
-      enddo
-    enddo
-
-    call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
-
-    deallocate(xp,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(yp,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(zp,stat=ier); if(ier /= 0) stop 'error in deallocate'
-
-    ! check that number of points found equals theoretical value
-    if(nglob /= nglob_theor) then
-      write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,ipass,iregion_code = ',&
-        myrank,nglob,nglob_theor,ipass,iregion_code
-      call exit_MPI(myrank,errmsg)
-    endif
-    if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
-
-    ! creates a new indirect addressing to reduce cache misses in memory access in the solver
-    ! this is *critical* to improve performance in the solver
-    call get_global_indirect_addressing(nspec,nglob,ibool)
-
-    ! checks again
-    if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
-
-    ! create MPI buffers
-    ! arrays locval(npointot) and ifseg(npointot) used to save memory
-    call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
-                    xstore,ystore,zstore,ifseg,npointot, &
-                    NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi)
-
-    call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
-                    xstore,ystore,zstore,ifseg,npointot, &
-                    NSPEC2D_XI_FACE,iregion_code,npoin2D_eta)
-
-    call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
-                    xstore,ystore,zstore,ifseg,npointot, &
-                    NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
-
-    ! Stacey
-    if(NCHUNKS /= 6) &
-         call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
-                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
-
-    ! create AVS or DX mesh data for the slices
-    if(SAVE_MESH_FILES) then
-      call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-
-      call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code)
-
-      call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code)
-
-      call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code)
-
-    endif
-
-    deallocate(locval,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(ifseg,stat=ier); if(ier /= 0) stop 'error in deallocate'
-
-! only create mass matrix and save all the final arrays in the second pass
-  else if(ipass == 2) then
-
-    ! copy the theoretical number of points for the second pass
-    nglob = nglob_theor
-
+  ! checks transverse isotropic elements
+  if( ipass == 2 ) then
     ! count number of anisotropic elements in current region
     ! should be zero in all the regions except in the mantle
-    ! (used only for checks in meshfem3D() routine)
     nspec_tiso = count(ispec_is_tiso(:))
 
-  if(SORT_MESH_INNER_OUTER) then
-
-! detection of the edges, coloring and permutation separately
-  allocate(perm(nspec))
-
-! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
-! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
-  if(USE_MESH_COLORING_GPU) then
-
-    allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
-
-    call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
-      nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,first_elem_number_in_this_color,myrank)
-
-! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
-    first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
-
-    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
-
-! save mesh coloring
-    open(unit=99,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat',status='unknown')
-
-! number of colors for outer elements
-    write(99,*) nb_colors_outer_elements
-
-! number of colors for inner elements
-    write(99,*) nb_colors_inner_elements
-
-! number of elements in each color
-    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
-      num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) - first_elem_number_in_this_color(icolor)
-      write(99,*) num_of_elems_in_this_color(icolor)
-    enddo
-    close(99)
-
-! check that the sum of all the numbers of elements found in each color is equal
-! to the total number of elements in the mesh
-    if(sum(num_of_elems_in_this_color) /= nspec) then
-      print *,'nspec = ',nspec
-      print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
-      stop 'incorrect total number of elements in all the colors of the mesh'
+    ! checks number of anisotropic elements found in the mantle
+    if(iregion_code /= IREGION_CRUST_MANTLE .and. nspec_tiso /= 0 ) &
+      call exit_MPI(myrank,'found anisotropic elements outside of the mantle')
+    if( TRANSVERSE_ISOTROPY ) then
+      if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
+        call exit_MPI(myrank,'found no anisotropic elements in the mantle')
     endif
-
-! check that the sum of all the numbers of elements found in each color for the outer elements is equal
-! to the total number of outer elements found in the mesh
-    if(sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
-      print *,'nspec_outer = ',nspec_outer
-      print *,'total number of elements in all the colors of the mesh for outer elements = ',sum(num_of_elems_in_this_color)
-      stop 'incorrect total number of elements in all the colors of the mesh for outer elements'
-    endif
-
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-    deallocate(first_elem_number_in_this_color)
-    deallocate(num_of_elems_in_this_color)
-
-  else
-
-!! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
-!! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
-
-!! DK DK nov 2010, for Rosa Badia / StarSs:
-!! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
-    ispec_counter = 0
-    perm(:) = 0
-
-! first generate all the outer elements
-    do ispec = 1,nspec
-      if(is_on_a_slice_edge(ispec)) then
-        ispec_counter = ispec_counter + 1
-        perm(ispec) = ispec_counter
-      endif
-    enddo
-
-! make sure we have detected some outer elements
-    if(ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
-
-! store total number of outer elements
-    nspec_outer = ispec_counter
-
-! then generate all the inner elements
-    do ispec = 1,nspec
-      if(.not. is_on_a_slice_edge(ispec)) then
-        ispec_counter = ispec_counter + 1
-        perm(ispec) = ispec_counter
-      endif
-    enddo
-
-! test that all the elements have been used once and only once
-  if(ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
-
-! do basic checks
-  if(minval(perm) /= 1) stop 'minval(perm) should be 1'
-  if(maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
-
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
   endif
 
-!! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-
-  if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
-
-! write a header file for the Fortran version of the solver
-    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h',status='unknown')
-    write(99,*) 'integer, parameter :: NSPEC = ',nspec
-    write(99,*) 'integer, parameter :: NGLOB = ',nglob
-!!! DK DK use 1000 time steps only for the scaling tests
-    write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
-    write(99,*) 'real(kind=4), parameter :: deltat = ',DT
-    write(99,*)
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
-    write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
-    write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
-    write(99,*)
-    write(99,*) '! element number of the source and of the station'
-    write(99,*) '! after permutation of the elements by mesh coloring'
-    write(99,*) '! and inner/outer set splitting in the mesher'
-    write(99,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
-    write(99,*) 'integer, parameter :: RANK_SOURCE = 0'
-    write(99,*)
-    write(99,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
-    write(99,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
-
-! save coordinates of the seismic source
-!   write(99,*) xstore(2,2,2,10);
-!   write(99,*) ystore(2,2,2,10);
-!   write(99,*) zstore(2,2,2,10);
-
-! save coordinates of the seismic station
-!   write(99,*) xstore(2,2,2,nspec-10);
-!   write(99,*) ystore(2,2,2,nspec-10);
-!   write(99,*) zstore(2,2,2,nspec-10);
-    close(99)
-
-!! write a header file for the C version of the solver
-    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h',status='unknown')
-    write(99,*) '#define NSPEC ',nspec
-    write(99,*) '#define NGLOB ',nglob
-!!    write(99,*) '#define NSTEP ',nstep
-!!! DK DK use 1000 time steps only for the scaling tests
-    write(99,*) '// #define NSTEP ',nstep
-    write(99,*) '#define NSTEP 1000'
-! put an "f" at the end to force single precision
-    write(99,"('#define deltat ',e18.10,'f')") DT
-    write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
-    write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
-    write(99,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
-    write(99,*) '#define NPROC_XI ',NPROC_XI
-    write(99,*) '#define NPROC_ETA ',NPROC_ETA
-    write(99,*)
-    write(99,*) '// element and MPI slice number of the source and the station'
-    write(99,*) '// after permutation of the elements by mesh coloring'
-    write(99,*) '// and inner/outer set splitting in the mesher'
-    write(99,*) '#define RANK_SOURCE 0'
-    write(99,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
-    write(99,*)
-    write(99,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
-    write(99,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
-    close(99)
-
-    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h',status='unknown')
-    write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
-    write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
-    write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
-    close(99)
-
-  endif
-
-!! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-
-  deallocate(perm)
-
-  else
-!
-    print *,'SORT_MESH_INNER_OUTER must always been set to .true. even for the regular C version for CPUs'
-    print *,'in order to be able to use non blocking MPI to overlap communications'
-!   print *,'generating identity permutation'
-!   do ispec = 1,nspec
-!     perm(ispec) = ispec
-!   enddo
-    stop 'please set SORT_MESH_INNER_OUTER to .true. and recompile the whole code'
-
-  endif
-
-!!!! David Michea: end of mesh coloring
-
-!****************************************************************************************************
-
-    ! precomputes jacobian for 2d absorbing boundary surfaces
-    call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
-              dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-              jacobian2D_xmin,jacobian2D_xmax, &
-              jacobian2D_ymin,jacobian2D_ymax, &
-              jacobian2D_bottom,jacobian2D_top, &
-              normal_xmin,normal_xmax, &
-              normal_ymin,normal_ymax, &
-              normal_bottom,normal_top, &
-              NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
-              xigll,yigll,zigll)
-
-    ! allocates mass matrices in this slice (will be fully assembled in the solver)
-    !
-    ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
-    ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
-    ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-    !
-    ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
-    ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
-    nglob_xy = 1
-
-    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. (.not. USE_LDDRK)) then
-       select case(iregion_code)
-       case( IREGION_CRUST_MANTLE )
-          nglob_xy = nglob
-       case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
-          nglob_xy = 1
-       endselect
-    else
-       nglob_xy = 1
-    endif
-
-    if(.not. USE_LDDRK)then
-      if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-        select case(iregion_code)
-        case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
-           nglob_xy = nglob
-        case( IREGION_OUTER_CORE )
-           nglob_xy = 1
-        endselect
-      endif
-    endif
-
-    allocate(rmassx(nglob_xy),stat=ier)
-    if(ier /= 0) stop 'error in allocate 21'
-    allocate(rmassy(nglob_xy),stat=ier)
-    if(ier /= 0) stop 'error in allocate 21'
-    allocate(rmassz(nglob),stat=ier)
-    if(ier /= 0) stop 'error in allocate 21'
-
-    allocate(b_rmassx(nglob_xy),stat=ier)
-    if(ier /= 0) stop 'error in allocate b_21'
-    allocate(b_rmassy(nglob_xy),stat=ier)
-    if(ier /= 0) stop 'error in allocate b_21'
-
-    ! allocates ocean load mass matrix as well if oceans
-    if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
-      nglob_oceans = nglob
-    else
-      ! allocate dummy array if no oceans
-      nglob_oceans = 1
-    endif
-    allocate(rmass_ocean_load(nglob_oceans),stat=ier)
-    if(ier /= 0) stop 'error in allocate 22'
-
-    ! creating mass matrices in this slice (will be fully assembled in the solver)
-    call create_mass_matrices(myrank,nspec,idoubling,wxgll,wygll,wzgll,ibool, &
-                          nspec_actually,xixstore,xiystore,xizstore, &
-                          etaxstore,etaystore,etazstore, &
-                          gammaxstore,gammaystore,gammazstore, &
-                          iregion_code,rhostore,kappavstore, &
-                          nglob_xy,nglob,prname, &
-                          rmassx,rmassy,rmassz,DT,ichunk,NCHUNKS,ABSORBING_CONDITIONS, &
-                          nglob_oceans,rmass_ocean_load, &
-                          xstore,ystore,zstore,RHO_OCEANS, &
-                          NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-                          ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                          nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                          normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
-                          rho_vp,rho_vs,nspec_stacey, &
-                          jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                          jacobian2D_bottom,jacobian2D_top,&
-                          EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK, &
-                          b_rmassx,b_rmassy)
-
-    ! save the binary files
-#ifdef USE_SERIAL_CASCADE_FOR_IOs
-    you_can_start_doing_IOs = .false.
-    if (myrank > 0) call MPI_RECV(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank-1, itag, MPI_COMM_WORLD, msg_status,ier)
-!!!!    print *,'starting doing serialized I/Os on rank ',myrank
-    print *,'starting doing serialized I/Os on rank ',myrank
-#endif
-    call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
-                  prname,iregion_code,xixstore,xiystore,xizstore, &
-                  etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                  xstore,ystore,zstore,rhostore,dvpstore, &
-                  kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                  nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                  c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                  c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                  ibool,idoubling,is_on_a_slice_edge,nglob_xy,nglob, &
-                  rmassx,rmassy,rmassz,rmass_ocean_load,nglob_oceans, &
-                  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                  normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
-                  jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                  jacobian2D_bottom,jacobian2D_top,nspec, &
-                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                  TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-                  ANISOTROPIC_INNER_CORE,OCEANS, &
-                  tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
-                  ATT1,ATT2,ATT3,size(tau_e_store,5),&
-                  NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso,myrank,&
-                  ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,USE_LDDRK,&
-                  b_rmassx,b_rmassy)
-#ifdef USE_SERIAL_CASCADE_FOR_IOs
-    you_can_start_doing_IOs = .true.
-    if (myrank < NPROC_XI*NPROC_ETA-1) call MPI_SEND(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank+1, itag, MPI_COMM_WORLD, ier)
-#endif
-
-    deallocate(rmassx,stat=ier); if(ier /= 0) stop 'error in deallocate rmassx'
-    deallocate(rmassy,stat=ier); if(ier /= 0) stop 'error in deallocate rmassy'
-    deallocate(rmassz,stat=ier); if(ier /= 0) stop 'error in deallocate rmassz'
-    deallocate(b_rmassx,stat=ier); if(ier /= 0) stop 'error in deallocate b_rmassx'
-    deallocate(b_rmassy,stat=ier); if(ier /= 0) stop 'error in deallocate b_rmassy'
-    deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate rmass_ocean_load'
-
-    ! boundary mesh
-    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-      ! first check the number of surface elements are the same for Moho, 400, 670
-      if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-        if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
-               call exit_mpi(myrank, 'Not the same number of Moho surface elements')
-      endif
-      if (ispec2D_400_top /= NSPEC2D_400 .or. ispec2D_400_bot /= NSPEC2D_400) &
-               call exit_mpi(myrank,'Not the same number of 400 surface elements')
-      if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
-               call exit_mpi(myrank,'Not the same number of 670 surface elements')
-
-      ! writing surface topology databases
-      open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted')
-      write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
-      write(27) ibelm_moho_top
-      write(27) ibelm_moho_bot
-      write(27) ibelm_400_top
-      write(27) ibelm_400_bot
-      write(27) ibelm_670_top
-      write(27) ibelm_670_bot
-      write(27) normal_moho
-      write(27) normal_400
-      write(27) normal_670
-      close(27)
-    endif
-
-    ! compute volume, bottom and top area of that part of the slice
-    call crm_compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
-
-
-  else
-    stop 'there cannot be more than two passes in mesh creation'
-
-  endif  ! end of test if first or second pass
-
-  deallocate(stretch_tab)
-  deallocate(perm_layer)
-
-  ! deallocate these arrays after each pass because they have a different size in each pass to save memory
-  deallocate(xixstore,xiystore,xizstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
-  deallocate(etaxstore,etaystore,etazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
-  deallocate(gammaxstore,gammaystore,gammazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
-
-  ! deallocate arrays
-  deallocate(rhostore,dvpstore,kappavstore,kappahstore)
-  deallocate(muvstore,muhstore)
-  deallocate(eta_anisostore)
-  deallocate(ispec_is_tiso)
-  deallocate(c11store)
-  deallocate(c12store)
-  deallocate(c13store)
-  deallocate(c14store)
-  deallocate(c15store)
-  deallocate(c16store)
-  deallocate(c22store)
-  deallocate(c23store)
-  deallocate(c24store)
-  deallocate(c25store)
-  deallocate(c26store)
-  deallocate(c33store)
-  deallocate(c34store)
-  deallocate(c35store)
-  deallocate(c36store)
-  deallocate(c44store)
-  deallocate(c45store)
-  deallocate(c46store)
-  deallocate(c55store)
-  deallocate(c56store)
-  deallocate(c66store)
-  deallocate(iboun)
-  deallocate(xigll,yigll,zigll)
-  deallocate(wxgll,wygll,wzgll)
-  deallocate(shape3D,dershape3D)
-  deallocate(shape2D_x,shape2D_y,shape2D_bottom,shape2D_top)
-  deallocate(dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top)
-  deallocate(ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
-  deallocate(ibelm_bottom,ibelm_top)
-  deallocate(jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax)
-  deallocate(jacobian2D_bottom,jacobian2D_top)
-  deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
-  deallocate(normal_bottom,normal_top)
-  deallocate(iMPIcut_xi,iMPIcut_eta)
-  deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
-  deallocate(rho_vp,rho_vs)
-  deallocate(Qmu_store)
-  deallocate(tau_e_store)
-  deallocate(ibelm_moho_top,ibelm_moho_bot)
-  deallocate(ibelm_400_top,ibelm_400_bot)
-  deallocate(ibelm_670_top,ibelm_670_bot)
-  deallocate(normal_moho,normal_400,normal_670)
-  deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
-
-  end subroutine create_regions_mesh
-
-!
-!-------------------------------------------------------------------------------
-!
-
-
-  subroutine crm_initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
-                        shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
-                        dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-                        iaddx,iaddy,iaddz,nspec,xstore,ystore,zstore,ibool,idoubling, &
-                        iboun,iMPIcut_xi,iMPIcut_eta,ispec2D_moho_top,ispec2D_moho_bot, &
-                        ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                        NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
-                        ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
-                        iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
-
-! create the different regions of the mesh
-
-  implicit none
-
-  include "constants.h"
-
-  integer :: myrank,ipass
-
-  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
-  double precision wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
-
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ),dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
-
-  double precision shape2D_x(NGNOD2D,NGLLY,NGLLZ),shape2D_y(NGNOD2D,NGLLX,NGLLZ)
-  double precision shape2D_bottom(NGNOD2D,NGLLX,NGLLY),shape2D_top(NGNOD2D,NGLLX,NGLLY)
-  double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ),dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
-  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY),dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
-
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
-
-  integer nspec
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
-  integer idoubling(nspec)
-
-  logical iboun(6,nspec)
-  logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
-
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
-    ispec2D_670_top,ispec2D_670_bot
-  integer NEX_PER_PROC_ETA,nex_eta_moho
-  double precision RMOHO,R400,R670
-  double precision r_moho,r_400,r_670
-
-  logical ONE_CRUST
-  integer NUMBER_OF_MESH_LAYERS,layer_shift
-
-  ! code for the four regions of the mesh
-  integer iregion_code,ifirst_region,ilast_region
-  integer first_layer_aniso,last_layer_aniso,nb_layer_above_aniso
-
-! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
-! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-
-! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
-  if(mod(NGLLY,2) /= 0) yigll((NGLLY-1)/2+1) = ZERO
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
-
-! get the 3-D shape functions
-  call get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
-
-! get the 2-D shape functions
-  call get_shape2D(myrank,shape2D_x,dershape2D_x,yigll,zigll,NGLLY,NGLLZ)
-  call get_shape2D(myrank,shape2D_y,dershape2D_y,xigll,zigll,NGLLX,NGLLZ)
-  call get_shape2D(myrank,shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
-  call get_shape2D(myrank,shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
-
-! create the shape of the corner nodes of a regular mesh element
-  call hex_nodes(iaddx,iaddy,iaddz)
-
-! reference element has size one here, not two
-  iaddx(:) = iaddx(:) / 2
-  iaddy(:) = iaddy(:) / 2
-  iaddz(:) = iaddz(:) / 2
-
-! sets number of layers
-  if (ONE_CRUST) then
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
-    layer_shift = 0
-  else
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
-    layer_shift = 1
-  endif
-
-  if (.not. ADD_4TH_DOUBLING) NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
-
-! define the first and last layers that define this region
-  if(iregion_code == IREGION_CRUST_MANTLE) then
-    ifirst_region = 1
-    ilast_region = 10 + layer_shift
-
-  else if(iregion_code == IREGION_OUTER_CORE) then
-    ifirst_region = 11 + layer_shift
-    ilast_region = NUMBER_OF_MESH_LAYERS - 1
-
-  else if(iregion_code == IREGION_INNER_CORE) then
-    ifirst_region = NUMBER_OF_MESH_LAYERS
-    ilast_region = NUMBER_OF_MESH_LAYERS
-
-  else
-    call exit_MPI(myrank,'incorrect region code detected')
-  endif
-
-! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
-  if (ONE_CRUST) then
-    first_layer_aniso=2
-    last_layer_aniso=3
-    nb_layer_above_aniso = 1
-  else
-    first_layer_aniso=3
-    last_layer_aniso=4
-    nb_layer_above_aniso = 2
-  endif
-
-! initialize mesh arrays
-  idoubling(:) = 0
-
-  xstore(:,:,:,:) = 0.d0
-  ystore(:,:,:,:) = 0.d0
-  zstore(:,:,:,:) = 0.d0
-
-  if(ipass == 1) ibool(:,:,:,:) = 0
-
-  ! initialize boundary arrays
-  iboun(:,:) = .false.
-  iMPIcut_xi(:,:) = .false.
-  iMPIcut_eta(:,:) = .false.
-  is_on_a_slice_edge(:) = .false.
-
-  ! boundary mesh
-  ispec2D_moho_top = 0; ispec2D_moho_bot = 0
-  ispec2D_400_top = 0; ispec2D_400_bot = 0
-  ispec2D_670_top = 0; ispec2D_670_bot = 0
-
-  nex_eta_moho = NEX_PER_PROC_ETA
-
-  r_moho = RMOHO/R_EARTH; r_400 = R400 / R_EARTH; r_670 = R670/R_EARTH
-
-  end subroutine crm_initialize_layers
-
+  end subroutine crm_create_elements
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine crm_compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+  subroutine crm_setup_indexing(nspec,nglob_theor,npointot)
+
+! creates global indexing array ibool
+
+  use constants,only: NGLLX,NGLLY,NGLLZ,ZERO
+
+  use meshfem3d_par,only: &
+    ibool,xstore,ystore,zstore,  &
+    myrank
+
+  use create_regions_mesh_par2
 
   implicit none
 
-  include "constants.h"
-
-  double precision :: volume_local,area_local_bottom,area_local_top
-
-  integer :: nspec
-  double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-  integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM) :: jacobian2D_bottom
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
+  ! number of spectral elements in each block
+  integer,intent(in) :: nspec,npointot,nglob_theor
 
   ! local parameters
-  double precision :: weight
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  ! variables for creating array ibool
+  double precision, dimension(:), allocatable :: xp,yp,zp
+  integer, dimension(:), allocatable :: locval
+  logical, dimension(:), allocatable :: ifseg
+
+  integer :: nglob
+  integer :: ieoff,ilocnum,ier
   integer :: i,j,k,ispec
+  character(len=150) :: errmsg
 
-  ! initializes
-  volume_local = ZERO
-  area_local_bottom = ZERO
-  area_local_top = ZERO
+  ! allocate memory for arrays
+  allocate(locval(npointot), &
+          ifseg(npointot), &
+          xp(npointot), &
+          yp(npointot), &
+          zp(npointot),stat=ier)
+  if(ier /= 0) stop 'error in allocate 20'
 
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
+  locval(:) = 0
+  ifseg(:) = .false.
+  xp(:) = ZERO
+  yp(:) = ZERO
+  zp(:) = ZERO
 
-          weight = wxgll(i)*wygll(j)*wzgll(k)
-
-          ! compute the jacobian
-          xixl = xixstore(i,j,k,ispec)
-          xiyl = xiystore(i,j,k,ispec)
-          xizl = xizstore(i,j,k,ispec)
-          etaxl = etaxstore(i,j,k,ispec)
-          etayl = etaystore(i,j,k,ispec)
-          etazl = etazstore(i,j,k,ispec)
-          gammaxl = gammaxstore(i,j,k,ispec)
-          gammayl = gammaystore(i,j,k,ispec)
-          gammazl = gammazstore(i,j,k,ispec)
-
-          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                        + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-          volume_local = volume_local + dble(jacobianl)*weight
-
+  ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
+  ! these arrays and therefore destroy them
+  do ispec=1,nspec
+    ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
+    ilocnum = 0
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          ilocnum = ilocnum + 1
+          xp(ilocnum+ieoff) = xstore(i,j,k,ispec)
+          yp(ilocnum+ieoff) = ystore(i,j,k,ispec)
+          zp(ilocnum+ieoff) = zstore(i,j,k,ispec)
         enddo
       enddo
     enddo
   enddo
 
-  do ispec = 1,NSPEC2D_BOTTOM
-    do i=1,NGLLX
-      do j=1,NGLLY
-        weight=wxgll(i)*wygll(j)
-        area_local_bottom = area_local_bottom + dble(jacobian2D_bottom(i,j,ispec))*weight
-      enddo
-    enddo
-  enddo
+  call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
 
-  do ispec = 1,NSPEC2D_TOP
-    do i=1,NGLLX
-      do j=1,NGLLY
-        weight=wxgll(i)*wygll(j)
-        area_local_top = area_local_top + dble(jacobian2D_top(i,j,ispec))*weight
-      enddo
-    enddo
-  enddo
+  deallocate(xp,yp,zp)
+  deallocate(locval,ifseg)
+
+  ! check that number of points found equals theoretical value
+  if(nglob /= nglob_theor) then
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor = ',&
+      myrank,nglob,nglob_theor
+    call exit_MPI(myrank,errmsg)
+  endif
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) &
+    call exit_MPI(myrank,'incorrect global numbering')
+
+  ! creates a new indirect addressing to reduce cache misses in memory access in the solver
+  ! this is *critical* to improve performance in the solver
+  call get_global_indirect_addressing(nspec,nglob_theor,ibool)
+
+  ! checks again
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) &
+    call exit_MPI(myrank,'incorrect global numbering after sorting')
+
+  end subroutine crm_setup_indexing
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine crm_setup_mpi_buffers(npointot,nspec,iregion_code)
+
+! sets up MPI cutplane arrays
+
+  use meshfem3d_par,only: &
+    ibool,idoubling, &
+    xstore,ystore,zstore, &
+    myrank,NGLLX,NGLLY,NGLLZ, &
+    NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+    NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE, &
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+
+  use create_MPI_interfaces_par
+  use create_regions_mesh_par2
+
+  implicit none
+
+  ! number of spectral elements in each block
+  integer,intent(in) :: nspec,npointot
+
+  integer,intent(in) :: iregion_code
+
+  ! local parameters
+  logical, dimension(:), allocatable :: mask_ibool
+  integer :: ier
+
+  ! arrays mask_ibool(npointot) used to save memory
+  ! allocate memory for arrays
+  allocate(mask_ibool(npointot), &
+          stat=ier)
+  if(ier /= 0) stop 'error in allocate 20b'
+
+  ! initializes
+  npoin2D_xi_all(:) = 0
+  npoin2D_eta_all(:) = 0
+  iboolleft_xi(:) = 0
+  iboolleft_eta(:) = 0
+  iboolright_xi(:) = 0
+  iboolright_eta(:) = 0
+
+  ! gets MPI buffer indices
+  call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
+                  xstore,ystore,zstore,mask_ibool,npointot, &
+                  NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi, &
+                  iboolleft_xi,iboolright_xi, &
+                  npoin2D_xi_all,NGLOB2DMAX_XMIN_XMAX(iregion_code))
+
+  call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
+                  xstore,ystore,zstore,mask_ibool,npointot, &
+                  NSPEC2D_XI_FACE,iregion_code,npoin2D_eta, &
+                  iboolleft_eta,iboolright_eta, &
+                  npoin2D_eta_all,NGLOB2DMAX_YMIN_YMAX(iregion_code))
+
+  call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta, &
+                  ibool,idoubling, &
+                  xstore,ystore,zstore,mask_ibool,npointot, &
+                  NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code, &
+                  ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                  ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+                  xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+                  xyz1D_leftxi_righteta,xyz1D_rightxi_righteta, &
+                  NGLOB1D_RADIAL_MAX)
+
+  deallocate(mask_ibool)
+
+  end subroutine crm_setup_mpi_buffers
 
 
-  end subroutine crm_compute_volumes
+!
+!-------------------------------------------------------------------------------
+!
+
+subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
+
+  use meshfem3d_par,only: &
+    ibool,idoubling, &
+    xstore,ystore,zstore, &
+    myrank,NGLLX,NGLLY,NGLLZ, &
+    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+    RMIDDLE_CRUST,ROCEAN, &
+    ADIOS_ENABLED,ADIOS_FOR_AVS_DX
+
+
+  use meshfem3D_models_par,only: &
+    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+    nspl,rspl,espl,espl2
+
+  use create_regions_mesh_par2
+
+  ! Modules for temporary AVS/DX data
+!  use AVS_DX_global_mod
+
+  implicit none
+
+  ! number of spectral elements in each block
+  integer,intent(in) :: nspec,npointot,iregion_code
+
+  ! local parameters
+  ! arrays used for AVS or DX files
+  integer, dimension(:), allocatable :: num_ibool_AVS_DX
+  logical, dimension(:), allocatable :: mask_ibool
+  integer :: ier
+
+  ! structures used for ADIOS AVS/DX files
+!  type(avs_dx_global_t) :: avs_dx_global_vars
+!  character(len=150) :: reg_name, outputname, group_name
+!  integer :: comm, sizeprocs
+!  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
+
+  ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
+  ! allocate memory for arrays
+  allocate(num_ibool_AVS_DX(npointot), &
+          mask_ibool(npointot), &
+          stat=ier)
+  if(ier /= 0) stop 'error in allocate 21'
+
+  if( ADIOS_ENABLED .and. ADIOS_FOR_AVS_DX ) then
+    call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
+        num_ibool_AVS_DX, mask_ibool)
+  else
+    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
+        xstore,ystore,zstore, num_ibool_AVS_DX,mask_ibool,npointot)
+
+    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi, &
+        iMPIcut_eta,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX, &
+        mask_ibool,npointot, rhostore,kappavstore,muvstore,nspl,rspl, &
+        espl,espl2, ELLIPTICITY,ISOTROPIC_3D_MANTLE, RICB,RCMB, &
+        RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+        RMIDDLE_CRUST,ROCEAN,iregion_code)
+
+  call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
+          idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+          npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+          ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+          RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+          RMIDDLE_CRUST,ROCEAN,iregion_code)
+
+  call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
+          idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
+          rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+          ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+          RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+          RMIDDLE_CRUST,ROCEAN,iregion_code)
+  endif
+
+  ! Output material information for all GLL points
+  ! Can be use to check the mesh
+  !    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore,&
+  !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
+  deallocate(num_ibool_AVS_DX,mask_ibool)
+
+end subroutine crm_save_mesh_files
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine crm_free_MPI_arrays(iregion_code)
+
+  use create_MPI_interfaces_par
+
+  use MPI_crust_mantle_par
+  use MPI_outer_core_par
+  use MPI_inner_core_par
+
+  implicit none
+
+  integer,intent(in):: iregion_code
+
+  ! free memory
+  select case( iregion_code )
+  case( IREGION_CRUST_MANTLE )
+    ! crust mantle
+    deallocate(phase_ispec_inner_crust_mantle)
+    deallocate(num_elem_colors_crust_mantle)
+  case( IREGION_OUTER_CORE )
+    ! outer core
+    deallocate(phase_ispec_inner_outer_core)
+    deallocate(num_elem_colors_outer_core)
+  case( IREGION_INNER_CORE )
+    ! inner core
+    deallocate(phase_ispec_inner_inner_core)
+    deallocate(num_elem_colors_inner_core)
+  end select
+
+  end subroutine crm_free_MPI_arrays
 

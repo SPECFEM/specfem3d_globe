@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,10 +25,11 @@
 !
 !=====================================================================
 
-subroutine read_kl_regular_grid(myrank, GRID)
+  subroutine read_kl_regular_grid(myrank, GRID)
+
+  use constants
 
   implicit none
-  include 'constants.h'
 
   type kl_reg_grid_variables
     sequence
@@ -81,15 +82,16 @@ subroutine read_kl_regular_grid(myrank, GRID)
     call exit_MPI(myrank, 'No Model points read in')
   endif
 
-end subroutine read_kl_regular_grid
+  end subroutine read_kl_regular_grid
 
 !==============================================================
 
-subroutine find_regular_grid_slice_number(slice_number, GRID, &
+  subroutine find_regular_grid_slice_number(slice_number, GRID, &
                                           NCHUNKS, NPROC_XI, NPROC_ETA)
 
+  use constants
+
   implicit none
-  include 'constants.h'
 
   integer, intent(out) :: slice_number(*)
 
@@ -148,20 +150,19 @@ subroutine find_regular_grid_slice_number(slice_number, GRID, &
     slice_number(isp) = nproc * nproc * (chunk_isp-1) + nproc * iproc_eta + iproc_xi
   enddo
 
-end subroutine find_regular_grid_slice_number
+  end subroutine find_regular_grid_slice_number
 
 !==============================================================
 
 ! how about using single precision for the iterations?
-subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
-                             NEX_XI,nspec,xstore,ystore,zstore,ibool, &
-                             xigll,yigll,zigll,ispec_reg, &
-                             hxir_reg,hetar_reg,hgammar_reg)
+  subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
+                                   NEX_XI,nspec,xstore,ystore,zstore,ibool, &
+                                   xigll,yigll,zigll,ispec_reg, &
+                                   hxir_reg,hetar_reg,hgammar_reg)
+
+  use constants_solver
 
   implicit none
-
-  include 'constants.h'
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! declarations of regular grid model
   integer, intent(in) :: npoints_slice
@@ -356,14 +357,15 @@ subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
 ! DEBUG
 !  print *, 'Maximum distance discrepancy ', maxval(dist_final(1:npoints_slice))
 
-end subroutine locate_regular_points
+  end subroutine locate_regular_points
 
 !==============================================================
 
-subroutine hex_nodes2(iaddx,iaddy,iaddz)
+  subroutine hex_nodes2(iaddx,iaddy,iaddz)
+
+  use constants
 
   implicit none
-  include 'constants.h'
 
   integer, dimension(NGNOD), intent(out) :: iaddx,iaddy,iaddz
   integer :: ia
@@ -406,11 +408,11 @@ subroutine hex_nodes2(iaddx,iaddy,iaddz)
 
   enddo
 
-end subroutine hex_nodes2
+  end subroutine hex_nodes2
 
 !==============================================================
 
-subroutine lagrange_any2(xi,NGLL,xigll,h)
+  subroutine lagrange_any2(xi,NGLL,xigll,h)
 
 ! subroutine to compute the Lagrange interpolants based upon the GLL points
 ! and their first derivatives at any point xi in [-1,1]
@@ -439,18 +441,19 @@ subroutine lagrange_any2(xi,NGLL,xigll,h)
      h(dgr) = prod1 / prod2
   enddo
 
-end subroutine lagrange_any2
+  end subroutine lagrange_any2
 
 !==============================================================
 
-subroutine chunk_map(k,xx,yy,zz,xi,eta)
+  subroutine chunk_map(k,xx,yy,zz,xi,eta)
 
   ! this program get the xi,eta for (xx,yy,zz)
   ! point under the k'th chunk coordinate
   ! transformation
 
+  use constants
+
   implicit none
-  include 'constants.h'
 
   integer, intent(in) :: k
   real, intent(in) :: xx, yy, zz
@@ -489,5 +492,5 @@ subroutine chunk_map(k,xx,yy,zz,xi,eta)
      stop 'chunk number k < 6'
   endif
 
-end subroutine chunk_map
+  end subroutine chunk_map
 

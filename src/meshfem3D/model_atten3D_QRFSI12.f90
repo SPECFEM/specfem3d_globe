@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -47,41 +47,62 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_atten3D_QRFSI12_broadcast(myrank,QRFSI12_Q)
+  module model_atten3D_QRFSI12_par
+
+  ! QRFSI12 constants
+  integer,parameter :: NKQ=8,MAXL_Q=12
+  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
+
+  ! model_atten3D_QRFSI12_variables
+  double precision,dimension(:,:),allocatable :: QRFSI12_Q_dqmu
+  double precision,dimension(:),allocatable :: QRFSI12_Q_spknt
+  double precision,dimension(:),allocatable :: QRFSI12_Q_refdepth,QRFSI12_Q_refqmu
+
+  end module model_atten3D_QRFSI12_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_atten3D_QRFSI12_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_atten3D_QRFSI12_par
 
   implicit none
-
-  include "constants.h"
-
-  ! model_atten3D_QRFSI12_variables
-  type model_atten3D_QRFSI12_variables
-    sequence
-    double precision dqmu(NKQ,NSQ)
-    double precision spknt(NKQ)
-    double precision refdepth(NDEPTHS_REFQ)
-    double precision refqmu(NDEPTHS_REFQ)
-  end type model_atten3D_QRFSI12_variables
-
-  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
-  ! model_atten3D_QRFSI12_variables
 
   integer :: myrank
 
   ! local parameters
   integer :: ier
 
-  if(myrank == 0) call read_atten_model_3D_QRFSI12(QRFSI12_Q)
+  ! allocates model arrays
+  allocate(QRFSI12_Q_dqmu(NKQ,NSQ), &
+          QRFSI12_Q_spknt(NKQ), &
+          QRFSI12_Q_refdepth(NDEPTHS_REFQ), &
+          QRFSI12_Q_refqmu(NDEPTHS_REFQ), &
+          stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating QRFSI12_Q model arrays')
 
-  call MPI_BCAST(QRFSI12_Q%dqmu,          NKQ*NSQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(QRFSI12_Q%spknt,             NKQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(QRFSI12_Q%refdepth, NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(QRFSI12_Q%refqmu,   NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  ! master process reads in file values
+  if(myrank == 0) call read_atten_model_3D_QRFSI12()
 
-  if(myrank == 0) write(IMAIN,*) 'read 3D attenuation model'
+  ! broadcasts to all processes
+  call bcast_all_dp(QRFSI12_Q_dqmu,          NKQ*NSQ)
+  call bcast_all_dp(QRFSI12_Q_spknt,             NKQ)
+  call bcast_all_dp(QRFSI12_Q_refdepth, NDEPTHS_REFQ)
+  call bcast_all_dp(QRFSI12_Q_refqmu,   NDEPTHS_REFQ)
+
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'read 3D attenuation model'
+    write(IMAIN,*) '  model: QRFSI12'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine
 
@@ -89,23 +110,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_atten_model_3D_QRFSI12(QRFSI12_Q)
+  subroutine read_atten_model_3D_QRFSI12()
+
+  use constants
+  use model_atten3D_QRFSI12_par
 
   implicit none
-
-  include "constants.h"
-
-! three_d_model_atten3D_QRFSI12_variables
-  type model_atten3D_QRFSI12_variables
-    sequence
-    double precision dqmu(NKQ,NSQ)
-    double precision spknt(NKQ)
-    double precision refdepth(NDEPTHS_REFQ)
-    double precision refqmu(NDEPTHS_REFQ)
-  end type model_atten3D_QRFSI12_variables
-
-  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
-! three_d_model_atten3D_QRFSI12_variables
 
   ! local parameters
   integer :: j,k,l,m,ier
@@ -134,13 +144,13 @@
         if(m==0)then
           j=j+1
           read(10,*)ll,mm,v1
-          QRFSI12_Q%dqmu(k,j)=v1
+          QRFSI12_Q_dqmu(k,j)=v1
         else
           j=j+2
           read(10,*)ll,mm,v1,v2
   !        write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
-          QRFSI12_Q%dqmu(k,j-1)=2.*v1
-          QRFSI12_Q%dqmu(k,j)=-2.*v2
+          QRFSI12_Q_dqmu(k,j-1)=2.*v1
+          QRFSI12_Q_dqmu(k,j)=-2.*v2
         endif
       enddo
     enddo
@@ -148,14 +158,14 @@
   close(10)
 
 ! get the depths (km) of the spline knots
-  QRFSI12_Q%spknt(1) = 24.4d0
-  QRFSI12_Q%spknt(2) = 75.d0
-  QRFSI12_Q%spknt(3) = 150.d0
-  QRFSI12_Q%spknt(4) = 225.d0
-  QRFSI12_Q%spknt(5) = 300.d0
-  QRFSI12_Q%spknt(6) = 410.d0
-  QRFSI12_Q%spknt(7) = 530.d0
-  QRFSI12_Q%spknt(8) = 650.d0
+  QRFSI12_Q_spknt(1) = 24.4d0
+  QRFSI12_Q_spknt(2) = 75.d0
+  QRFSI12_Q_spknt(3) = 150.d0
+  QRFSI12_Q_spknt(4) = 225.d0
+  QRFSI12_Q_spknt(5) = 300.d0
+  QRFSI12_Q_spknt(6) = 410.d0
+  QRFSI12_Q_spknt(7) = 530.d0
+  QRFSI12_Q_spknt(8) = 650.d0
 
 ! get the depths and 1/Q values of the reference model
   open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
@@ -165,7 +175,7 @@
   endif
 
   do j=1,NDEPTHS_REFQ
-    read(11,*)QRFSI12_Q%refdepth(j),QRFSI12_Q%refqmu(j)
+    read(11,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
   enddo
   close(11)
 
@@ -176,23 +186,12 @@
 !----------------------------------
 !
 
-  subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,QRFSI12_Q,idoubling)
+  subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,idoubling)
+
+  use constants
+  use model_atten3D_QRFSI12_par
 
   implicit none
-
-  include "constants.h"
-
-! model_atten3D_QRFSI12_variables
-  type model_atten3D_QRFSI12_variables
-    sequence
-    double precision dqmu(NKQ,NSQ)
-    double precision spknt(NKQ)
-    double precision refdepth(NDEPTHS_REFQ)
-    double precision refqmu(NDEPTHS_REFQ)
-  end type model_atten3D_QRFSI12_variables
-
-  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
-! model_atten3D_QRFSI12_variables
 
   double precision :: radius,theta,phi,Qmu
   integer :: idoubling
@@ -235,14 +234,26 @@
     Qmu = 84.6d0
 
   else if(idoubling == IFLAG_OUTER_CORE_NORMAL) then
-  !   print *,'QRFSI12: we are in the outer core'
-     Qmu = 0.0d0
-  else ! we are in the mantle
+
+    ! we are in the outer core
+
+    !debug
+    !   print *,'QRFSI12: we are in the outer core'
+
+    Qmu = 0.0d0
+
+  else
+
+    ! we are in the mantle
+
     depth = 6371.-radius
-!   print *,'QRFSI12: we are in the mantle at depth',depth
+
+    !debug
+    !   print *,'QRFSI12: we are in the mantle at depth',depth
+
     ifnd=0
     do i=2,NDEPTHS_REFQ
-      if(depth >= QRFSI12_Q%refdepth(i-1) .and. depth < QRFSI12_Q%refdepth(i))then
+      if(depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i))then
         ifnd=i
       endif
     enddo
@@ -250,7 +261,7 @@
       write(6,"('problem finding reference Q value at depth: ',f8.3)") depth
       stop
     endif
-    smallq_ref=QRFSI12_Q%refqmu(ifnd)
+    smallq_ref=QRFSI12_Q_refqmu(ifnd)
     smallq = smallq_ref
 
     if(depth < 650.d0) then !Colleen's model is only defined between depths of 24.4 and 650km
@@ -258,12 +269,12 @@
         shdep(j)=0.
       enddo
       do n=1,NKQ
-        splpts(n)=QRFSI12_Q%spknt(n)
+        splpts(n)=QRFSI12_Q_spknt(n)
       enddo
       call vbspl(depth,NKQ,splpts,splcon,splcond)
       do n=1,NKQ
         do j=1,NSQ
-          shdep(j)=shdep(j)+(splcon(n)*QRFSI12_Q%dqmu(n,j))
+          shdep(j)=shdep(j)+(splcon(n)*QRFSI12_Q_dqmu(n,j))
         enddo
       enddo
       call ylm(ylat,xlon,MAXL_Q,xlmvec,wk1,wk2,wk3)

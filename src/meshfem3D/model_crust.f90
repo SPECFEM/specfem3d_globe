@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,44 +35,56 @@
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_crust_broadcast(myrank,CM_V)
+  module model_crust_par
+
+  ! crustal_model_constants
+  ! crustal model parameters for crust2.0
+  integer, parameter :: NKEYS_CRUST = 359
+  integer, parameter :: NLAYERS_CRUST = 8
+  integer, parameter :: NCAP_CRUST = 180
+
+  ! model_crust_variables
+  double precision, dimension(:,:),allocatable :: thlr,velocp,velocs,dens
+  character(len=2) :: abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+  character(len=2) :: code(NKEYS_CRUST)
+
+  end module model_crust_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_crust_broadcast(myrank)
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
+  use model_crust_par
 
   implicit none
-
-  include "constants.h"
-
-  ! model_crust_variables
-  type model_crust_variables
-    sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
-    character(len=2) dummy_pad ! padding 2 bytes to align the structure
-  end type model_crust_variables
-
-  type (model_crust_variables) CM_V
-  ! model_crust_variables
 
   integer :: myrank
   integer :: ier
 
-  ! the variables read are declared and stored in structure CM_V
-  if(myrank == 0) call read_crust_model(CM_V)
+  ! allocate crustal arrays
+  allocate( thlr(NKEYS_CRUST,NLAYERS_CRUST), &
+           velocp(NKEYS_CRUST,NLAYERS_CRUST), &
+           velocs(NKEYS_CRUST,NLAYERS_CRUST), &
+           dens(NKEYS_CRUST,NLAYERS_CRUST), &
+           stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustal arrays')
+
+  ! the variables read are declared and stored in structure model_crust_par
+  if(myrank == 0) call read_crust_model()
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(CM_V%thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(CM_V%velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(CM_V%velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(CM_V%dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(CM_V%abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(CM_V%code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call bcast_all_dp(thlr,NKEYS_CRUST*NLAYERS_CRUST)
+  call bcast_all_dp(velocp,NKEYS_CRUST*NLAYERS_CRUST)
+  call bcast_all_dp(velocs,NKEYS_CRUST*NLAYERS_CRUST)
+  call bcast_all_dp(dens,NKEYS_CRUST*NLAYERS_CRUST)
+
+  call bcast_all_ch_array2(abbreviation,NCAP_CRUST/2,NCAP_CRUST,2)
+  call bcast_all_ch_array(code,NKEYS_CRUST,2)
 
   end subroutine model_crust_broadcast
 
@@ -80,25 +92,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V,elem_in_crust)
+  subroutine model_crust(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
+
+  use constants
+  use model_crust_par
 
   implicit none
-  include "constants.h"
-
-! model_crust_variables
-  type model_crust_variables
-    sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
-    character(len=2) dummy_pad ! padding 2 bytes to align the structure
-  end type model_crust_variables
-
-  type (model_crust_variables) CM_V
-! model_crust_variables
 
   double precision :: lat,lon,x,vp,vs,rho,moho
   logical :: found_crust,elem_in_crust
@@ -114,18 +113,19 @@
   rho = ZERO
 
   ! gets smoothed crust2.0 structure
-  call crust_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,CM_V%abbreviation, &
-                        CM_V%code,CM_V%thlr,CM_V%velocp,CM_V%velocs,CM_V%dens)
+  call crust_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,abbreviation, &
+                        code,thlr,velocp,velocs,dens)
 
-  x3 = (R_EARTH-thicks(3)*1000.0d0)/R_EARTH
+  scaleval = ONE / R_EARTH_KM
+
+  ! non-dimensializes thickness (given in km)
+  x3 = ONE - thicks(3) * scaleval
   h_sed = thicks(3) + thicks(4)
-  x4 = (R_EARTH-h_sed*1000.0d0)/R_EARTH
+  x4 = ONE - h_sed * scaleval
   h_uc = h_sed + thicks(5)
-  x5 = (R_EARTH-h_uc*1000.0d0)/R_EARTH
-  x6 = (R_EARTH-(h_uc+thicks(6))*1000.0d0)/R_EARTH
-  x7 = (R_EARTH-(h_uc+thicks(6)+thicks(7))*1000.0d0)/R_EARTH
-
-  found_crust = .true.
+  x5 = ONE - h_uc * scaleval
+  x6 = ONE - (h_uc+thicks(6)) * scaleval
+  x7 = ONE - (h_uc+thicks(6)+thicks(7)) * scaleval
 
   ! checks moho value
   !moho = h_uc + thicks(6) + thicks(7)
@@ -134,6 +134,11 @@
   ! print*,'  lat/lon/x:',lat,lon,x
   !endif
 
+  ! No matter found_crust true or false, output moho thickness
+  moho = (h_uc+thicks(6)+thicks(7)) * scaleval
+
+  ! gets corresponding crustal velocities and density
+  found_crust = .true.
 !  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
 !   .and. h_sed >= MINIMUM_SEDIMENT_THICKNESS) then
   if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
@@ -177,33 +182,16 @@
     rho = rho * 1000.0d0 / RHOAV
  endif
 
- ! No matter found_crust true or false, output moho thickness
- moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH
-
  end subroutine model_crust
 
 !---------------------------
 
-  subroutine read_crust_model(CM_V)
+  subroutine read_crust_model()
+
+  use constants
+  use model_crust_par
 
   implicit none
-
-  include "constants.h"
-
-! model_crust_variables
-  type model_crust_variables
-    sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
-    character(len=2) dummy_pad ! padding 2 bytes to align the structure
-  end type model_crust_variables
-
-  type (model_crust_variables) CM_V
-! model_crust_variables
 
   ! local variables
   integer :: i,ila,icolat,ikey,ier
@@ -213,19 +201,20 @@
   character(len=150) :: CNtype2, CNtype2_key_modif
 
   call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
-  call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
-
   open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(CNtype2), '": ', ier
+    call flush_IMAIN()
+    ! stop
     call exit_MPI(0, 'error model crust2.0')
   endif
 
   do ila=1,NCAP_CRUST/2
-    read(1,*) icolat,(CM_V%abbreviation(ila,i),i=1,NCAP_CRUST)
+    read(1,*) icolat,(abbreviation(ila,i),i=1,NCAP_CRUST)
   enddo
   close(1)
 
+  call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
   open(unit=1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(CNtype2_key_modif), '": ', ier
@@ -236,13 +225,13 @@
   h_moho_max = -HUGEVAL
 
   do ikey=1,NKEYS_CRUST
-    read (1,"(a2)") CM_V%code(ikey)
-    read (1,*) (CM_V%velocp(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (CM_V%velocs(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (CM_V%dens(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (CM_V%thlr(ikey,i),i=1,NLAYERS_CRUST-1),CM_V%thlr(ikey,NLAYERS_CRUST)
-    if(CM_V%thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max = CM_V%thlr(ikey,NLAYERS_CRUST)
-    if(CM_V%thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min = CM_V%thlr(ikey,NLAYERS_CRUST)
+    read (1,"(a2)") code(ikey)
+    read (1,*) (velocp(ikey,i),i=1,NLAYERS_CRUST)
+    read (1,*) (velocs(ikey,i),i=1,NLAYERS_CRUST)
+    read (1,*) (dens(ikey,i),i=1,NLAYERS_CRUST)
+    read (1,*) (thlr(ikey,i),i=1,NLAYERS_CRUST-1),thlr(ikey,NLAYERS_CRUST)
+    if(thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max = thlr(ikey,NLAYERS_CRUST)
+    if(thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min = thlr(ikey,NLAYERS_CRUST)
   enddo
   close(1)
 
@@ -262,9 +251,10 @@
 ! in the theta direction and NPHI in the phi direction.
 ! The cap is rotated to the North Pole.
 
-  implicit none
+  use constants
+  use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST,NCAP_CRUST
 
-  include "constants.h"
+  implicit none
 
   ! sampling rate for CAP points
   integer, parameter :: NTHETA = 4
@@ -397,8 +387,9 @@
   subroutine get_crust_structure(type,vptyp,vstyp,rhtyp,thtp, &
                code,thlr,velocp,velocs,dens,ierr)
 
+  use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST
+
   implicit none
-  include "constants.h"
 
   ! argument variables
   integer ierr
@@ -442,8 +433,9 @@
 !
 ! returns: xlon,xlat,weight
 
+  use constants
+
   implicit none
-  include "constants.h"
 
   ! sampling rate
   integer :: NTHETA

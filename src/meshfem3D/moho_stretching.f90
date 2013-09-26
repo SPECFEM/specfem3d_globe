@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,22 +25,25 @@
 !
 !=====================================================================
 
-  subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER, &
-                                        R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+  subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+                                        elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
+! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
+
+  use constants,only: &
+    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_VERSION_5_1_5
+
+  use meshfem3D_par,only: &
+    RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   use meshfem3D_models_par,only: &
     TOPOGRAPHY
 
   implicit none
 
-  include "constants.h"
-
-  double precision R220,RMIDDLE_CRUST
-  double precision RMOHO_FICTITIOUS_IN_MESHER
   integer :: myrank
   double precision,dimension(NGNOD) :: xelm,yelm,zelm
   logical :: elem_in_crust,elem_in_mantle
@@ -52,6 +55,10 @@
   double precision :: R_moho,R_middlecrust
   integer :: ia,count_crust,count_mantle
   logical :: found_crust
+
+  ! minimum/maximum allowed moho depths (5km/90km non-dimensionalized)
+  double precision,parameter :: MOHO_MINIMUM = 5.0 / R_EARTH_KM
+  double precision,parameter :: MOHO_MAXIMUM = 90.0 / R_EARTH_KM
 
   ! radii for stretching criteria
   R_moho = RMOHO_FICTITIOUS_IN_MESHER/R_EARTH
@@ -83,9 +90,27 @@
     ! gets smoothed moho depth
     call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    ! checks moho depth
-    if( abs(moho) < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
+    ! checks non-dimensionalized moho depth
+    !
+    ! note: flag found_crust returns .false. for points below moho,
+    !          nevertheless its moho depth should be set and will be used in linear stretching
+    if( moho < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
 
+    if( USE_VERSION_5_1_5 ) then
+      ! continue
+    else
+      ! limits moho depth to a threshold value to avoid stretching problems
+      if( moho < MOHO_MINIMUM ) then
+        print*,'moho value exceeds minimum: ',moho,MOHO_MINIMUM,'in km: ',moho*R_EARTH_KM
+        moho = MOHO_MINIMUM
+      endif
+      if( moho > MOHO_MAXIMUM ) then
+        print*,'moho value exceeds maximum: ',moho,MOHO_MAXIMUM,'in km: ',moho*R_EARTH_KM
+        moho = MOHO_MAXIMUM
+      endif
+    endif
+
+    ! radius of moho depth (normalized)
     moho = ONE - moho
 
     ! checks if moho will be honored by elements
@@ -191,25 +216,27 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER, &
-                                            R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+  subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+                                            elem_in_crust,elem_in_mantle)
 
 ! regional routine: for REGIONAL_MOHO_MESH adaptations
 !
 ! uses a 3-layer crust region
 !
 ! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
+! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
+
+  use constants,only: &
+    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO
+
+  use meshfem3D_par,only: &
+    R220
 
   implicit none
 
-  include "constants.h"
-
   integer :: myrank
-
-  double precision R220,RMIDDLE_CRUST
-  double precision RMOHO_FICTITIOUS_IN_MESHER
 
   double precision,dimension(NGNOD) :: xelm,yelm,zelm
 
@@ -258,11 +285,9 @@
     !         - below 60 km (in HONOR_DEEP_MOHO case)
     !         otherwise, the moho will be "interpolated" within the element
     if( HONOR_DEEP_MOHO) then
-      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
     else
-      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
     endif
 
     ! counts corners in above moho
@@ -299,14 +324,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+  subroutine stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
-  implicit none
+  use constants
+  use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
-  include "constants.h"
+  implicit none
 
   integer ia
 
@@ -316,9 +341,7 @@
 
   double precision :: x,y,z
 
-  double precision :: r,moho,R220
-  double precision :: RMIDDLE_CRUST
-  double precision :: RMOHO_FICTITIOUS_IN_MESHER
+  double precision :: r,moho
 
   ! local parameters
   double precision :: elevation,gamma
@@ -450,15 +473,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+  subroutine stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
 
 ! honors shallow and middle depth moho, deep moho will be interpolated within elements
 ! mesh will get stretched down to r220
 
-  implicit none
+  use constants
+  use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
-  include "constants.h"
+  implicit none
 
   integer ia
 
@@ -466,10 +489,8 @@
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
 
-  double precision :: r,moho,R220
+  double precision :: r,moho
   double precision :: x,y,z
-  double precision :: RMIDDLE_CRUST
-  double precision :: RMOHO_FICTITIOUS_IN_MESHER
 
   ! local parameters
   double precision :: elevation,gamma
@@ -579,9 +600,10 @@
   subroutine move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
 ! moves a point to a new location defined by gamma,elevation and r
-  implicit none
 
-  include "constants.h"
+  use constants
+
+  implicit none
 
   integer ia
 

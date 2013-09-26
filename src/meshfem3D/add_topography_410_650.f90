@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,23 +25,18 @@
 !
 !=====================================================================
 
-  subroutine add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
-    numker,numhpa,numcof,ihpa,lmax,nylm, &
-    lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-    nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-    coe,ylmcof,wk1,wk2,wk3,varstr)
+  subroutine add_topography_410_650(myrank,xelm,yelm,zelm)
+
+  use constants
+  use meshfem3D_par,only: R220,R400,R670,R771
 
   implicit none
-
-  include "constants.h"
 
   integer myrank
 
   double precision xelm(NGNOD)
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
-
-  double precision R220,R400,R670,R771
 
   integer ia
 
@@ -52,54 +47,38 @@
   double precision r,theta,phi
   double precision gamma
 
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=40) varstr(maxker)
+!! DK DK added this safety test for now
+  stop 'there is a currently a bug in this routine, it makes the mesher crash'
 
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
 ! convert to r theta phi
+!! DK DK old
+!   call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+!   call reduce(theta,phi)
+!! DK DK new
+    ! gets elevation of point
+    ! convert to r theta phi
+    ! slightly move points to avoid roundoff problem when exactly on the polar axis
     call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+    theta = theta + 0.0000001d0
+    phi = phi + 0.0000001d0
     call reduce(theta,phi)
 
-! get colatitude and longitude in degrees
-    xcolat = sngl(theta*RADIANS_TO_DEGREES)
-    xlon = sngl(phi*RADIANS_TO_DEGREES)
+!! DK DK old
+! get colatitude in degrees
+!   xcolat = sngl(theta*RADIANS_TO_DEGREES)  !! DK DK bug here, confusion between theta and PI_OVER_TWO - theta
+
+!! DK DK new
+    ! convert the geocentric colatitude to a geographic colatitude in degrees
+    xcolat = sngl((PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))) * RADIANS_TO_DEGREES)
+
+    ! get geographic longitude in degrees
+    xlon = sngl(phi * RADIANS_TO_DEGREES)
 
 ! compute topography on 410 and 650 at current point
-    call subtopo(xcolat,xlon,topo410out,topo650out, &
-                 numker,numhpa,numcof,ihpa,lmax,nylm, &
-                 lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                 nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                 coe,ylmcof,wk1,wk2,wk3,varstr)
+    call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
 ! non-dimensionalize the topography, which is in km
 ! positive for a depression, so change the sign for a perturbation in radius
@@ -139,21 +118,16 @@
   !> Hejun
   ! use GLL points to capture 410_650 topography
   ! JAN08, 2010
-  subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec,R220,R400,R670,R771, &
-        numker,numhpa,numcof,ihpa,lmax,nylm, &
-        lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-        nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-        coe,ylmcof,wk1,wk2,wk3,varstr)
+  subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
+
+  use constants
+  use meshfem3D_par,only: R220,R400,R670,R771
 
   implicit none
-
-  include "constants.h"
 
   integer myrank
   integer:: ispec,nspec
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
-
-  double precision R220,R400,R670,R771
 
   integer i,j,k
 
@@ -164,56 +138,35 @@
   double precision r,theta,phi
   double precision gamma
 
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=40) varstr(maxker)
+!! DK DK added this safety test for now
+  stop 'there is a currently a bug in this routine, it makes the mesher crash'
 
   ! we loop on all GLL points of the element
   do k = 1,NGLLZ
      do j = 1,NGLLY
         do i = 1,NGLLX
 
+        ! gets elevation of point
         ! convert to r theta phi
+        ! slightly move points to avoid roundoff problem when exactly on the polar axis
         call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
+        theta = theta + 0.0000001d0
+        phi = phi + 0.0000001d0
         call reduce(theta,phi)
 
-        ! get colatitude and longitude in degrees
-        xcolat = sngl(theta*RADIANS_TO_DEGREES)
-        xlon = sngl(phi*RADIANS_TO_DEGREES)
+!! DK DK old
+! get colatitude in degrees
+!       xcolat = sngl(theta*RADIANS_TO_DEGREES)  !! DK DK bug here, confusion between theta and PI_OVER_TWO - theta
+
+!! DK DK new
+        ! convert the geocentric colatitude to a geographic colatitude in degrees
+        xcolat = sngl((PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))) * RADIANS_TO_DEGREES)
+
+        ! get geographic longitude in degrees
+        xlon = sngl(phi * RADIANS_TO_DEGREES)
 
         ! compute topography on 410 and 650 at current point
-        call subtopo(xcolat,xlon,topo410out,topo650out, &
-                 numker,numhpa,numcof,ihpa,lmax,nylm, &
-                 lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-                 nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-                 coe,ylmcof,wk1,wk2,wk3,varstr)
+        call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
         ! non-dimensionalize the topography, which is in km
         ! positive for a depression, so change the sign for a perturbation in radius

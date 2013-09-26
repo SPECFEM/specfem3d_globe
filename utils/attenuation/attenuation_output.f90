@@ -12,9 +12,10 @@
 !    However, the values here should match those which are output from attenuation_prem.c
 !    This code was used for testing the implementation of 3D attenuation
 !    Brian Savage, 22/03/04
+
+    use constants_solver
+
     implicit none
-    include "OUTPUT_FILES/values_from_mesher.h"
-    include "constants.h"
 
     integer i,j,k,ispec
     integer myrank, vnspec, process, iregion

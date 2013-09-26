@@ -1,13 +1,13 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 #          --------------------------------------------------
 #
 #          Main authors: Dimitri Komatitsch and Jeroen Tromp
 #                        Princeton University, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            April 2011
+#                            August 2013
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,17 +33,131 @@ FC = @FC@
 FCFLAGS = #@FCFLAGS@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
+
 FLAGS_CHECK = @FLAGS_CHECK@
+#FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
+
 FCFLAGS_f90 = @FCFLAGS_f90@ -I@top_builddir@ -I${SETUP}
+
 FC_MODEXT = @FC_MODEXT@
 FC_MODDIR = @FC_MODDIR@
  
 FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
+#FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
+
 MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
+#MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK)
 
 CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = -I${SETUP} @CPPFLAGS@
+
+FCLINK = $(MPIFCCOMPILE_CHECK)
+
+
+#######################################
+####
+#### CUDA
+#### with configure: ./configure --with-cuda CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
+####
+#######################################
+
+@COND_CUDA_TRUE@CUDA = yes
+@COND_CUDA_FALSE@CUDA = no
+
+@COND_CUDA5_TRUE@CUDA5 = yes
+@COND_CUDA5_FALSE@CUDA5 = no
+
+# default cuda libraries
+# runtime library -lcudart needed, others are optional -lcuda -lcublas
+@COND_CUDA_TRUE@CUDA_LIBS = -lcudart
+@COND_CUDA_FALSE@CUDA_LIBS = 
+
+CUDA_LIB_LOCATION = @CUDA_LIB@
+CUDA_LINK = $(CUDA_LIB_LOCATION) $(CUDA_LIBS)
+CUDA_INC = @CUDA_INC@ -I${SETUP}
+MPI_INC = @MPI_INC@
+
+@COND_CUDA_TRUE@NVCC = nvcc
+@COND_CUDA_FALSE@NVCC = @CC@
+
+# GPU architecture
+
+# CUDA architecture / code version
+# Fermi: -gencode=arch=compute_10,code=sm_10 not supported
+# Tesla (default): -gencode=arch=compute_20,code=sm_20
+# Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
+# Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
+GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+
+# CUDA version 5.x
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@GENCODE = $(GENCODE_35)
+# CUDA version 4.x
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@GENCODE = $(GENCODE_20)
+
+# CUDA flags and linking
+@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_INC) $(MPI_INC)
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -dc $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK_BASE = $(NVCC) $(CUDA_INC) $(MPI_INC)
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK = $(NVCCLINK_BASE) -dlink $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCCLINK = $(NVCCLINK_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+
+@COND_CUDA_FALSE@NVCC_FLAGS = $(MPI_INC)
+@COND_CUDA_FALSE@NVCCLINK = $(NVCC) $(NVCC_FLAGS)
+
+#######################################
+####
+#### VTK
+#### with configure: ./configure --with-vtk ..
+####
+#######################################
+
+@COND_VTK_TRUE@VTK = yes
+@COND_VTK_FALSE@VTK = no
+
+@COND_VTK_TRUE@CPPFLAGS += -DWITH_VTK
+@COND_VTK_TRUE@FCCOMPILE_CHECK += -DWITH_VTK
+#@COND_VTK_TRUE@FCCOMPILE_NO_CHECK += -DWITH_VTK
+@COND_VTK_TRUE@MPIFCCOMPILE_CHECK += -DWITH_VTK
+#@COND_VTK_TRUE@MPIFCCOMPILE_NO_CHECK += -DWITH_VTK
+
+#######################################
+####
+#### ADIOS
+#### with configure: ./configure --with-adios ..
+####
+#######################################
+
+@COND_ADIOS_TRUE@ADIOS = yes
+@COND_ADIOS_FALSE@ADIOS = no
+
+
+#######################################
+####
+#### FORCE_VECTORIZATION
+#### with configure: ./configure --with-vec ..
+####
+#######################################
+@COND_VECTORIZATION_TRUE@FORCE_VECTORIZATION = yes
+@COND_VECTORIZATION_FALSE@FORCE_VECTORIZATION = no
+
+@COND_VECTORIZATION_TRUE@CPPFLAGS += -DFORCE_VECTORIZATION
+@COND_VECTORIZATION_TRUE@FCCOMPILE_CHECK += -DFORCE_VECTORIZATION
+#@COND_VECTORIZATION_TRUE@FCCOMPILE_NO_CHECK += -DFORCE_VECTORIZATION
+@COND_VECTORIZATION_TRUE@MPIFCCOMPILE_CHECK += -DFORCE_VECTORIZATION
+#@COND_VECTORIZATION_TRUE@MPIFCCOMPILE_NO_CHECK += -DFORCE_VECTORIZATION
+
+
+
+#######################################
+####
+#### directories
+####
+#######################################
 
 ## compilation directories
 # B : build directory
@@ -59,15 +173,19 @@ SETUP = $B/setup
 # output file directory
 OUTPUT = $B/OUTPUT_FILES
 
+
+#######################################
 ####
 #### targets
 ####
+#######################################
 
 # code subdirectories
 SUBDIRS = \
 	shared \
 	create_header_file \
 	compute_optimized_dumping_undo_att \
+	cuda \
 	meshfem3D \
 	specfem3D \
 	auxiliaries
@@ -83,6 +201,7 @@ DEFAULT = \
 	xcheck_buffers_corners_chunks \
 	xcheck_buffers_faces_chunks \
 	xcombine_vol_data \
+	xcombine_vol_data_vtk \
 	xcombine_surf_data \
 	xcombine_AVS_DX \
 	xconvolve_source_timefunction \
@@ -110,10 +229,14 @@ change_date_of_calling_code:
 
 ifdef CLEAN
 clean:
+	@echo "cleaning by CLEAN defined"
 	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
+	(rm -rf bin obj )
 else
 clean:
+	@echo "cleaning by CLEAN not defined"
 	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
+	(rm -rf bin obj )
 endif
 
 help:
@@ -129,6 +252,7 @@ help:
 	@echo "    xcheck_buffers_corners_chunks"
 	@echo "    xcheck_buffers_faces_chunks"
 	@echo "    xcombine_vol_data"
+	@echo "    xcombine_vol_data_vtk"
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
@@ -138,8 +262,14 @@ help:
 
 .PHONY: all default backup clean help
 
+#######################################
+
+
 # Get dependencies and rules for building stuff
 include $(patsubst %, ${S_TOP}/src/%/rules.mk, $(SUBDIRS))
+
+
+#######################################
 
 ##
 ## Shortcuts

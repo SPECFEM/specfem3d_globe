@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,11 +25,15 @@
 !
 !=====================================================================
 
-  subroutine add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+  subroutine add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
+
+  use constants,only: &
+    NGNOD,NX_BATHY,NY_BATHY,R_EARTH,R_UNIT_SPHERE, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE
+
+  use meshfem3D_par,only: R220
 
   implicit none
-
-  include "constants.h"
 
   integer :: myrank
 
@@ -43,8 +47,6 @@
   double precision :: r,theta,phi,colat
   double precision :: gamma
   integer :: ia
-
-  double precision R220
 
   ! we loop on all the points of the element
   do ia = 1,NGNOD
@@ -95,11 +97,12 @@
   ! Hejun Zhu, OCT16, 2009
 
   subroutine add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec, &
-                                ibathy_topo,R220)
+                                ibathy_topo)
+
+  use constants
+  use meshfem3D_par,only: R220
 
   implicit none
-
-  include "constants.h"
 
   ! input parameters
   integer:: myrank
@@ -108,7 +111,6 @@
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
 
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-  double precision:: R220
 
   ! local parameters used in this subroutine
   integer:: i,j,k
@@ -127,7 +129,6 @@
            phi = phi + 0.0000001d0
            call reduce(theta,phi)
 
-
            ! convert the geocentric colatitude to a geographic colatitude
            colat = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
 
@@ -143,14 +144,12 @@
 
            ! stretching topography between d220 and the surface
            gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
-           !
 
            ! add elevation to all the points of that element
            ! also make sure factor makes sense
            if(gamma < -0.02 .or. gamma > 1.02) then
                 call exit_MPI(myrank,'incorrect value of factor for topography gll points')
            endif
-           !
 
            ! since not all GLL points are exactlly at R220, use a small
            ! tolerance for R220 detection

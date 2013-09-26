@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -64,11 +64,9 @@
 
 ! standard routine to setup model
 
-  use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -97,18 +95,17 @@
   integer :: myrank
   integer :: ier
 
+  allocate(AM_V%Qtau_s(N_SLS),stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating Qtau_s array')
+
   ! master process determines period ranges
   if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
-  if(myrank /= 0) allocate(AM_V%Qtau_s(N_SLS))
-
   ! broadcasts to all others
-  call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call bcast_all_dp(AM_V%min_period,  1)
+  call bcast_all_dp(AM_V%max_period,  1)
+  call bcast_all_dp(AM_V%QT_c_source, 1)
+  call bcast_all_dp(AM_V%Qtau_s,   N_SLS)
 
   end subroutine model_attenuation_broadcast
 
@@ -118,9 +115,9 @@
 
   subroutine read_attenuation_model(min_att_period, max_att_period, AM_V)
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -150,8 +147,6 @@
   AM_V%min_period = min_att_period * 1.0d0
   AM_V%max_period = max_att_period * 1.0d0
 
-  allocate(AM_V%Qtau_s(N_SLS))
-
   call attenuation_tau_sigma(AM_V%Qtau_s, N_SLS, AM_V%min_period, AM_V%max_period)
   call attenuation_source_frequency(AM_V%QT_c_source, AM_V%min_period, AM_V%max_period)
 
@@ -168,14 +163,24 @@
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
-  subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670, &
-                    R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
+  subroutine model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
+                                    R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
-  use mpi
+  use constants
+
+  use model_1dref_par, only: &
+    NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
+
+  use model_ak135_par, only: &
+    NR_AK135F_NO_MUD,Mak135_V_radius_ak135,Mak135_V_Qmu_ak135
+
+  use model_1066a_par, only: &
+    NR_1066A,M1066a_V_radius_1066a,M1066a_V_Qmu_1066a
+
+  use model_sea1d_par, only: &
+    NR_SEA1D,SEA1DM_V_radius_sea1d,SEA1DM_V_Qmu_sea1d
 
   implicit none
-
-  include 'constants.h'
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -199,65 +204,6 @@
 
   type (model_attenuation_variables) AM_V
 ! model_attenuation_variables
-
-! model_1066a_variables
-  type model_1066a_variables
-    sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
-
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
-
-! model_ak135_variables
-  type model_ak135_variables
-    sequence
-    double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
-    double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
-    double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
-    double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
-    double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
-    double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
-  end type model_ak135_variables
-
- type (model_ak135_variables) Mak135_V
-! model_ak135_variables
-
-! model_1dref_variables
-  type model_1dref_variables
-    sequence
-    double precision, dimension(NR_REF) :: radius_ref
-    double precision, dimension(NR_REF) :: density_ref
-    double precision, dimension(NR_REF) :: vpv_ref
-    double precision, dimension(NR_REF) :: vph_ref
-    double precision, dimension(NR_REF) :: vsv_ref
-    double precision, dimension(NR_REF) :: vsh_ref
-    double precision, dimension(NR_REF) :: eta_ref
-    double precision, dimension(NR_REF) :: Qkappa_ref
-    double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_1dref_variables
-
- type (model_1dref_variables) Mref_V
-! model_1dref_variables
-
-! model_sea1d_variables
-  type model_sea1d_variables
-    sequence
-     double precision, dimension(NR_SEA1D) :: radius_sea1d
-     double precision, dimension(NR_SEA1D) :: density_sea1d
-     double precision, dimension(NR_SEA1D) :: vp_sea1d
-     double precision, dimension(NR_SEA1D) :: vs_sea1d
-     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
-     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type model_sea1d_variables
-
-  type (model_sea1d_variables) SEA1DM_V
-! model_sea1d_variables
 
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
@@ -290,6 +236,7 @@
 
   integer :: myrank,REFERENCE_1D_MODEL
   double precision :: RICB, RCMB, R670, R220, R80
+  logical :: CRUSTAL
 
   ! local parameters
   double precision :: tau_e(N_SLS)
@@ -301,9 +248,6 @@
   Qb = 57287.0d0
   R120 = 6251.d3 ! as defined by IASP91
 
-  call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-  if(myrank > 0) return
-
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
@@ -311,18 +255,22 @@
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
     AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
-    call define_model_ak135(.FALSE.,Mak135_V)
+    ! redefines "pure" 1D model without crustal modification
+    call define_model_ak135(.FALSE.)
     AM_V%Qn = NR_AK135F_NO_MUD
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-    call define_model_1066a(.FALSE.,M1066a_V)
+    ! redefines "pure" 1D model without crustal modification
+    call define_model_1066a(.FALSE.)
     AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-    call define_model_1dref(.FALSE.,Mref_V)
+    ! redefines "pure" 1D model without crustal modification
+    call define_model_1dref(.FALSE.)
     AM_V%Qn = NR_REF
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
     AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-    call define_model_sea1d(.FALSE.,SEA1DM_V)
+    ! redefines "pure" 1D model without crustal modification
+    call define_model_sea1d(.FALSE.)
     AM_V%Qn = NR_SEA1D
   else
     call exit_MPI(myrank, 'Reference 1D Model Not recognized')
@@ -343,26 +291,43 @@
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
-     AM_V%Qr(:)     = Mak135_V%radius_ak135(:)
-     AM_V%Qmu(:)    = Mak135_V%Qmu_ak135(:)
+     AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
+     AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-     AM_V%Qr(:)     = M1066a_V%radius_1066a(:)
-     AM_V%Qmu(:)    = M1066a_V%Qmu_1066a(:)
+     AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
+     AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-     AM_V%Qr(:)     = Mref_V%radius_ref(:)
-     AM_V%Qmu(:)    = Mref_V%Qmu_ref(:)
+     AM_V%Qr(:)     = Mref_V_radius_ref(:)
+     AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-     AM_V%Qr(:)     = SEA1DM_V%radius_sea1d(:)
-     AM_V%Qmu(:)    = SEA1DM_V%Qmu_sea1d(:)
+     AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
+     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
   endif
 
   do i = 1, AM_V%Qn
     call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
     AM_V%Qtau_e(:,i) = tau_e(:)
   enddo
+
+  ! re-defines 1D models with crustal modification if necessary
+  if( CRUSTAL ) then
+    if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+      ! redefines 1D model with crustal modification
+      call define_model_ak135(CRUSTAL)
+    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+      ! redefines 1D model with crustal modification
+      call define_model_1066a(CRUSTAL)
+    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+      ! redefines 1D model with crustal modification
+      call define_model_1dref(CRUSTAL)
+    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+      ! redefines 1D model with crustal modification
+      call define_model_sea1d(CRUSTAL)
+    endif
+  endif
 
   end subroutine model_attenuation_setup
 
@@ -374,9 +339,9 @@
 
 ! includes min_period, max_period, and N_SLS
 
-  implicit none
+  use constants
 
-  include 'constants.h'
+  implicit none
 
 ! model_attenuation_variables
   type model_attenuation_variables
@@ -455,11 +420,9 @@
 
   subroutine model_attenuation_storage(Qmu, tau_e, rw, AM_S)
 
-  use mpi
+  use constants
 
   implicit none
-
-  include 'constants.h'
 
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
@@ -473,7 +436,6 @@
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
 
-  integer :: ier
   double precision :: Qmu
   double precision, dimension(N_SLS) :: tau_e
   integer :: rw
@@ -495,11 +457,13 @@
   endif
 
   if(Qmu < 0.0d0 .OR. Qmu > AM_S%Q_max) then
-     write(IMAIN,*) 'Error attenuation_storage()'
-     write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
-     write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-     call exit_MPI(myrank, 'Attenuation Value out of Range')
+    write(IMAIN,*) 'Error attenuation_storage()'
+    write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
+    write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
+    call flush_IMAIN()
+    ! stop
+    call world_rank(myrank)
+    call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
   if(rw > 0 .AND. Qmu == 0.0d0) then
@@ -571,9 +535,9 @@
   subroutine attenuation_tau_sigma(tau_s, n, min_period, max_period)
   ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   integer n
   double precision tau_s(n)
@@ -602,11 +566,9 @@
 
   subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e, AS_V)
 
-  use mpi
+  use constants
 
   implicit none
-
-  include "constants.h"
 
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
@@ -626,7 +588,7 @@
 ! attenuation_simplex_variables
 
   ! Input / Output
-  integer myrank, ier
+  integer myrank
   double precision  t1, t2
   double precision  Q_real
   double precision  omega_not
@@ -656,8 +618,8 @@
   exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
+    call world_rank(myrank)
+    call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
   ! Determine the Source frequency
@@ -693,7 +655,7 @@
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
      write(*,*)'    Aborting program'
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+     call world_rank(myrank)
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
   deallocate(f)
@@ -806,9 +768,9 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
   subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
 
-  implicit none
+  use constants
 
-  include "constants.h"
+  implicit none
 
   ! Input
   integer nf, nsls

@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,17 +25,18 @@
 !
 !=====================================================================
 
-  subroutine get_absorb(myrank,prname,iboun,nspec, &
+  subroutine get_absorb(myrank,prname,iregion,iboun,nspec, &
                         nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
 ! Stacey, define flags for absorbing boundaries
 
+  use constants
+  use meshfem3D_par, only: ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER
+
   implicit none
 
-  include "constants.h"
-
-  integer :: nspec,myrank
+  integer :: nspec,myrank,iregion
 
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
@@ -52,6 +53,7 @@
   ! counters to keep track of the number of elements on each of the
   ! five absorbing boundaries
   integer :: ispecb1,ispecb2,ispecb3,ispecb4,ispecb5
+  integer :: ier
 
   ! processor identification
   character(len=150) :: prname
@@ -133,14 +135,23 @@
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
 
   ! save these temporary arrays for the solver for Stacey conditions
-      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted',action='write')
-      write(27) nimin
-      write(27) nimax
-      write(27) njmin
-      write(27) njmax
-      write(27) nkmin_xi
-      write(27) nkmin_eta
-      close(27)
+  ! This files will be saved with the help of ADIOS if the
+  ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
+        nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+  else
+    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file')
+    write(27) nimin
+    write(27) nimax
+    write(27) njmin
+    write(27) njmax
+    write(27) nkmin_xi
+    write(27) nkmin_eta
+    close(27)
+  endif
 
   end subroutine get_absorb
 

@@ -8,7 +8,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D Globe], [5.1.5], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -17,6 +17,9 @@ AC_CANONICAL_HOST
 
 # 'configure' options
 
+###
+### precision
+###
 AC_ARG_ENABLE([double-precision],
     [AS_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
@@ -32,6 +35,47 @@ fi
 AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
+###
+### CUDA
+###
+AC_ARG_WITH([cuda],
+    [AC_HELP_STRING([--with-cuda],
+        [build cuda GPU enabled version @<:@default=no@:>@])],
+    [want_cuda="$withval"],
+    [want_cuda=no])
+AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
+AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
+
+###
+### VTK
+###
+AC_ARG_WITH([vtk],
+    [AC_HELP_STRING([--with-vtk],
+        [build VTK enabled version @<:@default=no@:>@])],
+    [want_vtk="$withval"],
+    [want_vtk=no])
+AM_CONDITIONAL([COND_VTK], [test "$want_vtk" != no])
+
+###
+### ADIOS
+###
+AC_ARG_WITH([adios],
+    [AC_HELP_STRING([--with-adios],
+        [build ADIOS enabled version @<:@default=no@:>@])],
+    [want_adios="$withval"],
+    [want_adios=no])
+AM_CONDITIONAL([COND_ADIOS], [test "$want_adios" != no])
+
+
+###
+### FORCE_VECTORIZATION
+###
+AC_ARG_WITH([vec],
+    [AC_HELP_STRING([--with-vec],
+        [build FORCE_VECTORIZATION enabled version @<:@default=no@:>@])],
+    [want_vec="$withval"],
+    [want_vec=no])
+AM_CONDITIONAL([COND_VECTORIZATION], [test "$want_vec" != no])
 
 # Checks for programs.
 
@@ -73,7 +117,17 @@ AC_LANG_POP(C)
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
-AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags])
+AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
+AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
+
+AC_ARG_VAR(CUDA_LIB,[Location of CUDA library libcudart])
+AC_ARG_VAR(CUDA_INC,[Location of CUDA include files])
+AC_ARG_VAR(MPI_INC,[Location of MPI include mpi.h, which is needed by nvcc when compiling cuda files])
+
+AC_ARG_VAR(AR, [ar library creation])
+AC_ARG_VAR(ARFLAGS, [ar flag library creation])
+AC_ARG_VAR(RANLIB, [ranlib library creation])
+
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
@@ -92,6 +146,10 @@ fi
 
 CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
 
+if test "$want_adios" != no; then
+    CIT_ADIOS_HEADER
+    CIT_ADIOS_LIB
+fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 
@@ -142,6 +200,14 @@ AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
 AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
 
 AC_OUTPUT
+
+#daniel: adding custom lines to config.h.in through autoheader
+AH_BOTTOM([
+/* Uncomment and define to select optimized file i/o for regional simulations */
+/* map fails when output files are > 4GB, which is often the case for GPU simulations */
+// #define USE_MAP_FUNCTION
+])
+
 
 dnl FYI, this is not a "result", but AS_ECHO is not available in 2.61, and it
 dnl basically works like a portable echo.

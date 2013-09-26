@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and CNRS / INRIA / University of Pau, France
 ! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            April 2011
+!                            August 2013
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,87 +25,82 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ_inner_core,accel_inner_core,xstore,ystore,zstore, &
-          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-            is_on_a_slice_edge_inner_core,icall, &
-            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
-            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector,iphase, &
-            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
-            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgll_cube, &
-          kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,one_minus_sum_beta,deltat, &
-          alphaval,betaval,gammaval,factor_common, &
-          vnspec,&
-          istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,USE_LDDRK,&
-          epsilondev,eps_trace_over_3,wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D,COMPUTE_AND_STORE_STRAIN)
+  subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
+                                            deltat, &
+                                            displ_inner_core, &
+!                                           veloc_inner_core, &
+                                            accel_inner_core, &
+                                            phase_is_inner, &
+                                            R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                            R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                            epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                            epsilondev_xz,epsilondev_yz, &
+                                            epsilon_trace_over_3,&
+                                            alphaval,betaval,gammaval,factor_common, &
+                                            vnspec) !!!!!!!!!!!!!!!!! ,is_backward_field)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
+  use constants_solver
+
+  use specfem_par,only: &
+    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+    minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    COMPUTE_AND_STORE_STRAIN,USE_LDDRK
+
+  use specfem_par_innercore,only: &
+    xstore => xstore_inner_core,ystore => ystore_inner_core,zstore => zstore_inner_core, &
+    xix => xix_inner_core,xiy => xiy_inner_core,xiz => xiz_inner_core, &
+    etax => etax_inner_core,etay => etay_inner_core,etaz => etaz_inner_core, &
+    gammax => gammax_inner_core,gammay => gammay_inner_core,gammaz => gammaz_inner_core, &
+    kappavstore => kappavstore_inner_core, &
+    muvstore => muvstore_inner_core, &
+    c11store => c11store_inner_core,c12store => c12store_inner_core,c13store => c13store_inner_core, &
+    c33store => c33store_inner_core,c44store => c44store_inner_core, &
+    ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
+    one_minus_sum_beta => one_minus_sum_beta_inner_core, &
+    phase_ispec_inner => phase_ispec_inner_inner_core, &
+    nspec_outer => nspec_outer_inner_core, &
+    nspec_inner => nspec_inner_inner_core
+
+#ifdef FORCE_VECTORIZATION
+  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+#endif
+
   implicit none
 
-  include "constants.h"
+  integer :: NSPEC,NGLOB,NSPEC_ATT
 
+  ! time step
   real(kind=CUSTOM_REAL) deltat
 
-! include values created by the mesher
-! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
-
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
-
-  ! arrays with mesh parameters per slice
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: xix,xiy,xiz, &
-                      etax,etay,etaz,gammax,gammay,gammaz
-
-  logical :: COMPUTE_AND_STORE_STRAIN
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core
+! real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_inner_core
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common and one_minus_sum_beta
-  integer vnspec
+  integer :: vnspec
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
-
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: eps_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
 
-  ! array with derivatives of Lagrange polynomials and precalculated products
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore,muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
-    c11store,c33store,c12store,c13store,c44store
+  ! inner/outer element run flag
+  logical :: phase_is_inner
 
-  ! array with the local to global mapping per slice
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling
-
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+!!!!!!!!!!!!!!!  logical :: is_backward_field
 
   ! local parameters
 
@@ -129,6 +124,7 @@
   equivalence(newtempy1,E2_m1_m2_5points)
   equivalence(newtempz1,E3_m1_m2_5points)
 
+
   real(kind=CUSTOM_REAL), dimension(m2,NGLLX) :: &
     A1_mxm_m2_m1_5points,A2_mxm_m2_m1_5points,A3_mxm_m2_m1_5points
   real(kind=CUSTOM_REAL), dimension(m2,m1) :: &
@@ -146,6 +142,7 @@
   equivalence(newtempy3,E2_mxm_m2_m1_5points)
   equivalence(newtempz3,E3_mxm_m2_m1_5points)
 
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -157,7 +154,7 @@
 
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3
+  real(kind=CUSTOM_REAL) fac1,fac2,fac3,templ
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) kappal
 
@@ -175,140 +172,44 @@
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
   integer :: int_radius
-  integer :: ispec
+  integer :: ispec,ispec_strain
   integer :: i,j,k
   integer :: iglob
-
-! this for non blocking MPI
-  integer :: iphase,icall
-
-  integer :: computed_elements
-
-  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
-
-  integer :: ichunk,iproc_xi,iproc_eta,myrank
-
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-
-  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
-  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
-
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-       npoin2D_xi_inner_core,npoin2D_eta_inner_core
-
-! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
-
-! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
-  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
-
-  integer, dimension(NGLOB2DMAX_XY_CM_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
-  integer, dimension(NGLOB2DMAX_XY_IC_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
-
-  integer :: npoin2D_max_all_CM_IC
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC) :: buffer_send_faces,buffer_received_faces
-
-! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
-     buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
-
-! for matching with central cube in inner core
-  integer nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
-  integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
-  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices
-  double precision, dimension(npoin2D_cube_from_slices,NDIM,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
-  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
-  integer receiver_cube_from_slices
-  logical :: INCLUDE_CENTRAL_CUBE
-
-! local to global mapping
-  integer NSPEC2D_BOTTOM_INNER_CORE
-  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
-
-  real(kind=CUSTOM_REAL) templ
-
-  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-
-! for LDDRK
-  integer :: istage
-  logical :: USE_LDDRK
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_memory_lddrk
-  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+!  integer :: computed_elements
+  integer :: num_elements,ispec_p
+  integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
-#else
-  integer :: i_SLS
 #endif
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
-  computed_elements = 0
+!  computed_elements = 0
 
-  do ispec = 1,NSPEC_INNER_CORE
+  if( .not. phase_is_inner ) then
+    iphase = 1
+    num_elements = nspec_outer
+  else
+    iphase = 2
+    num_elements = nspec_inner
+  endif
 
-! hide communications by computing the edges first
-    if((icall == 2 .and. is_on_a_slice_edge_inner_core(ispec)) .or. &
-       (icall == 1 .and. .not. is_on_a_slice_edge_inner_core(ispec))) cycle
+  do ispec_p = 1,num_elements
+
+    ispec = phase_ispec_inner(ispec_p,iphase)
+
+    ! only compute element which belong to current phase (inner or outer elements)
 
     ! exclude fictitious elements in central cube
     if(idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
 
-! process the non-blocking communications every ELEMENTS_NONBLOCKING elements
-      computed_elements = computed_elements + 1
-      if (icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
+      ! subroutines adapted from Deville, Fischer and Mund, High-order methods
+      ! for incompressible fluid flow, Cambridge University Press (2002),
+      ! pages 386 and 389 and Figure 8.3.1
 
-        if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
-            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
-            NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
-
-        if(INCLUDE_CENTRAL_CUBE) then
-          if(iphase > 7 .and. iphase_CC <= 4) &
-            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-                   npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
-                   receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
-                   ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,accel_inner_core,NDIM,iphase_CC)
-        endif
-
-      endif
-
-#ifdef FORCE_VECTORIZATION
-        do ijk=1,NGLLCUBE
-            iglob = ibool(ijk,1,1,ispec)
-            dummyx_loc(ijk,1,1) = displ_inner_core(1,iglob)
-            dummyy_loc(ijk,1,1) = displ_inner_core(2,iglob)
-            dummyz_loc(ijk,1,1) = displ_inner_core(3,iglob)
-          enddo
-#else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -319,11 +220,7 @@
           enddo
         enddo
       enddo
-#endif
 
-      ! subroutines adapted from Deville, Fischer and Mund, High-order methods
-      ! for incompressible fluid flow, Cambridge University Press (2002),
-      ! pages 386 and 389 and Figure 8.3.1
       do j=1,m2
          do i=1,m1
             C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -393,260 +290,6 @@
          enddo
       enddo
 
-#ifdef FORCE_VECTORIZATION
-          do ijk=1,NGLLCUBE
-
-            ! get derivatives of ux, uy and uz with respect to x, y and z
-            xixl = xix(ijk,1,1,ispec)
-            xiyl = xiy(ijk,1,1,ispec)
-            xizl = xiz(ijk,1,1,ispec)
-            etaxl = etax(ijk,1,1,ispec)
-            etayl = etay(ijk,1,1,ispec)
-            etazl = etaz(ijk,1,1,ispec)
-            gammaxl = gammax(ijk,1,1,ispec)
-            gammayl = gammay(ijk,1,1,ispec)
-            gammazl = gammaz(ijk,1,1,ispec)
-
-            ! compute the jacobian
-            jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                          + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-            duxdxl = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
-            duxdyl = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
-            duxdzl = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
-
-            duydxl = xixl*tempy1(ijk,1,1) + etaxl*tempy2(ijk,1,1) + gammaxl*tempy3(ijk,1,1)
-            duydyl = xiyl*tempy1(ijk,1,1) + etayl*tempy2(ijk,1,1) + gammayl*tempy3(ijk,1,1)
-            duydzl = xizl*tempy1(ijk,1,1) + etazl*tempy2(ijk,1,1) + gammazl*tempy3(ijk,1,1)
-
-            duzdxl = xixl*tempz1(ijk,1,1) + etaxl*tempz2(ijk,1,1) + gammaxl*tempz3(ijk,1,1)
-            duzdyl = xiyl*tempz1(ijk,1,1) + etayl*tempz2(ijk,1,1) + gammayl*tempz3(ijk,1,1)
-            duzdzl = xizl*tempz1(ijk,1,1) + etazl*tempz2(ijk,1,1) + gammazl*tempz3(ijk,1,1)
-
-            ! precompute some sums to save CPU time
-            duxdxl_plus_duydyl = duxdxl + duydyl
-            duxdxl_plus_duzdzl = duxdxl + duzdzl
-            duydyl_plus_duzdzl = duydyl + duzdzl
-            duxdyl_plus_duydxl = duxdyl + duydxl
-            duzdxl_plus_duxdzl = duzdxl + duxdzl
-            duzdyl_plus_duydzl = duzdyl + duydzl
-
-            if (COMPUTE_AND_STORE_STRAIN) then
-              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              epsilondev_loc(1,ijk,1,1) = duxdxl - templ
-              epsilondev_loc(2,ijk,1,1) = duydyl - templ
-              epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-              epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-              epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-              eps_trace_over_3(ijk,1,1,ispec) = templ
-            endif
-
-            if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-              minus_sum_beta =  one_minus_sum_beta(ijk,1,1,ispec) - 1.0_CUSTOM_REAL
-            else if(ATTENUATION_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
-            endif
-
-            if(ANISOTROPIC_INNER_CORE_VAL) then
-              ! elastic tensor for hexagonal symmetry in reduced notation:
-              !
-              !      c11 c12 c13  0   0        0
-              !      c12 c11 c13  0   0        0
-              !      c13 c13 c33  0   0        0
-              !       0   0   0  c44  0        0
-              !       0   0   0   0  c44       0
-              !       0   0   0   0   0  (c11-c12)/2
-              !
-              !       in terms of the A, C, L, N and F of Love (1927):
-              !
-              !       c11 = A
-              !       c12 = A-2N
-              !       c13 = F
-              !       c33 = C
-              !       c44 = L
-              c11l = c11store(ijk,1,1,ispec)
-              c12l = c12store(ijk,1,1,ispec)
-              c13l = c13store(ijk,1,1,ispec)
-              c33l = c33store(ijk,1,1,ispec)
-              c44l = c44store(ijk,1,1,ispec)
-
-              ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL) then
-                mul = muvstore(ijk,1,1,ispec)
-                c11l = c11l + FOUR_THIRDS * minus_sum_beta * mul
-                c12l = c12l - TWO_THIRDS * minus_sum_beta * mul
-                c13l = c13l - TWO_THIRDS * minus_sum_beta * mul
-                c33l = c33l + FOUR_THIRDS * minus_sum_beta * mul
-                c44l = c44l + minus_sum_beta * mul
-              endif
-
-              sigma_xx = c11l*duxdxl + c12l*duydyl + c13l*duzdzl
-              sigma_yy = c12l*duxdxl + c11l*duydyl + c13l*duzdzl
-              sigma_zz = c13l*duxdxl + c13l*duydyl + c33l*duzdzl
-              sigma_xy = 0.5_CUSTOM_REAL*(c11l-c12l)*duxdyl_plus_duydxl
-              sigma_xz = c44l*duzdxl_plus_duxdzl
-              sigma_yz = c44l*duzdyl_plus_duydzl
-            else
-
-              ! inner core with no anisotropy, use kappav and muv for instance
-              ! layer with no anisotropy, use kappav and muv for instance
-              kappal = kappavstore(ijk,1,1,ispec)
-              mul = muvstore(ijk,1,1,ispec)
-
-              ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-                mul = mul * one_minus_sum_beta(ijk,1,1,ispec)
-              else if(ATTENUATION_VAL) then
-                mul = mul * one_minus_sum_beta(1,1,1,ispec)
-              endif
-
-              lambdalplus2mul = kappal + FOUR_THIRDS * mul
-              lambdal = lambdalplus2mul - 2._CUSTOM_REAL*mul
-
-              ! compute stress sigma
-              sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
-              sigma_yy = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
-              sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
-
-              sigma_xy = mul*duxdyl_plus_duydxl
-              sigma_xz = mul*duzdxl_plus_duxdzl
-              sigma_yz = mul*duzdyl_plus_duydzl
-
-            endif
-
-            ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
-! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop in order to vectorize the outer loop
-              R_xx_val = R_memory(1,1,ijk,1,1,ispec)
-              R_yy_val = R_memory(2,1,ijk,1,1,ispec)
-              sigma_xx = sigma_xx - R_xx_val
-              sigma_yy = sigma_yy - R_yy_val
-              sigma_zz = sigma_zz + R_xx_val + R_yy_val
-              sigma_xy = sigma_xy - R_memory(3,1,ijk,1,1,ispec)
-              sigma_xz = sigma_xz - R_memory(4,1,ijk,1,1,ispec)
-              sigma_yz = sigma_yz - R_memory(5,1,ijk,1,1,ispec)
-
-              R_xx_val = R_memory(1,2,ijk,1,1,ispec)
-              R_yy_val = R_memory(2,2,ijk,1,1,ispec)
-              sigma_xx = sigma_xx - R_xx_val
-              sigma_yy = sigma_yy - R_yy_val
-              sigma_zz = sigma_zz + R_xx_val + R_yy_val
-              sigma_xy = sigma_xy - R_memory(3,2,ijk,1,1,ispec)
-              sigma_xz = sigma_xz - R_memory(4,2,ijk,1,1,ispec)
-              sigma_yz = sigma_yz - R_memory(5,2,ijk,1,1,ispec)
-
-              R_xx_val = R_memory(1,3,ijk,1,1,ispec)
-              R_yy_val = R_memory(2,3,ijk,1,1,ispec)
-              sigma_xx = sigma_xx - R_xx_val
-              sigma_yy = sigma_yy - R_yy_val
-              sigma_zz = sigma_zz + R_xx_val + R_yy_val
-              sigma_xy = sigma_xy - R_memory(3,3,ijk,1,1,ispec)
-              sigma_xz = sigma_xz - R_memory(4,3,ijk,1,1,ispec)
-              sigma_yz = sigma_yz - R_memory(5,3,ijk,1,1,ispec)
-            endif
-
-            ! define symmetric components of sigma for gravity
-            sigma_yx = sigma_xy
-            sigma_zx = sigma_xz
-            sigma_zy = sigma_yz
-
-            ! compute non-symmetric terms for gravity
-            if(GRAVITY_VAL) then
-
-              ! use mesh coordinates to get theta and phi
-              ! x y and z contain r theta and phi
-              iglob = ibool(ijk,1,1,ispec)
-              radius = dble(xstore(iglob))
-              theta = dble(ystore(iglob))
-              phi = dble(zstore(iglob))
-
-              ! make sure radius is never zero even for points at center of cube
-              ! because we later divide by radius
-              if(radius < 100.d0 / R_EARTH) radius = 100.d0 / R_EARTH
-
-              cos_theta = dcos(theta)
-              sin_theta = dsin(theta)
-              cos_phi = dcos(phi)
-              sin_phi = dsin(phi)
-
-              cos_theta_sq = cos_theta**2
-              sin_theta_sq = sin_theta**2
-              cos_phi_sq = cos_phi**2
-              sin_phi_sq = sin_phi**2
-
-              ! get g, rho and dg/dr=dg
-              ! spherical components of the gravitational acceleration
-              ! for efficiency replace with lookup table every 100 m in radial direction
-              ! make sure we never use zero for point exactly at the center of the Earth
-              int_radius = max(1,nint(radius * R_EARTH_KM * 10.d0))
-              minus_g = minus_gravity_table(int_radius)
-              minus_dg = minus_deriv_gravity_table(int_radius)
-              rho = density_table(int_radius)
-
-              ! Cartesian components of the gravitational acceleration
-              gxl = minus_g*sin_theta*cos_phi
-              gyl = minus_g*sin_theta*sin_phi
-              gzl = minus_g*cos_theta
-
-              ! Cartesian components of gradient of gravitational acceleration
-              ! obtained from spherical components
-              minus_g_over_radius = minus_g / radius
-              minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
-
-              Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-              Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-              Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-              Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-              Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-              Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
-
-              ! for locality principle, we set iglob again, in order to have it in the cache again
-              iglob = ibool(ijk,1,1,ispec)
-
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * displ_inner_core(1,iglob)
-              sy_l = rho * displ_inner_core(2,iglob)
-              sz_l = rho * displ_inner_core(3,iglob)
-
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-              sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-              sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-              sigma_xy = sigma_xy - sx_l * gyl
-              sigma_yx = sigma_yx - sy_l * gxl
-
-              sigma_xz = sigma_xz - sx_l * gzl
-              sigma_zx = sigma_zx - sz_l * gxl
-
-              sigma_yz = sigma_yz - sy_l * gzl
-              sigma_zy = sigma_zy - sz_l * gyl
-
-              ! precompute vector
-              factor = jacobianl * wgll_cube(ijk,1,1)
-              rho_s_H(1,ijk,1,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-              rho_s_H(2,ijk,1,1) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-              rho_s_H(3,ijk,1,1) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-            endif  ! end of section with gravity terms
-
-            ! form dot product with test vector, non-symmetric form
-            tempx1(ijk,1,1) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) ! this goes to accel_x
-            tempy1(ijk,1,1) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) ! this goes to accel_y
-            tempz1(ijk,1,1) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) ! this goes to accel_z
-
-            tempx2(ijk,1,1) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl) ! this goes to accel_x
-            tempy2(ijk,1,1) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl) ! this goes to accel_y
-            tempz2(ijk,1,1) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl) ! this goes to accel_z
-
-            tempx3(ijk,1,1) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl) ! this goes to accel_x
-            tempy3(ijk,1,1) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
-            tempz3(ijk,1,1) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
-
-          enddo
-#else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -687,20 +330,20 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
+            ! compute deviatoric strain
             if (COMPUTE_AND_STORE_STRAIN) then
+              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                ispec_strain = 1
+              else
+                ispec_strain = ispec
+              endif
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
               epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
               epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
               epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-              eps_trace_over_3(i,j,k,ispec) = templ
-            endif
-
-            if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-              minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
-            else if(ATTENUATION_VAL) then
-              minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
             endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -728,6 +371,11 @@
 
               ! use unrelaxed parameters if attenuation
               if(ATTENUATION_VAL) then
+                if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+                  minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+                else
+                  minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+                endif
                 mul = muvstore(i,j,k,ispec)
                 c11l = c11l + FOUR_THIRDS * minus_sum_beta * mul
                 c12l = c12l - TWO_THIRDS * minus_sum_beta * mul
@@ -750,10 +398,12 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL .and. (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL)) then
-                mul = mul * one_minus_sum_beta(i,j,k,ispec)
-              else if(ATTENUATION_VAL) then
-                mul = mul * one_minus_sum_beta(1,1,1,ispec)
+              if(ATTENUATION_VAL ) then
+                if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+                  mul = mul * one_minus_sum_beta(i,j,k,ispec)
+                else
+                  mul = mul * one_minus_sum_beta(1,1,1,ispec)
+                endif
               endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
@@ -771,18 +421,14 @@
             endif
 
             ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers from vectorizing the outer loop
-              do i_SLS = 1,N_SLS
-                R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
-                R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
-                sigma_xx = sigma_xx - R_xx_val
-                sigma_yy = sigma_yy - R_yy_val
-                sigma_zz = sigma_zz + R_xx_val + R_yy_val
-                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
-              enddo
+            if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+              ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
+              call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
+                                              R_yy(1,i,j,k,ispec), &
+                                              R_xy(1,i,j,k,ispec), &
+                                              R_xz(1,i,j,k,ispec), &
+                                              R_yz(1,i,j,k,ispec), &
+                                              sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
             endif
 
             ! define symmetric components of sigma for gravity
@@ -843,30 +489,61 @@
               ! for locality principle, we set iglob again, in order to have it in the cache again
               iglob = ibool(i,j,k,ispec)
 
-              ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * displ_inner_core(1,iglob)
-              sy_l = rho * displ_inner_core(2,iglob)
-              sz_l = rho * displ_inner_core(3,iglob)
+              ! distinguish between single and double precision for reals
+              if(CUSTOM_REAL == SIZE_REAL) then
+                ! get displacement and multiply by density to compute G tensor
+                sx_l = rho * dble(displ_inner_core(1,iglob))
+                sy_l = rho * dble(displ_inner_core(2,iglob))
+                sz_l = rho * dble(displ_inner_core(3,iglob))
 
-              ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-              sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-              sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
+                ! compute G tensor from s . g and add to sigma (not symmetric)
+                sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
+                sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
+                sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
 
-              sigma_xy = sigma_xy - sx_l * gyl
-              sigma_yx = sigma_yx - sy_l * gxl
+                sigma_xy = sigma_xy - sngl(sx_l * gyl)
+                sigma_yx = sigma_yx - sngl(sy_l * gxl)
 
-              sigma_xz = sigma_xz - sx_l * gzl
-              sigma_zx = sigma_zx - sz_l * gxl
+                sigma_xz = sigma_xz - sngl(sx_l * gzl)
+                sigma_zx = sigma_zx - sngl(sz_l * gxl)
 
-              sigma_yz = sigma_yz - sy_l * gzl
-              sigma_zy = sigma_zy - sz_l * gyl
+                sigma_yz = sigma_yz - sngl(sy_l * gzl)
+                sigma_zy = sigma_zy - sngl(sz_l * gyl)
 
-              ! precompute vector
-              factor = jacobianl * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+                ! precompute vector
+                factor = dble(jacobianl) * wgll_cube(i,j,k)
+                rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
+                rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
+                rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
+
+              else
+
+                ! get displacement and multiply by density to compute G tensor
+                sx_l = rho * displ_inner_core(1,iglob)
+                sy_l = rho * displ_inner_core(2,iglob)
+                sz_l = rho * displ_inner_core(3,iglob)
+
+                ! compute G tensor from s . g and add to sigma (not symmetric)
+                sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
+                sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
+                sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
+
+                sigma_xy = sigma_xy - sx_l * gyl
+                sigma_yx = sigma_yx - sy_l * gxl
+
+                sigma_xz = sigma_xz - sx_l * gzl
+                sigma_zx = sigma_zx - sz_l * gxl
+
+                sigma_yz = sigma_yz - sy_l * gzl
+                sigma_zy = sigma_zy - sz_l * gyl
+
+                ! precompute vector
+                factor = jacobianl * wgll_cube(i,j,k)
+                rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+                rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+                rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+
+              endif
 
             endif  ! end of section with gravity terms
 
@@ -886,7 +563,6 @@
           enddo
         enddo
       enddo
-#endif
 
       ! subroutines adapted from Deville, Fischer and Mund, High-order methods
       ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -960,57 +636,38 @@
         enddo
       enddo
 
-      ! sum contributions
 #ifdef FORCE_VECTORIZATION
-          do ijk=1,NGLLCUBE
-            fac1 = wgllwgll_yz_3D(ijk,1,1)
-            fac2 = wgllwgll_xz_3D(ijk,1,1)
-            fac3 = wgllwgll_xy_3D(ijk,1,1)
-            sum_terms(1,ijk,1,1) = - (fac1*newtempx1(ijk,1,1) + fac2*newtempx2(ijk,1,1) + fac3*newtempx3(ijk,1,1))
-            sum_terms(2,ijk,1,1) = - (fac1*newtempy1(ijk,1,1) + fac2*newtempy2(ijk,1,1) + fac3*newtempy3(ijk,1,1))
-            sum_terms(3,ijk,1,1) = - (fac1*newtempz1(ijk,1,1) + fac2*newtempz2(ijk,1,1) + fac3*newtempz3(ijk,1,1))
-          enddo
+      do ijk=1,NGLLCUBE
+        fac1 = wgllwgll_yz_3D(ijk,1,1)
+        fac2 = wgllwgll_xz_3D(ijk,1,1)
+        fac3 = wgllwgll_xy_3D(ijk,1,1)
+        sum_terms(1,ijk,1,1) = - (fac1*newtempx1(ijk,1,1) + fac2*newtempx2(ijk,1,1) + fac3*newtempx3(ijk,1,1))
+        sum_terms(2,ijk,1,1) = - (fac1*newtempy1(ijk,1,1) + fac2*newtempy2(ijk,1,1) + fac3*newtempy3(ijk,1,1))
+        sum_terms(3,ijk,1,1) = - (fac1*newtempz1(ijk,1,1) + fac2*newtempz2(ijk,1,1) + fac3*newtempz3(ijk,1,1))
+      enddo
+      if(GRAVITY_VAL) then
+        do ijk = 1,NDIM*NGLLCUBE
+          sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
+        enddo
+      endif
 #else
-!     do k=1,NGLLZ
-!       do j=1,NGLLY
-!         fac1 = wgllwgll_yz(j,k)
-!         do i=1,NGLLX
-!           fac2 = wgllwgll_xz(i,k)
-!           fac3 = wgllwgll_xy(i,j)
-!           sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
-!           sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
-!           sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
-!         enddo
-!       enddo
-!     enddo
-! in principle we only need the 2D arrays of weights above, but here we purposely make them 3D
-! in order to be able to efficiently vectorize the loops (see above)
       do k=1,NGLLZ
         do j=1,NGLLY
+          fac1 = wgllwgll_yz(j,k)
           do i=1,NGLLX
-            fac1 = wgllwgll_yz_3D(i,j,k)
-            fac2 = wgllwgll_xz_3D(i,j,k)
-            fac3 = wgllwgll_xy_3D(i,j,k)
+            fac2 = wgllwgll_xz(i,k)
+            fac3 = wgllwgll_xy(i,j)
+            ! sum contributions
             sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
             sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
             sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
+            if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
           enddo
         enddo
       enddo
 #endif
 
-      ! add gravity terms
-      if(GRAVITY_VAL) then
-#ifdef FORCE_VECTORIZATION
-        do ijk = 1,NDIM*NGLLCUBE
-          sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
-        enddo
-#else
-        sum_terms(:,:,:,:) = sum_terms(:,:,:,:) + rho_s_H(:,:,:,:)
-#endif
-      endif
-
-      ! sum contributions from each element to the global mesh
+      ! sum contributions from each element to the global mesh and add gravity terms
 #ifdef FORCE_VECTORIZATION
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
@@ -1019,19 +676,21 @@
 !IBM* ASSERT (NODEPS)
 !pgi$ ivdep
 !DIR$ IVDEP
-          do ijk = 1,NGLLCUBE
-            iglob = ibool(ijk,1,1,ispec)
-! do NOT use array syntax ":" for the three statements below otherwise most compilers will not be able to vectorize the outer loop
-            accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,ijk,1,1)
-            accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,ijk,1,1)
-            accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk,1,1)
-          enddo
+      do ijk = 1,NGLLCUBE
+        iglob = ibool(ijk,1,1,ispec)
+        ! do NOT use array syntax ":" for the three statements below
+        ! otherwise most compilers will not be able to vectorize the outer loop
+        accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,ijk,1,1)
+        accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,ijk,1,1)
+        accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk,1,1)
+      enddo
 #else
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
             iglob = ibool(i,j,k,ispec)
-! do NOT use array syntax ":" for the three statements below otherwise most compilers will not be able to vectorize the outer loop
+            ! do NOT use array syntax ":" for the three statements below
+            ! otherwise most compilers will not be able to vectorize the outer loop
             accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,i,j,k)
             accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,i,j,k)
             accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,i,j,k)
@@ -1054,22 +713,35 @@
       ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
-      if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+      if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
         ! updates R_memory
-        call compute_element_att_memory_ic(ispec,R_memory, &
-                                      vnspec,factor_common, &
-                                      alphaval,betaval,gammaval, &
-                                      muvstore, &
-                                      epsilondev_loc,epsilondev(1,1,1,1,ispec),&
-                                      istage,R_memory_lddrk,tau_sigma_CUSTOM_REAL,deltat,USE_LDDRK)
+        if( USE_LDDRK ) then
+          call compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                                   R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                                   ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                                   muvstore, &
+!                                                  epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+!                                                  epsilondev_xz,epsilondev_yz, &
+                                                   epsilondev_loc, &
+                                                   deltat)
+        else
+          call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                             ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
+                                             alphaval,betaval,gammaval, &
+                                             muvstore, &
+                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                             epsilondev_xz,epsilondev_yz, &
+                                             epsilondev_loc) !!!!!!!!!!!! ,is_backward_field)
+        endif
+      endif
 
-#ifdef FORCE_VECTORIZATION
-        do ijk = 1,5*NGLLCUBE
-          epsilondev(ijk,1,1,1,ispec) = epsilondev_loc(ijk,1,1,1)
-        enddo
-#else
-        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-#endif
+      ! save deviatoric strain for Runge-Kutta scheme
+      if(COMPUTE_AND_STORE_STRAIN) then
+        epsilondev_xx(:,:,:,ispec) = epsilondev_loc(1,:,:,:)
+        epsilondev_yy(:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+        epsilondev_xy(:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+        epsilondev_xz(:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+        epsilondev_yz(:,:,:,ispec) = epsilondev_loc(5,:,:,:)
       endif
 
     endif ! end of test to exclude fictitious elements in central cube
