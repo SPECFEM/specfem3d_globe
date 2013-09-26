@@ -28,10 +28,6 @@
 #######################################
 
 auxiliaries_TARGETS = \
-	$E/xcheck_buffers_1D \
-	$E/xcheck_buffers_2D \
-	$E/xcheck_buffers_corners_chunks \
-	$E/xcheck_buffers_faces_chunks \
 	$E/xconvolve_source_timefunction \
 	$E/xcombine_AVS_DX \
 	$E/xcombine_paraview_strain_data \
@@ -44,10 +40,6 @@ auxiliaries_TARGETS = \
 	$(EMPTY_MACRO)
 
 auxiliaries_OBJECTS = \
-	$O/check_buffers_1D.aux.o \
-	$O/check_buffers_2D.aux.o \
-	$O/check_buffers_corners_chunks.aux.o \
-	$O/check_buffers_faces_chunks.aux.o \
 	$O/combine_AVS_DX.aux.o \
 	$O/combine_paraview_strain_data.auxsolver.o \
 	$O/combine_surf_data.auxsolver.o \
@@ -89,18 +81,6 @@ auxiliaries_SHARED_OBJECTS = \
 all_aux: required $(auxiliaries_TARGETS)
 
 aux: required $(auxiliaries_TARGETS)
-
-${E}/xcheck_buffers_1D: $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_1D.aux.o 
-	${FCCOMPILE_CHECK} -o ${E}/xcheck_buffers_1D $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_1D.aux.o
-
-${E}/xcheck_buffers_2D: $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_2D.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcheck_buffers_2D $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_2D.aux.o
-
-${E}/xcheck_buffers_corners_chunks: $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_corners_chunks.aux.o 
-	${FCCOMPILE_CHECK} -o ${E}/xcheck_buffers_corners_chunks $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_corners_chunks.aux.o
-
-${E}/xcheck_buffers_faces_chunks: $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_faces_chunks.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcheck_buffers_faces_chunks $(auxiliaries_SHARED_OBJECTS) $O/check_buffers_faces_chunks.aux.o
 
 ${E}/xconvolve_source_timefunction: $O/convolve_source_timefunction.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.aux.o
