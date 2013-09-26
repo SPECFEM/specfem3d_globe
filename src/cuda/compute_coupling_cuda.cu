@@ -137,7 +137,7 @@ void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
                                                         mp->nspec2D_top_outer_core);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_COUPLING();
 
     // adjoint simulations
     compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
@@ -257,7 +257,7 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
                                                         mp->nspec2D_bottom_outer_core);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_COUPLING();
 
     // adjoint simulations
     compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
@@ -387,7 +387,7 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
                                                         mp->nspec2D_bottom_crust_mantle);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_COUPLING();
 
     //  adjoint simulations
     compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
@@ -520,7 +520,7 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
                                                         mp->nspec2D_top_inner_core);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_COUPLING();
 
     //  adjoint simulations
     compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
@@ -634,7 +634,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
                                                          mp->d_normal_ocean_load);
   }else if( *FORWARD_OR_ADJOINT == 3){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_COUPLING();
 
     // for backward/reconstructed potentials
     compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,

@@ -1394,7 +1394,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                                   mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
   }else if( FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_FORCES();
 
     Kernel_2_crust_mantle_impl<<< grid,threads>>>(nb_blocks_to_compute,
                                                    mp->NGLOB_CRUST_MANTLE,

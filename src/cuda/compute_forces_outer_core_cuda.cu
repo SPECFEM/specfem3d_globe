@@ -523,7 +523,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                 mp->NSPEC_OUTER_CORE);
   }else if( FORWARD_OR_ADJOINT == 3 ){
     // debug
-    DEBUG_EMPTY_BACKWARD();
+    DEBUG_BACKWARD_FORCES();
 
     Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
                                                 mp->NGLOB_OUTER_CORE,

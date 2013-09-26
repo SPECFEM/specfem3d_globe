@@ -107,7 +107,7 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
 
   TRACE("transfer_fields_b_cm_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
   print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_crust_mantle,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
@@ -124,7 +124,7 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
 
   TRACE("transfer_fields_b_ic_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
   print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_inner_core,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
@@ -141,7 +141,7 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
 
   TRACE("transfer_fields_b_oc_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
   print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_outer_core,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
@@ -517,7 +517,7 @@ void FC_FUNC_(transfer_b_strain_cm_to_device,
                                               realw* epsilondev_yz) {
   TRACE("transfer_b_strain_cm_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
@@ -584,7 +584,7 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
                                               realw* epsilondev_yz) {
   TRACE("transfer_b_strain_cm_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
@@ -622,7 +622,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
                                                realw* b_R_yz) {
   TRACE("transfer_b_Rmemory_cm_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
@@ -657,7 +657,7 @@ void FC_FUNC_(transfer_b_rmemory_ic_to_device,
                                                realw* b_R_yz) {
   TRACE("transfer_b_rmemory_ic_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
@@ -715,7 +715,7 @@ void FC_FUNC_(transfer_b_rotation_to_device,
                                               realw* B_array_rotation) {
   TRACE("transfer_b_rotation_to_device");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);

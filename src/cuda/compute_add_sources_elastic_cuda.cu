@@ -138,7 +138,7 @@ void FC_FUNC_(compute_add_sources_backward_cuda,
                                                  double* h_stf_pre_compute) {
   TRACE("compute_add_sources_backward_cuda");
   // debug
-  DEBUG_EMPTY_BACKWARD();
+  DEBUG_BACKWARD_SOURCES();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 

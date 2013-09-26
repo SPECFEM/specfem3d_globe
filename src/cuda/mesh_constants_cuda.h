@@ -70,12 +70,24 @@
 #define PRINT5(var,offset) // for(i=0;i<10;i++) printf("var(%d)=%f\n",i,var[offset+i]);
 #endif
 
-// daniel debug: run backward simulations with empty arrays to check
+// daniel debug: run backward simulations with/without gpu routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
-#define DEBUG_EMPTY_BACKWARD() return;
+#define DEBUG_BACKWARD_ASSEMBLY() return;
+#define DEBUG_BACKWARD_COUPLING() return;
+#define DEBUG_BACKWARD_FORCES() return;
+#define DEBUG_BACKWARD_KERNEL() return;
+#define DEBUG_BACKWARD_SOURCES() return;
+#define DEBUG_BACKWARD_TRANSFER() return;
+#define DEBUG_BACKWARD_UPDATE() return;
 #else
-#define DEBUG_EMPTY_BACKWARD()
+#define DEBUG_BACKWARD_ASSEMBLY()
+#define DEBUG_BACKWARD_COUPLING()
+#define DEBUG_BACKWARD_FORCES()
+#define DEBUG_BACKWARD_KERNEL()
+#define DEBUG_BACKWARD_SOURCES()
+#define DEBUG_BACKWARD_TRANSFER()
+#define DEBUG_BACKWARD_UPDATE()
 #endif
 
 
