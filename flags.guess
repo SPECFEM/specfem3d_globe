@@ -5,6 +5,30 @@
 # can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
 # to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
 
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+#
+# If you run very large meshes on a relatively small number
+# of processors, the static memory size needed on each processor might become
+# greater than 2 gigabytes, which is the upper limit for 32-bit addressing
+# (dynamic memory allocation is always OK, even beyond the 2 GB limit; only static memory has a problem).
+# In this case, on some compilers you may need to add -mcmodel=medium (if you do not use the Intel ifort / icc compiler)
+# or -mcmodel=medium -shared-intel (if you use the Intel ifort / icc compiler)
+# to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
+# message (for instance 'relocation truncated to fit: R\_X86\_64\_PC32 against .bss' or something similar);
+# BEWARE that using -mcmodel=medium -shared-intel is known for currently leading to incorrect seismograms,
+# at least when flag ATTENUATION is on (and maybe even without), at least in the case of the Intel ifort / icc compiler.
+# This likely comes from intrinsic functions such as size() that return and integer8 instead of an integer4, thus leading
+# to incorrect results when used in function calls is the -i8 flag is not added to the compiler options;
+# however, when adding -i8 the code does not compile because the MPI calls then refuse to compile (they need integer4 as arguments).
+# Since most current users run the code with less than 2 GB of static memory per core, we have not investigated that problem carefully for now,
+# and thus recommend that you do NOT use these compiler flags.
+#
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+
 case $FC in
     ftn|*/ftn|crayftn|*/crayftn)
         #
@@ -31,6 +55,13 @@ case $FC in
 # I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
 # However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
         DEF_FFLAGS="-O3 -DFORCE_VECTORIZATION -check nobounds -xHost -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium -shared-intel
+##############################################################################################################################
+##############################################################################################################################
+##############################################################################################################################
+#  adding  -mcmodel=medium -shared-intel  can/will lead to problems, see the detailed comment at the beginning of this file
+##############################################################################################################################
+##############################################################################################################################
+##############################################################################################################################
         # useful for debugging...
         # for debugging: change -O3 -DFORCE_VECTORIZATION -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
         #
