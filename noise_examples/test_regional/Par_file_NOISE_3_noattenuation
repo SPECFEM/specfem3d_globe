@@ -130,3 +130,16 @@ PRINT_SOURCE_TIME_FUNCTION      = .true.
 # output kernels on a regular grid instead of on the mesh points
 SAVE_REGULAR_KL                 = .false.
 
+#-----------------------------------------------------------
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
+
+# set to true to use the ADIOS library for I/Os
+ADIOS_ENABLED                   = .false.
+ADIOS_FOR_FORWARD_ARRAYS        = .true.
+ADIOS_FOR_MPI_ARRAYS            = .true.
+ADIOS_FOR_ARRAYS_SOLVER         = .true.
+ADIOS_FOR_SOLVER_MESHFILES      = .true.
+ADIOS_FOR_AVS_DX                = .true.
+
