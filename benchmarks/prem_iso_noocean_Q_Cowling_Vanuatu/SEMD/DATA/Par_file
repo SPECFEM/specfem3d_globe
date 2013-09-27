@@ -120,7 +120,7 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      =  /scratch/siemins/DATABASES_MPI.336745
+LOCAL_PATH                      = ./DATABASES_MPI
 # temporary wavefield/kernel/movie files
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
