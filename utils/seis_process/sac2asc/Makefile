@@ -4,6 +4,7 @@
 
 INCLUDE_SACPATH=-I.
 
+CC = gcc
 CFLAGS = -g -Wall $(INCLUDE_SACPATH)
 
 PROG=sac2asc
