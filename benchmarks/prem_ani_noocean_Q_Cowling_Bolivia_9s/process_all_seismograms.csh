@@ -14,6 +14,7 @@
 ./rotate.pl -l 0 -L 2900 SEMD/*.MXE.sem.ascii.sac
 
 foreach file ( SEMD/*.MXR.sem.ascii.sac SEMD/*.MXT.sem.ascii.sac SEMD/*.MXZ.sem.ascii.sac )
+  echo "converting " $file " back to final result in ASCII..."
   ./sac2asc $file > $file.asciinew
 end
 
@@ -24,6 +25,7 @@ end
 ./rotate.pl -l 0 -L 2900 QMXD/*.MXE.qmxd.sac
 
 foreach file ( QMXD/*.MXR.qmxd.sac QMXD/*.MXT.qmxd.sac QMXD/*.MXZ.qmxd.sac )
+  echo "converting " $file " back to final result in ASCII..."
   ./sac2asc $file > $file.asciinew
 end
 
