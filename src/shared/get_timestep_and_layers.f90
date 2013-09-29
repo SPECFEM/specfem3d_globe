@@ -47,8 +47,57 @@
     multiplication_factor=1
   endif
 
+  if(NEX_MAX*multiplication_factor <= 80) then
+    ! time step
+    DT                       = 0.252d0
+
+    ! attenuation period range
+    MIN_ATTENUATION_PERIOD   = 30
+    MAX_ATTENUATION_PERIOD   = 1500
+
+    ! number of element layers in each mesh region
+    NER_CRUST                = 1
+    NER_80_MOHO              = 1
+    NER_220_80               = 2
+    NER_400_220              = 2
+    NER_600_400              = 2
+    NER_670_600              = 1
+    NER_771_670              = 1
+    NER_TOPDDOUBLEPRIME_771  = 15
+    NER_CMB_TOPDDOUBLEPRIME  = 1
+    NER_OUTER_CORE           = 16
+    NER_TOP_CENTRAL_CUBE_ICB = 2
+
+    ! radius of central cube
+    R_CENTRAL_CUBE = 950000.d0
+
+  else if(NEX_MAX*multiplication_factor <= 96) then
+    ! time step
+!! DK DK to hande a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
+    DT                       = 0.252d0 * 0.90d0
+
+    ! attenuation period range
+    MIN_ATTENUATION_PERIOD   = 30
+    MAX_ATTENUATION_PERIOD   = 1500
+
+    ! number of element layers in each mesh region
+    NER_CRUST                = 1
+    NER_80_MOHO              = 1
+    NER_220_80               = 2
+    NER_400_220              = 2
+    NER_600_400              = 2
+    NER_670_600              = 1
+    NER_771_670              = 1
+    NER_TOPDDOUBLEPRIME_771  = 15
+    NER_CMB_TOPDDOUBLEPRIME  = 1
+    NER_OUTER_CORE           = 16
+    NER_TOP_CENTRAL_CUBE_ICB = 2
+
+    ! radius of central cube
+    R_CENTRAL_CUBE = 950000.d0
+
   ! element width =   0.5625000      degrees =    62.54715      km
-  if(NEX_MAX*multiplication_factor <= 160) then
+  else if(NEX_MAX*multiplication_factor <= 160) then
     ! time step
     DT                       = 0.252d0
 
