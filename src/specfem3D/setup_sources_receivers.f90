@@ -289,6 +289,12 @@
   ! time steps needs to be doubled, due to +/- branches
   if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
 
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+  endif
+  it_end = NSTEP
+
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
   if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP .or. is_initial_guess) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
