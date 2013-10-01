@@ -38,7 +38,7 @@ create_header_file_OBJECTS = \
 
 # These files come from the shared directory
 create_header_file_SHARED_OBJECTS = \
-	$O/shared_par.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
@@ -83,7 +83,7 @@ ${OUTPUT}/values_from_mesher.h: $E/xcreate_header_file $B/DATA/Par_file
 ${E}/xcreate_header_file: $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
 	${FCCOMPILE_CHECK} -o ${E}/xcreate_header_file $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
 
-## uses MPI compiler to link executable instead (usedful for cross-compilation)
+## uses MPI compiler to link executable instead (useful for cross-compilation)
 #${E}/xcreate_header_file: $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
 #	${MPIFCCOMPILE_CHECK} -o ${E}/xcreate_header_file $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
 
@@ -100,6 +100,6 @@ $(create_header_file_OBJECTS): S := ${S_TOP}/src/create_header_file
 ##
 ## rule for create_header_file
 ##
-$O/%.header.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.header.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

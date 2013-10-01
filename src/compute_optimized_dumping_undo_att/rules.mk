@@ -37,7 +37,7 @@ compute_optimized_dumping_undo_att_OBJECTS = \
 
 # These files come from the shared directory
 compute_optimized_dumping_undo_att_SHARED_OBJECTS = \
-	$O/shared_par.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
@@ -81,6 +81,6 @@ $(compute_optimized_dumping_undo_att_OBJECTS): S := ${S_TOP}/src/compute_optimiz
 #### rule for each .o file below
 ####
 
-$O/%.optdump.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.optdump.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

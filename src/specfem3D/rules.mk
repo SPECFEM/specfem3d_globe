@@ -50,7 +50,7 @@ specfem3D_OBJECTS = \
 # solver objects with statically allocated arrays; dependent upon
 # values_from_mesher.h
 specfem3D_OBJECTS += \
-	$O/specfem3D_par.solverstatic.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/check_stability.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
 	$O/compute_boundary_kernel.solverstatic.o \
@@ -103,7 +103,7 @@ specfem3D_OBJECTS += \
 
 # These files come from the shared directory
 specfem3D_SHARED_OBJECTS = \
-	$O/shared_par.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
@@ -143,9 +143,9 @@ specfem3D_SHARED_OBJECTS = \
 ###
 
 cuda_OBJECTS = \
-  $O/assemble_MPI_scalar_cuda.cuda.o \
+	$O/assemble_MPI_scalar_cuda.cuda.o \
 	$O/assemble_MPI_vector_cuda.cuda.o \
-  $O/check_fields_cuda.cuda.o \
+	$O/check_fields_cuda.cuda.o \
 	$O/compute_add_sources_elastic_cuda.cuda.o \
 	$O/compute_coupling_cuda.cuda.o \
 	$O/compute_forces_crust_mantle_cuda.cuda.o \
@@ -285,13 +285,16 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here
 ###
-$O/%.solverstatic.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+$O/%.solverstatic_module.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+$O/%.solverstatic.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic_openmp.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+$O/%.solverstatic.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic_openmp.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 ## DK DK add OpenMP compiler flag here if needed
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 

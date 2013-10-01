@@ -52,7 +52,7 @@ auxiliaries_OBJECTS = \
 
 # These files come from the shared directory
 auxiliaries_SHARED_OBJECTS = \
-	$O/shared_par.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
@@ -106,7 +106,7 @@ ${E}/xcreate_movie_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_AVS_DX.
 ${E}/xcreate_movie_GMT_global: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_GMT_global.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xcreate_movie_GMT_global $(auxiliaries_SHARED_OBJECTS) $O/create_movie_GMT_global.aux.o
 
-${E}/xextract_database: $(S_TOP)/utils/extract_database/extract_database.f90
+${E}/xextract_database: $(S_TOP)/utils/extract_database/extract_database.f90 ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_CHECK} -o ${E}/xextract_database ${FCFLAGS_f90} $(S_TOP)/utils/extract_database/extract_database.f90
 
 #######################################
@@ -122,10 +122,10 @@ $(auxiliaries_OBJECTS): S := ${S_TOP}/src/auxiliaries
 ##
 ## auxiliaries
 ##
-$O/%.aux.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.aux.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.auxsolver.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+$O/%.auxsolver.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 
