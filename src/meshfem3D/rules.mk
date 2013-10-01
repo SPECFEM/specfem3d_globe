@@ -32,7 +32,7 @@ meshfem3D_TARGETS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_OBJECTS = \
-	$O/meshfem3D_par.check.o \
+	$O/meshfem3D_par.check_module.o \
 	$O/meshfem3D.check.o \
 	$O/meshfem3D_models.check.o \
 	$O/add_missing_nodes.check.o \
@@ -125,7 +125,7 @@ meshfem3D_MODULES = \
 
 # These files come from the shared directory
 meshfem3D_SHARED_OBJECTS = \
-	$O/shared_par.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
@@ -204,15 +204,18 @@ $(meshfem3D_OBJECTS): S = ${S_TOP}/src/meshfem3D
 #### rule for each .o file below
 ####
 
-$O/%.check.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.check_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check.o: $S/%.F90 ${SETUP}/constants.h
+$O/%.check.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.checkmpi.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.check.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.checkmpi.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.checkmpi.o: $S/%.F90 ${SETUP}/constants.h
+$O/%.checkmpi.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

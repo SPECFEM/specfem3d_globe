@@ -32,7 +32,7 @@ shared_TARGETS = \
 	$(EMPTY_MACRO)
 
 shared_OBJECTS = \
-	$O/shared_par.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
@@ -70,6 +70,13 @@ shared_OBJECTS = \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
+shared_MODULES = \
+	$(FC_MODDIR)/constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
+	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
+	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
 ADIOS_OBJECTS = \
   $O/adios_helpers.shared.o \
   $O/adios_manager.shared.o \
@@ -86,20 +93,24 @@ ADIOS_STUBS = \
 S := ${S_TOP}/src/shared
 $(shared_OBJECTS): S = ${S_TOP}/src/shared
 
+
 ####
 #### rule for each .o file below
 ####
 
+$O/%.shared_module.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
 ##
 ## shared
 ##
-$O/%.shared.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.shared.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.shared.o: $S/%.F90 ${SETUP}/constants.h
+$O/%.shared.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.sharedmpi.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.sharedmpi.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
