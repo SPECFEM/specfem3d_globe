@@ -171,8 +171,6 @@ cuda_DEVICE_OBJ = \
 	$O/cuda_device_obj.o \
 	$(EMPTY_MACRO)
 
-LIBSPECFEM_SOLVER = $O/libspecfem_solver.a
-
 ifeq ($(CUDA),yes)
 XSPECFEM_OBJECTS = $(specfem3D_SHARED_OBJECTS) $(specfem3D_OBJECTS) $(cuda_OBJECTS)
 else
