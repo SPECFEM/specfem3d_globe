@@ -35,7 +35,6 @@ MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 
 FLAGS_CHECK = @FLAGS_CHECK@
-#FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
 
 FCFLAGS_f90 = @FCFLAGS_f90@ -I@top_builddir@ -I${SETUP}
 
@@ -43,10 +42,8 @@ FC_MODEXT = @FC_MODEXT@
 FC_MODDIR = @FC_MODDIR@
  
 FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
-#FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
 
 MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
-#MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK)
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -138,9 +135,7 @@ VTK_LINK = $(VTK_LIBS)
 
 #@COND_VTK_TRUE@CPPFLAGS += $(VTK_FLAG)
 #@COND_VTK_TRUE@FCCOMPILE_CHECK += $(VTK_FLAG)
-##@COND_VTK_TRUE@FCCOMPILE_NO_CHECK += $(VTK_FLAG)
 #@COND_VTK_TRUE@MPIFCCOMPILE_CHECK += $(VTK_FLAG)
-##@COND_VTK_TRUE@MPIFCCOMPILE_NO_CHECK += $(VTK_FLAG)
 
 @COND_VTK_TRUE@MPILIBS += $(VTK_LINK)
 
@@ -190,9 +185,7 @@ ADIOS_INC = @ADIOS_INC@
 
 #@COND_VECTORIZATION_TRUE@CPPFLAGS += $(VEC_FLAG)
 #@COND_VECTORIZATION_TRUE@FCCOMPILE_CHECK += $(VEC_FLAG)
-##@COND_VECTORIZATION_TRUE@FCCOMPILE_NO_CHECK += $(VEC_FLAG)
 #@COND_VECTORIZATION_TRUE@MPIFCCOMPILE_CHECK += $(VEC_FLAG)
-##@COND_VECTORIZATION_TRUE@MPIFCCOMPILE_NO_CHECK += $(VEC_FLAG)
 
 
 
@@ -250,7 +243,7 @@ DEFAULT = \
 
 all: default
 
-default: change_date_of_calling_code $(DEFAULT)
+default: $(DEFAULT)
 
 required: bin obj
 
@@ -263,19 +256,14 @@ obj:
 backup:
 	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
 
-change_date_of_calling_code:
-	touch src/specfem3D/specfem3D.F90
-
 ifdef CLEAN
 clean:
 	@echo "cleaning by CLEAN defined"
 	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
-	(rm -rf bin obj )
 else
 clean:
 	@echo "cleaning by CLEAN not defined"
 	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
-	(rm -rf bin obj )
 endif
 
 help:

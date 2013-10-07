@@ -632,16 +632,12 @@ FC_MODEXT
 NVCC
 CONFIGURE_FLAGS
 LOCAL_PATH_IS_ALSO_GLOBAL
-RANLIB
-ARFLAGS
-AR
 CUDA_INC
 CUDA_LIB
 ADIOS_LIB
 ADIOS_INC
 MXML_LIB
 MXML_INC
-FLAGS_NO_CHECK
 FLAGS_CHECK
 MPI_INC
 MPILIBS
@@ -744,16 +740,12 @@ MPIFC
 MPILIBS
 MPI_INC
 FLAGS_CHECK
-FLAGS_NO_CHECK
 MXML_INC
 MXML_LIB
 ADIOS_INC
 ADIOS_LIB
 CUDA_LIB
 CUDA_INC
-AR
-ARFLAGS
-RANLIB
 LOCAL_PATH_IS_ALSO_GLOBAL'
 
 
@@ -1396,18 +1388,12 @@ Some influential environment variables:
   MPI_INC     Directory where MPI include file mpi.h is installed, which is
               needed by ADIOS/CUDA when compiling
   FLAGS_CHECK Fortran compiler flags for non-critical subroutines
-  FLAGS_NO_CHECK
-              Fortran compiler flags for creating fast, production-run code
-              for critical subroutines
   MXML_INC    Directory where MXML headers are installed
   MXML_LIB    Directory where MXML libraries are installed
   ADIOS_INC   Directory where ADIOS headers are installed
   ADIOS_LIB   Directory where ADIOS libraries are installed
   CUDA_LIB    Directory where CUDA library libcudart is installed
   CUDA_INC    Directory where CUDA include files are installed
-  AR          ar library creation
-  ARFLAGS     ar flag library creation
-  RANLIB      ranlib library creation
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=true]
@@ -5295,7 +5281,6 @@ if test x"$MPI_INC" != x; then :
   CPPFLAGS+=" $MPI_INC"
   FCFLAGS+=" $MPI_INC"
   FLAGS_CHECK+=" $MPI_INC"
-  FLAGS_NO_CHECK+=" $MPI_INC"
 
 fi
 
@@ -5445,7 +5430,6 @@ fi
     CPPFLAGS+=" $ADIOS_INC"
     FCFLAGS+=" $ADIOS_INC"
     FLAGS_CHECK+=" $ADIOS_INC"
-    FLAGS_NO_CHECK+=" $ADIOS_INC"
 
 fi
   if test x"$ADIOS_LIB" != x; then :
@@ -5655,7 +5639,6 @@ $as_echo "$as_me: FORCE_VECTORIZATION is enabled" >&6;}
    ;;
 esac
   FLAGS_CHECK+=" $VEC_FLAG"
-  FLAGS_NO_CHECK+=" $VEC_FLAG"
   # c compiler
   case $CC in #(
   # ibm compiler flag
@@ -5695,7 +5678,6 @@ $as_echo "$as_me: VTK is enabled" >&6;}
    ;;
 esac
   FLAGS_CHECK+=" $VTK_FLAG"
-  FLAGS_NO_CHECK+=" $VTK_FLAG"
   # c compiler
   case $CC in #(
   # ibm compiler flag

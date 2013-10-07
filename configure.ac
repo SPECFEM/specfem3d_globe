@@ -134,7 +134,6 @@ AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(MPI_INC,[Directory where MPI include file mpi.h is installed, which is needed by ADIOS/CUDA when compiling])
 
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
-AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
 
 # adios
 AC_ARG_VAR(MXML_INC, [Directory where MXML headers are installed])
@@ -145,10 +144,6 @@ AC_ARG_VAR(ADIOS_LIB, [Directory where ADIOS libraries are installed])
 # cuda
 AC_ARG_VAR(CUDA_LIB,[Directory where CUDA library libcudart is installed])
 AC_ARG_VAR(CUDA_INC,[Directory where CUDA include files are installed])
-
-AC_ARG_VAR(AR, [ar library creation])
-AC_ARG_VAR(ARFLAGS, [ar flag library creation])
-AC_ARG_VAR(RANLIB, [ranlib library creation])
 
 # scratch disks
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
@@ -168,7 +163,6 @@ AS_IF([test x"$MPI_INC" != x],[
   CPPFLAGS+=" $MPI_INC"
   FCFLAGS+=" $MPI_INC"
   FLAGS_CHECK+=" $MPI_INC"
-  FLAGS_NO_CHECK+=" $MPI_INC"
 ])
 
 # Checks for libraries.
@@ -196,7 +190,6 @@ AS_IF([test "$want_adios" != no],[
     CPPFLAGS+=" $ADIOS_INC"
     FCFLAGS+=" $ADIOS_INC"
     FLAGS_CHECK+=" $ADIOS_INC"
-    FLAGS_NO_CHECK+=" $ADIOS_INC"
   ])
   AS_IF([test x"$ADIOS_LIB" != x],[
     LDFLAGS+=" $ADIOS_LIB"
@@ -245,7 +238,6 @@ AS_IF([test "$want_vec" != no],[
     [VEC_FLAG="-DFORCE_VECTORIZATION"]
   )
   FLAGS_CHECK+=" $VEC_FLAG"
-  FLAGS_NO_CHECK+=" $VEC_FLAG"
   # c compiler
   AS_CASE([$CC],
     # ibm compiler flag
@@ -274,7 +266,6 @@ AS_IF([test "$want_vtk" != no],[
     [VTK_FLAG="-DWITH_VTK"]
   )
   FLAGS_CHECK+=" $VTK_FLAG"
-  FLAGS_NO_CHECK+=" $VTK_FLAG"
   # c compiler
   AS_CASE([$CC],
     # ibm compiler flag
