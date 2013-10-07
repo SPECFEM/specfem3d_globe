@@ -41,7 +41,7 @@
     COMPUTE_AND_STORE_STRAIN, &
     SIMULATION_TYPE,time_start,DT,t0, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-    myrank
+    myrank,UNDO_ATTENUATION
 
   use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
     eps_trace_over_3_crust_mantle, &
@@ -204,13 +204,20 @@
 
     ! rescale maximum displacement to correct dimensions
     Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
-    write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
-    write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+    if (SIMULATION_TYPE == 1) then
+      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for forward prop. (m) = ',Usolidnorm_all
+      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for forward prop. = ',Ufluidnorm_all
+    else
+      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for adjoint prop. (m)= ',Usolidnorm_all
+      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for adjoint prop. = ',Ufluidnorm_all
+    endif
 
     if (SIMULATION_TYPE == 3) then
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
-      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+      if(.not. UNDO_ATTENUATION)then
+        write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
+        write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+      endif
     endif
 
     if(COMPUTE_AND_STORE_STRAIN) then
@@ -232,7 +239,6 @@
       write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
     endif
 
-    write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
     write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
     write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_remain,iminutes_remain,iseconds_remain
@@ -334,7 +340,7 @@
     if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
 
-    if(SIMULATION_TYPE == 3) then
+    if(SIMULATION_TYPE == 3 .and. .not. UNDO_ATTENUATION) then
       if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
       if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
@@ -543,7 +549,7 @@
   if(SIMULATION_TYPE == 1) then
     write(outputname,"('/timestamp_forward',i6.6)") it
   else
-    write(outputname,"('/timestamp_backward',i6.6)") it
+    write(outputname,"('/timestamp_backward_and_adjoint',i6.6)") it
   endif
 
   ! file output
@@ -552,12 +558,17 @@
   write(IOUT,*) 'Time step # ',it
   write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
   write(IOUT,*)
-  write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
-  write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+  if (SIMULATION_TYPE == 1) then
+    write(IOUT,*) 'Max norm displacement vector U in solid in all slices for forward prop. (m) = ',Usolidnorm_all
+    write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for forward prop. = ',Ufluidnorm_all
+  else
+    write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) for adjoint prop. (m) = ',Usolidnorm_all
+    write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for adjoint prop. = ',Ufluidnorm_all
+  endif
   write(IOUT,*)
 
   if (SIMULATION_TYPE == 3) then
-    write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
+    write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop. (m) = ',b_Usolidnorm_all
     write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
     write(IOUT,*)
   endif
