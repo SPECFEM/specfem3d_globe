@@ -41,6 +41,10 @@
   use specfem_par_movie
   implicit none
 
+! note: instead of using size(factor_common_crust_mantle,5), we use the ATT4_VAL/ATT5_VAL in the function calls;
+!       this is due to the size(..) function returning either integer(kind=4) or integer(kind=8)
+!       depending on compiler flags (-mcmedium), leading to unpredictable results
+
   ! local parameters
   ! non blocking MPI
   ! iphase: iphase = 1 is for computing outer elements in the crust_mantle and inner_core regions,
@@ -92,7 +96,7 @@
                                              epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                              eps_trace_over_3_crust_mantle, &
                                              alphaval,betaval,gammaval, &
-                                             factor_common_crust_mantle,size(factor_common_crust_mantle,5), .false. )
+                                             factor_common_crust_mantle,ATT4_VAL, .false. )
         ! inner core region
         call compute_forces_inner_core_Dev(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                                            NSPEC_INNER_CORE_ATTENUATION, &
@@ -109,7 +113,7 @@
                                            epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                                            eps_trace_over_3_inner_core,&
                                            alphaval,betaval,gammaval, &
-                                           factor_common_inner_core,size(factor_common_inner_core,5)) !!!! , .false. )
+                                           factor_common_inner_core,ATT5_VAL) !!!! , .false. )
       else
         ! no Deville optimization
         ! crust/mantle region
@@ -128,7 +132,7 @@
                                          epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                          eps_trace_over_3_crust_mantle, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common_crust_mantle,size(factor_common_crust_mantle,5)) !!!!!!!!!!!! , .false. )
+                                         factor_common_crust_mantle,ATT4_VAL) !!!!!!!!!!!! , .false. )
         ! inner core region
         call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                                        NSPEC_INNER_CORE_ATTENUATION, &
@@ -145,7 +149,7 @@
                                        epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                                        eps_trace_over_3_inner_core,&
                                        alphaval,betaval,gammaval, &
-                                       factor_common_inner_core,size(factor_common_inner_core,5)) !!!!!!!!!!! , .false. )
+                                       factor_common_inner_core,ATT5_VAL) !!!!!!!!!!! , .false. )
       endif
     else
       ! on GPU
@@ -480,7 +484,7 @@
                                              b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                                              b_eps_trace_over_3_crust_mantle, &
                                              b_alphaval,b_betaval,b_gammaval, &
-                                             factor_common_crust_mantle,size(factor_common_crust_mantle,5), .true. )
+                                             factor_common_crust_mantle,ATT4_VAL, .true. )
         ! inner core region
         call compute_forces_inner_core_Dev(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                            NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -497,7 +501,7 @@
                                            b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                                            b_eps_trace_over_3_inner_core,&
                                            b_alphaval,b_betaval,b_gammaval, &
-                                           factor_common_inner_core,size(factor_common_inner_core,5)) !!!! , .true. )
+                                           factor_common_inner_core,ATT5_VAL) !!!! , .true. )
       else
         ! no Deville optimization
         ! crust/mantle region
@@ -517,7 +521,7 @@
                                          b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                                          b_eps_trace_over_3_crust_mantle, &
                                          b_alphaval,b_betaval,b_gammaval, &
-                                         factor_common_crust_mantle,size(factor_common_crust_mantle,5)) !!!!!!!!!!!! , .true. )
+                                         factor_common_crust_mantle,ATT4_VAL) !!!!!!!!!!!! , .true. )
         ! inner core region
         call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                        NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -534,7 +538,7 @@
                                        b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                                        b_eps_trace_over_3_inner_core,&
                                        b_alphaval,b_betaval,b_gammaval, &
-                                       factor_common_inner_core,size(factor_common_inner_core,5)) !!!!!!!!!!! , .true. )
+                                       factor_common_inner_core,ATT5_VAL) !!!!!!!!!!! , .true. )
       endif
     else
       ! on GPU

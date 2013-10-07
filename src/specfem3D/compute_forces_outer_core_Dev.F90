@@ -37,7 +37,8 @@
   use constants_solver
 
   use specfem_par,only: &
-    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+    wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
     MOVIE_VOLUME, &
     USE_LDDRK,istage
@@ -54,6 +55,8 @@
 
 #ifdef FORCE_VECTORIZATION
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+#else
+  use specfem_par,only: wgllwgll_xy,wgllwgll_xz,wgllwgll_yz
 #endif
 
   implicit none

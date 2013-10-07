@@ -36,6 +36,8 @@
 !-------------------------------------------------------------------------------
 !
 
+! TODO routine not used yet...
+
 !> @brief Write simulation parameters into ADIOS result file header.
 !!
 !! Write the ADIOS header containing values to ensure reproductibility of
@@ -43,12 +45,14 @@
 !! DATA/Par_file, DATA/CMTSOLUTION, DATA/STATIONS
 subroutine write_specfem_header_adios()
 
-  use constants
-  use mpi
-  use adios_write_mod
-  use specfem_par, only : myrank, NSOURCES
+!  use constants
+!  use shared_input_parameters
+  use shared_parameters
 
-  use shared_input_parameters
+  use adios_helpers_mod
+  use adios_write_mod
+
+  use specfem_par, only : myrank, NSOURCES
 
   implicit none
 
@@ -71,9 +75,11 @@ subroutine write_specfem_header_adios()
   character(len=:),   allocatable :: station_name, network_name
   double precision, allocatable, dimension(:) :: stlat, stlon, stele, stbur
 
+!  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+
   ! Adios variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, adios_handle, varid
+  integer(kind=8)         :: adios_group, adios_handle !, varid
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   ! TODO: find a better name once the use of ADIOS is more completely
   !       implemented
@@ -81,7 +87,7 @@ subroutine write_specfem_header_adios()
   integer(kind=8)   :: group_size_inc
   integer           :: model_length ! for later reading of MODEL
   integer           :: isource, irec, ier
-
+  integer :: comm
 
   ! only the master needs to read the values to be written
   if(myrank == 0) then
@@ -115,9 +121,10 @@ subroutine write_specfem_header_adios()
     call define_stations_variables (adios_group, group_size_inc, NSTATIONS,    &
         station_name_length, network_name_length)
 
+    call world_get_comm_self(comm)
     ! open the file where the headers have to be written
     call adios_open (adios_handle, "SPECFEM3D_GLOBE_HEADER", filename, "w",    &
-                     MPI_COMM_SELF, adios_err);
+                     comm, adios_err);
     ! The group size have been auto-incremented
     adios_groupsize = group_size_inc
     call adios_group_size (adios_handle, adios_groupsize,                      &
@@ -188,14 +195,17 @@ subroutine define_solver_info_variables (adios_group, group_size_inc)
 
   pkg_str_len    = len_trim(PACKAGE_STRING)
   conf_flags_len = len_trim(CONFIGURE_FLAGS)
-  call define_adios_integer_scalar (adios_group, "package_string_length", &
+
+  call define_adios_integer_scalar_s (adios_group, "package_string_length", &
       "/solver_info", group_size_inc)
-  call define_adios_string (adios_group, "package_name", "/solver_info", &
+  call define_adios_string_s (adios_group, "package_name", "/solver_info", &
       pkg_str_len, group_size_inc)
-  call define_adios_integer_scalar (adios_group, "conf_flags_len", &
+
+  call define_adios_integer_scalar_s (adios_group, "conf_flags_len", &
       "/solver_info", group_size_inc)
-  call define_adios_string (adios_group, "conf_flags", "/solver_info", &
+  call define_adios_string_s (adios_group, "conf_flags", "/solver_info", &
       conf_flags_len, group_size_inc)
+
 end subroutine define_solver_info_variables
 
 !> \brief Define ADIOS variable to store values from the Par_file
@@ -204,82 +214,85 @@ end subroutine define_solver_info_variables
 !! \param model_length The number of character of the MODEL string.
 !!                     Usefull for reading back the MODEL
 subroutine define_par_file_variables (adios_group, group_size_inc, model_length)
+
   implicit none
+
   ! Parameters
   integer(kind=8), intent(in)    :: adios_group
   integer(kind=8), intent(inout) :: group_size_inc
   integer, intent(in)            :: model_length ! for later reading of MODEL
 
   !-- double precision variables
-  call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_XI_IN_DEGREES", &
+  call define_adios_double_scalar_s (adios_group, "ANGULAR_WIDTH_XI_IN_DEGREES", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "ANGULAR_WIDTH_ETA_IN_DEGREES", &
+  call define_adios_double_scalar_s (adios_group, "ANGULAR_WIDTH_ETA_IN_DEGREES", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "CENTER_LONGITUDE_IN_DEGREES", &
+  call define_adios_double_scalar_s (adios_group, "CENTER_LONGITUDE_IN_DEGREES", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "CENTER_LATITUDE_IN_DEGREES", &
+  call define_adios_double_scalar_s (adios_group, "CENTER_LATITUDE_IN_DEGREES", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "GAMMA_ROTATION_AZIMUTH", &
+  call define_adios_double_scalar_s (adios_group, "GAMMA_ROTATION_AZIMUTH", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "HDUR_MOVIE", &
+  call define_adios_double_scalar_s (adios_group, "HDUR_MOVIE", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_TOP_KM", &
+  call define_adios_double_scalar_s (adios_group, "MOVIE_TOP_KM", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_BOTTOM_KM", &
+  call define_adios_double_scalar_s (adios_group, "MOVIE_BOTTOM_KM", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_EAST_DEG", &
+  call define_adios_double_scalar_s (adios_group, "MOVIE_EAST_DEG", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_WEST_DEG", &
+  call define_adios_double_scalar_s (adios_group, "MOVIE_WEST_DEG", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_NORTH_DEG", &
+  call define_adios_double_scalar_s (adios_group, "MOVIE_NORTH_DEG", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "MOVIE_SOUTH_DEG", &
+  call define_adios_double_scalar_s (adios_group, "MOVIE_SOUTH_DEG", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_double_scalar (adios_group, "RECORD_LENGTH_IN_MINUTES", &
+  call define_adios_double_scalar_s (adios_group, "RECORD_LENGTH_IN_MINUTES", &
       "/specfem3D_globe_parameter_file", group_size_inc)
   !-- integer variables
-  call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_OUTPUT_SEISMOS", &
+  call define_adios_integer_scalar_s (adios_group, "NTSTEP_BETWEEN_OUTPUT_SEISMOS", &
       "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_READ_ADJSRC", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_FRAMES", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NTSTEP_BETWEEN_OUTPUT_INFO", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NUMBER_OF_RUNS", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NUMBER_OF_THIS_RUN", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NCHUNKS", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "SIMULATION_TYPE", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "MOVIE_VOLUME_TYPE", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "MOVIE_START", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "MOVIE_STOP", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NEX_XI", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NEX_ETA", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NPROC_XI", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NPROC_ETA", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "NOISE_TOMOGRAPHY", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NTSTEP_BETWEEN_READ_ADJSRC", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NTSTEP_BETWEEN_FRAMES", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NTSTEP_BETWEEN_OUTPUT_INFO", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NUMBER_OF_RUNS", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NUMBER_OF_THIS_RUN", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NCHUNKS", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "SIMULATION_TYPE", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "MOVIE_VOLUME_TYPE", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "MOVIE_START", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "MOVIE_STOP", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NEX_XI", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NEX_ETA", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NPROC_XI", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NPROC_ETA", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_integer_scalar_s(adios_group, "NOISE_TOMOGRAPHY", "/specfem3D_globe_parameter_file", group_size_inc)
   !-- logical variables
-  call define_adios_byte_scalar (adios_group, "ELLIPTICITY", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "GRAVITY", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "ROTATION", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "TOPOGRAPHY", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "OCEANS", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "MOVIE_SURFACE", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "MOVIE_VOLUME", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "MOVIE_COARSE", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "RECEIVERS_CAN_BE_BURIED", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "PRINT_SOURCE_TIME_FUNCTION", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "SAVE_MESH_FILES", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "ATTENUATION", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "ABSORBING_CONDITIONS", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "SAVE_FORWARD", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "OUTPUT_SEISMOS_ASCII_TEXT", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "OUTPUT_SEISMOS_SAC_ALPHANUM", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "OUTPUT_SEISMOS_SAC_BINARY", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "ROTATE_SEISMOGRAMS_RT", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "WRITE_SEISMOGRAMS_BY_MASTER", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "SAVE_ALL_SEISMOS_IN_ONE_FILE", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_byte_scalar (adios_group, "USE_BINARY_FOR_LARGE_FILE", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "ELLIPTICITY", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "GRAVITY", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "ROTATION", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "TOPOGRAPHY", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "OCEANS", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "MOVIE_SURFACE", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "MOVIE_VOLUME", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "MOVIE_COARSE", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "RECEIVERS_CAN_BE_BURIED", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "PRINT_SOURCE_TIME_FUNCTION", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "SAVE_MESH_FILES", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "ATTENUATION", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "ABSORBING_CONDITIONS", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "SAVE_FORWARD", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "OUTPUT_SEISMOS_ASCII_TEXT", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "OUTPUT_SEISMOS_SAC_ALPHANUM", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "OUTPUT_SEISMOS_SAC_BINARY", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "ROTATE_SEISMOGRAMS_RT", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "WRITE_SEISMOGRAMS_BY_MASTER", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "SAVE_ALL_SEISMOS_IN_ONE_FILE", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_byte_scalar_s(adios_group, "USE_BINARY_FOR_LARGE_FILE", "/specfem3D_globe_parameter_file", group_size_inc)
   !-- string variables
-  call define_adios_integer_scalar (adios_group, "model_length", "/specfem3D_globe_parameter_file", group_size_inc)
-  call define_adios_string (adios_group, "MODEL", "/specfem3D_globe_parameter_file", model_length, group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "model_length", "/specfem3D_globe_parameter_file", group_size_inc)
+  call define_adios_string_s (adios_group, "MODEL", "/specfem3D_globe_parameter_file", model_length, group_size_inc)
+
 end subroutine define_par_file_variables
 
 
@@ -297,31 +310,32 @@ subroutine define_cmtsolution_variables (adios_group, group_size_inc, NSOURCES,&
   integer, intent(in) :: NSOURCES, datasource_length, event_name_length
 
   !-- Number of SOURCES inside the CMTSOLUTION file
-  call define_adios_integer_scalar (adios_group, "NSOURCES", "/CMTSOLUTION", group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "NSOURCES", "/CMTSOLUTION", group_size_inc)
   !-- double precision arrays
-  call define_adios_double_local_array1D (adios_group, "second", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "time_shift", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "half_duration", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "latitude", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "longitude", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "depth", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "mrr", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "mtt", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "mpp", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "mrt", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "mrp", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "mtp", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "second", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "time_shift", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "half_duration", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "latitude", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "longitude", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "depth", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "mrr", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "mtt", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "mpp", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "mrt", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "mrp", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "mtp", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
   !-- integer arrays
-  call define_adios_integer_local_array1D (adios_group, "year", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_integer_local_array1D (adios_group, "month", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_integer_local_array1D (adios_group, "day", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_integer_local_array1D (adios_group, "hour", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
-  call define_adios_integer_local_array1D (adios_group, "minute", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_integer_local_array1D_s (adios_group, "year", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_integer_local_array1D_s (adios_group, "month", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_integer_local_array1D_s (adios_group, "day", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_integer_local_array1D_s (adios_group, "hour", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
+  call define_adios_integer_local_array1D_s (adios_group, "minute", "/CMTSOLUTION", NSOURCES, "NSOURCES", group_size_inc)
   !-- string
-  call define_adios_integer_scalar (adios_group, "event_name_length", "/CMTSOLUTION", group_size_inc)
-  call define_adios_string (adios_group, "event_name", "/CMTSOLUTION", event_name_length, group_size_inc)
-  call define_adios_integer_scalar (adios_group, "datasource_length", "/CMTSOLUTION", group_size_inc)
-  call define_adios_string (adios_group, "datasource", "/CMTSOLUTION", datasource_length, group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "event_name_length", "/CMTSOLUTION", group_size_inc)
+  call define_adios_string_s (adios_group, "event_name", "/CMTSOLUTION", event_name_length, group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "datasource_length", "/CMTSOLUTION", group_size_inc)
+  call define_adios_string_s (adios_group, "datasource", "/CMTSOLUTION", datasource_length, group_size_inc)
+
 end subroutine define_cmtsolution_variables
 
 !> \brief Define ADIOS variable to store values from the STATIONS file
@@ -340,17 +354,18 @@ subroutine define_stations_variables (adios_group, group_size_inc, NSTATIONS,&
   integer, intent(in) :: NSTATIONS, station_name_length, network_name_length
 
   !-- Number of STATIONS inside the STATIONS file
-  call define_adios_integer_scalar (adios_group, "NSTATIONS", "/STATIONS", group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "NSTATIONS", "/STATIONS", group_size_inc)
   !-- double precision arrays
-  call define_adios_double_local_array1D (adios_group, "station_latitude", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "station_longitude", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "station_elevation", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
-  call define_adios_double_local_array1D (adios_group, "station_burial", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "station_latitude", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "station_longitude", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "station_elevation", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
+  call define_adios_double_local_array1D_s (adios_group, "station_burial", "/STATIONS", NSTATIONS, "NSTATIONS", group_size_inc)
   !-- string
-  call define_adios_integer_scalar (adios_group, "station_name_length", "/STATIONS", group_size_inc)
-  call define_adios_integer_scalar (adios_group, "network_name_length", "/STATIONS", group_size_inc)
-  call define_adios_string (adios_group, "station_name", "/STATIONS", station_name_length, group_size_inc)
-  call define_adios_string (adios_group, "network_name", "/STATIONS", network_name_length, group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "station_name_length", "/STATIONS", group_size_inc)
+  call define_adios_integer_scalar_s (adios_group, "network_name_length", "/STATIONS", group_size_inc)
+  call define_adios_string_s (adios_group, "station_name", "/STATIONS", station_name_length, group_size_inc)
+  call define_adios_string_s (adios_group, "network_name", "/STATIONS", network_name_length, group_size_inc)
+
 end subroutine define_stations_variables
 
 !> \brief Read the 'CMTSOLUTION file' and do not modify nor transform variables
@@ -477,6 +492,9 @@ end subroutine read_raw_cmtsolution
 !!                     concatenated
 subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
     station_name_length, station_name, network_name_length, network_name)
+
+  use constants,only: MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN
+
   implicit none
   ! Parameters
   integer :: NSTATIONS
@@ -581,7 +599,7 @@ subroutine write_adios_par_file_variables (adios_handle,                       &
       MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG, RECORD_LENGTH_IN_MINUTES
   logical, intent(in) :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,       &
       MOVIE_SURFACE, MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,       &
-      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION, &
+      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION,                 &
       ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
       OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
       ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
@@ -718,6 +736,169 @@ subroutine write_adios_stations_variables (adios_handle,                       &
   call adios_write (adios_handle, "station_name", station_name, adios_err)
   call adios_write (adios_handle, "network_name", network_name, adios_err)
 end subroutine write_adios_stations_variables
+
+
+!===============================================================================
+!> Define an ADIOS scalar double precision variable and autoincrement
+!! the adios group size by (8).
+!! \param adios_group The adios group where the variables belongs
+!! \param name The variable to be defined
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+subroutine define_adios_double_scalar_s (adios_group, name, path, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+
+  ! adios: 6 == real(kind=8)
+  call adios_define_var (adios_group, name, path, 6,  "", "", "", varid)
+  group_size_inc = group_size_inc + 8
+end subroutine define_adios_double_scalar_s
+
+!===============================================================================
+!> Define an ADIOS scalar integer variable and autoincrement the adios
+!! group size by (4).
+!! \param adios_group The adios group where the variables belongs
+!! \param name The variable to be defined
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+subroutine define_adios_integer_scalar_s (adios_group, name, path, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+
+  ! adios: 2 == integer(kind=4)
+  call adios_define_var (adios_group, name, path, adios_integer,  "", "", "", varid)
+  group_size_inc = group_size_inc + 4
+end subroutine define_adios_integer_scalar_s
+
+!===============================================================================
+!> Define an ADIOS scalar byte variable and autoincrement the adios
+!! group size by (1).
+!! \param adios_group The adios group where the variables belongs
+!! \param name The variable to be defined
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+subroutine define_adios_byte_scalar_s (adios_group, name, path, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+
+  ! adios: 0 == byte == any_data_type(kind=1)
+  call adios_define_var (adios_group, name, path, 0,  "", "", "", varid)
+  group_size_inc = group_size_inc + 1
+end subroutine define_adios_byte_scalar_s
+
+!===============================================================================
+!> Define a local ADIOS string and autoincrement the adios
+!! group size by (1 * string's length).
+!! \param adios_group The adios group where the variables belongs
+!! \param name The variable to be defined
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param len The length of the string(number of character. in Fortran
+!!            it does not include a final '\0' -- null -- character)
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \note Adios string are scalar values counting for (1) byte. It is
+!!       mandatory to increase the group size by the length of the
+!!       string in order not to overlap 'data regions'.
+subroutine define_adios_string_s (adios_group, name, path, length, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  integer                          :: length
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+
+  ! adios: 9 == string
+  call adios_define_var (adios_group, name, path, 9,  "", "", "", varid)
+  group_size_inc = group_size_inc + 1*length
+
+end subroutine define_adios_string_s
+
+!===============================================================================
+!> Define a local ADIOS array of doubles and autoincrement the adios
+!! group size by (8 * number of elements).
+!! \param adios_group The adios group where the variables belongs
+!! \param name The variable to be defined
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param dim The number of elements in the 1D array. Required to
+!!            correctly increment adios group size.
+!! \param dim_str The "stringified" version of dim. Needed by adios
+!!                to define variables
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+subroutine define_adios_double_local_array1D_s (adios_group, name, path, dim, dim_str, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path, dim_str
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  integer, intent(in)              :: dim
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+
+  ! adios: 6 == real(kind=8)
+  call adios_define_var (adios_group, name, path, 6, dim_str, "", "", varid)
+  group_size_inc = group_size_inc + 8*dim
+
+end subroutine define_adios_double_local_array1D_s
+
+!===============================================================================
+!> Define a local ADIOS array of integers and autoincrement the adios
+!! group size by (4 * number of elements).
+!! \param adios_group The adios group where the variables belongs
+!! \param name The variable to be defined
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param dim The number of elements in the 1D array. Required to
+!!            correctly increment adios group size.
+!! \param dim_str The "stringified" version of dim. Needed by adios
+!!                to define variables
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+subroutine define_adios_integer_local_array1D_s (adios_group, name, path, dim, dim_str, group_size_inc)
+  use adios_write_mod
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path, dim_str
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  integer, intent(in)              :: dim
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+
+  ! adios: 2 == integer
+  call adios_define_var (adios_group, name, path, 2,  dim_str, "", "", varid)
+  group_size_inc = group_size_inc + 4*dim
+end subroutine define_adios_integer_local_array1D_s
 
 
 end subroutine write_specfem_header_adios

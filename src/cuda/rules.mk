@@ -79,6 +79,6 @@ $O/%.cuda.o: $S/%.cu ${SETUP}/config.h $S/mesh_constants_cuda.h $S/prepare_const
 	${NVCC} -c $< -o $@ $(NVCC_FLAGS)
 
 $O/%.cudacc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) $(MPI_INC) -o $@ $< 
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 

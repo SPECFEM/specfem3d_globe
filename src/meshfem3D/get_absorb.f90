@@ -138,8 +138,9 @@
   ! This files will be saved with the help of ADIOS if the
   ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-    call get_absorb_adios(myrank, iregion, nimin, nimax, njmin, njmax, &
-        nkmin_xi, nkmin_eta, NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+    call get_absorb_adios(myrank, iregion, &
+                          nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
+                          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
   else
     open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)

@@ -55,6 +55,7 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
 
   use constants
   use adios_write_mod
+  use adios_helpers_mod
 
   implicit none
 
@@ -98,20 +99,23 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
 
   ! local parameters
   integer ispec
-  integer i,j,k,np
+  !integer i,j,k,np
   integer, dimension(8) :: iglobval
-  integer npoin,numpoin,nspecface,ispecface
+  integer npoin,nspecface !,ispecface,numpoin
 
-  real(kind=CUSTOM_REAL) vmin,vmax
-
-  double precision r,rho,vp,vs,Qkappa,Qmu
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
-  real(kind=CUSTOM_REAL) dvp,dvs
+  !real(kind=CUSTOM_REAL) vmin,vmax
+  !double precision r,rho,vp,vs,Qkappa,Qmu
+  !double precision vpv,vph,vsv,vsh !,eta_aniso
+  !double precision x,y,z,theta,phi_dummy,p20 !,ell,factor,cost
+  !real(kind=CUSTOM_REAL) dvp,dvs
 
   type(avs_dx_global_chunks_t), intent(inout) :: avs_dx_adios
 
   integer :: ierr
+
+  ! Dummy arrays for type inference inside adios helpers
+  real(kind=4), dimension(1) :: dummy_real1d
+  integer(kind=4), dimension(1) :: dummy_int1d
 
   mask_ibool(:) = .false.
 
@@ -200,41 +204,50 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
   allocate(avs_dx_adios%iglob4(nspecface), stat=ierr)
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating iglob4.")
 
-  !--- Variables for '...AVS_DXpointschunk.txt'
-  call define_adios_global_real_1d_array(adios_group, "points_chunks/x_value", &
-      npoin, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, "points_chunks/y_value", &
-      npoin, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, "points_chunks/z_value", &
-      npoin, group_size_inc)
-  !--- Variables for '...AVS_DXpointschunk_stability.txt'
-  call define_adios_global_real_1d_array(adios_group, &
-      "points_chunks_stability/vmin", npoin, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "points_chunks_stability/vmax", npoin, group_size_inc)
-  !--- Variables for AVS_DXelementschunks.txt
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_chunks/idoubling", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_chunks/num_ibool_AVS_DX_iglob1", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_chunks/num_ibool_AVS_DX_iglob2", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_chunks/num_ibool_AVS_DX_iglob3", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_chunks/num_ibool_AVS_DX_iglob4", nspecface, group_size_inc)
 
-  !--- Variables for AVS_DXelementschunks_dvp_dvs.txt
+  !--- Variables for '...AVS_DXpointschunks.txt'
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_chunks/x_value", dummy_real1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_chunks/y_value", dummy_real1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_chunks/z_value", dummy_real1d)
+
+  !--- Variables for '...AVS_DXpointschunk_stability.txt'
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_chunks/vmin", dummy_real1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_chunks/vmax", dummy_real1d)
+
+  !--- Variables for AVS_DXelementschunks.txt
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements_chunks/idoubling",    &
+                                   dummy_int1d)
+
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                "", "elements_chunks/num_ibool_AVS_DX_iglob1", &
+                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                "", "elements_chunks/num_ibool_AVS_DX_iglob2", &
+                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                "", "elements_chunks/num_ibool_AVS_DX_iglob3", &
+                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                "", "elements_chunks/num_ibool_AVS_DX_iglob4", &
+                                   dummy_int1d)
+
   if(ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
-    call define_adios_global_real_1d_array(adios_group, &
-        "elements_chunks/dvp", dvp, group_size_inc)
-    call define_adios_global_real_1d_array(adios_group, &
-        "elements_chunks/dvp", dvs, group_size_inc)
+    call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                     "elements_faces", "dvp", dummy_real1d)
+    call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                     "elements_faces", "dvs", dummy_real1d)
   endif
+
 
 end subroutine define_AVS_DX_global_chunks_data
 
@@ -918,7 +931,8 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
                   dvp = dvp + (sqrt((kappavstore(i,j,k,ispec) &
                       +4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) &
                       - sngl(vp))/sngl(vp)
-                  dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) &
+                  dvs = dvs + (sqrt(muvstore(i,j,k,ispec) &
+                               / rhostore(i,j,k,ispec)) &
                       - sngl(vs))/sngl(vs)
                 endif
 
@@ -1004,6 +1018,7 @@ subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
     sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
 
   use adios_write_mod
+  use adios_helpers_mod
   implicit none
   !--- Arguments
   integer(kind=8), intent(in) :: adios_handle
@@ -1012,78 +1027,49 @@ subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
   logical ISOTROPIC_3D_MANTLE
   !--- Variables
   integer :: npoin, nspec
-  integer :: ierr
 
   npoin = avs_dx_adios%npoin
   nspec = avs_dx_adios%nspecface
 
-  call adios_set_path(adios_handle, "points_chunks/x_value", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%x_adios, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_chunks/x_value",                &
+                                   avs_dx_adios%x_adios)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_chunks/y_value",                &
+                                   avs_dx_adios%y_adios)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_chunks/z_value",                &
+                                   avs_dx_adios%z_adios)
 
-  call adios_set_path(adios_handle, "points_chunks/y_value", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%y_adios, ierr)
-
-  call adios_set_path(adios_handle, "points_chunks/z_value", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%z_adios, ierr)
-
-
-  call adios_set_path(adios_handle, "points_chunks/vmin", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%vmin, ierr)
-
-  call adios_set_path(adios_handle, "points_chunks/vmax", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%vmax, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_chunks/vmin", avs_dx_adios%vmin)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_chunks/vmax", avs_dx_adios%vmax)
 
 
-  call adios_set_path(adios_handle, "elements_chunks/idoubling", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%idoubling, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                  "elements_chunks/idoubling",             &
+                                   avs_dx_adios%idoubling)
 
-
-  call adios_set_path(adios_handle, &
-      "elements_chunks/num_ibool_AVS_DX_iglob1", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob1, ierr)
-
-  call adios_set_path(adios_handle, &
-      "elements_chunks/num_ibool_AVS_DX_iglob2", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob2, ierr)
-
-  call adios_set_path(adios_handle, &
-      "elements_chunks/num_ibool_AVS_DX_iglob3", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob3, ierr)
-
-  call adios_set_path(adios_handle, &
-      "elements_chunks/num_ibool_AVS_DX_iglob4", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob4, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec,    &
+                                   "elements_chunks/num_ibool_AVS_DX_iglob1", &
+                                   avs_dx_adios%iglob1)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec,    &
+                                   "elements_chunks/num_ibool_AVS_DX_iglob2", &
+                                   avs_dx_adios%iglob2)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec,    &
+                                   "elements_chunks/num_ibool_AVS_DX_iglob3", &
+                                   avs_dx_adios%iglob3)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec,    &
+                                   "elements_chunks/num_ibool_AVS_DX_iglob4", &
+                                   avs_dx_adios%iglob4)
 
 
   if(ISOTROPIC_3D_MANTLE) then
-    call adios_set_path(adios_handle, "elements_chunks/dvp", ierr)
-    call write_1D_global_array_adios_dims(adios_handle, myrank, &
-        nspec, sizeprocs)
-    call adios_write(adios_handle, "array", avs_dx_adios%dvp, ierr)
-    call adios_set_path(adios_handle, "elements_chunks/dvs", ierr)
-    call write_1D_global_array_adios_dims(adios_handle, myrank, &
-        nspec, sizeprocs)
-    call adios_write(adios_handle, "array", avs_dx_adios%dvs, ierr)
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                     "elements_chunks/dvp", avs_dx_adios%dvp)
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                     "elements_chunks/dvs", avs_dx_adios%dvs)
   endif
 
 end subroutine write_AVS_DX_global_chunks_data_adios

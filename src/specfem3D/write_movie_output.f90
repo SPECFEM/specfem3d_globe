@@ -80,7 +80,7 @@
       endif
 
       ! integrates strain
-      call movie_volume_integrate_strain(deltat,size(Ieps_trace_over_3_crust_mantle,4), &
+      call movie_volume_integrate_strain(deltat,NSPEC_CRUST_MANTLE_3DMOVIE, &
                                         eps_trace_over_3_crust_mantle, &
                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
                                         epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &

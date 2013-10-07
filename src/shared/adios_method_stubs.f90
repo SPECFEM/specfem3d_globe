@@ -28,12 +28,39 @@
 
 ! placeholders for non-adios compilation
 
-! for xmeshfem3D compilation
+  subroutine warn_no_adios()
+    stop 'Trying to use ADIOS while not configured for it.'
+  end subroutine warn_no_adios
 
-  subroutine adios_cleanup()
-  end subroutine
+! modules
+
+!  module AVS_DX_global_mod
+!    type avs_dx_global_t
+!    end type avs_dx_global_t
+!  end module AVS_DX_global_mod
+
+!  module AVS_DX_global_faces_mod
+!    type avs_dx_global_faces_t
+!    end type avs_dx_global_faces_t
+!  end module AVS_DX_global_faces_mod
+
+!  module AVS_DX_global_chunks_mod
+!    type avs_dx_global_chunks_t
+!    end type avs_dx_global_chunks_t
+!  end module AVS_DX_global_chunks_mod
+
+!  module AVS_DX_surface_mod
+!    type avs_dx_surface_t
+!    end type avs_dx_surface_t
+!  end module AVS_DX_surface_mod
+
+! for both xmeshfem3D/xspecfem3D compilation
 
   subroutine adios_setup()
+  call warn_no_adios()
+  end subroutine
+
+  subroutine adios_cleanup()
   end subroutine
 
 ! for xmeshfem3D compilation
@@ -47,12 +74,63 @@
   subroutine save_arrays_solver_adios()
   end subroutine
 
+  subroutine save_arrays_solver_meshfiles_adios()
+  end subroutine
+
   subroutine save_arrays_solver_boundary_adios()
   end subroutine
 
-  subroutine save_mpi_arrays_adios()
+  subroutine save_MPI_arrays_adios()
   end subroutine
 
+  subroutine read_gll_model_adios
+  end subroutine
+  
+!  subroutine prepare_AVS_DX_global_chunks_data_adios()
+!  end subroutine
+!
+!  subroutine write_AVS_DX_global_chunks_data_adios()
+!  end subroutine
+!
+!  subroutine free_AVS_DX_global_chunks_data_adios()
+!  end subroutine
+!
+!  subroutine define_AVS_DX_global_data_adios()
+!  end subroutine
+!
+!  subroutine prepare_AVS_DX_global_data_adios()
+!  end subroutine
+!
+!  subroutine write_AVS_DX_global_data_adios()
+!  end subroutine
+!
+!  subroutine free_AVS_DX_global_data_adios()
+!  end subroutine
+!
+!  subroutine define_AVS_DX_global_faces_data_adios()
+!  end subroutine
+!
+!  subroutine prepare_AVS_DX_global_faces_data_adios()
+!  end subroutine
+!
+!  subroutine write_AVS_DX_global_faces_data_adios()
+!  end subroutine
+!
+!  subroutine free_AVS_DX_global_faces_data_adios()
+!  end subroutine
+!
+!  subroutine define_AVS_DX_surfaces_data_adios()
+!  end subroutine
+!
+!  subroutine prepare_AVS_DX_surfaces_data_adios()
+!  end subroutine
+!
+!  subroutine write_AVS_DX_surfaces_data_adios()
+!  end subroutine
+!
+!  subroutine free_AVS_DX_surfaces_data_adios()
+!  end subroutine
+!
 
 ! for xspecfem3D compilation
 
@@ -88,4 +166,54 @@
 
   subroutine save_intermediate_forward_arrays_adios()
   end subroutine
+
+!  subroutine define_common_forward_arrays_adios()
+!  end subroutine
+!
+!  subroutine define_rotation_forward_arrays_adios()
+!  end subroutine
+!
+!  subroutine define_attenuation_forward_arrays_adios()
+!  end subroutine
+!
+!  subroutine write_common_forward_arrays_adios()
+!  end subroutine
+!
+!  subroutine write_rotation_forward_arrays_adios()
+!  end subroutine
+!
+!  subroutine write_attenuation_forward_arrays_adios()
+!  end subroutine
+!
+!  subroutine write_1D_global_array_adios_dims()
+!  end subroutine
+!
+
+  subroutine perform_write_adios_kernels()
+  end subroutine
+
+  subroutine define_kernel_adios_variables()
+  end subroutine
+
+  subroutine write_kernels_crust_mantle_adios()
+  end subroutine
+
+  subroutine write_kernels_outer_core_adios()
+  end subroutine
+
+  subroutine write_kernels_inner_core_adios()
+  end subroutine
+
+  subroutine write_kernels_boundary_kl_adios()
+  end subroutine
+
+  subroutine write_kernels_source_derivatives_adios()
+  end subroutine
+
+  subroutine write_kernels_hessian_adios()
+  end subroutine
+
+!
+!  subroutine write_specfem_header_adios()
+!  end subroutine
 

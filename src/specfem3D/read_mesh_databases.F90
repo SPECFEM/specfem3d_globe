@@ -39,6 +39,18 @@
   double precision :: tCPU
   double precision, external :: wtime
 
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+  logical,parameter :: SYNC_READING = .false.
+#else
+  logical,parameter :: SYNC_READING = .true.
+#endif
+
+  ! user output
+  if( myrank == 0 ) then
+    write(IMAIN,*) 'mesh databases:'
+    call flush_IMAIN()
+  endif
+
   ! get MPI starting time
   time_start = wtime()
 
@@ -52,39 +64,72 @@
   ! read arrays created by the mesher
 
   ! reads "solver_data.bin" files for crust and mantle
+  if( SYNC_READING ) call synchronize_all()
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  reading in crust/mantle databases...'
+    call flush_IMAIN()
+  endif
   call read_mesh_databases_CM()
 
   ! reads "solver_data.bin" files for outer core
+  if( SYNC_READING ) call synchronize_all()
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  reading in outer core databases...'
+    call flush_IMAIN()
+  endif
   call read_mesh_databases_OC()
 
   ! reads "solver_data.bin" files for inner core
+  if( SYNC_READING ) call synchronize_all()
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  reading in inner core databases...'
+    call flush_IMAIN()
+  endif
   call read_mesh_databases_IC()
 
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
-  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-    call read_mesh_databases_coupling_adios()
-  else
-    call read_mesh_databases_coupling()
+  if( SYNC_READING ) call synchronize_all()
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  reading in coupling surface databases...'
+    call flush_IMAIN()
   endif
+  call read_mesh_databases_coupling()
 
   ! reads "addressing.txt" 2-D addressing (needed for Stacey boundaries)
+  if( SYNC_READING ) call synchronize_all()
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  reading in addressing...'
+    call flush_IMAIN()
+  endif
   call read_mesh_databases_addressing()
 
+
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
+  if( SYNC_READING ) call synchronize_all()
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  reading in mpi databases...'
+    call flush_IMAIN()
+  endif
   call read_mesh_databases_MPI()
 
   ! absorbing boundaries
   if(ABSORBING_CONDITIONS) then
     ! reads "stacey.bin" files
-    if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-      call read_mesh_databases_stacey_adios()
-    else
-      call read_mesh_databases_stacey()
+    if( SYNC_READING ) call synchronize_all()
+    if( myrank == 0 ) then
+      write(IMAIN,*) '  reading in stacey databases...'
+      call flush_IMAIN()
     endif
+    call read_mesh_databases_stacey()
   endif
 
   ! kernels on regular grids
   if (SAVE_REGULAR_KL) then
+    if( SYNC_READING ) call synchronize_all()
+    if( myrank == 0 ) then
+      write(IMAIN,*) '  reading in regular kernel databases...'
+      call flush_IMAIN()
+    endif
     call read_mesh_databases_regular_kl()
   endif
 
@@ -176,48 +221,48 @@
   ! reads databases file
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
-        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
-        nspec_iso,nspec_tiso,nspec_ani, &
-        rho_vp_crust_mantle,rho_vs_crust_mantle, &
-        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-        c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-        c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-        c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-        c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-        c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-        c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-        c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-        ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-        rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
-        READ_KAPPA_MU,READ_TISO, &
-        b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+                                  NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
+                                  nspec_iso,nspec_tiso,nspec_ani, &
+                                  rho_vp_crust_mantle,rho_vs_crust_mantle, &
+                                  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                  rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                  kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                  c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+                                  c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+                                  c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+                                  c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+                                  c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+                                  c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                  c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                  ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+                                  READ_KAPPA_MU,READ_TISO, &
+                                  b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   else
     call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
-        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
-        nspec_iso,nspec_tiso,nspec_ani, &
-        rho_vp_crust_mantle,rho_vs_crust_mantle, &
-        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-        c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-        c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-        c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-        c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-        c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-        c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-        c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-        ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-        rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
-        READ_KAPPA_MU,READ_TISO, &
-        b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+                            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
+                            nspec_iso,nspec_tiso,nspec_ani, &
+                            rho_vp_crust_mantle,rho_vs_crust_mantle, &
+                            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                            rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                            kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                            c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+                            c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+                            c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+                            c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+                            c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+                            c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                            c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                            ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+                            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+                            READ_KAPPA_MU,READ_TISO, &
+                            b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   endif
 
   ! check that the number of points in this slice is correct
@@ -262,7 +307,6 @@
     deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     nullify(b_rmassz_crust_mantle)
   endif
-
 
   end subroutine read_mesh_databases_CM
 
@@ -309,51 +353,50 @@
   if(ier /= 0) stop 'error allocating dummy rmass and dummy ispec/idoubling in outer core'
 
   ! reads in mesh arrays
-
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
-              NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
-              nspec_iso,nspec_tiso,nspec_ani, &
-              vp_outer_core,dummy_array, &
-              xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-              xix_outer_core,xiy_outer_core,xiz_outer_core, &
-              etax_outer_core,etay_outer_core,etaz_outer_core, &
-              gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-              rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-              dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
-              READ_KAPPA_MU,READ_TISO, &
-              dummy_rmass,dummy_rmass)
+                                  NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
+                                  nspec_iso,nspec_tiso,nspec_ani, &
+                                  vp_outer_core,dummy_array, &
+                                  xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                                  etax_outer_core,etay_outer_core,etaz_outer_core, &
+                                  gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                                  rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+                                  dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
+                                  READ_KAPPA_MU,READ_TISO, &
+                                  dummy_rmass,dummy_rmass)
   else
     call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-              NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
-              nspec_iso,nspec_tiso,nspec_ani, &
-              vp_outer_core,dummy_array, &
-              xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-              xix_outer_core,xiy_outer_core,xiz_outer_core, &
-              etax_outer_core,etay_outer_core,etaz_outer_core, &
-              gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-              rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-              dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
-              READ_KAPPA_MU,READ_TISO, &
-              dummy_rmass,dummy_rmass)
+                            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
+                            nspec_iso,nspec_tiso,nspec_ani, &
+                            vp_outer_core,dummy_array, &
+                            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                            xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                            etax_outer_core,etay_outer_core,etaz_outer_core, &
+                            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                            rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+                            dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
+                            READ_KAPPA_MU,READ_TISO, &
+                            dummy_rmass,dummy_rmass)
   endif
 
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
@@ -434,48 +477,48 @@
   ! reads in arrays
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
     call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
-              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
-              nspec_iso,nspec_tiso,nspec_ani, &
-              dummy_array,dummy_array, &
-              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-              xix_inner_core,xiy_inner_core,xiz_inner_core, &
-              etax_inner_core,etay_inner_core,etaz_inner_core, &
-              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-              rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-              dummy_array,dummy_array,dummy_array, &
-              c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,c33store_inner_core, &
-              dummy_array,dummy_array,dummy_array, &
-              c44store_inner_core,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
-              READ_KAPPA_MU,READ_TISO, &
-              b_rmassx_inner_core,b_rmassy_inner_core)
+                                  NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
+                                  nspec_iso,nspec_tiso,nspec_ani, &
+                                  dummy_array,dummy_array, &
+                                  xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                  etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                  gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                  rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,c33store_inner_core, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  c44store_inner_core,dummy_array,dummy_array, &
+                                  dummy_array,dummy_array,dummy_array, &
+                                  ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+                                  rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
+                                  READ_KAPPA_MU,READ_TISO, &
+                                  b_rmassx_inner_core,b_rmassy_inner_core)
   else
     call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
-              nspec_iso,nspec_tiso,nspec_ani, &
-              dummy_array,dummy_array, &
-              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-              xix_inner_core,xiy_inner_core,xiz_inner_core, &
-              etax_inner_core,etay_inner_core,etaz_inner_core, &
-              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-              rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-              dummy_array,dummy_array,dummy_array, &
-              c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              dummy_array,dummy_array,c33store_inner_core, &
-              dummy_array,dummy_array,dummy_array, &
-              c44store_inner_core,dummy_array,dummy_array, &
-              dummy_array,dummy_array,dummy_array, &
-              ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
-              READ_KAPPA_MU,READ_TISO, &
-              b_rmassx_inner_core,b_rmassy_inner_core)
+                            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
+                            nspec_iso,nspec_tiso,nspec_ani, &
+                            dummy_array,dummy_array, &
+                            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                            xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                            etax_inner_core,etay_inner_core,etaz_inner_core, &
+                            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                            rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                            dummy_array,dummy_array,dummy_array, &
+                            c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,c33store_inner_core, &
+                            dummy_array,dummy_array,dummy_array, &
+                            c44store_inner_core,dummy_array,dummy_array, &
+                            dummy_array,dummy_array,dummy_array, &
+                            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+                            rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
+                            READ_KAPPA_MU,READ_TISO, &
+                            b_rmassx_inner_core,b_rmassy_inner_core)
   endif
 
   deallocate(dummy_ispec_is_tiso)
@@ -544,147 +587,174 @@
   integer :: njunk1,njunk2,njunk3
   integer :: ier
 
-  ! user output
-  if( myrank == 0 ) write(IMAIN,*) 'reading coupling surfaces...'
-
-  ! crust and mantle
-  ! create name of database
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-
-  ! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening crust_mantle boundary.bin file')
-
-  read(27) nspec2D_xmin_crust_mantle
-  read(27) nspec2D_xmax_crust_mantle
-  read(27) nspec2D_ymin_crust_mantle
-  read(27) nspec2D_ymax_crust_mantle
-  read(27) njunk1
-  read(27) njunk2
-
-! boundary parameters
-  read(27) ibelm_xmin_crust_mantle
-  read(27) ibelm_xmax_crust_mantle
-  read(27) ibelm_ymin_crust_mantle
-  read(27) ibelm_ymax_crust_mantle
-  read(27) ibelm_bottom_crust_mantle
-  read(27) ibelm_top_crust_mantle
-
-  read(27) normal_xmin_crust_mantle
-  read(27) normal_xmax_crust_mantle
-  read(27) normal_ymin_crust_mantle
-  read(27) normal_ymax_crust_mantle
-  read(27) normal_bottom_crust_mantle
-  read(27) normal_top_crust_mantle
-
-  read(27) jacobian2D_xmin_crust_mantle
-  read(27) jacobian2D_xmax_crust_mantle
-  read(27) jacobian2D_ymin_crust_mantle
-  read(27) jacobian2D_ymax_crust_mantle
-  read(27) jacobian2D_bottom_crust_mantle
-  read(27) jacobian2D_top_crust_mantle
-  close(27)
-
-  ! read parameters to couple fluid and solid regions
-  !
-  ! outer core
-
-  ! create name of database
-  call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-
-  ! boundary parameters
-
-  ! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening outer_core boundary.bin file')
-
-  read(27) nspec2D_xmin_outer_core
-  read(27) nspec2D_xmax_outer_core
-  read(27) nspec2D_ymin_outer_core
-  read(27) nspec2D_ymax_outer_core
-  read(27) njunk1
-  read(27) njunk2
-
-  nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
-
-  read(27) ibelm_xmin_outer_core
-  read(27) ibelm_xmax_outer_core
-  read(27) ibelm_ymin_outer_core
-  read(27) ibelm_ymax_outer_core
-  read(27) ibelm_bottom_outer_core
-  read(27) ibelm_top_outer_core
-
-  read(27) normal_xmin_outer_core
-  read(27) normal_xmax_outer_core
-  read(27) normal_ymin_outer_core
-  read(27) normal_ymax_outer_core
-  read(27) normal_bottom_outer_core
-  read(27) normal_top_outer_core
-
-  read(27) jacobian2D_xmin_outer_core
-  read(27) jacobian2D_xmax_outer_core
-  read(27) jacobian2D_ymin_outer_core
-  read(27) jacobian2D_ymax_outer_core
-  read(27) jacobian2D_bottom_outer_core
-  read(27) jacobian2D_top_outer_core
-  close(27)
-
-  !
-  ! inner core
-  !
-
-  ! create name of database
-  call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-
-  ! read info for vertical edges for central cube matching in inner core
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening inner_core boundary.bin file')
-
-  read(27) nspec2D_xmin_inner_core
-  read(27) nspec2D_xmax_inner_core
-  read(27) nspec2D_ymin_inner_core
-  read(27) nspec2D_ymax_inner_core
-  read(27) njunk1
-  read(27) njunk2
-
-  ! boundary parameters
-  read(27) ibelm_xmin_inner_core
-  read(27) ibelm_xmax_inner_core
-  read(27) ibelm_ymin_inner_core
-  read(27) ibelm_ymax_inner_core
-  read(27) ibelm_bottom_inner_core
-  read(27) ibelm_top_inner_core
-  close(27)
-
-  ! -- Boundary Mesh for crust and mantle ---
-  if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-
+  ! reads in arrays
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call read_mesh_databases_coupling_adios()
+  else
+    ! crust and mantle
+    ! create name of database
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+    ! Stacey put back
+    open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
           status='old',form='unformatted',action='read',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening crust_mantle boundary.bin file')
 
-    read(27) njunk1,njunk2,njunk3
-    if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
-               call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
-    read(27) ibelm_moho_top
-    read(27) ibelm_moho_bot
-    read(27) ibelm_400_top
-    read(27) ibelm_400_bot
-    read(27) ibelm_670_top
-    read(27) ibelm_670_bot
-    read(27) normal_moho
-    read(27) normal_400
-    read(27) normal_670
+    read(27) nspec2D_xmin_crust_mantle
+    read(27) nspec2D_xmax_crust_mantle
+    read(27) nspec2D_ymin_crust_mantle
+    read(27) nspec2D_ymax_crust_mantle
+    read(27) njunk1
+    read(27) njunk2
+
+  ! boundary parameters
+    read(27) ibelm_xmin_crust_mantle
+    read(27) ibelm_xmax_crust_mantle
+    read(27) ibelm_ymin_crust_mantle
+    read(27) ibelm_ymax_crust_mantle
+    read(27) ibelm_bottom_crust_mantle
+    read(27) ibelm_top_crust_mantle
+
+    read(27) normal_xmin_crust_mantle
+    read(27) normal_xmax_crust_mantle
+    read(27) normal_ymin_crust_mantle
+    read(27) normal_ymax_crust_mantle
+    read(27) normal_bottom_crust_mantle
+    read(27) normal_top_crust_mantle
+
+    read(27) jacobian2D_xmin_crust_mantle
+    read(27) jacobian2D_xmax_crust_mantle
+    read(27) jacobian2D_ymin_crust_mantle
+    read(27) jacobian2D_ymax_crust_mantle
+    read(27) jacobian2D_bottom_crust_mantle
+    read(27) jacobian2D_top_crust_mantle
     close(27)
 
+    ! read parameters to couple fluid and solid regions
+    !
+    ! outer core
+
+    ! create name of database
+    call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+
+    ! boundary parameters
+
+    ! Stacey put back
+    open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+          status='old',form='unformatted',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening outer_core boundary.bin file')
+
+    read(27) nspec2D_xmin_outer_core
+    read(27) nspec2D_xmax_outer_core
+    read(27) nspec2D_ymin_outer_core
+    read(27) nspec2D_ymax_outer_core
+    read(27) njunk1
+    read(27) njunk2
+
+    nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
+    read(27) ibelm_xmin_outer_core
+    read(27) ibelm_xmax_outer_core
+    read(27) ibelm_ymin_outer_core
+    read(27) ibelm_ymax_outer_core
+    read(27) ibelm_bottom_outer_core
+    read(27) ibelm_top_outer_core
+
+    read(27) normal_xmin_outer_core
+    read(27) normal_xmax_outer_core
+    read(27) normal_ymin_outer_core
+    read(27) normal_ymax_outer_core
+    read(27) normal_bottom_outer_core
+    read(27) normal_top_outer_core
+
+    read(27) jacobian2D_xmin_outer_core
+    read(27) jacobian2D_xmax_outer_core
+    read(27) jacobian2D_ymin_outer_core
+    read(27) jacobian2D_ymax_outer_core
+    read(27) jacobian2D_bottom_outer_core
+    read(27) jacobian2D_top_outer_core
+    close(27)
+
+    !
+    ! inner core
+    !
+
+    ! create name of database
+    call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+
+    ! read info for vertical edges for central cube matching in inner core
+    open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+          status='old',form='unformatted',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening inner_core boundary.bin file')
+
+    read(27) nspec2D_xmin_inner_core
+    read(27) nspec2D_xmax_inner_core
+    read(27) nspec2D_ymin_inner_core
+    read(27) nspec2D_ymax_inner_core
+    read(27) njunk1
+    read(27) njunk2
+
+    ! boundary parameters
+    read(27) ibelm_xmin_inner_core
+    read(27) ibelm_xmax_inner_core
+    read(27) ibelm_ymin_inner_core
+    read(27) ibelm_ymax_inner_core
+    read(27) ibelm_bottom_inner_core
+    read(27) ibelm_top_inner_core
+    close(27)
+
+    ! -- Boundary Mesh for crust and mantle ---
+    if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
+      call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+            status='old',form='unformatted',action='read',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+
+      read(27) njunk1,njunk2,njunk3
+      if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
+                 call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
+      read(27) ibelm_moho_top
+      read(27) ibelm_moho_bot
+      read(27) ibelm_400_top
+      read(27) ibelm_400_bot
+      read(27) ibelm_670_top
+      read(27) ibelm_670_bot
+      read(27) normal_moho
+      read(27) normal_400
+      read(27) normal_670
+      close(27)
+    endif
+
+  endif ! ADIOS
+
+  ! checks dimensions
+  ! crust mantle
+  if( nspec2d_xmin_crust_mantle < 0 .or. nspec2d_xmin_crust_mantle > NSPEC2DMAX_XMIN_XMAX_CM .or. &
+      nspec2d_xmax_crust_mantle < 0 .or. nspec2d_xmax_crust_mantle > NSPEC2DMAX_XMIN_XMAX_CM .or. &
+      nspec2d_ymin_crust_mantle < 0 .or. nspec2d_ymin_crust_mantle > NSPEC2DMAX_YMIN_YMAX_CM .or. &
+      nspec2d_ymax_crust_mantle < 0 .or. nspec2d_ymax_crust_mantle > NSPEC2DMAX_YMIN_YMAX_CM ) &
+      call exit_mpi(myrank,'error reading crust/mantle boundary')
+  ! outer core
+  if (nspec2D_xmin_outer_core < 0 .or. nspec2d_xmin_outer_core > NSPEC2DMAX_XMIN_XMAX_OC .or. &
+      nspec2D_xmax_outer_core < 0 .or. nspec2d_xmax_outer_core > NSPEC2DMAX_XMIN_XMAX_OC .or. &
+      nspec2D_ymin_outer_core < 0 .or. nspec2d_ymin_outer_core > NSPEC2DMAX_YMIN_YMAX_OC .or. &
+      nspec2D_ymax_outer_core < 0 .or. nspec2d_ymax_outer_core > NSPEC2DMAX_YMIN_YMAX_OC ) &
+    call exit_mpi(myrank, 'Error reading outer core boundary')
+  ! inner core
+  if (nspec2D_xmin_inner_core < 0 .or. nspec2d_xmin_inner_core > NSPEC2DMAX_XMIN_XMAX_IC .or. &
+      nspec2D_xmax_inner_core < 0 .or. nspec2d_xmax_inner_core > NSPEC2DMAX_XMIN_XMAX_IC .or. &
+      nspec2D_ymin_inner_core < 0 .or. nspec2d_ymin_inner_core > NSPEC2DMAX_YMIN_YMAX_IC .or. &
+      nspec2D_ymax_inner_core < 0 .or. nspec2d_ymax_inner_core > NSPEC2DMAX_YMIN_YMAX_IC ) &
+    call exit_mpi(myrank, 'Error reading inner core boundary')
+
+  ! initializes
+  nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
+  ! Boundary Mesh for crust and mantle
+  if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
     k_top = 1
     k_bot = NGLLZ
-
     ! initialization
     moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
   endif
@@ -883,22 +953,22 @@
 
   ! user output
   if(myrank == 0) then
-    write(IMAIN,*) 'for overlapping of communications with calculations:'
+    write(IMAIN,*) '  for overlapping of communications with calculations:'
     write(IMAIN,*)
 
     percentage_edge = 100. * nspec_outer_crust_mantle / real(NSPEC_CRUST_MANTLE)
-    write(IMAIN,*) 'percentage of edge elements in crust/mantle ',percentage_edge,'%'
-    write(IMAIN,*) 'percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
+    write(IMAIN,*) '  percentage of edge elements in crust/mantle ',percentage_edge,'%'
+    write(IMAIN,*) '  percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
     write(IMAIN,*)
 
     percentage_edge = 100.* nspec_outer_outer_core / real(NSPEC_OUTER_CORE)
-    write(IMAIN,*) 'percentage of edge elements in outer core ',percentage_edge,'%'
-    write(IMAIN,*) 'percentage of volume elements in outer core ',100. - percentage_edge,'%'
+    write(IMAIN,*) '  percentage of edge elements in outer core ',percentage_edge,'%'
+    write(IMAIN,*) '  percentage of volume elements in outer core ',100. - percentage_edge,'%'
     write(IMAIN,*)
 
     percentage_edge = 100. * nspec_outer_inner_core / real(NSPEC_INNER_CORE)
-    write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
-    write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
+    write(IMAIN,*) '  percentage of edge elements in inner core ',percentage_edge,'%'
+    write(IMAIN,*) '  percentage of volume elements in inner core ',100. - percentage_edge,'%'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -1177,41 +1247,46 @@
   ! local parameters
   integer :: ier
 
-  ! crust and mantle
+  ! reads in arrays
+  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+    call read_mesh_databases_stacey_adios()
+  else
+    ! crust and mantle
 
-  ! create name of database
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+    ! create name of database
+    call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-  ! read arrays for Stacey conditions
-  open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for crust mantle')
+    ! read arrays for Stacey conditions
+    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+          status='old',form='unformatted',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for crust mantle')
 
-  read(27) nimin_crust_mantle
-  read(27) nimax_crust_mantle
-  read(27) njmin_crust_mantle
-  read(27) njmax_crust_mantle
-  read(27) nkmin_xi_crust_mantle
-  read(27) nkmin_eta_crust_mantle
-  close(27)
+    read(27) nimin_crust_mantle
+    read(27) nimax_crust_mantle
+    read(27) njmin_crust_mantle
+    read(27) njmax_crust_mantle
+    read(27) nkmin_xi_crust_mantle
+    read(27) nkmin_eta_crust_mantle
+    close(27)
 
-  ! outer core
+    ! outer core
 
-  ! create name of database
-  call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+    ! create name of database
+    call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
-  ! read arrays for Stacey conditions
-  open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='old',form='unformatted',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for outer core')
+    ! read arrays for Stacey conditions
+    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+          status='old',form='unformatted',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file for outer core')
 
-  read(27) nimin_outer_core
-  read(27) nimax_outer_core
-  read(27) njmin_outer_core
-  read(27) njmax_outer_core
-  read(27) nkmin_xi_outer_core
-  read(27) nkmin_eta_outer_core
-  close(27)
+    read(27) nimin_outer_core
+    read(27) nimax_outer_core
+    read(27) njmin_outer_core
+    read(27) njmax_outer_core
+    read(27) nkmin_xi_outer_core
+    read(27) nkmin_eta_outer_core
+    close(27)
+  endif ! ADIOS
 
   end subroutine read_mesh_databases_stacey
 

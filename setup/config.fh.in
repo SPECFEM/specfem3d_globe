@@ -1,0 +1,19 @@
+! for ADIOS header informations
+
+! configuration flags to be saved in the adios output file.
+#define CONFIGURE_FLAGS "@CONFIGURE_FLAGS@"
+
+! Define to the full name and version of this package.
+#define PACKAGE_STRING "@PACKAGE_STRING@"
+
+!> \def STRINGIFY_VAR(a)
+!! Macro taking a variable and returning the stringified variable and 
+!! the variable itself.
+!! STRINGIFY_VAR(x) expand as:
+!!   "x", x
+!! x being the variable name inside the code.
+#ifdef __INTEL_COMPILER
+#define STRINGIFY_VAR(a) #a, a
+#else
+#define STRINGIFY_VAR(a) "a", a
+#endif

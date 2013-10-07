@@ -26,11 +26,43 @@
 !=====================================================================
 
 
-!-------------------------------------------------------------------------------
-!> \file adios_helpers.f90
-!! \brief Helpers to set up adios features.
+!===============================================================================
+!> Helpers to set up adios features.
+!! * Error checking
+!! * Scalar definition
+!! * Global arrays definition
+!!
 !! \author MPBL
 !-------------------------------------------------------------------------------
+module adios_helpers_mod
+
+  use adios_helpers_definitions_mod
+  use adios_helpers_writers_mod
+
+  implicit none
+
+  private
+
+  ! from this module. No 'imports'
+  public :: check_adios_err
+
+  ! from adios_helpers_definitions_mod
+  public :: define_adios_scalar
+  public :: define_adios_global_real_1d_array
+  public :: define_adios_global_double_1d_array
+  public :: define_adios_global_integer_1d_array
+  public :: define_adios_global_long_1d_array
+  public :: define_adios_global_logical_1d_array
+  public :: define_adios_global_array1D
+
+  ! from adios_helpers_writers_mod
+  public :: write_adios_global_real_1d_array
+  public :: write_adios_global_double_1d_array
+  public :: write_adios_global_integer_1d_array
+  public :: write_adios_global_long_1d_array
+  public :: write_adios_global_logical_1d_array
+  public :: write_adios_global_1d_array
+contains
 
 !===============================================================================
 !> Get the ADIOS error message from an adios error number if there is an error.
@@ -43,314 +75,9 @@ subroutine check_adios_err(myrank, adios_err)
 
   if (adios_err /= 0) then
     call adios_errmsg(msg)
-    print *, "process: ", myrank, ", error: ", msg
-    stop
+    print *, "process: ", myrank, ", error: ", trim(msg)
+    stop 'adios error'
   endif
 end subroutine check_adios_err
 
-
-!===============================================================================
-!> Define an ADIOS scalar double precision variable and autoincrement
-!! the adios group size by (8).
-!! \param adios_group The adios group where the variables belongs
-!! \param name The variable to be defined
-!! \param path The logical path structuring the data and containing
-!!             the variable
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-subroutine define_adios_double_scalar (adios_group, name, path, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Arguments
-  integer(kind=8),  intent(in)     :: adios_group
-  character(len=*), intent(in)     :: name, path
-  integer(kind=8),  intent(inout)  :: group_size_inc
-  ! Local Variables
-  integer(kind=8)                  :: varid ! dummy variable, adios use var name
-
-  ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, name, path, 6,  "", "", "", varid)
-  group_size_inc = group_size_inc + 8
-end subroutine define_adios_double_scalar
-
-!===============================================================================
-!> Define an ADIOS scalar integer variable and autoincrement the adios
-!! group size by (4).
-!! \param adios_group The adios group where the variables belongs
-!! \param name The variable to be defined
-!! \param path The logical path structuring the data and containing
-!!             the variable
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-subroutine define_adios_integer_scalar (adios_group, name, path, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Arguments
-  integer(kind=8),  intent(in)     :: adios_group
-  character(len=*), intent(in)     :: name, path
-  integer(kind=8),  intent(inout)  :: group_size_inc
-  ! Local Variables
-  integer(kind=8)                  :: varid ! dummy variable, adios use var name
-
-  ! adios: 2 == integer(kind=4)
-  call adios_define_var (adios_group, name, path, adios_integer,  "", "", "", varid)
-  group_size_inc = group_size_inc + 4
-end subroutine define_adios_integer_scalar
-
-!===============================================================================
-!> Define an ADIOS scalar byte variable and autoincrement the adios
-!! group size by (1).
-!! \param adios_group The adios group where the variables belongs
-!! \param name The variable to be defined
-!! \param path The logical path structuring the data and containing
-!!             the variable
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-subroutine define_adios_byte_scalar (adios_group, name, path, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Arguments
-  integer(kind=8),  intent(in)     :: adios_group
-  character(len=*), intent(in)     :: name, path
-  integer(kind=8),  intent(inout)  :: group_size_inc
-  ! Local Variables
-  integer(kind=8)                  :: varid ! dummy variable, adios use var name
-
-  ! adios: 0 == byte == any_data_type(kind=1)
-  call adios_define_var (adios_group, name, path, 0,  "", "", "", varid)
-  group_size_inc = group_size_inc + 1
-end subroutine define_adios_byte_scalar
-
-!===============================================================================
-!> Define a local ADIOS array of integers and autoincrement the adios
-!! group size by (4 * number of elements).
-!! \param adios_group The adios group where the variables belongs
-!! \param name The variable to be defined
-!! \param path The logical path structuring the data and containing
-!!             the variable
-!! \param dim The number of elements in the 1D array. Required to
-!!            correctly increment adios group size.
-!! \param dim_str The "stringified" version of dim. Needed by adios
-!!                to define variables
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-subroutine define_adios_integer_local_array1D (adios_group, name, path, dim, dim_str, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Arguments
-  integer(kind=8),  intent(in)     :: adios_group
-  character(len=*), intent(in)     :: name, path, dim_str
-  integer(kind=8),  intent(inout)  :: group_size_inc
-  integer, intent(in)              :: dim
-  ! Local Variables
-  integer(kind=8)                  :: varid ! dummy variable, adios use var name
-
-  ! adios: 2 == integer
-  call adios_define_var (adios_group, name, path, 2,  dim_str, "", "", varid)
-  group_size_inc = group_size_inc + 4*dim
-end subroutine define_adios_integer_local_array1D
-
-!===============================================================================
-!> Define a local ADIOS array of doubles and autoincrement the adios
-!! group size by (8 * number of elements).
-!! \param adios_group The adios group where the variables belongs
-!! \param name The variable to be defined
-!! \param path The logical path structuring the data and containing
-!!             the variable
-!! \param dim The number of elements in the 1D array. Required to
-!!            correctly increment adios group size.
-!! \param dim_str The "stringified" version of dim. Needed by adios
-!!                to define variables
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-subroutine define_adios_double_local_array1D (adios_group, name, path, dim, dim_str, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Arguments
-  integer(kind=8),  intent(in)     :: adios_group
-  character(len=*), intent(in)     :: name, path, dim_str
-  integer(kind=8),  intent(inout)  :: group_size_inc
-  integer, intent(in)              :: dim
-  ! Local Variables
-  integer(kind=8)                  :: varid ! dummy variable, adios use var name
-
-  ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, name, path, 6, dim_str, "", "", varid)
-  group_size_inc = group_size_inc + 8*dim
-end subroutine define_adios_double_local_array1D
-
-!===============================================================================
-!> Define a local ADIOS string and autoincrement the adios
-!! group size by (1 * string's length).
-!! \param adios_group The adios group where the variables belongs
-!! \param name The variable to be defined
-!! \param path The logical path structuring the data and containing
-!!             the variable
-!! \param len The length of the string(number of character. in Fortran
-!!            it does not include a final '\0' -- null -- character)
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \note Adios string are scalar values counting for (1) byte. It is
-!!       mandatory to increase the group size by the length of the
-!!       string in order not to overlap 'data regions'.
-subroutine define_adios_string (adios_group, name, path, length, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Arguments
-  integer(kind=8),  intent(in)     :: adios_group
-  character(len=*), intent(in)     :: name, path
-  integer(kind=8),  intent(inout)  :: group_size_inc
-  integer                          :: length
-  ! Local Variables
-  integer(kind=8)                  :: varid ! dummy variable, adios use var name
-
-  ! adios: 9 == string
-  call adios_define_var (adios_group, name, path, 9,  "", "", "", varid)
-  group_size_inc = group_size_inc + 1*length
-end subroutine define_adios_string
-
-!===============================================================================
-!> Define a global ADIOS 1D real array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param len The local dimension of the array.
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_real_1d_array(adios_group, array_name, &
-    local_dim, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  ! Variables
-  integer(kind=8) :: var_id
-
-  call define_adios_integer_scalar (adios_group, "local_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "global_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "offset", array_name, &
-      group_size_inc)
-!  call adios_define_var(adios_group, "array", array_name, 6, &
-!      "local_dim", "global_dim", "offset", var_id)
-  call adios_define_var(adios_group, "array", array_name, 5, &
-      array_name // "/local_dim", array_name // "/global_dim", &
-      array_name // "/offset", var_id)
-  group_size_inc = group_size_inc + local_dim*4
-end subroutine define_adios_global_real_1d_array
-
-!===============================================================================
-!> Define a global ADIOS 1D integer array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param len The local dimension of the array.
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_integer_1d_array(adios_group, array_name, &
-    local_dim, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  ! Variables
-  integer(kind=8) :: var_id
-
-  call define_adios_integer_scalar (adios_group, "local_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "global_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "offset", array_name, &
-      group_size_inc)
-!  call adios_define_var(adios_group, "array", array_name, 6, &
-!      "local_dim", "global_dim", "offset", var_id)
-  call adios_define_var(adios_group, "array", array_name, 2, &
-      array_name // "/local_dim", array_name // "/global_dim", &
-      array_name // "/offset", var_id)
-  group_size_inc = group_size_inc + local_dim*4
-end subroutine define_adios_global_integer_1d_array
-
-!===============================================================================
-!> Define a global ADIOS 1D logical array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param len The local dimension of the array.
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_logical_1d_array(adios_group, array_name, &
-    local_dim, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  ! Variables
-  integer(kind=8) :: var_id
-
-  call define_adios_integer_scalar (adios_group, "local_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "global_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "offset", array_name, &
-      group_size_inc)
-!  call adios_define_var(adios_group, "array", array_name, 6, &
-!      "local_dim", "global_dim", "offset", var_id)
-  call adios_define_var(adios_group, "array", array_name, 1, &
-      array_name // "/local_dim", array_name // "/global_dim", &
-      array_name // "/offset", var_id)
-  group_size_inc = group_size_inc + local_dim*1
-end subroutine define_adios_global_logical_1d_array
-
-!===============================================================================
-!> Define a global ADIOS 1D real array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param len The local dimension of the array.
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_double_1d_array(adios_group, array_name, &
-    local_dim, group_size_inc)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  ! Variables
-  integer(kind=8) :: var_id
-
-  call define_adios_integer_scalar (adios_group, "local_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "global_dim", array_name, &
-      group_size_inc)
-  call define_adios_integer_scalar (adios_group, "offset", array_name, &
-      group_size_inc)
-  call adios_define_var(adios_group, "array", array_name, 6, &
-      array_name // "/local_dim", array_name // "/global_dim", &
-      array_name // "/offset", var_id)
-  group_size_inc = group_size_inc + local_dim*8
-end subroutine define_adios_global_double_1d_array
+end module adios_helpers_mod

@@ -25,13 +25,13 @@
 !
 !=====================================================================
 
-  subroutine get_attenuation_model_3D(myrank, prname, &
+  subroutine get_attenuation_model_3D(myrank,iregion_code, &
                                       one_minus_sum_beta, &
                                       factor_common, &
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER
+  use specfem_par,only: ATTENUATION_VAL,ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
 
   implicit none
 
@@ -47,12 +47,13 @@
 
   double precision, dimension(N_SLS),intent(out) :: tau_s
 
-  character(len=150) :: prname
+  integer :: iregion_code
 
   ! local parameters
   integer :: i,j,k,ispec,ier
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, T_c_source, scale_t
+  character(len=150) :: prname
 
   ! checks if attenuation is on and anything to do
   if( .not. ATTENUATION_VAL) return
@@ -60,12 +61,16 @@
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
   if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-    call read_attenuation_adios(myrank, prname, &
+    call read_attenuation_adios(myrank, iregion_code, &
                                 factor_common, scale_factor, tau_s, vnspec, T_c_source)
   else
+
+    ! opens corresponding databases file
+    call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
     open(unit=IIN, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file attenuation.bin')
+
     read(IIN) tau_s
     read(IIN) factor_common ! tau_e_store
     read(IIN) scale_factor  ! Qmu_store

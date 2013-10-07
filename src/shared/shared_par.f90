@@ -100,7 +100,7 @@
   ! adios file output
   logical :: ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
              ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
-             ADIOS_FOR_AVS_DX
+             ADIOS_FOR_AVS_DX,ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS
 
   end module shared_input_parameters
 

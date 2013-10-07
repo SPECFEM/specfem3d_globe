@@ -261,7 +261,7 @@
   implicit none
 
   real :: currenttime
-  integer :: iglob,inum
+  integer :: iglob,inum,data_size
   real(kind=CUSTOM_REAL),dimension(1):: dummy
 
   ! vtk rendering at frame interval
@@ -295,16 +295,17 @@
 
     ! updates for multiple mpi process
     if( NPROCTOT_VAL > 1 ) then
+      data_size = size(vtkdata)
       if( myrank == 0 ) then
         ! gather data
-        call gatherv_all_cr(vtkdata,size(vtkdata),&
+        call gatherv_all_cr(vtkdata,data_size,&
                             vtkdata_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROCTOT_VAL)
         ! updates vtk window
         call visualize_vtkdata(it,currenttime,vtkdata_all)
       else
         ! all other process just send data
-        call gatherv_all_cr(vtkdata,size(vtkdata),&
+        call gatherv_all_cr(vtkdata,data_size,&
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROCTOT_VAL)
       endif

@@ -58,6 +58,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
     group_size_inc, avs_dx_adios)
 
   use constants
+  use adios_helpers_mod
   use adios_write_mod
 
   implicit none
@@ -94,14 +95,14 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   integer num_ibool_AVS_DX(npointot)
 
   integer ispec
-  integer i,j,k,np
+  !integer i,j,k,np
   integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
-  integer npoin,numpoin,nspecface,ispecface
+  integer npoin,nspecface !,ispecface,numpoin
 
-  double precision r,rho,vp,vs,Qkappa,Qmu
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
-  real(kind=CUSTOM_REAL) dvp,dvs
+  !double precision r,rho,vp,vs,Qkappa,Qmu
+  !double precision vpv,vph,vsv,vsh,eta_aniso
+  !double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
+  !real(kind=CUSTOM_REAL) dvp,dvs
 
 ! for ellipticity
   integer nspl
@@ -115,6 +116,10 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   type(avs_dx_global_faces_t), intent(inout) :: avs_dx_adios
 
   integer :: ierr
+
+  ! Dummy arrays for type inference inside adios helpers
+  real(kind=4), dimension(1) :: dummy_real1d
+  integer(kind=4), dimension(1) :: dummy_int1d
 
   ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -198,33 +203,38 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating iglob4.")
 
   !--- Variables for '...AVS_DXpointsfaces.txt'
-  call define_adios_global_real_1d_array(adios_group, "points_faces/x_value", &
-      npoin, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, "points_faces/y_value", &
-      npoin, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, "points_faces/z_value", &
-      npoin, group_size_inc)
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_faces/x_value", dummy_real1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_faces/y_value", dummy_real1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
+                                   "", "points_faces/z_value", dummy_real1d)
   !--- Variables for AVS_DXelementsfaces.txt
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_faces/idoubling", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_faces/num_ibool_AVS_DX_iglob1", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_faces/num_ibool_AVS_DX_iglob2", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_faces/num_ibool_AVS_DX_iglob3", nspecface, group_size_inc)
-  call define_adios_global_real_1d_array(adios_group, &
-      "elements_faces/num_ibool_AVS_DX_iglob4", nspecface, group_size_inc)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                  "", "elements_faces/idoubling", dummy_int1d)
+
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob1", &
+                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob2", &
+                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc,nspecface,      &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob3", &
+                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob4", &
+                                   dummy_int1d)
 
   if(ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
-    call define_adios_global_real_1d_array(adios_group, &
-        "elements_faces/dvp", dvp, group_size_inc)
-    call define_adios_global_real_1d_array(adios_group, &
-        "elements_faces/dvp", dvs, group_size_inc)
+    call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                     "", "elements_faces/dvp", dummy_real1d)
+    call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                     "", "elements_faces/dvs", dummy_real1d)
   endif
 
 end subroutine define_AVS_DX_global_faces_data_adios
@@ -539,23 +549,6 @@ subroutine prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
       iglob6=ibool(NGLLX,1,NGLLZ,ispec)
       iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
       iglob8=ibool(1,NGLLY,NGLLZ,ispec)
-if (iglob1 > npointot) print *, myrank, "problem with iglob1", iglob1, npointot
-if (iglob2 > npointot) print *, myrank, "problem with iglob2", iglob2, npointot
-if (iglob3 > npointot) print *, myrank, "problem with iglob3", iglob3, npointot
-if (iglob4 > npointot) print *, myrank, "problem with iglob4", iglob4, npointot
-if (iglob5 > npointot) print *, myrank, "problem with iglob5", iglob5, npointot
-if (iglob6 > npointot) print *, myrank, "problem with iglob6", iglob6, npointot
-if (iglob7 > npointot) print *, myrank, "problem with iglob7", iglob7, npointot
-if (iglob8 > npointot) print *, myrank, "problem with iglob8", iglob8, npointot
-
-if (iglob1 < 0) print *, myrank, "problem with iglob1", iglob1, npointot
-if (iglob2 < 0) print *, myrank, "problem with iglob2", iglob2, npointot
-if (iglob3 < 0) print *, myrank, "problem with iglob3", iglob3, npointot
-if (iglob4 < 0) print *, myrank, "problem with iglob4", iglob4, npointot
-if (iglob5 < 0) print *, myrank, "problem with iglob5", iglob5, npointot
-if (iglob6 < 0) print *, myrank, "problem with iglob6", iglob6, npointot
-if (iglob7 < 0) print *, myrank, "problem with iglob7", iglob7, npointot
-if (iglob8 < 0) print *, myrank, "problem with iglob8", iglob8, npointot
 
       ! include lateral variations if needed
       if(ISOTROPIC_3D_MANTLE) then
@@ -701,6 +694,7 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
     sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
 
   use adios_write_mod
+  use adios_helpers_mod
   implicit none
   !--- Arguments
   integer(kind=8), intent(in) :: adios_handle
@@ -709,67 +703,41 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
   logical ISOTROPIC_3D_MANTLE
   !--- Variables
   integer :: npoin, nspec
-  integer :: ierr
 
   npoin = avs_dx_adios%npoin
   nspec = avs_dx_adios%nspecface
 
-  call adios_set_path(adios_handle, "points_faces/x_value", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%x_adios, ierr)
-
-  call adios_set_path(adios_handle, "points_faces/y_value", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%y_adios, ierr)
-
-  call adios_set_path(adios_handle, "points_faces/z_value", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      npoin, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%z_adios, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_faces/x_value", avs_dx_adios%x_adios)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_faces/y_value", avs_dx_adios%y_adios)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
+                                   "points_faces/z_value", avs_dx_adios%z_adios)
 
 
-  call adios_set_path(adios_handle, "elements_faces/idoubling", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%idoubling, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                 "elements_faces/idoubling",               &
+                                   avs_dx_adios%idoubling)
 
-
-  call adios_set_path(adios_handle, &
-      "elements_faces/num_ibool_AVS_DX_iglob1", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob1, ierr)
-
-  call adios_set_path(adios_handle, &
-      "elements_faces/num_ibool_AVS_DX_iglob2", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob2, ierr)
-
-  call adios_set_path(adios_handle, &
-      "elements_faces/num_ibool_AVS_DX_iglob3", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob3, ierr)
-
-  call adios_set_path(adios_handle, &
-      "elements_faces/num_ibool_AVS_DX_iglob4", ierr)
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      nspec, sizeprocs)
-  call adios_write(adios_handle, "array", avs_dx_adios%iglob4, ierr)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                 "elements_faces/num_ibool_AVS_DX_iglob1", &
+                                   avs_dx_adios%iglob1)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                 "elements_faces/num_ibool_AVS_DX_iglob2", &
+                                   avs_dx_adios%iglob2)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                 "elements_faces/num_ibool_AVS_DX_iglob3", &
+                                   avs_dx_adios%iglob3)
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                 "elements_faces/num_ibool_AVS_DX_iglob4", &
+                                   avs_dx_adios%iglob4)
 
 
   if(ISOTROPIC_3D_MANTLE) then
-    call adios_set_path(adios_handle, "elements_faces/dvp", ierr)
-    call write_1D_global_array_adios_dims(adios_handle, myrank, &
-        nspec, sizeprocs)
-    call adios_write(adios_handle, "array", avs_dx_adios%dvp, ierr)
-    call adios_set_path(adios_handle, "elements_faces/dvs", ierr)
-    call write_1D_global_array_adios_dims(adios_handle, myrank, &
-        nspec, sizeprocs)
-    call adios_write(adios_handle, "array", avs_dx_adios%dvs, ierr)
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                     "elements_faces/dvp", avs_dx_adios%dvp)
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
+                                     "elements_faces/dvs", avs_dx_adios%dvs)
   endif
 
 end subroutine write_AVS_DX_global_faces_data_adios

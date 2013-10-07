@@ -532,9 +532,6 @@
     vp_outer_core, &
     nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core, &
     njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core, &
-    absorb_xmin_outer_core,absorb_xmax_outer_core, &
-    absorb_ymin_outer_core,absorb_ymax_outer_core, &
-    absorb_zmin_outer_core, &
     ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
     ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
     ibelm_bottom_outer_core

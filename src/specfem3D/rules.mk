@@ -184,14 +184,17 @@ endif
 ###
 
 adios_OBJECTS = \
-	$O/adios_helpers.shared.o \
-	$O/adios_manager.shared.o \
-	$O/read_arrays_solver_adios.solverstatic.o \
-	$O/read_attenuation_adios.solverstatic.o \
-	$O/read_forward_arrays_adios.solverstatic.o \
-	$O/read_mesh_databases_adios.solverstatic.o \
-	$O/save_forward_arrays_adios.solverstatic.o \
-	$O/write_specfem_adios_header.solverstatic.o \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios.o \
+	$O/read_arrays_solver_adios.solverstatic_adios.o \
+	$O/read_attenuation_adios.solverstatic_adios.o \
+	$O/read_forward_arrays_adios.solverstatic_adios.o \
+	$O/read_mesh_databases_adios.solverstatic_adios.o \
+	$O/save_forward_arrays_adios.solverstatic_adios.o \
+	$O/save_kernels_adios.solverstatic_adios.o \
+	$O/write_specfem_adios_header.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
 adios_STUBS = \
@@ -298,6 +301,13 @@ $O/%.solverstatic_openmp.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_
 ## DK DK add OpenMP compiler flag here if needed
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 
+
+$O/%.solverstatic_adios.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic_adios.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
 ###
 ### no dependence on values from mesher here
 ###
@@ -314,8 +324,8 @@ $O/%.solver.o: $S/%.F90 ${SETUP}/constants.h
 ###
 
 $O/%.visualcc.o: $S/%.cpp ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(MPI_INC) -o $@ $<
+	${CC} -c $(CPPFLAGS) -o $@ $<
 
 $O/%.visualc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(MPI_INC) -o $@ $<
+	${CC} -c $(CPPFLAGS) -o $@ $<
 

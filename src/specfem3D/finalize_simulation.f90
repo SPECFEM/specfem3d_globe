@@ -88,18 +88,18 @@
 
     ! frees memory
     deallocate(absorb_xmin_crust_mantle, &
-              absorb_xmax_crust_mantle, &
-              absorb_ymin_crust_mantle, &
-              absorb_ymax_crust_mantle, &
-              absorb_xmin_outer_core, &
-              absorb_xmax_outer_core, &
-              absorb_ymin_outer_core, &
-              absorb_ymax_outer_core, &
-              absorb_zmin_outer_core)
+               absorb_xmax_crust_mantle, &
+               absorb_ymin_crust_mantle, &
+               absorb_ymax_crust_mantle, &
+               absorb_xmin_outer_core, &
+               absorb_xmax_outer_core, &
+               absorb_ymin_outer_core, &
+               absorb_ymax_outer_core, &
+               absorb_zmin_outer_core)
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
-  if (NOISE_TOMOGRAPHY/=0) then
+  if( NOISE_TOMOGRAPHY /= 0 ) then
     call close_file_abs(9)
   endif
 
@@ -107,40 +107,7 @@
   call save_forward_arrays()
 
   ! dump kernel arrays
-  if (SIMULATION_TYPE == 3) then
-    ! crust mantle
-    if (SAVE_REGULAR_KL) then
-      call save_regular_kernels_crust_mantle()
-    else
-      call save_kernels_crust_mantle()
-    endif
-
-    ! noise strength kernel
-    if (NOISE_TOMOGRAPHY == 3) then
-       call save_kernels_strength_noise()
-    endif
-
-    ! outer core
-    call save_kernels_outer_core()
-
-    ! inner core
-    call save_kernels_inner_core()
-
-    ! boundary kernel
-    if (SAVE_BOUNDARY_MESH) then
-      call save_kernels_boundary_kl()
-    endif
-
-    ! approximate hessian
-    if( APPROXIMATE_HESS_KL ) then
-      call save_kernels_hessian()
-    endif
-  endif
-
-  ! save source derivatives for adjoint simulations
-  if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
-    call save_kernels_source_derivatives()
-  endif
+  call save_kernels()
 
   ! vtk visualization
   if( VTK_MODE ) then
@@ -148,10 +115,15 @@
     if(myrank == 0 ) call finish_vtkwindow()
   endif
 
+  ! adios finalizes
+  if( ADIOS_ENABLED ) then
+    call adios_cleanup()
+  endif
+
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()
 
-  ! close the main output file
+  ! closes the main output file
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'End of the simulation'
@@ -160,12 +132,9 @@
     close(IMAIN)
   endif
 
-  ! synchronize all the processes to make sure everybody has finished
+  ! synchronizes all the processes to make sure everybody has finished
   call synchronize_all()
 
-  if (ADIOS_ENABLED) then
-    call adios_cleanup()
-  endif
   end subroutine finalize_simulation
 
 !
