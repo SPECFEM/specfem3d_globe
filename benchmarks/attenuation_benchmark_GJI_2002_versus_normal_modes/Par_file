@@ -189,4 +189,6 @@ ADIOS_FOR_MPI_ARRAYS            = .true.
 ADIOS_FOR_ARRAYS_SOLVER         = .true.
 ADIOS_FOR_SOLVER_MESHFILES      = .true.
 ADIOS_FOR_AVS_DX                = .true.
+ADIOS_FOR_KERNELS               = .true.
+ADIOS_FOR_MODELS                = .true.
 
