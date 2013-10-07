@@ -6,13 +6,19 @@ dnl autoreconf -I m4
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
+############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D_Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
+
 AC_CONFIG_HEADER([setup/config.h])
+
 AC_CONFIG_MACRO_DIR([m4])
 
+############################################################
+
+AS_BOX([setting up compilation flags])
 AC_CANONICAL_HOST
 
 # 'configure' options
@@ -20,6 +26,7 @@ AC_CANONICAL_HOST
 ###
 ### precision
 ###
+
 AC_ARG_ENABLE([double-precision],
     [AS_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
@@ -38,6 +45,7 @@ AC_SUBST([CUSTOM_MPI_TYPE])
 ###
 ### CUDA
 ###
+
 AC_ARG_WITH([cuda],
     [AC_HELP_STRING([--with-cuda],
         [build cuda GPU enabled version @<:@default=no@:>@])],
@@ -49,6 +57,7 @@ AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
 ###
 ### VTK
 ###
+
 AC_ARG_WITH([vtk],
     [AC_HELP_STRING([--with-vtk],
         [build VTK enabled version @<:@default=no@:>@])],
@@ -59,6 +68,7 @@ AM_CONDITIONAL([COND_VTK], [test "$want_vtk" != no])
 ###
 ### ADIOS
 ###
+
 AC_ARG_WITH([adios],
     [AC_HELP_STRING([--with-adios],
         [build ADIOS enabled version @<:@default=no@:>@])],
@@ -66,16 +76,18 @@ AC_ARG_WITH([adios],
     [want_adios=no])
 AM_CONDITIONAL([COND_ADIOS], [test "$want_adios" != no])
 
-
 ###
 ### FORCE_VECTORIZATION
 ###
+
 AC_ARG_WITH([vec],
     [AC_HELP_STRING([--with-vec],
-        [build FORCE_VECTORIZATION enabled version @<:@default=no@:>@])],
+        [build FORCE_VECTORIZATION enabled version @<:@default=yes@:>@])],
     [want_vec="$withval"],
-    [want_vec=no])
+    [want_vec=yes])
 AM_CONDITIONAL([COND_VECTORIZATION], [test "$want_vec" != no])
+
+############################################################
 
 # Checks for programs.
 
@@ -113,45 +125,171 @@ AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.
 AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
 AC_LANG_POP(C)
 
+############################################################
+
 # influential environment variables
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
+AC_ARG_VAR(MPI_INC,[Directory where MPI include file mpi.h is installed, which is needed by ADIOS/CUDA when compiling])
+
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
 AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
 
-AC_ARG_VAR(CUDA_LIB,[Location of CUDA library libcudart])
-AC_ARG_VAR(CUDA_INC,[Location of CUDA include files])
-AC_ARG_VAR(MPI_INC,[Location of MPI include mpi.h, which is needed by nvcc when compiling cuda files])
+# adios
+AC_ARG_VAR(MXML_INC, [Directory where MXML headers are installed])
+AC_ARG_VAR(MXML_LIB, [Directory where MXML libraries are installed])
+AC_ARG_VAR(ADIOS_INC, [Directory where ADIOS headers are installed])
+AC_ARG_VAR(ADIOS_LIB, [Directory where ADIOS libraries are installed])
+
+# cuda
+AC_ARG_VAR(CUDA_LIB,[Directory where CUDA library libcudart is installed])
+AC_ARG_VAR(CUDA_INC,[Directory where CUDA include files are installed])
 
 AC_ARG_VAR(AR, [ar library creation])
 AC_ARG_VAR(ARFLAGS, [ar flag library creation])
 AC_ARG_VAR(RANLIB, [ranlib library creation])
 
-if test x"$MPIFC" = x; then
-    MPIFC=mpif90
-fi
-
+# scratch disks
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
-if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
+
+############################################################
+
+# tests
+AS_IF([test x"$MPIFC" = x],[
+    MPIFC=mpif90
+])
+
+AS_IF([test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x],[
     LOCAL_PATH_IS_ALSO_GLOBAL=true
-fi
+])
 
-
+AS_IF([test x"$MPI_INC" != x],[
+  CPPFLAGS+=" $MPI_INC"
+  FCFLAGS+=" $MPI_INC"
+  FLAGS_CHECK+=" $MPI_INC"
+  FLAGS_NO_CHECK+=" $MPI_INC"
+])
 
 # Checks for libraries.
-
 
 # Checks for header files.
 
 CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
 
-if test "$want_adios" != no; then
-    CIT_ADIOS_HEADER
-    CIT_ADIOS_LIB
-fi
+###
+### ADIOS
+###
+
+AS_IF([test "$want_adios" != no],[
+  AS_BOX([ADIOS])
+  AC_MSG_NOTICE([ADIOS is enabled])
+
+  # adds include/library directories to compile flags
+  AS_IF([test x"$$MXML_INC" != x],[
+    CPPFLAGS+=" $MXML_INC"
+  ])
+  AS_IF([test x"$MXML_LIB" != x],[
+    LDFLAGS+=" $MXML_LIB"
+  ])
+  AS_IF([test x"$ADIOS_INC" != x],[
+    CPPFLAGS+=" $ADIOS_INC"
+    FCFLAGS+=" $ADIOS_INC"
+    FLAGS_CHECK+=" $ADIOS_INC"
+    FLAGS_NO_CHECK+=" $ADIOS_INC"
+  ])
+  AS_IF([test x"$ADIOS_LIB" != x],[
+    LDFLAGS+=" $ADIOS_LIB"
+  ])
+
+  # checks
+  CIT_MXML_HEADER
+  CIT_MXML_LIB
+  CIT_ADIOS_HEADER
+  CIT_ADIOS_LIB
+])
+
+#mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
+#configure_flags_str="FC=$FC FCFLAGS=$FCFLAGS $FLAGS_CHECK"
+#AC_DEFINE_UNQUOTED([CONFIGURE_FLAGS],["${configure_flags_str}"],
+ #         [configuration flags to be saved in the adios output file.])
+CONFIGURE_FLAGS="FC=$FC FCFLAGS=$FCFLAGS"
+AC_SUBST([CONFIGURE_FLAGS])
+
+###
+### CUDA
+###
+
+AS_IF([test "$want_cuda" != no],[
+  AS_BOX([CUDA])
+  AC_MSG_NOTICE([CUDA is enabled])
+
+  # checks
+  CIT_CUDA_COMPILER
+])
+
+###
+### FORCE_VECTORIZATION
+###
+
+AS_IF([test "$want_vec" != no],[
+  AS_BOX([FORCE VECTORIZATION])
+  AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
+
+  # adds conditional compilation flag
+  # fortran compiler
+  AS_CASE([$FC],
+    # ibm compiler flag
+    [*xlf*|*/*xlf*], [VEC_FLAG="-WF,-DFORCE_VECTORIZATION"],
+    # default: gnu,intel,pgi,..
+    [VEC_FLAG="-DFORCE_VECTORIZATION"]
+  )
+  FLAGS_CHECK+=" $VEC_FLAG"
+  FLAGS_NO_CHECK+=" $VEC_FLAG"
+  # c compiler
+  AS_CASE([$CC],
+    # ibm compiler flag
+    [*xlc*|*/*xlc*], [VEC_FLAG="-DFORCE_VECTORIZATION"],
+    # default: gnu,intel,pgi,..
+    [VEC_FLAG="-DFORCE_VECTORIZATION"]
+  )
+  CPPFLAGS+=" $VEC_FLAG"
+
+])
+
+###
+### VTK
+###
+
+AS_IF([test "$want_vtk" != no],[
+  AS_BOX([VTK])
+  AC_MSG_NOTICE([VTK is enabled])
+
+  # adds conditional compilation flag 
+  # fortran compiler
+  AS_CASE([$FC],
+    # ibm compiler flag
+    [*xlf*|*/*xlf*], [VTK_FLAG="-WF,-DWITH_VTK"],
+    # default: gnu,intel,pgi,..
+    [VTK_FLAG="-DWITH_VTK"]
+  )
+  FLAGS_CHECK+=" $VTK_FLAG"
+  FLAGS_NO_CHECK+=" $VTK_FLAG"
+  # c compiler
+  AS_CASE([$CC],
+    # ibm compiler flag
+    [*xlc*|*/*xlc*], [VTK_FLAG="-DWITH_VTK"],
+    # default: gnu,intel,pgi,..
+    [VTK_FLAG="-DWITH_VTK"]
+  )
+  CPPFLAGS+=" $VTK_FLAG"
+
+])
+
+############################################################
 
 # Checks for typedefs, structures, and compiler characteristics.
+AS_BOX([module extensions])
 
 CIT_FC_MODULE_EXTENSION
 AC_SUBST([FC_MODEXT])
@@ -165,12 +303,13 @@ CIT_FC_MODULE_OUTPUT_FLAG([
 AC_SUBST([FC_MODDIR])
 
 # Checks for library functions.
-
+AS_BOX([setting up default simulation setup])
 
 AC_CONFIG_FILES([
     Makefile
     setup/constants.h
     setup/precision.h
+    setup/config.fh
 ])
 AC_CONFIG_FILES([
     DATA/Par_file:DATA/Par_file
@@ -203,14 +342,15 @@ AC_OUTPUT
 
 #daniel: adding custom lines to config.h.in through autoheader
 AH_BOTTOM([
-/* Uncomment and define to select optimized file i/o for regional simulations */
+/* Define to select optimized file i/o for regional simulations */
 /* map fails when output files are > 4GB, which is often the case for GPU simulations */
-// #define USE_MAP_FUNCTION
+#undef USE_MAP_FUNCTION
 ])
 
 
 dnl FYI, this is not a "result", but AS_ECHO is not available in 2.61, and it
 dnl basically works like a portable echo.
+
 AC_MSG_RESULT([])
 AS_BOX([$PACKAGE_NAME $PACKAGE_VERSION])
 AC_MSG_RESULT([])

@@ -128,19 +128,22 @@
 
   ! master gathers infos
   if( myrank == 0 ) then
+    ! user output
+    write(IMAIN,*) '  maximum interfaces:',max_num
+
     ! array for gathering infos
     allocate(test_interfaces(max_num,0:NPROCTOT),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_interfaces')
-    test_interfaces = -1
+    test_interfaces(:,:) = -1
 
     allocate(test_interfaces_nibool(max_num,0:NPROCTOT),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_interfaces_nibool')
-    test_interfaces_nibool = 0
+    test_interfaces_nibool(:,:) = 0
 
     ! used to store number of interfaces per proc
     allocate(dummy_i(0:NPROCTOT),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i for test interfaces')
-    dummy_i = 0
+    dummy_i(:) = 0
 
     ! sets infos for master process
     test_interfaces(1:num_interfaces,0) = my_neighbours(1:num_interfaces)
@@ -223,6 +226,7 @@
 
     deallocate(dummy_i)
     deallocate(test_interfaces)
+    deallocate(test_interfaces_nibool)
   endif
   call synchronize_all()
 

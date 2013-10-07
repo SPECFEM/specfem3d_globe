@@ -240,6 +240,10 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_SOLVER_MESHFILES'
   call read_value_logical(ADIOS_FOR_AVS_DX, 'solver.ADIOS_FOR_AVS_DX', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_AVS_DX'
+  call read_value_logical(ADIOS_FOR_KERNELS, 'solver.ADIOS_FOR_KERNELS', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_KERNELS'
+  call read_value_logical(ADIOS_FOR_MODELS, 'solver.ADIOS_FOR_MODELS', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_MODELS'
 
   ! closes parameter file
   call close_parameter_file()
@@ -286,10 +290,14 @@
 ! please remove these security checks only after validating new features
 
 !! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  if( ADIOS_ENABLED ) &
-    stop 'ADIOS_ENABLED support not implemented yet'
-  if( ADIOS_ENABLED .and. GPU_MODE ) &
-    stop 'ADIOS_ENABLED support not implemented yet'
+  !if( ADIOS_ENABLED ) &
+  !  stop 'ADIOS_ENABLED support not implemented yet'
+  !if( ADIOS_ENABLED .and. GPU_MODE ) &
+  !  stop 'ADIOS_ENABLED support not implemented yet for GPU_MODE'
+  if( ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
+    stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
+  if( ADIOS_ENABLED .and. UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 ) &
+    stop 'ADIOS_ENABLED support not implemented yet for UNDO_ATTENUATION and SIMULATION_TYPE == 3'
 
   !if( USE_LDDRK ) &
   !  stop 'USE_LDDRK support not implemented yet'

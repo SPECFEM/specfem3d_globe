@@ -39,7 +39,7 @@
   integer, parameter :: nparam_i = 44
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 54
+  integer, parameter :: nparam_l = 56
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 32
@@ -55,7 +55,8 @@
     ! funny way to pass parameters in arrays from master to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
-    bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+    bcast_integer = (/ &
+            MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
             NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
             NER_TOP_CENTRAL_CUBE_ICB, &
@@ -73,9 +74,11 @@
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
             NOISE_TOMOGRAPHY, &
-            NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5/)
+            NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5 &
+            /)
 
-    bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    bcast_logical = (/ &
+            TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
             TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
@@ -90,17 +93,22 @@
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
             ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
             USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK, &
+            EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE, &            
             GPU_MODE, &
             ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
-            ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
-            EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE/)
+            ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
+            ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
+            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS &
+            /)
 
-    bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+    bcast_double_precision = (/ &
+            DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
             R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
             MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,&
-            RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT /)
+            RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT &
+            /)
   endif
 
   ! broadcasts the information read on the master to the nodes
@@ -240,15 +248,17 @@
     APPROXIMATE_HESS_KL = bcast_logical(43)
     USE_FULL_TISO_MANTLE = bcast_logical(44)
     SAVE_SOURCE_MASK = bcast_logical(45)
-    GPU_MODE = bcast_logical(46)
-    ADIOS_ENABLED = bcast_logical(47)
-    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(48)
-    ADIOS_FOR_MPI_ARRAYS = bcast_logical(49)
-    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(50)
-    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(51)
-    ADIOS_FOR_AVS_DX = bcast_logical(52)
-    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(53)
-    ATTENUATION_1D_WITH_3D_STORAGE = bcast_logical(54)
+    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(46)
+    ATTENUATION_1D_WITH_3D_STORAGE = bcast_logical(47)
+    GPU_MODE = bcast_logical(48)
+    ADIOS_ENABLED = bcast_logical(49)
+    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(50)
+    ADIOS_FOR_MPI_ARRAYS = bcast_logical(51)
+    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(52)
+    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(53)
+    ADIOS_FOR_AVS_DX = bcast_logical(54)
+    ADIOS_FOR_KERNELS = bcast_logical(55)
+    ADIOS_FOR_MODELS = bcast_logical(56)
 
     ! double precisions
     DT = bcast_double_precision(1)

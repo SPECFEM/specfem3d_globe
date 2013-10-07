@@ -44,7 +44,8 @@
   use constants_solver
 
   use specfem_par,only: &
-    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+    wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
@@ -65,6 +66,8 @@
 
 #ifdef FORCE_VECTORIZATION
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+#else
+  use specfem_par,only: wgllwgll_xy,wgllwgll_xz,wgllwgll_yz
 #endif
 
   implicit none

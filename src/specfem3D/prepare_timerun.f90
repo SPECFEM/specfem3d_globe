@@ -855,7 +855,6 @@
   double precision :: scale_factor,scale_factor_minus_one
   real(kind=CUSTOM_REAL) :: mul
   integer :: ispec,i,j,k
-  character(len=150) :: prname_l
 
   ! checks if attenuation is on and anything to do
   if( .not. ATTENUATION_VAL ) return
@@ -868,24 +867,14 @@
 
   ! reads in attenuation values
   ! CRUST_MANTLE ATTENUATION
-  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-    call create_name_database_adios(prname_l, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  else
-    call create_name_database(prname_l, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  endif
-  call get_attenuation_model_3D(myrank, prname_l, &
+  call get_attenuation_model_3D(myrank,IREGION_CRUST_MANTLE, &
                                 one_minus_sum_beta_crust_mantle, &
                                 factor_common_crust_mantle, &
                                 factor_scale_crust_mantle,tau_sigma_dble, &
                                 NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
-  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-    call create_name_database_adios(prname_l, IREGION_INNER_CORE, LOCAL_PATH)
-  else
-    call create_name_database(prname_l, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-  endif
-  call get_attenuation_model_3D(myrank, prname_l, &
+  call get_attenuation_model_3D(myrank,IREGION_INNER_CORE, &
                                 one_minus_sum_beta_inner_core, &
                                 factor_common_inner_core, &
                                 factor_scale_inner_core,tau_sigma_dble, &

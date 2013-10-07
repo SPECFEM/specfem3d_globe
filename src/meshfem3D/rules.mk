@@ -167,10 +167,19 @@ XMESHFEM_OBJECTS = $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
 ### ADIOS
 ###
 
-adios_OBJECTS = \
-	$O/adios_helpers.shared.o \
-	$O/adios_manager.shared.o \
-	$O/save_arrays_solver_adios.check.o \
+adios_meshfem3D_OBJECTS = \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios.o \
+	$O/write_AVS_DX_global_chunks_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_global_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_global_faces_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_surface_data_adios.check_adios_module.o \
+	$O/create_regions_mesh_adios.check_adios.o \
+	$O/get_absorb_adios.check_adios.o \
+	$O/model_gll_adios.check_adios.o \
+	$O/save_arrays_solver_adios.check_adios.o \
 	$(EMPTY_MACRO)
 
 adios_STUBS = \
@@ -179,7 +188,7 @@ adios_STUBS = \
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
-XMESHFEM_OBJECTS += $(adios_OBJECTS)
+XMESHFEM_OBJECTS += $(adios_meshfem3D_OBJECTS)
 else
 XMESHFEM_OBJECTS += $(adios_STUBS)
 endif
@@ -218,4 +227,18 @@ $O/%.checkmpi.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/
 
 $O/%.checkmpi.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+## adios
+
+$O/%.check_adios_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.check_adios_module.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.check_adios.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.check_adios.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

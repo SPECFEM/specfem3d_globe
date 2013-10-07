@@ -36,8 +36,8 @@
 !!       and read_forward_arrays_adios() are not factorized, because
 !>       the latest read the bp file in "b_" prefixed arrays
 subroutine read_intermediate_forward_arrays_adios()
+
   ! External imports
-  use mpi
   use adios_read_mod
   ! Internal imports
   use specfem_par
@@ -45,27 +45,22 @@ subroutine read_intermediate_forward_arrays_adios()
   use specfem_par_innercore
   use specfem_par_outercore
 
+  use adios_helpers_mod, only: check_adios_err
+
   implicit none
   ! Local parameters
-  integer :: sizeprocs, comm, ierr
-  character(len=150) :: file_name
-  integer(kind=8) :: group_size_inc
-  integer :: local_dim, global_dim, offset
-!  integer, parameter :: num_arrays = 9 ! TODO correct number
-!  character(len=256), dimension(num_arrays) :: local_dims1, local_dims2, &
-!      global_dims1, global_dims2, offsets1, offsets2, array_name
+  integer :: comm, ierr
+  character(len=256) :: file_name
+  integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, adios_handle, varid, sel
-  integer(kind=8)         :: adios_groupsize, adios_totalsize
-  integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names
+  integer(kind=8)         :: adios_handle, sel
   integer(kind=8), dimension(1) :: start, count
 
 
   file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
-  call world_size(sizeprocs)
-  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
+
+  call world_duplicate(comm)
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
@@ -231,7 +226,7 @@ subroutine read_intermediate_forward_arrays_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call synchronize_all()
+  call synchronize_all_comm(comm)
 
 end subroutine read_intermediate_forward_arrays_adios
 
@@ -241,8 +236,8 @@ end subroutine read_intermediate_forward_arrays_adios
 !!       and read_forward_arrays_adios() are not factorized, because
 !>       the latest read the bp file in "b_" prefixed arrays
 subroutine read_forward_arrays_adios()
+
   ! External imports
-  use mpi
   use adios_read_mod
   ! Internal imports
   use specfem_par
@@ -250,32 +245,30 @@ subroutine read_forward_arrays_adios()
   use specfem_par_innercore
   use specfem_par_outercore
 
+  use adios_helpers_mod, only: check_adios_err
+
   implicit none
   ! Local parameters
-  integer :: sizeprocs, comm, ierr
-  character(len=150) :: file_name
-  integer(kind=8) :: group_size_inc
-  integer :: local_dim, global_dim, offset
+  integer :: comm, ierr
+  character(len=256) :: file_name
+  integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, adios_handle, varid, sel
-  integer(kind=8)         :: adios_groupsize, adios_totalsize
-  integer :: vars_count, attrs_count, current_step, last_step, vsteps
-  character(len=128), dimension(:), allocatable :: adios_names
+  integer(kind=8)         :: adios_handle, sel
   integer(kind=8), dimension(1) :: start, count
 
-
   file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
-  call world_size(sizeprocs)
-  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ierr)
 
+  call world_duplicate(comm)
+
+  ! opens adios file
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
       "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
   call check_adios_err(myrank,adios_err)
 
-
+  ! reads in arrays
   local_dim = NDIM * NGLOB_CRUST_MANTLE
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
@@ -437,6 +430,6 @@ subroutine read_forward_arrays_adios()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call synchronize_all()
+  call synchronize_all_comm(comm)
 
 end subroutine read_forward_arrays_adios

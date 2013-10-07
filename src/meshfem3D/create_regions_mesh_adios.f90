@@ -26,9 +26,9 @@
 !=====================================================================
 
 
-subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
-    num_ibool_AVS_DX, mask_ibool)
-  use mpi
+  subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
+                                       num_ibool_AVS_DX, mask_ibool)
+
   use adios_write_mod
 
   use meshfem3d_par,only: &
@@ -67,16 +67,22 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
   type(avs_dx_surface_t) :: avs_dx_surface_vars
 
   character(len=150) :: reg_name, outputname, group_name
-  integer :: comm, sizeprocs, ier
+  integer :: comm, ier
   integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
+
+  integer :: sizeprocs
+
+  ! number of mpi processes
+  call world_size(sizeprocs)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
   outputname = trim(reg_name) // "AVS_DX.bp"
   write(group_name,"('SPECFEM3D_GLOBE_AVS_DX_reg',i1)") iregion_code
-  call world_size(sizeprocs) ! TODO keep it in parameters
+
   ! Alias COMM_WORLD to use ADIOS
-  call MPI_Comm_dup (MPI_COMM_WORLD, comm, ier)
+  call world_duplicate(comm)
+
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, &
       "", 0, ier)
@@ -171,4 +177,5 @@ subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
       ISOTROPIC_3D_MANTLE)
   call free_AVS_DX_surfaces_data_adios(myrank, avs_dx_surface_vars, &
       ISOTROPIC_3D_MANTLE)
-end subroutine crm_save_mesh_files_adios
+
+  end subroutine crm_save_mesh_files_adios

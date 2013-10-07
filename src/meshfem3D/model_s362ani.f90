@@ -136,7 +136,7 @@
   call bcast_all_ch(kerstr,80)
   call bcast_all_ch(refmdl,80)
 
-  call bcast_all_ch(varstr,maxker,40)
+  call bcast_all_ch_array(varstr,maxker,40)
 
   end subroutine model_s362ani_broadcast
 

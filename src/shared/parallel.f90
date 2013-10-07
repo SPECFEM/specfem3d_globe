@@ -93,16 +93,35 @@
 
   implicit none
 
-  integer :: ier,rank
-
-  ! gets callers rank
-  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
+  integer :: ier
 
   ! synchronizes MPI processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) call exit_mpi(rank,'error synchronize MPI processes')
+  if( ier /= 0 ) stop 'error synchronize MPI processes'
 
   end subroutine synchronize_all
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine synchronize_all_comm(comm)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(in) :: comm
+
+  ! local parameters
+  integer :: ier
+
+  ! synchronizes MPI processes
+  call MPI_BARRIER(comm,ier)
+  if( ier /= 0 ) stop 'error synchronize MPI processes for specified communicator'
+
+  end subroutine synchronize_all_comm
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -317,6 +336,34 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine max_allreduce_i(buffer,count)
+
+  use mpi
+
+  implicit none
+
+  integer :: count
+  integer,dimension(count),intent(inout) :: buffer
+
+  ! local parameters
+  integer :: ier
+  integer,dimension(count) :: send
+
+  ! seems not to be supported on all kind of MPI implementations...
+  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, count, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+
+  send(:) = buffer(:)
+
+  call MPI_ALLREDUCE(send, buffer, count, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+  if( ier /= 0 ) stop 'Allreduce to get max values failed.'
+
+  end subroutine max_allreduce_i
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine max_all_cr(sendbuf, recvbuf)
 
   use mpi
@@ -366,6 +413,7 @@
   call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
   end subroutine sum_all_dp
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -840,44 +888,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-
-  subroutine world_size(size)
-
-  use mpi
-
-  implicit none
-
-  integer :: size
-  integer :: ier
-
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,size,ier)
-  if( ier /= 0 ) stop 'error getting MPI world size'
-
-  end subroutine world_size
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine world_rank(rank)
-
-  use mpi
-
-  implicit none
-
-  integer :: rank
-  integer :: ier
-
-  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
-  if( ier /= 0 ) stop 'error getting MPI rank'
-
-  end subroutine world_rank
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
   use mpi
@@ -995,4 +1005,96 @@
                   0,MPI_COMM_WORLD,ier)
 
   end subroutine gatherv_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+
+  subroutine world_size(size)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: size
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,size,ier)
+  if( ier /= 0 ) stop 'error getting MPI world size'
+
+  end subroutine world_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_rank(rank)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: rank
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
+  if( ier /= 0 ) stop 'error getting MPI rank'
+
+  end subroutine world_rank
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_duplicate(comm)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: comm
+  integer :: ier
+
+  call MPI_COMM_DUP(MPI_COMM_WORLD,comm,ier)
+  if( ier /= 0 ) stop 'error duplicating MPI_COMM_WORLD communicator'
+
+  end subroutine world_duplicate
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_get_comm(comm)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: comm
+
+  comm = MPI_COMM_WORLD
+
+  end subroutine world_get_comm
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_get_comm_self(comm)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: comm
+
+  comm = MPI_COMM_SELF
+
+  end subroutine world_get_comm_self
 

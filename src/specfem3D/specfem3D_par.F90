@@ -255,11 +255,17 @@ module specfem_par
   integer, dimension(:), allocatable :: b_request_send_scalar_oc,b_request_recv_scalar_oc
 
   !-----------------------------------------------------------------
-  ! gpu
+  ! GPU
   !-----------------------------------------------------------------
 
   ! CUDA mesh pointer<->integer wrapper
   integer(kind=8) :: Mesh_pointer
+
+  !-----------------------------------------------------------------
+  ! ADIOS
+  !-----------------------------------------------------------------
+  ! adios file handle
+  integer(kind=8) :: current_adios_handle
 
   !-----------------------------------------------------------------
   ! time scheme
@@ -286,6 +292,8 @@ module specfem_par
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
   logical :: you_can_start_doing_IOs
 #endif
+
+
 
 end module specfem_par
 

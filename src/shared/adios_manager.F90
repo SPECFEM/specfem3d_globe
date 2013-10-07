@@ -25,27 +25,51 @@
 !
 !=====================================================================
 
-!> @brief Initialize ADIOS and setup the xml output file
+!==============================================================================
+!> Tools to setup and cleanup ADIOS
+!------------------------------------------------------------------------------
+!module adios_manager_mod
+
+!contains
+
+!==============================================================================
+!> Initialize ADIOS and setup the xml output file
 subroutine adios_setup()
+
+  use constants,only : ADIOS_BUFFER_SIZE_IN_MB
+
   use adios_write_mod, only: adios_init
 
   implicit none
-  integer :: adios_err, sizeMB
 
-  call adios_init_noxml (adios_err);
-  sizeMB = 200 ! TODO 200MB is surely not the right size for the adios buffer
-  call adios_allocate_buffer (sizeMB , adios_err)
+  integer :: adios_err
+  integer :: comm
+
+  call world_get_comm(comm)
+
+  call adios_init_noxml (comm, adios_err);
+
+  !sizeMB = 200 ! TODO 200MB is surely not the right size for the adios buffer
+  !call adios_allocate_buffer (sizeMB , adios_err)
+  call adios_allocate_buffer (ADIOS_BUFFER_SIZE_IN_MB, adios_err)
+
 end subroutine adios_setup
 
-!> @brief Finalize ADIOS. Must be called once everything is written down.
+!==============================================================================
+!> Finalize ADIOS. Must be called once everything is written down.
 subroutine adios_cleanup()
-  use mpi
+
   use adios_write_mod, only: adios_finalize
 
   implicit none
   integer :: myrank
-  integer :: adios_err, ierr
+  integer :: adios_err
 
-  call MPI_Comm_rank(MPI_COMM_WORLD, myrank, ierr)
+  call world_rank(myrank)
+  call synchronize_all()
+
   call adios_finalize (myrank, adios_err)
+
 end subroutine adios_cleanup
+
+!end module adios_manager_mod

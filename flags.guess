@@ -37,14 +37,14 @@ case $FC in
         #
         # Cray Fortran
         #
-        DEF_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2 -M 1438 -DFORCE_VECTORIZATION" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
+        DEF_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2 -M 1438" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
         # -eC -eD -ec -en -eI -ea -g -G0 -M 1438  # turn on full debugging and range checking
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90)
         #
         # Portland PGI
         #
-        DEF_FFLAGS="-fast -Mnobounds -DFORCE_VECTORIZATION -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz -Mvect -mcmodel=medium"
+        DEF_FFLAGS="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz -Mvect -mcmodel=medium"
         # -Mbounds
         # -fastsse -tp amd64e -Msmart
         ;;
@@ -57,7 +57,7 @@ case $FC in
 # parallel file systems like SFS 3.2 / Lustre 1.8. If omitted
 # I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
 # However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
-        DEF_FFLAGS="-O3 -DFORCE_VECTORIZATION -check nobounds -xHost -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium -shared-intel
+        DEF_FFLAGS="-O3 -check nobounds -xHost -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium -shared-intel
 ##############################################################################################################################
 ##############################################################################################################################
 ##############################################################################################################################
@@ -66,15 +66,15 @@ case $FC in
 ##############################################################################################################################
 ##############################################################################################################################
         # useful for debugging...
-        # for debugging: change -O3 -DFORCE_VECTORIZATION -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
+        # for debugging: change -O3 -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
         #
         ;;
     gfortran|*/gfortran|f95|*/f95)
         #
         # GNU gfortran
         #
-        DEF_FFLAGS="-std=gnu -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -DFORCE_VECTORIZATION " # -mcmodel=medium
-        # useful for debugging: replace -DFORCE_VECTORIZATION with -ffpe-trap=overflow,zero -fbacktrace -fbounds-check
+        DEF_FFLAGS="-std=gnu -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow " # -mcmodel=medium
+        # useful for debugging: add -ffpe-trap=overflow,zero -fbacktrace -fbounds-check
         ;;
     g95|*/g95)
         #
@@ -147,12 +147,12 @@ case $FC in
         # CFLAGS = -Wl,-relax
         #
 # deleted -qxflag=dvz because it requires handler function __xl_dzx and thus linking will fail 
-        DEF_FFLAGS="-O4 -qnostrict -qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036 -Q -Q+rank,swap_all -Wl,-relax -WF,-DFORCE_VECTORIZATION"
+        DEF_FFLAGS="-O4 -qnostrict -qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036 -Q -Q+rank,swap_all -Wl,-relax"
         # Options -qreport -qsource -qlist create a *.lst file containing detailed information about vectorization.
         # On IBM BlueGene at IDRIS (France) use:
         # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
         #
-        # to debug with IBM xlf, remove -Wl,-relax -WF,-DFORCE_VECTORIZATION and add -g -O0 -C -qddim -qfullpath -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF
+        # to debug with IBM xlf, remove -Wl,-relax and add -g -O0 -C -qddim -qfullpath -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF
         #
         ;;
     pathf90|*/pathf90)

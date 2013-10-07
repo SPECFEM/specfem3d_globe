@@ -499,6 +499,8 @@
   ! local parameters
   integer :: ier
 
+  ! adios needs properly initialized arrays, otherwise its intrinsic check procedures will cause undefined operations
+
   ! new attenuation definition on all GLL points
   ! attenuation
   if (ATTENUATION) then
@@ -513,10 +515,14 @@
           tau_e_store(N_SLS,ATT1,ATT2,ATT3,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
 
+  Qmu_store(:,:,:,:) = 0.0; tau_e_store(:,:,:,:,:) = 0.0
+
   ! array with model density
   allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec), &
           dvpstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 6'
+
+  rhostore(:,:,:,:) = 0.0; dvpstore(:,:,:,:) = 0.0
 
   ! for anisotropy
   allocate(kappavstore(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -527,6 +533,11 @@
           ispec_is_tiso(nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 7'
 
+  kappavstore(:,:,:,:) = 0.0; kappahstore(:,:,:,:) = 0.0
+  muvstore(:,:,:,:) = 0.0; muhstore(:,:,:,:) = 0.0
+  eta_anisostore(:,:,:,:) = 0.0
+  ispec_is_tiso(:) = .false.
+
   ! Stacey absorbing boundaries
   if(NCHUNKS /= 6) then
     nspec_stacey = nspec
@@ -536,6 +547,8 @@
   allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey), &
           rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey),stat=ier)
   if(ier /= 0) stop 'error in allocate 8'
+
+  rho_vp(:,:,:,:) = 0.0; rho_vs(:,:,:,:) = 0.0
 
   ! anisotropy
   if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
@@ -567,51 +580,77 @@
           c66store(NGLLX,NGLLY,NGLLZ,nspec_ani),stat=ier)
   if(ier /= 0) stop 'error in allocate 9'
 
+  c11store(:,:,:,:) = 0.0; c12store(:,:,:,:) = 0.0; c13store(:,:,:,:) = 0.0
+  c14store(:,:,:,:) = 0.0; c15store(:,:,:,:) = 0.0; c16store(:,:,:,:) = 0.0
+  c22store(:,:,:,:) = 0.0; c23store(:,:,:,:) = 0.0; c24store(:,:,:,:) = 0.0
+  c25store(:,:,:,:) = 0.0; c26store(:,:,:,:) = 0.0; c33store(:,:,:,:) = 0.0
+  c34store(:,:,:,:) = 0.0; c35store(:,:,:,:) = 0.0; c36store(:,:,:,:) = 0.0
+  c44store(:,:,:,:) = 0.0; c45store(:,:,:,:) = 0.0; c46store(:,:,:,:) = 0.0
+  c55store(:,:,:,:) = 0.0; c56store(:,:,:,:) = 0.0; c66store(:,:,:,:) = 0.0
+
   ! boundary locator
   allocate(iboun(6,nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 10'
 
   ! boundary parameters locator
   allocate(ibelm_xmin(NSPEC2DMAX_XMIN_XMAX), &
-          ibelm_xmax(NSPEC2DMAX_XMIN_XMAX), &
-          ibelm_ymin(NSPEC2DMAX_YMIN_YMAX), &
-          ibelm_ymax(NSPEC2DMAX_YMIN_YMAX), &
-          ibelm_bottom(NSPEC2D_BOTTOM), &
-          ibelm_top(NSPEC2D_TOP),stat=ier)
+           ibelm_xmax(NSPEC2DMAX_XMIN_XMAX), &
+           ibelm_ymin(NSPEC2DMAX_YMIN_YMAX), &
+           ibelm_ymax(NSPEC2DMAX_YMIN_YMAX), &
+           ibelm_bottom(NSPEC2D_BOTTOM), &
+           ibelm_top(NSPEC2D_TOP),stat=ier)
   if(ier /= 0) stop 'error in allocate 11'
+
+  ibelm_xmin(:) = 0; ibelm_xmax(:) = 0
+  ibelm_ymin(:) = 0; ibelm_ymax(:) = 0
+  ibelm_bottom(:) = 0; ibelm_top(:) = 0
 
   ! 2-D jacobians and normals
   allocate(jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
-          jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
-          jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
-          jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
-          jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM), &
-          jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP),stat=ier)
+           jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
+           jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+           jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+           jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM), &
+           jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP),stat=ier)
   if(ier /= 0) stop 'error in allocate 12'
 
+  jacobian2D_xmin(:,:,:) = 0.0; jacobian2D_xmax(:,:,:) = 0.0
+  jacobian2D_ymin(:,:,:) = 0.0; jacobian2D_ymax(:,:,:) = 0.0
+  jacobian2D_bottom(:,:,:) = 0.0; jacobian2D_top(:,:,:) = 0.0
+
   allocate(normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
-          normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
-          normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
-          normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
-          normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM), &
-          normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP),stat=ier)
+           normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
+           normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+           normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+           normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM), &
+           normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP),stat=ier)
   if(ier /= 0) stop 'error in allocate 13'
+
+  normal_xmin(:,:,:,:) = 0.0; normal_xmax(:,:,:,:) = 0.0
+  normal_ymin(:,:,:,:) = 0.0; normal_ymax(:,:,:,:) = 0.0
+  normal_bottom(:,:,:,:) = 0.0; normal_top(:,:,:,:) = 0.0
 
   ! Stacey
   if( ipass == 1 .and. NCHUNKS /= 6 ) then
     allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX), &
-            nimax(2,NSPEC2DMAX_YMIN_YMAX), &
-            njmin(2,NSPEC2DMAX_XMIN_XMAX), &
-            njmax(2,NSPEC2DMAX_XMIN_XMAX), &
-            nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
-            nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
+             nimax(2,NSPEC2DMAX_YMIN_YMAX), &
+             njmin(2,NSPEC2DMAX_XMIN_XMAX), &
+             njmax(2,NSPEC2DMAX_XMIN_XMAX), &
+             nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
+             nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
     if(ier /= 0) stop 'error in allocate 14'
   endif
 
+  nimin(:,:) = 0; nimax(:,:) = 0
+  njmin(:,:) = 0; njmax(:,:) = 0
+  nkmin_xi(:,:) = 0; nkmin_eta(:,:) = 0
+
   ! MPI cut-planes parameters along xi and along eta
   allocate(iMPIcut_xi(2,nspec), &
-          iMPIcut_eta(2,nspec),stat=ier)
+           iMPIcut_eta(2,nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 15'
+
+  iMPIcut_xi(:,:) = .false.; iMPIcut_eta(:,:) = .false.
 
   ! MPI buffer indices
   !
@@ -623,33 +662,43 @@
 
   if( ipass == 1 ) then
     allocate(iboolleft_xi(NGLOB2DMAX_XMIN_XMAX(iregion_code)), &
-            iboolright_xi(NGLOB2DMAX_XMIN_XMAX(iregion_code)), &
-            iboolleft_eta(NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
-            iboolright_eta(NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
-            stat=ier)
+             iboolright_xi(NGLOB2DMAX_XMIN_XMAX(iregion_code)), &
+             iboolleft_eta(NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
+             iboolright_eta(NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
+             stat=ier)
     if(ier /= 0) stop 'error in allocate 15b'
+
+    iboolleft_xi(:) = 0; iboolright_xi(:) = 0
+    iboolleft_eta(:) = 0; iboolright_eta(:) = 0
 
     allocate(ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX), &
-            ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX), &
-            ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX), &
-            ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX), &
-            stat=ier)
+             ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX), &
+             ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX), &
+             ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX), &
+             stat=ier)
     if(ier /= 0) stop 'error in allocate 15c'
+
+    ibool1D_leftxi_lefteta(:) = 0; ibool1D_rightxi_lefteta(:) = 0
+    ibool1D_leftxi_righteta(:) = 0; ibool1D_rightxi_righteta(:) = 0
 
     allocate(xyz1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX,NDIM), &
-            xyz1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX,NDIM), &
-            xyz1D_leftxi_righteta(NGLOB1D_RADIAL_MAX,NDIM), &
-            xyz1D_rightxi_righteta(NGLOB1D_RADIAL_MAX,NDIM), &
-            stat=ier)
+             xyz1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX,NDIM), &
+             xyz1D_leftxi_righteta(NGLOB1D_RADIAL_MAX,NDIM), &
+             xyz1D_rightxi_righteta(NGLOB1D_RADIAL_MAX,NDIM), &
+             stat=ier)
     if(ier /= 0) stop 'error in allocate 15c'
 
+    xyz1D_leftxi_lefteta(:,:) = 0.0; xyz1D_rightxi_lefteta(:,:) = 0.0
+    xyz1D_leftxi_righteta(:,:) = 0.0; xyz1D_rightxi_righteta(:,:) = 0.0
+
     allocate(iboolcorner(NGLOB1D_RADIAL(iregion_code),NUMCORNERS_SHARED), &
-            iboolfaces(NGLOB2DMAX_XY,NUMFACES_SHARED), &
-            stat=ier)
+             iboolfaces(NGLOB2DMAX_XY,NUMFACES_SHARED), &
+             stat=ier)
     if(ier /= 0) stop 'error in allocate 15b'
 
-  endif
+    iboolcorner(:,:) = 0; iboolfaces(:,:) = 0
 
+  endif
 
   ! store and save the final arrays only in the second pass
   ! therefore in the first pass some arrays can be allocated with a dummy size
@@ -659,15 +708,19 @@
     nspec_actually = nspec
   endif
   allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          xiystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          xizstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          etaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          etaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          etazstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          gammaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          gammaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
-          gammazstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier)
+           xiystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           xizstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           etaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           etaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           etazstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           gammaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           gammaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+           gammazstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier)
   if(ier /= 0) stop 'error in allocate 16'
+
+  xixstore(:,:,:,:) = 0.0; xiystore(:,:,:,:) = 0.0; xizstore(:,:,:,:) = 0.0
+  etaxstore(:,:,:,:) = 0.0; etaystore(:,:,:,:) = 0.0; etazstore(:,:,:,:) = 0.0
+  gammaxstore(:,:,:,:) = 0.0; gammaystore(:,:,:,:) = 0.0; gammazstore(:,:,:,:) = 0.0
 
   ! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -680,15 +733,21 @@
     NSPEC2D_670 = 1
   endif
   allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO), &
-          ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400), &
-          ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670), &
-          normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), &
-          normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), &
-          normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), &
-          jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO), &
-          jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400), &
-          jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),stat=ier)
+           ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400), &
+           ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670), &
+           normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), &
+           normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), &
+           normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), &
+           jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO), &
+           jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400), &
+           jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),stat=ier)
   if(ier /= 0) stop 'error in allocate 17'
+
+  ibelm_moho_top(:) = 0; ibelm_moho_bot(:) = 0
+  ibelm_400_top(:) = 0; ibelm_400_bot(:) = 0
+  ibelm_670_top(:) = 0; ibelm_670_bot(:) = 0
+  normal_moho(:,:,:,:) = 0.0; normal_400(:,:,:,:) = 0.0; normal_670(:,:,:,:) = 0.0
+  jacobian2D_moho(:,:,:) = 0.0; jacobian2D_400(:,:,:) = 0.0; jacobian2D_670(:,:,:) = 0.0
 
   end subroutine crm_allocate_arrays
 
@@ -1229,7 +1288,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
 
   if( ADIOS_ENABLED .and. ADIOS_FOR_AVS_DX ) then
     call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
-        num_ibool_AVS_DX, mask_ibool)
+                                   num_ibool_AVS_DX, mask_ibool)
   else
     call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
         xstore,ystore,zstore, num_ibool_AVS_DX,mask_ibool,npointot)

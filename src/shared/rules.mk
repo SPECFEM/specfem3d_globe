@@ -78,8 +78,10 @@ shared_MODULES = \
 	$(EMPTY_MACRO)
 
 ADIOS_OBJECTS = \
-  $O/adios_helpers.shared.o \
-  $O/adios_manager.shared.o \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
 
 ADIOS_STUBS = \
@@ -98,12 +100,13 @@ $(shared_OBJECTS): S = ${S_TOP}/src/shared
 #### rule for each .o file below
 ####
 
-$O/%.shared_module.o: $S/%.f90 ${SETUP}/constants.h
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
-
 ##
 ## shared
 ##
+
+$O/%.shared_module.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
 $O/%.shared.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
@@ -112,6 +115,18 @@ $O/%.shared.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 
 $O/%.sharedmpi.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+## adios
+
+$O/%.shared_adios_module.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.shared_adios.o: $S/%.f90 ${SETUP}/constants.h $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.shared_adios.o: $S/%.F90 ${SETUP}/constants.h $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
