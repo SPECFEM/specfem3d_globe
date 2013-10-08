@@ -164,7 +164,9 @@ AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.
 AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
 AC_LANG_POP(C)
 
-CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
+CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$FLAGS_CHECK], [:], [
+    AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
+])
 
 # Checks for libraries.
 
