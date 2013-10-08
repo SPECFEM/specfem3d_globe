@@ -29,9 +29,9 @@
 
 #include "config.h"
 
-#ifdef WITH_VTK
+#ifdef HAVE_VTK
 
-#pragma message ("\nCompiling with: WITH_VTK enabled\n")
+#pragma message ("\nCompiling with: HAVE_VTK enabled\n")
 
 #include <stdio.h>
 #include <unistd.h>
@@ -1194,5 +1194,5 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
 }
 
 
-#endif // WITH_VTK
+#endif // HAVE_VTK
 

@@ -201,7 +201,7 @@ endif
 
 ${E}/xmeshfem3D: $(XMESHFEM_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(XMESHFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 #######################################
 

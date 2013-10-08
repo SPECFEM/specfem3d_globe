@@ -624,27 +624,40 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+MPI_INCLUDES
+MPI_INC
+VTK_LIBS
+VTK_LDFLAGS
+VTK_INCLUDES
+CUDA_LIBS
+CUDA_LDFLAGS
+CUDA_CPPFLAGS
+CXXCPP
+ac_ct_CXX
+CXXFLAGS
+CXX
+NVCC
+CUDA_LIB
+CUDA_INC
+CONFIGURE_FLAGS
+ADIOS_LIBS
+ADIOS_FCFLAGS
+ADIOS_CONFIG
+EGREP
+GREP
+CPP
 FC_MODDIR
 FC_MODOUT
 ac_empty
 FC_MODINC
 FC_MODEXT
-NVCC
-CONFIGURE_FLAGS
 LOCAL_PATH_IS_ALSO_GLOBAL
-CUDA_INC
-CUDA_LIB
-ADIOS_LIB
-ADIOS_INC
-MXML_LIB
-MXML_INC
 FLAGS_CHECK
-MPI_INC
 MPILIBS
 MPIFC
-EGREP
-GREP
-CPP
+FCFLAGS_F90
+FC_DEFINE
+FCFLAGS_F
 FCFLAGS_f90
 ac_ct_CC
 CPPFLAGS
@@ -721,9 +734,12 @@ ac_user_opts='
 enable_option_checking
 enable_double_precision
 with_cuda
-with_vtk
+enable_vtk
 with_adios
 with_vec
+with_vtk
+with_vtk_suffix
+with_vtk_version
 '
       ac_precious_vars='build_alias
 host_alias
@@ -735,18 +751,19 @@ LIBS
 CC
 CFLAGS
 CPPFLAGS
-CPP
 MPIFC
 MPILIBS
-MPI_INC
 FLAGS_CHECK
-MXML_INC
-MXML_LIB
-ADIOS_INC
-ADIOS_LIB
-CUDA_LIB
+LOCAL_PATH_IS_ALSO_GLOBAL
+CPP
+ADIOS_CONFIG
 CUDA_INC
-LOCAL_PATH_IS_ALSO_GLOBAL'
+CUDA_LIB
+CXX
+CXXFLAGS
+CCC
+CXXCPP
+MPI_INC'
 
 
 # Initialize some variables set by options.
@@ -1362,15 +1379,19 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-double-precision
                           solver in double precision [default=no]
+  --enable-vtk            build VTK enabled version [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-cuda             build cuda GPU enabled version [default=no]
-  --with-vtk              build VTK enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
   --with-vec              build FORCE_VECTORIZATION enabled version
                           [default=yes]
+  --with-vtk              The prefix where VTK is installed [default=/usr]
+  --with-vtk-suffix       Suffix to append to VTK's include directory, e.g.,
+                          for vtk-5.2/ the suffix is "-5.2"
+  --with-vtk-version      Version number of VTK library [default=5.2]
 
 Some influential environment variables:
   FC          Fortran compiler command
@@ -1382,21 +1403,23 @@ Some influential environment variables:
   CFLAGS      C compiler flags
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
-  CPP         C preprocessor
   MPIFC       MPI Fortran compiler command
   MPILIBS     extra libraries for linking MPI programs
-  MPI_INC     Directory where MPI include file mpi.h is installed, which is
-              needed by ADIOS/CUDA when compiling
   FLAGS_CHECK Fortran compiler flags for non-critical subroutines
-  MXML_INC    Directory where MXML headers are installed
-  MXML_LIB    Directory where MXML libraries are installed
-  ADIOS_INC   Directory where ADIOS headers are installed
-  ADIOS_LIB   Directory where ADIOS libraries are installed
-  CUDA_LIB    Directory where CUDA library libcudart is installed
-  CUDA_INC    Directory where CUDA include files are installed
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=true]
+  CPP         C preprocessor
+  ADIOS_CONFIG
+              Path to adios_config program that indicates how to compile with
+              it.
+  CUDA_INC    Location of CUDA include files
+  CUDA_LIB    Location of CUDA library libcudart
+  CXX         C++ compiler command
+  CXXFLAGS    C++ compiler flags
+  CXXCPP      C++ preprocessor
+  MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
+              auto-detect)
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -1800,6 +1823,264 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_header_compile
+
+# ac_fn_fc_try_link LINENO
+# ------------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_fc_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_fc_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 test -x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_fc_try_link
+
+# ac_fn_cxx_try_compile LINENO
+# ----------------------------
+# Try to compile conftest.$ac_ext, and return whether this succeeded.
+ac_fn_cxx_try_compile ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext
+  if { { ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_compile") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_cxx_try_compile
+
+# ac_fn_cxx_try_cpp LINENO
+# ------------------------
+# Try to preprocess conftest.$ac_ext, and return whether this succeeded.
+ac_fn_cxx_try_cpp ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if { { ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } > conftest.i && {
+	 test -z "$ac_cxx_preproc_warn_flag$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+    ac_retval=1
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_cxx_try_cpp
+
+# ac_fn_cxx_check_header_mongrel LINENO HEADER VAR INCLUDES
+# ---------------------------------------------------------
+# Tests whether HEADER exists, giving a warning if it cannot be compiled using
+# the include files in INCLUDES and setting the cache variable VAR
+# accordingly.
+ac_fn_cxx_check_header_mongrel ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if eval \${$3+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
+$as_echo_n "checking $2 usability... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_header_compiler=yes
+else
+  ac_header_compiler=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
+$as_echo_n "checking $2 presence... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+  ac_header_preproc=yes
+else
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in #((
+  yes:no: )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+( $as_echo "## -------------------------------------- ##
+## Report this to jtromp AT princeton.edu ##
+## -------------------------------------- ##"
+     ) | sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=\$ac_header_compiler"
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_header_mongrel
+
+# ac_fn_cxx_try_link LINENO
+# -------------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_cxx_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 test -x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_cxx_try_link
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2158,6 +2439,140 @@ ac_config_headers="$ac_config_headers setup/config.h"
 
 
 
+# -*- Autoconf -*-
+
+## --------------------------------------------------------- ##
+## Autoconf macros for functions missing in older versions.  ##
+## --------------------------------------------------------- ##
+
+# Missing in autoconf < 2.60
+
+
+
+#
+# The following two macros are from autoconf 2.68 (which is still new).
+#
+
+# AC_FC_PP_SRCEXT(EXT, [ACTION-IF-SUCCESS], [ACTION-IF-FAILURE])
+# --------------------------------------------------------------
+# Like AC_FC_SRCEXT, set the source-code extension used in Fortran (FC) tests
+# to EXT (which defaults to f).  Also, look for any necessary additional
+# FCFLAGS needed to allow this extension for preprocessed Fortran, and store
+# them in the output variable FCFLAGS_<EXT> (e.g. FCFLAGS_f90 for EXT=f90).
+# If successful, call ACTION-IF-SUCCESS.  If unable to compile preprocessed
+# source code with EXT, call ACTION-IF-FAILURE, which defaults to failing with
+# an error message.
+#
+# Some compilers allow preprocessing with either a Fortran preprocessor or
+# with the C preprocessor (cpp).  Prefer the Fortran preprocessor, to deal
+# correctly with continuation lines, `//' (not a comment), and preserve white
+# space (for fixed form).
+#
+# (The flags for the current source-code extension, if any, are stored in
+# $ac_fcflags_srcext and used automatically in subsequent autoconf tests.)
+#
+# For ordinary extensions like f90, etcetera, the modified FCFLAGS
+# are needed for IBM's xlf*.  Also, for Intel's ifort compiler, the
+# $FCFLAGS_<EXT> variable *must* go immediately before the source file on the
+# command line, unlike other $FCFLAGS.  Ugh.
+#
+# Known extensions that enable preprocessing by default, and flags to force it:
+# GNU: .F .F90 .F95 .F03 .F08, -cpp for most others,
+#      -x f77-cpp-input for .f77 .F77; -x f95-cpp-input for gfortran < 4.4
+# SGI: .F .F90, -ftpp or -cpp for .f .f90, -E write preproc to stdout
+#      -macro_expand enable macro expansion everywhere (with -ftpp)
+#      -P preproc only, save in .i, no #line's
+# SUN: .F .F95, -fpp for others; -xpp={fpp,cpp} for preprocessor selection
+#      -F preprocess only (save in lowercase extension)
+# IBM: .F .F77 .F90 .F95 .F03, -qsuffix=cpp=EXT for extension .EXT to invoke cpp
+#      -WF,-qnofpp -WF,-qfpp=comment:linecont:nocomment:nolinecont
+#      -WF,-qlanglvl=classic or not -qnoescape (trigraph problems)
+#      -d no #line in output, -qnoobject for preprocessing only (output in .f)
+#      -q{no,}ppsuborigarg substitute original macro args before expansion
+# HP:  .F, +cpp={yes|no|default} use cpp, -cpp, +cpp_keep save in .i/.i90
+# PGI: -Mpreprocess
+# Absoft: .F .FOR .F90 .F95, -cpp for others
+# Cray: .F .F90 .FTN, -e Z for others; -F enable macro expansion everywhere
+# Intel: .F .F90, -fpp for others, but except for .f and .f90, -Tf may also be
+#        needed right before the source file name
+# PathScale: .F .F90 .F95, -ftpp or -cpp for .f .f90 .f95
+#         -macro_expand for expansion everywhere, -P for no #line in output
+# Lahey: .F .FOR .F90 .F95, -Cpp
+# NAGWare: .F .F90 .F95, .ff .ff90 .ff95 (new), -fpp for others
+# Compaq/Tru64: .F .F90, -cpp, -P keep .i file, -P keep .i file
+# f2c: .F, -cpp
+# g95: .F .FOR .F90 .F95 .F03, -cpp -no-cpp, -E for stdout
+
+
+# AC_FC_PP_DEFINE([ACTION-IF-SUCCESS], [ACTION-IF-FAILURE = FAILURE])
+# -------------------------------------------------------------------
+# Find a flag to specify defines for preprocessed Fortran.  Not all
+# Fortran compilers use -D.  Substitute FC_DEFINE with the result and
+# call ACTION-IF-SUCCESS (defaults to nothing) if successful, and
+# ACTION-IF-FAILURE (defaults to failing with an error message) if not.
+#
+# Known flags:
+# IBM: -WF,-D
+# Lahey/Fujitsu: -Wp,-D     older versions???
+# f2c: -D or -Wc,-D
+# others: -D
+
+
+
+#
+# The following three macros are from autoconf 2.69 (which is quite new).
+#
+
+# AC_FC_MODULE_EXTENSION
+# ----------------------
+# Find the Fortran 90 module file extension.  The module extension is stored
+# in the variable FC_MODEXT and empty if it cannot be determined.  The result
+# or "unknown" is cached in the cache variable ac_cv_fc_module_ext.
+
+
+
+# AC_FC_MODULE_FLAG([ACTION-IF-SUCCESS], [ACTION-IF-FAILURE = FAILURE])
+# ---------------------------------------------------------------------
+# Find a flag to include Fortran 90 modules from another directory.
+# If successful, run ACTION-IF-SUCCESS (defaults to nothing), otherwise
+# run ACTION-IF-FAILURE (defaults to failing with an error message).
+# The module flag is cached in the ac_cv_fc_module_flag variable.
+# It may contain significant trailing whitespace.
+#
+# Known flags:
+# gfortran: -Idir, -I dir (-M dir, -Mdir (deprecated), -Jdir for writing)
+# g95: -I dir (-fmod=dir for writing)
+# SUN: -Mdir, -M dir (-moddir=dir for writing;
+#                     -Idir for includes is also searched)
+# HP: -Idir, -I dir (+moddir=dir for writing)
+# IBM: -Idir (-qmoddir=dir for writing)
+# Intel: -Idir -I dir (-mod dir for writing)
+# Absoft: -pdir
+# Lahey: -mod dir
+# Cray: -module dir, -p dir (-J dir for writing)
+#       -e m is needed to enable writing .mod files at all
+# Compaq: -Idir
+# NAGWare: -I dir
+# PathScale: -I dir  (but -module dir is looked at first)
+# Portland: -module dir (first -module also names dir for writing)
+# Fujitsu: -Am -Idir (-Mdir for writing is searched first, then '.', then -I)
+#                    (-Am indicates how module information is saved)
+
+
+
+# AC_FC_MODULE_OUTPUT_FLAG([ACTION-IF-SUCCESS], [ACTION-IF-FAILURE = FAILURE])
+# ----------------------------------------------------------------------------
+# Find a flag to write Fortran 90 module information to another directory.
+# If successful, run ACTION-IF-SUCCESS (defaults to nothing), otherwise
+# run ACTION-IF-FAILURE (defaults to failing with an error message).
+# The module flag is cached in the ac_cv_fc_module_output_flag variable.
+# It may contain significant trailing whitespace.
+#
+# For known flags, see the documentation of AC_FC_MODULE_FLAG above.
+
+
+
+
 
 ############################################################
 
@@ -2278,7 +2693,7 @@ else
   want_double_precision=no
 fi
 
-if test "$want_double_precision" = no; then
+if test x"$want_double_precision" = xno; then
     CUSTOM_REAL=SIZE_REAL
     CUSTOM_MPI_TYPE=MPI_REAL
 else
@@ -2300,7 +2715,7 @@ else
   want_cuda=no
 fi
 
- if test "$want_cuda" != no; then
+ if test x"$want_cuda" != xno; then
   COND_CUDA_TRUE=
   COND_CUDA_FALSE='#'
 else
@@ -2308,7 +2723,7 @@ else
   COND_CUDA_FALSE=
 fi
 
- if test "$want_cuda" = cuda5; then
+ if test x"$want_cuda" = xcuda5; then
   COND_CUDA5_TRUE=
   COND_CUDA5_FALSE='#'
 else
@@ -2321,15 +2736,14 @@ fi
 ### VTK
 ###
 
-
-# Check whether --with-vtk was given.
-if test "${with_vtk+set}" = set; then :
-  withval=$with_vtk; want_vtk="$withval"
+# Check whether --enable-vtk was given.
+if test "${enable_vtk+set}" = set; then :
+  enableval=$enable_vtk; want_vtk="$enableval"
 else
   want_vtk=no
 fi
 
- if test "$want_vtk" != no; then
+ if test x"$want_vtk" != xno; then
   COND_VTK_TRUE=
   COND_VTK_FALSE='#'
 else
@@ -2350,7 +2764,7 @@ else
   want_adios=no
 fi
 
- if test "$want_adios" != no; then
+ if test x"$want_adios" != xno; then
   COND_ADIOS_TRUE=
   COND_ADIOS_FALSE='#'
 else
@@ -2837,9 +3251,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 export FC
 export MPIFC
-F77="$FC"
-FFLAGS="$FCFLAGS"
-
 
 
 flags_guess="$SHELL $srcdir/flags.guess"
@@ -4220,6 +4631,203 @@ ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+ac_fc_pp_define_srcext_save=$ac_fc_srcext
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran flag to compile preprocessed .F files" >&5
+$as_echo_n "checking for Fortran flag to compile preprocessed .F files... " >&6; }
+if ${ac_cv_fc_pp_srcext_F+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=F
+ac_fcflags_pp_srcext_save=$ac_fcflags_srcext
+ac_fcflags_srcext=
+ac_cv_fc_pp_srcext_F=unknown
+case $ac_ext in #(
+  [fF]77) ac_try=f77-cpp-input;; #(
+  *) ac_try=f95-cpp-input;;
+esac
+for ac_flag in none -ftpp -fpp -Tf "-fpp -Tf" -xpp=fpp -Mpreprocess "-e Z" \
+               -cpp -xpp=cpp -qsuffix=cpp=F "-x $ac_try" +cpp -Cpp; do
+  test "x$ac_flag" != xnone && ac_fcflags_srcext="$ac_flag"
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+#if 0
+#include <ac_nonexistent.h>
+      choke me
+#endif
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+#if 1
+#include <ac_nonexistent.h>
+      choke me
+#endif
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+
+else
+  ac_cv_fc_pp_srcext_F=$ac_flag; break
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+rm -f conftest.$ac_objext conftest.F
+ac_fcflags_srcext=$ac_fcflags_pp_srcext_save
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_pp_srcext_F" >&5
+$as_echo "$ac_cv_fc_pp_srcext_F" >&6; }
+if test "x$ac_cv_fc_pp_srcext_F" = xunknown; then
+  as_fn_error $? "Fortran could not compile preprocessed .F files" "$LINENO" 5
+else
+  ac_fc_srcext=F
+  if test "x$ac_cv_fc_pp_srcext_F" = xnone; then
+    ac_fcflags_srcext=""
+    FCFLAGS_F=""
+  else
+    ac_fcflags_srcext=$ac_cv_fc_pp_srcext_F
+    FCFLAGS_F=$ac_cv_fc_pp_srcext_F
+  fi
+
+
+fi
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how to define symbols for preprocessed Fortran" >&5
+$as_echo_n "checking how to define symbols for preprocessed Fortran... " >&6; }
+if ${ac_cv_fc_pp_define+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_fc_pp_define_srcext_save=$ac_fc_srcext
+ac_cv_fc_pp_define=unknown
+ac_fc_pp_define_FCFLAGS_save=$FCFLAGS
+for ac_flag in -D -WF,-D -Wp,-D -Wc,-D
+do
+  FCFLAGS="$ac_fc_pp_define_FCFLAGS_save ${ac_flag}FOOBAR ${ac_flag}ZORK=42"
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+#ifndef FOOBAR
+      choke me
+#endif
+#if ZORK != 42
+      choke me
+#endif
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_pp_define=$ac_flag
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  test x"$ac_cv_fc_pp_define" != xunknown && break
+done
+FCFLAGS=$ac_fc_pp_define_FCFLAGS_save
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_pp_define" >&5
+$as_echo "$ac_cv_fc_pp_define" >&6; }
+ac_fc_srcext=$ac_fc_pp_define_srcext_save
+if test "x$ac_cv_fc_pp_define" = xunknown; then
+  FC_DEFINE=
+  as_fn_error 77 "Fortran does not allow to define preprocessor symbols" "$LINENO" 5
+else
+  FC_DEFINE=$ac_cv_fc_pp_define
+
+fi
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran flag to compile preprocessed .F90 files" >&5
+$as_echo_n "checking for Fortran flag to compile preprocessed .F90 files... " >&6; }
+if ${ac_cv_fc_pp_srcext_F90+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=F90
+ac_fcflags_pp_srcext_save=$ac_fcflags_srcext
+ac_fcflags_srcext=
+ac_cv_fc_pp_srcext_F90=unknown
+case $ac_ext in #(
+  [fF]77) ac_try=f77-cpp-input;; #(
+  *) ac_try=f95-cpp-input;;
+esac
+for ac_flag in none -ftpp -fpp -Tf "-fpp -Tf" -xpp=fpp -Mpreprocess "-e Z" \
+               -cpp -xpp=cpp -qsuffix=cpp=F90 "-x $ac_try" +cpp -Cpp; do
+  test "x$ac_flag" != xnone && ac_fcflags_srcext="$ac_flag"
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+#if 0
+#include <ac_nonexistent.h>
+      choke me
+#endif
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+#if 1
+#include <ac_nonexistent.h>
+      choke me
+#endif
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+
+else
+  ac_cv_fc_pp_srcext_F90=$ac_flag; break
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+rm -f conftest.$ac_objext conftest.F90
+ac_fcflags_srcext=$ac_fcflags_pp_srcext_save
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_pp_srcext_F90" >&5
+$as_echo "$ac_cv_fc_pp_srcext_F90" >&6; }
+if test "x$ac_cv_fc_pp_srcext_F90" = xunknown; then
+  as_fn_error $? "Fortran could not compile preprocessed .F90 files" "$LINENO" 5
+else
+  ac_fc_srcext=F90
+  if test "x$ac_cv_fc_pp_srcext_F90" = xnone; then
+    ac_fcflags_srcext=""
+    FCFLAGS_F90=""
+  else
+    ac_fcflags_srcext=$ac_cv_fc_pp_srcext_F90
+    FCFLAGS_F90=$ac_cv_fc_pp_srcext_F90
+  fi
+
+
+fi
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -4800,6 +5408,236 @@ ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
+############################################################
+# influential environment variables
+
+
+
+
+
+
+# scratch disks
+
+
+############################################################
+
+# tests
+if test x"$MPIFC" = x; then :
+
+    MPIFC=mpif90
+
+fi
+
+if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then :
+
+    LOCAL_PATH_IS_ALSO_GLOBAL=true
+
+fi
+
+# Checks for typedefs, structures, and compiler characteristics.
+$as_echo "## ----------------- ##
+## module extensions ##
+## ----------------- ##"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module extension" >&5
+$as_echo_n "checking Fortran 90 module extension... " >&6; }
+if ${ac_cv_fc_module_ext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+mkdir conftest.dir
+cd conftest.dir
+ac_cv_fc_module_ext=unknown
+cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_ext=`ls | sed -n 's,conftest_module\.,,p'`
+   if test x$ac_cv_fc_module_ext = x; then
+     ac_cv_fc_module_ext=`ls | sed -n 's,CONFTEST_MODULE\.,,p'`
+   fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+cd ..
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_ext" >&5
+$as_echo "$ac_cv_fc_module_ext" >&6; }
+FC_MODEXT=$ac_cv_fc_module_ext
+if test "$FC_MODEXT" = unknown; then
+  FC_MODEXT=
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module inclusion flag" >&5
+$as_echo_n "checking Fortran 90 module inclusion flag... " >&6; }
+if ${ac_cv_fc_module_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+ac_cv_fc_module_flag=unknown
+mkdir conftest.dir
+cd conftest.dir
+cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cd ..
+   ac_fc_module_flag_FCFLAGS_save=$FCFLAGS
+   # Flag ordering is significant for gfortran and Sun.
+   for ac_flag in -M -I '-I ' '-M ' -p '-mod ' '-module ' '-Am -I'; do
+     # Add the flag twice to prevent matching an output flag.
+     FCFLAGS="$ac_fc_module_flag_FCFLAGS_save ${ac_flag}conftest.dir ${ac_flag}conftest.dir"
+     cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      use conftest_module
+      call conftest_routine
+      end program
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_flag="$ac_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+     if test "$ac_cv_fc_module_flag" != unknown; then
+       break
+     fi
+   done
+   FCFLAGS=$ac_fc_module_flag_FCFLAGS_save
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_flag" >&5
+$as_echo "$ac_cv_fc_module_flag" >&6; }
+if test "$ac_cv_fc_module_flag" != unknown; then
+  FC_MODINC=$ac_cv_fc_module_flag
+
+else
+  FC_MODINC=
+  as_fn_error $? "unable to find compiler flag for module search path" "$LINENO" 5
+fi
+
+# Ensure trailing whitespace is preserved in a Makefile.
+ac_empty=""
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module output flag" >&5
+$as_echo_n "checking Fortran 90 module output flag... " >&6; }
+if ${ac_cv_fc_module_output_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+mkdir conftest.dir conftest.dir/sub
+cd conftest.dir
+ac_cv_fc_module_output_flag=unknown
+ac_fc_module_output_flag_FCFLAGS_save=$FCFLAGS
+# Flag ordering is significant: put flags late which some compilers use
+# for the search path.
+for ac_flag in -J '-J ' -fmod= -moddir= +moddir= -qmoddir= '-mod ' \
+	      '-module ' -M '-Am -M' '-e m -J '; do
+  FCFLAGS="$ac_fc_module_output_flag_FCFLAGS_save ${ac_flag}sub"
+  cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cd sub
+     cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      use conftest_module
+      call conftest_routine
+      end program
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_output_flag="$ac_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+     cd ..
+     if test "$ac_cv_fc_module_output_flag" != unknown; then
+       break
+     fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+FCFLAGS=$ac_fc_module_output_flag_FCFLAGS_save
+cd ..
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_output_flag" >&5
+$as_echo "$ac_cv_fc_module_output_flag" >&6; }
+if test "$ac_cv_fc_module_output_flag" != unknown; then
+  FC_MODOUT=$ac_cv_fc_module_output_flag
+
+	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+	FC_MODDIR=./obj
+
+else
+  FC_MODOUT=
+
+	FC_MODDIR=.
+
+fi
+
+# Ensure trailing whitespace is preserved in a Makefile.
+ac_empty=""
+
+
+
+
+# Checks for header files.
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5233,61 +6071,6 @@ ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
-############################################################
-
-# influential environment variables
-
-
-
-
-
-
-
-
-# adios
-
-
-
-
-
-# cuda
-
-
-
-
-
-
-
-# scratch disks
-
-
-############################################################
-
-# tests
-if test x"$MPIFC" = x; then :
-
-    MPIFC=mpif90
-
-fi
-
-if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then :
-
-    LOCAL_PATH_IS_ALSO_GLOBAL=true
-
-fi
-
-if test x"$MPI_INC" != x; then :
-
-  CPPFLAGS+=" $MPI_INC"
-  FCFLAGS+=" $MPI_INC"
-  FLAGS_CHECK+=" $MPI_INC"
-
-fi
-
-# Checks for libraries.
-
-# Checks for header files.
-
 
 # Generate a Fortran 9x-compatible 'mpif.h', if necessary.
 ac_ext=${ac_fc_srcext-f}
@@ -5402,143 +6185,139 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
+# Checks for libraries.
+
 ###
 ### ADIOS
 ###
 
-if test "$want_adios" != no; then :
+if test x"$want_adios" != xno; then :
 
-  $as_echo "## ----- ##
+    $as_echo "## ----- ##
 ## ADIOS ##
 ## ----- ##"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: ADIOS is enabled" >&5
-$as_echo "$as_me: ADIOS is enabled" >&6;}
 
-  # adds include/library directories to compile flags
-  if test x"$$MXML_INC" != x; then :
 
-    CPPFLAGS+=" $MXML_INC"
-
-fi
-  if test x"$MXML_LIB" != x; then :
-
-    LDFLAGS+=" $MXML_LIB"
-
-fi
-  if test x"$ADIOS_INC" != x; then :
-
-    CPPFLAGS+=" $ADIOS_INC"
-    FCFLAGS+=" $ADIOS_INC"
-    FLAGS_CHECK+=" $ADIOS_INC"
-
-fi
-  if test x"$ADIOS_LIB" != x; then :
-
-    LDFLAGS+=" $ADIOS_LIB"
-
-fi
-
-  # checks
-
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-  ac_fn_c_check_header_mongrel "$LINENO" "mxml.h" "ac_cv_header_mxml_h" "$ac_includes_default"
-if test "x$ac_cv_header_mxml_h" = xyes; then :
-
+  # Extract the first word of "adios_config", so it can be a program name with args.
+set dummy adios_config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ADIOS_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
+  case $ADIOS_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ADIOS_CONFIG="$ADIOS_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ADIOS_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
 
-    as_fn_error $? "mxml C header not found; try CPPFLAGS=\"-I<mxml include dir>\"" "$LINENO" 5
-
+  ;;
+esac
 fi
-
-
-
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mxmlNewXML in -lmxml" >&5
-$as_echo_n "checking for mxmlNewXML in -lmxml... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <mxml.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-mxml_node_t *xml = mxmlNewXML("1.0");
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+ADIOS_CONFIG=$ac_cv_path_ADIOS_CONFIG
+if test -n "$ADIOS_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ADIOS_CONFIG" >&5
+$as_echo "$ADIOS_CONFIG" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-     as_fn_error $? "mxml library not found; try LDFLAGS=\"-L<mxml lib dir>\"" "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-  ac_fn_c_check_header_mongrel "$LINENO" "adios.h" "ac_cv_header_adios_h" "$ac_includes_default"
-if test "x$ac_cv_header_adios_h" = xyes; then :
-
-else
-
-    as_fn_error $? "adios C header not found; try CPPFLAGS=\"-I<adios include dir>\"" "$LINENO" 5
-
 fi
 
 
+
+  if test "x$ADIOS_CONFIG" = "x"; then
+    as_fn_error $? "adios_config program not found; try setting ADIOS_CONFIG to point to it" "$LINENO" 5
+  fi
 
   ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for adios_init in -ladiosf" >&5
-$as_echo_n "checking for adios_init in -ladiosf... " >&6; }
-      FC_BCK=$FC
-  FC=$MPIFC
+  FC_save="$FC"
+  FCFLAGS_save="$FCFLAGS"
+  LIBS_save="$LIBS"
+  FC="$MPIFC"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ADIOS modules" >&5
+$as_echo_n "checking for ADIOS modules... " >&6; }
+  ADIOS_FCFLAGS=`$ADIOS_CONFIG -c -f`
+  FCFLAGS="$ADIOS_FCFLAGS $FCFLAGS"
   cat > conftest.$ac_ext <<_ACEOF
-      program main
-use adios_write_mod; call adios_init_noxml(MPI_COMM_WORLD, ierr)
+
+          program main
+
+    use adios_read_mod
+    use adios_write_mod
+
       end
+
 _ACEOF
 if ac_fn_fc_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-     as_fn_error $? "adiosf library not found; try LDFLAGS=\"-L<adios lib dir>\"
-					     and FCFLAGS=\"-I<adios inc dir>\"" "$LINENO" 5
+    as_fn_error $? "ADIOS modules not found; is ADIOS built with Fortran support for this compiler?" "$LINENO" 5
 
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext    FC=$FC_BCK
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ADIOS libraries" >&5
+$as_echo_n "checking for ADIOS libraries... " >&6; }
+  FCFLAGS="$ADIOS_FCFLAGS $FCFLAGS_save"
+  ADIOS_LIBS=`$ADIOS_CONFIG -l -f`
+  LIBS="$ADIOS_LIBS $LIBS"
+  cat > conftest.$ac_ext <<_ACEOF
+
+          program main
+use adios_write_mod; call adios_init_noxml(MPI_COMM_WORLD, ierr)
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "ADIOS libraries not found." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+  FC="$FC_save"
+  FCFLAGS="$FCFLAGS_save"
+  LIBS="$LIBS_save"
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+
 
 
 fi
@@ -5554,17 +6333,440 @@ CONFIGURE_FLAGS="FC=$FC FCFLAGS=$FCFLAGS"
 ### CUDA
 ###
 
-if test "$want_cuda" != no; then :
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+if test -z "$CXX"; then
+  if test -n "$CCC"; then
+    CXX=$CCC
+  else
+    if test -n "$ac_tool_prefix"; then
+  for ac_prog in g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC
+  do
+    # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
+set dummy $ac_tool_prefix$ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_CXX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$CXX"; then
+  ac_cv_prog_CXX="$CXX" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CXX="$ac_tool_prefix$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
 
-  $as_echo "## ---- ##
+fi
+fi
+CXX=$ac_cv_prog_CXX
+if test -n "$CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXX" >&5
+$as_echo "$CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    test -n "$CXX" && break
+  done
+fi
+if test -z "$CXX"; then
+  ac_ct_CXX=$CXX
+  for ac_prog in g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_CXX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_CXX"; then
+  ac_cv_prog_ac_ct_CXX="$ac_ct_CXX" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CXX="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_CXX=$ac_cv_prog_ac_ct_CXX
+if test -n "$ac_ct_CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CXX" >&5
+$as_echo "$ac_ct_CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$ac_ct_CXX" && break
+done
+
+  if test "x$ac_ct_CXX" = x; then
+    CXX="g++"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    CXX=$ac_ct_CXX
+  fi
+fi
+
+  fi
+fi
+# Provide some information about the compiler.
+$as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ compiler version" >&5
+set X $ac_compile
+ac_compiler=$2
+for ac_option in --version -v -V -qversion; do
+  { { ac_try="$ac_compiler $ac_option >&5"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_compiler $ac_option >&5") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    sed '10a\
+... rest of stderr output deleted ...
+         10q' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+  fi
+  rm -f conftest.er1 conftest.err
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are using the GNU C++ compiler" >&5
+$as_echo_n "checking whether we are using the GNU C++ compiler... " >&6; }
+if ${ac_cv_cxx_compiler_gnu+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+#ifndef __GNUC__
+       choke me
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_compiler_gnu=yes
+else
+  ac_compiler_gnu=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_cv_cxx_compiler_gnu=$ac_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cxx_compiler_gnu" >&5
+$as_echo "$ac_cv_cxx_compiler_gnu" >&6; }
+if test $ac_compiler_gnu = yes; then
+  GXX=yes
+else
+  GXX=
+fi
+ac_test_CXXFLAGS=${CXXFLAGS+set}
+ac_save_CXXFLAGS=$CXXFLAGS
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX accepts -g" >&5
+$as_echo_n "checking whether $CXX accepts -g... " >&6; }
+if ${ac_cv_prog_cxx_g+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+   ac_cxx_werror_flag=yes
+   ac_cv_prog_cxx_g=no
+   CXXFLAGS="-g"
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_prog_cxx_g=yes
+else
+  CXXFLAGS=""
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+else
+  ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+	 CXXFLAGS="-g"
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_prog_cxx_g=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+   ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cxx_g" >&5
+$as_echo "$ac_cv_prog_cxx_g" >&6; }
+if test "$ac_test_CXXFLAGS" = set; then
+  CXXFLAGS=$ac_save_CXXFLAGS
+elif test $ac_cv_prog_cxx_g = yes; then
+  if test "$GXX" = yes; then
+    CXXFLAGS="-g -O2"
+  else
+    CXXFLAGS="-g"
+  fi
+else
+  if test "$GXX" = yes; then
+    CXXFLAGS="-O2"
+  else
+    CXXFLAGS=
+  fi
+fi
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how to run the C++ preprocessor" >&5
+$as_echo_n "checking how to run the C++ preprocessor... " >&6; }
+if test -z "$CXXCPP"; then
+  if ${ac_cv_prog_CXXCPP+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+      # Double quotes because CXXCPP needs to be expanded
+    for CXXCPP in "$CXX -E" "/lib/cpp"
+    do
+      ac_preproc_ok=false
+for ac_cxx_preproc_warn_flag in '' yes
+do
+  # Use a header file that comes with gcc, so configuring glibc
+  # with a fresh cross-compiler works.
+  # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+  # <limits.h> exists even on freestanding compilers.
+  # On the NeXT, cc -E runs the code through the compiler's parser,
+  # not just through cpp. "Syntax error" is here to catch this case.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+		     Syntax error
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+
+else
+  # Broken: fails on valid input.
+continue
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+  # OK, works on sane cases.  Now check whether nonexistent headers
+  # can be detected and how.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ac_nonexistent.h>
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+  # Broken: success on invalid input.
+continue
+else
+  # Passes both tests.
+ac_preproc_ok=:
+break
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+done
+# Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
+rm -f conftest.i conftest.err conftest.$ac_ext
+if $ac_preproc_ok; then :
+  break
+fi
+
+    done
+    ac_cv_prog_CXXCPP=$CXXCPP
+
+fi
+  CXXCPP=$ac_cv_prog_CXXCPP
+else
+  ac_cv_prog_CXXCPP=$CXXCPP
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXXCPP" >&5
+$as_echo "$CXXCPP" >&6; }
+ac_preproc_ok=false
+for ac_cxx_preproc_warn_flag in '' yes
+do
+  # Use a header file that comes with gcc, so configuring glibc
+  # with a fresh cross-compiler works.
+  # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+  # <limits.h> exists even on freestanding compilers.
+  # On the NeXT, cc -E runs the code through the compiler's parser,
+  # not just through cpp. "Syntax error" is here to catch this case.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+		     Syntax error
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+
+else
+  # Broken: fails on valid input.
+continue
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+  # OK, works on sane cases.  Now check whether nonexistent headers
+  # can be detected and how.
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ac_nonexistent.h>
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+  # Broken: success on invalid input.
+continue
+else
+  # Passes both tests.
+ac_preproc_ok=:
+break
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+done
+# Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
+rm -f conftest.i conftest.err conftest.$ac_ext
+if $ac_preproc_ok; then :
+
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "C++ preprocessor \"$CXXCPP\" fails sanity check
+See \`config.log' for more details" "$LINENO" 5; }
+fi
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+if test x"$want_cuda" != xno; then :
+
+    $as_echo "## ---- ##
 ## CUDA ##
 ## ---- ##"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: CUDA is enabled" >&5
-$as_echo "$as_me: CUDA is enabled" >&6;}
 
-  # checks
 
-  # Extract the first word of "nvcc", so it can be a program name with args.
+
+
+    # Extract the first word of "nvcc", so it can be a program name with args.
 set dummy nvcc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -5605,12 +6807,87 @@ fi
 
 
   if test -z "$NVCC" ; then
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot find 'nvcc' program.
-See \`config.log' for more details" "$LINENO" 5; }
-    NVCC=`echo "Error: nvcc is not installed." ; false`
+    as_fn_error $? "cannot find 'nvcc' program." "$LINENO" 5
   fi
+
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+  CPPFLAGS_save="$CPPFLAGS"
+  LDFLAGS_save="$LDFLAGS"
+  LIBS_save="$LIBS"
+
+    if test "x$CUDA_INC" != "x"; then
+    CUDA_CPPFLAGS="-I$CUDA_INC"
+    CPPFLAGS="$CUDA_CPPFLAGS $CPPFLAGS"
+  fi
+  ac_fn_cxx_check_header_mongrel "$LINENO" "cuda_runtime.h" "ac_cv_header_cuda_runtime_h" "$ac_includes_default"
+if test "x$ac_cv_header_cuda_runtime_h" = xyes; then :
+
+else
+
+    as_fn_error $? "CUDA runtime header not found; try setting CUDA_INC." "$LINENO" 5
+
+fi
+
+
+
+  if test "x$CUDA_LIB" != "x"; then
+    CUDA_LDFLAGS="-L$CUDA_LIB"
+    LDFLAGS="$CUDA_LDFLAGS $LDFLAGS"
+  fi
+  CUDA_LIBS="-lcudart"
+  LIBS="$CUDA_LIBS $LIBS"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cudaMalloc in -lcudart" >&5
+$as_echo_n "checking for cudaMalloc in -lcudart... " >&6; }
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <cuda_runtime.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+void* ptr = 0;
+  	             cudaMalloc(&ptr, 1);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+     as_fn_error $? "CUDA library not found; try setting CUDA_LIB." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+  CPPFLAGS="$CPPFLAGS_save"
+  LDFLAGS="$LDFLAGS_save"
+  LIBS="$LIBS_save"
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+
+
 
 
 fi
@@ -5619,7 +6896,7 @@ fi
 ### FORCE_VECTORIZATION
 ###
 
-if test "$want_vec" != no; then :
+if test x"$want_vec" != xno; then :
 
   $as_echo "## ------------------- ##
 ## FORCE VECTORIZATION ##
@@ -5627,30 +6904,8 @@ if test "$want_vec" != no; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: FORCE_VECTORIZATION is enabled" >&5
 $as_echo "$as_me: FORCE_VECTORIZATION is enabled" >&6;}
 
-  # adds conditional compilation flag
-  # fortran compiler
-  case $FC in #(
-  # ibm compiler flag
-    *xlf*|*/*xlf*) :
-    VEC_FLAG="-WF,-DFORCE_VECTORIZATION" ;; #(
-  *) :
-    # default: gnu,intel,pgi,..
-    VEC_FLAG="-DFORCE_VECTORIZATION"
-   ;;
-esac
-  FLAGS_CHECK+=" $VEC_FLAG"
-  # c compiler
-  case $CC in #(
-  # ibm compiler flag
-    *xlc*|*/*xlc*) :
-    VEC_FLAG="-DFORCE_VECTORIZATION" ;; #(
-  *) :
-    # default: gnu,intel,pgi,..
-    VEC_FLAG="-DFORCE_VECTORIZATION"
-   ;;
-esac
-  CPPFLAGS+=" $VEC_FLAG"
-
+  FLAGS_CHECK+=" ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS+=" -DFORCE_VECTORIZATION"
 
 fi
 
@@ -5658,250 +6913,512 @@ fi
 ### VTK
 ###
 
-if test "$want_vtk" != no; then :
+if test x"$want_vtk" != xno; then :
 
-  $as_echo "## --- ##
+    $as_echo "## --- ##
 ## VTK ##
 ## --- ##"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: VTK is enabled" >&5
-$as_echo "$as_me: VTK is enabled" >&6;}
 
-  # adds conditional compilation flag
-  # fortran compiler
-  case $FC in #(
-  # ibm compiler flag
-    *xlf*|*/*xlf*) :
-    VTK_FLAG="-WF,-DWITH_VTK" ;; #(
-  *) :
-    # default: gnu,intel,pgi,..
-    VTK_FLAG="-DWITH_VTK"
-   ;;
-esac
-  FLAGS_CHECK+=" $VTK_FLAG"
-  # c compiler
-  case $CC in #(
-  # ibm compiler flag
-    *xlc*|*/*xlc*) :
-    VTK_FLAG="-DWITH_VTK" ;; #(
-  *) :
-    # default: gnu,intel,pgi,..
-    VTK_FLAG="-DWITH_VTK"
-   ;;
-esac
-  CPPFLAGS+=" $VTK_FLAG"
+
+    # vtk install prefix
+
+# Check whether --with-vtk was given.
+if test "${with_vtk+set}" = set; then :
+  withval=$with_vtk; with_vtk="$withval"
+else
+  with_vtk="/usr"
+fi
+
+
+    # vtk suffix, to allow for multiple installations of vtk libraries
+
+# Check whether --with-vtk-suffix was given.
+if test "${with_vtk_suffix+set}" = set; then :
+  withval=$with_vtk_suffix; vtk_suffix="$withval"
+else
+  vtk_suffix=""
+fi
+
+
+    # alternatively, derive suffix from version number
+
+# Check whether --with-vtk-version was given.
+if test "${with_vtk_version+set}" = set; then :
+  withval=$with_vtk_version; vtk_version="$withval"
+else
+  vtk_version="5.2"
+fi
+
+
+    if test -z "$vtk_suffix"; then
+        #
+        # suffix was not specified. use the version number
+        # to calculate what it should be
+        #
+        if test -n "$vtk_version"; then
+            vtk_suffix="-$vtk_version"
+        fi
+
+    else
+        #
+        # suffix was specified. ignore version silently?
+        # produce error for now
+        #
+        if test -n "$vtk_version"; then
+            as_fn_error $? "The option --with-vtk-suffix overrides --with-vtk-version. Do not use simultaneously." "$LINENO" 5
+        fi
+
+    fi
+
+
+
+        if test x$with_vtk = "xyes"; then
+                with_vtk="/usr"
+    fi
+
+    if test x$with_vtk != "xno"; then
+        VTK_PREFIX="$with_vtk"
+
+        as_ac_File=`$as_echo "ac_cv_file_$VTK_PREFIX/include/vtk$vtk_suffix/vtkCommonInstantiator.h" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $VTK_PREFIX/include/vtk$vtk_suffix/vtkCommonInstantiator.h" >&5
+$as_echo_n "checking for $VTK_PREFIX/include/vtk$vtk_suffix/vtkCommonInstantiator.h... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$VTK_PREFIX/include/vtk$vtk_suffix/vtkCommonInstantiator.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  vtkFound="OK"
+fi
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if VTK is installed in $VTK_PREFIX" >&5
+$as_echo_n "checking if VTK is installed in $VTK_PREFIX... " >&6; }
+
+        if test -z "$vtkFound"; then
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+
+        else
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+                        VTK_INCLUDES="-I$VTK_PREFIX/include/vtk$vtk_suffix"
+            VTK_LDFLAGS="-L$VTK_PREFIX/lib/vtk$vtk_suffix -L$VTK_PREFIX/lib64/vtk$vtk_suffix"
+
+                        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+            OLD_CFLAGS=$CFLAGS
+            OLD_CXXFLAGS=$CXXFLAGS
+            OLD_LDFLAGS=$LDFLAGS
+            OLD_LIBS=$LIBS
+
+                                    CFLAGS="$VTK_CFLAGS $CFLAGS"
+            CXXFLAGS="$VTK_CXXFLAGS $CXXFLAGS"
+            LDFLAGS="$VTK_LDFLAGS $LDFLAGS"
+
+                                                VTK_SUPPORT_LIBS="-lvtktiff -lvtkpng -lvtkjpeg -lvtkzlib -lvtkexpat -lvfw32 -lgdi32"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for strcmp in -lvtkIO" >&5
+$as_echo_n "checking for strcmp in -lvtkIO... " >&6; }
+if ${ac_cv_lib_vtkIO_strcmp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lvtkIO $VTK_SUPPORT_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char strcmp ();
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+return strcmp ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_vtkIO_strcmp=yes
+else
+  ac_cv_lib_vtkIO_strcmp=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_vtkIO_strcmp" >&5
+$as_echo "$ac_cv_lib_vtkIO_strcmp" >&6; }
+if test "x$ac_cv_lib_vtkIO_strcmp" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBVTKIO 1
+_ACEOF
+
+  LIBS="-lvtkIO $LIBS"
+
+else
+
+                VTK_SUPPORT_LIBS="-lvtktiff -lvtkpng -lvtkjpeg -lvtkzlib -lvtkexpat"
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for abort in -lvtkIO" >&5
+$as_echo_n "checking for abort in -lvtkIO... " >&6; }
+if ${ac_cv_lib_vtkIO_abort+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lvtkIO $VTK_SUPPORT_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char abort ();
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+return abort ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_vtkIO_abort=yes
+else
+  ac_cv_lib_vtkIO_abort=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_vtkIO_abort" >&5
+$as_echo "$ac_cv_lib_vtkIO_abort" >&6; }
+if test "x$ac_cv_lib_vtkIO_abort" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBVTKIO 1
+_ACEOF
+
+  LIBS="-lvtkIO $LIBS"
+
+else
+
+                    VTK_SUPPORT_LIBS="-ltiff -lpng -ljpeg -lz -lexpat"
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for exit in -lvtkIO" >&5
+$as_echo_n "checking for exit in -lvtkIO... " >&6; }
+if ${ac_cv_lib_vtkIO_exit+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lvtkIO $VTK_SUPPORT_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char exit ();
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+return exit ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_vtkIO_exit=yes
+else
+  ac_cv_lib_vtkIO_exit=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_vtkIO_exit" >&5
+$as_echo "$ac_cv_lib_vtkIO_exit" >&6; }
+if test "x$ac_cv_lib_vtkIO_exit" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBVTKIO 1
+_ACEOF
+
+  LIBS="-lvtkIO $LIBS"
+
+else
+
+                        VTK_SUPPORT_LIBS=""
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for strstr in -lvtkIO" >&5
+$as_echo_n "checking for strstr in -lvtkIO... " >&6; }
+if ${ac_cv_lib_vtkIO_strstr+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lvtkIO $VTK_SUPPORT_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char strstr ();
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+return strstr ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_vtkIO_strstr=yes
+else
+  ac_cv_lib_vtkIO_strstr=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_vtkIO_strstr" >&5
+$as_echo "$ac_cv_lib_vtkIO_strstr" >&6; }
+if test "x$ac_cv_lib_vtkIO_strstr" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBVTKIO 1
+_ACEOF
+
+  LIBS="-lvtkIO $LIBS"
+
+else
+
+                            as_fn_error $? "cannot link against VTK libraries" "$LINENO" 5
+
+fi
+
+
+fi
+
+
+fi
+
+
+fi
+
+            VTK_LIBS="-lvtkIO -lvtkDICOMParser -lvtkFiltering -lvtkGenericFiltering -lvtkCommon $VTK_SUPPORT_LIBS -lvtksys"
+            LIBS="$VTK_LIBS $LIBS"
+
+                        if test -n ""; then
+
+                maj=`echo  | sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
+                min=`echo  | sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
+                rel=`echo  | sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if VTK version is at least $maj.$min.$rel" >&5
+$as_echo_n "checking if VTK version is at least $maj.$min.$rel... " >&6; }
+
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                        #include <vtk/vtkConfigure.h>
+                        #include <stdio.h>
+
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+
+                        printf("VTK version is: %d.%d.%d",
+                               VTK_MAJOR_VERSION,
+                               VTK_MINOR_VERSION,
+                               VTK_BUILD_VERSION);
+
+                        #if VTK_MAJOR_VERSION < $maj
+                        #error Installed VTK is too old!
+                        #endif
+
+                        #if VTK_MINOR_VERSION < $min
+                        #error Installed VTK is too old!
+                        #endif
+
+                        #if VTK_BUILD_VERSION < $rel
+                        #error Installed VTK is too old!
+                        #endif
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  vtkVersion="OK"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+                                CFLAGS=$OLD_CFLAGS
+                CXXFLAGS=$OLD_CXXFLAGS
+                LDFLAGS=$OLD_LDFLAGS
+                LIBS=$OLD_LIBS
+
+                if test "$vtkVersion" = "OK"; then
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+                else
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+                fi
+
+            else
+
+                                CFLAGS=$OLD_CFLAGS
+                CXXFLAGS=$OLD_CXXFLAGS
+                LDFLAGS=$OLD_LDFLAGS
+                LIBS=$OLD_LIBS
+
+
+
+            fi          #if [[ -n "" ]];
+
+                        ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+$as_echo "#define HAVE_VTK /**/" >>confdefs.h
+
+
+        fi          # if [[ -z "$vtkFound" ]];
+    fi          # $with_vtk != "no"
+
+
+
+
+
+    # Add optional libraries we need:
+    VTK_LIBS="-lvtkRendering -lvtkGraphics $VTK_LIBS"
+
+fi
+
+if test x"$want_cuda" != xno -o x"$want_vtk" != xno; then :
+
+
+
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+  CPPFLAGS_save="$CPPFLAGS"
+
+  if test "x$MPI_INC" = "x"; then
+    MPI_INC=`$MPIFC -showme:incdirs`
+  fi
+  if test "x$MPI_INC" != "x"; then
+        for i in $MPI_INC
+    do
+      MPI_INCLUDES="$MPI_INCLUDES -I$i"
+    done
+    CPPFLAGS="$MPI_INCLUDES $CPPFLAGS"
+  fi
+  ac_fn_cxx_check_header_mongrel "$LINENO" "mpi.h" "ac_cv_header_mpi_h" "$ac_includes_default"
+if test "x$ac_cv_header_mpi_h" = xyes; then :
+
+else
+
+    as_fn_error $? "MPI header not found; try setting MPI_INC." "$LINENO" 5
+
+fi
+
+
+
+  CPPFLAGS="$CPPFLAGS_save"
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
 
 
 fi
 
 ############################################################
 
-# Checks for typedefs, structures, and compiler characteristics.
-$as_echo "## ----------------- ##
-## module extensions ##
-## ----------------- ##"
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module extension" >&5
-$as_echo_n "checking Fortran 90 module extension... " >&6; }
-if ${ac_cv_fc_module_ext+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-mkdir conftest.dir
-cd conftest.dir
-ac_cv_fc_module_ext=unknown
-cat > conftest.$ac_ext <<_ACEOF
-
-      module conftest_module
-      contains
-      subroutine conftest_routine
-      write(*,'(a)') 'gotcha!'
-      end subroutine
-      end module
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  ac_cv_fc_module_ext=`ls | sed -n 's,conftest_module\.,,p'`
-   if test x$ac_cv_fc_module_ext = x; then
-     ac_cv_fc_module_ext=`ls | sed -n 's,CONFTEST_MODULE\.,,p'`
-   fi
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-cd ..
-rm -rf conftest.dir
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_ext" >&5
-$as_echo "$ac_cv_fc_module_ext" >&6; }
-FC_MODEXT=$ac_cv_fc_module_ext
-if test "$FC_MODEXT" = unknown; then
-  FC_MODEXT=
-fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module inclusion flag" >&5
-$as_echo_n "checking Fortran 90 module inclusion flag... " >&6; }
-if ${ac_cv_fc_module_flag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-ac_cv_fc_module_flag=unknown
-mkdir conftest.dir
-cd conftest.dir
-cat > conftest.$ac_ext <<_ACEOF
-
-      module conftest_module
-      contains
-      subroutine conftest_routine
-      write(*,'(a)') 'gotcha!'
-      end subroutine
-      end module
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  cd ..
-   ac_fc_module_flag_FCFLAGS_save=$FCFLAGS
-   # Flag ordering is significant for gfortran and Sun.
-   for ac_flag in -M -I '-I ' '-M ' -p '-mod ' '-module ' '-Am -I'; do
-     # Add the flag twice to prevent matching an output flag.
-     FCFLAGS="$ac_fc_module_flag_FCFLAGS_save ${ac_flag}conftest.dir ${ac_flag}conftest.dir"
-     cat > conftest.$ac_ext <<_ACEOF
-
-      program main
-      use conftest_module
-      call conftest_routine
-      end program
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  ac_cv_fc_module_flag="$ac_flag"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     if test "$ac_cv_fc_module_flag" != unknown; then
-       break
-     fi
-   done
-   FCFLAGS=$ac_fc_module_flag_FCFLAGS_save
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-rm -rf conftest.dir
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_flag" >&5
-$as_echo "$ac_cv_fc_module_flag" >&6; }
-if test "$ac_cv_fc_module_flag" != unknown; then
-  FC_MODINC=$ac_cv_fc_module_flag
-
-else
-  FC_MODINC=
-  as_fn_error $? "unable to find compiler flag for module search path" "$LINENO" 5
-fi
-
-# Ensure trailing whitespace is preserved in a Makefile.
-ac_empty=""
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module output flag" >&5
-$as_echo_n "checking Fortran 90 module output flag... " >&6; }
-if ${ac_cv_fc_module_output_flag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-mkdir conftest.dir conftest.dir/sub
-cd conftest.dir
-ac_cv_fc_module_output_flag=unknown
-ac_fc_module_output_flag_FCFLAGS_save=$FCFLAGS
-# Flag ordering is significant: put flags late which some compilers use
-# for the search path.
-for ac_flag in -J '-J ' -fmod= -moddir= +moddir= -qmoddir= '-mod ' \
-	      '-module ' -M '-Am -M' '-e m -J '; do
-  FCFLAGS="$ac_fc_module_output_flag_FCFLAGS_save ${ac_flag}sub"
-  cat > conftest.$ac_ext <<_ACEOF
-
-      module conftest_module
-      contains
-      subroutine conftest_routine
-      write(*,'(a)') 'gotcha!'
-      end subroutine
-      end module
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  cd sub
-     cat > conftest.$ac_ext <<_ACEOF
-
-      program main
-      use conftest_module
-      call conftest_routine
-      end program
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  ac_cv_fc_module_output_flag="$ac_flag"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     cd ..
-     if test "$ac_cv_fc_module_output_flag" != unknown; then
-       break
-     fi
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-done
-FCFLAGS=$ac_fc_module_output_flag_FCFLAGS_save
-cd ..
-rm -rf conftest.dir
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_output_flag" >&5
-$as_echo "$ac_cv_fc_module_output_flag" >&6; }
-if test "$ac_cv_fc_module_output_flag" != unknown; then
-  FC_MODOUT=$ac_cv_fc_module_output_flag
-
-	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
-	FC_MODDIR=./obj
-
-else
-  FC_MODOUT=
-
-	FC_MODDIR=.
-
-fi
-
-# Ensure trailing whitespace is preserved in a Makefile.
-ac_empty=""
-
-
-
-
-# Checks for library functions.
 $as_echo "## ----------------------------------- ##
 ## setting up default simulation setup ##
 ## ----------------------------------- ##"
 
+# Output results.
 ac_config_files="$ac_config_files Makefile setup/constants.h setup/precision.h setup/config.fh"
 
 ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/CMTSOLUTION:DATA/CMTSOLUTION DATA/STATIONS:DATA/STATIONS"

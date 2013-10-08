@@ -748,7 +748,7 @@ module specfem_par_movie
   logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
 
   ! vtk run-time visualization
-#ifdef WITH_VTK
+#ifdef HAVE_VTK
   ! vtk window
   logical, parameter :: VTK_MODE = .true.
 #else

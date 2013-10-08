@@ -39,7 +39,7 @@
 /* ----------------------------------------------------------------------------------------------- */
 
 void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
-  //printf("VTK_MODE not enabled at compile time: use -DWITH_VTK\n");
+  //printf("VTK_MODE not enabled at compile time: use -DHAVE_VTK\n");
 }
 
 void FC_FUNC_(prepare_vtksource,PREPARE_VTKSOURCE)(float* xs_x,float* xs_y, float* xs_z) {}
