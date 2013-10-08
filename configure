@@ -736,7 +736,7 @@ enable_double_precision
 with_cuda
 enable_vtk
 with_adios
-with_vec
+enable_vectorization
 with_vtk
 with_vtk_suffix
 with_vtk_version
@@ -1380,14 +1380,14 @@ Optional Features:
   --enable-double-precision
                           solver in double precision [default=no]
   --enable-vtk            build VTK enabled version [default=no]
+  --enable-vectorization  build FORCE_VECTORIZATION enabled version
+                          [default=yes]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-cuda             build cuda GPU enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
-  --with-vec              build FORCE_VECTORIZATION enabled version
-                          [default=yes]
   --with-vtk              The prefix where VTK is installed [default=/usr]
   --with-vtk-suffix       Suffix to append to VTK's include directory, e.g.,
                           for vtk-5.2/ the suffix is "-5.2"
@@ -2777,15 +2777,14 @@ fi
 ### FORCE_VECTORIZATION
 ###
 
-
-# Check whether --with-vec was given.
-if test "${with_vec+set}" = set; then :
-  withval=$with_vec; want_vec="$withval"
+# Check whether --enable-vectorization was given.
+if test "${enable_vectorization+set}" = set; then :
+  enableval=$enable_vectorization; want_vec="$enableval"
 else
   want_vec=yes
 fi
 
- if test "$want_vec" != no; then
+ if test x"$want_vec" != xno; then
   COND_VECTORIZATION_TRUE=
   COND_VECTORIZATION_FALSE='#'
 else
