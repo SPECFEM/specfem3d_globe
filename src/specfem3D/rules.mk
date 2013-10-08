@@ -243,7 +243,7 @@ ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 	@echo "building xspecfem3D with CUDA 5 support"
 	@echo ""
 	${NVCCLINK} -o $(cuda_DEVICE_OBJ) $(cuda_OBJECTS)
-	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
+	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
 else
@@ -253,7 +253,7 @@ ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 4 support"
 	@echo ""
-	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
 endif
@@ -267,8 +267,8 @@ ${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
 	@echo ""
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
-#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
-	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
+#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 	@echo ""
 
 endif
@@ -322,8 +322,8 @@ $O/%.solver.o: $S/%.F90 ${SETUP}/constants.h
 ###
 
 $O/%.visualcc.o: $S/%.cpp ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) -o $@ $<
+	${CC} -c $(CPPFLAGS) $(MPI_INCLUDES) -o $@ $<
 
 $O/%.visualc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) -o $@ $<
+	${CC} -c $(CPPFLAGS) $(MPI_INCLUDES) -o $@ $<
 

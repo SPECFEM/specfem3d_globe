@@ -33,7 +33,7 @@ AC_ARG_ENABLE([double-precision],
         [solver in double precision @<:@default=no@:>@])],
     [want_double_precision="$enableval"],
     [want_double_precision=no])
-if test "$want_double_precision" = no; then
+if test x"$want_double_precision" = xno; then
     CUSTOM_REAL=SIZE_REAL
     CUSTOM_MPI_TYPE=MPI_REAL
 else
@@ -52,19 +52,19 @@ AC_ARG_WITH([cuda],
         [build cuda GPU enabled version @<:@default=no@:>@])],
     [want_cuda="$withval"],
     [want_cuda=no])
-AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
-AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
+AM_CONDITIONAL([COND_CUDA], [test x"$want_cuda" != xno])
+AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
 
 ###
 ### VTK
 ###
 
-AC_ARG_WITH([vtk],
-    [AC_HELP_STRING([--with-vtk],
+AC_ARG_ENABLE([vtk],
+    [AC_HELP_STRING([--enable-vtk],
         [build VTK enabled version @<:@default=no@:>@])],
-    [want_vtk="$withval"],
+    [want_vtk="$enableval"],
     [want_vtk=no])
-AM_CONDITIONAL([COND_VTK], [test "$want_vtk" != no])
+AM_CONDITIONAL([COND_VTK], [test x"$want_vtk" != xno])
 
 ###
 ### ADIOS
@@ -75,7 +75,7 @@ AC_ARG_WITH([adios],
         [build ADIOS enabled version @<:@default=no@:>@])],
     [want_adios="$withval"],
     [want_adios=no])
-AM_CONDITIONAL([COND_ADIOS], [test "$want_adios" != no])
+AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 
 ###
 ### FORCE_VECTORIZATION
@@ -103,9 +103,6 @@ fi
 AC_PROG_FC
 export FC
 export MPIFC
-F77="$FC"
-FFLAGS="$FCFLAGS"
-AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
 
 flags_guess="$SHELL $srcdir/flags.guess"
@@ -129,19 +126,8 @@ AC_PROG_CC
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
-AC_ARG_VAR(MPI_INC,[Directory where MPI include file mpi.h is installed, which is needed by ADIOS/CUDA when compiling])
 
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
-
-# adios
-AC_ARG_VAR(MXML_INC, [Directory where MXML headers are installed])
-AC_ARG_VAR(MXML_LIB, [Directory where MXML libraries are installed])
-AC_ARG_VAR(ADIOS_INC, [Directory where ADIOS headers are installed])
-AC_ARG_VAR(ADIOS_LIB, [Directory where ADIOS libraries are installed])
-
-# cuda
-AC_ARG_VAR(CUDA_LIB,[Directory where CUDA library libcudart is installed])
-AC_ARG_VAR(CUDA_INC,[Directory where CUDA include files are installed])
 
 # scratch disks
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
@@ -155,12 +141,6 @@ AS_IF([test x"$MPIFC" = x],[
 
 AS_IF([test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x],[
     LOCAL_PATH_IS_ALSO_GLOBAL=true
-])
-
-AS_IF([test x"$MPI_INC" != x],[
-  CPPFLAGS+=" $MPI_INC"
-  FCFLAGS+=" $MPI_INC"
-  FLAGS_CHECK+=" $MPI_INC"
 ])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -192,31 +172,9 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
 ### ADIOS
 ###
 
-AS_IF([test "$want_adios" != no],[
-  AS_BOX([ADIOS])
-  AC_MSG_NOTICE([ADIOS is enabled])
-
-  # adds include/library directories to compile flags
-  AS_IF([test x"$$MXML_INC" != x],[
-    CPPFLAGS+=" $MXML_INC"
-  ])
-  AS_IF([test x"$MXML_LIB" != x],[
-    LDFLAGS+=" $MXML_LIB"
-  ])
-  AS_IF([test x"$ADIOS_INC" != x],[
-    CPPFLAGS+=" $ADIOS_INC"
-    FCFLAGS+=" $ADIOS_INC"
-    FLAGS_CHECK+=" $ADIOS_INC"
-  ])
-  AS_IF([test x"$ADIOS_LIB" != x],[
-    LDFLAGS+=" $ADIOS_LIB"
-  ])
-
-  # checks
-  CIT_MXML_HEADER
-  CIT_MXML_LIB
-  CIT_ADIOS_HEADER
-  CIT_ADIOS_LIB
+AS_IF([test x"$want_adios" != xno], [
+    AS_BOX([ADIOS])
+    CIT_ADIOS_CONFIG
 ])
 
 #mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
@@ -230,19 +188,16 @@ AC_SUBST([CONFIGURE_FLAGS])
 ### CUDA
 ###
 
-AS_IF([test "$want_cuda" != no],[
-  AS_BOX([CUDA])
-  AC_MSG_NOTICE([CUDA is enabled])
-
-  # checks
-  CIT_CUDA_COMPILER
+AS_IF([test x"$want_cuda" != xno], [
+    AS_BOX([CUDA])
+    CIT_CUDA_CONFIG
 ])
 
 ###
 ### FORCE_VECTORIZATION
 ###
 
-AS_IF([test "$want_vec" != no],[
+AS_IF([test x"$want_vec" != xno],[
   AS_BOX([FORCE VECTORIZATION])
   AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
 
@@ -254,18 +209,23 @@ AS_IF([test "$want_vec" != no],[
 ### VTK
 ###
 
-AS_IF([test "$want_vtk" != no],[
-  AS_BOX([VTK])
-  AC_MSG_NOTICE([VTK is enabled])
+AS_IF([test x"$want_vtk" != xno], [
+    AS_BOX([VTK])
+    CIT_OPTIONS_VTK
+    CIT_PATH_VTK
+    # Add optional libraries we need:
+    VTK_LIBS="-lvtkRendering -lvtkGraphics $VTK_LIBS"
+])
 
-  FLAGS_CHECK+=" ${FC_DEFINE}WITH_VTK"
-  CPPFLAGS+=" -DWITH_VTK"
+AS_IF([test x"$want_cuda" != xno -o x"$want_vtk" != xno], [
+    CIT_MPI_INCDIR([$MPIFC])
 ])
 
 ############################################################
 
 AS_BOX([setting up default simulation setup])
 
+# Output results.
 AC_CONFIG_FILES([
     Makefile
     setup/constants.h
