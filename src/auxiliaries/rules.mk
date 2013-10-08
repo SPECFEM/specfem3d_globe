@@ -122,10 +122,10 @@ $(auxiliaries_OBJECTS): S := ${S_TOP}/src/auxiliaries
 ##
 ## auxiliaries
 ##
-$O/%.aux.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
+$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.auxsolver.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.auxsolver.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 

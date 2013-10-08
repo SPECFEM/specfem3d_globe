@@ -246,32 +246,32 @@ $(meshfem3D_OBJECTS): S = ${S_TOP}/src/meshfem3D
 #### rule for each .o file below
 ####
 
-$O/%.check_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
+$O/%.check_module.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+$O/%.check.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+$O/%.check.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.checkmpi.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+$O/%.checkmpi.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.checkmpi.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+$O/%.checkmpi.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 ## adios
 
-$O/%.check_adios_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
+$O/%.check_adios_module.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check_adios_module.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
+$O/%.check_adios_module.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check_adios.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o
+$O/%.check_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check_adios.o: $S/%.F90 ${SETUP}/constants.h $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o
+$O/%.check_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

@@ -81,6 +81,6 @@ $(compute_optimized_dumping_undo_att_OBJECTS): S := ${S_TOP}/src/compute_optimiz
 #### rule for each .o file below
 ####
 
-$O/%.optdump.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
+$O/%.optdump.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
