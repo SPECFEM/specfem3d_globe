@@ -118,9 +118,36 @@ meshfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_MODULES = \
+	$(FC_MODDIR)/create_regions_mesh_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/create_regions_mesh_par2.$(FC_MODEXT) \
+	$(FC_MODDIR)/create_mpi_interfaces_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/module_ppm.$(FC_MODEXT) \
+	$(FC_MODDIR)/meshfem3d_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_crust_mantle_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_inner_core_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_outer_core_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_1066a_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_1dref_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_ak135_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_aniso_mantle_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_atten3d_qrfsi12_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_crust_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_crustmaps_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_epcrust_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_eucrust_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_heterogen_mantle_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_jp3d_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_ppm_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_s20rts_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_s362ani_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_s40rts_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sea1d_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sea99_s_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/avs_dx_global_chunks_mod.$(FC_MODEXT) \
+	$(FC_MODDIR)/avs_dx_global_mod.$(FC_MODEXT) \
+	$(FC_MODDIR)/avs_dx_global_faces_mod.$(FC_MODEXT) \
+	$(FC_MODDIR)/avs_dx_surface_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
@@ -161,17 +188,11 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
-XMESHFEM_OBJECTS = $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
-
 ###
 ### ADIOS
 ###
 
 adios_meshfem3D_OBJECTS = \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
-	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
 	$O/write_AVS_DX_global_chunks_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_global_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_global_faces_data_adios.check_adios_module.o \
@@ -182,15 +203,27 @@ adios_meshfem3D_OBJECTS = \
 	$O/save_arrays_solver_adios.check_adios.o \
 	$(EMPTY_MACRO)
 
+adios_meshfem3D_SHARED_OBJECTS = \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios.o \
+	$(EMPTY_MACRO)
+
 adios_STUBS = \
+	$(EMPTY_MACRO)
+
+adios_SHARED_STUBS = \
 	$O/adios_method_stubs.shared.o \
 	$(EMPTY_MACRO)
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
-XMESHFEM_OBJECTS += $(adios_meshfem3D_OBJECTS)
+meshfem3D_OBJECTS += $(adios_meshfem3D_OBJECTS)
+meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_OBJECTS)
 else
-XMESHFEM_OBJECTS += $(adios_STUBS)
+meshfem3D_OBJECTS += $(adios_STUBS)
+meshfem3D_SHARED_OBJECTS += $(adios_SHARED_STUBS)
 endif
 
 #######################################
@@ -199,9 +232,9 @@ endif
 #### rules for executables
 ####
 
-${E}/xmeshfem3D: $(XMESHFEM_OBJECTS)
+${E}/xmeshfem3D: $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(XMESHFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 #######################################
 

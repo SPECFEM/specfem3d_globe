@@ -101,6 +101,15 @@ specfem3D_OBJECTS += \
 	$O/write_seismograms.solverstatic.o \
 	$(EMPTY_MACRO)
 
+specfem3D_MODULES = \
+	$(FC_MODDIR)/constants_solver.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
 # These files come from the shared directory
 specfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
@@ -172,9 +181,12 @@ cuda_DEVICE_OBJ = \
 	$(EMPTY_MACRO)
 
 ifeq ($(CUDA),yes)
-XSPECFEM_OBJECTS = $(specfem3D_SHARED_OBJECTS) $(specfem3D_OBJECTS) $(cuda_OBJECTS)
+specfem3D_OBJECTS += $(cuda_OBJECTS)
+ifeq ($(CUDA5),yes)
+specfem3D_OBJECTS += $(cuda_DEVICE_OBJ)
+endif
 else
-XSPECFEM_OBJECTS = $(specfem3D_SHARED_OBJECTS) $(specfem3D_OBJECTS) $(cuda_STUBS)
+specfem3D_OBJECTS += $(cuda_STUBS)
 endif
 
 ###
@@ -182,10 +194,6 @@ endif
 ###
 
 adios_OBJECTS = \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
-	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
 	$O/read_arrays_solver_adios.solverstatic_adios.o \
 	$O/read_attenuation_adios.solverstatic_adios.o \
 	$O/read_forward_arrays_adios.solverstatic_adios.o \
@@ -195,15 +203,27 @@ adios_OBJECTS = \
 	$O/write_specfem_adios_header.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
+adios_SHARED_OBJECTS = \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios.o \
+	$(EMPTY_MACRO)
+
 adios_STUBS = \
+	$(EMPTY_MACRO)
+
+adios_SHARED_STUBS = \
 	$O/adios_method_stubs.shared.o \
 	$(EMPTY_MACRO)
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
-XSPECFEM_OBJECTS += $(adios_OBJECTS)
+specfem3D_OBJECTS += $(adios_OBJECTS)
+specfem3D_SHARED_OBJECTS += $(adios_SHARED_OBJECTS)
 else
-XSPECFEM_OBJECTS += $(adios_STUBS)
+specfem3D_OBJECTS += $(adios_STUBS)
+specfem3D_SHARED_OBJECTS += $(adios_SHARED_STUBS)
 endif
 
 ###
@@ -220,9 +240,9 @@ vtk_STUBS = \
 
 # conditional adios linking
 ifeq ($(VTK),yes)
-XSPECFEM_OBJECTS += $(vtk_OBJECTS)
+specfem3D_OBJECTS += $(vtk_OBJECTS)
 else
-XSPECFEM_OBJECTS += $(vtk_STUBS)
+specfem3D_OBJECTS += $(vtk_STUBS)
 endif
 
 
@@ -238,22 +258,22 @@ ifeq ($(CUDA),yes)
 ifeq ($(CUDA5),yes)
 
 ## cuda 5 version
-${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
+${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 5 support"
 	@echo ""
 	${NVCCLINK} -o $(cuda_DEVICE_OBJ) $(cuda_OBJECTS)
-	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(cuda_DEVICE_OBJ) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
+	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
 else
 
 ## cuda 4 version
-${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
+${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 4 support"
 	@echo ""
-	${FCLINK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
+	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
 endif
@@ -261,14 +281,14 @@ endif
 else
 
 ## non-cuda version
-${E}/xspecfem3D: $(XSPECFEM_OBJECTS)
+${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D without CUDA support"
 	@echo ""
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
-#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
-	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 	@echo ""
 
 endif
