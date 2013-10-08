@@ -15,6 +15,7 @@ AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 
 AC_CONFIG_MACRO_DIR([m4])
+m4_include(m4/cit_backports.m4)
 
 ############################################################
 
@@ -120,13 +121,7 @@ AC_FC_FREEFORM()
 
 AC_PROG_CC
 
-AC_LANG_PUSH(C)
-AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
-AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
-AC_LANG_POP(C)
-
 ############################################################
-
 # influential environment variables
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
@@ -165,11 +160,30 @@ AS_IF([test x"$MPI_INC" != x],[
   FLAGS_CHECK+=" $MPI_INC"
 ])
 
-# Checks for libraries.
+# Checks for typedefs, structures, and compiler characteristics.
+AS_BOX([module extensions])
+
+AC_FC_MODULE_EXTENSION
+AC_SUBST([FC_MODEXT])
+AC_FC_MODULE_FLAG([], [])
+AC_FC_MODULE_OUTPUT_FLAG([
+	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+	FC_MODDIR=./obj
+], [
+	FC_MODDIR=.
+])
+AC_SUBST([FC_MODDIR])
 
 # Checks for header files.
 
+AC_LANG_PUSH(C)
+AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
+AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
+AC_LANG_POP(C)
+
 CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
+
+# Checks for libraries.
 
 ###
 ### ADIOS
@@ -279,21 +293,6 @@ AS_IF([test "$want_vtk" != no],[
 
 ############################################################
 
-# Checks for typedefs, structures, and compiler characteristics.
-AS_BOX([module extensions])
-
-CIT_FC_MODULE_EXTENSION
-AC_SUBST([FC_MODEXT])
-CIT_FC_MODULE_FLAG([], [])
-CIT_FC_MODULE_OUTPUT_FLAG([
-	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
-	FC_MODDIR=./obj
-], [
-	FC_MODDIR=.
-])
-AC_SUBST([FC_MODDIR])
-
-# Checks for library functions.
 AS_BOX([setting up default simulation setup])
 
 AC_CONFIG_FILES([
