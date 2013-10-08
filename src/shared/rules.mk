@@ -84,10 +84,22 @@ ADIOS_OBJECTS = \
 	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
 
+ADIOS_MODULES = \
+	$(FC_MODDIR)/adios_helpers_definitions_mod.$(FC_MODEXT) \
+	$(FC_MODDIR)/adios_helpers_mod.$(FC_MODEXT) \
+	$(FC_MODDIR)/adios_helpers_writers_mod.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
 ADIOS_STUBS = \
 	$O/adios_method_stubs.shared.o \
 	$(EMPTY_MACRO)
 
+ifeq ($(ADIOS),yes)
+shared_OBJECTS += $(ADIOS_OBJECTS)
+shared_MODULES += $(ADIOS_MODULES)
+else
+shared_OBJECTS += $(ADIOS_STUBS)
+endif
 
 #######################################
 
