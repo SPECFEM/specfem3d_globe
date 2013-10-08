@@ -100,6 +100,6 @@ $(create_header_file_OBJECTS): S := ${S_TOP}/src/create_header_file
 ##
 ## rule for create_header_file
 ##
-$O/%.header.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
+$O/%.header.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
