@@ -210,10 +210,10 @@ adios_meshfem3D_SHARED_OBJECTS = \
 	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
 
-adios_STUBS = \
+adios_meshfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
-adios_SHARED_STUBS = \
+adios_meshfem3D_SHARED_STUBS = \
 	$O/adios_method_stubs.shared.o \
 	$(EMPTY_MACRO)
 
@@ -222,8 +222,8 @@ ifeq ($(ADIOS),yes)
 meshfem3D_OBJECTS += $(adios_meshfem3D_OBJECTS)
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_OBJECTS)
 else
-meshfem3D_OBJECTS += $(adios_STUBS)
-meshfem3D_SHARED_OBJECTS += $(adios_SHARED_STUBS)
+meshfem3D_OBJECTS += $(adios_meshfem3D_STUBS)
+meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_STUBS)
 endif
 
 #######################################

@@ -151,7 +151,7 @@ specfem3D_SHARED_OBJECTS = \
 ### CUDA
 ###
 
-cuda_OBJECTS = \
+cuda_specfem3D_OBJECTS = \
 	$O/assemble_MPI_scalar_cuda.cuda.o \
 	$O/assemble_MPI_vector_cuda.cuda.o \
 	$O/check_fields_cuda.cuda.o \
@@ -172,28 +172,28 @@ cuda_OBJECTS = \
 	$O/save_and_compare_cpu_vs_gpu.cudacc.o \
 	$(EMPTY_MACRO)
 
-cuda_STUBS = \
+cuda_specfem3D_STUBS = \
 	$O/specfem3D_gpu_cuda_method_stubs.cudacc.o \
 	$(EMPTY_MACRO)
 
-cuda_DEVICE_OBJ = \
+cuda_specfem3D_DEVICE_OBJ = \
 	$O/cuda_device_obj.o \
 	$(EMPTY_MACRO)
 
 ifeq ($(CUDA),yes)
-specfem3D_OBJECTS += $(cuda_OBJECTS)
+specfem3D_OBJECTS += $(cuda_specfem3D_OBJECTS)
 ifeq ($(CUDA5),yes)
-specfem3D_OBJECTS += $(cuda_DEVICE_OBJ)
+specfem3D_OBJECTS += $(cuda_specfem3D_DEVICE_OBJ)
 endif
 else
-specfem3D_OBJECTS += $(cuda_STUBS)
+specfem3D_OBJECTS += $(cuda_specfem3D_STUBS)
 endif
 
 ###
 ### ADIOS
 ###
 
-adios_OBJECTS = \
+adios_specfem3D_OBJECTS = \
 	$O/read_arrays_solver_adios.solverstatic_adios.o \
 	$O/read_attenuation_adios.solverstatic_adios.o \
 	$O/read_forward_arrays_adios.solverstatic_adios.o \
@@ -203,46 +203,46 @@ adios_OBJECTS = \
 	$O/write_specfem_adios_header.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
-adios_SHARED_OBJECTS = \
+adios_specfem3D_SHARED_OBJECTS = \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
 
-adios_STUBS = \
+adios_specfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
-adios_SHARED_STUBS = \
+adios_specfem3D_SHARED_STUBS = \
 	$O/adios_method_stubs.shared.o \
 	$(EMPTY_MACRO)
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
-specfem3D_OBJECTS += $(adios_OBJECTS)
-specfem3D_SHARED_OBJECTS += $(adios_SHARED_OBJECTS)
+specfem3D_OBJECTS += $(adios_specfem3D_OBJECTS)
+specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
 else
-specfem3D_OBJECTS += $(adios_STUBS)
-specfem3D_SHARED_OBJECTS += $(adios_SHARED_STUBS)
+specfem3D_OBJECTS += $(adios_specfem3D_STUBS)
+specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
 endif
 
 ###
 ### VTK
 ###
 
-vtk_OBJECTS = \
+vtk_specfem3D_OBJECTS = \
   $O/visual_vtk.visualcc.o \
 	$(EMPTY_MACRO)
 
-vtk_STUBS = \
+vtk_specfem3D_STUBS = \
 	$O/visual_vtk_stubs.visualc.o \
 	$(EMPTY_MACRO)
 
 # conditional adios linking
 ifeq ($(VTK),yes)
-specfem3D_OBJECTS += $(vtk_OBJECTS)
+specfem3D_OBJECTS += $(vtk_specfem3D_OBJECTS)
 else
-specfem3D_OBJECTS += $(vtk_STUBS)
+specfem3D_OBJECTS += $(vtk_specfem3D_STUBS)
 endif
 
 
@@ -262,7 +262,7 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 5 support"
 	@echo ""
-	${NVCCLINK} -o $(cuda_DEVICE_OBJ) $(cuda_OBJECTS)
+	${NVCCLINK} -o $(cuda_specfem3D_DEVICE_OBJ) $(cuda_OBJECTS)
 	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
