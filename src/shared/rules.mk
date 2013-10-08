@@ -77,28 +77,28 @@ shared_MODULES = \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
-ADIOS_OBJECTS = \
+adios_shared_OBJECTS = \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
 
-ADIOS_MODULES = \
+adios_shared_MODULES = \
 	$(FC_MODDIR)/adios_helpers_definitions_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/adios_helpers_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/adios_helpers_writers_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
-ADIOS_STUBS = \
+adios_shared_STUBS = \
 	$O/adios_method_stubs.shared.o \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS),yes)
-shared_OBJECTS += $(ADIOS_OBJECTS)
-shared_MODULES += $(ADIOS_MODULES)
+shared_OBJECTS += $(adios_shared_OBJECTS)
+shared_MODULES += $(adios_shared_MODULES)
 else
-shared_OBJECTS += $(ADIOS_STUBS)
+shared_OBJECTS += $(adios_shared_STUBS)
 endif
 
 #######################################
