@@ -118,6 +118,9 @@ AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
+AC_FC_PP_DEFINE()
+AC_SUBST([FC_DEFINE])
+AC_FC_PP_SRCEXT(F90)dnl Because AC_FC_PP_DEFINE messes with things.
 
 AC_PROG_CC
 
@@ -243,24 +246,8 @@ AS_IF([test "$want_vec" != no],[
   AS_BOX([FORCE VECTORIZATION])
   AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
 
-  # adds conditional compilation flag
-  # fortran compiler
-  AS_CASE([$FC],
-    # ibm compiler flag
-    [*xlf*|*/*xlf*], [VEC_FLAG="-WF,-DFORCE_VECTORIZATION"],
-    # default: gnu,intel,pgi,..
-    [VEC_FLAG="-DFORCE_VECTORIZATION"]
-  )
-  FLAGS_CHECK+=" $VEC_FLAG"
-  # c compiler
-  AS_CASE([$CC],
-    # ibm compiler flag
-    [*xlc*|*/*xlc*], [VEC_FLAG="-DFORCE_VECTORIZATION"],
-    # default: gnu,intel,pgi,..
-    [VEC_FLAG="-DFORCE_VECTORIZATION"]
-  )
-  CPPFLAGS+=" $VEC_FLAG"
-
+  FLAGS_CHECK+=" ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS+=" -DFORCE_VECTORIZATION"
 ])
 
 ###
@@ -271,24 +258,8 @@ AS_IF([test "$want_vtk" != no],[
   AS_BOX([VTK])
   AC_MSG_NOTICE([VTK is enabled])
 
-  # adds conditional compilation flag 
-  # fortran compiler
-  AS_CASE([$FC],
-    # ibm compiler flag
-    [*xlf*|*/*xlf*], [VTK_FLAG="-WF,-DWITH_VTK"],
-    # default: gnu,intel,pgi,..
-    [VTK_FLAG="-DWITH_VTK"]
-  )
-  FLAGS_CHECK+=" $VTK_FLAG"
-  # c compiler
-  AS_CASE([$CC],
-    # ibm compiler flag
-    [*xlc*|*/*xlc*], [VTK_FLAG="-DWITH_VTK"],
-    # default: gnu,intel,pgi,..
-    [VTK_FLAG="-DWITH_VTK"]
-  )
-  CPPFLAGS+=" $VTK_FLAG"
-
+  FLAGS_CHECK+=" ${FC_DEFINE}WITH_VTK"
+  CPPFLAGS+=" -DWITH_VTK"
 ])
 
 ############################################################
