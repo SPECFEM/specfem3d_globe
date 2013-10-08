@@ -29,9 +29,10 @@ program combine_surf_data
 
   ! combines the database files on several slices.
 
+  use constants
+
   implicit none
 
-  include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 400

@@ -32,9 +32,10 @@ program combine_vol_data_vtk
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 
+  use constants
+
   implicit none
 
-  include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
