@@ -377,7 +377,7 @@
     deallocate(b_rmassx,b_rmassy)
     deallocate(rmass_ocean_load)
     ! Stacey
-    if( NCHUNKS /= 6 ) deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+    deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
 
     ! saves MPI interface infos
     call save_arrays_solver_MPI(iregion_code)
