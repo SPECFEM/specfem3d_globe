@@ -639,6 +639,14 @@
              nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
              nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
     if(ier /= 0) stop 'error in allocate 14'
+  else
+    allocate(nimin(1,1), &
+             nimax(1,1), &
+             njmin(1,1), &
+             njmax(1,1), &
+             nkmin_xi(1,1), &
+             nkmin_eta(1,1),stat=ier)
+    if(ier /= 0) stop 'error in allocate 14'
   endif
 
   nimin(:,:) = 0; nimax(:,:) = 0
