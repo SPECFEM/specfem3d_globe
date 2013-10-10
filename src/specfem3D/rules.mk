@@ -262,7 +262,6 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 5 support"
 	@echo ""
-	${NVCCLINK} -o $(cuda_specfem3D_DEVICE_OBJ) $(cuda_OBJECTS)
 	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
@@ -336,6 +335,12 @@ $O/%.solver.o: $S/%.f90 $O/shared_par.shared_module.o
 $O/%.solver.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
+###
+### CUDA 5 only
+###
+
+$(cuda_specfem3D_DEVICE_OBJ): $(cuda_OBJECTS)
+	${NVCCLINK} -o $(cuda_specfem3D_DEVICE_OBJ) $(cuda_OBJECTS)
 
 ###
 ### VTK compilation
