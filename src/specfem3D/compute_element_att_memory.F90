@@ -161,7 +161,7 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   use constants_solver
-  use specfem_par,only: ALPHA_LDDRK,BETA_LDDRK,tau_sigma_CUSTOM_REAL,istage
+  use specfem_par,only: tau_sigma_CUSTOM_REAL,istage
 
   implicit none
 
@@ -385,7 +385,7 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   use constants_solver
-  use specfem_par,only: ALPHA_LDDRK,BETA_LDDRK,tau_sigma_CUSTOM_REAL,istage
+  use specfem_par,only: tau_sigma_CUSTOM_REAL,istage
 
   implicit none
 
