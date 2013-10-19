@@ -2781,7 +2781,9 @@ fi
 if test "${enable_vectorization+set}" = set; then :
   enableval=$enable_vectorization; want_vec="$enableval"
 else
-  want_vec=yes
+#  want_vec=yes
+## DK DK changed the default to no_vectorization
+  want_vec=no
 fi
 
  if test x"$want_vec" != xno; then
