@@ -78,7 +78,7 @@
     ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION, &
     ATTENUATION_1D_WITH_3D_STORAGE, &
     ATT1,ATT2,ATT3,ATT4,ATT5, &
-    MOVIE_VOLUME
+    MOVIE_VOLUME,MOVIE_VOLUME_TYPE
 
   implicit none
 
@@ -536,6 +536,12 @@
     write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1'
   endif
   write(IOUT,*)
+
+  if( MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = NSPEC_OUTER_CORE'
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1'
+  endif
 
   if (SAVE_REGULAR_KL) then
     write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = NM_KL_REG_PTS'

@@ -252,7 +252,7 @@
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(3) :: vector_accel
-
+  real(kind=CUSTOM_REAL) :: div_displ,b_div_displ
   integer :: i,j,k,l,ispec,iglob
 
   ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
@@ -323,11 +323,11 @@
             ! bulk modulus kernel
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
 
-            div_displ_outer_core(i,j,k,ispec) =  kappal * accel_outer_core(iglob)
-            b_div_displ_outer_core(i,j,k,ispec) =  kappal * b_accel_outer_core(iglob)
+            div_displ =  kappal * accel_outer_core(iglob)
+            b_div_displ =  kappal * b_accel_outer_core(iglob)
 
             alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
-               + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
+               + deltat * div_displ * b_div_displ
 
             ! calculates gradient grad(displ) (also needed for boundary kernels)
             if(SAVE_BOUNDARY_MESH .or. deviatoric_outercore) then

@@ -1243,7 +1243,7 @@ end subroutine save_arrays_solver_meshfiles_adios
 !! \param phase_ispec_inner
 !! \param num_colors_inner Number of colors for GPU computing in the inner core.
 !! \param num_colors_outer Number of colors for GPU computing in the outer core.
-subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
+subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
    num_interfaces,max_nibool_interfaces, my_neighbours,nibool_interfaces, &
    ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
    phase_ispec_inner, num_colors_outer,num_colors_inner, num_elem_colors)
@@ -1434,7 +1434,7 @@ subroutine save_MPI_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
 
   num_regions_written = num_regions_written + 1
 
-end subroutine save_MPI_arrays_adios
+end subroutine save_mpi_arrays_adios
 
 
 !===============================================================================

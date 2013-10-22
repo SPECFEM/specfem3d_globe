@@ -175,7 +175,7 @@
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
   integer :: int_radius
-  integer :: ispec,ispec_strain
+  integer :: ispec
   integer :: i,j,k
   integer :: iglob
 !  integer :: computed_elements
@@ -336,12 +336,13 @@
             ! compute deviatoric strain
             if (COMPUTE_AND_STORE_STRAIN) then
               if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-                ispec_strain = 1
+                if( ispec == 1) then
+                  epsilon_trace_over_3(i,j,k,1) = templ
+                endif
               else
-                ispec_strain = ispec
+                epsilon_trace_over_3(i,j,k,ispec) = templ
               endif
               templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
               epsilondev_loc(1,i,j,k) = duxdxl - templ
               epsilondev_loc(2,i,j,k) = duydyl - templ
               epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl

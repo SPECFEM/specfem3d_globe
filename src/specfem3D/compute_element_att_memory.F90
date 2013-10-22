@@ -89,14 +89,63 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-  do i_SLS = 1,N_SLS
+#ifdef FORCE_VECTORIZATION
 
+  do i_SLS = 1,N_SLS
+    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+      if(ANISOTROPIC_3D_MANTLE_VAL) then
+        do ijk=1,NGLLCUBE
+          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec) * c44store(ijk,1,1,ispec)
+        enddo
+      else
+        do ijk=1,NGLLCUBE
+          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec) * muvstore(ijk,1,1,ispec)
+        enddo
+      endif
+    else
+      if(ANISOTROPIC_3D_MANTLE_VAL) then
+        do ijk=1,NGLLCUBE
+          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec) * c44store(ijk,1,1,ispec)
+        enddo
+      else
+        do ijk=1,NGLLCUBE
+          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec) * muvstore(ijk,1,1,ispec)
+        enddo
+      endif
+    endif
+
+    do ijk=1,NGLLCUBE
+      R_xx(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xx(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
+          (betaval(i_SLS) * epsilondev_xx(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(1,ijk,1,1))
+
+      R_yy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yy(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
+          (betaval(i_SLS) * epsilondev_yy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(2,ijk,1,1))
+
+      R_xy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xy(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
+          (betaval(i_SLS) * epsilondev_xy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(3,ijk,1,1))
+
+      R_xz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xz(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
+          (betaval(i_SLS) * epsilondev_xz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(4,ijk,1,1))
+
+      R_yz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yz(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
+          (betaval(i_SLS) * epsilondev_yz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(5,ijk,1,1))
+    enddo
+  enddo ! i_SLS
+
+#else
+
+  do i_SLS = 1,N_SLS
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       if(ANISOTROPIC_3D_MANTLE_VAL) then
@@ -128,6 +177,8 @@
           (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
 
   enddo ! i_SLS
+
+#endif
 
   end subroutine compute_element_att_memory_cm
 
@@ -312,6 +363,10 @@
 
   integer :: i_SLS
 
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#endif
+
   ! use Runge-Kutta scheme to march in time
 
   ! get coefficients for that standard linear solid
@@ -321,20 +376,47 @@
   ! note: epsilondev_loc is calculated based on displ( n + 1 ), thus corresponds to strain at time (n + 1)
   !       epsilondev_xx,.. are stored from previous step, thus corresponds now to strain at time n
 
-  do i_SLS = 1,N_SLS
+#ifdef FORCE_VECTORIZATION
 
+  do i_SLS = 1,N_SLS
+    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+      do ijk=1,NGLLCUBE
+        factor_common_use(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec) * muvstore(ijk,1,1,ispec)
+      enddo
+    else
+      do ijk=1,NGLLCUBE
+        factor_common_use(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec) * muvstore(ijk,1,1,ispec)
+      enddo
+    endif
+
+    do ijk=1,NGLLCUBE
+      R_xx(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xx(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
+           (betaval(i_SLS) * epsilondev_xx(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(1,ijk,1,1))
+
+      R_yy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yy(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
+           (betaval(i_SLS) * epsilondev_yy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(2,ijk,1,1))
+
+      R_xy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xy(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
+           (betaval(i_SLS) * epsilondev_xy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(3,ijk,1,1))
+
+      R_xz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xz(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
+           (betaval(i_SLS) * epsilondev_xz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(4,ijk,1,1))
+
+      R_yz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yz(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
+           (betaval(i_SLS) * epsilondev_yz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(5,ijk,1,1))
+    enddo
+  enddo
+
+#else
+
+  do i_SLS = 1,N_SLS
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
     else
       factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
     endif
-
-!    do i_memory = 1,5
-!       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
-!            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-!            (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-!    enddo
 
     R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
          (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
@@ -350,8 +432,9 @@
 
     R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-
   enddo
+
+#endif
 
   end subroutine compute_element_att_memory_ic
 

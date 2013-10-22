@@ -673,7 +673,6 @@
     if(myrank == 0) then
 
       ! MPI loop on all the results to determine the best slice
-      islice_selected_rec(:) = -1
       do irec_in_this_subset = 1,nrec_SUBSET_current_size
 
         ! mapping from station number in current subset to real station number in all the subsets
@@ -854,7 +853,7 @@
   deallocate(final_distance)
 
   ! main process broadcasts the results to all the slices
-  call bcast_all_i(nrec,1)
+  call bcast_all_singlei(nrec)
 
   call bcast_all_i(islice_selected_rec,nrec)
   call bcast_all_i(ispec_selected_rec,nrec)

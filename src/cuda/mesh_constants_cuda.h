@@ -99,31 +99,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// type of "working" variables: see also CUSTOM_REAL
-// double precision temporary variables leads to 10% performance decrease
-// in Kernel_2_impl (not very much..)
-typedef float realw;
-
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// utility functions: defined in check_fields_cuda.cu
-
-/* ----------------------------------------------------------------------------------------------- */
-
-double get_time();
-void get_free_memory(double* free_db, double* used_db, double* total_db);
-void print_CUDA_error_if_any(cudaError_t err, int num);
-void pause_for_debugger(int pause);
-void exit_on_cuda_error(char* kernel_name);
-void exit_on_error(char* info);
-void synchronize_cuda();
-void synchronize_mpi();
-void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y);
-realw get_device_array_maximum_value(realw* array,int size);
-
-/* ----------------------------------------------------------------------------------------------- */
-
 // cuda constant arrays
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -156,7 +131,6 @@ realw get_device_array_maximum_value(realw* array,int size);
 #define R_EARTH_KM 6371.0f
 // uncomment line below for PREM with oceans
 //#define R_EARTH_KM 6368.0f
-
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -240,6 +214,36 @@ realw get_device_array_maximum_value(realw* array,int size);
 
 #define INDEX4_PADDED(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*z) + (i)*NGLL3_PADDED
 //#define INDEX4_PADDED(xsize,ysize,zsize,x,y,z,i) x + (y)*xsize + (z)*xsize*ysize + (i)*NGLL3_PADDED
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// type of "working" variables: see also CUSTOM_REAL
+// double precision temporary variables leads to 10% performance decrease
+// in Kernel_2_impl (not very much..)
+typedef float realw;
+
+// textures
+typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// utility functions: defined in check_fields_cuda.cu
+
+/* ----------------------------------------------------------------------------------------------- */
+
+double get_time();
+void get_free_memory(double* free_db, double* used_db, double* total_db);
+void print_CUDA_error_if_any(cudaError_t err, int num);
+void pause_for_debugger(int pause);
+void exit_on_cuda_error(char* kernel_name);
+void exit_on_error(char* info);
+void synchronize_cuda();
+void synchronize_mpi();
+void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y);
+realw get_device_array_maximum_value(realw* array,int size);
+
+
 
 /* ----------------------------------------------------------------------------------------------- */
 

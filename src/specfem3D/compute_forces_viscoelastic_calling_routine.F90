@@ -212,9 +212,9 @@
           !--- couple with outer core at the bottom of the mantle
           !---
           if(ACTUALLY_COUPLE_FLUID_CMB) &
-            call compute_coupling_CMB_fluid(displ_crust_mantle,accel_crust_mantle, &
+            call compute_coupling_CMB_fluid(NGLOB_CRUST_MANTLE,displ_crust_mantle,accel_crust_mantle, &
                                             ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                            accel_outer_core, &
+                                            NGLOB_OUTER_CORE,accel_outer_core, &
                                             normal_top_outer_core,jacobian2D_top_outer_core, &
                                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                             RHO_TOP_OC,minus_g_cmb, &
@@ -224,9 +224,9 @@
           !--- couple with outer core at the top of the inner core
           !---
           if(ACTUALLY_COUPLE_FLUID_ICB) &
-            call compute_coupling_ICB_fluid(displ_inner_core,accel_inner_core, &
+            call compute_coupling_ICB_fluid(NGLOB_INNER_CORE,displ_inner_core,accel_inner_core, &
                                             ibool_inner_core,ibelm_top_inner_core,  &
-                                            accel_outer_core, &
+                                            NGLOB_OUTER_CORE,accel_outer_core, &
                                             normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                             RHO_BOTTOM_OC,minus_g_icb, &
@@ -352,7 +352,7 @@
   if( OCEANS_VAL ) then
     if(.NOT. GPU_MODE) then
       ! on CPU
-      call compute_coupling_ocean(accel_crust_mantle, &
+      call compute_coupling_ocean(NGLOB_CRUST_MANTLE,accel_crust_mantle, &
                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                   rmass_ocean_load,normal_top_crust_mantle, &
                                   ibool_crust_mantle,ibelm_top_crust_mantle, &
@@ -588,9 +588,9 @@
         !--- couple with outer core at the bottom of the mantle
         !---
         if(ACTUALLY_COUPLE_FLUID_CMB) &
-          call compute_coupling_CMB_fluid(b_displ_crust_mantle,b_accel_crust_mantle, &
+          call compute_coupling_CMB_fluid(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_accel_crust_mantle, &
                                           ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                          b_accel_outer_core, &
+                                          NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core, &
                                           normal_top_outer_core,jacobian2D_top_outer_core, &
                                           wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                           RHO_TOP_OC,minus_g_cmb, &
@@ -600,9 +600,9 @@
         !--- couple with outer core at the top of the inner core
         !---
         if(ACTUALLY_COUPLE_FLUID_ICB) &
-          call compute_coupling_ICB_fluid(b_displ_inner_core,b_accel_inner_core, &
+          call compute_coupling_ICB_fluid(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_accel_inner_core, &
                                           ibool_inner_core,ibelm_top_inner_core,  &
-                                          b_accel_outer_core, &
+                                          NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core, &
                                           normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                           wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                           RHO_BOTTOM_OC,minus_g_icb, &
@@ -732,7 +732,7 @@
   if( OCEANS_VAL ) then
     if(.NOT. GPU_MODE) then
       ! on CPU
-      call compute_coupling_ocean(b_accel_crust_mantle, &
+      call compute_coupling_ocean(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle, &
                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle, &
                                   rmass_ocean_load,normal_top_crust_mantle, &
                                   ibool_crust_mantle,ibelm_top_crust_mantle, &

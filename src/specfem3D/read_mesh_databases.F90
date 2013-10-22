@@ -238,7 +238,8 @@
                                   c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                                   c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                                   ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                  NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
                                   READ_KAPPA_MU,READ_TISO, &
                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   else
@@ -260,7 +261,8 @@
                             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                             ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-                            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle,rmass_ocean_load, &
+                            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                            NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
                             READ_KAPPA_MU,READ_TISO, &
                             b_rmassx_crust_mantle,b_rmassy_crust_mantle)
   endif
@@ -372,7 +374,8 @@
                                   dummy_array,dummy_array,dummy_array, &
                                   dummy_array,dummy_array,dummy_array, &
                                   ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-                                  dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
+                                  dummy_rmass,dummy_rmass,rmass_outer_core, &
+                                  1,dummy_array, &
                                   READ_KAPPA_MU,READ_TISO, &
                                   dummy_rmass,dummy_rmass)
   else
@@ -394,7 +397,8 @@
                             dummy_array,dummy_array,dummy_array, &
                             dummy_array,dummy_array,dummy_array, &
                             ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-                            dummy_rmass,dummy_rmass,rmass_outer_core,dummy_array, &
+                            dummy_rmass,dummy_rmass,rmass_outer_core, &
+                            1, dummy_array, &
                             READ_KAPPA_MU,READ_TISO, &
                             dummy_rmass,dummy_rmass)
   endif
@@ -494,7 +498,8 @@
                                   c44store_inner_core,dummy_array,dummy_array, &
                                   dummy_array,dummy_array,dummy_array, &
                                   ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-                                  rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
+                                  rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                                  1,dummy_array, &
                                   READ_KAPPA_MU,READ_TISO, &
                                   b_rmassx_inner_core,b_rmassy_inner_core)
   else
@@ -516,7 +521,8 @@
                             c44store_inner_core,dummy_array,dummy_array, &
                             dummy_array,dummy_array,dummy_array, &
                             ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-                            rmassx_inner_core,rmassy_inner_core,rmassz_inner_core,dummy_array, &
+                            rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                            1,dummy_array, &
                             READ_KAPPA_MU,READ_TISO, &
                             b_rmassx_inner_core,b_rmassy_inner_core)
   endif

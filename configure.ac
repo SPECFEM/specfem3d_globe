@@ -83,9 +83,9 @@ AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 
 AC_ARG_ENABLE([vectorization],
     [AC_HELP_STRING([--enable-vectorization],
-        [build FORCE_VECTORIZATION enabled version @<:@default=yes@:>@])],
+        [build FORCE_VECTORIZATION enabled version @<:@default=no@:>@])],
     [want_vec="$enableval"],
-    [want_vec=yes])
+    [want_vec=no])
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ############################################################

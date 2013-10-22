@@ -39,10 +39,12 @@
   character(len=256) :: filename
   integer,dimension(:),allocatable :: dummy_i
 
+  !-----------------------------------------------------------------------------
+  ! user parameters
+  ! outputs volume snapshot vtk-files of displacement in crust/mantle region for debugging
   logical, parameter :: DEBUG_SNAPSHOT = .false.
+  !-----------------------------------------------------------------------------
 
-  logical, parameter :: RUN_EXTERNAL_SCRIPT = .true.
-  character(len=256) :: script_name = "tar_databases_file.sh"
   character(len=256) :: system_command
 
   ! save movie on surface
@@ -61,6 +63,18 @@
 
       ! save velocity here to avoid static offset on displacement for movies
       call write_movie_surface()
+
+      ! executes an external script on the node
+      if( RUN_EXTERNAL_MOVIE_SCRIPT ) then
+        ! synchronizes outputs
+        call synchronize_all()
+        ! calls shell external command
+        if( myrank == 0 ) then
+          write(system_command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
+          !print*,trim(system_command)
+          call system(system_command)
+        endif
+      endif
 
     endif
   endif
@@ -232,14 +246,17 @@
       end select ! MOVIE_VOLUME_TYPE
 
       ! executes an external script on the node
-      if( RUN_EXTERNAL_SCRIPT ) then
+      if( RUN_EXTERNAL_MOVIE_SCRIPT ) then
+        ! synchronizes outputs
         call synchronize_all()
+        ! calls shell external command
         if( myrank == 0 ) then
-          write(system_command,"('./',a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(script_name),it,it
+          write(system_command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
           !print*,trim(system_command)
           call system(system_command)
         endif
       endif
+
     endif
   endif ! MOVIE_VOLUME
 

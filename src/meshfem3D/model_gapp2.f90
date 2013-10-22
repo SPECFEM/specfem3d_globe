@@ -37,8 +37,8 @@
   module gapp2_mantle_model_constants
     ! data file resolution
     integer, parameter :: ma=288,mo=576,mr=32,mr1=64
-    integer no,na,nnr,nr1
-    real dela,delo
+    integer :: no,na,nnr,nr1
+    real :: dela,delo
     ! allocatable model arrays
     real,dimension(:),allocatable :: dep,dep1,vp1
     real,dimension(:,:,:),allocatable :: vp3
@@ -71,18 +71,18 @@
   if(myrank == 0) call read_mantle_gapmodel()
 
   ! master process broadcasts data to all processes
-  call bcast_all_r( dep,mr+1)
+  call bcast_all_r(dep,mr+1)
   call bcast_all_r(dep1,mr1+1)
-  call bcast_all_r( vp1,mr1+1)
-  call bcast_all_r( vp3,ma*mo*mr)
+  call bcast_all_r(vp1,mr1+1)
+  call bcast_all_r(vp3,ma*mo*mr)
 
-  call bcast_all_i( nnr,1)
-  call bcast_all_i( nr1,1)
-  call bcast_all_i(  no,1)
-  call bcast_all_i(  na,1)
+  call bcast_all_singlei(nnr)
+  call bcast_all_singlei(nr1)
+  call bcast_all_singlei(no)
+  call bcast_all_singlei(na)
 
-  call bcast_all_r( dela,1)
-  call bcast_all_r( delo,1)
+  call bcast_all_singler(dela)
+  call bcast_all_singler(delo)
 
   end subroutine model_gapp2_broadcast
 

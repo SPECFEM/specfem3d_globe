@@ -365,6 +365,8 @@
   ! count number of receivers located in this slice
   nrec_local = 0
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+    ! note: for 1-chunk simulations, nrec is now the actual number of receivers found in this chunk 
+    !       (excludes stations located outside of chunk)
     nrec_simulation = nrec
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec)) nrec_local = nrec_local + 1
@@ -445,14 +447,20 @@
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers in all slices'
-    if(nrec_tot_found <= 1) then
-      call exit_MPI(myrank,'error: no receiver found in the mesh')
-!! DK DK we do not check if the total found is equal to nrec_simulation here because some stations in the STATIONS file
-!! DK DK can be located outside of the mesh, thus the only thing we can check is that the total found is smaller or equal
-    else if(nrec_tot_found > nrec_simulation) then
-      call exit_MPI(myrank,'error: too many receivers found, problem when dispatching the receivers')
+    ! checks for number of receivers
+    ! note: for 1-chunk simulations, nrec_simulations is the number of receivers/sources found in this chunk
+    if(nrec_tot_found /= nrec_simulation) then
+      call exit_MPI(myrank,'problem when dispatching the receivers')
+    else
+      write(IMAIN,*) 'this total is okay'
     endif
     call flush_IMAIN()
+  endif
+
+  ! check that the sum of the number of receivers in each slice is nrec
+  if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
+    if(myrank == 0 .and. nrec_tot_found /= nrec) &
+      call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
 
   end subroutine setup_receivers

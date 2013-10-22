@@ -25,24 +25,25 @@
 !
 !=====================================================================
 
-  subroutine compute_coupling_fluid_CMB(displ_crust_mantle, &
-                                       ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                       accel_outer_core, &
-                                       normal_top_outer_core,jacobian2D_top_outer_core, &
-                                       wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                                       nspec2D_top)
+  subroutine compute_coupling_fluid_CMB(NGLOB_CM,displ_crust_mantle, &
+                                        ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                        NGLOB_OC,accel_outer_core, &
+                                        normal_top_outer_core,jacobian2D_top_outer_core, &
+                                        wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+                                        nspec2D_top)
 
   use constants_solver
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    displ_crust_mantle
+  integer :: NGLOB_CM
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: displ_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
+  integer :: NGLOB_OC
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
@@ -104,9 +105,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_fluid_ICB(displ_inner_core, &
+  subroutine compute_coupling_fluid_ICB(NGLOB_IC,displ_inner_core, &
                                         ibool_inner_core,ibelm_top_inner_core,  &
-                                        accel_outer_core, &
+                                        NGLOB_OC,accel_outer_core, &
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                         nspec_bottom)
@@ -115,13 +116,15 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
+  integer :: NGLOB_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: &
     displ_inner_core
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
+  integer :: NGLOB_OC
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
@@ -183,10 +186,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_CMB_fluid(displ_crust_mantle, &
-                                        accel_crust_mantle, &
+  subroutine compute_coupling_CMB_fluid(NGLOB_CM,displ_crust_mantle,accel_crust_mantle, &
                                         ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                        accel_outer_core, &
+                                        NGLOB_OC,accel_outer_core, &
                                         normal_top_outer_core,jacobian2D_top_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                         RHO_TOP_OC,minus_g_cmb, &
@@ -196,13 +198,14 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    displ_crust_mantle,accel_crust_mantle
+  integer :: NGLOB_CM
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: displ_crust_mantle,accel_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
+  integer :: NGLOB_OC
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
@@ -270,9 +273,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_ICB_fluid(displ_inner_core,accel_inner_core, &
+  subroutine compute_coupling_ICB_fluid(NGLOB_IC,displ_inner_core,accel_inner_core, &
                                         ibool_inner_core,ibelm_top_inner_core,  &
-                                        accel_outer_core, &
+                                        NGLOB_OC,accel_outer_core, &
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                         RHO_BOTTOM_OC,minus_g_icb, &
@@ -282,13 +285,14 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-    displ_inner_core,accel_inner_core
+  integer :: NGLOB_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: displ_inner_core,accel_inner_core
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
+  integer :: NGLOB_OC
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
@@ -356,7 +360,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_coupling_ocean(accel_crust_mantle, &
+  subroutine compute_coupling_ocean(NGLOB,accel_crust_mantle, &
                                     rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, &
                                     rmass_ocean_load,normal_top_crust_mantle, &
                                     ibool_crust_mantle,ibelm_top_crust_mantle, &
@@ -367,7 +371,8 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
+  integer :: NGLOB
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_crust_mantle
 
   ! mass matrices
   !

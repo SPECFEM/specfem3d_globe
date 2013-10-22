@@ -80,10 +80,10 @@
 
   ! allocates model arrays
   allocate(QRFSI12_Q_dqmu(NKQ,NSQ), &
-          QRFSI12_Q_spknt(NKQ), &
-          QRFSI12_Q_refdepth(NDEPTHS_REFQ), &
-          QRFSI12_Q_refqmu(NDEPTHS_REFQ), &
-          stat=ier)
+           QRFSI12_Q_spknt(NKQ), &
+           QRFSI12_Q_refdepth(NDEPTHS_REFQ), &
+           QRFSI12_Q_refqmu(NDEPTHS_REFQ), &
+           stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating QRFSI12_Q model arrays')
 
   ! master process reads in file values
@@ -203,7 +203,8 @@
   real(kind=4) :: splpts(NKQ),splcon(NKQ),splcond(NKQ)
   real(kind=4) :: depth,ylat,xlon
   real(kind=4) :: shdep(NSQ)
-  real(kind=4) :: xlmvec(NSQ),wk1(NSQ),wk2(NSQ),wk3(NSQ)
+  real(kind=4) :: wk1(NSQ),wk2(NSQ),wk3(NSQ)
+  real(kind=4) :: xlmvec(NSQ**2)
   double precision, parameter :: rmoho_prem = 6371.0-24.4
   double precision, parameter :: rcmb = 3480.0
 

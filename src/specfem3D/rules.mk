@@ -214,7 +214,7 @@ adios_specfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_SHARED_STUBS = \
-	$O/adios_method_stubs.shared.o \
+	$O/adios_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
 # conditional adios linking

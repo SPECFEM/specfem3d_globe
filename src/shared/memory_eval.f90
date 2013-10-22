@@ -47,13 +47,15 @@
                          static_memory_size)
 
   use constants
-  use shared_parameters,only: ATT1,ATT2,ATT3, &
+  use shared_parameters,only: &
+    ATT1,ATT2,ATT3, &
     APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
     EXACT_MASS_MATRIX_FOR_ROTATION, &
     OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY, &
     ONE_CRUST,NCHUNKS, &
-    SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD
+    SIMULATION_TYPE,SAVE_FORWARD, &
+    MOVIE_VOLUME,MOVIE_VOLUME_TYPE
 
   implicit none
 
@@ -434,6 +436,12 @@
 
   endif
 
+  ! div_displ_outer_core
+  if( MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) then
+    static_memory_size = static_memory_size + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+  endif
+
 ! add arrays used for adjoint runs only (LQY: not very accurate)
 
   ! b_R_memory_crust_mantle
@@ -443,10 +451,9 @@
   static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
 
-  ! b_div_displ_outer_core
   ! rho_kl_outer_core,alpha_kl_outer_core
   static_memory_size = static_memory_size + &
-    3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
+    2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
 
   ! b_R_memory_inner_core
   ! b_epsilondev_inner_core

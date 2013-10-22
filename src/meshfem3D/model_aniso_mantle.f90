@@ -77,7 +77,7 @@
   if(myrank == 0) call read_aniso_mantle_model()
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_i(AMM_V_npar1,1)
+  call bcast_all_singlei(AMM_V_npar1)
   call bcast_all_dp(AMM_V_beta,14*34*37*73)
   call bcast_all_dp(AMM_V_pro,47)
 

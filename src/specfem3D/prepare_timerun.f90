@@ -1122,7 +1122,6 @@
     alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
 
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
     ! deviatoric kernel check
     if( deviatoric_outercore) then
@@ -2426,7 +2425,7 @@
       if( ier /= 0 ) stop 'error allocating arrays'
 
       free_points_all(:) = 0
-      call gather_all_i(free_np,1,free_points_all,1,NPROC)
+      call gather_all_singlei(free_np,free_points_all,NPROC)
 
       ! array offsets
       allocate(free_offset_all(NPROC),stat=ier)
@@ -2446,7 +2445,7 @@
       if( ier /= 0 ) stop 'error allocating arrays'
 
       free_conn_nspec_all(:) = 0
-      call gather_all_i(4*free_nspec,1,free_conn_nspec_all,1,NPROC)
+      call gather_all_singlei(4*free_nspec,free_conn_nspec_all,NPROC)
 
       ! array offsets
       allocate(free_conn_offset_all(NPROC),stat=ier)
@@ -2694,7 +2693,7 @@
       if( ier /= 0 ) stop 'error allocating arrays'
 
       vtkdata_points_all(:) = 0
-      call gather_all_i(vol_np,1,vtkdata_points_all,1,NPROC)
+      call gather_all_singlei(vol_np,vtkdata_points_all,NPROC)
 
       ! array offsets
       allocate(vtkdata_offset_all(NPROC),stat=ier)
@@ -2714,7 +2713,7 @@
       if( ier /= 0 ) stop 'error allocating arrays'
 
       vol_conn_nspec_all(:) = 0
-      call gather_all_i(8*vol_nspec,1,vol_conn_nspec_all,1,NPROC)
+      call gather_all_singlei(8*vol_nspec,vol_conn_nspec_all,NPROC)
 
       ! array offsets
       allocate(vol_conn_offset_all(NPROC),stat=ier)
