@@ -91,7 +91,7 @@ adios_shared_MODULES = \
 	$(EMPTY_MACRO)
 
 adios_shared_STUBS = \
-	$O/adios_method_stubs.shared.o \
+	$O/adios_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS),yes)

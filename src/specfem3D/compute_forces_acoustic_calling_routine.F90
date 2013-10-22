@@ -35,6 +35,7 @@
   use specfem_par_innercore,only: displ_inner_core, &
                                   ibool_inner_core,ibelm_top_inner_core
   use specfem_par_outercore
+  use specfem_par_movie,only: div_displ_outer_core
   implicit none
 
   ! local parameters
@@ -122,9 +123,9 @@
           !--- couple with mantle at the top of the outer core
           !---
           if(ACTUALLY_COUPLE_FLUID_CMB) &
-               call compute_coupling_fluid_CMB(displ_crust_mantle, &
+               call compute_coupling_fluid_CMB(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
                                                ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                               accel_outer_core, &
+                                               NGLOB_OUTER_CORE,accel_outer_core, &
                                                normal_top_outer_core,jacobian2D_top_outer_core, &
                                                wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                                NSPEC2D_TOP(IREGION_OUTER_CORE))
@@ -133,9 +134,9 @@
           !--- couple with inner core at the bottom of the outer core
           !---
           if(ACTUALLY_COUPLE_FLUID_ICB) &
-               call compute_coupling_fluid_ICB(displ_inner_core, &
+               call compute_coupling_fluid_ICB(NGLOB_INNER_CORE,displ_inner_core, &
                                                ibool_inner_core,ibelm_top_inner_core,  &
-                                               accel_outer_core, &
+                                               NGLOB_OUTER_CORE,accel_outer_core, &
                                                normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                                wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                                NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
@@ -241,6 +242,7 @@
   use specfem_par_innercore,only: b_displ_inner_core, &
                                   ibool_inner_core,ibelm_top_inner_core
   use specfem_par_outercore
+  use specfem_par_movie,only: div_displ_outer_core
   implicit none
 
   ! local parameters
@@ -313,14 +315,14 @@
                                            b_A_array_rotation,b_B_array_rotation, &
                                            b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
                                            b_displ_outer_core,b_accel_outer_core, &
-                                           b_div_displ_outer_core,phase_is_inner)
+                                           div_displ_outer_core,phase_is_inner)
       else
         call compute_forces_outer_core(b_time,b_deltat,b_two_omega_earth, &
                                        NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                                        b_A_array_rotation,b_B_array_rotation, &
                                        b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
                                        b_displ_outer_core,b_accel_outer_core, &
-                                       b_div_displ_outer_core,phase_is_inner)
+                                       div_displ_outer_core,phase_is_inner)
       endif
     else
       ! on GPU
@@ -351,9 +353,9 @@
         !--- couple with mantle at the top of the outer core
         !---
         if(ACTUALLY_COUPLE_FLUID_CMB) &
-          call compute_coupling_fluid_CMB(b_displ_crust_mantle, &
+          call compute_coupling_fluid_CMB(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
                                           ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                                          b_accel_outer_core, &
+                                          NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core, &
                                           normal_top_outer_core,jacobian2D_top_outer_core, &
                                           wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                           NSPEC2D_TOP(IREGION_OUTER_CORE))
@@ -362,9 +364,9 @@
         !--- couple with inner core at the bottom of the outer core
         !---
         if(ACTUALLY_COUPLE_FLUID_ICB) &
-          call compute_coupling_fluid_ICB(b_displ_inner_core, &
+          call compute_coupling_fluid_ICB(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core, &
                                           ibool_inner_core,ibelm_top_inner_core,  &
-                                          b_accel_outer_core, &
+                                          NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core, &
                                           normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                           wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                           NSPEC2D_BOTTOM(IREGION_OUTER_CORE))

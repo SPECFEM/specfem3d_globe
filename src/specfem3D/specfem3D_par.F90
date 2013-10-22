@@ -680,12 +680,6 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
     rho_kl_outer_core,alpha_kl_outer_core
 
-  ! kernel runs
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
-    div_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
-    b_div_displ_outer_core
-
   ! check for deviatoric kernel for outer core region
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
@@ -746,6 +740,10 @@ module specfem_par_movie
 
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
   logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
+
+  ! outer core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: &
+    div_displ_outer_core
 
   ! vtk run-time visualization
 #ifdef HAVE_VTK

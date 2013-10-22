@@ -115,9 +115,10 @@
   if(myrank == 0) call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
                           THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
 
-  call bcast_all_i(numker,1)
-  call bcast_all_i(numhpa,1)
-  call bcast_all_i(ihpa,1)
+  call bcast_all_singlei(numker)
+  call bcast_all_singlei(numhpa)
+  call bcast_all_singlei(ihpa)
+
   call bcast_all_i(lmxhpa,maxhpa)
   call bcast_all_i(itypehpa,maxhpa)
   call bcast_all_i(ihpakern,maxker)
@@ -1773,8 +1774,6 @@
 
   subroutine ylm(XLAT,XLON,LMAX,Y,WK1,WK2,WK3)
 
-  use model_s362ani_par,only : maxl
-
   implicit none
 
   complex TEMP,FAC,DFAC
@@ -1786,9 +1785,9 @@
 !
 !     WK1,WK2,WK3 SHOULD BE DIMENSIONED AT LEAST (LMAX+1)*4
 !
-  real(kind=4) WK1(LMAX+1),WK2(LMAX+1),WK3(LMAX+1)
-  real(kind=4) XLAT,XLON
-  real(kind=4),dimension((maxl+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
+  real(kind=4),dimension(LMAX+1) :: WK1,WK2,WK3
+  real(kind=4) :: XLAT,XLON
+  real(kind=4),dimension((LMAX+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
 
   real(kind=4), parameter :: RADIAN = 57.2957795
 
@@ -1806,8 +1805,10 @@
 
     ! index L goes from 0 to LMAX
     L=IL1-1
+
+    !! see legndr(): WK1,WK2,WK3 should go from 1 to L+1
     !CALL legndr(THETA,L,L,WK1,WK2,WK3)
-    CALL legndr(THETA,L,L,WK1(1:L+1),WK2(1:L+1),WK3(1:L+1)) !! see legndr(): WK1,WK2,WK3 should go from 1 to L+1
+    CALL legndr(THETA,L,L,WK1(1:L+1),WK2(1:L+1),WK3(1:L+1))
 
     FAC=(1.,0.)
     DFAC=CEXP(CMPLX(0.,PHI))

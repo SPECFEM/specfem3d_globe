@@ -74,24 +74,26 @@
 
   ! allocates model arrays
   allocate(sea99_vs(100,100,100), &
-          sea99_depth(100), &
-          stat=ier)
+           sea99_depth(100), &
+           stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating sea99 arrays')
 
   ! master proc reads in values
   if(myrank == 0) call read_sea99_s_model()
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_i(sea99_ndep,1)
-  call bcast_all_i(sea99_nlat,1)
-  call bcast_all_i(sea99_nlon,1)
-  call bcast_all_dp(sea99_ddeg,1)
-  call bcast_all_dp(alatmin,1)
-  call bcast_all_dp(alatmax,1)
-  call bcast_all_dp(alonmin,1)
-  call bcast_all_i(alonmax,1)
-  call bcast_all_i(sea99_vs,100*100*100)
-  call bcast_all_i(sea99_depth,100)
+  call bcast_all_singlei(sea99_ndep)
+  call bcast_all_singlei(sea99_nlat)
+  call bcast_all_singlei(sea99_nlon)
+
+  call bcast_all_singledp(sea99_ddeg)
+  call bcast_all_singledp(alatmin)
+  call bcast_all_singledp(alatmax)
+  call bcast_all_singledp(alonmin)
+  call bcast_all_singledp(alonmax)
+
+  call bcast_all_dp(sea99_vs,100*100*100)
+  call bcast_all_dp(sea99_depth,100)
 
   end subroutine model_sea99_s_broadcast
 

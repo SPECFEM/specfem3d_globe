@@ -214,7 +214,7 @@ adios_meshfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
 adios_meshfem3D_SHARED_STUBS = \
-	$O/adios_method_stubs.shared.o \
+	$O/adios_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
 # conditional adios linking

@@ -317,7 +317,7 @@
   ! input
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -573,14 +573,14 @@
 !
 
  subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
-                                      div_displ_outer_core, &
-                                      accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
-                                      eps_trace_over_3_inner_core, &
-                                      epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                      epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                      epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
-                                      epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                                      LOCAL_TMP_PATH)
+                                       div_displ_outer_core, &
+                                       accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
+                                       eps_trace_over_3_inner_core, &
+                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
+                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
+                                       LOCAL_TMP_PATH)
 
 ! outputs divergence and curl: MOVIE_VOLUME_TYPE == 4
 
@@ -590,7 +590,7 @@
 
   integer :: myrank,it
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: div_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
@@ -632,7 +632,7 @@
     close(27)
 
     ! outer core
-    if (NSPEC_OUTER_CORE_ADJOINT /= 1 ) then
+    if (NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
       open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))

@@ -39,8 +39,32 @@
 
 
 #ifdef USE_TEXTURES_FIELDS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_cm_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_cm_tex;
+//forward
+realw_texture d_displ_cm_tex;
+realw_texture d_accel_cm_tex;
+//backward/reconstructed
+realw_texture d_b_displ_cm_tex;
+realw_texture d_b_accel_cm_tex;
+
+//note: texture variables are implicitly static, and cannot be passed as arguments to cuda kernels;
+//      thus, 1) we thus use if-statements (FORWARD_OR_ADJOINT) to determine from which texture to fetch from
+//            2) we use templates
+//      since if-statements are a bit slower as the variable is only known at runtime, we use option 2)
+
+// templates definitions
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_cm(int x);
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_veloc_cm(int x);
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_cm(int x);
+
+// templates for texture fetching
+// FORWARD_OR_ADJOINT == 1 <- forward arrays
+template<> __device__ float texfetch_displ_cm<1>(int x) { return tex1Dfetch(d_displ_cm_tex, x); }
+template<> __device__ float texfetch_veloc_cm<1>(int x) { return tex1Dfetch(d_veloc_cm_tex, x); }
+template<> __device__ float texfetch_accel_cm<1>(int x) { return tex1Dfetch(d_accel_cm_tex, x); }
+// FORWARD_OR_ADJOINT == 3 <- backward/reconstructed arrays
+template<> __device__ float texfetch_displ_cm<3>(int x) { return tex1Dfetch(d_b_displ_cm_tex, x); }
+template<> __device__ float texfetch_veloc_cm<3>(int x) { return tex1Dfetch(d_b_veloc_cm_tex, x); }
+template<> __device__ float texfetch_accel_cm<3>(int x) { return tex1Dfetch(d_b_accel_cm_tex, x); }
 #endif
 
 #ifdef USE_TEXTURES_CONSTANTS

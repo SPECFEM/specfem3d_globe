@@ -500,11 +500,8 @@
   subroutine bcast_all_r(buffer, count)
 
   use mpi
-  use constants
 
   implicit none
-
-  include "precision.h"
 
   integer :: count
   real, dimension(count) :: buffer
@@ -514,6 +511,25 @@
   call MPI_BCAST(buffer,count,MPI_REAL,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singler(buffer)
+
+  use mpi
+
+  implicit none
+
+  real :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,1,MPI_REAL,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_singler
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -533,6 +549,24 @@
   call MPI_BCAST(buffer,count,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singledp(buffer)
+
+  use :: mpi
+
+  implicit none
+
+  double precision :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_singledp
 
 
 !
@@ -905,6 +939,28 @@
                   0,MPI_COMM_WORLD,ier)
 
   end subroutine gather_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gather_all_singlei(sendbuf, recvbuf, NPROC)
+
+  use mpi
+
+  implicit none
+
+  integer :: NPROC
+  integer :: sendbuf
+  integer, dimension(0:NPROC-1) :: recvbuf
+
+  integer :: ier
+
+  call MPI_GATHER(sendbuf,1,MPI_INTEGER, &
+                  recvbuf,1,MPI_INTEGER, &
+                  0,MPI_COMM_WORLD,ier)
+
+  end subroutine gather_all_singlei
 
 !
 !-------------------------------------------------------------------------------------------------

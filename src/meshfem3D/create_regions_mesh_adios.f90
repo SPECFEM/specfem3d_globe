@@ -56,10 +56,11 @@
   ! number of spectral elements in each block
   integer,intent(in) :: nspec,npointot,iregion_code
 
-  ! local parameters
   ! arrays used for AVS or DX files
   integer, dimension(npointot), intent(inout) :: num_ibool_AVS_DX
   logical, dimension(npointot), intent(inout) :: mask_ibool
+
+  ! local parameters
   ! structures used for ADIOS AVS/DX files
   type(avs_dx_global_t) :: avs_dx_global_vars
   type(avs_dx_global_faces_t) :: avs_dx_global_faces_vars

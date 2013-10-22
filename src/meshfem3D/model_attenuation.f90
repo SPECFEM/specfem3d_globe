@@ -102,9 +102,9 @@
   if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
   ! broadcasts to all others
-  call bcast_all_dp(AM_V%min_period,  1)
-  call bcast_all_dp(AM_V%max_period,  1)
-  call bcast_all_dp(AM_V%QT_c_source, 1)
+  call bcast_all_singledp(AM_V%min_period)
+  call bcast_all_singledp(AM_V%max_period)
+  call bcast_all_singledp(AM_V%QT_c_source)
   call bcast_all_dp(AM_V%Qtau_s,   N_SLS)
 
   end subroutine model_attenuation_broadcast

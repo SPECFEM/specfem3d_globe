@@ -107,9 +107,10 @@
   if(myrank == 0) call read_model_ppm()
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_i(PPM_num_v,1)
-  call bcast_all_i(PPM_num_latperlon,1)
-  call bcast_all_i(PPM_num_lonperdepth,1)
+  call bcast_all_singlei(PPM_num_v)
+  call bcast_all_singlei(PPM_num_latperlon)
+  call bcast_all_singlei(PPM_num_lonperdepth)
+  
   if( myrank /= 0 ) then
     allocate(PPM_lat(PPM_num_v),PPM_lon(PPM_num_v),PPM_depth(PPM_num_v),PPM_dvs(PPM_num_v))
   endif
@@ -118,15 +119,16 @@
   call bcast_all_dp(PPM_lat(1:PPM_num_v),PPM_num_v)
   call bcast_all_dp(PPM_lon(1:PPM_num_v),PPM_num_v)
   call bcast_all_dp(PPM_depth(1:PPM_num_v),PPM_num_v)
-  call bcast_all_dp(PPM_maxlat,1)
-  call bcast_all_dp(PPM_minlat,1)
-  call bcast_all_dp(PPM_maxlon,1)
-  call bcast_all_dp(PPM_minlon,1)
-  call bcast_all_dp(PPM_maxdepth,1)
-  call bcast_all_dp(PPM_mindepth,1)
-  call bcast_all_dp(PPM_dlat,1)
-  call bcast_all_dp(PPM_dlon,1)
-  call bcast_all_dp(PPM_ddepth,1)
+  
+  call bcast_all_singledp(PPM_maxlat)
+  call bcast_all_singledp(PPM_minlat)
+  call bcast_all_singledp(PPM_maxlon)
+  call bcast_all_singledp(PPM_minlon)
+  call bcast_all_singledp(PPM_maxdepth)
+  call bcast_all_singledp(PPM_mindepth)
+  call bcast_all_singledp(PPM_dlat)
+  call bcast_all_singledp(PPM_dlon)
+  call bcast_all_singledp(PPM_ddepth)
 
   end subroutine model_ppm_broadcast
 

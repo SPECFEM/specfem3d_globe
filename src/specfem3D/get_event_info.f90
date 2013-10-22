@@ -76,26 +76,26 @@
   endif
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_i(yr,1)
-  call bcast_all_i(jda,1)
-  call bcast_all_i(ho,1)
-  call bcast_all_i(mi,1)
+  call bcast_all_singlei(yr)
+  call bcast_all_singlei(jda)
+  call bcast_all_singlei(ho)
+  call bcast_all_singlei(mi)
 
-  call bcast_all_dp(sec,1)
+  call bcast_all_singledp(sec)
 
-  call bcast_all_dp(tshift_cmt,1)
-  call bcast_all_dp(t_shift,1)
+  call bcast_all_singledp(tshift_cmt)
+  call bcast_all_singledp(t_shift)
 
   ! event location given on first, PDE line
-  call bcast_all_dp(elat,1)
-  call bcast_all_dp(elon,1)
-  call bcast_all_dp(depth,1)
+  call bcast_all_singledp(elat)
+  call bcast_all_singledp(elon)
+  call bcast_all_singledp(depth)
 
   ! cmt location given in CMT file
-  call bcast_all_dp(cmt_lat,1)
-  call bcast_all_dp(cmt_lon,1)
-  call bcast_all_dp(cmt_depth,1)
-  call bcast_all_dp(cmt_hdur,1)
+  call bcast_all_singledp(cmt_lat)
+  call bcast_all_singledp(cmt_lon)
+  call bcast_all_singledp(cmt_depth)
+  call bcast_all_singledp(cmt_hdur)
 
   call bcast_all_ch(event_name,20)
 

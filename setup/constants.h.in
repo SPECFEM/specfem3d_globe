@@ -253,6 +253,7 @@
 ! postprocess the colors to balance them if Droux (1993) algorithm is not used
   logical, parameter :: BALANCE_COLORS_SIMPLE_ALGO = .true.
 
+
 !!-----------------------------------------------------------
 !!
 !! ADIOS Related values
@@ -278,6 +279,7 @@
   real, parameter :: KL_REG_MIN_LAT = -90.0
   real, parameter :: KL_REG_MAX_LAT = +90.0
 
+
 !!-----------------------------------------------------------
 !!
 !! new version compatibility
@@ -290,7 +292,6 @@
 ! new version
 ! new version uses optional full 3d attenuation
   logical, parameter :: USE_VERSION_5_1_5 = .false.
-
 
 
 !!-----------------------------------------------------------
@@ -307,6 +308,18 @@
   logical, parameter :: ADD_TIME_ESTIMATE_ELSEWHERE = .false.
   integer, parameter :: HOURS_TIME_DIFFERENCE = +9
   integer, parameter :: MINUTES_TIME_DIFFERENCE = +0
+
+
+!!-----------------------------------------------------------
+!!
+!! movie outputs
+!!
+!!-----------------------------------------------------------
+
+! runs external bash script after storing movie files
+! (useful for postprocessing during simulation time)
+  logical, parameter :: RUN_EXTERNAL_MOVIE_SCRIPT = .false.
+  character(len=256) :: MOVIE_SCRIPT_NAME = "./tar_movie_files.sh"
 
 
 !!-----------------------------------------------------------
@@ -660,7 +673,11 @@
   integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
-! for LDDRK high-order time scheme
+!!-----------------------------------------------------------
+!!
+!! for LDDRK high-order time scheme
+!!
+!!-----------------------------------------------------------
   integer, parameter :: NSTAGE = 6
 
   real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &

@@ -75,7 +75,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: displfluid,accelfluid
 
   ! divergence of displacement
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displfluid
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: div_displfluid
 
   ! inner/outer element run flag
   logical :: phase_is_inner
@@ -137,7 +137,9 @@
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. (.not. phase_is_inner) ) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (.not. phase_is_inner) ) then
+    div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
 ! computed_elements = 0
   if( .not. phase_is_inner ) then
@@ -365,7 +367,8 @@
             dpotentialdy_with_rot = dpotentialdy_with_rot + displ_times_grad_y_ln_rho(i,j,k)
             dpotentialdzl = dpotentialdzl + displ_times_grad_z_ln_rho(i,j,k)
 
-         else  ! if gravity is turned on
+         else
+            ! if gravity is turned on
 
             ! compute divergence of displacment
             gxl = temp_gxl(i,j,k)
@@ -392,7 +395,7 @@
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
             !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
             !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
+            if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
               div_displfluid(i,j,k,ispec) =  &
                         minus_rho_g_over_kappa_fluid(int_radius) &
                         * (dpotentialdx_with_rot * gxl &

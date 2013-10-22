@@ -63,7 +63,7 @@
   if( myrank == 0 ) call read_EuCrust()
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_i(num_eucrust,1)
+  call bcast_all_singlei(num_eucrust)
 
   ! allocates on all other processes
   if( myrank /= 0 ) then

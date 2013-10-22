@@ -37,7 +37,8 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
                                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                                     ibool,idoubling,ispec_is_tiso, &
-                                    rmassx,rmassy,rmassz,rmass_ocean_load, &
+                                    rmassx,rmassy,rmassz, &
+                                    nglob_oceans,rmass_ocean_load, &
                                     READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx,b_rmassy)
 
@@ -88,7 +89,9 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
 
   real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+
+  integer :: nglob_oceans
+  real(kind=CUSTOM_REAL), dimension(nglob_oceans) :: rmass_ocean_load
 
   ! flags to know if we should read Vs and anisotropy arrays
   logical :: READ_KAPPA_MU,READ_TISO

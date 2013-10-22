@@ -343,12 +343,12 @@
                                           xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                           etax_inner_core,etay_inner_core,etaz_inner_core, &
                                           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                          epsilondev_xx_inner_core(1,1,1,ispec), &
-                                          epsilondev_yy_inner_core(1,1,1,ispec), &
-                                          epsilondev_xy_inner_core(1,1,1,ispec), &
-                                          epsilondev_xz_inner_core(1,1,1,ispec), &
-                                          epsilondev_yz_inner_core(1,1,1,ispec), &
-                                          eps_trace_over_3_inner_core(1,1,1,ispec))
+                                          epsilondev_xx_inner_core, &
+                                          epsilondev_yy_inner_core, &
+                                          epsilondev_xy_inner_core, &
+                                          epsilondev_xz_inner_core, &
+                                          epsilondev_yz_inner_core, &
+                                          NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core)
     enddo
     ! crust mantle
     do ispec = 1, NSPEC_crust_mantle
@@ -359,12 +359,12 @@
                                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                          epsilondev_xx_crust_mantle(1,1,1,ispec), &
-                                          epsilondev_yy_crust_mantle(1,1,1,ispec), &
-                                          epsilondev_xy_crust_mantle(1,1,1,ispec), &
-                                          epsilondev_xz_crust_mantle(1,1,1,ispec), &
-                                          epsilondev_yz_crust_mantle(1,1,1,ispec), &
-                                          eps_trace_over_3_crust_mantle(1,1,1,ispec))
+                                          epsilondev_xx_crust_mantle, &
+                                          epsilondev_yy_crust_mantle, &
+                                          epsilondev_xy_crust_mantle, &
+                                          epsilondev_xz_crust_mantle, &
+                                          epsilondev_yz_crust_mantle, &
+                                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle)
     enddo
 
   else
@@ -378,12 +378,12 @@
                                             xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                             etax_inner_core,etay_inner_core,etaz_inner_core, &
                                             gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                            epsilondev_xx_inner_core(1,1,1,ispec), &
-                                            epsilondev_yy_inner_core(1,1,1,ispec), &
-                                            epsilondev_xy_inner_core(1,1,1,ispec), &
-                                            epsilondev_xz_inner_core(1,1,1,ispec), &
-                                            epsilondev_yz_inner_core(1,1,1,ispec), &
-                                            eps_trace_over_3_inner_core(1,1,1,ispec))
+                                            epsilondev_xx_inner_core, &
+                                            epsilondev_yy_inner_core, &
+                                            epsilondev_xy_inner_core, &
+                                            epsilondev_xz_inner_core, &
+                                            epsilondev_yz_inner_core, &
+                                            NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core)
     enddo
     ! crust mantle
     do ispec = 1, NSPEC_CRUST_MANTLE
@@ -394,12 +394,12 @@
                                             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                            epsilondev_xx_crust_mantle(1,1,1,ispec), &
-                                            epsilondev_yy_crust_mantle(1,1,1,ispec), &
-                                            epsilondev_xy_crust_mantle(1,1,1,ispec), &
-                                            epsilondev_xz_crust_mantle(1,1,1,ispec), &
-                                            epsilondev_yz_crust_mantle(1,1,1,ispec), &
-                                            eps_trace_over_3_crust_mantle(1,1,1,ispec))
+                                            epsilondev_xx_crust_mantle, &
+                                            epsilondev_yy_crust_mantle, &
+                                            epsilondev_xy_crust_mantle, &
+                                            epsilondev_xz_crust_mantle, &
+                                            epsilondev_yz_crust_mantle, &
+                                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle)
     enddo
   endif
 
@@ -431,15 +431,16 @@
                                           xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                           etax_inner_core,etay_inner_core,etaz_inner_core, &
                                           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                          b_epsilondev_xx_inner_core(1,1,1,ispec), &
-                                          b_epsilondev_yy_inner_core(1,1,1,ispec), &
-                                          b_epsilondev_xy_inner_core(1,1,1,ispec), &
-                                          b_epsilondev_xz_inner_core(1,1,1,ispec), &
-                                          b_epsilondev_yz_inner_core(1,1,1,ispec), &
-                                          b_eps_trace_over_3_inner_core(1,1,1,ispec))
+                                          b_epsilondev_xx_inner_core, &
+                                          b_epsilondev_yy_inner_core, &
+                                          b_epsilondev_xy_inner_core, &
+                                          b_epsilondev_xz_inner_core, &
+                                          b_epsilondev_yz_inner_core, &
+                                          NSPEC_INNER_CORE_STRAIN_ONLY,b_eps_trace_over_3_inner_core)
     enddo
+
     ! crust mantle
-    do ispec = 1, NSPEC_crust_mantle
+    do ispec = 1, NSPEC_CRUST_MANTLE
       call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE_ADJOINT,NSPEC_CRUST_MANTLE_ADJOINT, &
                                           b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
                                           ibool_crust_mantle, &
@@ -447,12 +448,12 @@
                                           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                          b_epsilondev_xx_crust_mantle(1,1,1,ispec), &
-                                          b_epsilondev_yy_crust_mantle(1,1,1,ispec), &
-                                          b_epsilondev_xy_crust_mantle(1,1,1,ispec), &
-                                          b_epsilondev_xz_crust_mantle(1,1,1,ispec), &
-                                          b_epsilondev_yz_crust_mantle(1,1,1,ispec), &
-                                          b_eps_trace_over_3_crust_mantle(1,1,1,ispec))
+                                          b_epsilondev_xx_crust_mantle, &
+                                          b_epsilondev_yy_crust_mantle, &
+                                          b_epsilondev_xy_crust_mantle, &
+                                          b_epsilondev_xz_crust_mantle, &
+                                          b_epsilondev_yz_crust_mantle, &
+                                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,b_eps_trace_over_3_crust_mantle)
     enddo
 
   else
@@ -466,12 +467,12 @@
                                             xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                             etax_inner_core,etay_inner_core,etaz_inner_core, &
                                             gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                            b_epsilondev_xx_inner_core(1,1,1,ispec), &
-                                            b_epsilondev_yy_inner_core(1,1,1,ispec), &
-                                            b_epsilondev_xy_inner_core(1,1,1,ispec), &
-                                            b_epsilondev_xz_inner_core(1,1,1,ispec), &
-                                            b_epsilondev_yz_inner_core(1,1,1,ispec), &
-                                            b_eps_trace_over_3_inner_core(1,1,1,ispec))
+                                            b_epsilondev_xx_inner_core, &
+                                            b_epsilondev_yy_inner_core, &
+                                            b_epsilondev_xy_inner_core, &
+                                            b_epsilondev_xz_inner_core, &
+                                            b_epsilondev_yz_inner_core, &
+                                            NSPEC_INNER_CORE_STRAIN_ONLY,b_eps_trace_over_3_inner_core)
     enddo
     ! crust mantle
     do ispec = 1, NSPEC_crust_mantle
@@ -482,12 +483,12 @@
                                             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                            b_epsilondev_xx_crust_mantle(1,1,1,ispec), &
-                                            b_epsilondev_yy_crust_mantle(1,1,1,ispec), &
-                                            b_epsilondev_xy_crust_mantle(1,1,1,ispec), &
-                                            b_epsilondev_xz_crust_mantle(1,1,1,ispec), &
-                                            b_epsilondev_yz_crust_mantle(1,1,1,ispec), &
-                                            b_eps_trace_over_3_crust_mantle(1,1,1,ispec))
+                                            b_epsilondev_xx_crust_mantle, &
+                                            b_epsilondev_yy_crust_mantle, &
+                                            b_epsilondev_xy_crust_mantle, &
+                                            b_epsilondev_xz_crust_mantle, &
+                                            b_epsilondev_yz_crust_mantle, &
+                                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,b_eps_trace_over_3_crust_mantle)
     enddo
   endif
 
