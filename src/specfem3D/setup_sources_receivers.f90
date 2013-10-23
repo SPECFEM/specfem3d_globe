@@ -365,7 +365,7 @@
   ! count number of receivers located in this slice
   nrec_local = 0
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-    ! note: for 1-chunk simulations, nrec is now the actual number of receivers found in this chunk 
+    ! note: for 1-chunk simulations, nrec is now the actual number of receivers found in this chunk
     !       (excludes stations located outside of chunk)
     nrec_simulation = nrec
     do irec = 1,nrec

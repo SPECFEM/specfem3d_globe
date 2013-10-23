@@ -119,12 +119,12 @@
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')    !model P12 is in s20rts data directory
 
   ! S40RTS degree 40 S model from Ritsema
-  open(unit=10,file=S40RTS,status='old',action='read',iostat=ier)
+  open(unit=10,file=trim(S40RTS),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(S40RTS), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0, 'error model s40rts')
+    call exit_MPI(0, 'error: opening model s40rts data file DATA/s40rts/S40RTS.dat failed, please check...')
   endif
 
   do k=0,NK_20
@@ -135,10 +135,10 @@
   close(10)
 
   ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old',action='read',iostat=ier)
+  open(unit=10,file=trim(P12),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
-    call exit_MPI(0, 'error model s40rts')
+    call exit_MPI(0, 'error : opening model s40rts data file DATA/s20rts/P12.dat failed, please check...')
   endif
   do k=0,NK_20
     do l=0,12

@@ -1268,7 +1268,7 @@ subroutine define_adios_global_1d_logical_5d(adios_group, group_size_inc, &
   full_name = trim(path) // trim(array_name)
 
   call define_adios_global_1d_logical_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-  
+
 end subroutine define_adios_global_1d_logical_5d
 
 end module adios_helpers_definitions_mod

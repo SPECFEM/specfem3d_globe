@@ -38,7 +38,7 @@
                                            alphaval,betaval,gammaval, &
                                            c44store,muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-                                           epsilondev_loc) !!!!!!!!!!!!!!!!! ,is_backward_field)
+                                           epsilondev_loc)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -82,8 +82,6 @@
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-
-!!!!!!!!!!!!!!!  logical :: is_backward_field
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
@@ -314,7 +312,7 @@
                                            alphaval,betaval,gammaval, &
                                            muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-                                           epsilondev_loc) !!!!!!!!!!!!! ,is_backward_field)
+                                           epsilondev_loc)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -355,8 +353,6 @@
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-
-!!!!!!!!!!!  logical :: is_backward_field
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
@@ -562,98 +558,99 @@
 !
 ! helper functions
 !
-
-
-  subroutine compute_element_att_mem_up_cm(ispec,i,j,k, &
-                                              R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
-                                              epsilondev_loc,c44_muv,is_backward_field)
-! crust mantle
-! update memory variables based upon the Runge-Kutta scheme
-
-
-!daniel: att - debug update
-  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
-
-  use specfem_par_crustmantle,only: factor_common=>factor_common_crust_mantle
-
-  use constants_solver
-
-  implicit none
-
-  ! element id
-  integer :: ispec,i,j,k
-
-  ! attenuation
-  ! memory variables for attenuation
-  ! memory variables R_ij are stored at the local rather than global level
-  ! to allow for optimization of cache access by compiler
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xx_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yy_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xy_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xz_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yz_loc
-
-  real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
-  real(kind=CUSTOM_REAL) :: c44_muv
-
-  logical :: is_backward_field
-  double precision :: dt,kappa
-
-! local parameters
-  real(kind=CUSTOM_REAL) :: factor_common_c44_muv
-  integer :: i_SLS
-
-  if( .not. is_backward_field ) then
-    dt = dble(deltat)
-  else
-    ! backward/reconstruction: reverse time
-    dt = dble(b_deltat)
-  endif
-
-  do i_SLS = 1,N_SLS
-
-    ! runge-kutta scheme to update memory variables R(t)
-    if( .false. ) then
-! classical RK 4:       R'(t) =  - 1/tau * R(t)
 !
-! Butcher RK4:
-! 0     |
-! 1/2   | 1/2
-! 1/2   | 0    1/2
-! 1     | 0          1
-! -----------------------------------------------------------------------------
-!         1/6  1/3   1/3   1/6
-    kappa = - dt/tau_sigma_dble(i_SLS)
-
-    R_xx_loc(i_SLS) = R_xx_loc(i_SLS) * &
-      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-    R_yy_loc(i_SLS) = R_yy_loc(i_SLS) * &
-      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-    R_xy_loc(i_SLS) = R_xy_loc(i_SLS) * &
-      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-    R_xz_loc(i_SLS) = R_xz_loc(i_SLS) * &
-      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-    R_yz_loc(i_SLS) = R_yz_loc(i_SLS) * &
-      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
-    endif
-
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-      factor_common_c44_muv = factor_common(i_SLS,i,j,k,ispec) * c44_muv
-    else
-      factor_common_c44_muv = factor_common(i_SLS,1,1,1,ispec) * c44_muv
-    endif
-
-    ! adds contributions from current strain
-    R_xx_loc(i_SLS) = R_xx_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(1))
-    R_yy_loc(i_SLS) = R_yy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(2))
-    R_xy_loc(i_SLS) = R_xy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(3))
-    R_xz_loc(i_SLS) = R_xz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(4))
-    R_yz_loc(i_SLS) = R_yz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(5))
-
-  enddo ! i_SLS
-
-  end subroutine compute_element_att_mem_up_cm
-
+!daniel debug: att - debug update
+!
+!  subroutine compute_element_att_mem_up_cm(ispec,i,j,k, &
+!                                              R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
+!                                              epsilondev_loc,c44_muv,is_backward_field)
+!! crust mantle
+!! update memory variables based upon the Runge-Kutta scheme
+!
+!
+!!daniel: att - debug update
+!  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
+!
+!  use specfem_par_crustmantle,only: factor_common=>factor_common_crust_mantle
+!
+!  use constants_solver
+!
+!  implicit none
+!
+!  ! element id
+!  integer :: ispec,i,j,k
+!
+!  ! attenuation
+!  ! memory variables for attenuation
+!  ! memory variables R_ij are stored at the local rather than global level
+!  ! to allow for optimization of cache access by compiler
+!!  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
+!  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xx_loc
+!  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yy_loc
+!  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xy_loc
+!  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xz_loc
+!  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yz_loc
+!
+!  real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
+!  real(kind=CUSTOM_REAL) :: c44_muv
+!
+!  logical :: is_backward_field
+!  double precision :: dt,kappa
+!
+!! local parameters
+!  real(kind=CUSTOM_REAL) :: factor_common_c44_muv
+!  integer :: i_SLS
+!
+!  if( .not. is_backward_field ) then
+!    dt = dble(deltat)
+!  else
+!    ! backward/reconstruction: reverse time
+!    dt = dble(b_deltat)
+!  endif
+!
+!  do i_SLS = 1,N_SLS
+!
+!    ! runge-kutta scheme to update memory variables R(t)
+!    if( .false. ) then
+!! classical RK 4:       R'(t) =  - 1/tau * R(t)
+!!
+!! Butcher RK4:
+!! 0     |
+!! 1/2   | 1/2
+!! 1/2   | 0    1/2
+!! 1     | 0          1
+!! -----------------------------------------------------------------------------
+!!         1/6  1/3   1/3   1/6
+!    kappa = - dt/tau_sigma_dble(i_SLS)
+!
+!    R_xx_loc(i_SLS) = R_xx_loc(i_SLS) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!    R_yy_loc(i_SLS) = R_yy_loc(i_SLS) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!    R_xy_loc(i_SLS) = R_xy_loc(i_SLS) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!    R_xz_loc(i_SLS) = R_xz_loc(i_SLS) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!    R_yz_loc(i_SLS) = R_yz_loc(i_SLS) * &
+!      (1.0d0 + kappa*(1.d0 + 0.5d0*kappa*(1.d0 + 1.0d0/6.0d0*kappa*(1.d0 + 1.0d0/24.0d0*kappa))))
+!    endif
+!
+!    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+!    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+!      factor_common_c44_muv = factor_common(i_SLS,i,j,k,ispec) * c44_muv
+!    else
+!      factor_common_c44_muv = factor_common(i_SLS,1,1,1,ispec) * c44_muv
+!    endif
+!
+!    ! adds contributions from current strain
+!    R_xx_loc(i_SLS) = R_xx_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(1))
+!    R_yy_loc(i_SLS) = R_yy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(2))
+!    R_xy_loc(i_SLS) = R_xy_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(3))
+!    R_xz_loc(i_SLS) = R_xz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(4))
+!    R_yz_loc(i_SLS) = R_yz_loc(i_SLS) + 0.5d0 * dt * dble(factor_common_c44_muv) * dble(epsilondev_loc(5))
+!
+!  enddo ! i_SLS
+!
+!  end subroutine compute_element_att_mem_up_cm
+!
 

@@ -25,10 +25,14 @@
 !
 !=====================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+#include "config.fh"
+
+
   subroutine compute_forces_crust_mantle_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_crust_mantle, &
-!                                             veloc_crust_mantle, &
                                               accel_crust_mantle, &
                                               phase_is_inner, &
                                               R_xx,R_yy,R_xy,R_xz,R_yz, &
@@ -37,7 +41,7 @@
                                               epsilondev_xz,epsilondev_yz, &
                                               epsilon_trace_over_3, &
                                               alphaval,betaval,gammaval, &
-                                              factor_common,vnspec,is_backward_field)
+                                              factor_common,vnspec )
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -71,11 +75,7 @@
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
 
-#ifdef FORCE_VECTORIZATION
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
-#else
-  use specfem_par,only: wgllwgll_xy,wgllwgll_xz,wgllwgll_yz
-#endif
 
 !daniel: att - debug
 !  use specfem_par,only: it,NSTEP
@@ -112,8 +112,6 @@
 
   ! inner/outer element run flag
   logical :: phase_is_inner
-
-  logical :: is_backward_field
 
   ! local parameters
 
@@ -162,8 +160,8 @@
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
-  integer :: ispec,i,j,k,iglob
-
+  integer :: ispec,iglob
+  integer :: i,j,k
   integer :: num_elements,ispec_p
   integer :: iphase
 
@@ -190,29 +188,14 @@
 
     ! only compute element which belong to current phase (inner or outer elements)
 
-    ! subroutines adapted from Deville, Fischer and Mund, High-order methods
-    ! for incompressible fluid flow, Cambridge University Press (2002),
-    ! pages 386 and 389 and Figure 8.3.1
+    DO_LOOP_IJK
 
-#ifdef FORCE_VECTORIZATION
-    do ijk=1,NGLLCUBE
-      iglob = ibool(ijk,1,1,ispec)
-      dummyx_loc(ijk,1,1) = displ_crust_mantle(1,iglob)
-      dummyy_loc(ijk,1,1) = displ_crust_mantle(2,iglob)
-      dummyz_loc(ijk,1,1) = displ_crust_mantle(3,iglob)
-    enddo
-#else
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob)
-          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob)
-          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob)
-        enddo
-      enddo
-    enddo
-#endif
+      iglob = ibool(INDEX_IJK,ispec)
+      dummyx_loc(INDEX_IJK) = displ_crust_mantle(1,iglob)
+      dummyy_loc(INDEX_IJK) = displ_crust_mantle(2,iglob)
+      dummyz_loc(INDEX_IJK) = displ_crust_mantle(3,iglob)
+
+    ENDDO_LOOP_IJK
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -292,54 +275,51 @@
     if(ANISOTROPIC_3D_MANTLE_VAL) then
        ! anisotropic element
        call compute_element_aniso(ispec, &
-            minus_gravity_table,density_table,minus_deriv_gravity_table, &
-            xstore,ystore,zstore, &
-            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-            wgll_cube, &
-            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-            ibool, &
-            R_xx,R_yy,R_xy,R_xz,R_yz, &
-            epsilon_trace_over_3, &
-            one_minus_sum_beta,vnspec, &
-            tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-            dummyx_loc,dummyy_loc,dummyz_loc, &
-            epsilondev_loc, &
-            rho_s_H,is_backward_field)
+                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                  xstore,ystore,zstore, &
+                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                  wgll_cube, &
+                                  c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                  c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                  c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                  ibool, &
+                                  R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                  epsilon_trace_over_3, &
+                                  one_minus_sum_beta,vnspec, &
+                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                  dummyx_loc,dummyy_loc,dummyz_loc, &
+                                  epsilondev_loc,rho_s_H)
     else
        if(.not. ispec_is_tiso(ispec)) then
           ! isotropic element
           call compute_element_iso(ispec, &
-               minus_gravity_table,density_table,minus_deriv_gravity_table, &
-               xstore,ystore,zstore, &
-               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-               wgll_cube, &
-               kappavstore,muvstore, &
-               ibool, &
-               R_xx,R_yy,R_xy,R_xz,R_yz, &
-               epsilon_trace_over_3, &
-               one_minus_sum_beta,vnspec, &
-               tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc, &
-               epsilondev_loc, &
-               rho_s_H,is_backward_field)
+                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                   xstore,ystore,zstore, &
+                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                   wgll_cube, &
+                                   kappavstore,muvstore, &
+                                   ibool, &
+                                   R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                   epsilon_trace_over_3, &
+                                   one_minus_sum_beta,vnspec, &
+                                   tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                   dummyx_loc,dummyy_loc,dummyz_loc, &
+                                   epsilondev_loc,rho_s_H)
        else
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
-               minus_gravity_table,density_table,minus_deriv_gravity_table, &
-               xstore,ystore,zstore, &
-               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-               wgll_cube, &
-               kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-               ibool, &
-               R_xx,R_yy,R_xy,R_xz,R_yz, &
-               epsilon_trace_over_3, &
-               one_minus_sum_beta,vnspec, &
-               tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-               dummyx_loc,dummyy_loc,dummyz_loc, &
-               epsilondev_loc, &
-               rho_s_H,is_backward_field)
+                                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                     xstore,ystore,zstore, &
+                                     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                     wgll_cube, &
+                                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                                     ibool, &
+                                     R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                     epsilon_trace_over_3, &
+                                     one_minus_sum_beta,vnspec, &
+                                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                     dummyx_loc,dummyy_loc,dummyz_loc, &
+                                     epsilondev_loc,rho_s_H)
        endif ! .not. ispec_is_tiso
     endif
 
@@ -416,40 +396,42 @@
     enddo
 
     ! sum contributions
-#ifdef FORCE_VECTORIZATION
-    do ijk=1,NGLLCUBE
-      fac1 = wgllwgll_yz_3D(ijk,1,1)
-      fac2 = wgllwgll_xz_3D(ijk,1,1)
-      fac3 = wgllwgll_xy_3D(ijk,1,1)
-      sum_terms(1,ijk,1,1) = - (fac1*newtempx1(ijk,1,1) + fac2*newtempx2(ijk,1,1) + fac3*newtempx3(ijk,1,1))
-      sum_terms(2,ijk,1,1) = - (fac1*newtempy1(ijk,1,1) + fac2*newtempy2(ijk,1,1) + fac3*newtempy3(ijk,1,1))
-      sum_terms(3,ijk,1,1) = - (fac1*newtempz1(ijk,1,1) + fac2*newtempz2(ijk,1,1) + fac3*newtempz3(ijk,1,1))
-    enddo
+
+    DO_LOOP_IJK
+
+      fac1 = wgllwgll_yz_3D(INDEX_IJK)
+      fac2 = wgllwgll_xz_3D(INDEX_IJK)
+      fac3 = wgllwgll_xy_3D(INDEX_IJK)
+      sum_terms(1,INDEX_IJK) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
+      sum_terms(2,INDEX_IJK) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
+      sum_terms(3,INDEX_IJK) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
+
+    ENDDO_LOOP_IJK
+
     ! adds gravity terms
     if(GRAVITY_VAL) then
+
+#ifdef FORCE_VECTORIZATION
       do ijk = 1,NDIM*NGLLCUBE
         sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
       enddo
-    endif
 #else
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        fac1 = wgllwgll_yz(j,k)
-        do i=1,NGLLX
-          fac2 = wgllwgll_xz(i,k)
-          fac3 = wgllwgll_xy(i,j)
-          ! sums contributions
-          sum_terms(1,i,j,k) = - (fac1*newtempx1(i,j,k) + fac2*newtempx2(i,j,k) + fac3*newtempx3(i,j,k))
-          sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
-          sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
-          ! adds gravity terms
-          if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
-        enddo ! NGLLX
-      enddo ! NGLLY
-    enddo ! NGLLZ
+      do k=1,NGLLZ
+        do j=1,NGLLY
+          do i=1,NGLLX
+            sum_terms(1,INDEX_IJK) = sum_terms(1,INDEX_IJK) + rho_s_H(1,INDEX_IJK)
+            sum_terms(2,INDEX_IJK) = sum_terms(2,INDEX_IJK) + rho_s_H(2,INDEX_IJK)
+            sum_terms(3,INDEX_IJK) = sum_terms(3,INDEX_IJK) + rho_s_H(3,INDEX_IJK)
+          enddo
+        enddo
+      enddo
 #endif
 
-    ! sum contributions from each element to the global mesh and add gravity terms
+    endif
+
+
+    ! updates acceleration
+
 #ifdef FORCE_VECTORIZATION
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
@@ -459,21 +441,23 @@
 !pgi$ ivdep
 !DIR$ IVDEP
     do ijk = 1,NGLLCUBE
-      iglob = ibool(ijk,1,1,ispec)
-      ! do NOT use array syntax ":" for the three statements below otherwise most compilers
-      ! will not be able to vectorize the outer loop
-      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,ijk,1,1)
-      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,ijk,1,1)
-      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,ijk,1,1)
-    enddo
 #else
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k)
-          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k)
-          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k)
+#endif
+
+          iglob = ibool(INDEX_IJK,ispec)
+
+          ! do NOT use array syntax ":" for the three statements below otherwise most compilers
+          ! will not be able to vectorize the outer loop
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK)
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK)
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK)
+
+#ifdef FORCE_VECTORIZATION
+    enddo
+#else
         enddo
       enddo
     enddo
@@ -511,7 +495,7 @@
                                            c44store,muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                            epsilondev_xz,epsilondev_yz, &
-                                           epsilondev_loc) !!!!!!!!!!!!!!! ,is_backward_field)
+                                           epsilondev_loc)
       endif
     endif
 
