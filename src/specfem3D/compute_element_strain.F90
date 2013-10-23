@@ -25,6 +25,10 @@
 !
 !=====================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+#include "config.fh"
+
 
 
   subroutine compute_element_strain_undo_att_Dev(ispec,nglob,nspec, &
@@ -53,7 +57,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
 
 !  local variable
-  integer :: i,j,k,iglob
+  integer :: iglob
+  integer :: i,j,k
+
   real(kind=CUSTOM_REAL) :: templ
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
@@ -93,26 +99,16 @@
   integer :: ijk
 #endif
 
-#ifdef FORCE_VECTORIZATION
-  do ijk=1,NGLLCUBE
-    iglob = ibool(ijk,1,1,ispec)
-    dummyx_loc(ijk,1,1) = displ(1,iglob)
-    dummyy_loc(ijk,1,1) = displ(2,iglob)
-    dummyz_loc(ijk,1,1) = displ(3,iglob)
-  enddo
-#else
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        iglob = ibool(i,j,k,ispec)
-        dummyx_loc(i,j,k) = displ(1,iglob)
-        dummyy_loc(i,j,k) = displ(2,iglob)
-        dummyz_loc(i,j,k) = displ(3,iglob)
-      enddo
-    enddo
-  enddo
-#endif
+  DO_LOOP_IJK
 
+    iglob = ibool(INDEX_IJK,ispec)
+    dummyx_loc(INDEX_IJK) = displ(1,iglob)
+    dummyy_loc(INDEX_IJK) = displ(2,iglob)
+    dummyz_loc(INDEX_IJK) = displ(3,iglob)
+
+  ENDDO_LOOP_IJK
+
+  ! deville optimizations
   do j=1,m2
     do i=1,m1
       C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -182,35 +178,35 @@
     enddo
   enddo
 
-#ifdef FORCE_VECTORIZATION
-  do ijk=1,NGLLCUBE
+  DO_LOOP_IJK
+
     ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(ijk,1,1,ispec)
-    xiyl = xiy(ijk,1,1,ispec)
-    xizl = xiz(ijk,1,1,ispec)
-    etaxl = etax(ijk,1,1,ispec)
-    etayl = etay(ijk,1,1,ispec)
-    etazl = etaz(ijk,1,1,ispec)
-    gammaxl = gammax(ijk,1,1,ispec)
-    gammayl = gammay(ijk,1,1,ispec)
-    gammazl = gammaz(ijk,1,1,ispec)
+    xixl = xix(INDEX_IJK,ispec)
+    xiyl = xiy(INDEX_IJK,ispec)
+    xizl = xiz(INDEX_IJK,ispec)
+    etaxl = etax(INDEX_IJK,ispec)
+    etayl = etay(INDEX_IJK,ispec)
+    etazl = etaz(INDEX_IJK,ispec)
+    gammaxl = gammax(INDEX_IJK,ispec)
+    gammayl = gammay(INDEX_IJK,ispec)
+    gammazl = gammaz(INDEX_IJK,ispec)
 
     ! compute the jacobian
     jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                   - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                   + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-    duxdxl = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
-    duxdyl = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
-    duxdzl = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+    duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
+    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
+    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
 
-    duydxl = xixl*tempy1(ijk,1,1) + etaxl*tempy2(ijk,1,1) + gammaxl*tempy3(ijk,1,1)
-    duydyl = xiyl*tempy1(ijk,1,1) + etayl*tempy2(ijk,1,1) + gammayl*tempy3(ijk,1,1)
-    duydzl = xizl*tempy1(ijk,1,1) + etazl*tempy2(ijk,1,1) + gammazl*tempy3(ijk,1,1)
+    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
+    duydyl = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
+    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
 
-    duzdxl = xixl*tempz1(ijk,1,1) + etaxl*tempz2(ijk,1,1) + gammaxl*tempz3(ijk,1,1)
-    duzdyl = xiyl*tempz1(ijk,1,1) + etayl*tempz2(ijk,1,1) + gammayl*tempz3(ijk,1,1)
-    duzdzl = xizl*tempz1(ijk,1,1) + etazl*tempz2(ijk,1,1) + gammazl*tempz3(ijk,1,1)
+    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
+    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
+    duzdzl = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
 
     ! precompute some sums to save CPU time
     duxdxl_plus_duydyl = duxdxl + duydyl
@@ -222,65 +218,14 @@
 
     ! strains
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    eps_trace_over_3_loc(ijk,1,1) = templ
-    epsilondev_loc(1,ijk,1,1) = duxdxl - templ
-    epsilondev_loc(2,ijk,1,1) = duydyl - templ
-    epsilondev_loc(3,ijk,1,1) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-    epsilondev_loc(4,ijk,1,1) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-    epsilondev_loc(5,ijk,1,1) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-  enddo
-#else
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        ! get derivatives of ux, uy and uz with respect to x, y and z
-        xixl = xix(i,j,k,ispec)
-        xiyl = xiy(i,j,k,ispec)
-        xizl = xiz(i,j,k,ispec)
-        etaxl = etax(i,j,k,ispec)
-        etayl = etay(i,j,k,ispec)
-        etazl = etaz(i,j,k,ispec)
-        gammaxl = gammax(i,j,k,ispec)
-        gammayl = gammay(i,j,k,ispec)
-        gammazl = gammaz(i,j,k,ispec)
+    eps_trace_over_3_loc(INDEX_IJK) = templ
+    epsilondev_loc(1,INDEX_IJK) = duxdxl - templ
+    epsilondev_loc(2,INDEX_IJK) = duydyl - templ
+    epsilondev_loc(3,INDEX_IJK) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+    epsilondev_loc(4,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+    epsilondev_loc(5,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
-        ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                      + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-        duxdxl = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
-        duxdyl = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
-        duxdzl = xizl*tempx1(i,j,k) + etazl*tempx2(i,j,k) + gammazl*tempx3(i,j,k)
-
-        duydxl = xixl*tempy1(i,j,k) + etaxl*tempy2(i,j,k) + gammaxl*tempy3(i,j,k)
-        duydyl = xiyl*tempy1(i,j,k) + etayl*tempy2(i,j,k) + gammayl*tempy3(i,j,k)
-        duydzl = xizl*tempy1(i,j,k) + etazl*tempy2(i,j,k) + gammazl*tempy3(i,j,k)
-
-        duzdxl = xixl*tempz1(i,j,k) + etaxl*tempz2(i,j,k) + gammaxl*tempz3(i,j,k)
-        duzdyl = xiyl*tempz1(i,j,k) + etayl*tempz2(i,j,k) + gammayl*tempz3(i,j,k)
-        duzdzl = xizl*tempz1(i,j,k) + etazl*tempz2(i,j,k) + gammazl*tempz3(i,j,k)
-
-        ! precompute some sums to save CPU time
-        duxdxl_plus_duydyl = duxdxl + duydyl
-        duxdxl_plus_duzdzl = duxdxl + duzdzl
-        duydyl_plus_duzdzl = duydyl + duzdzl
-        duxdyl_plus_duydxl = duxdyl + duydxl
-        duzdxl_plus_duxdzl = duzdxl + duxdzl
-        duzdyl_plus_duydzl = duzdyl + duydzl
-
-        ! strains
-        templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-        eps_trace_over_3_loc(i,j,k) = templ
-        epsilondev_loc(1,i,j,k) = duxdxl - templ
-        epsilondev_loc(2,i,j,k) = duydyl - templ
-        epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-        epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-        epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-      enddo
-    enddo
-  enddo
-#endif
+  ENDDO_LOOP_IJK
 
   end subroutine compute_element_strain_undo_att_Dev
 
@@ -470,7 +415,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_strain_only) :: eps_trace_over_3_loc_nplus1
 
   ! local variable
-  integer :: i,j,k,iglob
+  integer :: iglob
+  integer :: i,j,k
+
   real(kind=CUSTOM_REAL) :: templ
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
@@ -503,26 +450,16 @@
   integer :: ijk
 #endif
 
-#ifdef FORCE_VECTORIZATION
-  do ijk=1,NGLLCUBE
-      iglob = ibool(ijk,1,1,ispec)
-      dummyx_loc(ijk,1,1) = displ(1,iglob) + deltat * veloc(1,iglob)
-      dummyy_loc(ijk,1,1) = displ(2,iglob) + deltat * veloc(2,iglob)
-      dummyz_loc(ijk,1,1) = displ(3,iglob) + deltat * veloc(3,iglob)
-  enddo
-#else
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          dummyx_loc(i,j,k) = displ(1,iglob) + deltat * veloc(1,iglob)
-          dummyy_loc(i,j,k) = displ(2,iglob) + deltat * veloc(2,iglob)
-          dummyz_loc(i,j,k) = displ(3,iglob) + deltat * veloc(3,iglob)
-      enddo
-    enddo
-  enddo
-#endif
+  DO_LOOP_IJK
 
+    iglob = ibool(INDEX_IJK,ispec)
+    dummyx_loc(INDEX_IJK) = displ(1,iglob) + deltat * veloc(1,iglob)
+    dummyy_loc(INDEX_IJK) = displ(2,iglob) + deltat * veloc(2,iglob)
+    dummyz_loc(INDEX_IJK) = displ(3,iglob) + deltat * veloc(3,iglob)
+
+  ENDDO_LOOP_IJK
+
+  ! deville optimizations
   do j=1,m2
     do i=1,m1
       C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -592,35 +529,35 @@
     enddo
   enddo
 
-#ifdef FORCE_VECTORIZATION
-  do ijk=1,NGLLCUBE
+  DO_LOOP_IJK
+
     ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(ijk,1,1,ispec)
-    xiyl = xiy(ijk,1,1,ispec)
-    xizl = xiz(ijk,1,1,ispec)
-    etaxl = etax(ijk,1,1,ispec)
-    etayl = etay(ijk,1,1,ispec)
-    etazl = etaz(ijk,1,1,ispec)
-    gammaxl = gammax(ijk,1,1,ispec)
-    gammayl = gammay(ijk,1,1,ispec)
-    gammazl = gammaz(ijk,1,1,ispec)
+    xixl = xix(INDEX_IJK,ispec)
+    xiyl = xiy(INDEX_IJK,ispec)
+    xizl = xiz(INDEX_IJK,ispec)
+    etaxl = etax(INDEX_IJK,ispec)
+    etayl = etay(INDEX_IJK,ispec)
+    etazl = etaz(INDEX_IJK,ispec)
+    gammaxl = gammax(INDEX_IJK,ispec)
+    gammayl = gammay(INDEX_IJK,ispec)
+    gammazl = gammaz(INDEX_IJK,ispec)
 
     ! compute the jacobian
     jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                   - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                   + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-    duxdxl = xixl*tempx1(ijk,1,1) + etaxl*tempx2(ijk,1,1) + gammaxl*tempx3(ijk,1,1)
-    duxdyl = xiyl*tempx1(ijk,1,1) + etayl*tempx2(ijk,1,1) + gammayl*tempx3(ijk,1,1)
-    duxdzl = xizl*tempx1(ijk,1,1) + etazl*tempx2(ijk,1,1) + gammazl*tempx3(ijk,1,1)
+    duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
+    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
+    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
 
-    duydxl = xixl*tempy1(ijk,1,1) + etaxl*tempy2(ijk,1,1) + gammaxl*tempy3(ijk,1,1)
-    duydyl = xiyl*tempy1(ijk,1,1) + etayl*tempy2(ijk,1,1) + gammayl*tempy3(ijk,1,1)
-    duydzl = xizl*tempy1(ijk,1,1) + etazl*tempy2(ijk,1,1) + gammazl*tempy3(ijk,1,1)
+    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
+    duydyl = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
+    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
 
-    duzdxl = xixl*tempz1(ijk,1,1) + etaxl*tempz2(ijk,1,1) + gammaxl*tempz3(ijk,1,1)
-    duzdyl = xiyl*tempz1(ijk,1,1) + etayl*tempz2(ijk,1,1) + gammayl*tempz3(ijk,1,1)
-    duzdzl = xizl*tempz1(ijk,1,1) + etazl*tempz2(ijk,1,1) + gammazl*tempz3(ijk,1,1)
+    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
+    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
+    duzdzl = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
 
     ! precompute some sums to save CPU time
     duxdxl_plus_duydyl = duxdxl + duydyl
@@ -633,74 +570,18 @@
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     if( nspec_strain_only == 1 ) then
       if( ispec == 1 ) then
-        eps_trace_over_3_loc_nplus1(ijk,1,1,1) = templ
+        eps_trace_over_3_loc_nplus1(INDEX_IJK,1) = templ
       endif
     else
-      eps_trace_over_3_loc_nplus1(ijk,1,1,ispec) = templ
+      eps_trace_over_3_loc_nplus1(INDEX_IJK,ispec) = templ
     endif
-    epsilondev_xx_loc_nplus1(ijk,1,1,ispec) = duxdxl - templ
-    epsilondev_yy_loc_nplus1(ijk,1,1,ispec) = duydyl - templ
-    epsilondev_xy_loc_nplus1(ijk,1,1,ispec) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-    epsilondev_xz_loc_nplus1(ijk,1,1,ispec) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-    epsilondev_yz_loc_nplus1(ijk,1,1,ispec) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-  enddo
-#else
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        ! get derivatives of ux, uy and uz with respect to x, y and z
-        xixl = xix(i,j,k,ispec)
-        xiyl = xiy(i,j,k,ispec)
-        xizl = xiz(i,j,k,ispec)
-        etaxl = etax(i,j,k,ispec)
-        etayl = etay(i,j,k,ispec)
-        etazl = etaz(i,j,k,ispec)
-        gammaxl = gammax(i,j,k,ispec)
-        gammayl = gammay(i,j,k,ispec)
-        gammazl = gammaz(i,j,k,ispec)
+    epsilondev_xx_loc_nplus1(INDEX_IJK,ispec) = duxdxl - templ
+    epsilondev_yy_loc_nplus1(INDEX_IJK,ispec) = duydyl - templ
+    epsilondev_xy_loc_nplus1(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+    epsilondev_xz_loc_nplus1(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+    epsilondev_yz_loc_nplus1(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
-        ! compute the jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                      + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-        duxdxl = xixl*tempx1(i,j,k) + etaxl*tempx2(i,j,k) + gammaxl*tempx3(i,j,k)
-        duxdyl = xiyl*tempx1(i,j,k) + etayl*tempx2(i,j,k) + gammayl*tempx3(i,j,k)
-        duxdzl = xizl*tempx1(i,j,k) + etazl*tempx2(i,j,k) + gammazl*tempx3(i,j,k)
-
-        duydxl = xixl*tempy1(i,j,k) + etaxl*tempy2(i,j,k) + gammaxl*tempy3(i,j,k)
-        duydyl = xiyl*tempy1(i,j,k) + etayl*tempy2(i,j,k) + gammayl*tempy3(i,j,k)
-        duydzl = xizl*tempy1(i,j,k) + etazl*tempy2(i,j,k) + gammazl*tempy3(i,j,k)
-
-        duzdxl = xixl*tempz1(i,j,k) + etaxl*tempz2(i,j,k) + gammaxl*tempz3(i,j,k)
-        duzdyl = xiyl*tempz1(i,j,k) + etayl*tempz2(i,j,k) + gammayl*tempz3(i,j,k)
-        duzdzl = xizl*tempz1(i,j,k) + etazl*tempz2(i,j,k) + gammazl*tempz3(i,j,k)
-
-        ! precompute some sums to save CPU time
-        duxdxl_plus_duydyl = duxdxl + duydyl
-        duxdxl_plus_duzdzl = duxdxl + duzdzl
-        duydyl_plus_duzdzl = duydyl + duzdzl
-        duxdyl_plus_duydxl = duxdyl + duydxl
-        duzdxl_plus_duxdzl = duzdxl + duxdzl
-        duzdyl_plus_duydzl = duzdyl + duydzl
-
-        templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-        if( nspec_strain_only == 1 ) then
-          if( ispec == 1 ) then
-            eps_trace_over_3_loc_nplus1(i,j,k,1) = templ
-          endif
-        else
-          eps_trace_over_3_loc_nplus1(i,j,k,ispec) = templ
-        endif
-        epsilondev_xx_loc_nplus1(i,j,k,ispec) = duxdxl - templ
-        epsilondev_yy_loc_nplus1(i,j,k,ispec) = duydyl - templ
-        epsilondev_xy_loc_nplus1(i,j,k,ispec) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-        epsilondev_xz_loc_nplus1(i,j,k,ispec) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-        epsilondev_yz_loc_nplus1(i,j,k,ispec) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-      enddo
-    enddo
-  enddo
-#endif
+  ENDDO_LOOP_IJK
 
  end subroutine compute_element_strain_att_Dev
 

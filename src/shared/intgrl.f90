@@ -33,22 +33,20 @@
   implicit none
 
 ! Argument variables
-  integer ner,nir
-  double precision f(640),r(640),s1(640),s2(640)
-  double precision s3(640),sum
+  integer :: ner,nir
+  double precision :: f(640),r(640),s1(640),s2(640)
+  double precision :: s3(640),sum
 
 ! Local variables
   double precision, parameter :: third = 1.0d0/3.0d0
   double precision, parameter :: fifth = 1.0d0/5.0d0
   double precision, parameter :: sixth = 1.0d0/6.0d0
 
-  double precision rji,yprime(640)
-  double precision s1l,s2l,s3l
+  double precision :: rji,yprime(640)
+  double precision :: s1l,s2l,s3l
 
-  integer i,j,n,kdis(28)
-  integer ndis,nir1
-
-
+  integer :: i,j,n,kdis(28)
+  integer :: ndis,nir1
 
   data kdis/163,323,336,517,530,540,565,590,609,619,626,633,16*0/
 
@@ -56,6 +54,7 @@
   n = 640
 
   call deriv(f,yprime,n,r,ndis,kdis,s1,s2,s3)
+
   nir1 = nir + 1
   sum = 0.0d0
   do i=nir1,ner
@@ -79,17 +78,17 @@
   implicit none
 
 ! Argument variables
-  integer kdis(28),n,ndis
-  double precision r(n),s1(n),s2(n),s3(n)
-  double precision y(n),yprime(n)
+  integer :: kdis(28),n,ndis
+  double precision :: r(n),s1(n),s2(n),s3(n)
+  double precision :: y(n),yprime(n)
 
 ! Local variables
-  integer i,j,j1,j2
-  integer k,nd,ndp
-  double precision a0,b0,b1
-  double precision f(3,1000),h,h2,h2a
-  double precision h2b,h3a,ha,s13
-  double precision s21,s32,yy(3)
+  integer :: i,j,j1,j2
+  integer :: k,nd,ndp
+  double precision :: a0,b0,b1
+  double precision :: f(3,1000),h,h2,h2a
+  double precision :: h2b,h3a,ha,s13
+  double precision :: s21,s32,yy(3)
 
   yy(1) = 0.d0
   yy(2) = 0.d0

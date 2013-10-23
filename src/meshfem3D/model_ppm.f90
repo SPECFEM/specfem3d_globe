@@ -110,7 +110,7 @@
   call bcast_all_singlei(PPM_num_v)
   call bcast_all_singlei(PPM_num_latperlon)
   call bcast_all_singlei(PPM_num_lonperdepth)
-  
+
   if( myrank /= 0 ) then
     allocate(PPM_lat(PPM_num_v),PPM_lon(PPM_num_v),PPM_depth(PPM_num_v),PPM_dvs(PPM_num_v))
   endif
@@ -119,7 +119,7 @@
   call bcast_all_dp(PPM_lat(1:PPM_num_v),PPM_num_v)
   call bcast_all_dp(PPM_lon(1:PPM_num_v),PPM_num_v)
   call bcast_all_dp(PPM_depth(1:PPM_num_v),PPM_num_v)
-  
+
   call bcast_all_singledp(PPM_maxlat)
   call bcast_all_singledp(PPM_minlat)
   call bcast_all_singledp(PPM_maxlon)

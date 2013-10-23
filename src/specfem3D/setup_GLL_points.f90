@@ -40,18 +40,16 @@
                                  hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
                                  wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
-  ! define a 3D extension in order to be able to force vectorization in the compute_forces routines
-  if( FORCE_VECTORIZATION_VAL ) then
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          wgllwgll_yz_3D(i,j,k) = wgllwgll_yz(j,k)
-          wgllwgll_xz_3D(i,j,k) = wgllwgll_xz(i,k)
-          wgllwgll_xy_3D(i,j,k) = wgllwgll_xy(i,j)
-        enddo
+  ! define a 3D extension in order to be able to force vectorization in the compute_forces_**_Dev routines
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        wgllwgll_yz_3D(i,j,k) = wgllwgll_yz(j,k)
+        wgllwgll_xz_3D(i,j,k) = wgllwgll_xz(i,k)
+        wgllwgll_xy_3D(i,j,k) = wgllwgll_xy(i,j)
       enddo
     enddo
-  endif
+  enddo
 
   if( USE_DEVILLE_PRODUCTS_VAL ) then
     ! check that optimized routines from Deville et al. (2002) can be used

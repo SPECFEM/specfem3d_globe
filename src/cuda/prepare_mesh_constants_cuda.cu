@@ -1863,7 +1863,7 @@ void FC_FUNC_(prepare_inner_core_device,
         print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_ic_tex_ref_ptr, "d_b_accel_ic_tex"), 6023);
         print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_ic_tex_ref_ptr, mp->d_b_accel_inner_core,
                                                 &channelDesc, sizeof(realw)*size), 6023);
-  
+
       }
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
