@@ -80,7 +80,7 @@
   double precision :: rho,dvp
   double precision :: vpv,vph,vsv,vsh,eta_aniso
   double precision :: r,r_prem,moho
-  integer :: i,j,k
+  integer :: i,j,k,i_sls
 
   ! loops over all gll points for this spectral element
   do k=1,NGLLZ
@@ -305,12 +305,16 @@
 
         if(ATTENUATION) then
           if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-            tau_e_store(:,i,j,k,ispec) = tau_e(:)
+            do i_sls = 1,N_SLS
+              tau_e_store(i,j,k,i_sls,ispec) = tau_e(i_sls)
+            enddo
             Qmu_store(i,j,k,ispec)     = Qmu
           else
             ! store values from mid-point for whole element
             if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
-              tau_e_store(:,1,1,1,ispec) = tau_e(:)
+              do i_sls = 1,N_SLS
+                tau_e_store(1,1,1,i_sls,ispec) = tau_e(i_sls)
+              enddo
               Qmu_store(1,1,1,ispec)     = Qmu
             endif
           endif

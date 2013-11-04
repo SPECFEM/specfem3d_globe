@@ -33,7 +33,6 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
-  use specfem_par_movie
   implicit none
 
   ! local parameters
@@ -43,9 +42,12 @@
   integer:: ispec,i,j,k,l,iglob
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
+  real(kind=CUSTOM_REAL) :: gradx,grady,gradz
+  logical,dimension(NGLOB_OUTER_CORE) :: mask_ibool
 
   ! transfers wavefields onto CPU
   if( GPU_MODE ) then
+
     ! crust/mantle
     call transfer_accel_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
     call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
@@ -59,78 +61,106 @@
     call transfer_displ_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core,Mesh_pointer)
     call transfer_b_displ_oc_from_device(NGLOB_OUTER_CORE,b_displ_outer_core,Mesh_pointer)
 
-    ! pre-calculates gradients on CPU
+    ! pre-calculates gradients in outer core
+    ! note: for CPU, this is already done in compute_kernels_outer_core() routine
+
+    ! pre-calculates gradients
+    mask_ibool(:) = .false.
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
+
+            ! global index
             iglob = ibool_outer_core(i,j,k,ispec)
 
-            xixl = xix_outer_core(i,j,k,ispec)
-            xiyl = xiy_outer_core(i,j,k,ispec)
-            xizl = xiz_outer_core(i,j,k,ispec)
-            etaxl = etax_outer_core(i,j,k,ispec)
-            etayl = etay_outer_core(i,j,k,ispec)
-            etazl = etaz_outer_core(i,j,k,ispec)
-            gammaxl = gammax_outer_core(i,j,k,ispec)
-            gammayl = gammay_outer_core(i,j,k,ispec)
-            gammazl = gammaz_outer_core(i,j,k,ispec)
+            ! only calculates gradients once for shared nodes
+            if( .not. mask_ibool(iglob) ) then
 
-            ! calculates gradient grad(b_displ)
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-            do l=1,NGLLX
-              tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-            enddo
-            do l=1,NGLLY
-              tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-            enddo
-            do l=1,NGLLZ
-              tempx3l = tempx3l + b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-            b_vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            b_vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            b_vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+              ! masks this global point
+              mask_ibool(iglob) = .true.
 
-            ! calculates gradient grad(accel)
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-            do l=1,NGLLX
-              tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-            enddo
-            do l=1,NGLLY
-              tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-            enddo
-            do l=1,NGLLZ
-              tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-            vector_accel_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            vector_accel_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            vector_accel_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+              xixl = xix_outer_core(i,j,k,ispec)
+              xiyl = xiy_outer_core(i,j,k,ispec)
+              xizl = xiz_outer_core(i,j,k,ispec)
+              etaxl = etax_outer_core(i,j,k,ispec)
+              etayl = etay_outer_core(i,j,k,ispec)
+              etazl = etaz_outer_core(i,j,k,ispec)
+              gammaxl = gammax_outer_core(i,j,k,ispec)
+              gammayl = gammay_outer_core(i,j,k,ispec)
+              gammazl = gammaz_outer_core(i,j,k,ispec)
 
-            ! calculates gradient grad(displ)
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-            do l=1,NGLLX
-              tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-            enddo
-            do l=1,NGLLY
-              tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-            enddo
-            do l=1,NGLLZ
-              tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-            vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+              ! calculates gradient grad(b_displ)
+              tempx1l = 0._CUSTOM_REAL
+              tempx2l = 0._CUSTOM_REAL
+              tempx3l = 0._CUSTOM_REAL
+              do l=1,NGLLX
+                tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
+              enddo
+              do l=1,NGLLY
+                tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
+              enddo
+              do l=1,NGLLZ
+                tempx3l = tempx3l + b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
+              enddo
+              gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+              grady = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+              gradz = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+              ! assigns and stores gradient on global nodes
+              b_vector_displ_outer_core(1,iglob) = gradx
+              b_vector_displ_outer_core(2,iglob) = grady
+              b_vector_displ_outer_core(3,iglob) = gradz
+
+              ! calculates gradient grad(accel)
+              tempx1l = 0._CUSTOM_REAL
+              tempx2l = 0._CUSTOM_REAL
+              tempx3l = 0._CUSTOM_REAL
+              do l=1,NGLLX
+                tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
+              enddo
+              do l=1,NGLLY
+                tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
+              enddo
+              do l=1,NGLLZ
+                tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
+              enddo
+              gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+              grady = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+              gradz = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+              vector_accel_outer_core(1,iglob) = gradx
+              vector_accel_outer_core(2,iglob) = grady
+              vector_accel_outer_core(3,iglob) = gradz
+
+              ! calculates gradient grad(displ)
+              tempx1l = 0._CUSTOM_REAL
+              tempx2l = 0._CUSTOM_REAL
+              tempx3l = 0._CUSTOM_REAL
+              do l=1,NGLLX
+                tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
+              enddo
+              do l=1,NGLLY
+                tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
+              enddo
+              do l=1,NGLLZ
+                tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
+              enddo
+              gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+              grady = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+              gradz = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+              vector_displ_outer_core(1,iglob) = gradx
+              vector_displ_outer_core(2,iglob) = grady
+              vector_displ_outer_core(3,iglob) = gradz
+            endif
+
           enddo
         enddo
       enddo
     enddo
-  endif
+
+  endif ! GPU_MODE
 
   ! updates kernels on CPU
   fluid_solid_boundary = .false.
@@ -138,108 +168,114 @@
 
   ! Moho
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-    call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_top,ibelm_moho_top,normal_moho,moho_kl_top,fluid_solid_boundary,NSPEC2D_MOHO)
+    call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                       nspec_crust_mantle,iregion_code, &
+                                       ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                       xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                       gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                       hprime_xx,hprime_yy,hprime_zz, &
+                                       rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                       kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                       c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                       c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                       c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                       c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                       c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                       c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                       k_top,ibelm_moho_top,normal_moho,moho_kl_top,fluid_solid_boundary,NSPEC2D_MOHO)
 
-    call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_bot,ibelm_moho_bot,normal_moho,moho_kl_bot,fluid_solid_boundary,NSPEC2D_MOHO)
+    call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                       nspec_crust_mantle,iregion_code, &
+                                       ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                       xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                       gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                       hprime_xx,hprime_yy,hprime_zz, &
+                                       rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                       kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                       c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                       c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                       c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                       c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                       c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                       c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                       k_bot,ibelm_moho_bot,normal_moho,moho_kl_bot,fluid_solid_boundary,NSPEC2D_MOHO)
 
     moho_kl = moho_kl + (moho_kl_top - moho_kl_bot) * deltat
   endif
 
   ! 400
-  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_top,ibelm_400_top,normal_400,d400_kl_top,fluid_solid_boundary,NSPEC2D_400)
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                     nspec_crust_mantle,iregion_code, &
+                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                     c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                     c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                     c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                     c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                     c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                     k_top,ibelm_400_top,normal_400,d400_kl_top,fluid_solid_boundary,NSPEC2D_400)
 
-  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_bot,ibelm_400_bot,normal_400,d400_kl_bot,fluid_solid_boundary,NSPEC2D_400)
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                     nspec_crust_mantle,iregion_code, &
+                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                     c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                     c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                     c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                     c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                     c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                     k_bot,ibelm_400_bot,normal_400,d400_kl_bot,fluid_solid_boundary,NSPEC2D_400)
 
   d400_kl = d400_kl + (d400_kl_top - d400_kl_bot) * deltat
 
   ! 670
-  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_top,ibelm_670_top,normal_670,d670_kl_top,fluid_solid_boundary,NSPEC2D_670)
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                     nspec_crust_mantle,iregion_code, &
+                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                     c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                     c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                     c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                     c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                     c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                     k_top,ibelm_670_top,normal_670,d670_kl_top,fluid_solid_boundary,NSPEC2D_670)
 
-  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_bot,ibelm_670_bot,normal_670,d670_kl_bot,fluid_solid_boundary,NSPEC2D_670)
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                     nspec_crust_mantle,iregion_code, &
+                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                     c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                     c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                     c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                     c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                     c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                     k_bot,ibelm_670_bot,normal_670,d670_kl_bot,fluid_solid_boundary,NSPEC2D_670)
 
   d670_kl = d670_kl + (d670_kl_top - d670_kl_bot) * deltat
 
@@ -247,22 +283,23 @@
   fluid_solid_boundary = .true.
   iregion_code = IREGION_CRUST_MANTLE
 
-  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle, &
-             b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-             ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-             gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_crust_mantle,kappavstore_crust_mantle, muvstore_crust_mantle, &
-             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-             c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-             c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-             c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-             c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-             c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-             k_top,ibelm_bottom_crust_mantle,normal_top_outer_core, &
-             cmb_kl_top,fluid_solid_boundary,NSPEC2D_CMB)
+  call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
+                                     nspec_crust_mantle,iregion_code, &
+                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_crust_mantle,kappavstore_crust_mantle, muvstore_crust_mantle, &
+                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                     c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                                     c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                                     c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                                     c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                                     c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                     k_top,ibelm_bottom_crust_mantle,normal_top_outer_core, &
+                                     cmb_kl_top,fluid_solid_boundary,NSPEC2D_CMB)
 
   iregion_code = IREGION_OUTER_CORE
 
@@ -270,43 +307,43 @@
   allocate(dummy_ispec_is_tiso(NSPEC_OUTER_CORE))
   dummy_ispec_is_tiso(:) = .false.
 
-  call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core, &
-             b_vector_displ_outer_core,nspec_outer_core, &
-             iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
-             xix_outer_core,xiy_outer_core,xiz_outer_core, &
-             etax_outer_core,etay_outer_core,etaz_outer_core,&
-             gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             k_bot,ibelm_top_outer_core,normal_top_outer_core, &
-             cmb_kl_bot,fluid_solid_boundary,NSPEC2D_CMB)
+  call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
+                                     nspec_outer_core, &
+                                     iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
+                                     xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                                     etax_outer_core,etay_outer_core,etaz_outer_core,&
+                                     gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     k_bot,ibelm_top_outer_core,normal_top_outer_core, &
+                                     cmb_kl_bot,fluid_solid_boundary,NSPEC2D_CMB)
 
   cmb_kl = cmb_kl + (cmb_kl_top - cmb_kl_bot) * deltat
 
   ! ICB
   fluid_solid_boundary = .true.
-  call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core, &
-             b_vector_displ_outer_core,nspec_outer_core, &
-             iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
-             xix_outer_core,xiy_outer_core,xiz_outer_core, &
-             etax_outer_core,etay_outer_core,etaz_outer_core,&
-             gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             k_top,ibelm_bottom_outer_core,normal_bottom_outer_core, &
-             icb_kl_top,fluid_solid_boundary,NSPEC2D_ICB)
+  call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
+                                     nspec_outer_core, &
+                                     iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
+                                     xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                                     etax_outer_core,etay_outer_core,etaz_outer_core,&
+                                     gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     k_top,ibelm_bottom_outer_core,normal_bottom_outer_core, &
+                                     icb_kl_top,fluid_solid_boundary,NSPEC2D_ICB)
 
   deallocate(dummy_ispec_is_tiso)
 
@@ -317,22 +354,22 @@
   allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE))
   dummy_ispec_is_tiso(:) = .false.
 
-  call compute_boundary_kernel_depth(displ_inner_core,accel_inner_core, &
-             b_displ_inner_core,nspec_inner_core,iregion_code, &
-             ystore_inner_core,zstore_inner_core,ibool_inner_core,dummy_ispec_is_tiso, &
-             xix_inner_core,xiy_inner_core,xiz_inner_core, &
-             etax_inner_core,etay_inner_core,etaz_inner_core,&
-             gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
-             rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-             dummy_array,dummy_array,dummy_array, &
-             c11store_inner_core,c12store_inner_core,c13store_inner_core,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array,dummy_array, &
-             c33store_inner_core,dummy_array,dummy_array, &
-             dummy_array,c44store_inner_core,dummy_array,dummy_array, &
-             dummy_array,dummy_array,dummy_array, &
-             k_bot,ibelm_top_inner_core,normal_bottom_outer_core, &
-             icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
+  call compute_boundary_kernel_depth(displ_inner_core,accel_inner_core,b_displ_inner_core, &
+                                     nspec_inner_core,iregion_code, &
+                                     ystore_inner_core,zstore_inner_core,ibool_inner_core,dummy_ispec_is_tiso, &
+                                     xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                     etax_inner_core,etay_inner_core,etaz_inner_core,&
+                                     gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
+                                     rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     c11store_inner_core,c12store_inner_core,c13store_inner_core,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array,dummy_array, &
+                                     c33store_inner_core,dummy_array,dummy_array, &
+                                     dummy_array,c44store_inner_core,dummy_array,dummy_array, &
+                                     dummy_array,dummy_array,dummy_array, &
+                                     k_bot,ibelm_top_inner_core,normal_bottom_outer_core, &
+                                     icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
   deallocate(dummy_ispec_is_tiso)
 
   icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
@@ -343,7 +380,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_boundary_kernel_depth(displ,accel,b_displ,nspec,iregion_code, &
+  subroutine compute_boundary_kernel_depth(displ,accel,b_displ, &
+                                           nspec,iregion_code, &
                                            ystore,zstore,ibool,ispec_is_tiso, &
                                            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                                            hprime_xx,hprime_yy,hprime_zz, &

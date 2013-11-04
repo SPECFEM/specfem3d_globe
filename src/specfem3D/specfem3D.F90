@@ -408,9 +408,13 @@
 !             thus it has longer latency to access variables than stack memory variables.
 !
 !             however, declaring the static arrays needed in compute_forces_crust_mantle_Dev()
-!             like e.g. sum_terms, tempx1,...B1_m1_m2_5points,... in this main routine and
+!             like e.g. sum_terms, tempx1,... in this main routine and
 !             passing them along as arguments to the routine makes the code slower.
-!             it seems that this stack/heap criterion is more complicated.
+!             it seems that this stack/heap criterion is more complicated, 
+!             and inlining functions is a performance criteria as well.
+!
+!             for vectorization, we asssume that arrays have contiguous memory allocated. this holds true for most compilers and
+!             static memory allocation. however, note that dynamically allocated memory could in principle be non-contiguous.
 !
 !             another reason why the use of modules is restricted is to make the code thread safe.
 !             having different threads access the same data structure and modifying it at the same time

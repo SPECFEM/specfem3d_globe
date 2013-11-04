@@ -89,7 +89,6 @@
 
   ! displacement, velocity and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_crust_mantle
-! real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_crust_mantle
 
   ! variable sized array variables
@@ -98,8 +97,8 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
@@ -107,7 +106,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
@@ -119,54 +118,28 @@
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc, &
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,m2) :: B1_m1_m2_5points,B2_m1_m2_5points,B3_m1_m2_5points
-  real(kind=CUSTOM_REAL), dimension(m1,m2) :: C1_m1_m2_5points,C2_m1_m2_5points,C3_m1_m2_5points
-  real(kind=CUSTOM_REAL), dimension(m1,m2) :: E1_m1_m2_5points,E2_m1_m2_5points,E3_m1_m2_5points
 
-  equivalence(dummyx_loc,B1_m1_m2_5points)
-  equivalence(dummyy_loc,B2_m1_m2_5points)
-  equivalence(dummyz_loc,B3_m1_m2_5points)
-  equivalence(tempx1,C1_m1_m2_5points)
-  equivalence(tempy1,C2_m1_m2_5points)
-  equivalence(tempz1,C3_m1_m2_5points)
-  equivalence(newtempx1,E1_m1_m2_5points)
-  equivalence(newtempy1,E2_m1_m2_5points)
-  equivalence(newtempz1,E3_m1_m2_5points)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(m2,NGLLX) :: &
-    A1_mxm_m2_m1_5points,A2_mxm_m2_m1_5points,A3_mxm_m2_m1_5points
-  real(kind=CUSTOM_REAL), dimension(m2,m1) :: &
-    C1_mxm_m2_m1_5points,C2_mxm_m2_m1_5points,C3_mxm_m2_m1_5points
-  real(kind=CUSTOM_REAL), dimension(m2,m1) :: &
-    E1_mxm_m2_m1_5points,E2_mxm_m2_m1_5points,E3_mxm_m2_m1_5points
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: sum_terms
 
-  equivalence(dummyx_loc,A1_mxm_m2_m1_5points)
-  equivalence(dummyy_loc,A2_mxm_m2_m1_5points)
-  equivalence(dummyz_loc,A3_mxm_m2_m1_5points)
-  equivalence(tempx3,C1_mxm_m2_m1_5points)
-  equivalence(tempy3,C2_mxm_m2_m1_5points)
-  equivalence(tempz3,C3_mxm_m2_m1_5points)
-  equivalence(newtempx3,E1_mxm_m2_m1_5points)
-  equivalence(newtempy3,E2_mxm_m2_m1_5points)
-  equivalence(newtempz3,E3_mxm_m2_m1_5points)
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
-
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
 
   integer :: ispec,iglob
-  integer :: i,j,k
   integer :: num_elements,ispec_p
   integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
+#else
+  integer :: i,j,k
 #endif
 
 ! ****************************************************
@@ -200,74 +173,13 @@
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
-    do j=1,m2
-       do i=1,m1
-          C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
-                                  hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
-                                  hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
-                                  hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
-                                  hprime_xx(i,5)*B1_m1_m2_5points(5,j)
 
-          C2_m1_m2_5points(i,j) = hprime_xx(i,1)*B2_m1_m2_5points(1,j) + &
-                                  hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
-                                  hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
-                                  hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
-                                  hprime_xx(i,5)*B2_m1_m2_5points(5,j)
-
-          C3_m1_m2_5points(i,j) = hprime_xx(i,1)*B3_m1_m2_5points(1,j) + &
-                                  hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
-                                  hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
-                                  hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
-                                  hprime_xx(i,5)*B3_m1_m2_5points(5,j)
-       enddo
-    enddo
-
-    do j=1,m1
-       do i=1,m1
-          ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-          do k = 1,NGLLX
-             tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
-                             dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
-                             dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
-                             dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
-                             dummyx_loc(i,5,k)*hprime_xxT(5,j)
-
-             tempy2(i,j,k) = dummyy_loc(i,1,k)*hprime_xxT(1,j) + &
-                             dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
-                             dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
-                             dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
-                             dummyy_loc(i,5,k)*hprime_xxT(5,j)
-
-             tempz2(i,j,k) = dummyz_loc(i,1,k)*hprime_xxT(1,j) + &
-                             dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
-                             dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
-                             dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
-                             dummyz_loc(i,5,k)*hprime_xxT(5,j)
-          enddo
-       enddo
-    enddo
-
-    do j=1,m1
-       do i=1,m2
-          C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                      A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                      A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                      A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                      A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
-
-          C2_mxm_m2_m1_5points(i,j) = A2_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                      A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                      A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                      A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                      A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
-
-          C3_mxm_m2_m1_5points(i,j) = A3_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                      A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                      A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                      A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                      A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
-       enddo
-    enddo
+    ! computes 1. matrix multiplication for tempx1,..
+    call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
+    ! computes 2. matrix multiplication for tempx2,..
+    call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
+    ! computes 3. matrix multiplication for tempx1,..
+    call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
@@ -326,85 +238,24 @@
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
-    do j=1,m2
-      do i=1,m1
-        E1_m1_m2_5points(i,j) = hprimewgll_xxT(i,1)*C1_m1_m2_5points(1,j) + &
-                                hprimewgll_xxT(i,2)*C1_m1_m2_5points(2,j) + &
-                                hprimewgll_xxT(i,3)*C1_m1_m2_5points(3,j) + &
-                                hprimewgll_xxT(i,4)*C1_m1_m2_5points(4,j) + &
-                                hprimewgll_xxT(i,5)*C1_m1_m2_5points(5,j)
 
-        E2_m1_m2_5points(i,j) = hprimewgll_xxT(i,1)*C2_m1_m2_5points(1,j) + &
-                                hprimewgll_xxT(i,2)*C2_m1_m2_5points(2,j) + &
-                                hprimewgll_xxT(i,3)*C2_m1_m2_5points(3,j) + &
-                                hprimewgll_xxT(i,4)*C2_m1_m2_5points(4,j) + &
-                                hprimewgll_xxT(i,5)*C2_m1_m2_5points(5,j)
+    ! computes 1. matrix multiplication for newtempx1,..
+    call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
+    ! computes 2. matrix multiplication for tempx2,..
+    call mxm5_3comp_3dmat_singleB(tempx2,tempy2,tempz2,m1,hprimewgll_xx,m1,newtempx2,newtempy2,newtempz2,NGLLX)
+    ! computes 3. matrix multiplication for newtempx3,..
+    call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
 
-        E3_m1_m2_5points(i,j) = hprimewgll_xxT(i,1)*C3_m1_m2_5points(1,j) + &
-                                hprimewgll_xxT(i,2)*C3_m1_m2_5points(2,j) + &
-                                hprimewgll_xxT(i,3)*C3_m1_m2_5points(3,j) + &
-                                hprimewgll_xxT(i,4)*C3_m1_m2_5points(4,j) + &
-                                hprimewgll_xxT(i,5)*C3_m1_m2_5points(5,j)
-      enddo
-    enddo
-
-    do i=1,m1
-      do j=1,m1
-        ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-        do k = 1,NGLLX
-          newtempx2(i,j,k) = tempx2(i,1,k)*hprimewgll_xx(1,j) + &
-                             tempx2(i,2,k)*hprimewgll_xx(2,j) + &
-                             tempx2(i,3,k)*hprimewgll_xx(3,j) + &
-                             tempx2(i,4,k)*hprimewgll_xx(4,j) + &
-                             tempx2(i,5,k)*hprimewgll_xx(5,j)
-
-          newtempy2(i,j,k) = tempy2(i,1,k)*hprimewgll_xx(1,j) + &
-                             tempy2(i,2,k)*hprimewgll_xx(2,j) + &
-                             tempy2(i,3,k)*hprimewgll_xx(3,j) + &
-                             tempy2(i,4,k)*hprimewgll_xx(4,j) + &
-                             tempy2(i,5,k)*hprimewgll_xx(5,j)
-
-          newtempz2(i,j,k) = tempz2(i,1,k)*hprimewgll_xx(1,j) + &
-                             tempz2(i,2,k)*hprimewgll_xx(2,j) + &
-                             tempz2(i,3,k)*hprimewgll_xx(3,j) + &
-                             tempz2(i,4,k)*hprimewgll_xx(4,j) + &
-                             tempz2(i,5,k)*hprimewgll_xx(5,j)
-        enddo
-      enddo
-    enddo
-
-    do j=1,m1
-      do i=1,m2
-        E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
-                                    C1_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
-                                    C1_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
-                                    C1_mxm_m2_m1_5points(i,4)*hprimewgll_xx(4,j) + &
-                                    C1_mxm_m2_m1_5points(i,5)*hprimewgll_xx(5,j)
-
-        E2_mxm_m2_m1_5points(i,j) = C2_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
-                                    C2_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
-                                    C2_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
-                                    C2_mxm_m2_m1_5points(i,4)*hprimewgll_xx(4,j) + &
-                                    C2_mxm_m2_m1_5points(i,5)*hprimewgll_xx(5,j)
-
-        E3_mxm_m2_m1_5points(i,j) = C3_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
-                                    C3_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
-                                    C3_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
-                                    C3_mxm_m2_m1_5points(i,4)*hprimewgll_xx(4,j) + &
-                                    C3_mxm_m2_m1_5points(i,5)*hprimewgll_xx(5,j)
-      enddo
-    enddo
-
-    ! sum contributions
+    ! sums contributions
 
     DO_LOOP_IJK
 
       fac1 = wgllwgll_yz_3D(INDEX_IJK)
       fac2 = wgllwgll_xz_3D(INDEX_IJK)
       fac3 = wgllwgll_xy_3D(INDEX_IJK)
-      sum_terms(1,INDEX_IJK) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
-      sum_terms(2,INDEX_IJK) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
-      sum_terms(3,INDEX_IJK) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
+      sum_terms(INDEX_IJK,1) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
+      sum_terms(INDEX_IJK,2) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
+      sum_terms(INDEX_IJK,3) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
 
     ENDDO_LOOP_IJK
 
@@ -419,9 +270,9 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-            sum_terms(1,INDEX_IJK) = sum_terms(1,INDEX_IJK) + rho_s_H(1,INDEX_IJK)
-            sum_terms(2,INDEX_IJK) = sum_terms(2,INDEX_IJK) + rho_s_H(2,INDEX_IJK)
-            sum_terms(3,INDEX_IJK) = sum_terms(3,INDEX_IJK) + rho_s_H(3,INDEX_IJK)
+            sum_terms(INDEX_IJK,1) = sum_terms(INDEX_IJK,1) + rho_s_H(INDEX_IJK,1)
+            sum_terms(INDEX_IJK,2) = sum_terms(INDEX_IJK,2) + rho_s_H(INDEX_IJK,2)
+            sum_terms(INDEX_IJK,3) = sum_terms(INDEX_IJK,3) + rho_s_H(INDEX_IJK,3)
           enddo
         enddo
       enddo
@@ -451,9 +302,9 @@
 
           ! do NOT use array syntax ":" for the three statements below otherwise most compilers
           ! will not be able to vectorize the outer loop
-          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK)
-          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK)
-          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK)
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(INDEX_IJK,1)
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(INDEX_IJK,2)
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(INDEX_IJK,3)
 
 #ifdef FORCE_VECTORIZATION
     enddo
@@ -484,8 +335,6 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                                  c44store,muvstore, &
-!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-!                                                epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
       else
@@ -501,14 +350,165 @@
 
     ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) then
-      epsilondev_xx(:,:,:,ispec) = epsilondev_loc(1,:,:,:)
-      epsilondev_yy(:,:,:,ispec) = epsilondev_loc(2,:,:,:)
-      epsilondev_xy(:,:,:,ispec) = epsilondev_loc(3,:,:,:)
-      epsilondev_xz(:,:,:,ispec) = epsilondev_loc(4,:,:,:)
-      epsilondev_yz(:,:,:,ispec) = epsilondev_loc(5,:,:,:)
+      epsilondev_xx(:,:,:,ispec) = epsilondev_loc(:,:,:,1)
+      epsilondev_yy(:,:,:,ispec) = epsilondev_loc(:,:,:,2)
+      epsilondev_xy(:,:,:,ispec) = epsilondev_loc(:,:,:,3)
+      epsilondev_xz(:,:,:,ispec) = epsilondev_loc(:,:,:,4)
+      epsilondev_yz(:,:,:,ispec) = epsilondev_loc(:,:,:,5)
     endif
 
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 
+  contains
+
+!--------------------------------------------------------------------------------------------
+!
+! matrix-matrix multiplications
+!
+! subroutines adapted from Deville, Fischer and Mund, High-order methods
+! for incompressible fluid flow, Cambridge University Press (2002),
+! pages 386 and 389 and Figure 8.3.1
+!
+!--------------------------------------------------------------------------------------------
+!
+! note: the matrix-matrix multiplications are used for very small matrices ( 5 x 5 x 5 elements);
+!       thus, calling external optimized libraries for these multiplications are in general slower
+!
+! please leave the routines here to help compilers inlining the code
+
+  subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
+
+! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A(i,1) * B1(1,j) &
+               + A(i,2) * B1(2,j) &
+               + A(i,3) * B1(3,j) &
+               + A(i,4) * B1(4,j) &
+               + A(i,5) * B1(5,j)
+
+      C2(i,j) =  A(i,1) * B2(1,j) &
+               + A(i,2) * B2(2,j) &
+               + A(i,3) * B2(3,j) &
+               + A(i,4) * B2(4,j) &
+               + A(i,5) * B2(5,j)
+
+      C3(i,j) =  A(i,1) * B3(1,j) &
+               + A(i,2) * B3(2,j) &
+               + A(i,3) * B3(3,j) &
+               + A(i,4) * B3(4,j) &
+               + A(i,5) * B3(5,j)
+    enddo
+  enddo
+
+  end subroutine mxm5_3comp_singleA
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+
+! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A1(i,1) * B(1,j) &
+               + A1(i,2) * B(2,j) &
+               + A1(i,3) * B(3,j) &
+               + A1(i,4) * B(4,j) &
+               + A1(i,5) * B(5,j)
+
+      C2(i,j) =  A2(i,1) * B(1,j) &
+               + A2(i,2) * B(2,j) &
+               + A2(i,3) * B(3,j) &
+               + A2(i,4) * B(4,j) &
+               + A2(i,5) * B(5,j)
+
+      C3(i,j) =  A3(i,1) * B(1,j) &
+               + A3(i,2) * B(2,j) &
+               + A3(i,3) * B(3,j) &
+               + A3(i,4) * B(4,j) &
+               + A3(i,5) * B(5,j)
+    enddo
+  enddo
+
+  end subroutine mxm5_3comp_singleB
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+
+! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j,k
+
+  ! matrix-matrix multiplication
+  do j=1,n2
+    do i=1,n1
+      ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
+      do k=1,n3
+        C1(i,j,k) =  A1(i,1,k) * B(1,j) &
+                   + A1(i,2,k) * B(2,j) &
+                   + A1(i,3,k) * B(3,j) &
+                   + A1(i,4,k) * B(4,j) &
+                   + A1(i,5,k) * B(5,j)
+
+        C2(i,j,k) =  A2(i,1,k) * B(1,j) &
+                   + A2(i,2,k) * B(2,j) &
+                   + A2(i,3,k) * B(3,j) &
+                   + A2(i,4,k) * B(4,j) &
+                   + A2(i,5,k) * B(5,j)
+
+        C3(i,j,k) =  A3(i,1,k) * B(1,j) &
+                   + A3(i,2,k) * B(2,j) &
+                   + A3(i,3,k) * B(3,j) &
+                   + A3(i,4,k) * B(4,j) &
+                   + A3(i,5,k) * B(5,j)
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxm5_3comp_3dmat_singleB
+
   end subroutine compute_forces_crust_mantle_Dev
+
+
 

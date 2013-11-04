@@ -167,7 +167,7 @@
 
   ! element strain
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc_crust_mantle
 
   do irec_local = 1,nrec_local
 
@@ -201,11 +201,11 @@
     else
       ! element adjoint strain
       eps_trace_over_3_loc_crust_mantle(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
-      epsilondev_loc_crust_mantle(1,:,:,:) = epsilondev_xx_crust_mantle(:,:,:,ispec)
-      epsilondev_loc_crust_mantle(2,:,:,:) = epsilondev_yy_crust_mantle(:,:,:,ispec)
-      epsilondev_loc_crust_mantle(3,:,:,:) = epsilondev_xy_crust_mantle(:,:,:,ispec)
-      epsilondev_loc_crust_mantle(4,:,:,:) = epsilondev_xz_crust_mantle(:,:,:,ispec)
-      epsilondev_loc_crust_mantle(5,:,:,:) = epsilondev_yz_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(:,:,:,1) = epsilondev_xx_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(:,:,:,2) = epsilondev_yy_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(:,:,:,3) = epsilondev_xy_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(:,:,:,4) = epsilondev_xz_crust_mantle(:,:,:,ispec)
+      epsilondev_loc_crust_mantle(:,:,:,5) = epsilondev_yz_crust_mantle(:,:,:,ispec)
     endif
 
     ! perform the general interpolation using Lagrange polynomials
@@ -223,11 +223,11 @@
 
           eps_trace = eps_trace + dble(eps_trace_over_3_loc_crust_mantle(i,j,k))*hlagrange
 
-          dxx = dxx + dble(epsilondev_loc_crust_mantle(1,i,j,k))*hlagrange
-          dyy = dyy + dble(epsilondev_loc_crust_mantle(2,i,j,k))*hlagrange
-          dxy = dxy + dble(epsilondev_loc_crust_mantle(3,i,j,k))*hlagrange
-          dxz = dxz + dble(epsilondev_loc_crust_mantle(4,i,j,k))*hlagrange
-          dyz = dyz + dble(epsilondev_loc_crust_mantle(5,i,j,k))*hlagrange
+          dxx = dxx + dble(epsilondev_loc_crust_mantle(i,j,k,1))*hlagrange
+          dyy = dyy + dble(epsilondev_loc_crust_mantle(i,j,k,2))*hlagrange
+          dxy = dxy + dble(epsilondev_loc_crust_mantle(i,j,k,3))*hlagrange
+          dxz = dxz + dble(epsilondev_loc_crust_mantle(i,j,k,4))*hlagrange
+          dyz = dyz + dble(epsilondev_loc_crust_mantle(i,j,k,5))*hlagrange
 
           displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
 

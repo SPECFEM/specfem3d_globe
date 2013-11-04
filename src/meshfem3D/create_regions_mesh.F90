@@ -512,7 +512,7 @@
     nspec_att = 1
   endif
   allocate(Qmu_store(ATT1,ATT2,ATT3,nspec_att), &
-          tau_e_store(N_SLS,ATT1,ATT2,ATT3,nspec_att),stat=ier)
+          tau_e_store(ATT1,ATT2,ATT3,N_SLS,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
 
   Qmu_store(:,:,:,:) = 0.0; tau_e_store(:,:,:,:,:) = 0.0

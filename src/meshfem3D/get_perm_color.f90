@@ -1154,7 +1154,7 @@
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
 
-  real(kind=CUSTOM_REAL), intent(inout), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), intent(inout), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,nspec) :: &
     array_to_permute,temp_array
 
   integer :: old_ispec,new_ispec
@@ -1184,7 +1184,7 @@
   integer, intent(in) :: nspec
   integer, intent(in), dimension(nspec) :: perm
 
-  real(kind=CUSTOM_REAL), intent(inout), dimension(N_SLS,1,1,1,nspec) :: &
+  real(kind=CUSTOM_REAL), intent(inout), dimension(1,1,1,N_SLS,nspec) :: &
     array_to_permute,temp_array
 
   integer :: old_ispec,new_ispec

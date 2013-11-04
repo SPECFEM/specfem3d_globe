@@ -85,8 +85,8 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
@@ -94,7 +94,7 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
@@ -105,8 +105,7 @@
   ! for attenuation
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ)   :: factor_common_c44_muv
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
@@ -141,7 +140,7 @@
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) kappal,kappavl,kappahl,muvl,muhl
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: sum_terms
 
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
@@ -157,7 +156,7 @@
   double precision cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
   double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -269,11 +268,11 @@
             else
               epsilon_trace_over_3(i,j,k,ispec) = templ
             endif
-            epsilondev_loc(1,i,j,k) = duxdxl - templ
-            epsilondev_loc(2,i,j,k) = duydyl - templ
-            epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-            epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-            epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+            epsilondev_loc(i,j,k,1) = duxdxl - templ
+            epsilondev_loc(i,j,k,2) = duydyl - templ
+            epsilondev_loc(i,j,k,3) = 0.5 * duxdyl_plus_duydxl
+            epsilondev_loc(i,j,k,4) = 0.5 * duzdxl_plus_duxdzl
+            epsilondev_loc(i,j,k,5) = 0.5 * duzdyl_plus_duydzl
           endif
 
           ! precompute terms for attenuation if needed
@@ -588,14 +587,14 @@
           ! subtract memory variables if attenuation
           if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
              do i_SLS = 1,N_SLS
-                R_xx_val = R_xx(i_SLS,i,j,k,ispec)
-                R_yy_val = R_yy(i_SLS,i,j,k,ispec)
+                R_xx_val = R_xx(i,j,k,i_SLS,ispec)
+                R_yy_val = R_yy(i,j,k,i_SLS,ispec)
                 sigma_xx = sigma_xx - R_xx_val
                 sigma_yy = sigma_yy - R_yy_val
                 sigma_zz = sigma_zz + R_xx_val + R_yy_val
-                sigma_xy = sigma_xy - R_xy(i_SLS,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_xz(i_SLS,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_yz(i_SLS,i,j,k,ispec)
+                sigma_xy = sigma_xy - R_xy(i,j,k,i_SLS,ispec)
+                sigma_xz = sigma_xz - R_xz(i,j,k,i_SLS,ispec)
+                sigma_yz = sigma_yz - R_yz(i,j,k,i_SLS,ispec)
              enddo
           endif
 
@@ -677,9 +676,9 @@
 
               ! precompute vector
               factor = dble(jacobianl) * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-              rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-              rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
+              rho_s_H(i,j,k,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
+              rho_s_H(i,j,k,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
+              rho_s_H(i,j,k,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
 
             else
 
@@ -704,9 +703,9 @@
 
               ! precompute vector
               factor = jacobianl * wgll_cube(i,j,k)
-              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+              rho_s_H(i,j,k,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+              rho_s_H(i,j,k,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+              rho_s_H(i,j,k,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
             endif
 
@@ -770,11 +769,15 @@
           fac2 = wgllwgll_xz(i,k)
           fac3 = wgllwgll_xy(i,j)
 
-          sum_terms(1,i,j,k) = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l)
-          sum_terms(2,i,j,k) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
-          sum_terms(3,i,j,k) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
+          sum_terms(i,j,k,1) = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l)
+          sum_terms(i,j,k,2) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
+          sum_terms(i,j,k,3) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
-          if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
+          if(GRAVITY_VAL) then
+            sum_terms(i,j,k,1) = sum_terms(i,j,k,1) + rho_s_H(i,j,k,1)
+            sum_terms(i,j,k,2) = sum_terms(i,j,k,2) + rho_s_H(i,j,k,2)
+            sum_terms(i,j,k,3) = sum_terms(i,j,k,3) + rho_s_H(i,j,k,3)
+          endif
 
         enddo ! NGLLX
       enddo ! NGLLY
@@ -785,9 +788,9 @@
       do j=1,NGLLY
         do i=1,NGLLX
           iglob = ibool(i,j,k,ispec)
-          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k)
-          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k)
-          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k)
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(i,j,k,1)
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(i,j,k,2)
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(i,j,k,3)
         enddo
       enddo
     enddo
@@ -814,8 +817,6 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                                  c44store,muvstore, &
-!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-!                                                epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
       else
@@ -835,11 +836,11 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-            epsilondev_xx(i,j,k,ispec) = epsilondev_loc(1,i,j,k)
-            epsilondev_yy(i,j,k,ispec) = epsilondev_loc(2,i,j,k)
-            epsilondev_xy(i,j,k,ispec) = epsilondev_loc(3,i,j,k)
-            epsilondev_xz(i,j,k,ispec) = epsilondev_loc(4,i,j,k)
-            epsilondev_yz(i,j,k,ispec) = epsilondev_loc(5,i,j,k)
+            epsilondev_xx(i,j,k,ispec) = epsilondev_loc(i,j,k,1)
+            epsilondev_yy(i,j,k,ispec) = epsilondev_loc(i,j,k,2)
+            epsilondev_xy(i,j,k,ispec) = epsilondev_loc(i,j,k,3)
+            epsilondev_xz(i,j,k,ispec) = epsilondev_loc(i,j,k,4)
+            epsilondev_yz(i,j,k,ispec) = epsilondev_loc(i,j,k,5)
           enddo
         enddo
       enddo

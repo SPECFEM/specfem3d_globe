@@ -590,8 +590,7 @@
   endif
   write(IOUT,*)
 
-!! DK DK Jul 2013: we need that for the part1_*.f90 and part2_*.f90 include files, which some compilers
-!! DK DK Jul 2013: refuse to preprocess even if we rename them *.F90
+  ! we use this vectorization flag for solver routines in files **.f90
 #ifdef FORCE_VECTORIZATION
   write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .true.'
 #else
