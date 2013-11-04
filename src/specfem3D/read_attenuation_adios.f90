@@ -43,7 +43,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
 
   integer :: vnspec
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: scale_factor
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
   double precision, dimension(N_SLS)                 :: tau_s
 
   integer :: iregion_code

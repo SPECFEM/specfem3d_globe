@@ -25,6 +25,11 @@
 !
 !=====================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+#include "config.fh"
+
+
 
 !--------------------------------------------------------------------------------------------
 !
@@ -67,12 +72,12 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   ! variable sized array variables
   integer :: vx,vy,vz,vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
@@ -81,7 +86,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
@@ -89,6 +94,8 @@
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
+#else
+  integer :: i,j,k
 #endif
 
   ! use Runge-Kutta scheme to march in time
@@ -97,86 +104,64 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef FORCE_VECTORIZATION
 
   do i_SLS = 1,N_SLS
+
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+
       if(ANISOTROPIC_3D_MANTLE_VAL) then
-        do ijk=1,NGLLCUBE
-          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec) * c44store(ijk,1,1,ispec)
-        enddo
+
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
+
       else
-        do ijk=1,NGLLCUBE
-          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec) * muvstore(ijk,1,1,ispec)
-        enddo
+
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
+
       endif
+
     else
+
       if(ANISOTROPIC_3D_MANTLE_VAL) then
-        do ijk=1,NGLLCUBE
-          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec) * c44store(ijk,1,1,ispec)
-        enddo
+
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
+
       else
-        do ijk=1,NGLLCUBE
-          factor_common_c44_muv(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec) * muvstore(ijk,1,1,ispec)
-        enddo
+
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
+
       endif
     endif
 
-    do ijk=1,NGLLCUBE
-      R_xx(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xx(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
-          (betaval(i_SLS) * epsilondev_xx(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(1,ijk,1,1))
+    ! updates memory variables
+    DO_LOOP_IJK
 
-      R_yy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yy(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
-          (betaval(i_SLS) * epsilondev_yy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(2,ijk,1,1))
+      R_xx(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_xx(INDEX_IJK,i_SLS,ispec) + factor_common_c44_muv(INDEX_IJK) * &
+          (betaval(i_SLS) * epsilondev_xx(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,1))
 
-      R_xy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xy(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
-          (betaval(i_SLS) * epsilondev_xy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(3,ijk,1,1))
+      R_yy(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_yy(INDEX_IJK,i_SLS,ispec) + factor_common_c44_muv(INDEX_IJK) * &
+          (betaval(i_SLS) * epsilondev_yy(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,2))
 
-      R_xz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xz(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
-          (betaval(i_SLS) * epsilondev_xz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(4,ijk,1,1))
+      R_xy(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_xy(INDEX_IJK,i_SLS,ispec) + factor_common_c44_muv(INDEX_IJK) * &
+          (betaval(i_SLS) * epsilondev_xy(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,3))
 
-      R_yz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yz(i_SLS,ijk,1,1,ispec) + factor_common_c44_muv(ijk,1,1) * &
-          (betaval(i_SLS) * epsilondev_yz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(5,ijk,1,1))
-    enddo
-  enddo ! i_SLS
+      R_xz(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_xz(INDEX_IJK,i_SLS,ispec) + factor_common_c44_muv(INDEX_IJK) * &
+          (betaval(i_SLS) * epsilondev_xz(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,4))
 
-#else
+      R_yz(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_yz(INDEX_IJK,i_SLS,ispec) + factor_common_c44_muv(INDEX_IJK) * &
+          (betaval(i_SLS) * epsilondev_yz(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,5))
 
-  do i_SLS = 1,N_SLS
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
-      else
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-      endif
-    else
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
-      else
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-      endif
-    endif
-
-    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-          (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-
-    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-          (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-
-    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-          (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-
-    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-          (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-
-    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_c44_muv(:,:,:) * &
-          (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+    ENDDO_LOOP_IJK
 
   enddo ! i_SLS
-
-#endif
 
   end subroutine compute_element_att_memory_cm
 
@@ -189,7 +174,6 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
                                                  c44store,muvstore, &
-!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
 ! crust mantle
@@ -221,29 +205,32 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   ! variable sized array variables
   integer :: vx,vy,vz,vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
 
-! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-!   epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
-
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL) :: deltat
 
-! local parameters
+  ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
 
   ! use Runge-Kutta scheme to march in time
 
@@ -256,43 +243,60 @@
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * c44store(:,:,:,ispec)
+
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
       else
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
       endif
+
     else
+
       if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * c44store(:,:,:,ispec)
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
       else
-        factor_common_c44_muv(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+        DO_LOOP_IJK
+          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+        ENDDO_LOOP_IJK
       endif
+
     endif
 
-    R_xx_lddrk(i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_xx_lddrk(i_SLS,:,:,:,ispec) &
-                     + deltat * ( factor_common_c44_muv(:,:,:) * epsilondev_loc(1,:,:,:) &
-                                  - R_xx(i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+    ! updates memory variables
+    DO_LOOP_IJK
 
-    R_yy_lddrk(i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_yy_lddrk(i_SLS,:,:,:,ispec) &
-                     + deltat * ( factor_common_c44_muv(:,:,:) * epsilondev_loc(2,:,:,:) &
-                                  - R_yy(i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_xx_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec) &
+                       + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,1) &
+                                    - R_xx(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-    R_xy_lddrk(i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_xy_lddrk(i_SLS,:,:,:,ispec) &
-                     + deltat * ( factor_common_c44_muv(:,:,:) * epsilondev_loc(3,:,:,:) &
-                                  - R_xy(i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_yy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec) &
+                       + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,2) &
+                                    - R_yy(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-    R_xz_lddrk(i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_xz_lddrk(i_SLS,:,:,:,ispec) &
-                     + deltat * ( factor_common_c44_muv(:,:,:) * epsilondev_loc(4,:,:,:) &
-                                  - R_xz(i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_xy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xy_lddrk(INDEX_IJK,i_SLS,ispec) &
+                       + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,3) &
+                                    - R_xy(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-    R_yz_lddrk(i_SLS,:,:,:,ispec) = ALPHA_LDDRK(istage) * R_yz_lddrk(i_SLS,:,:,:,ispec) &
-                     + deltat * ( factor_common_c44_muv(:,:,:) * epsilondev_loc(5,:,:,:) &
-                                  - R_yz(i_SLS,:,:,:,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_xz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec) &
+                       + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,4) &
+                                    - R_xz(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-    R_xx(i_SLS,:,:,:,ispec) = R_xx(i_SLS,:,:,:,ispec) + BETA_LDDRK(istage) * R_xx_lddrk(i_SLS,:,:,:,ispec)
-    R_yy(i_SLS,:,:,:,ispec) = R_yy(i_SLS,:,:,:,ispec) + BETA_LDDRK(istage) * R_yy_lddrk(i_SLS,:,:,:,ispec)
-    R_xy(i_SLS,:,:,:,ispec) = R_xy(i_SLS,:,:,:,ispec) + BETA_LDDRK(istage) * R_xy_lddrk(i_SLS,:,:,:,ispec)
-    R_xz(i_SLS,:,:,:,ispec) = R_xz(i_SLS,:,:,:,ispec) + BETA_LDDRK(istage) * R_xz_lddrk(i_SLS,:,:,:,ispec)
-    R_yz(i_SLS,:,:,:,ispec) = R_yz(i_SLS,:,:,:,ispec) + BETA_LDDRK(istage) * R_yz_lddrk(i_SLS,:,:,:,ispec)
+      R_yz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec) &
+                       + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,5) &
+                                    - R_yz(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+
+      R_xx(INDEX_IJK,i_SLS,ispec) = R_xx(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_yy(INDEX_IJK,i_SLS,ispec) = R_yy(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_xy(INDEX_IJK,i_SLS,ispec) = R_xy(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xy_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_xz(INDEX_IJK,i_SLS,ispec) = R_xz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_yz(INDEX_IJK,i_SLS,ispec) = R_yz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec)
+
+    ENDDO_LOOP_IJK
 
   enddo ! i_SLS
 
@@ -337,13 +341,12 @@
   ! element id
   integer :: ispec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
-    R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   ! variable sized array variables
   integer :: vx,vy,vz,vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
@@ -352,7 +355,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
@@ -361,6 +364,8 @@
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
+#else
+  integer :: i,j,k
 #endif
 
   ! use Runge-Kutta scheme to march in time
@@ -372,65 +377,44 @@
   ! note: epsilondev_loc is calculated based on displ( n + 1 ), thus corresponds to strain at time (n + 1)
   !       epsilondev_xx,.. are stored from previous step, thus corresponds now to strain at time n
 
-#ifdef FORCE_VECTORIZATION
-
   do i_SLS = 1,N_SLS
+
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-      do ijk=1,NGLLCUBE
-        factor_common_use(ijk,1,1) = factor_common(i_SLS,ijk,1,1,ispec) * muvstore(ijk,1,1,ispec)
-      enddo
+
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
+
     else
-      do ijk=1,NGLLCUBE
-        factor_common_use(ijk,1,1) = factor_common(i_SLS,1,1,1,ispec) * muvstore(ijk,1,1,ispec)
-      enddo
+
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
+
     endif
 
-    do ijk=1,NGLLCUBE
-      R_xx(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xx(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
-           (betaval(i_SLS) * epsilondev_xx(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(1,ijk,1,1))
+    ! updates memory variables
+    DO_LOOP_IJK
 
-      R_yy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yy(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
-           (betaval(i_SLS) * epsilondev_yy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(2,ijk,1,1))
+      R_xx(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_xx(INDEX_IJK,i_SLS,ispec) + factor_common_use(INDEX_IJK) * &
+           (betaval(i_SLS) * epsilondev_xx(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,1))
 
-      R_xy(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xy(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
-           (betaval(i_SLS) * epsilondev_xy(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(3,ijk,1,1))
+      R_yy(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_yy(INDEX_IJK,i_SLS,ispec) + factor_common_use(INDEX_IJK) * &
+           (betaval(i_SLS) * epsilondev_yy(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,2))
 
-      R_xz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_xz(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
-           (betaval(i_SLS) * epsilondev_xz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(4,ijk,1,1))
+      R_xy(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_xy(INDEX_IJK,i_SLS,ispec) + factor_common_use(INDEX_IJK) * &
+           (betaval(i_SLS) * epsilondev_xy(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,3))
 
-      R_yz(i_SLS,ijk,1,1,ispec) = alphaval(i_SLS) * R_yz(i_SLS,ijk,1,1,ispec) + factor_common_use(ijk,1,1) * &
-           (betaval(i_SLS) * epsilondev_yz(ijk,1,1,ispec) + gammaval(i_SLS) * epsilondev_loc(5,ijk,1,1))
-    enddo
-  enddo
+      R_xz(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_xz(INDEX_IJK,i_SLS,ispec) + factor_common_use(INDEX_IJK) * &
+           (betaval(i_SLS) * epsilondev_xz(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,4))
 
-#else
+      R_yz(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_yz(INDEX_IJK,i_SLS,ispec) + factor_common_use(INDEX_IJK) * &
+           (betaval(i_SLS) * epsilondev_yz(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,5))
 
-  do i_SLS = 1,N_SLS
-    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
-    else
-      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
-    endif
+    ENDDO_LOOP_IJK
 
-    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-         (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
-
-    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-         (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
-
-    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-         (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
-
-    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-         (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
-
-    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) + factor_common_use(:,:,:) * &
-         (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
-  enddo
-
-#endif
+  enddo ! N_SLS
 
   end subroutine compute_element_att_memory_ic
 
@@ -443,7 +427,6 @@
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
                                                  muvstore, &
-!                                                epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                                  epsilondev_loc, &
                                                  deltat)
 ! inner core
@@ -471,32 +454,33 @@
   ! element id
   integer :: ispec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
   ! variable sized array variables
   integer :: vx,vy,vz,vnspec
 
-  real(kind=CUSTOM_REAL), dimension(N_SLS,vx,vy,vz,vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
 
-! real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
-!   epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
-
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL) :: deltat
 
-! local parameters
+  ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor_common_use
 
   integer :: i_SLS
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
   integer :: i,j,k
+#endif
 
   ! use Runge-Kutta scheme to march in time
 
@@ -511,42 +495,45 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-      factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) * muvstore(:,:,:,ispec)
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     else
-      factor_common_use(:,:,:) = factor_common(i_SLS,1,1,1,ispec) * muvstore(:,:,:,ispec)
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     endif
 
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          R_xx_lddrk(i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_xx_lddrk(i_SLS,i,j,k,ispec) &
-            + deltat * ( factor_common_use(i,j,k)*epsilondev_loc(1,i,j,k) &
-                         - R_xx(i_SLS,i,j,k,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+    ! updates memory variables
+    DO_LOOP_IJK
 
-          R_yy_lddrk(i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_yy_lddrk(i_SLS,i,j,k,ispec) &
-            + deltat * ( factor_common_use(i,j,k)*epsilondev_loc(2,i,j,k) &
-                         - R_yy(i_SLS,i,j,k,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_xx_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec) &
+        + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,1) &
+                     - R_xx(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-          R_xy_lddrk(i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_xy_lddrk(i_SLS,i,j,k,ispec) &
-            + deltat * ( factor_common_use(i,j,k)*epsilondev_loc(3,i,j,k) &
-                         - R_xy(i_SLS,i,j,k,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_yy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec) &
+        + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,2) &
+                     - R_yy(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-          R_xz_lddrk(i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_xz_lddrk(i_SLS,i,j,k,ispec) &
-            + deltat * ( factor_common_use(i,j,k)*epsilondev_loc(4,i,j,k) &
-                         - R_xz(i_SLS,i,j,k,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_xy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xy_lddrk(INDEX_IJK,i_SLS,ispec) &
+        + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,3) &
+                     - R_xy(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-          R_yz_lddrk(i_SLS,i,j,k,ispec) = ALPHA_LDDRK(istage) * R_yz_lddrk(i_SLS,i,j,k,ispec) &
-            + deltat * ( factor_common_use(i,j,k)*epsilondev_loc(5,i,j,k) &
-                         - R_yz(i_SLS,i,j,k,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+      R_xz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec) &
+        + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,4) &
+                     - R_xz(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
 
-          R_xx(i_SLS,i,j,k,ispec) = R_xx(i_SLS,i,j,k,ispec) + BETA_LDDRK(istage) * R_xx_lddrk(i_SLS,i,j,k,ispec)
-          R_yy(i_SLS,i,j,k,ispec) = R_yy(i_SLS,i,j,k,ispec) + BETA_LDDRK(istage) * R_yy_lddrk(i_SLS,i,j,k,ispec)
-          R_xy(i_SLS,i,j,k,ispec) = R_xy(i_SLS,i,j,k,ispec) + BETA_LDDRK(istage) * R_xy_lddrk(i_SLS,i,j,k,ispec)
-          R_xz(i_SLS,i,j,k,ispec) = R_xz(i_SLS,i,j,k,ispec) + BETA_LDDRK(istage) * R_xz_lddrk(i_SLS,i,j,k,ispec)
-          R_yz(i_SLS,i,j,k,ispec) = R_yz(i_SLS,i,j,k,ispec) + BETA_LDDRK(istage) * R_yz_lddrk(i_SLS,i,j,k,ispec)
-        enddo
-      enddo
-    enddo
+      R_yz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec) &
+        + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,5) &
+                     - R_yz(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+
+      R_xx(INDEX_IJK,i_SLS,ispec) = R_xx(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_yy(INDEX_IJK,i_SLS,ispec) = R_yy(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_xy(INDEX_IJK,i_SLS,ispec) = R_xy(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xy_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_xz(INDEX_IJK,i_SLS,ispec) = R_xz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec)
+      R_yz(INDEX_IJK,i_SLS,ispec) = R_yz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec)
+
+    ENDDO_LOOP_IJK
 
   enddo
 
@@ -637,9 +624,9 @@
 !
 !    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
 !    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-!      factor_common_c44_muv = factor_common(i_SLS,i,j,k,ispec) * c44_muv
+!      factor_common_c44_muv = factor_common(i,j,k,i_SLS,ispec) * c44_muv
 !    else
-!      factor_common_c44_muv = factor_common(i_SLS,1,1,1,ispec) * c44_muv
+!      factor_common_c44_muv = factor_common(1,1,1,i_SLS,ispec) * c44_muv
 !    endif
 !
 !    ! adds contributions from current strain

@@ -43,14 +43,14 @@
   !       this is better, it works fine and these arrays are really huge
   !       in the crust_mantle region, thus let us not double their size
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(out) :: one_minus_sum_beta, scale_factor
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(out) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(out) :: factor_common
 
   double precision, dimension(N_SLS),intent(out) :: tau_s
 
   integer :: iregion_code
 
   ! local parameters
-  integer :: i,j,k,ispec,ier
+  integer :: i,j,k,ispec,ier,i_sls
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, T_c_source, scale_t
   character(len=150) :: prname
@@ -85,21 +85,32 @@
   T_c_source               = 1000.0d0 / T_c_source
   T_c_source               = T_c_source / scale_t
 
+  ! loops over elements
   do ispec = 1, vnspec
+
+    ! loops over GLL points
     do k = 1, ATT3_VAL
       do j = 1, ATT2_VAL
         do i = 1, ATT1_VAL
-          tau_e(:) = factor_common(:,i,j,k,ispec)
+
+          ! gets relaxation times for each standard linear solid
+          do i_sls = 1,N_SLS
+            tau_e(i_sls) = factor_common(i,j,k,i_sls,ispec)
+          enddo
           Q_mu     = scale_factor(i,j,k,ispec)
 
           ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
           call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
 
           if( CUSTOM_REAL == SIZE_REAL ) then
-            factor_common(:,i,j,k,ispec)    = sngl(fc(:))
+            do i_sls = 1,N_SLS
+              factor_common(i,j,k,i_sls,ispec)    = sngl(fc(i_sls))
+            enddo
             one_minus_sum_beta(i,j,k,ispec) = sngl(omsb)
           else
-            factor_common(:,i,j,k,ispec)    = fc(:)
+            do i_sls = 1,N_SLS
+              factor_common(i,j,k,i_sls,ispec)    = fc(i_sls)
+            enddo
             one_minus_sum_beta(i,j,k,ispec) = omsb
           endif
 

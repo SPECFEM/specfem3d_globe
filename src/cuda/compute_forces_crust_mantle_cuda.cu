@@ -94,20 +94,27 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
                                               realw* sigma_yz) {
 
   realw R_xx_val,R_yy_val;
-
+  int offset_sls;
+  
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // index
-    // note: index for R_xx,.. here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
-    //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
-    R_xx_val = R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)];
-    R_yy_val = R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    // note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
+    //       see local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
+    // indexing examples:
+    //   (i,j,k,ispec,i_sls) -> offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls)
+    //   (i_sls,i,j,k,ispec) -> offset_sls = i_sls + N_SLS*(tx + NGLL3*working_element)
+    //   (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
+    offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
+    
+    R_xx_val = R_xx[offset_sls];
+    R_yy_val = R_yy[offset_sls];
 
     *sigma_xx = *sigma_xx - R_xx_val;
     *sigma_yy = *sigma_yy - R_yy_val;
     *sigma_zz = *sigma_zz + R_xx_val + R_yy_val;
-    *sigma_xy = *sigma_xy - R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)];
-    *sigma_xz = *sigma_xz - R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)];
-    *sigma_yz = *sigma_yz - R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    *sigma_xy = *sigma_xy - R_xy[offset_sls];
+    *sigma_xz = *sigma_xz - R_xz[offset_sls];
+    *sigma_yz = *sigma_yz - R_yz[offset_sls];
   }
 }
 
@@ -131,7 +138,8 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
   realw fac;
   realw alphaval_loc,betaval_loc,gammaval_loc;
   realw factor_loc,Sn,Snp1;
-
+  int offset_sls;
+  
   // shear moduli for common factor (only Q_mu attenuation)
   if( ANISOTROPY ){
     fac = d_c44store[tx + NGLL3_PADDED * working_element];
@@ -142,16 +150,19 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
   // use Runge-Kutta scheme to march in time
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // indices
-    // note: index for R_xx,... here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
-    //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
+    // note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
     //
-    // either mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
+    // index:
+    // (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
+    offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
+
+    // either mustore(i,j,k,ispec) * factor_common(i,j,k,i_sls,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
     if( USE_3D_ATTENUATION_ARRAYS ){
       // array dimension: factor_common(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC)
-      factor_loc = fac * factor_common[i_sls + N_SLS*(tx + NGLL3*working_element)];
+      factor_loc = fac * factor_common[offset_sls];
     }else{
-      // array dimension: factor_common(N_SLS,1,1,1,NSPEC)
+      // array dimension: factor_common(1,1,1,N_SLS,NSPEC)
       factor_loc = fac * factor_common[i_sls + N_SLS*working_element];
     }
 
@@ -159,36 +170,33 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
 
+    
     // term in xx
     Sn   = factor_loc * epsilondev_xx[tx + NGLL3 * working_element]; //(i,j,k,ispec)
     Snp1   = factor_loc * epsilondev_xx_loc; //(i,j,k)
-    R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xx[offset_sls] = alphaval_loc * R_xx[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yy
     Sn   = factor_loc * epsilondev_yy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yy_loc;
-    R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yy[offset_sls] = alphaval_loc * R_yy[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
+
     // term in zz not computed since zero trace
 
     // term in xy
     Sn   = factor_loc * epsilondev_xy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xy_loc;
-    R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xy[offset_sls] = alphaval_loc * R_xy[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in xz
     Sn   = factor_loc * epsilondev_xz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xz_loc;
-    R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xz[offset_sls] = alphaval_loc * R_xz[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yz
     Sn   = factor_loc * epsilondev_yz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yz_loc;
-    R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yz[offset_sls] = alphaval_loc * R_yz[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
   }
 }
 

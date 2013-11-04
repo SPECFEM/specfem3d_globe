@@ -219,14 +219,13 @@
 
         ! determine where we cut the central cube to share it between CHUNK_AB & CHUNK_AB_ANTIPODE
         ! in the case of mod(NPROC_XI,2)/=0, the cut is asymetric and the bigger part is for CHUNK_AB
+        nz_inf_limit = nz_central_cube
         if (mod(NPROC_XI,2)/=0 .and. NPROC_XI > 1) then
           if (ichunk == CHUNK_AB) then
             nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*floor(NPROC_XI/2.d0)
           else if (ichunk == CHUNK_AB_ANTIPODE) then
             nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*ceiling(NPROC_XI/2.d0)
           endif
-        else
-          nz_inf_limit = nz_central_cube
         endif
 
         if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then

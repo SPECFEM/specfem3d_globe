@@ -371,15 +371,15 @@
 
   implicit none
 
-  integer :: NGLOB_CM,NGLOB_IC
+  integer,intent(in) :: NGLOB_CM,NGLOB_IC
 
   ! acceleration & velocity
   ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: veloc_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM),intent(inout) :: veloc_crust_mantle,accel_crust_mantle
   ! inner core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: veloc_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC),intent(inout) :: veloc_inner_core,accel_inner_core
 
-  real(kind=CUSTOM_REAL) :: deltatover2
+  real(kind=CUSTOM_REAL),intent(in) :: deltatover2
 
   ! local parameters
   integer :: i
@@ -393,30 +393,26 @@
   !   - inner core region
   !         needs both, acceleration update & velocity corrector terms
 
-  ! crust/mantle
   if(FORCE_VECTORIZATION_VAL) then
 
+    ! crust/mantle
     do i=1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
 
-  else
-
-    do i=1,NGLOB_CM
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    enddo
-
-  endif
-
-  ! inner core
-  if(FORCE_VECTORIZATION_VAL) then
-
+    ! inner core
     do i=1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
 
   else
 
+    ! crust/mantle
+    do i=1,NGLOB_CM
+      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
+    enddo
+
+    ! inner core
     do i=1,NGLOB_IC
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo

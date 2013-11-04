@@ -82,7 +82,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
@@ -96,8 +96,8 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -190,11 +190,11 @@
       else
         epsilon_trace_over_3(INDEX_IJK,ispec) = templ
       endif
-      epsilondev_loc(1,INDEX_IJK) = duxdxl - templ
-      epsilondev_loc(2,INDEX_IJK) = duydyl - templ
-      epsilondev_loc(3,INDEX_IJK) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-      epsilondev_loc(4,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-      epsilondev_loc(5,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
     endif
 
     !
@@ -237,50 +237,47 @@
 
       ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
       ! in order to vectorize the outer loop
-      R_xx_val = R_xx(1,INDEX_IJK,ispec)
-      R_yy_val = R_yy(1,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,1,ispec)
+      R_yy_val = R_yy(INDEX_IJK,1,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(1,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(1,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(1,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
 
-      R_xx_val = R_xx(2,INDEX_IJK,ispec)
-      R_yy_val = R_yy(2,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,2,ispec)
+      R_yy_val = R_yy(INDEX_IJK,2,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(2,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(2,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(2,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
 
-      R_xx_val = R_xx(3,INDEX_IJK,ispec)
-      R_yy_val = R_yy(3,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,3,ispec)
+      R_yy_val = R_yy(INDEX_IJK,3,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(3,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(3,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(3,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
 #else
 !daniel debug: att - debug update
 !          call compute_element_att_mem_up_cm(ispec,INDEX_IJK, &
-!                                          R_xx(1,INDEX_IJK,ispec), &
-!                                          R_yy(1,INDEX_IJK,ispec), &
-!                                          R_xy(1,INDEX_IJK,ispec), &
-!                                          R_xz(1,INDEX_IJK,ispec), &
-!                                          R_yz(1,INDEX_IJK,ispec), &
-!                                          epsilondev_loc(:,INDEX_IJK),muvstore(INDEX_IJK,ispec),is_backward_field)
+!                                          R_xx(INDEX_IJK,1,ispec), &
+!                                          R_yy(INDEX_IJK,1,ispec), &
+!                                          R_xy(INDEX_IJK,1,ispec), &
+!                                          R_xz(INDEX_IJK,1,ispec), &
+!                                          R_yz(INDEX_IJK,1,ispec), &
+!                                          epsilondev_loc(INDEX_IJK,:),muvstore(INDEX_IJK,ispec),is_backward_field)
 
       ! note: function inlining is generally done by fortran compilers;
       !       compilers decide based on performance heuristics
       ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-      call compute_element_att_stress(R_xx(1,INDEX_IJK,ispec), &
-                                      R_yy(1,INDEX_IJK,ispec), &
-                                      R_xy(1,INDEX_IJK,ispec), &
-                                      R_xz(1,INDEX_IJK,ispec), &
-                                      R_yz(1,INDEX_IJK,ispec), &
+      call compute_element_att_stress(i,j,k,R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                      R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 #endif
 
@@ -361,9 +358,9 @@
 
           ! precompute vector
           factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-          rho_s_H(1,INDEX_IJK) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-          rho_s_H(2,INDEX_IJK) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-          rho_s_H(3,INDEX_IJK) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
+          rho_s_H(INDEX_IJK,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
+          rho_s_H(INDEX_IJK,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
+          rho_s_H(INDEX_IJK,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
 
         else
 
@@ -388,9 +385,9 @@
 
           ! precompute vector
           factor = jacobianl * wgll_cube(INDEX_IJK)
-          rho_s_H(1,INDEX_IJK) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-          rho_s_H(2,INDEX_IJK) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-          rho_s_H(3,INDEX_IJK) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+          rho_s_H(INDEX_IJK,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+          rho_s_H(INDEX_IJK,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+          rho_s_H(INDEX_IJK,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
         endif
 
@@ -466,7 +463,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
@@ -484,8 +481,8 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
@@ -591,11 +588,11 @@
       else
         epsilon_trace_over_3(INDEX_IJK,ispec) = templ
       endif
-      epsilondev_loc(1,INDEX_IJK) = duxdxl - templ
-      epsilondev_loc(2,INDEX_IJK) = duydyl - templ
-      epsilondev_loc(3,INDEX_IJK) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-      epsilondev_loc(4,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-      epsilondev_loc(5,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
     endif
 
     !
@@ -822,41 +819,38 @@
 
       ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
       ! in order to vectorize the outer loop
-      R_xx_val = R_xx(1,INDEX_IJK,ispec)
-      R_yy_val = R_yy(1,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,1,ispec)
+      R_yy_val = R_yy(INDEX_IJK,1,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(1,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(1,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(1,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
 
-      R_xx_val = R_xx(2,INDEX_IJK,ispec)
-      R_yy_val = R_yy(2,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,2,ispec)
+      R_yy_val = R_yy(INDEX_IJK,2,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(2,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(2,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(2,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
 
-      R_xx_val = R_xx(3,ijk,1,1,ispec)
-      R_yy_val = R_yy(3,ijk,1,1,ispec)
+      R_xx_val = R_xx(INDEX_IJK,3,ispec)
+      R_yy_val = R_yy(INDEX_IJK,3,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(3,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(3,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(3,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
 #else
       ! note: function inlining is generally done by fortran compilers;
       !       compilers decide based on performance heuristics
       ! note: fortran passes pointers to array location, thus R_memory(1,1,...) is fine
-      call compute_element_att_stress(R_xx(1,INDEX_IJK,ispec), &
-                                      R_yy(1,INDEX_IJK,ispec), &
-                                      R_xy(1,INDEX_IJK,ispec), &
-                                      R_xz(1,INDEX_IJK,ispec), &
-                                      R_yz(1,INDEX_IJK,ispec), &
+      call compute_element_att_stress(i,j,k,R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                      R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 #endif
 
@@ -936,9 +930,9 @@
 
           ! precompute vector
           factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-          rho_s_H(1,INDEX_IJK) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-          rho_s_H(2,INDEX_IJK) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-          rho_s_H(3,INDEX_IJK) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
+          rho_s_H(INDEX_IJK,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
+          rho_s_H(INDEX_IJK,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
+          rho_s_H(INDEX_IJK,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
 
         else
 
@@ -963,9 +957,9 @@
 
           ! precompute vector
           factor = jacobianl * wgll_cube(INDEX_IJK)
-          rho_s_H(1,INDEX_IJK) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-          rho_s_H(2,INDEX_IJK) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-          rho_s_H(3,INDEX_IJK) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+          rho_s_H(INDEX_IJK,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+          rho_s_H(INDEX_IJK,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+          rho_s_H(INDEX_IJK,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
         endif
 
@@ -1041,7 +1035,7 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
@@ -1059,8 +1053,8 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL) minus_sum_beta,mul
@@ -1154,11 +1148,11 @@
       else
         epsilon_trace_over_3(INDEX_IJK,ispec) = templ
       endif
-      epsilondev_loc(1,INDEX_IJK) = duxdxl - templ
-      epsilondev_loc(2,INDEX_IJK) = duydyl - templ
-      epsilondev_loc(3,INDEX_IJK) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-      epsilondev_loc(4,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-      epsilondev_loc(5,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
     endif
 
     !
@@ -1232,42 +1226,39 @@
 
       ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
       ! in order to vectorize the outer loop
-      R_xx_val = R_xx(1,INDEX_IJK,ispec)
-      R_yy_val = R_yy(1,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,1,ispec)
+      R_yy_val = R_yy(INDEX_IJK,1,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(1,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(1,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(1,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
 
-      R_xx_val = R_xx(2,INDEX_IJK,ispec)
-      R_yy_val = R_yy(2,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,2,ispec)
+      R_yy_val = R_yy(INDEX_IJK,2,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(2,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(2,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(2,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
 
-      R_xx_val = R_xx(3,INDEX_IJK,ispec)
-      R_yy_val = R_yy(3,INDEX_IJK,ispec)
+      R_xx_val = R_xx(INDEX_IJK,3,ispec)
+      R_yy_val = R_yy(INDEX_IJK,3,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(3,INDEX_IJK,ispec)
-      sigma_xz = sigma_xz - R_xz(3,INDEX_IJK,ispec)
-      sigma_yz = sigma_yz - R_yz(3,INDEX_IJK,ispec)
+      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
+      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
+      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
 #else
       ! note: function inlining is generally done by fortran compilers;
       !       compilers decide based on performance heuristics
 
       ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
-      call compute_element_att_stress(R_xx(1,INDEX_IJK,ispec), &
-                                      R_yy(1,INDEX_IJK,ispec), &
-                                      R_xy(1,INDEX_IJK,ispec), &
-                                      R_xz(1,INDEX_IJK,ispec), &
-                                      R_yz(1,INDEX_IJK,ispec), &
+      call compute_element_att_stress(i,j,k,R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                      R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 #endif
     endif ! ATTENUATION_VAL
@@ -1346,9 +1337,9 @@
 
           ! precompute vector
           factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-          rho_s_H(1,INDEX_IJK) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-          rho_s_H(2,INDEX_IJK) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-          rho_s_H(3,INDEX_IJK) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
+          rho_s_H(INDEX_IJK,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
+          rho_s_H(INDEX_IJK,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
+          rho_s_H(INDEX_IJK,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
 
         else
 
@@ -1373,9 +1364,9 @@
 
           ! precompute vector
           factor = jacobianl * wgll_cube(INDEX_IJK)
-          rho_s_H(1,INDEX_IJK) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-          rho_s_H(2,INDEX_IJK) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-          rho_s_H(3,INDEX_IJK) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+          rho_s_H(INDEX_IJK,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+          rho_s_H(INDEX_IJK,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+          rho_s_H(INDEX_IJK,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
         endif
 
@@ -1410,44 +1401,579 @@
 !
 
 
-  subroutine compute_element_att_stress(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
+  subroutine compute_element_att_stress(i,j,k,R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
                                        sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
 ! updates stress with attenuation correction
 
 
-  use constants_solver,only: CUSTOM_REAL,N_SLS
+  use constants_solver,only: CUSTOM_REAL,N_SLS,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
+  integer, intent(in) :: i,j,k
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xx_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yy_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xy_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xz_loc
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yz_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_xx_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_yy_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_xy_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_xz_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_yz_loc
 
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
 ! local parameters
-  real(kind=CUSTOM_REAL) R_xx_val1,R_yy_val1
+  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   integer :: i_SLS
 
   do i_SLS = 1,N_SLS
-    R_xx_val1 = R_xx_loc(i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
-    R_yy_val1 = R_yy_loc(i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
-    sigma_xx = sigma_xx - R_xx_val1
-    sigma_yy = sigma_yy - R_yy_val1
-    sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-    sigma_xy = sigma_xy - R_xy_loc(i_SLS) ! R_memory(3,i_SLS,i,j,k,ispec)
-    sigma_xz = sigma_xz - R_xz_loc(i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
-    sigma_yz = sigma_yz - R_yz_loc(i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
+    R_xx_val = R_xx_loc(i,j,k,i_SLS)
+    R_yy_val = R_yy_loc(i,j,k,i_SLS)
+    sigma_xx = sigma_xx - R_xx_val
+    sigma_yy = sigma_yy - R_yy_val
+    sigma_zz = sigma_zz + R_xx_val + R_yy_val
+    sigma_xy = sigma_xy - R_xy_loc(i,j,k,i_SLS)
+    sigma_xz = sigma_xz - R_xz_loc(i,j,k,i_SLS)
+    sigma_yz = sigma_yz - R_yz_loc(i,j,k,i_SLS)
   enddo
 
   end subroutine compute_element_att_stress
+
+!--------------------------------------------------------------------------------------------
+!
+! Deville et al. 2002
+! Higher-Order Methods for Incompressible Fluid Flow
+!
+! subroutines adapted from Deville, Fischer and Mund, High-order methods
+! for incompressible fluid flow, Cambridge University Press (2002),
+! pages 386 and 389 and Figure 8.3.1
+!
+!--------------------------------------------------------------------------------------------
+
+! matrix - matrix multiplications
+
+! single component routines
+
+  subroutine mxm(A,n1,B,n2,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
+  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! chooses optimized version
+  select case( n2 )
+
+  case( 4 )
+    call mxm4(A,n1,B,C,n3)
+
+  case( 5 )
+    call mxm5(A,n1,B,C,n3)
+
+  case( 6 )
+    call mxm6(A,n1,B,C,n3)
+
+  case( 7 )
+    call mxm7(A,n1,B,C,n3)
+
+  case( 8 )
+    call mxm8(A,n1,B,C,n3)
+
+  case default
+    call mxmN(A,n1,B,n2,C,n3)
+
+  end select
+
+  end subroutine mxm
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm4(A,n1,B,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,4) :: A
+  real(kind=CUSTOM_REAL),dimension(4,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j)
+    enddo
+  enddo
+
+  end subroutine mxm4
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm5(A,n1,B,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j)
+    enddo
+  enddo
+
+  end subroutine mxm5
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm6(A,n1,B,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,6) :: A
+  real(kind=CUSTOM_REAL),dimension(6,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j) &
+              + A(i,6) * B(6,j)
+    enddo
+  enddo
+
+  end subroutine mxm6
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm7(A,n1,B,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,7) :: A
+  real(kind=CUSTOM_REAL),dimension(7,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j) &
+              + A(i,6) * B(6,j) &
+              + A(i,7) * B(7,j)
+    enddo
+  enddo
+
+  end subroutine mxm7
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm8(A,n1,B,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,8) :: A
+  real(kind=CUSTOM_REAL),dimension(8,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j) &
+              + A(i,6) * B(6,j) &
+              + A(i,7) * B(7,j) &
+              + A(i,8) * B(8,j)
+    enddo
+  enddo
+
+  end subroutine mxm8
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxmN(A,n1,B,n2,C,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
+  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j,k
+  real(kind=CUSTOM_REAL) :: tmp
+
+  ! general matrix-matrix multiplication
+  do j=1,n3
+    do k=1,n2
+      tmp = B(k,j)
+      do i=1,n1
+        C(i,j) = C(i,j) + A(i,k) * tmp
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxmN
+
+
+!----------------------------------------------------------------------------------------------
+
+
+
+! 3-component routines: combines arrays A1,A2,A3 which correspond to 3 different components x/y/z
+
+  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! chooses optimized version
+  select case( n2 )
+
+  case( 4 )
+    call mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  case( 5 )
+    call mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  case( 6 )
+    call mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  case( 7 )
+    call mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  case( 8 )
+    call mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  case default
+    call mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+
+  end select
+
+  end subroutine mxm_3comp
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,4) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(4,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A1(i,1) * B1(1,j) &
+               + A1(i,2) * B1(2,j) &
+               + A1(i,3) * B1(3,j) &
+               + A1(i,4) * B1(4,j)
+
+      C2(i,j) =  A2(i,1) * B2(1,j) &
+               + A2(i,2) * B2(2,j) &
+               + A2(i,3) * B2(3,j) &
+               + A2(i,4) * B2(4,j)
+
+      C3(i,j) =  A3(i,1) * B3(1,j) &
+               + A3(i,2) * B3(2,j) &
+               + A3(i,3) * B3(3,j) &
+               + A3(i,4) * B3(4,j)
+    enddo
+  enddo
+
+  end subroutine mxm4_3comp
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A1(i,1) * B1(1,j) &
+               + A1(i,2) * B1(2,j) &
+               + A1(i,3) * B1(3,j) &
+               + A1(i,4) * B1(4,j) &
+               + A1(i,5) * B1(5,j)
+
+      C2(i,j) =  A2(i,1) * B2(1,j) &
+               + A2(i,2) * B2(2,j) &
+               + A2(i,3) * B2(3,j) &
+               + A2(i,4) * B2(4,j) &
+               + A2(i,5) * B2(5,j)
+
+      C3(i,j) =  A3(i,1) * B3(1,j) &
+               + A3(i,2) * B3(2,j) &
+               + A3(i,3) * B3(3,j) &
+               + A3(i,4) * B3(4,j) &
+               + A3(i,5) * B3(5,j)
+    enddo
+  enddo
+
+  end subroutine mxm5_3comp
+
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,6) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(6,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A1(i,1) * B1(1,j) &
+               + A1(i,2) * B1(2,j) &
+               + A1(i,3) * B1(3,j) &
+               + A1(i,4) * B1(4,j) &
+               + A1(i,5) * B1(5,j) &
+               + A1(i,6) * B1(6,j)
+
+      C2(i,j) =  A2(i,1) * B2(1,j) &
+               + A2(i,2) * B2(2,j) &
+               + A2(i,3) * B2(3,j) &
+               + A2(i,4) * B2(4,j) &
+               + A2(i,5) * B2(5,j) &
+               + A2(i,6) * B2(6,j)
+
+      C3(i,j) =  A3(i,1) * B3(1,j) &
+               + A3(i,2) * B3(2,j) &
+               + A3(i,3) * B3(3,j) &
+               + A3(i,4) * B3(4,j) &
+               + A3(i,5) * B3(5,j) &
+               + A3(i,6) * B3(6,j)
+    enddo
+  enddo
+
+  end subroutine mxm6_3comp
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,7) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(7,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A1(i,1) * B1(1,j) &
+               + A1(i,2) * B1(2,j) &
+               + A1(i,3) * B1(3,j) &
+               + A1(i,4) * B1(4,j) &
+               + A1(i,5) * B1(5,j) &
+               + A1(i,6) * B1(6,j) &
+               + A1(i,7) * B1(7,j)
+
+      C2(i,j) =  A2(i,1) * B2(1,j) &
+               + A2(i,2) * B2(2,j) &
+               + A2(i,3) * B2(3,j) &
+               + A2(i,4) * B2(4,j) &
+               + A2(i,5) * B2(5,j) &
+               + A2(i,6) * B2(6,j) &
+               + A2(i,7) * B2(7,j)
+
+      C3(i,j) =  A3(i,1) * B3(1,j) &
+               + A3(i,2) * B3(2,j) &
+               + A3(i,3) * B3(3,j) &
+               + A3(i,4) * B3(4,j) &
+               + A3(i,5) * B3(5,j) &
+               + A3(i,6) * B3(6,j) &
+               + A3(i,7) * B3(7,j)
+    enddo
+  enddo
+
+  end subroutine mxm7_3comp
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,8) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(8,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C1(i,j) =  A1(i,1) * B1(1,j) &
+               + A1(i,2) * B1(2,j) &
+               + A1(i,3) * B1(3,j) &
+               + A1(i,4) * B1(4,j) &
+               + A1(i,5) * B1(5,j) &
+               + A1(i,6) * B1(6,j) &
+               + A1(i,7) * B1(7,j) &
+               + A1(i,8) * B1(8,j)
+
+      C2(i,j) =  A2(i,1) * B2(1,j) &
+               + A2(i,2) * B2(2,j) &
+               + A2(i,3) * B2(3,j) &
+               + A2(i,4) * B2(4,j) &
+               + A2(i,5) * B2(5,j) &
+               + A2(i,6) * B2(6,j) &
+               + A2(i,7) * B2(7,j) &
+               + A2(i,8) * B2(8,j)
+
+      C3(i,j) =  A3(i,1) * B3(1,j) &
+               + A3(i,2) * B3(2,j) &
+               + A3(i,3) * B3(3,j) &
+               + A3(i,4) * B3(4,j) &
+               + A3(i,5) * B3(5,j) &
+               + A3(i,6) * B3(6,j) &
+               + A3(i,7) * B3(7,j) &
+               + A3(i,8) * B3(8,j)
+    enddo
+  enddo
+
+  end subroutine mxm8_3comp
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+
+  ! local parameters
+  integer :: i,j,k
+  real(kind=CUSTOM_REAL) :: tmp1,tmp2,tmp3
+
+  ! general matrix-matrix multiplication
+  do j=1,n3
+    do k=1,n2
+      tmp1 = B1(k,j)
+      tmp2 = B2(k,j)
+      tmp3 = B3(k,j)
+      do i=1,n1
+        C1(i,j) = C1(i,j) + A1(i,k) * tmp1
+        C2(i,j) = C2(i,j) + A2(i,k) * tmp2
+        C3(i,j) = C3(i,j) + A3(i,k) * tmp3
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxmN_3comp
+
+
+
 
 

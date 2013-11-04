@@ -860,13 +860,13 @@
   if (ATTENUATION) then
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
-      allocate(temp_array_real_sls(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
+      allocate(temp_array_real_sls(NGLLX,NGLLY,NGLLZ,N_SLS,nspec))
       call permute_elements_real(Qmu_store,temp_array_real,perm,nspec)
       call permute_elements_real_sls(tau_e_store,temp_array_real_sls,perm,nspec)
       deallocate(temp_array_real,temp_array_real_sls)
     else
       allocate(temp_array_real(1,1,1,nspec))
-      allocate(temp_array_real_sls(N_SLS,1,1,1,nspec))
+      allocate(temp_array_real_sls(1,1,1,N_SLS,nspec))
       call permute_elements_real1(Qmu_store,temp_array_real,perm,nspec)
       call permute_elements_real_sls1(tau_e_store,temp_array_real_sls,perm,nspec)
       deallocate(temp_array_real,temp_array_real_sls)

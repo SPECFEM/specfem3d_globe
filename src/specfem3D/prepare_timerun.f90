@@ -1345,19 +1345,19 @@
 
     ! attenuation memory variables
     ! crust/mantle
-    allocate(R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
-             R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
-             R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
-             R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
-             R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUATION), &
+    allocate(R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_xy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+             R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
              stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
     ! inner core
-    allocate(R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
-             R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
-             R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
-             R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
-             R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION), &
+    allocate(R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+             R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+             R_xy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+             R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+             R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
              stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
     if(ATTENUATION_VAL) then
@@ -1375,19 +1375,19 @@
     endif
     if( SIMULATION_TYPE == 3 ) then
       ! crust/mantle
-      allocate(b_R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
-               b_R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
-               b_R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
-               b_R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
-               b_R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+      allocate(b_R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_xy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+               b_R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
                stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
       ! inner core
-      allocate(b_R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
-               b_R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
-               b_R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
-               b_R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
-               b_R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT), &
+      allocate(b_R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_xy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+               b_R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
                stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
       if(ATTENUATION_VAL) then
@@ -1417,18 +1417,18 @@
     if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
     allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
-    allocate(R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+    allocate(R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_xy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
-    allocate(R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-             R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+    allocate(R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_xy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+             R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              stat=ier)
     if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
     if( SIMULATION_TYPE == 3 ) then
@@ -1436,18 +1436,18 @@
       if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
       allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
-      allocate(b_R_xx_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_yy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_xy_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_xz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_yz_crust_mantle_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+      allocate(b_R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_xy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_crust_mantle_lddrk'
-      allocate(b_R_xx_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_yy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_xy_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_xz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
-               b_R_yz_inner_core_lddrk(N_SLS,NGLLX,NGLLY,NGLLZ,1), &
+      allocate(b_R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_xy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
+               b_R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_inner_core_lddrk'
     endif

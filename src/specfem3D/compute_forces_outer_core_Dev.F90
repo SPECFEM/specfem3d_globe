@@ -83,8 +83,6 @@
   logical :: phase_is_inner
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   ! for gravity
@@ -92,45 +90,34 @@
   double precision :: radius,theta,phi,gxl,gyl,gzl
   double precision :: cos_theta,sin_theta,cos_phi,sin_phi
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
+
+  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: temp_gxl,temp_gyl,temp_gzl
+
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
        ux_rotation,uy_rotation,dpotentialdx_with_rot,dpotentialdy_with_rot
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
   integer :: ispec,iglob
-  integer :: i,j,k
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
 
-  ! manually inline the calls to the Deville et al. (2002) routines
+  ! Deville
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,m2) :: B1_m1_m2_5points
-  real(kind=CUSTOM_REAL), dimension(m1,m2) :: C1_m1_m2_5points
-  real(kind=CUSTOM_REAL), dimension(m1,m2) :: E1_m1_m2_5points
 
-  equivalence(dummyx_loc,B1_m1_m2_5points)
-  equivalence(tempx1,C1_m1_m2_5points)
-  equivalence(newtempx1,E1_m1_m2_5points)
-
-  real(kind=CUSTOM_REAL), dimension(m2,NGLLX) :: A1_mxm_m2_m1_5points
-  real(kind=CUSTOM_REAL), dimension(m2,m1) :: C1_mxm_m2_m1_5points
-  real(kind=CUSTOM_REAL), dimension(m2,m1) :: E1_mxm_m2_m1_5points
-
-  equivalence(dummyx_loc,A1_mxm_m2_m1_5points)
-  equivalence(tempx3,C1_mxm_m2_m1_5points)
-  equivalence(newtempx3,E1_mxm_m2_m1_5points)
-
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: temp_gxl,temp_gyl,temp_gzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     displ_times_grad_x_ln_rho,displ_times_grad_y_ln_rho,displ_times_grad_z_ln_rho
 
-! integer :: computed_elements
   integer :: num_elements,ispec_p
   integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
+#else
+  integer :: i,j,k
 #endif
 
 ! ****************************************************
@@ -198,37 +185,13 @@
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
-    do j=1,m2
-      do i=1,m1
-        C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
-                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
-                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
-                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
-                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
-      enddo
-    enddo
 
-    do k = 1,NGLLX
-      do j=1,m1
-        do i=1,m1
-          tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
-                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
-                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
-                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
-                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
-        enddo
-      enddo
-    enddo
-
-    do j=1,m1
-      do i=1,m2
-        C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
-      enddo
-    enddo
+    ! computes 1. matrix multiplication for tempx1,..
+    call mxm5_single(hprime_xx,m1,dummyx_loc,tempx1,m2)
+    ! computes 2. matrix multiplication for tempx2,..
+    call mxm5_3dmat_single(dummyx_loc,m1,hprime_xxT,m1,tempx2,NGLLX)
+    ! computes 3. matrix multiplication for tempx1,..
+    call mxm5_single(dummyx_loc,m2,hprime_xxT,tempx3,m1)
 
     DO_LOOP_IJK
 
@@ -373,37 +336,13 @@
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
-    do j=1,m2
-      do i=1,m1
-        E1_m1_m2_5points(i,j) = hprimewgll_xxT(i,1)*C1_m1_m2_5points(1,j) + &
-                                hprimewgll_xxT(i,2)*C1_m1_m2_5points(2,j) + &
-                                hprimewgll_xxT(i,3)*C1_m1_m2_5points(3,j) + &
-                                hprimewgll_xxT(i,4)*C1_m1_m2_5points(4,j) + &
-                                hprimewgll_xxT(i,5)*C1_m1_m2_5points(5,j)
-      enddo
-    enddo
 
-    do k = 1,NGLLX
-      do j=1,m1
-        do i=1,m1
-          newtempx2(i,j,k) = tempx2(i,1,k)*hprimewgll_xx(1,j) + &
-                             tempx2(i,2,k)*hprimewgll_xx(2,j) + &
-                             tempx2(i,3,k)*hprimewgll_xx(3,j) + &
-                             tempx2(i,4,k)*hprimewgll_xx(4,j) + &
-                             tempx2(i,5,k)*hprimewgll_xx(5,j)
-        enddo
-      enddo
-    enddo
-
-    do j=1,m1
-      do i=1,m2
-        E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
-                                    C1_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
-                                    C1_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
-                                    C1_mxm_m2_m1_5points(i,4)*hprimewgll_xx(4,j) + &
-                                    C1_mxm_m2_m1_5points(i,5)*hprimewgll_xx(5,j)
-      enddo
-    enddo
+    ! computes 1. matrix multiplication for newtempx1,..
+    call mxm5_single(hprimewgll_xxT,m1,tempx1,newtempx1,m2)
+    ! computes 2. matrix multiplication for tempx2,..
+    call mxm5_3dmat_single(tempx2,m1,hprimewgll_xx,m1,newtempx2,NGLLX)
+    ! computes 3. matrix multiplication for newtempx3,..
+    call mxm5_single(tempx3,m2,hprimewgll_xx,newtempx3,m1)
 
     ! sum contributions from each element to the global mesh and add gravity term
 
@@ -487,6 +426,87 @@
     endif
 
   enddo   ! spectral element loop
+
+  contains
+
+!--------------------------------------------------------------------------------------------
+!
+! matrix-matrix multiplications
+!
+! subroutines adapted from Deville, Fischer and Mund, High-order methods
+! for incompressible fluid flow, Cambridge University Press (2002),
+! pages 386 and 389 and Figure 8.3.1
+!
+!--------------------------------------------------------------------------------------------
+!
+! note: the matrix-matrix multiplications are used for very small matrices ( 5 x 5 x 5 elements);
+!       thus, calling external optimized libraries for these multiplications are in general slower
+!
+! please leave the routines here to help compilers inlining the code
+
+  subroutine mxm5_single(A,n1,B,C,n3)
+
+! 2-dimensional arrays (25,5)/(5,25)
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j=1,n3
+    do i=1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j)
+    enddo
+  enddo
+
+  end subroutine mxm5_single
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine mxm5_3dmat_single(A,n1,B,n2,C,n3)
+
+! 3-dimensional arrays (5,5,5) for A and C
+
+  use constants_solver,only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C
+
+  ! local parameters
+  integer :: i,j,k
+
+  ! matrix-matrix multiplication
+  do j=1,n2
+    do i=1,n1
+      ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
+      do k=1,n3
+        C(i,j,k) =  A(i,1,k) * B(1,j) &
+                  + A(i,2,k) * B(2,j) &
+                  + A(i,3,k) * B(3,j) &
+                  + A(i,4,k) * B(4,j) &
+                  + A(i,5,k) * B(5,j)
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxm5_3dmat_single
 
   end subroutine compute_forces_outer_core_Dev
 

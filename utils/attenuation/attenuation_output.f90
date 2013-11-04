@@ -21,7 +21,7 @@
     integer myrank, vnspec, process, iregion
     character(len=150) prname, LOCAL_PATH
     double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_AC)       :: one_minus_sum_beta, scale_factor
-    double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_AC) :: factor_common
+    double precision, dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_AC) :: factor_common
     double precision, dimension(N_SLS)                                         :: tau_s
     double precision T_c_source
 
@@ -56,9 +56,9 @@
        do k = 1, NGLLZ
           do j = 1, NGLLY
              do i = 1, NGLLX
-                write(*,*)' tau_mu(1) = ', factor_common(1,i,j,k,ispec)
-                write(*,*)' tau_mu(2) = ', factor_common(2,i,j,k,ispec)
-                write(*,*)' tau_mu(3) = ', factor_common(3,i,j,k,ispec)
+                write(*,*)' tau_mu(1) = ', factor_common(i,j,k,1,ispec)
+                write(*,*)' tau_mu(2) = ', factor_common(i,j,k,2,ispec)
+                write(*,*)' tau_mu(3) = ', factor_common(i,j,k,3,ispec)
                 write(*,*)' Qmu = ', scale_factor(i,j,k,ispec)
                 write(*,*)
              enddo
