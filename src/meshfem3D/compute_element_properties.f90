@@ -28,7 +28,9 @@
 ! compute several rheological and geometrical properties for a given spectral element
   subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec,myrank, &
-                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
+                         xelm,yelm,zelm,shape3D, &
+                         rmin,rmax, &
+                         rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                          gammaxstore,gammaystore,gammazstore,nspec_actually, &
@@ -99,6 +101,9 @@
   ! flag for transverse isotropic elements
   logical:: elem_is_tiso
 
+  ! note: at this point, the mesh is still perfectly spherical, thus no need to
+  !         convert the geocentric colatitude to a geographic colatitude
+
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
   elem_in_crust = .false.
@@ -153,9 +158,21 @@
         ! THREE_D_MODEL_S29EA
         ! THREE_D_MODEL_GLL
         ! which show significant transverse isotropy also below 220km depth
-        if( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO &
-          .or. idoubling(ispec)==IFLAG_670_220 ) then
-          elem_is_tiso = .true.
+        if( USE_VERSION_5_1_5) then
+          ! assignes TI only to elements below (2-layer) ficticious moho down to 670
+          if( idoubling(ispec)==IFLAG_220_80 &
+            .or. idoubling(ispec)==IFLAG_80_MOHO &
+            .or. idoubling(ispec)==IFLAG_670_220 ) then
+            elem_is_tiso = .true.
+          endif
+        else
+          ! assignes TI to elements in mantle elements just below actual moho down to 670
+          if( idoubling(ispec)==IFLAG_220_80 &
+            .or. idoubling(ispec)==IFLAG_80_MOHO &
+            .or. idoubling(ispec)==IFLAG_670_220 &
+            .or. (idoubling(ispec)==IFLAG_CRUST .and. elem_in_mantle ) ) then
+            elem_is_tiso = .true.
+          endif
         endif
       else if( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO ) then
         ! default case for PREM reference models:
@@ -192,9 +209,11 @@
   endif
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
+  !
   ! note:  using gll points to capture them results in a slightly more accurate mesh.
   !           however, it introduces more deformations to the elements which might lead to
   !           problems with the jacobian. using the anchors is therefore more robust.
+
   ! adds surface topography
   if( TOPOGRAPHY ) then
     if(idoubling(ispec) == IFLAG_CRUST .or. &
@@ -242,6 +261,7 @@
 
   ! make the Earth elliptical
   if(ELLIPTICITY) then
+    ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
     if( USE_GLL ) then
       ! make the Earth's ellipticity, use GLL points
       call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
@@ -256,9 +276,10 @@
   ! note: velocity values associated for each GLL point will "move" along together with
   !          their associated points. however, we don't re-calculate the velocity model values since the
   !          models are/should be referenced with respect to a spherical Earth.
-  if( .not. USE_GLL) &
+  if( .not. USE_GLL) then
     call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                       xstore,ystore,zstore,shape3D)
+  endif
 
   ! updates jacobian
   ! (only needed for second meshing phase)

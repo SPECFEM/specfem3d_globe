@@ -27,58 +27,63 @@
 
   subroutine add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
 
+! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
+
   use constants
 
   implicit none
 
-  integer myrank
+  integer :: myrank
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision :: xelm(NGNOD)
+  double precision :: yelm(NGNOD)
+  double precision :: zelm(NGNOD)
 
-  double precision RTOPDDOUBLEPRIME,RCMB
+  double precision :: RTOPDDOUBLEPRIME,RCMB
 
-  integer ia
+  ! local parameters
+  integer :: ia
 
-  double precision r_start,topocmb
+  double precision :: r_start,topocmb
 
-  double precision r,theta,phi
-  double precision gamma
+  double precision :: r,lat,lon
+  double precision :: x,y,z
+  double precision :: gamma
 
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
-! convert to r theta phi
-    call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
-    theta = theta + 0.0000001d0
-    phi = phi + 0.0000001d0
-    call reduce(theta,phi)
+    x = xelm(ia)
+    y = xelm(ia)
+    z = xelm(ia)
 
-! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user
-!   call subtopo_cmb(theta,phi,topocmb)
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+
+    ! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user
+    !   call subtopo_cmb(lat,lon,topocmb)
     topocmb = 0.0d0
 
-! non-dimensionalize the topography, which is in km
-! positive for a depression, so change the sign for a perturbation in radius
+    ! non-dimensionalize the topography, which is in km
+    ! positive for a depression, so change the sign for a perturbation in radius
     topocmb = -topocmb / R_EARTH_KM
 
-! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
-! and finish at RTOPDDOUBLEPRIME (D'')
+    ! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
+    ! and finish at RTOPDDOUBLEPRIME (D'')
     r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_EARTH
     gamma = 0.0d0
     if(r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then
-! stretching between RCMB and RTOPDDOUBLEPRIME
+      ! stretching between RCMB and RTOPDDOUBLEPRIME
       gamma = (RTOPDDOUBLEPRIME/R_EARTH - r) / (RTOPDDOUBLEPRIME/R_EARTH - RCMB/R_EARTH)
     else if(r>= r_start .and. r <= RCMB/R_EARTH) then
-! stretching between r_start and RCMB
+      ! stretching between r_start and RCMB
       gamma = (r - r_start) / (RCMB/R_EARTH - r_start)
     endif
     if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for CMB topography')
 
-    xelm(ia) = xelm(ia)*(ONE + gamma * topocmb / r)
-    yelm(ia) = yelm(ia)*(ONE + gamma * topocmb / r)
-    zelm(ia) = zelm(ia)*(ONE + gamma * topocmb / r)
+    xelm(ia) = x*(ONE + gamma * topocmb / r)
+    yelm(ia) = y*(ONE + gamma * topocmb / r)
+    zelm(ia) = z*(ONE + gamma * topocmb / r)
 
   enddo
 

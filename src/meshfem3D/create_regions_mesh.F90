@@ -178,11 +178,11 @@
     call crm_setup_mpi_buffers(npointot,nspec,iregion_code)
 
 
-    ! sets up Stacey absorbing boundary indices
+    ! sets up Stacey absorbing boundary indices (nimin,nimax,..)
     if(NCHUNKS /= 6) then
       call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
-          njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
-          NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
+                      njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
+                      NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
     endif
 
   ! only create mass matrix and save all the final arrays in the second pass
@@ -195,18 +195,18 @@
       call flush_IMAIN()
     endif
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
-              dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-              jacobian2D_xmin,jacobian2D_xmax, &
-              jacobian2D_ymin,jacobian2D_ymax, &
-              jacobian2D_bottom,jacobian2D_top, &
-              normal_xmin,normal_xmax, &
-              normal_ymin,normal_ymax, &
-              normal_bottom,normal_top, &
-              NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
-              xigll,yigll,zigll)
+                                 dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+                                 ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+                                 nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+                                 jacobian2D_xmin,jacobian2D_xmax, &
+                                 jacobian2D_ymin,jacobian2D_ymax, &
+                                 jacobian2D_bottom,jacobian2D_top, &
+                                 normal_xmin,normal_xmax, &
+                                 normal_ymin,normal_ymax, &
+                                 normal_bottom,normal_top, &
+                                 NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+                                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
+                                 xigll,yigll,zigll)
 
     ! create chunk buffers if more than one chunk
     call synchronize_all()
@@ -222,9 +222,9 @@
 
     ! only deallocates after second pass
     deallocate(ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-              ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
-              xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
-              xyz1D_leftxi_righteta,xyz1D_rightxi_righteta)
+               ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+               xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+               xyz1D_leftxi_righteta,xyz1D_rightxi_righteta)
 
     ! setup mpi communication interfaces
     call synchronize_all()
@@ -348,9 +348,13 @@
     if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
-    call create_mass_matrices(myrank,nspec,nglob,idoubling,ibool, &
+    ! note: for stacey boundaries, needs indexing nimin,.. filled in in first pass
+    call create_mass_matrices(nspec,nglob,idoubling,ibool, &
                               iregion_code,xstore,ystore,zstore, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM)
+
+    ! Stacey
+    deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
 
     ! save the binary files
     call synchronize_all()
@@ -376,8 +380,6 @@
     deallocate(rmassx,rmassy,rmassz)
     deallocate(b_rmassx,b_rmassy)
     deallocate(rmass_ocean_load)
-    ! Stacey
-    deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
 
     ! saves MPI interface infos
     call save_arrays_solver_MPI(iregion_code)
@@ -558,26 +560,26 @@
     nspec_ani = 1
   endif
   allocate(c11store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c12store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c13store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c14store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c15store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c16store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c22store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c23store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c24store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c25store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c26store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c33store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c34store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c35store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c36store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c44store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c45store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c46store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c55store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c56store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
-          c66store(NGLLX,NGLLY,NGLLZ,nspec_ani),stat=ier)
+           c12store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c13store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c14store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c15store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c16store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c22store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c23store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c24store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c25store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c26store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c33store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c34store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c35store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c36store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c44store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c45store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c46store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c55store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c56store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+           c66store(NGLLX,NGLLY,NGLLZ,nspec_ani),stat=ier)
   if(ier /= 0) stop 'error in allocate 9'
 
   c11store(:,:,:,:) = 0.0; c12store(:,:,:,:) = 0.0; c13store(:,:,:,:) = 0.0
@@ -649,11 +651,14 @@
                nkmin_eta(1,1),stat=ier)
       if(ier /= 0) stop 'error in allocate 14'
     endif
+
+    ! initializes boundary indices only during first pass, we need then the stored index values
+    ! for creating mass matrices for stacey in second pass
+    nimin(:,:) = 0; nimax(:,:) = 0
+    njmin(:,:) = 0; njmax(:,:) = 0
+    nkmin_xi(:,:) = 0; nkmin_eta(:,:) = 0
   endif
 
-  nimin(:,:) = 0; nimax(:,:) = 0
-  njmin(:,:) = 0; njmax(:,:) = 0
-  nkmin_xi(:,:) = 0; nkmin_eta(:,:) = 0
 
   ! MPI cut-planes parameters along xi and along eta
   allocate(iMPIcut_xi(2,nspec), &
@@ -707,7 +712,6 @@
     if(ier /= 0) stop 'error in allocate 15b'
 
     iboolcorner(:,:) = 0; iboolfaces(:,:) = 0
-
   endif
 
   ! store and save the final arrays only in the second pass

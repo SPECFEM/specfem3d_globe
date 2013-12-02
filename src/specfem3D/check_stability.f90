@@ -360,7 +360,8 @@
   !  rval = xstore_crust_mantle(indx(1))
   !  thetaval = ystore_crust_mantle(indx(1))
   !  phival = zstore_crust_mantle(indx(1))
-  !  !thetaval = PI_OVER_TWO-datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dsin(dble(thetaval))))
+  !
+  !  !call geocentric_2_geographic_cr(thetaval,thetaval)
   !  print*,'r/lat/lon:',rval*R_EARTH_KM,90.0-thetaval*180./PI,phival*180./PI
   !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
   !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))

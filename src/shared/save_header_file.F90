@@ -216,12 +216,12 @@
     gamma=ONE/dsqrt(ONE+x*x+y*y)
     rgt=R_UNIT_SPHERE*gamma
 
-! define the mesh points at the top surface
+    ! define the mesh points at the top surface
     x_top=-y*rgt
     y_top=x*rgt
     z_top=rgt
 
-! rotate top
+    ! rotate top
     vector_ori(1) = x_top
     vector_ori(2) = y_top
     vector_ori(3) = z_top
@@ -235,15 +235,16 @@
     y_top = vector_rotated(2)
     z_top = vector_rotated(3)
 
-! convert to latitude and longitude
+    ! convert to latitude and longitude
     call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
     call reduce(theta_corner,phi_corner)
 
-! convert geocentric to geographic colatitude
-    colat_corner=PI_OVER_TWO-datan(1.006760466d0*dcos(theta_corner)/dmax1(TINYVAL,dsin(theta_corner)))
+    ! convert geocentric to geographic colatitude
+    call geocentric_2_geographic_dble(theta_corner,colat_corner)
+
     if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
 
-! compute real position of the source
+    ! compute real position of the source
     lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
     long = phi_corner*RADIANS_TO_DEGREES
 

@@ -82,15 +82,15 @@
 
   ! allocates model arrays
   allocate(Mref_V_radius_ref(NR_REF), &
-          Mref_V_density_ref(NR_REF), &
-          Mref_V_vpv_ref(NR_REF), &
-          Mref_V_vph_ref(NR_REF), &
-          Mref_V_vsv_ref(NR_REF), &
-          Mref_V_vsh_ref(NR_REF), &
-          Mref_V_eta_ref(NR_REF), &
-          Mref_V_Qkappa_ref(NR_REF), &
-          Mref_V_Qmu_ref(NR_REF), &
-          stat=ier)
+           Mref_V_density_ref(NR_REF), &
+           Mref_V_vpv_ref(NR_REF), &
+           Mref_V_vph_ref(NR_REF), &
+           Mref_V_vsv_ref(NR_REF), &
+           Mref_V_vsh_ref(NR_REF), &
+           Mref_V_eta_ref(NR_REF), &
+           Mref_V_Qkappa_ref(NR_REF), &
+           Mref_V_Qmu_ref(NR_REF), &
+           stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating Mref_V arrays')
 
   ! all processes will define same parameters

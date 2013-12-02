@@ -687,10 +687,7 @@
             call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
 
             ! note: converts the geocentric colatitude to a geographic colatitude
-            if(.not. ASSUME_PERFECT_SPHERE) then
-              thetaval = PI_OVER_TWO - &
-                      datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dble(sin(thetaval))))
-            endif
+            call geocentric_2_geographic_cr(thetaval,thetaval)
 
             ! gets geographic latitude and longitude in degrees
             lat = (PI_OVER_TWO-thetaval)*RADIANS_TO_DEGREES

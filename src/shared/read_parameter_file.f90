@@ -281,36 +281,35 @@
     print*
   endif
 
+  ! checks flags when perfect sphere is set
+  if( ASSUME_PERFECT_SPHERE ) then
+    if( ELLIPTICITY ) then
+      stop 'ELLIPTICITY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
+    endif
+    if( TOPOGRAPHY ) then
+      stop 'TOPOGRAPHY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
+    endif
+  endif
+
 !----------------------------------------------
 !
 ! status of implementation
 !
 !----------------------------------------------
-!daniel debug:
+!
 ! please remove these security checks only after validating new features
 
 !! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  !if( ADIOS_ENABLED ) &
-  !  stop 'ADIOS_ENABLED support not implemented yet'
-  !if( ADIOS_ENABLED .and. GPU_MODE ) &
-  !  stop 'ADIOS_ENABLED support not implemented yet for GPU_MODE'
   if( ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
     stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
   if( ADIOS_ENABLED .and. UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 ) &
     stop 'ADIOS_ENABLED support not implemented yet for UNDO_ATTENUATION and SIMULATION_TYPE == 3'
 
-  !if( USE_LDDRK ) &
-  !  stop 'USE_LDDRK support not implemented yet'
   if( USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
     stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
   if( USE_LDDRK .and. GPU_MODE ) &
     stop 'USE_LDDRK support not implemented yet for GPU simulations'
 
-  if( EXACT_MASS_MATRIX_FOR_ROTATION .and. GPU_MODE ) &
-    stop 'EXACT_MASS_MATRIX_FOR_ROTATION support not implemented yet for GPU simulations'
-
-  !if( UNDO_ATTENUATION ) &
-  !  stop 'UNDO_ATTENUATION support not implemented yet'
   if( UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
   if( UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &

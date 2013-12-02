@@ -146,7 +146,7 @@
 
   ! read all the sources
   if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                              DT,NSOURCES,min_tshift_cmt_original)
+                               DT,NSOURCES,min_tshift_cmt_original)
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(tshift_cmt,NSOURCES)
@@ -243,11 +243,7 @@
       isource = isource_in_this_subset + isources_already_done
 
       ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-      if(ASSUME_PERFECT_SPHERE) then
-        theta = PI_OVER_TWO - lat(isource)*DEGREES_TO_RADIANS
-      else
-        theta = PI_OVER_TWO - atan(0.99329534d0*dtan(lat(isource)*DEGREES_TO_RADIANS))
-      endif
+      call lat_2_geocentric_colat_dble(lat(isource),theta)
 
       phi = long(isource)*DEGREES_TO_RADIANS
       call reduce(theta,phi)
@@ -684,9 +680,10 @@
                                  r_found_source,theta_source(isource),phi_source(isource))
         call reduce(theta_source(isource),phi_source(isource))
 
-        ! convert geocentric to geographic colatitude
-        colat_source = PI_OVER_TWO &
-          - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
+        ! converts geocentric to geographic colatitude
+        call geocentric_2_geographic_dble(theta_source(isource),colat_source)
+
+        ! brings longitude between -PI and PI
         if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
         write(IMAIN,*)

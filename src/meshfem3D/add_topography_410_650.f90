@@ -44,8 +44,9 @@
   real(kind=4) topo410out,topo650out
   double precision topo410,topo650
 
-  double precision r,theta,phi
-  double precision gamma
+  double precision :: r,lat,lon
+  double precision :: gamma
+  double precision :: x,y,z
 
 !! DK DK added this safety test for now
   stop 'there is a currently a bug in this routine, it makes the mesher crash'
@@ -53,57 +54,44 @@
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
-! convert to r theta phi
-!! DK DK old
-!   call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
-!   call reduce(theta,phi)
-!! DK DK new
-    ! gets elevation of point
-    ! convert to r theta phi
-    ! slightly move points to avoid roundoff problem when exactly on the polar axis
-    call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
-    theta = theta + 0.0000001d0
-    phi = phi + 0.0000001d0
-    call reduce(theta,phi)
+    x = xelm(ia)
+    y = xelm(ia)
+    z = xelm(ia)
 
-!! DK DK old
-! get colatitude in degrees
-!   xcolat = sngl(theta*RADIANS_TO_DEGREES)  !! DK DK bug here, confusion between theta and PI_OVER_TWO - theta
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
-!! DK DK new
-    ! convert the geocentric colatitude to a geographic colatitude in degrees
-    xcolat = sngl((PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))) * RADIANS_TO_DEGREES)
+    ! converts lat/lon to (real) colat/lon in degrees
+    xcolat = sngl(90.d0 - lat)     ! colatitude
+    xlon = sngl(lon)
 
-    ! get geographic longitude in degrees
-    xlon = sngl(phi * RADIANS_TO_DEGREES)
-
-! compute topography on 410 and 650 at current point
+    ! compute topography on 410 and 650 at current point
     call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
-! non-dimensionalize the topography, which is in km
-! positive for a depression, so change the sign for a perturbation in radius
+    ! non-dimensionalize the topography, which is in km
+    ! positive for a depression, so change the sign for a perturbation in radius
     topo410 = -dble(topo410out) / R_EARTH_KM
     topo650 = -dble(topo650out) / R_EARTH_KM
 
     gamma = 0.d0
     if(r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
-! stretching between R220 and R400
+      ! stretching between R220 and R400
       gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
-      xelm(ia) = xelm(ia)*(ONE + gamma * topo410 / r)
-      yelm(ia) = yelm(ia)*(ONE + gamma * topo410 / r)
-      zelm(ia) = zelm(ia)*(ONE + gamma * topo410 / r)
+      xelm(ia) = x*(ONE + gamma * topo410 / r)
+      yelm(ia) = y*(ONE + gamma * topo410 / r)
+      zelm(ia) = z*(ONE + gamma * topo410 / r)
     else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
-! stretching between R771 and R670
+      ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
-      xelm(ia) = xelm(ia)*(ONE + gamma * topo650 / r)
-      yelm(ia) = yelm(ia)*(ONE + gamma * topo650 / r)
-      zelm(ia) = zelm(ia)*(ONE + gamma * topo650 / r)
+      xelm(ia) = x*(ONE + gamma * topo650 / r)
+      yelm(ia) = y*(ONE + gamma * topo650 / r)
+      zelm(ia) = z*(ONE + gamma * topo650 / r)
     else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
-! stretching between R670 and R400
+      ! stretching between R670 and R400
       gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
-      xelm(ia) = xelm(ia)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
-      yelm(ia) = yelm(ia)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
-      zelm(ia) = zelm(ia)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
+      xelm(ia) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
+      yelm(ia) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
+      zelm(ia) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
     endif
     if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
@@ -135,8 +123,9 @@
   real(kind=4) topo410out,topo650out
   double precision topo410,topo650
 
-  double precision r,theta,phi
-  double precision gamma
+  double precision :: r,lat,lon
+  double precision :: gamma
+  double precision :: x,y,z
 
 !! DK DK added this safety test for now
   stop 'there is a currently a bug in this routine, it makes the mesher crash'
@@ -146,54 +135,46 @@
      do j = 1,NGLLY
         do i = 1,NGLLX
 
-        ! gets elevation of point
-        ! convert to r theta phi
-        ! slightly move points to avoid roundoff problem when exactly on the polar axis
-        call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
-        theta = theta + 0.0000001d0
-        phi = phi + 0.0000001d0
-        call reduce(theta,phi)
+          x = xstore(i,j,k,ispec)
+          y = ystore(i,j,k,ispec)
+          z = zstore(i,j,k,ispec)
 
-!! DK DK old
-! get colatitude in degrees
-!       xcolat = sngl(theta*RADIANS_TO_DEGREES)  !! DK DK bug here, confusion between theta and PI_OVER_TWO - theta
+          ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+          call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
-!! DK DK new
-        ! convert the geocentric colatitude to a geographic colatitude in degrees
-        xcolat = sngl((PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))) * RADIANS_TO_DEGREES)
+          ! converts lat/lon to (real) colat/lon in degrees
+          xcolat = sngl(90.d0 - lat)     ! colatitude
+          xlon = sngl(lon)
 
-        ! get geographic longitude in degrees
-        xlon = sngl(phi * RADIANS_TO_DEGREES)
+          ! compute topography on 410 and 650 at current point
+          call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
-        ! compute topography on 410 and 650 at current point
-        call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
+          ! non-dimensionalize the topography, which is in km
+          ! positive for a depression, so change the sign for a perturbation in radius
+          topo410 = -dble(topo410out) / R_EARTH_KM
+          topo650 = -dble(topo650out) / R_EARTH_KM
 
-        ! non-dimensionalize the topography, which is in km
-        ! positive for a depression, so change the sign for a perturbation in radius
-        topo410 = -dble(topo410out) / R_EARTH_KM
-        topo650 = -dble(topo650out) / R_EARTH_KM
-
-        gamma = 0.d0
-        if(r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
-        ! stretching between R220 and R400
-                gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
-                xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * topo410 / r)
-                ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * topo410 / r)
-                zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * topo410 / r)
-        else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
-        ! stretching between R771 and R670
-                gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
-                xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * topo650 / r)
-                ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * topo650 / r)
-                zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * topo650 / r)
-        else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
-        ! stretching between R670 and R400
-                gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
-                xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
-                ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
-                zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
-        endif
-        if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
+          gamma = 0.d0
+          if(r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
+          ! stretching between R220 and R400
+                  gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
+                  xstore(i,j,k,ispec) = x*(ONE + gamma * topo410 / r)
+                  ystore(i,j,k,ispec) = y*(ONE + gamma * topo410 / r)
+                  zstore(i,j,k,ispec) = z*(ONE + gamma * topo410 / r)
+          else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+          ! stretching between R771 and R670
+                  gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
+                  xstore(i,j,k,ispec) = x*(ONE + gamma * topo650 / r)
+                  ystore(i,j,k,ispec) = y*(ONE + gamma * topo650 / r)
+                  zstore(i,j,k,ispec) = z*(ONE + gamma * topo650 / r)
+          else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
+          ! stretching between R670 and R400
+                  gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
+                  xstore(i,j,k,ispec) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
+                  ystore(i,j,k,ispec) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
+                  zstore(i,j,k,ispec) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
+          endif
+          if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
         enddo
      enddo

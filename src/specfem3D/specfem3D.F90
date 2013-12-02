@@ -410,7 +410,7 @@
 !             however, declaring the static arrays needed in compute_forces_crust_mantle_Dev()
 !             like e.g. sum_terms, tempx1,... in this main routine and
 !             passing them along as arguments to the routine makes the code slower.
-!             it seems that this stack/heap criterion is more complicated, 
+!             it seems that this stack/heap criterion is more complicated,
 !             and inlining functions is a performance criteria as well.
 !
 !             for vectorization, we asssume that arrays have contiguous memory allocated. this holds true for most compilers and

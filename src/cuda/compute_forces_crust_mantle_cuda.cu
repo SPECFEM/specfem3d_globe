@@ -95,7 +95,7 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
 
   realw R_xx_val,R_yy_val;
   int offset_sls;
-  
+
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // index
     // note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
@@ -105,7 +105,7 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
     //   (i_sls,i,j,k,ispec) -> offset_sls = i_sls + N_SLS*(tx + NGLL3*working_element)
     //   (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
     offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
-    
+
     R_xx_val = R_xx[offset_sls];
     R_yy_val = R_yy[offset_sls];
 
@@ -139,7 +139,7 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
   realw alphaval_loc,betaval_loc,gammaval_loc;
   realw factor_loc,Sn,Snp1;
   int offset_sls;
-  
+
   // shear moduli for common factor (only Q_mu attenuation)
   if( ANISOTROPY ){
     fac = d_c44store[tx + NGLL3_PADDED * working_element];
@@ -170,7 +170,7 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
 
-    
+
     // term in xx
     Sn   = factor_loc * epsilondev_xx[tx + NGLL3 * working_element]; //(i,j,k,ispec)
     Snp1   = factor_loc * epsilondev_xx_loc; //(i,j,k)

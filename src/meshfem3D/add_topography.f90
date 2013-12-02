@@ -43,28 +43,21 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
-  double precision :: lat,lon,elevation
-  double precision :: r,theta,phi,colat
+  double precision :: r,lat,lon,elevation
+  double precision :: x,y,z
   double precision :: gamma
+
   integer :: ia
 
   ! we loop on all the points of the element
   do ia = 1,NGNOD
 
-    ! gets elevation of point
-    ! convert to r theta phi
-    ! slightly move points to avoid roundoff problem when exactly on the polar axis
-    call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
-    theta = theta + 0.0000001d0
-    phi = phi + 0.0000001d0
-    call reduce(theta,phi)
+    x = xelm(ia)
+    y = yelm(ia)
+    z = zelm(ia)
 
-    ! convert the geocentric colatitude to a geographic colatitude
-    colat = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-
-    ! get geographic latitude and longitude in degrees
-    lat = (PI_OVER_TWO - colat) * RADIANS_TO_DEGREES
-    lon = phi * RADIANS_TO_DEGREES
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
     ! compute elevation at current point
     call get_topo_bathy(lat,lon,elevation,ibathy_topo)
@@ -79,9 +72,9 @@
     ! also make sure gamma makes sense
     if(gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
 
-    xelm(ia) = xelm(ia)*(ONE + gamma * elevation / r)
-    yelm(ia) = yelm(ia)*(ONE + gamma * elevation / r)
-    zelm(ia) = zelm(ia)*(ONE + gamma * elevation / r)
+    xelm(ia) = x*(ONE + gamma * elevation / r)
+    yelm(ia) = y*(ONE + gamma * elevation / r)
+    zelm(ia) = z*(ONE + gamma * elevation / r)
 
   enddo
 
@@ -113,54 +106,47 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters used in this subroutine
-  integer:: i,j,k
-  double precision:: r,theta,phi,colat
-  double precision:: lat,lon,elevation,gamma
+  integer :: i,j,k
+  double precision :: r,lat,lon,elevation,gamma
+  double precision :: x,y,z
 
   do k = 1,NGLLZ
-     do j = 1,NGLLY
-        do i = 1,NGLLX
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
-           ! convert to r theta phi
-           ! slightly move points to avoid roundoff problem when exactly on the polar axis
-           call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),&
-                                          r,theta,phi)
-           theta = theta + 0.0000001d0
-           phi = phi + 0.0000001d0
-           call reduce(theta,phi)
+        x = xstore(i,j,k,ispec)
+        y = ystore(i,j,k,ispec)
+        z = zstore(i,j,k,ispec)
 
-           ! convert the geocentric colatitude to a geographic colatitude
-           colat = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+        ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+        call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
-           ! get geographic latitude and longitude in degrees
-           lat = (PI_OVER_TWO - colat) * RADIANS_TO_DEGREES
-           lon = phi * RADIANS_TO_DEGREES
+        ! compute elevation at current point
+        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
-           ! compute elevation at current point
-           call get_topo_bathy(lat,lon,elevation,ibathy_topo)
-           ! non-dimensionalize the elevation, which is in meters
+        ! non-dimensionalize the elevation, which is in meters
+        elevation = elevation / R_EARTH
 
-           elevation = elevation / R_EARTH
+        ! stretching topography between d220 and the surface
+        gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
 
-           ! stretching topography between d220 and the surface
-           gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+        ! add elevation to all the points of that element
+        ! also make sure factor makes sense
+        if(gamma < -0.02 .or. gamma > 1.02) then
+          call exit_MPI(myrank,'incorrect value of factor for topography gll points')
+        endif
 
-           ! add elevation to all the points of that element
-           ! also make sure factor makes sense
-           if(gamma < -0.02 .or. gamma > 1.02) then
-                call exit_MPI(myrank,'incorrect value of factor for topography gll points')
-           endif
+        ! since not all GLL points are exactlly at R220, use a small
+        ! tolerance for R220 detection
+        if (abs(gamma) < SMALLVAL) then
+          gamma = 0.d0
+        endif
 
-           ! since not all GLL points are exactlly at R220, use a small
-           ! tolerance for R220 detection
-           if (abs(gamma) < SMALLVAL) then
-               gamma = 0.0
-           endif
-           xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * elevation / r)
-           ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * elevation / r)
-           zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * elevation / r)
-
-        enddo
-     enddo
+        xstore(i,j,k,ispec) = x*(ONE + gamma * elevation / r)
+        ystore(i,j,k,ispec) = y*(ONE + gamma * elevation / r)
+        zstore(i,j,k,ispec) = z*(ONE + gamma * elevation / r)
+      enddo
+    enddo
   enddo
+
   end subroutine add_topography_gll
