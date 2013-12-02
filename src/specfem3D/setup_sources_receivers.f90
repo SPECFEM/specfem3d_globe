@@ -85,6 +85,13 @@
   ! makes smaller hdur for movies
   logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
 
+  ! user output
+  if( myrank == 0 ) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'sources:'
+    call flush_IMAIN()
+  endif
+
   ! allocate arrays for source
   allocate(islice_selected_source(NSOURCES), &
            ispec_selected_source(NSOURCES), &
@@ -119,7 +126,8 @@
   if(myrank == 0) then
   ! write source and receiver VTK files for Paraview
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
-    open(IOVTK,file=trim(filename),status='unknown')
+    open(IOVTK,file=trim(filename),status='unknown',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening temporary file sr_temp.vtk')
     write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
     write(IOVTK,'(a)') 'Source and Receiver VTK file'
     write(IOVTK,'(a)') 'ASCII'
@@ -324,6 +332,13 @@
   character(len=256) :: filename,adj_source_file
   character(len=2) :: bic
   integer :: ier
+
+  ! user output
+  if( myrank == 0 ) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'receivers:'
+    call flush_IMAIN()
+  endif
 
   ! allocate memory for receiver arrays
   allocate(islice_selected_rec(nrec), &

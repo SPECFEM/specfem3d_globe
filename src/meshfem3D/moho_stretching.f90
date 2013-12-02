@@ -73,15 +73,24 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    ! converts location to lat/lon
-    call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-    call reduce(theta,phi)
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    if( USE_VERSION_5_1_5 ) then
+      ! note: at this point, the mesh is still perfectly spherical, thus no need to
+      !         convert the geocentric colatitude to a geographic colatitude
+      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+      call reduce(theta,phi)
+      lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+      lon = phi * RADIANS_TO_DEGREES
+    else
+      ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
+      !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon),
+      !       thus correcting geocentric latitude for ellipticity
+      !
+      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    endif
 
-    ! get geographic latitude and longitude in degrees
-    ! note: at this point, the mesh is still perfectly spherical, thus no need to
-    !         convert the geocentric colatitude to a geographic colatitude
-    lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-    lon = phi * RADIANS_TO_DEGREES
+    ! sets longitude bounds [-180,180]
     if( lon > 180.0d0 ) lon = lon - 360.0d0
 
     ! initializes
@@ -96,9 +105,7 @@
     !          nevertheless its moho depth should be set and will be used in linear stretching
     if( moho < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
 
-    if( USE_VERSION_5_1_5 ) then
-      ! continue
-    else
+    if( .not. USE_VERSION_5_1_5 ) then
       ! limits moho depth to a threshold value to avoid stretching problems
       if( moho < MOHO_MINIMUM ) then
         print*,'moho value exceeds minimum: ',moho,MOHO_MINIMUM,'in km: ',moho*R_EARTH_KM
@@ -229,7 +236,7 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_VERSION_5_1_5
 
   use meshfem3D_par,only: &
     R220
@@ -259,11 +266,24 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-    call reduce(theta,phi)
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    if( USE_VERSION_5_1_5 ) then
+      ! note: at this point, the mesh is still perfectly spherical, thus no need to
+      !         convert the geocentric colatitude to a geographic colatitude
+      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+      call reduce(theta,phi)
+      lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+      lon = phi * RADIANS_TO_DEGREES
+    else
+      ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
+      !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon),
+      !       thus correcting geocentric latitude for ellipticity
+      !
+      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    endif
 
-    lat = 90.d0 - theta * RADIANS_TO_DEGREES
-    lon = phi * RADIANS_TO_DEGREES
+    ! sets longitude bounds [-180,180]
     if( lon > 180.d0 ) lon = lon - 360.0d0
 
     ! initializes
@@ -601,7 +621,7 @@
 
 ! moves a point to a new location defined by gamma,elevation and r
 
-  use constants
+  use constants,only: NGNOD,ONE
 
   implicit none
 

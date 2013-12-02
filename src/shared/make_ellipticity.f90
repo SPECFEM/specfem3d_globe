@@ -30,30 +30,35 @@
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
 
-  use constants
+  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV
 
   implicit none
 
-  integer nspl
+  integer :: nspl
 
-  logical ONE_CRUST
+  double precision,dimension(NR) :: rspl,espl,espl2
 
-! radius of the Earth for gravity calculation
-  double precision, parameter :: R_EARTH_ELLIPTICITY = 6371000.d0
-! radius of the ocean floor for gravity calculation
-  double precision, parameter :: ROCEAN_ELLIPTICITY = 6368000.d0
+  logical :: ONE_CRUST
 
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  integer i
-  double precision ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670, &
+  ! local parameters
+  integer :: i
+  ! radii
+  double precision :: ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670, &
                    R771,RTOPDDOUBLEPRIME,RCMB,RICB
-  double precision r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
-  double precision r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
-  double precision r(NR),rho(NR),epsilonval(NR),eta(NR)
-  double precision radau(NR),z,k(NR),g_a,bom,exponentval,i_rho,i_radau
-  double precision s1(NR),s2(NR),s3(NR)
-  double precision yp1,ypn
+  double precision :: r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
+  double precision :: r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
+
+  double precision,dimension(NR) :: r,rho,epsilonval,eta
+  double precision,dimension(NR) :: radau,k
+  double precision,dimension(NR) :: s1,s2,s3
+
+  double precision :: z,g_a,bom,exponentval,i_rho,i_radau
+  double precision :: yp1,ypn
+
+  ! radius of the Earth for gravity calculation
+  double precision, parameter :: R_EARTH_ELLIPTICITY = 6371000.d0
+  ! radius of the ocean floor for gravity calculation
+  double precision, parameter :: ROCEAN_ELLIPTICITY = 6368000.d0
 
 ! PREM
   ROCEAN = 6368000.d0

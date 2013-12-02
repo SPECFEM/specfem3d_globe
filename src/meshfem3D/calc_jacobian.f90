@@ -175,6 +175,9 @@
         ! note: when honoring the moho, we squeeze and stretch elements
         !          thus, it can happen that with a coarse mesh resolution, the jacobian encounters problems
         if(jacobian <= VERYSMALLVAL) then
+          ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
+          !
+          ! converts position to geocentric coordinates
           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
           print*,'error jacobian rank:',myrank
           print*,'  location r/lat/lon: ',r*R_EARTH_KM, &

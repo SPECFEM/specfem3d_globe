@@ -29,7 +29,7 @@
 
   subroutine euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
-  use constants
+  use constants,only: DEGREES_TO_RADIANS
 
   implicit none
 

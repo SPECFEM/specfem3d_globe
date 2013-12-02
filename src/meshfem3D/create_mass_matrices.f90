@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_mass_matrices(myrank,nspec,nglob,idoubling,ibool, &
+  subroutine create_mass_matrices(nspec,nglob,idoubling,ibool, &
                                   iregion_code,xstore,ystore,zstore, &
                                   NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
@@ -47,7 +47,7 @@
     OCEANS
 
   use meshfem3D_par,only: &
-    NCHUNKS,ABSORBING_CONDITIONS, &
+    myrank,NCHUNKS,ABSORBING_CONDITIONS, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,INCLUDE_CENTRAL_CUBE
 
   use create_regions_mesh_par,only: &
@@ -60,8 +60,6 @@
     nglob_xy
 
   implicit none
-
-  integer :: myrank
 
   integer :: nspec,nglob
   integer,dimension(nspec) :: idoubling
@@ -182,7 +180,7 @@
   ! absorbing boundaries
   ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
   if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
-    call create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code,NSPEC2D_BOTTOM)
+    call create_mass_matrices_Stacey(nspec,ibool,iregion_code,NSPEC2D_BOTTOM)
   endif
 
   ! check that mass matrix is positive
@@ -229,7 +227,7 @@
   use constants
 
   use meshfem3D_par,only: &
-    DT
+    myrank,DT
 
   use create_regions_mesh_par,only: &
     wxgll,wygll,wzgll
@@ -240,8 +238,6 @@
     rmassx,rmassy,b_rmassx,b_rmassy
 
   implicit none
-
-!!!!!!!!!!!  integer :: myrank
 
   integer :: nspec
 
@@ -257,6 +253,12 @@
   real(kind=CUSTOM_REAL) :: deltat,two_omega_earth_dt,b_two_omega_earth_dt,scale_t_inv
 
   integer :: ispec,i,j,k,iglob
+
+  ! user output
+  if( myrank == 0) then
+    write(IMAIN,*) '    creates exact mass matrix for rotation'
+    call flush_IMAIN()
+  endif
 
   ! use the non-dimensional time step to make the mass matrix correction
   deltat = DT*dsqrt(PI*GRAV*RHOAV)
@@ -341,7 +343,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine create_mass_matrices_Stacey(myrank,nspec,ibool,iregion_code, &
+  subroutine create_mass_matrices_Stacey(nspec,ibool,iregion_code, &
                                         NSPEC2D_BOTTOM)
 
 ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
@@ -351,7 +353,7 @@
   use constants
 
   use meshfem3D_par,only: &
-    DT,NCHUNKS,ichunk, &
+    myrank,DT,NCHUNKS,ichunk, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
   use create_regions_mesh_par,only: &
@@ -368,8 +370,6 @@
     nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
 
   implicit none
-
-  integer :: myrank
 
   integer :: nspec
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -391,6 +391,12 @@
 
   integer :: ispec,i,j,k,iglob
   integer :: ispec2D
+
+  ! user output
+  if( myrank == 0) then
+    write(IMAIN,*) '    updates mass matrix with Stacey boundary corrections'
+    call flush_IMAIN()
+  endif
 
   ! checks if we have absorbing boundary arrays
   if( .not. allocated(nimin) ) call exit_MPI(myrank,'error Stacey array not allocated')
@@ -787,7 +793,7 @@
     TOPOGRAPHY,ibathy_topo,CASE_3D
 
   use meshfem3D_par,only: &
-    RHO_OCEANS
+    myrank,RHO_OCEANS
 
   use create_regions_mesh_par,only: &
     wxgll,wygll
@@ -798,8 +804,6 @@
 
   implicit none
 
-!!!!!!!!!!!  integer :: myrank
-
   integer :: nspec
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
 
@@ -809,13 +813,19 @@
   integer :: NSPEC2D_TOP
 
   ! local parameters
-  double precision :: xval,yval,zval,rval,theta,phi,weight
+  double precision :: x,y,z,r,theta,phi,weight
   double precision :: lat,lon
   double precision :: elevation,height_oceans
 
   integer :: ispec,i,j,k,iglob,ispec2D
 
   logical :: do_ocean_load
+
+  ! user output
+  if( myrank == 0) then
+    write(IMAIN,*) '    updates mass matrix with ocean load'
+    call flush_IMAIN()
+  endif
 
   ! initializes
   do_ocean_load = .false.
@@ -855,17 +865,15 @@
         if( do_ocean_load ) then
 
           ! get coordinates of current point
-          xval = xstore(i,j,k,ispec)
-          yval = ystore(i,j,k,ispec)
-          zval = zstore(i,j,k,ispec)
+          x = xstore(i,j,k,ispec)
+          y = ystore(i,j,k,ispec)
+          z = zstore(i,j,k,ispec)
 
           ! map to latitude and longitude for bathymetry routine
           ! slightly move points to avoid roundoff problem when exactly on the polar axis
-          call xyz_2_rthetaphi_dble(xval,yval,zval,rval,theta,phi)
+          call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
-          if( USE_VERSION_5_1_5 ) then
-            !continue
-          else
+          if( .not. USE_VERSION_5_1_5 ) then
             ! adds small margins
   !! DK DK Jul 2013: added a test to only do this if we are on the axis
             if(abs(theta) > 89.99d0) then
@@ -876,15 +884,16 @@
 
           call reduce(theta,phi)
 
-          ! convert the geocentric colatitude to a geographic colatitude
+          ! converts the geocentric colatitude to a geographic colatitude
+          ! note: bathymetry is given in geographic lat/lon
+          !       (i.e., latitutde with respect to reference ellipsoid)
+          !       we will need convert the geocentric positions here to geographic ones
           if( USE_VERSION_5_1_5 ) then
-            theta = PI_OVER_TWO - &
-                datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+            ! always converts
+            theta = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
           else
-            if( .not. ASSUME_PERFECT_SPHERE) then
-              theta = PI_OVER_TWO - &
-                datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-            endif
+            ! will take flag ASSUME_PERFECT_SPHERE into account
+            call geocentric_2_geographic_dble(theta,theta)
           endif
 
           ! get geographic latitude and longitude in degrees

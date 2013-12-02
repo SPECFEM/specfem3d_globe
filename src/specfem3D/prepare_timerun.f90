@@ -468,9 +468,7 @@
 
   ! convert in the crust and mantle
   do i = 1,NGLOB_CRUST_MANTLE
-    call xyz_2_rthetaphi(xstore_crust_mantle(i), &
-                        ystore_crust_mantle(i), &
-                        zstore_crust_mantle(i),rval,thetaval,phival)
+    call xyz_2_rthetaphi(xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i),rval,thetaval,phival)
     xstore_crust_mantle(i) = rval
     ystore_crust_mantle(i) = thetaval
     zstore_crust_mantle(i) = phival
@@ -478,9 +476,7 @@
 
   ! convert in the outer core
   do i = 1,NGLOB_OUTER_CORE
-    call xyz_2_rthetaphi(xstore_outer_core(i), &
-                        ystore_outer_core(i), &
-                        zstore_outer_core(i),rval,thetaval,phival)
+    call xyz_2_rthetaphi(xstore_outer_core(i),ystore_outer_core(i),zstore_outer_core(i),rval,thetaval,phival)
     xstore_outer_core(i) = rval
     ystore_outer_core(i) = thetaval
     zstore_outer_core(i) = phival
@@ -488,9 +484,7 @@
 
   ! convert in the inner core
   do i = 1,NGLOB_INNER_CORE
-    call xyz_2_rthetaphi(xstore_inner_core(i), &
-                        ystore_inner_core(i), &
-                        zstore_inner_core(i),rval,thetaval,phival)
+    call xyz_2_rthetaphi(xstore_inner_core(i),ystore_inner_core(i),zstore_inner_core(i),rval,thetaval,phival)
     xstore_inner_core(i) = rval
     ystore_inner_core(i) = thetaval
     zstore_inner_core(i) = phival

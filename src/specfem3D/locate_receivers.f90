@@ -261,12 +261,8 @@
     ! set distance to huge initial value
     distmin = HUGEVAL
 
-    ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-    if(ASSUME_PERFECT_SPHERE) then
-      theta = PI_OVER_TWO - stlat(irec)*DEGREES_TO_RADIANS
-    else
-      theta = PI_OVER_TWO - atan(0.99329534d0*dtan(stlat(irec)*DEGREES_TO_RADIANS))
-    endif
+    ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
+    call lat_2_geocentric_colat_dble(stlat(irec),theta)
 
     phi = stlon(irec)*DEGREES_TO_RADIANS
     call reduce(theta,phi)
@@ -332,8 +328,7 @@
        call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
        r0 = r0 + elevation/R_EARTH
     endif
-
-    !     ellipticity
+    ! ellipticity
     if(ELLIPTICITY) then
       cost=cos(theta)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)

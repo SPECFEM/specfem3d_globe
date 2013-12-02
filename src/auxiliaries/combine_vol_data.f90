@@ -70,6 +70,7 @@ program combine_vol_data
   ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor;
   ! useful for plotting spherical cuts at certain depths
   logical,parameter:: CORRECT_ELLIPTICITY = .false.
+
   integer :: nspl
   double precision :: rspl(NR),espl(NR),espl2(NR)
   logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust

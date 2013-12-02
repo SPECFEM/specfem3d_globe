@@ -29,31 +29,43 @@
 
 ! bring theta between 0 and PI, and phi between 0 and 2*PI
 
-  use constants
+  use constants,only: ZERO,PI,TWO_PI,TINYVAL
 
   implicit none
 
-  double precision :: theta,phi
+  double precision,intent(inout) :: theta,phi
 
+  ! local parameters
   integer :: i
   double precision :: th,ph
 
-  th=theta
-  ph=phi
-  i=abs(int(ph/TWO_PI))
+  ! slightly move points to avoid roundoff problem when exactly on the polar axis
+  if( abs(theta) < TINYVAL ) theta = theta + 0.0000001d0
+  if( abs(phi) < TINYVAL ) phi = phi + 0.0000001d0
 
-  if(ph<ZERO) then
-    ph=ph+(i+1)*TWO_PI
-  else
-    if(ph>TWO_PI) ph=ph-i*TWO_PI
+  ! colatitude
+  th = theta
+  ! longitude
+  ph = phi
+
+  ! brings longitude between 0 and 2*PI
+  if( ph<ZERO .or. ph>TWO_PI) then
+    i = abs(int(ph/TWO_PI))
+    if(ph < ZERO) then
+      ph = ph+(i+1)*TWO_PI
+    else
+      if(ph > TWO_PI) ph=ph-i*TWO_PI
+    endif
+    phi=ph
   endif
 
-  phi=ph
-  if(th<ZERO .or. th>PI) then
+  ! brings colatitude between 0 and PI
+  if( th < ZERO .or. th > PI) then
     i=int(th/PI)
     if(th>ZERO) then
       if(mod(i,2) /= 0) then
         th=(i+1)*PI-th
+        ! switches hemisphere
         if(ph<PI) then
           ph=ph+PI
         else
@@ -65,6 +77,7 @@
     else
       if(mod(i,2) == 0) then
         th=-th+i*PI
+        ! switches hemisphere
         if(ph<PI) then
           ph=ph+PI
         else
@@ -78,8 +91,8 @@
     phi=ph
   endif
 
+  ! checks ranges
   if(theta<ZERO .or. theta>PI) stop 'theta out of range in reduce'
-
   if(phi<ZERO .or. phi>TWO_PI) stop 'phi out of range in reduce'
 
   end subroutine reduce

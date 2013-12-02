@@ -943,9 +943,8 @@
     call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                 DT,1,min_tshift_cmt_original)
 
-!   convert geographic latitude lat (degrees)
-!   to geocentric colatitude theta (radians)
-    theta=PI_OVER_TWO-atan(0.99329534d0*tan(dble(lat(1))*DEGREES_TO_RADIANS))
+!   convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
+    call lat_2_geocentric_colat_dble(lat(1),theta)
     phi=dble(long(1))*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
@@ -1007,9 +1006,8 @@
     do irec=1,nrec
       read(11,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
 
-! convert geographic latitude stlat (degrees)
-! to geocentric colatitude theta (radians)
-      theta=PI_OVER_TWO-atan(0.99329534d0*dtan(stlat(irec)*DEGREES_TO_RADIANS))
+! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
+      call lat_2_geocentric_colat_dble(stlat(irec),theta)
       phi=stlon(irec)*DEGREES_TO_RADIANS
       call reduce(theta,phi)
 

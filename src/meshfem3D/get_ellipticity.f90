@@ -31,33 +31,39 @@
 
   implicit none
 
-  integer nspl
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
-  double precision rspl(NR),espl(NR),espl2(NR)
+  integer :: nspl
+  double precision :: xelm(NGNOD)
+  double precision :: yelm(NGNOD)
+  double precision :: zelm(NGNOD)
+  double precision :: rspl(NR),espl(NR),espl2(NR)
 
-  integer ia
+  ! local parameters
+  integer :: ia
 
-  double precision ell
-  double precision r,theta,phi,factor
-  double precision cost,p20
+  double precision :: ell
+  double precision :: r,theta,phi,factor
+  double precision :: x,y,z
+  double precision :: cost,p20
 
   do ia=1,NGNOD
 
-  call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+    x = xelm(ia)
+    y = yelm(ia)
+    z = zelm(ia)
 
-  cost=dcos(theta)
-  p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+    call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
-! get ellipticity using spline evaluation
-  call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+    cost = dcos(theta)
+    p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
-  factor=ONE-(TWO/3.0d0)*ell*p20
+    ! get ellipticity using spline evaluation
+    call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
 
-  xelm(ia)=xelm(ia)*factor
-  yelm(ia)=yelm(ia)*factor
-  zelm(ia)=zelm(ia)*factor
+    factor = ONE-(TWO/3.0d0)*ell*p20
+
+    xelm(ia) = x*factor
+    yelm(ia) = y*factor
+    zelm(ia) = z*factor
 
   enddo
 
@@ -76,37 +82,44 @@
 
   implicit none
 
-  integer nspl
-  integer::ispec,nspec
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
-  double precision rspl(NR),espl(NR),espl2(NR)
+  integer :: nspl
+  integer :: ispec,nspec
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision :: rspl(NR),espl(NR),espl2(NR)
 
-  integer i,j,k
+  ! local parameters
+  integer :: i,j,k
 
-  double precision ell
-  double precision r,theta,phi,factor
-  double precision cost,p20
+  double precision :: ell
+  double precision :: r,theta,phi,factor
+  double precision :: x,y,z
+  double precision :: cost,p20
 
   do k = 1,NGLLZ
-     do j = 1,NGLLY
-        do i = 1,NGLLX
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
-           call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
+        x = xstore(i,j,k,ispec)
+        y = ystore(i,j,k,ispec)
+        z = zstore(i,j,k,ispec)
 
-           cost=dcos(theta)
-           p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+        call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
-           ! get ellipticity using spline evaluation
-           call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+        cost = dcos(theta)
+        p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
-           factor=ONE-(TWO/3.0d0)*ell*p20
+        ! get ellipticity using spline evaluation
+        call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
 
-           xstore(i,j,k,ispec)=xstore(i,j,k,ispec)*factor
-           ystore(i,j,k,ispec)=ystore(i,j,k,ispec)*factor
-           zstore(i,j,k,ispec)=zstore(i,j,k,ispec)*factor
+        factor = ONE-(TWO/3.0d0)*ell*p20
 
-        enddo
+        xstore(i,j,k,ispec) = x*factor
+        ystore(i,j,k,ispec) = y*factor
+        zstore(i,j,k,ispec) = z*factor
+
       enddo
+    enddo
   enddo
+
   end subroutine get_ellipticity_gll
 
