@@ -307,6 +307,7 @@
   else
     ! b_rmassx,b_rmassy not used anymore
     deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+    nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     nullify(b_rmassz_crust_mantle)
   endif
 
@@ -564,6 +565,7 @@
   else
     ! b_rmassx,b_rmassy not used anymore
     deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+    nullify(b_rmassx_inner_core,b_rmassy_inner_core)
     ! use dummy pointers used for passing as function arguments
     ! associates mass matrix used for backward/reconstructed wavefields
     !b_rmassz_inner_core => rmassz_inner_core

@@ -32,41 +32,64 @@
 
   implicit none
 
-  integer myrank
+  integer :: myrank
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision :: xelm(NGNOD)
+  double precision :: yelm(NGNOD)
+  double precision :: zelm(NGNOD)
 
-  integer ia
+  integer :: ia
 
-  real(kind=4) xcolat,xlon
-  real(kind=4) topo410out,topo650out
-  double precision topo410,topo650
+  real(kind=4) :: xcolat,xlon
+  real(kind=4) :: topo410out,topo650out
+  double precision :: topo410,topo650
 
-  double precision :: r,lat,lon
+  double precision :: r,lat,lon,theta,phi
   double precision :: gamma
   double precision :: x,y,z
 
-!! DK DK added this safety test for now
-  stop 'there is a currently a bug in this routine, it makes the mesher crash'
+! note: adding topography to 410 and 660 strongly affects PcP, PKiKP, etc. phases,
+!       we leave it in and check whether the stretching makes simulation unstable
+
+!  if( .not. USE_VERSION_5_1_5 ) then
+!    !! DK DK added this safety test for now
+!    !stop 'there is a currently a bug in this routine, it makes the mesher crash'
+!  endif
 
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
     x = xelm(ia)
-    y = xelm(ia)
-    z = xelm(ia)
+    y = yelm(ia)
+    z = zelm(ia)
 
-    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    if( USE_VERSION_5_1_5) then
+      ! convert to r theta phi
+      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+      call reduce(theta,phi)
+      ! get colatitude and longitude in degrees
+      xcolat = sngl(theta*RADIANS_TO_DEGREES)
+      xlon = sngl(phi*RADIANS_TO_DEGREES)
+    else
+      ! note: the topography on 410 and 650 is given in geographic colat/lon,
+      !       thus we need to convert geocentric colatitude to geographic colatitudes
+      !
+      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
-    ! converts lat/lon to (real) colat/lon in degrees
-    xcolat = sngl(90.d0 - lat)     ! colatitude
-    xlon = sngl(lon)
+      ! converts lat/lon to (real) colat/lon in degrees
+      xcolat = sngl(90.d0 - lat)     ! colatitude
+      xlon = sngl(lon)
+    endif
+
+    ! stretching occurs between 220 and 770
+    if(r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
 
     ! compute topography on 410 and 650 at current point
     call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
+
+    ! debug
+    !print*,'topo410 / topo650: ',r,xcolat,xlon,topo410out,topo650out
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
@@ -123,12 +146,17 @@
   real(kind=4) topo410out,topo650out
   double precision topo410,topo650
 
-  double precision :: r,lat,lon
+  double precision :: r,lat,lon,theta,phi
   double precision :: gamma
   double precision :: x,y,z
 
-!! DK DK added this safety test for now
-  stop 'there is a currently a bug in this routine, it makes the mesher crash'
+! note: adding topography to 410 and 660 strongly affects PcP, PKiKP, etc. phases,
+!       we leave it in and check whether the stretching makes simulation unstable
+
+!  if( .not. USE_VERSION_5_1_5 ) then
+!    !! DK DK added this safety test for now
+!    !stop 'there is a currently a bug in this routine, it makes the mesher crash'
+!  endif
 
   ! we loop on all GLL points of the element
   do k = 1,NGLLZ
@@ -139,12 +167,24 @@
           y = ystore(i,j,k,ispec)
           z = zstore(i,j,k,ispec)
 
-          ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-          call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+          if( USE_VERSION_5_1_5) then
+            ! convert to r theta phi
+            call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+            call reduce(theta,phi)
+            ! get colatitude and longitude in degrees
+            xcolat = sngl(theta*RADIANS_TO_DEGREES)
+            xlon = sngl(phi*RADIANS_TO_DEGREES)
+          else
+            ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+            call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
-          ! converts lat/lon to (real) colat/lon in degrees
-          xcolat = sngl(90.d0 - lat)     ! colatitude
-          xlon = sngl(lon)
+            ! converts lat/lon to (real) colat/lon in degrees
+            xcolat = sngl(90.d0 - lat)     ! colatitude
+            xlon = sngl(lon)
+          endif
+
+          ! stretching occurs between 220 and 770
+          if(r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
 
           ! compute topography on 410 and 650 at current point
           call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)

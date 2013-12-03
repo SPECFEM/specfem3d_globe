@@ -1174,6 +1174,14 @@
                b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
     endif
+  else
+    ! initializes pointers
+    nullify(b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
+            b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle)
+    nullify(b_eps_trace_over_3_crust_mantle)
+    nullify(b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
+            b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core)
+    nullify(b_eps_trace_over_3_inner_core)
   endif
 
   ! inner core
