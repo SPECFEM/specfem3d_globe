@@ -450,6 +450,7 @@
       store_val_ux_all,store_val_uy_all,store_val_uz_all
   integer, dimension(:,:,:,:,:),allocatable :: ibool_all
   integer, dimension(:,:),allocatable :: idoubling_all
+  real(kind=CUSTOM_REAL), dimension(nglob) :: tmp
 
   ! master collect arrays
   if( myrank == 0 ) then
@@ -480,9 +481,16 @@
   call gather_all_cr(ystore_dummy,nglob,store_val_y_all,nglob,NPROCTOT)
   call gather_all_cr(zstore_dummy,nglob,store_val_z_all,nglob,NPROCTOT)
 
-  call gather_all_cr(glob_data(1,:),nglob,store_val_ux_all,nglob,NPROCTOT)
-  call gather_all_cr(glob_data(2,:),nglob,store_val_uy_all,nglob,NPROCTOT)
-  call gather_all_cr(glob_data(3,:),nglob,store_val_uz_all,nglob,NPROCTOT)
+  ! attention: these calls produce copies of the glob_data array
+  ! x-component
+  tmp(:) = glob_data(1,:)
+  call gather_all_cr(tmp,nglob,store_val_ux_all,nglob,NPROCTOT)
+  ! y-component
+  tmp(:) = glob_data(2,:)
+  call gather_all_cr(tmp,nglob,store_val_uy_all,nglob,NPROCTOT)
+  ! z-component
+  tmp(:) = glob_data(3,:)
+  call gather_all_cr(tmp,nglob,store_val_uz_all,nglob,NPROCTOT)
 
   call gather_all_i(ibool,NGLLX*NGLLY*NGLLZ*nspec,ibool_all,NGLLX*NGLLY*NGLLZ*nspec,NPROCTOT)
   call gather_all_i(idoubling,nspec,idoubling_all,nspec,NPROCTOT)

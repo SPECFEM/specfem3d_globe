@@ -101,9 +101,8 @@
   ! flag for transverse isotropic elements
   logical:: elem_is_tiso
 
-  ! note: at this point, the mesh is still perfectly spherical, thus no need to
-  !         convert the geocentric colatitude to a geographic colatitude
-
+  ! note: at this point, the mesh is still perfectly spherical
+  
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
   elem_in_crust = .false.
@@ -116,7 +115,8 @@
         .or. idoubling(ispec) == IFLAG_220_80 &
         .or. idoubling(ispec) == IFLAG_80_MOHO ) then
         ! Stretch mesh to honor smoothed moho thickness from crust2.0
-
+        ! mesh is stretched between surface and 220
+        !
         ! differentiate between regional and global meshing
         if( REGIONAL_MOHO_MESH ) then
           call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
@@ -233,14 +233,16 @@
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
   if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
-    if( USE_GLL ) then
-      ! stretches every gll point accordingly
-!! DK DK commented this out because it makes the mesher crash
-!! DK DK       call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
-    else
-      ! stretches anchor points only, interpolates gll points later on
-!! DK DK commented this out because it makes the mesher crash
-!! DK DK       call add_topography_410_650(myrank,xelm,yelm,zelm)
+    ! stretching between 220 and 770
+    if(idoubling(ispec) == IFLAG_670_220 .or. &
+       idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+      if( USE_GLL ) then
+        ! stretches every gll point accordingly
+        call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
+      else
+        ! stretches anchor points only, interpolates gll points later on
+        call add_topography_410_650(myrank,xelm,yelm,zelm)
+      endif
     endif
   endif
 
