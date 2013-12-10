@@ -268,7 +268,7 @@ subroutine define_kernel_adios_variables(adios_handle)
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
       !call save_kernels_hessian()
-      local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY
+      local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
       call define_adios_global_array1D(adios_group, group_size_inc, &
                                        local_dim, "",               &
                                        STRINGIFY_VAR(hess_kl_crust_mantle))
@@ -679,7 +679,7 @@ subroutine write_kernels_hessian_adios(adios_handle)
   ! number of mpi processes
   call world_size(sizeprocs)
 
-  local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY
+  local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
   ! stores into file
   call write_adios_global_1d_array(adios_handle, myrank, &
                                    sizeprocs, local_dim, &
