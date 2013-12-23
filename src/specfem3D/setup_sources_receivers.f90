@@ -373,9 +373,9 @@
 
   ! locate receivers in the crust in the mesh
   call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                      yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
-                      theta_source(1),phi_source(1),NCHUNKS_VAL,ELLIPTICITY_VAL)
+                        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                        yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
+                        theta_source(1),phi_source(1) )
 
   ! count number of receivers located in this slice
   nrec_local = 0

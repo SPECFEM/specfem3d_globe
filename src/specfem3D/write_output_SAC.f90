@@ -61,8 +61,9 @@
 
   double precision :: phi
 
-! local parameters
+  ! local parameters
   double precision :: btime
+  real, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: tmp
   integer :: time_sec,isample
   character(len=256) :: sisname_2
 
@@ -619,12 +620,12 @@
     ! now write SAC time series to file
     ! BS BS write whole time series at once (hope to increase I/O performance
     ! compared to using a loop on it)
-
     if (CUSTOM_REAL == SIZE_REAL) then
-      call write_n_real(seismogram_tmp(iorientation,1:seismo_current),seismo_current)
+      tmp(1:seismo_current) = seismogram_tmp(iorientation,1:seismo_current)
     else if (CUSTOM_REAL == SIZE_DOUBLE) then
-      call write_n_real(real(seismogram_tmp(iorientation,1:seismo_current)),seismo_current)
+      tmp(1:seismo_current) = real(seismogram_tmp(iorientation,1:seismo_current))
     endif
+    call write_n_real(tmp(1:seismo_current),seismo_current)
 
     call close_file()
 

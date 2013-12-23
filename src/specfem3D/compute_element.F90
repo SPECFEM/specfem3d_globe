@@ -1441,539 +1441,537 @@
 
   end subroutine compute_element_att_stress
 
-!--------------------------------------------------------------------------------------------
+! for reference...
+!!--------------------------------------------------------------------------------------------
+!!
+!! Deville et al. 2002
+!! Higher-Order Methods for Incompressible Fluid Flow
+!!
+!! subroutines adapted from Deville, Fischer and Mund, High-order methods
+!! for incompressible fluid flow, Cambridge University Press (2002),
+!! pages 386 and 389 and Figure 8.3.1
+!!
+!!--------------------------------------------------------------------------------------------
 !
-! Deville et al. 2002
-! Higher-Order Methods for Incompressible Fluid Flow
+!! matrix - matrix multiplications
 !
-! subroutines adapted from Deville, Fischer and Mund, High-order methods
-! for incompressible fluid flow, Cambridge University Press (2002),
-! pages 386 and 389 and Figure 8.3.1
+!! single component routines
 !
-!--------------------------------------------------------------------------------------------
-
-! matrix - matrix multiplications
-
-! single component routines
-
-  subroutine mxm(A,n1,B,n2,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
-  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! chooses optimized version
-  select case( n2 )
-
-  case( 4 )
-    call mxm4(A,n1,B,C,n3)
-
-  case( 5 )
-    call mxm5(A,n1,B,C,n3)
-
-  case( 6 )
-    call mxm6(A,n1,B,C,n3)
-
-  case( 7 )
-    call mxm7(A,n1,B,C,n3)
-
-  case( 8 )
-    call mxm8(A,n1,B,C,n3)
-
-  case default
-    call mxmN(A,n1,B,n2,C,n3)
-
-  end select
-
-  end subroutine mxm
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm4(A,n1,B,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,4) :: A
-  real(kind=CUSTOM_REAL),dimension(4,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j)
-    enddo
-  enddo
-
-  end subroutine mxm4
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm5(A,n1,B,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j)
-    enddo
-  enddo
-
-  end subroutine mxm5
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm6(A,n1,B,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,6) :: A
-  real(kind=CUSTOM_REAL),dimension(6,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j) &
-              + A(i,6) * B(6,j)
-    enddo
-  enddo
-
-  end subroutine mxm6
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm7(A,n1,B,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,7) :: A
-  real(kind=CUSTOM_REAL),dimension(7,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j) &
-              + A(i,6) * B(6,j) &
-              + A(i,7) * B(7,j)
-    enddo
-  enddo
-
-  end subroutine mxm7
-
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm8(A,n1,B,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,8) :: A
-  real(kind=CUSTOM_REAL),dimension(8,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j) &
-              + A(i,6) * B(6,j) &
-              + A(i,7) * B(7,j) &
-              + A(i,8) * B(8,j)
-    enddo
-  enddo
-
-  end subroutine mxm8
-
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxmN(A,n1,B,n2,C,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
-  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-
-  ! local parameters
-  integer :: i,j,k
-  real(kind=CUSTOM_REAL) :: tmp
-
-  ! general matrix-matrix multiplication
-  do j=1,n3
-    do k=1,n2
-      tmp = B(k,j)
-      do i=1,n1
-        C(i,j) = C(i,j) + A(i,k) * tmp
-      enddo
-    enddo
-  enddo
-
-  end subroutine mxmN
-
-
-!----------------------------------------------------------------------------------------------
-
-
-
-! 3-component routines: combines arrays A1,A2,A3 which correspond to 3 different components x/y/z
-
-  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! chooses optimized version
-  select case( n2 )
-
-  case( 4 )
-    call mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  case( 5 )
-    call mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  case( 6 )
-    call mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  case( 7 )
-    call mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  case( 8 )
-    call mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  case default
-    call mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
-
-  end select
-
-  end subroutine mxm_3comp
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,4) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(4,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C1(i,j) =  A1(i,1) * B1(1,j) &
-               + A1(i,2) * B1(2,j) &
-               + A1(i,3) * B1(3,j) &
-               + A1(i,4) * B1(4,j)
-
-      C2(i,j) =  A2(i,1) * B2(1,j) &
-               + A2(i,2) * B2(2,j) &
-               + A2(i,3) * B2(3,j) &
-               + A2(i,4) * B2(4,j)
-
-      C3(i,j) =  A3(i,1) * B3(1,j) &
-               + A3(i,2) * B3(2,j) &
-               + A3(i,3) * B3(3,j) &
-               + A3(i,4) * B3(4,j)
-    enddo
-  enddo
-
-  end subroutine mxm4_3comp
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C1(i,j) =  A1(i,1) * B1(1,j) &
-               + A1(i,2) * B1(2,j) &
-               + A1(i,3) * B1(3,j) &
-               + A1(i,4) * B1(4,j) &
-               + A1(i,5) * B1(5,j)
-
-      C2(i,j) =  A2(i,1) * B2(1,j) &
-               + A2(i,2) * B2(2,j) &
-               + A2(i,3) * B2(3,j) &
-               + A2(i,4) * B2(4,j) &
-               + A2(i,5) * B2(5,j)
-
-      C3(i,j) =  A3(i,1) * B3(1,j) &
-               + A3(i,2) * B3(2,j) &
-               + A3(i,3) * B3(3,j) &
-               + A3(i,4) * B3(4,j) &
-               + A3(i,5) * B3(5,j)
-    enddo
-  enddo
-
-  end subroutine mxm5_3comp
-
-
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,6) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(6,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C1(i,j) =  A1(i,1) * B1(1,j) &
-               + A1(i,2) * B1(2,j) &
-               + A1(i,3) * B1(3,j) &
-               + A1(i,4) * B1(4,j) &
-               + A1(i,5) * B1(5,j) &
-               + A1(i,6) * B1(6,j)
-
-      C2(i,j) =  A2(i,1) * B2(1,j) &
-               + A2(i,2) * B2(2,j) &
-               + A2(i,3) * B2(3,j) &
-               + A2(i,4) * B2(4,j) &
-               + A2(i,5) * B2(5,j) &
-               + A2(i,6) * B2(6,j)
-
-      C3(i,j) =  A3(i,1) * B3(1,j) &
-               + A3(i,2) * B3(2,j) &
-               + A3(i,3) * B3(3,j) &
-               + A3(i,4) * B3(4,j) &
-               + A3(i,5) * B3(5,j) &
-               + A3(i,6) * B3(6,j)
-    enddo
-  enddo
-
-  end subroutine mxm6_3comp
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,7) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(7,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C1(i,j) =  A1(i,1) * B1(1,j) &
-               + A1(i,2) * B1(2,j) &
-               + A1(i,3) * B1(3,j) &
-               + A1(i,4) * B1(4,j) &
-               + A1(i,5) * B1(5,j) &
-               + A1(i,6) * B1(6,j) &
-               + A1(i,7) * B1(7,j)
-
-      C2(i,j) =  A2(i,1) * B2(1,j) &
-               + A2(i,2) * B2(2,j) &
-               + A2(i,3) * B2(3,j) &
-               + A2(i,4) * B2(4,j) &
-               + A2(i,5) * B2(5,j) &
-               + A2(i,6) * B2(6,j) &
-               + A2(i,7) * B2(7,j)
-
-      C3(i,j) =  A3(i,1) * B3(1,j) &
-               + A3(i,2) * B3(2,j) &
-               + A3(i,3) * B3(3,j) &
-               + A3(i,4) * B3(4,j) &
-               + A3(i,5) * B3(5,j) &
-               + A3(i,6) * B3(6,j) &
-               + A3(i,7) * B3(7,j)
-    enddo
-  enddo
-
-  end subroutine mxm7_3comp
-
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,8) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(8,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
-      C1(i,j) =  A1(i,1) * B1(1,j) &
-               + A1(i,2) * B1(2,j) &
-               + A1(i,3) * B1(3,j) &
-               + A1(i,4) * B1(4,j) &
-               + A1(i,5) * B1(5,j) &
-               + A1(i,6) * B1(6,j) &
-               + A1(i,7) * B1(7,j) &
-               + A1(i,8) * B1(8,j)
-
-      C2(i,j) =  A2(i,1) * B2(1,j) &
-               + A2(i,2) * B2(2,j) &
-               + A2(i,3) * B2(3,j) &
-               + A2(i,4) * B2(4,j) &
-               + A2(i,5) * B2(5,j) &
-               + A2(i,6) * B2(6,j) &
-               + A2(i,7) * B2(7,j) &
-               + A2(i,8) * B2(8,j)
-
-      C3(i,j) =  A3(i,1) * B3(1,j) &
-               + A3(i,2) * B3(2,j) &
-               + A3(i,3) * B3(3,j) &
-               + A3(i,4) * B3(4,j) &
-               + A3(i,5) * B3(5,j) &
-               + A3(i,6) * B3(6,j) &
-               + A3(i,7) * B3(7,j) &
-               + A3(i,8) * B3(8,j)
-    enddo
-  enddo
-
-  end subroutine mxm8_3comp
-
-
-!--------------------------------------------------------------------------------------------
-
-  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
-
-  use constants_solver,only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-
-  ! local parameters
-  integer :: i,j,k
-  real(kind=CUSTOM_REAL) :: tmp1,tmp2,tmp3
-
-  ! general matrix-matrix multiplication
-  do j=1,n3
-    do k=1,n2
-      tmp1 = B1(k,j)
-      tmp2 = B2(k,j)
-      tmp3 = B3(k,j)
-      do i=1,n1
-        C1(i,j) = C1(i,j) + A1(i,k) * tmp1
-        C2(i,j) = C2(i,j) + A2(i,k) * tmp2
-        C3(i,j) = C3(i,j) + A3(i,k) * tmp3
-      enddo
-    enddo
-  enddo
-
-  end subroutine mxmN_3comp
-
-
-
+!  subroutine mxm(A,n1,B,n2,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! chooses optimized version
+!  select case( n2 )
+!
+!  case( 4 )
+!    call mxm4(A,n1,B,C,n3)
+!
+!  case( 5 )
+!    call mxm5(A,n1,B,C,n3)
+!
+!  case( 6 )
+!    call mxm6(A,n1,B,C,n3)
+!
+!  case( 7 )
+!    call mxm7(A,n1,B,C,n3)
+!
+!  case( 8 )
+!    call mxm8(A,n1,B,C,n3)
+!
+!  case default
+!    call mxmN(A,n1,B,n2,C,n3)
+!
+!  end select
+!
+!  end subroutine mxm
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm4(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,4) :: A
+!  real(kind=CUSTOM_REAL),dimension(4,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm4
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm5(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
+!  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm5
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm6(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,6) :: A
+!  real(kind=CUSTOM_REAL),dimension(6,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm6
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm7(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,7) :: A
+!  real(kind=CUSTOM_REAL),dimension(7,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j) &
+!              + A(i,7) * B(7,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm7
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm8(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,8) :: A
+!  real(kind=CUSTOM_REAL),dimension(8,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j) &
+!              + A(i,7) * B(7,j) &
+!              + A(i,8) * B(8,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm8
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxmN(A,n1,B,n2,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j,k
+!  real(kind=CUSTOM_REAL) :: tmp
+!
+!  ! general matrix-matrix multiplication
+!  do j=1,n3
+!    do k=1,n2
+!      tmp = B(k,j)
+!      do i=1,n1
+!        C(i,j) = C(i,j) + A(i,k) * tmp
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxmN
+!
+!
+!!----------------------------------------------------------------------------------------------
+!
+!
+!
+!! 3-component routines: combines arrays A1,A2,A3 which correspond to 3 different components x/y/z
+!
+!  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! chooses optimized version
+!  select case( n2 )
+!
+!  case( 4 )
+!    call mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case( 5 )
+!    call mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case( 6 )
+!    call mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case( 7 )
+!    call mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case( 8 )
+!    call mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case default
+!    call mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+!
+!  end select
+!
+!  end subroutine mxm_3comp
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,4) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(4,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm4_3comp
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm5_3comp
+!
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,6) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(6,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j) &
+!               + A1(i,6) * B1(6,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j) &
+!               + A2(i,6) * B2(6,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j) &
+!               + A3(i,6) * B3(6,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm6_3comp
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,7) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(7,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j) &
+!               + A1(i,6) * B1(6,j) &
+!               + A1(i,7) * B1(7,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j) &
+!               + A2(i,6) * B2(6,j) &
+!               + A2(i,7) * B2(7,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j) &
+!               + A3(i,6) * B3(6,j) &
+!               + A3(i,7) * B3(7,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm7_3comp
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,8) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(8,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j=1,n3
+!    do i=1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j) &
+!               + A1(i,6) * B1(6,j) &
+!               + A1(i,7) * B1(7,j) &
+!               + A1(i,8) * B1(8,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j) &
+!               + A2(i,6) * B2(6,j) &
+!               + A2(i,7) * B2(7,j) &
+!               + A2(i,8) * B2(8,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j) &
+!               + A3(i,6) * B3(6,j) &
+!               + A3(i,7) * B3(7,j) &
+!               + A3(i,8) * B3(8,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm8_3comp
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j,k
+!  real(kind=CUSTOM_REAL) :: tmp1,tmp2,tmp3
+!
+!  ! general matrix-matrix multiplication
+!  do j=1,n3
+!    do k=1,n2
+!      tmp1 = B1(k,j)
+!      tmp2 = B2(k,j)
+!      tmp3 = B3(k,j)
+!      do i=1,n1
+!        C1(i,j) = C1(i,j) + A1(i,k) * tmp1
+!        C2(i,j) = C2(i,j) + A2(i,k) * tmp2
+!        C3(i,j) = C3(i,j) + A3(i,k) * tmp3
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxmN_3comp
 
 

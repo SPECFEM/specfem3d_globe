@@ -2050,7 +2050,7 @@ TRACE("prepare_cleanup_device");
 
     cudaFree(mp->d_eps_trace_over_3_crust_mantle);
     cudaFree(mp->d_eps_trace_over_3_inner_core);
-    if( mp->simulation_type == 3 && ! mp->undo_attenuation ){
+    if( mp->simulation_type == 3 && ! mp->undo_attenuation){
       cudaFree(mp->d_b_epsilondev_xx_crust_mantle);
       cudaFree(mp->d_b_epsilondev_yy_crust_mantle);
       cudaFree(mp->d_b_epsilondev_xy_crust_mantle);

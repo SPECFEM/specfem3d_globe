@@ -169,6 +169,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc_crust_mantle
 
+  double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
+                      hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
+
   do irec_local = 1,nrec_local
 
     ! initializes
@@ -270,11 +273,21 @@
                   nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)
     endif
 
+    ! interpolators
+    ! note: we explicitly copy the store arrays to local temporary arrays here
+    !       the array indexing (irec_local,:) is non-contiguous and compilers would have to do this anyway
+    hxir(:) = hxir_store(irec_local,:)
+    hetar(:) = hetar_store(irec_local,:)
+    hgammar(:) = hgammar_store(irec_local,:)
+    hpxir(:) = hpxir_store(irec_local,:)
+    hpetar(:) = hpetar_store(irec_local,:)
+    hpgammar(:) = hpgammar_store(irec_local,:)
+
     ! frechet derviatives of the source
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &
                 Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s,eps_m_l_s, &
-                hxir_store(irec_local,:),hetar_store(irec_local,:),hgammar_store(irec_local,:), &
-                hpxir_store(irec_local,:),hpetar_store(irec_local,:),hpgammar_store(irec_local,:), &
+                hxir,hetar,hgammar, &
+                hpxir,hpetar,hpgammar, &
                 hprime_xx,hprime_yy,hprime_zz, &
                 xix_crust_mantle(1,1,1,ispec),xiy_crust_mantle(1,1,1,ispec),xiz_crust_mantle(1,1,1,ispec), &
                 etax_crust_mantle(1,1,1,ispec),etay_crust_mantle(1,1,1,ispec),etaz_crust_mantle(1,1,1,ispec), &

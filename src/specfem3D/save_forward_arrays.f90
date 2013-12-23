@@ -180,6 +180,29 @@
   integer :: ier
   character(len=150) :: outputname
 
+  ! transfers wavefields from GPU device to CPU host
+  if( GPU_MODE ) then
+    call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                                    Mesh_pointer)
+    call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                    displ_inner_core,veloc_inner_core,accel_inner_core, &
+                                    Mesh_pointer)
+    call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                    displ_outer_core,veloc_outer_core,accel_outer_core, &
+                                    Mesh_pointer)
+    if (ROTATION_VAL) then
+      call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+    endif
+
+    if (ATTENUATION_VAL) then
+      call transfer_rmemory_cm_from_device(Mesh_pointer,R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
+                                           R_xz_crust_mantle,R_yz_crust_mantle)
+      call transfer_rmemory_ic_from_device(Mesh_pointer,R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+                                           R_xz_inner_core,R_yz_inner_core)
+    endif
+  endif
+
   ! current subset iteration
   iteration_on_subset_tmp = iteration_on_subset
 

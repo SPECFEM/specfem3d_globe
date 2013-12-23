@@ -639,6 +639,7 @@ CXX
 NVCC
 CUDA_LIB
 CUDA_INC
+CUDA_FLAGS
 CONFIGURE_FLAGS
 ADIOS_LIBS
 ADIOS_FCFLAGS
@@ -757,6 +758,7 @@ FLAGS_CHECK
 LOCAL_PATH_IS_ALSO_GLOBAL
 CPP
 ADIOS_CONFIG
+CUDA_FLAGS
 CUDA_INC
 CUDA_LIB
 CXX
@@ -1405,7 +1407,7 @@ Some influential environment variables:
               you have headers in a nonstandard directory <include dir>
   MPIFC       MPI Fortran compiler command
   MPILIBS     extra libraries for linking MPI programs
-  FLAGS_CHECK Fortran compiler flags for non-critical subroutines
+  FLAGS_CHECK Fortran compiler flags
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=true]
@@ -1413,6 +1415,7 @@ Some influential environment variables:
   ADIOS_CONFIG
               Path to adios_config program that indicates how to compile with
               it.
+  CUDA_FLAGS  Cuda compiler flags
   CUDA_INC    Location of CUDA include files
   CUDA_LIB    Location of CUDA library libcudart
   CXX         C++ compiler command
@@ -6731,6 +6734,7 @@ if test x"$want_cuda" != xno; then :
     $as_echo "## ---- ##
 ## CUDA ##
 ## ---- ##"
+
 
 
 
