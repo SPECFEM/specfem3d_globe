@@ -160,39 +160,56 @@ void FC_FUNC_(initialize_cuda_device,
   // outputs device infos to file
   char filename[BUFSIZ];
   FILE* fp;
-  sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
-  fp = fopen(filename,"a+");
-  if (fp != NULL){
-    // display device properties
-    fprintf(fp,"Device Name = %s\n",deviceProp.name);
-    fprintf(fp,"multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
-    fprintf(fp,"totalGlobalMem (in MB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f));
-    fprintf(fp,"totalGlobalMem (in GB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f * 1024.f));
-    fprintf(fp,"sharedMemPerBlock (in bytes): %lu\n",(unsigned long) deviceProp.sharedMemPerBlock);
-    fprintf(fp,"Maximum number of threads per block: %d\n",deviceProp.maxThreadsPerBlock);
-    fprintf(fp,"Maximum size of each dimension of a block: %d x %d x %d\n",
-            deviceProp.maxThreadsDim[0],deviceProp.maxThreadsDim[1],deviceProp.maxThreadsDim[2]);
-    fprintf(fp,"Maximum sizes of each dimension of a grid: %d x %d x %d\n",
-            deviceProp.maxGridSize[0],deviceProp.maxGridSize[1],deviceProp.maxGridSize[2]);
-    fprintf(fp,"Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
-    if(deviceProp.canMapHostMemory){
-      fprintf(fp,"canMapHostMemory: TRUE\n");
-    }else{
-      fprintf(fp,"canMapHostMemory: FALSE\n");
-    }
-    if(deviceProp.deviceOverlap){
-      fprintf(fp,"deviceOverlap: TRUE\n");
-    }else{
-      fprintf(fp,"deviceOverlap: FALSE\n");
-    }
+  int do_output_info;
 
-    // outputs initial memory infos via cudaMemGetInfo()
-    double free_db,used_db,total_db;
-    get_free_memory(&free_db,&used_db,&total_db);
-    fprintf(fp,"%d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n",myrank,
-            used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
+  // by default, only master process outputs device infos to avoid file cluttering
+  do_output_info = 0;
+  if( myrank == 0 ){
+    do_output_info = 1;
+    sprintf(filename,"OUTPUT_FILES/gpu_device_info.txt");
+  }
+  // debugging
+  if( DEBUG ){
+    do_output_info = 1;
+    sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
+  }
 
-    fclose(fp);
+  // output to file
+  if( do_output_info ){
+    fp = fopen(filename,"a+");
+    if (fp != NULL){
+      // display device properties
+      fprintf(fp,"Device Name = %s\n",deviceProp.name);
+      fprintf(fp,"multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
+      fprintf(fp,"totalGlobalMem (in MB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f));
+      fprintf(fp,"totalGlobalMem (in GB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f * 1024.f));
+      fprintf(fp,"sharedMemPerBlock (in bytes): %lu\n",(unsigned long) deviceProp.sharedMemPerBlock);
+      fprintf(fp,"Maximum number of threads per block: %d\n",deviceProp.maxThreadsPerBlock);
+      fprintf(fp,"Maximum size of each dimension of a block: %d x %d x %d\n",
+              deviceProp.maxThreadsDim[0],deviceProp.maxThreadsDim[1],deviceProp.maxThreadsDim[2]);
+      fprintf(fp,"Maximum sizes of each dimension of a grid: %d x %d x %d\n",
+              deviceProp.maxGridSize[0],deviceProp.maxGridSize[1],deviceProp.maxGridSize[2]);
+      fprintf(fp,"Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
+      if(deviceProp.canMapHostMemory){
+        fprintf(fp,"canMapHostMemory: TRUE\n");
+      }else{
+        fprintf(fp,"canMapHostMemory: FALSE\n");
+      }
+      if(deviceProp.deviceOverlap){
+        fprintf(fp,"deviceOverlap: TRUE\n");
+      }else{
+        fprintf(fp,"deviceOverlap: FALSE\n");
+      }
+
+      // outputs initial memory infos via cudaMemGetInfo()
+      double free_db,used_db,total_db;
+      get_free_memory(&free_db,&used_db,&total_db);
+      fprintf(fp,"%d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n",myrank,
+              used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
+
+      // closes output file
+      fclose(fp);
+    }
   }
 
   // make sure that the device has compute capability >= 1.3

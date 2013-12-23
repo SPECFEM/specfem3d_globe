@@ -45,7 +45,8 @@
 
   ! auxilliary
   double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
-             hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
+                      hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz

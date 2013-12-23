@@ -691,6 +691,14 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
                                               realw* epsilondev_xz,
                                               realw* epsilondev_yz) {}
 
+void FC_FUNC_(transfer_rmemory_cm_from_device,
+              TRANSFER_RMEMORY_CM_FROM_DEVICE)(long* Mesh_pointer,
+                                               realw* R_xx,
+                                               realw* R_yy,
+                                               realw* R_xy,
+                                               realw* R_xz,
+                                               realw* R_yz) {}
+
 void FC_FUNC_(transfer_b_rmemory_cm_to_device,
               TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long* Mesh_pointer,
                                                realw* b_R_xx,
@@ -698,6 +706,14 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
                                                realw* b_R_xy,
                                                realw* b_R_xz,
                                                realw* b_R_yz) {}
+
+void FC_FUNC_(transfer_rmemory_ic_from_device,
+              TRANSFER_RMEMORY_IC_FROM_DEVICE)(long* Mesh_pointer,
+                                               realw* R_xx,
+                                               realw* R_yy,
+                                               realw* R_xy,
+                                               realw* R_xz,
+                                               realw* R_yz) {}
 
 void FC_FUNC_(transfer_b_rmemory_ic_to_device,
               TRANSFER_B_RMEMORY_IC_TO_DEVICE)(long* Mesh_pointer,

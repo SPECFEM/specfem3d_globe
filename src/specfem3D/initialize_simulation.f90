@@ -266,75 +266,75 @@
 
   ! check that the code has been compiled with the right values
   if (NSPEC(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
-      write(IMAIN,*) 'NSPEC_CRUST_MANTLE:',NSPEC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE
+      if(myrank == 0) write(IMAIN,*) 'NSPEC_CRUST_MANTLE:',NSPEC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 1')
   endif
   if (NSPEC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE) then
-      write(IMAIN,*) 'NSPEC_OUTER_CORE:',NSPEC(IREGION_OUTER_CORE),NSPEC_OUTER_CORE
+      if(myrank == 0) write(IMAIN,*) 'NSPEC_OUTER_CORE:',NSPEC(IREGION_OUTER_CORE),NSPEC_OUTER_CORE
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 2')
   endif
   if (NSPEC(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
-      write(IMAIN,*) 'NSPEC_INNER_CORE:',NSPEC(IREGION_INNER_CORE),NSPEC_INNER_CORE
+      if(myrank == 0) write(IMAIN,*) 'NSPEC_INNER_CORE:',NSPEC(IREGION_INNER_CORE),NSPEC_INNER_CORE
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 3')
   endif
   if (ATTENUATION_3D .NEQV. ATTENUATION_3D_VAL) then
-      write(IMAIN,*) 'ATTENUATION_3D:',ATTENUATION_3D,ATTENUATION_3D_VAL
+      if(myrank == 0) write(IMAIN,*) 'ATTENUATION_3D:',ATTENUATION_3D,ATTENUATION_3D_VAL
       call exit_MPI(myrank,'error in compiled parameters ATTENUATION_3D, please recompile solver')
   endif
   if (NCHUNKS /= NCHUNKS_VAL) then
-      write(IMAIN,*) 'NCHUNKS:',NCHUNKS,NCHUNKS_VAL
+      if(myrank == 0) write(IMAIN,*) 'NCHUNKS:',NCHUNKS,NCHUNKS_VAL
       call exit_MPI(myrank,'error in compiled parameters NCHUNKS, please recompile solver')
   endif
   if (GRAVITY .NEQV. GRAVITY_VAL) then
-      write(IMAIN,*) 'GRAVITY:',GRAVITY,GRAVITY_VAL
+      if(myrank == 0) write(IMAIN,*) 'GRAVITY:',GRAVITY,GRAVITY_VAL
       call exit_MPI(myrank,'error in compiled parameters GRAVITY, please recompile solver')
   endif
   if (ROTATION .NEQV. ROTATION_VAL) then
-      write(IMAIN,*) 'ROTATION:',ROTATION,ROTATION_VAL
+      if(myrank == 0) write(IMAIN,*) 'ROTATION:',ROTATION,ROTATION_VAL
       call exit_MPI(myrank,'error in compiled parameters ROTATION, please recompile solver')
   endif
   if (ATTENUATION .NEQV. ATTENUATION_VAL) then
-      write(IMAIN,*) 'ATTENUATION:',ATTENUATION,ATTENUATION_VAL
+      if(myrank == 0) write(IMAIN,*) 'ATTENUATION:',ATTENUATION,ATTENUATION_VAL
       call exit_MPI(myrank,'error in compiled parameters ATTENUATION, please recompile solver')
   endif
   if (ELLIPTICITY .NEQV. ELLIPTICITY_VAL) then
-      write(IMAIN,*) 'ELLIPTICITY:',ELLIPTICITY,ELLIPTICITY_VAL
+      if(myrank == 0) write(IMAIN,*) 'ELLIPTICITY:',ELLIPTICITY,ELLIPTICITY_VAL
       call exit_MPI(myrank,'error in compiled parameters ELLIPTICITY, please recompile solver')
   endif
   if (OCEANS .NEQV. OCEANS_VAL) then
-      write(IMAIN,*) 'OCEANS:',OCEANS,OCEANS_VAL
+      if(myrank == 0) write(IMAIN,*) 'OCEANS:',OCEANS,OCEANS_VAL
       call exit_MPI(myrank,'error in compiled parameters OCEANS, please recompile solver')
   endif
   if (NPROC_XI /= NPROC_XI_VAL) then
-      write(IMAIN,*) 'NPROC_XI:',NPROC_XI,NPROC_XI_VAL
+      if(myrank == 0) write(IMAIN,*) 'NPROC_XI:',NPROC_XI,NPROC_XI_VAL
       call exit_MPI(myrank,'error in compiled parameters NPROC_XI, please recompile solver')
   endif
   if (NPROC_ETA /= NPROC_ETA_VAL) then
-      write(IMAIN,*) 'NPROC_ETA:',NPROC_ETA,NPROC_ETA_VAL
+      if(myrank == 0) write(IMAIN,*) 'NPROC_ETA:',NPROC_ETA,NPROC_ETA_VAL
       call exit_MPI(myrank,'error in compiled parameters NPROC_ETA, please recompile solver')
   endif
   if (NPROCTOT /= NPROCTOT_VAL) then
-      write(IMAIN,*) 'NPROCTOT:',NPROCTOT,NPROCTOT_VAL
+      if(myrank == 0) write(IMAIN,*) 'NPROCTOT:',NPROCTOT,NPROCTOT_VAL
       call exit_MPI(myrank,'error in compiled parameters NPROCTOT, please recompile solver')
   endif
   if (NEX_XI /= NEX_XI_VAL) then
-      write(IMAIN,*) 'NEX_XI:',NEX_XI,NEX_XI_VAL
+      if(myrank == 0) write(IMAIN,*) 'NEX_XI:',NEX_XI,NEX_XI_VAL
       call exit_MPI(myrank,'error in compiled parameters NEX_XI, please recompile solver')
   endif
   if (NEX_ETA /= NEX_ETA_VAL) then
-      write(IMAIN,*) 'NEX_ETA:',NEX_ETA,NEX_ETA_VAL
+      if(myrank == 0) write(IMAIN,*) 'NEX_ETA:',NEX_ETA,NEX_ETA_VAL
       call exit_MPI(myrank,'error in compiled parameters NEX_ETA, please recompile solver')
   endif
   if (TRANSVERSE_ISOTROPY .NEQV. TRANSVERSE_ISOTROPY_VAL) then
-      write(IMAIN,*) 'TRANSVERSE_ISOTROPY:',TRANSVERSE_ISOTROPY,TRANSVERSE_ISOTROPY_VAL
+      if(myrank == 0) write(IMAIN,*) 'TRANSVERSE_ISOTROPY:',TRANSVERSE_ISOTROPY,TRANSVERSE_ISOTROPY_VAL
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 14')
   endif
   if (ANISOTROPIC_3D_MANTLE .NEQV. ANISOTROPIC_3D_MANTLE_VAL) then
-      write(IMAIN,*) 'ANISOTROPIC_3D_MANTLE:',ANISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE_VAL
+      if(myrank == 0) write(IMAIN,*) 'ANISOTROPIC_3D_MANTLE:',ANISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE_VAL
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 15')
   endif
   if (ANISOTROPIC_INNER_CORE .NEQV. ANISOTROPIC_INNER_CORE_VAL) then
-      write(IMAIN,*) 'ANISOTROPIC_INNER_CORE:',ANISOTROPIC_INNER_CORE,ANISOTROPIC_INNER_CORE_VAL
+      if(myrank == 0) write(IMAIN,*) 'ANISOTROPIC_INNER_CORE:',ANISOTROPIC_INNER_CORE,ANISOTROPIC_INNER_CORE_VAL
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 16')
   endif
 
@@ -361,7 +361,8 @@
       endif
 
       if (PARTIAL_PHYS_DISPERSION_ONLY .NEQV. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-        write(IMAIN,*) 'PARTIAL_PHYS_DISPERSION_ONLY:',PARTIAL_PHYS_DISPERSION_ONLY,PARTIAL_PHYS_DISPERSION_ONLY_VAL
+        if(myrank == 0) write(IMAIN,*) 'PARTIAL_PHYS_DISPERSION_ONLY:',PARTIAL_PHYS_DISPERSION_ONLY, &
+                                                                       PARTIAL_PHYS_DISPERSION_ONLY_VAL
         call exit_MPI(myrank,'error in compiled parameters, please recompile solver 17')
       endif
 

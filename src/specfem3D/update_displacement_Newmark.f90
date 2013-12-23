@@ -253,7 +253,7 @@
     ! on CPU
     ! adjoint / kernel runs
     call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
-                               b_deltatover2) !!!!!! ,b_rmass_outer_core)
+                               b_deltatover2)
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
@@ -267,7 +267,7 @@
 !
 
   subroutine update_veloc_acoustic(NGLOB,veloc_outer_core,accel_outer_core, &
-                                  deltatover2) !!!! ,rmass_outer_core)
+                                  deltatover2)
 
 ! updates acceleration and velocity in outer core
 

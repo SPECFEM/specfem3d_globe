@@ -552,7 +552,7 @@ void FC_FUNC_(compute_stacey_acoustic_undoatt_cuda,
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_acoustic_cuda: unknown interface type");
+      exit_on_cuda_error("compute_stacey_acoustic_undoatt_cuda: unknown interface type");
       break;
   }
 

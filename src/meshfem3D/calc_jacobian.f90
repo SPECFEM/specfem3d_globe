@@ -41,12 +41,13 @@
 
 
   subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
-                                ispec,nspec,&
-                                xixstore,xiystore,xizstore, &
-                                etaxstore,etaystore,etazstore, &
-                                gammaxstore,gammaystore,gammazstore)
+                                   ispec,nspec,&
+                                   xixstore,xiystore,xizstore, &
+                                   etaxstore,etaystore,etazstore, &
+                                   gammaxstore,gammaystore,gammazstore)
 
-  use constants
+  use constants,only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
+    ZERO,ONE,TINYVAL,VERYSMALLVAL,R_EARTH_KM,RADIANS_TO_DEGREES
 
   implicit none
 
@@ -61,21 +62,24 @@
 
   ! output results
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore
 
-
   ! local parameters for this subroutine
-  integer:: i,j,k,i1,j1,k1
-  double precision:: xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
-  double precision:: xi,eta,gamma
   double precision,dimension(NGLLX):: hxir,hpxir
   double precision,dimension(NGLLY):: hetar,hpetar
   double precision,dimension(NGLLZ):: hgammar,hpgammar
+
+  double precision:: xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
+  double precision:: xi,eta,gamma
+
   double precision:: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
   double precision:: jacobian,jacobian_inv
   double precision:: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
   double precision:: r,theta,phi
+  double precision:: x,y,z
+
+  integer:: i,j,k,i1,j1,k1
 
   ! test parameters which can be deleted
   double precision:: xmesh,ymesh,zmesh
@@ -110,6 +114,7 @@
         sumdershapexi = ZERO
         sumdershapeeta = ZERO
         sumdershapegamma = ZERO
+
         xmesh = ZERO
         ymesh = ZERO
         zmesh = ZERO
@@ -117,27 +122,33 @@
         do k1 = 1,NGLLZ
           do j1 = 1,NGLLY
             do i1 = 1,NGLLX
-              hlagrange = hxir(i1)*hetar(j1)*hgammar(k1)
-              hlagrange_xi = hpxir(i1)*hetar(j1)*hgammar(k1)
-              hlagrange_eta = hxir(i1)*hpetar(j1)*hgammar(k1)
-              hlagrange_gamma = hxir(i1)*hetar(j1)*hpgammar(k1)
 
-              xxi = xxi + xstore(i1,j1,k1,ispec)*hlagrange_xi
-              xeta = xeta + xstore(i1,j1,k1,ispec)*hlagrange_eta
-              xgamma = xgamma + xstore(i1,j1,k1,ispec)*hlagrange_gamma
+              hlagrange = hxir(i1) * hetar(j1) * hgammar(k1)
+              hlagrange_xi = hpxir(i1) * hetar(j1) * hgammar(k1)
+              hlagrange_eta = hxir(i1) * hpetar(j1) * hgammar(k1)
+              hlagrange_gamma = hxir(i1) * hetar(j1) * hpgammar(k1)
 
-              yxi = yxi + ystore(i1,j1,k1,ispec)*hlagrange_xi
-              yeta = yeta + ystore(i1,j1,k1,ispec)*hlagrange_eta
-              ygamma = ygamma + ystore(i1,j1,k1,ispec)*hlagrange_gamma
+              x = xstore(i1,j1,k1,ispec)
+              y = ystore(i1,j1,k1,ispec)
+              z = zstore(i1,j1,k1,ispec)
 
-              zxi = zxi + zstore(i1,j1,k1,ispec)*hlagrange_xi
-              zeta = zeta + zstore(i1,j1,k1,ispec)*hlagrange_eta
-              zgamma = zgamma + zstore(i1,j1,k1,ispec)*hlagrange_gamma
+              xxi = xxi + x * hlagrange_xi
+              xeta = xeta + x * hlagrange_eta
+              xgamma = xgamma + x * hlagrange_gamma
+
+              yxi = yxi + y * hlagrange_xi
+              yeta = yeta + y * hlagrange_eta
+              ygamma = ygamma + y * hlagrange_gamma
+
+              zxi = zxi + z * hlagrange_xi
+              zeta = zeta + z * hlagrange_eta
+              zgamma = zgamma + z * hlagrange_gamma
 
               ! test the lagrange polynomial and its derivate
-              xmesh = xmesh + xstore(i1,j1,k1,ispec)*hlagrange
-              ymesh = ymesh + ystore(i1,j1,k1,ispec)*hlagrange
-              zmesh = zmesh + zstore(i1,j1,k1,ispec)*hlagrange
+              xmesh = xmesh + x * hlagrange
+              ymesh = ymesh + y * hlagrange
+              zmesh = zmesh + z * hlagrange
+
               sumshape = sumshape + hlagrange
               sumdershapexi = sumdershapexi + hlagrange_xi
               sumdershapeeta = sumdershapeeta + hlagrange_eta
@@ -181,7 +192,7 @@
           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
           print*,'error jacobian rank:',myrank
           print*,'  location r/lat/lon: ',r*R_EARTH_KM, &
-            (PI_OVER_TWO-theta)*RADIANS_TO_DEGREES,phi*RADIANS_TO_DEGREES
+            90.0-(theta*RADIANS_TO_DEGREES),phi*RADIANS_TO_DEGREES
           print*,'  jacobian: ',jacobian
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
@@ -222,6 +233,7 @@
           gammaystore(i,j,k,ispec) = gammay
           gammazstore(i,j,k,ispec) = gammaz
         endif
+
       enddo
     enddo
   enddo

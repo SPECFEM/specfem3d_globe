@@ -127,7 +127,7 @@ AC_PROG_CC
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 
-AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
+AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags])
 
 # scratch disks
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
@@ -192,6 +192,7 @@ AC_SUBST([CONFIGURE_FLAGS])
 
 AS_IF([test x"$want_cuda" != xno], [
     AS_BOX([CUDA])
+    AC_ARG_VAR(CUDA_FLAGS, [Cuda compiler flags])
     CIT_CUDA_CONFIG
 ])
 

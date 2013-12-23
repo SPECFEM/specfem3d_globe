@@ -76,7 +76,7 @@
 ! subroutine to compute the derivative of the Lagrange interpolants
 ! at the GLL points at any given GLL point
 
-  double precision function lagrange_deriv_GLL(I,j,ZGLL,NZ)
+  double precision function lagrange_deriv_GLL(i,j,ZGLL,NZ)
 
 !------------------------------------------------------------------------
 !
@@ -88,18 +88,19 @@
 
   implicit none
 
-  integer i,j,nz
-  double precision zgll(0:nz-1)
+  integer :: i,j,nz
+  double precision :: zgll(0:nz-1)
 
-  integer degpoly
+  ! local parameters
+  integer :: degpoly
 
   double precision, external :: pnleg,pndleg
 
   degpoly = nz - 1
   if (i == 0 .and. j == 0) then
-    lagrange_deriv_GLL = - dble(degpoly)*(dble(degpoly)+1.d0) / 4.d0
+    lagrange_deriv_GLL = - dble(degpoly)*(dble(degpoly)+1.d0) * 0.25d0  ! / 4.d0
   else if (i == degpoly .and. j == degpoly) then
-    lagrange_deriv_GLL = dble(degpoly)*(dble(degpoly)+1.d0) / 4.d0
+    lagrange_deriv_GLL = dble(degpoly)*(dble(degpoly)+1.d0) * 0.25d0  ! / 4.d0
   else if (i == j) then
     lagrange_deriv_GLL = 0.d0
   else

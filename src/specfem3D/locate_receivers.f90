@@ -32,7 +32,7 @@
   subroutine locate_receivers(nspec,nglob,ibool, &
                              xstore,ystore,zstore, &
                              yr,jda,ho,mi,sec, &
-                             theta_source,phi_source,NCHUNKS,ELLIPTICITY)
+                             theta_source,phi_source)
 
   use constants_solver
 
@@ -57,9 +57,6 @@
   integer yr,jda,ho,mi
   double precision sec
   double precision theta_source,phi_source
-
-  integer NCHUNKS
-  logical ELLIPTICITY
 
   ! local parameters
   integer :: nrec_found
@@ -324,12 +321,12 @@
     r0 = R_UNIT_SPHERE
 
     ! finds elevation of receiver
-    if(TOPOGRAPHY) then
+    if( TOPOGRAPHY ) then
        call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
        r0 = r0 + elevation/R_EARTH
     endif
     ! ellipticity
-    if(ELLIPTICITY) then
+    if( ELLIPTICITY_VAL ) then
       cost=cos(theta)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)
       call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
@@ -741,7 +738,7 @@
       if(final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
         write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
         write(IMAIN,*) '*****************************************************************'
-        if(NCHUNKS == 6) then
+        if(NCHUNKS_VAL == 6) then
           write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
         else
           write(IMAIN,*) '***** WARNING: receiver is located outside the mesh, therefore excluded *****'
@@ -822,7 +819,7 @@
     close(IOUT)
 
     ! write out a filtered station list
-    if( NCHUNKS /= 6 ) then
+    if( NCHUNKS_VAL /= 6 ) then
       open(unit=IOUT,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
             status='unknown',iostat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error opening file STATIONS_FILTERED')
