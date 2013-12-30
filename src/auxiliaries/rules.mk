@@ -91,11 +91,11 @@ ${E}/xcombine_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combi
 ${E}/xcombine_paraview_strain_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_paraview_strain_data $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
 
-${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o
+${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
 
-${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o
+${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_vtk.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
 
 ${E}/xcombine_surf_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_surf_data $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
