@@ -218,6 +218,7 @@ help:
 	@echo "    xcompute_optimized_dumping_undo_att"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
+	@echo "    xcombine_vol_data_adios"
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"

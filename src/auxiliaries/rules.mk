@@ -33,6 +33,8 @@ auxiliaries_TARGETS = \
 	$E/xcombine_paraview_strain_data \
 	$E/xcombine_vol_data \
 	$E/xcombine_vol_data_vtk \
+	$E/xcombine_vol_data_adios \
+	$E/xcombine_vol_data_vtk_adios \
 	$E/xcombine_surf_data \
 	$E/xcreate_movie_AVS_DX \
 	$E/xcreate_movie_GMT_global \
@@ -94,6 +96,12 @@ ${E}/xcombine_paraview_strain_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_par
 ${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
 
+${E}/xcombine_vol_data_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
+	${MPIFCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_adios $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o $(MPILIBS)
+
+${E}/xcombine_vol_data_vtk_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
+	${MPIFCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk_adios $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o $(MPILIBS)
+
 ${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
 
@@ -128,8 +136,17 @@ $O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o
 $O/%.auxsolver.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
+$O/%.auxmpi.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
 $O/%.auxsolver.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.auxsolver_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DUSE_VTK_INSTEAD_OF_MESH
+
+$O/%.auxadios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DADIOS_INPUT
+
+$O/%.auxadios_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DADIOS_INPUT -DUSE_VTK_INSTEAD_OF_MESH
