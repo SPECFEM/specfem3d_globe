@@ -39,10 +39,9 @@ program combine_vol_data_vtk
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
-  integer  iregion, ir, irs, ire, ires
+  integer :: iregion, ir, irs, ire, ires
   character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
   character(len=256) :: prname_topo, prname_file, dimension_file
-  character(len=256) :: mesh_file
   character(len=256) :: data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
@@ -58,7 +57,6 @@ program combine_vol_data_vtk
   real x, y, z, dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
-  integer ier
   ! instead of taking the first value which appears for a global point, average the values
   ! if there are more than one gll points for a global point (points on element corners, edges, faces)
   logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
@@ -75,21 +73,33 @@ program combine_vol_data_vtk
   ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor;
   ! useful for plotting spherical cuts at certain depths
   logical,parameter:: CORRECT_ELLIPTICITY = .false.
+
   integer :: nspl
   double precision :: rspl(NR),espl(NR),espl2(NR)
   logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
 
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
+!!! .mesh specific !!!!!!!!!!!
+#ifndef USE_VTK_INSTEAD_OF_MESH
+  integer :: pfd, efd
+  character(len=1038) :: command_name
+  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
+!!! .vtk specific !!!!!!!!!!!
+#else
+  character(len=256) :: mesh_file
+  integer ier
   ! global point data
   real,dimension(:),allocatable :: total_dat
   real,dimension(:,:),allocatable :: total_dat_xyz
   integer,dimension(:,:),allocatable :: total_dat_con
+#endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 7
     call get_command_argument(i,arg(i))
-    if (i < 7 .and. trim(arg(i)) == '') then
+    if (i < 7 .and. len_trim(arg(i)) == 0) then
       print *, ' '
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
       print *, '        output_dir high/low-resolution [region]'
@@ -107,7 +117,7 @@ program combine_vol_data_vtk
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! get region id
-  if (trim(arg(7)) == '') then
+  if (len_trim(arg(7)) == 0) then
     iregion  = 0
   else
     read(arg(7),*) iregion
@@ -184,6 +194,18 @@ program combine_vol_data_vtk
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
 
+!!! .mesh specific !!!!!!!!!!!
+#ifndef USE_VTK_INSTEAD_OF_MESH
+    ! open paraview output mesh file
+    write(pt_mesh_file1,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_point1.mesh'
+    write(pt_mesh_file2,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_point2.mesh'
+    write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.mesh'
+    write(em_mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_element.mesh'
+
+    call open_file_fd(trim(pt_mesh_file1)//char(0),pfd)
+    call open_file_fd(trim(em_mesh_file)//char(0),efd)
+#endif
+
     ! figure out total number of points and elements for high-res mesh
 
     do it = 1, num_node
@@ -214,10 +236,16 @@ program combine_vol_data_vtk
         npoint(it) = nglob(it)
         nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1)
       else if( ires == 0 ) then
+!!! .vtk specific !!!!!!!!!!!
+#ifdef USE_VTK_INSTEAD_OF_MESH
         npoint(it) = nglob(it)
+#endif
         nelement(it) = nspec(it)
       else if (ires == 2 ) then
+!!! .vtk specific !!!!!!!!!!!
+#ifdef USE_VTK_INSTEAD_OF_MESH
         npoint(it) = nglob(it)
+#endif
         nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1) / 8
       endif
 
@@ -225,9 +253,11 @@ program combine_vol_data_vtk
 
     print *, 'nspec(it) = ', nspec(1:num_node)
     print *, 'nglob(it) = ', nglob(1:num_node)
+    print *, 'nelement(it) = ', nelement(1:num_node)
 
-    !call write_integer_fd(efd,sum(nelement(1:num_node)))
-
+#ifndef USE_VTK_INSTEAD_OF_MESH
+    call write_integer_fd(efd,sum(nelement(1:num_node)))
+#else
     ! VTK
     print *
     print *,'vtk inital total points: ',sum(npoint(1:num_node))
@@ -244,6 +274,7 @@ program combine_vol_data_vtk
     allocate(total_dat_con(8,sum(nelement(1:num_node))),stat=ier)
     if( ier /= 0 ) stop 'error allocating total_dat_con array'
     total_dat_con(:,:) = 0
+#endif
 
     np = 0
     ne = 0
@@ -340,7 +371,6 @@ program combine_vol_data_vtk
       num_ibool(:) = 0
       numpoin = 0
 
-
       ! write point file
       do ispec=1,nspec(it)
         ! checks if element counts
@@ -370,18 +400,18 @@ program combine_vol_data_vtk
 
                   !dat = data(i,j,k,ispec)
                   dat = ibool_dat(iglob)
-
-                  !call write_real_fd(pfd,x)
-                  !call write_real_fd(pfd,y)
-                  !call write_real_fd(pfd,z)
-                  !call write_real_fd(pfd,dat)
-
+#ifndef USE_VTK_INSTEAD_OF_MESH
+                  call write_real_fd(pfd,x)
+                  call write_real_fd(pfd,y)
+                  call write_real_fd(pfd,z)
+                  call write_real_fd(pfd,dat)
+#else
                   ! VTK
                   total_dat(np+numpoin) = dat
                   total_dat_xyz(1,np+numpoin) = x
                   total_dat_xyz(2,np+numpoin) = y
                   total_dat_xyz(3,np+numpoin) = z
-
+#endif                  
                   mask_ibool(iglob) = .true.
                   num_ibool(iglob) = numpoin
                 endif
@@ -397,17 +427,18 @@ program combine_vol_data_vtk
 
                   dat = data(i,j,k,ispec)
 
-                  !call write_real_fd(pfd,x)
-                  !call write_real_fd(pfd,y)
-                  !call write_real_fd(pfd,z)
-                  !call write_real_fd(pfd,dat)
-
+#ifndef USE_VTK_INSTEAD_OF_MESH
+                  call write_real_fd(pfd,x)
+                  call write_real_fd(pfd,y)
+                  call write_real_fd(pfd,z)
+                  call write_real_fd(pfd,dat)
+#else
                   ! VTK
                   total_dat(np+numpoin) = dat
                   total_dat_xyz(1,np+numpoin) = x
                   total_dat_xyz(2,np+numpoin) = y
                   total_dat_xyz(3,np+numpoin) = z
-
+#endif
                   mask_ibool(iglob) = .true.
                   num_ibool(iglob) = numpoin
                 endif
@@ -416,7 +447,6 @@ program combine_vol_data_vtk
           enddo ! j
         enddo ! k
       enddo !ispec
-
 
       ! no way to check the number of points for low-res
       if (HIGH_RESOLUTION_MESH ) then
@@ -441,20 +471,22 @@ program combine_vol_data_vtk
           if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
             ! connectivity must be given, otherwise element count would be wrong
             ! maps "fictitious" connectivity, element is all with iglob = 1
-            !do k = 1, NGLLZ-1, dk
-            !  do j = 1, NGLLY-1, dj
-            !    do i = 1, NGLLX-1, di
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-                  !call write_integer_fd(efd,1)
-            !    enddo ! i
-            !  enddo ! j
-            !enddo ! k
+#ifndef USE_VTK_INSTEAD_OF_MESH            
+            do k = 1, NGLLZ-1, dk
+              do j = 1, NGLLY-1, dj
+                do i = 1, NGLLX-1, di
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                enddo ! i
+              enddo ! j
+            enddo ! k
+#endif
             ! takes next element
             cycle
           endif
@@ -485,15 +517,16 @@ program combine_vol_data_vtk
               n7 = num_ibool(iglob7)+np-1
               n8 = num_ibool(iglob8)+np-1
 
-              !call write_integer_fd(efd,n1)
-              !call write_integer_fd(efd,n2)
-              !call write_integer_fd(efd,n3)
-              !call write_integer_fd(efd,n4)
-              !call write_integer_fd(efd,n5)
-              !call write_integer_fd(efd,n6)
-              !call write_integer_fd(efd,n7)
-              !call write_integer_fd(efd,n8)
-
+#ifndef USE_VTK_INSTEAD_OF_MESH
+              call write_integer_fd(efd,n1)
+              call write_integer_fd(efd,n2)
+              call write_integer_fd(efd,n3)
+              call write_integer_fd(efd,n4)
+              call write_integer_fd(efd,n5)
+              call write_integer_fd(efd,n6)
+              call write_integer_fd(efd,n7)
+              call write_integer_fd(efd,n8)
+#else
               ! VTK
               ! note: indices for vtk start at 0
               total_dat_con(1,numpoin + ne) = n1
@@ -504,7 +537,7 @@ program combine_vol_data_vtk
               total_dat_con(6,numpoin + ne) = n6
               total_dat_con(7,numpoin + ne) = n7
               total_dat_con(8,numpoin + ne) = n8
-
+#endif
             enddo ! i
           enddo ! j
         enddo ! k
@@ -523,6 +556,7 @@ program combine_vol_data_vtk
     print *, 'Total number of elements: ', ne
     print *
 
+#ifdef USE_VTK_INSTEAD_OF_MESH
     ! VTK
     ! opens unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
@@ -548,21 +582,6 @@ program combine_vol_data_vtk
                             total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)
     enddo
     write(IOVTK,*) ""
-
-    !call close_file_fd(pfd)
-    !call close_file_fd(efd)
-
-    ! add the critical piece: total number of points
-    !call open_file_fd(trim(pt_mesh_file2)//char(0),pfd)
-    !call write_integer_fd(pfd,np)
-    !call close_file_fd(pfd)
-
-    !command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//' > '//trim(mesh_file)
-    !print *, ' '
-    !print *, 'cat mesh files: '
-    !print *, trim(command_name)
-    !call system(trim(command_name))
-
     ! VTK
     ! type: hexahedrons
     write(IOVTK,'(a,i12)') "CELL_TYPES ",ne
@@ -584,6 +603,21 @@ program combine_vol_data_vtk
 
     print *,'written: ',trim(mesh_file)
     print *
+#else
+    call close_file_fd(pfd)
+    call close_file_fd(efd)
+
+    ! add the critical piece: total number of points
+    call open_file_fd(trim(pt_mesh_file2)//char(0),pfd)
+    call write_integer_fd(pfd,np)
+    call close_file_fd(pfd)
+
+    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//' > '//trim(mesh_file)
+    print *, ' '
+    print *, 'cat mesh files: '
+    print *, trim(command_name)
+    call system(trim(command_name))
+#endif
   enddo
 
   print *, 'Done writing mesh files'
