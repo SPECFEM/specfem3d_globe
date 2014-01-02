@@ -37,19 +37,28 @@ program combine_vol_data
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
-  integer  iregion, ir, irs, ire, ires, pfd, efd
+  integer :: iregion, ir, irs, ire, ires
+!!! .mesh specific !!!!!!!!!!!
+  integer :: pfd, efd
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
   character(len=256) :: prname_topo, prname_file, dimension_file
+!!! .mesh specific !!!!!!!!!!!
   character(len=1038) :: command_name
-  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
+  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  character(len=256) :: data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
   integer np, ne,  njunk
+
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: data
   real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
   integer ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
+
   integer num_ibool(NGLOB_CRUST_MANTLE)
   logical mask_ibool(NGLOB_CRUST_MANTLE), HIGH_RESOLUTION_MESH
+
   real x, y, z, dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
@@ -175,6 +184,7 @@ program combine_vol_data
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
 
+!!! .mesh specific !!!!!!!!!!!
     ! open paraview output mesh file
     write(pt_mesh_file1,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_point1.mesh'
     write(pt_mesh_file2,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_point2.mesh'
@@ -183,6 +193,7 @@ program combine_vol_data
 
     call open_file_fd(trim(pt_mesh_file1)//char(0),pfd)
     call open_file_fd(trim(em_mesh_file)//char(0),efd)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     ! figure out total number of points and elements for high-res mesh
 
@@ -205,6 +216,10 @@ program combine_vol_data
       read(27) nspec(it)
       read(27) nglob(it)
       close(27)
+
+      ! check
+      if( nspec(it) > NSPEC_CRUST_MANTLE ) stop 'error file nspec too big, please check compilation'
+      if( nglob(it) > NGLOB_CRUST_MANTLE ) stop 'error file nglob too big, please check compilation'
 
       if (HIGH_RESOLUTION_MESH) then
         npoint(it) = nglob(it)
@@ -231,6 +246,7 @@ program combine_vol_data
 
       iproc = node_list(it)
 
+      data(:,:,:,:) = -1.e10
 
       print *, ' '
       print *, 'Reading slice ', iproc
@@ -241,13 +257,16 @@ program combine_vol_data
       data_file = trim(prname_file) // trim(filename) // '.bin'
       open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-       print*,'error ',ios
-       print*,'file:',trim(data_file)
-       stop 'Error opening file'
+        print*,'error ',ios
+        print*,'file:',trim(data_file)
+        stop 'Error opening file'
       endif
-
-      data(:,:,:,:) = -1.e10
-      read(27) data(:,:,:,1:nspec(it))
+      read(27,iostat=ios) data(:,:,:,1:nspec(it))
+      if( ios /= 0 ) then
+        print*,'read error ',ios
+        print*,'file:',trim(data_file)
+        stop 'error reading data'
+      endif
       close(27)
 
       print *,trim(data_file)
@@ -342,12 +361,12 @@ program combine_vol_data
 
                   !dat = data(i,j,k,ispec)
                   dat = ibool_dat(iglob)
-
+!!! .mesh specific !!!!!!!!!!!
                   call write_real_fd(pfd,x)
                   call write_real_fd(pfd,y)
                   call write_real_fd(pfd,z)
                   call write_real_fd(pfd,dat)
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   mask_ibool(iglob) = .true.
                   num_ibool(iglob) = numpoin
                 endif
@@ -362,10 +381,12 @@ program combine_vol_data
                   if( CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
                   dat = data(i,j,k,ispec)
+!!! .mesh specific !!!!!!!!!!!
                   call write_real_fd(pfd,x)
                   call write_real_fd(pfd,y)
                   call write_real_fd(pfd,z)
                   call write_real_fd(pfd,dat)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   mask_ibool(iglob) = .true.
                   num_ibool(iglob) = numpoin
                 endif
@@ -388,6 +409,7 @@ program combine_vol_data
         npoint(it) = numpoin
       endif
 
+
       ! write elements file
       numpoin = 0
       do ispec = 1, nspec(it)
@@ -398,6 +420,7 @@ program combine_vol_data
           if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
             ! connectivity must be given, otherwise element count would be wrong
             ! maps "fictitious" connectivity, element is all with iglob = 1
+!!! .mesh specific !!!!!!!!!!!
             do k = 1, NGLLZ-1, dk
               do j = 1, NGLLY-1, dj
                 do i = 1, NGLLX-1, di
@@ -412,16 +435,19 @@ program combine_vol_data
                 enddo ! i
               enddo ! j
             enddo ! k
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             ! takes next element
             cycle
           endif
         endif
 
         ! writes out element connectivity
-        numpoin = numpoin + 1 ! counts elements
         do k = 1, NGLLZ-1, dk
           do j = 1, NGLLY-1, dj
             do i = 1, NGLLX-1, di
+
+              numpoin = numpoin + 1 ! counts elements
+
               iglob1 = ibool(i,j,k,ispec)
               iglob2 = ibool(i+di,j,k,ispec)
               iglob3 = ibool(i+di,j+dj,k,ispec)
@@ -430,6 +456,7 @@ program combine_vol_data
               iglob6 = ibool(i+di,j,k+dk,ispec)
               iglob7 = ibool(i+di,j+dj,k+dk,ispec)
               iglob8 = ibool(i,j+dj,k+dk,ispec)
+
               n1 = num_ibool(iglob1)+np-1
               n2 = num_ibool(iglob2)+np-1
               n3 = num_ibool(iglob3)+np-1
@@ -438,6 +465,7 @@ program combine_vol_data
               n6 = num_ibool(iglob6)+np-1
               n7 = num_ibool(iglob7)+np-1
               n8 = num_ibool(iglob8)+np-1
+!!! .mesh specific !!!!!!!!!!!
               call write_integer_fd(efd,n1)
               call write_integer_fd(efd,n2)
               call write_integer_fd(efd,n3)
@@ -446,6 +474,7 @@ program combine_vol_data
               call write_integer_fd(efd,n6)
               call write_integer_fd(efd,n7)
               call write_integer_fd(efd,n8)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             enddo ! i
           enddo ! j
         enddo ! k
@@ -459,9 +488,11 @@ program combine_vol_data
     if (np /= sum(npoint(1:num_node)))  stop 'Error: Number of total points are not consistent'
     if (ne /= sum(nelement(1:num_node))) stop 'Error: Number of total elements are not consistent'
 
+    print *
     print *, 'Total number of points: ', np
     print *, 'Total number of elements: ', ne
-
+    print *
+!!! .mesh specific !!!!!!!!!!!
     call close_file_fd(pfd)
     call close_file_fd(efd)
 
@@ -475,7 +506,7 @@ program combine_vol_data
     print *, 'cat mesh files: '
     print *, trim(command_name)
     call system(trim(command_name))
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   enddo
 
   print *, 'Done writing mesh files'
