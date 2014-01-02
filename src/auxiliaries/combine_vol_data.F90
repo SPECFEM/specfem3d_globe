@@ -30,6 +30,11 @@ program combine_vol_data_vtk
 
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
+#ifdef ADIOS_INPUT
+  use mpi
+  use adios_read_mod
+  use combine_vol_data_adios_mod
+#endif
 
   use constants
 
@@ -93,9 +98,30 @@ program combine_vol_data_vtk
   real,dimension(:,:),allocatable :: total_dat_xyz
   integer,dimension(:,:),allocatable :: total_dat_con
 #endif
+
+#if ADIOS_INPUT
+  integer :: sizeprocs, ierr, mpier
+  character(len=256) :: var_name, value_file_name, mesh_file_name
+  integer(kind=8) :: value_handle, mesh_handle
+
+#endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  ! starts here--------------------------------------------------------------------------------------------------
+  ! starts here---------------------------------------------------------------
+#ifdef ADIOS_INPUT
+  call MPI_Init(ierr)
+  call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
+  print  *, sizeprocs, "procs"
+  if (sizeprocs .ne. 1) then
+    print *, "sequential program. Only mpirun -np 1 ..."
+    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)  
+  endif
+#endif
+
+  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
+             stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
+
+#ifndef ADIOS_INPUT
   do i = 1, 7
     call get_command_argument(i,arg(i))
     if (i < 7 .and. len_trim(arg(i)) == 0) then
@@ -111,9 +137,6 @@ program combine_vol_data_vtk
       stop ' Reenter command line options'
     endif
   enddo
-
-  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
-             stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! get region id
   if (len_trim(arg(7)) == 0) then
@@ -161,6 +184,18 @@ program combine_vol_data_vtk
 
   ! resolution
   read(arg(6),*) ires
+#else
+  do i = 1, 7
+    call get_command_argument(i,arg(i))
+  enddo
+  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node,   &
+                       var_name, value_file_name, mesh_file_name, &
+                       outdir, ires, irs, ire)
+  filename = var_name
+#endif
+print *, irs, ire
+!stop
+
   di = 0
   dj = 0
   dk = 0
@@ -189,6 +224,9 @@ program combine_vol_data_vtk
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
   if( CORRECT_ELLIPTICITY ) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
+#ifdef ADIOS_INPUT
+  call init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)
+#endif
 
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
@@ -212,9 +250,9 @@ program combine_vol_data_vtk
       iproc = node_list(it)
 
       print *, 'Reading slice ', iproc
+#ifndef ADIOS_INPUT
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
-
 
       dimension_file = trim(prname_topo) //'solver_data.bin'
       open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
@@ -226,6 +264,10 @@ program combine_vol_data_vtk
       read(27) nspec(it)
       read(27) nglob(it)
       close(27)
+#else
+      call read_scalars_adios_mesh(mesh_handle, iproc, ir, &
+                                   nglob(it), nspec(it))
+#endif
 
       ! check
       if( nspec(it) > NSPEC_CRUST_MANTLE ) stop 'error file nspec too big, please check compilation'
@@ -287,6 +329,7 @@ program combine_vol_data_vtk
 
       print *, ' '
       print *, 'Reading slice ', iproc
+#ifndef ADIOS_INPUT
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
@@ -305,12 +348,16 @@ program combine_vol_data_vtk
         stop 'error reading data'
       endif
       close(27)
+#else
+    call read_values_adios(value_handle, var_name, iproc, ir, nspec(it), data)
+#endif
 
       print *,trim(data_file)
       print *,'  min/max value: ',minval(data(:,:,:,1:nspec(it))),maxval(data(:,:,:,1:nspec(it)))
       print *
 
       ! topology file
+#ifndef ADIOS_INPUT      
       topo_file = trim(prname_topo) // 'solver_data.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
@@ -330,9 +377,13 @@ program combine_vol_data_vtk
       read(28) ibool(:,:,:,1:nspec(it))
       if (ir==3) read(28) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
       close(28)
+#else
+      call read_coordinates_adios_mesh(mesh_handle, iproc, ir, &
+                                       nglob(it), nspec(it),   &
+                                       xstore, ystore, zstore, ibool)
+#endif
 
       print *, trim(topo_file)
-
 
       !average data on global points
       ibool_count(:) = 0
@@ -618,6 +669,12 @@ program combine_vol_data_vtk
     call system(trim(command_name))
 #endif
   enddo
+
+#ifdef ADIOS_INPUT
+  call clean_adios(value_handle, mesh_handle)
+  call MPI_Finalize(ierr)
+#endif
+
 
   print *, 'Done writing mesh files'
   print *, ' '
