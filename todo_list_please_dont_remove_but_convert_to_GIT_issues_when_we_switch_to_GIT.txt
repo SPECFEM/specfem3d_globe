@@ -7,6 +7,325 @@ DK DK Jan 6, 2014: when we move to GIT, see which of all the issues below are re
 
 DK DK here are new items that should be converted to GIT issues for SPECFEM3D_GLOBE for sure:
 
+-------------------------------------------------------------------------------------
+
+Subject: Re: SPECFEM3D svn trunk: vectorisation dans compute_element
+Date: Thu, 24 Oct 2013 11:23:45 +0200
+From: daniel peter
+To: Dimitri Komatitsch
+CC: Th
+
+hi Dimitri, 
+
+for the two options below, i have no real preference. maybe i would also go with 2/, as it gives more choices for additional optimizations. however, there is a small overhead for these function calls which we avoided so far. anyway, choose whatever you think is best.
+
+thanks also for the info about memory, it's good to know more about contiguous memory allocation for dynamic allocations.
+
+best wishes,
+daniel
+
+On Oct 23, 2013, at 9:58 PM, Dimitri Komatitsch wrote:
+> 
+> Hi Daniel,
+> 
+> OK, great, thanks a lot! Very useful.
+> 
+> Th showed us an idea he has to get rid of the equivalence statements in compute_forces (so that he can then safely add OpenMP), he suggests two possible ways: 1/ use a preprocessor macro to do the index calculations (I thought that would be very slow, it was slow when I tried it back in 2008, but apparently not any more) 2/ rewrite these lines in C and call the tiny C routine from Fortran.
+> We'll probably go with 2/ (for these lines only, the rest will remain in Fortran). (let us know if you think 1/ is better)
+> 
+> We also discussed memory allocation, and we are 99% sure that the answer is yes for static memory allocation (i.e. SPECFEM3D_GLOBE) but no for dynamic if the array has more than one dimension (i.e. SPECFEM3D_Cartesian), because some compilers can then decide to create an array of pointers and call malloc() independently for each column i.e. each value of the second index.
+> That would explain why at least one person (Ilya A U) noticed that SPECFEM3D_Cartesian gave the wrong answer on his machine when using FORCE_VECTORIZE, but the right answer when removing it (and GLOBE was always OK); I thought it could be a small bug in the vectorized code but found none, thus I had no idea until the discussion this afternoon.
+> We decided that Th will email the ifort developers to ask (and cc us), and on my side I'll do a test in SPECFEM3D_Cartesian for Ilya's case in which I will declare these dynamic arrays as 1D and will call allocate() with that, and we will see if Ilya then gets the right result (I bet he will).
+> 
+> Thanks,
+> 
+> Dimitri.
+> 
+> On 10/23/2013 04:54 PM, daniel peter wrote:
+>> hi Th,
+>> 
+>> thanks for the little macro example. i updated the vectorization routines now, using your suggestion below (plus additional macros to simplify life with do-loop writing).
+>> hopefully the readability is still fine. so, much of the duplicate code is gone now...
+>> 
+>> best wishes,
+>> daniel
+>> 
+>> ps. i could not find much infos about contiguous memory allocation. it looks like the standard allocation for arrays is always contiguous in fortran90.
+>> 
+>> Daniel Peter
+>> 
+>> 
+>> On Oct 22, 2013, at 5:57 PM, Th wrote:
+>> 
+>>> Hi Daniel,
+>>> 
+>>> I see you've added vectorization to the compute_element routines in the SVN, and also guarded the ispec_strain lines with if(ispec==1), this is all great thanks a lot!
+>>> 
+>>> Regarding vectorization, maybe we could avoid duplicating the whole routines by using a trick like:
+>>> 
+>>> #ifdef FORCE_VECTORIZATION
+>>> #  define INDEX_IJK   ijk,1,1
+>>> #else
+>>> #  define INDEX_IJK  i,j,k
+>>> #endif
+>>> 
+>>> And then write each routine only once using:
+>>> Foo = bar(INDEX_IJK,ispec, ...)
+>>> 
+>>> While it's not a super elegant solution, I fear the code duplication may lead to either branch of the #ifdef FORCE_VECTORIZATION becoming stale or buggy if the code evolves.
+>>> 
+>>> What do you think?
+>>> Regards,
+>>> Th
+>>> 
+
+-------------------------------------------------------------------------------------
+
+creating the tar files automatically, and a few sentences to change on the CIG web site
+
+Subject: Re: [seismo-dev] switching from tar files to GIT (stable branch) on the CIG web site
+Date: Fri, 06 Dec 2013 15:30:45 +0100
+From: Dimitri Komatitsch
+To: seismo-dev
+
+Hi Eric,
+
+Great! Sounds like the perfect solution. It would be great if someone who is familiar with Git could implement that (for SPECFEM2D and also SPECFEM3D).
+
+It would also be great if we could keep tracking the downloads (using
+the HTML redirect that you suggest). These download maps have been very
+useful.
+
+Thanks,
+Best wishes,
+
+Dimitri.
+
+On 12/05/2013 06:59 PM, Eric Heien wrote:
+
+    Hi Dimitri,
+
+    If you tag revisions in a Github repository, you can link to tarballs of those revisions without requiring the user to have Git, such as:
+
+    https://github.com/geodynamics/specfem1d/archive/v1.0.1.tar.gz
+
+    A minor point about this change: from what I understand about Github we’d no longer be able to track downloads, though we could use an HTML redirect from the CIG website to correctly handle this.
+
+    -Eric
+
+    On Dec 5, 2013, at 9:35 AM, Dimitri Komatitsch wrote:
+
+        Dear all,
+
+        I think we should modify the SPECFEM CIG web pages (2D and 3D_Cartesian) relatively soon to switch from tar files to a GIT command to get the stable branch of the code, because I keep receiving bug reports about routines in the tar file that have been fixed long ago. More importantly, I keep receiving nice contributions that I cannot merge because users developed them from the (obsolete) code in the tar files instead of from the SVN (now GIT) development branch.
+
+        Therefore what about removing the tar files in the next few days and replacing them with the right GIT command?
+
+        Regarding the development branch, I also suggest changing:
+
+        Development Version:
+        If you are interested in checking out SPECFEM3D from the CIG repository, use the following git command:
+
+        to
+
+        Development Version:
+        If you are interested in getting the most up-to-date version of SPECFEM3D from the CIG repository, use the following Git command:
+
+        to encourage users (who know what they are doing) to use and test the latest version instead of the stable version (it seems that with the current web page almost nobody does, since I keep getting emails about the tar files).
+
+        Thanks,
+        Best regards,
+
+        Dimitri.
+
+
+-------- Original Message --------
+Subject: Re: [seismo-dev] switching from tar files to GIT (stable branch) on the CIG web site
+Date: Fri, 06 Dec 2013 15:30:45 +0100
+From: Dimitri Komatitsch
+To: seismo-dev
+
+Hi Eric,
+
+Great! Sounds like the perfect solution. It would be great if someone who is familiar with Git could implement that (for SPECFEM2D and also SPECFEM3D).
+
+It would also be great if we could keep tracking the downloads (using
+the HTML redirect that you suggest). These download maps have been very
+useful.
+
+Thanks,
+Best wishes,
+
+Dimitri.
+
+On 12/05/2013 06:59 PM, Eric Heien wrote:
+
+    Hi Dimitri,
+
+    If you tag revisions in a Github repository, you can link to tarballs of those revisions without requiring the user to have Git, such as:
+
+    https://github.com/geodynamics/specfem1d/archive/v1.0.1.tar.gz
+
+    A minor point about this change: from what I understand about Github we’d no longer be able to track downloads, though we could use an HTML redirect from the CIG website to correctly handle this.
+
+    -Eric
+
+    On Dec 5, 2013, at 9:35 AM, Dimitri Komatitsch wrote:
+
+        Dear all,
+
+        I think we should modify the SPECFEM CIG web pages (2D and 3D_Cartesian) relatively soon to switch from tar files to a GIT command to get the stable branch of the code, because I keep receiving bug reports about routines in the tar file that have been fixed long ago. More importantly, I keep receiving nice contributions that I cannot merge because users developed them from the (obsolete) code in the tar files instead of from the SVN (now GIT) development branch.
+
+        Therefore what about removing the tar files in the next few days and replacing them with the right GIT command?
+
+        Regarding the development branch, I also suggest changing:
+
+        Development Version:
+        If you are interested in checking out SPECFEM3D from the CIG repository, use the following git command:
+
+        to
+
+        Development Version:
+        If you are interested in getting the most up-to-date version of SPECFEM3D from the CIG repository, use the following Git command:
+
+        to encourage users (who know what they are doing) to use and test the latest version instead of the stable version (it seems that with the current web page almost nobody does, since I keep getting emails about the tar files).
+
+        Thanks,
+        Best regards,
+
+        Dimitri.
+
+
+
+-------------------------------------------------------------------------------------
+
+suggestion for the download maps: we could consider adding the total number of downloads on the GMT plot (we currently have the yellow dots only, from which it is not easy to estimate the total number).
+
+-------------------------------------------------------------------------------------
+
+Subject: 	RE: SPECFEM3D: Additional SIMD optimizations
+Date: 	Tue, 29 Oct 2013 15:42:01 +0000
+From: 	Th
+To: 	daniel peter
+CC: 	Dimitri Komatitsch
+
+Hi Daniel,
+
+The equivalence statements are an issue for OpenMP: if you have two 
+variables x and y with EQUIVALENCE(x,y), and if x and y are 
+thread-private (as would be the case for example for the small arrays in 
+compute_forces_crust_mantle_Dev) then writing into x leaves y undefined, 
+and vice versa.
+
+This very nasty behaviour is indeed ingrained in the OpenMP standard 
+(which clearly documents this, if you manage to come across it…), so 
+there’s no way around it short of dropping EQUIVALENCE altogether.
+
+There are “clean” ways of achieving the same as EQUIVALENCE in Fortran 
+2008. I still need to ping the compiler guys about these questions J
+
+Subroutines for the Deville loops, as you suggest, can be a good option. 
+In any case, with argument passing:
+
+1.Either you do argument passing in the Fortran 77 way, which is what 
+most people use in codes: no declaration of subroutine signature, and 
+it’s “use at your own risk”, but it allows to do tricks with array 
+shapes. SPECFEM (like most codes I’ve seen) seems to be using this, mostly.
+
+2.Either you use full Fortran 90 syntax, with procedure interfaces, etc, 
+which is much stricter/safer, but I suspect won’t allow you to change 
+the dimensions of an array “on the fly”.
+
+I think that option 1 above should be fine, as long as it is done 
+carefully and well-documented, especially if there are shape changes.
+
+So how did you manage to implement the products in practice? Is a single 
+subroutine enough, or do you have to split by component?
+
+Th
+
+*From:*daniel peter
+*Sent:* Tuesday, October 29, 2013 4:13 PM
+*To:* Th
+*Cc:* Dimitri Komatitsch
+*Subject:* Re: SPECFEM3D: Additional SIMD optimizations
+
+hi th,
+
+sounds good, i’ll test your suggested changes and will commit it as soon 
+as possible.
+
+for the equivalence statements, how severe are they for your 
+optimizations? i’m testing a modified version here without them using 
+subroutines for the deville loops, and it is about the same speed. i’m 
+not sure though, if by using subroutines with a change of dimension in 
+the arguments, this will produce compiler errors. so far, there is no 
+complaint. anyway, if equivalence statements have to go, then i would 
+have a quick fix which i could submit as well.
+
+best wishes,
+
+daniel
+
+On Oct 29, 2013, at 3:05 PM, Th wrote:
+
+
+
+Hi all,
+
+Here are some more ideas which could further improve vectorization in 
+compute_element and compute_forces_crust_mantle_Dev:
+
+·Transpose R_* arrays from (1:5, ijk) to (ijk, 1:5)
+
+·Transpose rho_s_H from (1:3, ijk) to (ijk, 1:3)
+
+·Transpose epsilondev_loc from (1:5, ijk) to (ijk, 1:5)
+
+·Remove single/double conversions for gravity (we discussed this a few emails ago)
+
+I’m not sure how local those changes would be. It seems that 
+epsilondev_loc is only used locally within compute_element_*, but I’m 
+not sure about the attenuation arrays and rho_s_H.
+
+What do you guys think? Would that be easy to implement in a 
+straightforward way?
+
+Thanks,
+
+Th
+
+
+-------------------------------------------------------------------------------------
+
+advertize for the "OpenTOAST" package in the manual
+
+We should advertize for the "OpenTOAST" package in the manual:
+
+    On 09/24/2013 09:49 AM, Florian Schumacher wrote:
+
+        Dear Mr Komatitsch,
+        dear Mr Tromp,
+
+        for my PhD I developed a program package for full waveform inversion
+        based on waveform sensitivity kernels which supports several external
+        forward codes, two of which are SPECFEM3D Cartesian and GLOBE.
+        (http://www.rub.de/aski)
+
+        This program package "ASKI" is part of the "OpenTOAST" - TOolbox for
+        Applied Seismic Tomography. (http://www.opentoast.de/index.php)
+
+        Since we incorporated SPECFEM3D_Cartesian into the toolbox TOAST, we
+        would like to add the names of the two of you, as the main authors, on
+        our "Contributors" page
+        http://www.opentoast.de/OpenTOAST_People.php
+        next to the link to the SPECFEM3D page
+        http://www.opentoast.de/101.php
+
+        Please let us know if you have any objections to that. Thank you.
+
+        With kind regards,
+        Florian Schumacher
 
 
 =========================================
