@@ -40,6 +40,7 @@
 
     ! gets resulting array values onto CPU
     if( GPU_MODE ) then
+      ! gets field values from GPU
       ! this transfers fields only in elements with stations for efficiency
       call write_seismograms_transfer_cuda(Mesh_pointer, &
                                 displ_crust_mantle,b_displ_crust_mantle, &
@@ -49,6 +50,15 @@
                                 number_receiver_global, &
                                 ispec_selected_rec,ispec_selected_source, &
                                 ibool_crust_mantle)
+
+      ! synchronizes field values from GPU
+      if( GPU_ASYNC_COPY) then
+        call transfer_seismo_from_device_async(Mesh_pointer, &
+                                               displ_crust_mantle,b_displ_crust_mantle, &
+                                               number_receiver_global,ispec_selected_rec,ispec_selected_source, &
+                                               ibool_crust_mantle)
+      endif
+
     endif
 
     ! computes traces at interpolated receiver locations

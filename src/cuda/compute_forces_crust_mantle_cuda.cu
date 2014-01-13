@@ -59,11 +59,11 @@ template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_cm(int x);
 // templates for texture fetching
 // FORWARD_OR_ADJOINT == 1 <- forward arrays
 template<> __device__ float texfetch_displ_cm<1>(int x) { return tex1Dfetch(d_displ_cm_tex, x); }
-template<> __device__ float texfetch_veloc_cm<1>(int x) { return tex1Dfetch(d_veloc_cm_tex, x); }
+//template<> __device__ float texfetch_veloc_cm<1>(int x) { return tex1Dfetch(d_veloc_cm_tex, x); }
 template<> __device__ float texfetch_accel_cm<1>(int x) { return tex1Dfetch(d_accel_cm_tex, x); }
 // FORWARD_OR_ADJOINT == 3 <- backward/reconstructed arrays
 template<> __device__ float texfetch_displ_cm<3>(int x) { return tex1Dfetch(d_b_displ_cm_tex, x); }
-template<> __device__ float texfetch_veloc_cm<3>(int x) { return tex1Dfetch(d_b_veloc_cm_tex, x); }
+//template<> __device__ float texfetch_veloc_cm<3>(int x) { return tex1Dfetch(d_b_veloc_cm_tex, x); }
 template<> __device__ float texfetch_accel_cm<3>(int x) { return tex1Dfetch(d_b_accel_cm_tex, x); }
 #endif
 
@@ -469,8 +469,8 @@ __device__ void compute_element_cm_tiso(int offset,
   realw costwothetasq,costwophisq,sintwophisq;
   realw etaminone,twoetaminone;
   realw two_eta_aniso,four_eta_aniso,six_eta_aniso;
-  realw two_rhovsvsq,two_rhovshsq; // two_rhovpvsq,two_rhovphsq
-  realw four_rhovsvsq,four_rhovshsq; // four_rhovpvsq,four_rhovphsq
+  realw two_rhovsvsq,two_rhovshsq;
+  realw four_rhovsvsq,four_rhovshsq;
   realw c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
 
   // cosine and sine function in CUDA only supported for float
@@ -567,23 +567,17 @@ __device__ void compute_element_cm_tiso(int offset,
   twoetaminone = 2.0f * eta_aniso - 1.0f;
 
   // precompute some products to reduce the CPU time
-
   two_eta_aniso = 2.0f * eta_aniso;
   four_eta_aniso = 4.0f * eta_aniso;
   six_eta_aniso = 6.0f * eta_aniso;
 
-  //two_rhovpvsq = 2.0f * rhovpvsq;
-  //two_rhovphsq = 2.0f * rhovphsq;
   two_rhovsvsq = 2.0f * rhovsvsq;
   two_rhovshsq = 2.0f * rhovshsq;
 
-  //four_rhovpvsq = 4.0f * rhovpvsq;
-  //four_rhovphsq = 4.0f * rhovphsq;
   four_rhovsvsq = 4.0f * rhovsvsq;
   four_rhovshsq = 4.0f * rhovshsq;
 
   // the 21 anisotropic coefficients computed using Mathematica
-
   c11 = rhovphsq*sinphifour + 2.0f*cosphisq*sinphisq*
         (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)*
         sinthetasq) + cosphifour*
@@ -1285,7 +1279,6 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 
     // update memory variables based upon the Runge-Kutta scheme
     if( ATTENUATION && ( ! PARTIAL_PHYS_DISPERSION_ONLY ) ){
-
       compute_element_cm_att_memory(tx,working_element,
                                     d_muvstore,
                                     factor_common,alphaval,betaval,gammaval,
@@ -1378,7 +1371,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventRecord( start, 0 );
 
   if( FORWARD_OR_ADJOINT == 1 ){
-    Kernel_2_crust_mantle_impl<<<grid,threads>>>(nb_blocks_to_compute,
+    Kernel_2_crust_mantle_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                   mp->NGLOB_CRUST_MANTLE,
                                                   d_ibool,
                                                   d_ispec_is_tiso,
@@ -1428,7 +1421,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
     // debug
     DEBUG_BACKWARD_FORCES();
 
-    Kernel_2_crust_mantle_impl<<< grid,threads>>>(nb_blocks_to_compute,
+    Kernel_2_crust_mantle_impl<<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                    mp->NGLOB_CRUST_MANTLE,
                                                    d_ibool,
                                                    d_ispec_is_tiso,

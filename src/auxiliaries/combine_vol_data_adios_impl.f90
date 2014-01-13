@@ -6,7 +6,7 @@ module combine_vol_data_adios_mod
 contains
 
 !=============================================================================
-!> Print help message. 
+!> Print help message.
 subroutine print_usage_adios()
   print *, 'Usage: '
   print *, '   xcombine_data slice_list varname var_file mesh_file ' // &
@@ -73,7 +73,7 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node,   &
   endif
 
   iregion = 0
-  if (command_argument_count() == 7) then 
+  if (command_argument_count() == 7) then
     read(arg(7),*) iregion
   endif
   if (iregion > 3 .or. iregion < 0) stop 'Iregion = 0,1,2,3'
@@ -89,11 +89,11 @@ end subroutine read_args_adios
 
 
 !=============================================================================
-!> Open ADIOS value and mesh files, read mode 
+!> Open ADIOS value and mesh files, read mode
 subroutine init_adios(value_file_name, mesh_file_name, &
                       value_handle, mesh_handle)
   implicit none
-  ! Parameters 
+  ! Parameters
   character(len=*), intent(in) :: value_file_name, mesh_file_name
   integer(kind=8), intent(out) :: value_handle, mesh_handle
   ! Variables
@@ -109,10 +109,10 @@ end subroutine init_adios
 
 
 !=============================================================================
-!> Open ADIOS value and mesh files, read mode 
+!> Open ADIOS value and mesh files, read mode
 subroutine clean_adios(value_handle, mesh_handle)
   implicit none
-  ! Parameters 
+  ! Parameters
   integer(kind=8), intent(in) :: value_handle, mesh_handle
   ! Variables
   integer :: ier
@@ -142,18 +142,18 @@ subroutine read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
                            0, 1, nglob, ier)
   call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "/nspec", &
                            0, 1, nspec, ier)
-  call adios_perform_reads(mesh_handle, ier) 
+  call adios_perform_reads(mesh_handle, ier)
 end subroutine read_scalars_adios_mesh
 
 
 !=============================================================================
-subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, & 
+subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
                                        xstore, ystore, zstore, ibool)
   implicit none
   include 'constants.h'
   ! Parameters
   integer(kind=8), intent(in) :: mesh_handle
-  integer, intent(in) :: iproc, ir, nglob, nspec 
+  integer, intent(in) :: iproc, ir, nglob, nspec
   real(kind=CUSTOM_REAL),dimension(:), intent(inout) :: xstore, ystore, zstore
   integer, dimension(:,:,:,:), intent(inout) :: ibool
   ! Variables
@@ -171,7 +171,7 @@ subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
   call adios_schedule_read(mesh_handle, sel_scalar,             &
                            trim(reg_name) // "x_global/offset", &
                            0, 1, offset_coord, ier)
-  call adios_perform_reads(mesh_handle, ier) 
+  call adios_perform_reads(mesh_handle, ier)
 
   start(1) = offset_ibool
   count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
@@ -180,7 +180,7 @@ subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
                            trim(reg_name) // "ibool/array", 0, 1, &
                            ibool, ier)
 
-  start(1) = offset_coord 
+  start(1) = offset_coord
   count_ad(1) = nglob
   call adios_selection_boundingbox (sel_coord , 1, start, count_ad)
   call adios_schedule_read(mesh_handle, sel_coord, &
@@ -192,7 +192,7 @@ subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
   call adios_schedule_read(mesh_handle, sel_coord, &
                            trim(reg_name) // "z_global/array", 0, 1, &
                            zstore, ier)
-  call adios_perform_reads(mesh_handle, ier) 
+  call adios_perform_reads(mesh_handle, ier)
 end subroutine read_coordinates_adios_mesh
 
 
@@ -202,7 +202,7 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, &
   implicit none
   include 'constants.h'
   ! Parameters
-  integer(kind=8), intent(in) :: value_handle 
+  integer(kind=8), intent(in) :: value_handle
   character(len=*), intent(in) :: var_name
   integer, intent(in) :: iproc, ir, nspec
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), intent(inout) :: data
@@ -218,7 +218,7 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, &
   call adios_schedule_read(value_handle, sel,                             &
                            trim(reg_name) // trim(var_name) // "/offset", &
                            0, 1, offset, ier)
-  call adios_perform_reads(value_handle, ier) 
+  call adios_perform_reads(value_handle, ier)
 
   start(1) = offset
   count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
@@ -226,7 +226,7 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, &
   call adios_schedule_read(value_handle, sel, &
                            trim(reg_name) // trim(var_name) // "/array", 0, 1,&
                            data, ier)
-  call adios_perform_reads(value_handle, ier) 
+  call adios_perform_reads(value_handle, ier)
 end subroutine read_values_adios
 
 end module combine_vol_data_adios_mod

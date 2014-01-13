@@ -111,7 +111,7 @@ void exit_on_cuda_error(char* kernel_name) {
 #else
     myrank = 0;
 #endif
-    sprintf(filename,"../in_out_files/OUTPUT_FILES/error_message_%06d.txt",myrank);
+    sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
     fp = fopen(filename,"a+");
     if (fp != NULL){
       fprintf(fp,"Error after %s: %s\n", kernel_name, cudaGetErrorString(err));
@@ -152,7 +152,7 @@ void exit_on_error(char* info) {
 #else
   myrank = 0;
 #endif
-  sprintf(filename,"../in_out_files/OUTPUT_FILES/error_message_%06d.txt",myrank);
+  sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
   fp = fopen(filename,"a+");
   if (fp != NULL){
     fprintf(fp,"ERROR: %s\n",info);
@@ -185,7 +185,7 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
 #else
     myrank = 0;
 #endif
-    sprintf(filename,"../in_out_files/OUTPUT_FILES/error_message_%06d.txt",myrank);
+    sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
     fp = fopen(filename,"a+");
     if (fp != NULL){
       fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
@@ -509,10 +509,14 @@ TRACE("check_norm_acoustic_from_device");
   cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
 
   if(*FORWARD_OR_ADJOINT == 1 ){
-    get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_displ_outer_core,size,d_max);
+    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core,size,d_max);
   }else if(*FORWARD_OR_ADJOINT == 3 ){
-    get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_b_displ_outer_core,size,d_max);
+    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core,size,d_max);
   }
+
+  // explicitly waits until previous compute stream finishes
+  // (cudaMemcpy implicitly synchronizes all other cuda operations)
+  cudaStreamSynchronize(mp->compute_stream);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),222);
@@ -650,10 +654,14 @@ void FC_FUNC_(check_norm_elastic_from_device,
   cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
 
   if(*FORWARD_OR_ADJOINT == 1 ){
-    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,size,d_max);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle,size,d_max);
   }else if(*FORWARD_OR_ADJOINT == 3 ){
-    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,size,d_max);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle,size,d_max);
   }
+
+  // explicitly waits until previous compute stream finishes
+  // (cudaMemcpy implicitly synchronizes all other cuda operations)
+  cudaStreamSynchronize(mp->compute_stream);
 
   // copies to CPU
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
@@ -753,7 +761,7 @@ void FC_FUNC_(check_norm_strain_from_device,
   max = 0.0f;
 
   // determines max for: eps_trace_over_3_crust_mantle
-  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_eps_trace_over_3_crust_mantle,size,d_max);
+  get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle,size,d_max);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),221);
@@ -785,7 +793,7 @@ void FC_FUNC_(check_norm_strain_from_device,
   max_eps = 0.0f;
 
   // determines max for: epsilondev_xx_crust_mantle
-  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,size,d_max);
+  get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle,size,d_max);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),222);
@@ -796,7 +804,7 @@ void FC_FUNC_(check_norm_strain_from_device,
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_yy_crust_mantle
-  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_yy_crust_mantle,size,d_max);
+  get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_yy_crust_mantle,size,d_max);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),223);
@@ -807,7 +815,7 @@ void FC_FUNC_(check_norm_strain_from_device,
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_xy_crust_mantle
-  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xy_crust_mantle,size,d_max);
+  get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xy_crust_mantle,size,d_max);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),224);
@@ -818,7 +826,7 @@ void FC_FUNC_(check_norm_strain_from_device,
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_xz_crust_mantle
-  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xz_crust_mantle,size,d_max);
+  get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xz_crust_mantle,size,d_max);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),225);
@@ -829,7 +837,7 @@ void FC_FUNC_(check_norm_strain_from_device,
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_yz_crust_mantle
-  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_yz_crust_mantle,size,d_max);
+  get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_yz_crust_mantle,size,d_max);
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),226);

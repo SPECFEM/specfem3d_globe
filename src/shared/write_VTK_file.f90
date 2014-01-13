@@ -193,7 +193,7 @@
 
   ! type: hexahedrons
   write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOVTK,*) (12,ispec=1,nspec)
+  write(IOVTK,'(6i12)') (12,ispec=1,nspec)
   write(IOVTK,*) ""
 
   write(IOVTK,'(a,i12)') "CELL_DATA ",nspec
@@ -268,7 +268,7 @@
 
   ! type: hexahedrons
   write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOVTK,*) (12,ispec=1,nspec)
+  write(IOVTK,'(6i12)') (12,ispec=1,nspec)
   write(IOVTK,*) ""
 
   write(IOVTK,'(a,i12)') "CELL_DATA ",nspec
@@ -371,7 +371,7 @@
 
   ! type: hexahedrons
   write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOVTK,*) (12,ispec=1,nspec)
+  write(IOVTK,'(6i12)') (12,ispec=1,nspec)
   write(IOVTK,*) ""
 
   ! x components
@@ -561,7 +561,7 @@
 
     ! type: hexahedrons
     write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec*NPROCTOT
-    write(IOVTK,*) (12,ispec=1,nspec*NPROCTOT)
+    write(IOVTK,'(6i12)') (12,ispec=1,nspec*NPROCTOT)
     write(IOVTK,*) ""
 
     ! x components

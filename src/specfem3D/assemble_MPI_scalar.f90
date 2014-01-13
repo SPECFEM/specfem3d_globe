@@ -238,17 +238,20 @@
 
   end subroutine assemble_MPI_scalar_w
 
-!
+
 !-------------------------------------------------------------------------------------------------
 !
+! CUDA routines
+!
+!-------------------------------------------------------------------------------------------------
+
 
   subroutine assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROC, &
                                           buffer_send_scalar,buffer_recv_scalar, &
                                           num_interfaces,max_nibool_interfaces, &
                                           nibool_interfaces, &
                                           my_neighbours, &
-                                          request_send_scalar,request_recv_scalar, &
-                                          FORWARD_OR_ADJOINT)
+                                          request_send_scalar,request_recv_scalar)
 
 ! non-blocking MPI send
 
@@ -270,19 +273,14 @@
   integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
   integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
-  integer :: FORWARD_OR_ADJOINT
-
   ! local parameters
   integer iinterface
 
-! sends only if more than one partition
-  if(NPROC > 1) then
+  ! note: preparation of the contribution between partitions using MPI
+  !       transfers mpi buffers to CPU in already done in transfer_boun_pot_from_device() call
 
-    ! preparation of the contribution between partitions using MPI
-    ! transfers mpi buffers to CPU
-    call transfer_boun_pot_from_device(Mesh_pointer, &
-                                      buffer_send_scalar, &
-                                      FORWARD_OR_ADJOINT)
+  ! sends only if more than one partition
+  if(NPROC > 1) then
 
     ! send messages
     do iinterface = 1, num_interfaces
@@ -323,8 +321,7 @@
 
   integer :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
-       buffer_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: buffer_recv_scalar
   integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
   integer :: FORWARD_OR_ADJOINT
@@ -360,3 +357,64 @@
   endif
 
   end subroutine assemble_MPI_scalar_write_cuda
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! with cuda functions...
+
+  subroutine transfer_boundarypot_to_device(Mesh_pointer, NPROC, &
+                                            buffer_recv_scalar, &
+                                            num_interfaces,max_nibool_interfaces,&
+                                            request_recv_scalar, &
+                                            IREGION,FORWARD_OR_ADJOINT)
+
+  use constants
+
+  implicit none
+
+  integer(kind=8) :: Mesh_pointer
+
+  integer :: NPROC
+
+  ! array to assemble
+  integer :: num_interfaces,max_nibool_interfaces
+
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: buffer_recv_scalar
+
+  integer, dimension(num_interfaces) :: request_recv_scalar
+
+  integer :: IREGION
+  integer :: FORWARD_OR_ADJOINT
+
+  ! local parameters
+  integer :: iinterface
+
+  ! here we have to assemble all the contributions between partitions using MPI
+
+  ! assemble only if more than one partition
+  if(NPROC > 1) then
+
+    ! waits for communications completion (recv)
+    do iinterface = 1, num_interfaces
+      call wait_req(request_recv_scalar(iinterface))
+    enddo
+
+    ! sends contributions to GPU
+    call transfer_buffer_to_device_async(Mesh_pointer, &
+                                         buffer_recv_scalar, &
+                                         IREGION,FORWARD_OR_ADJOINT)
+  endif
+
+  ! This step is done via previous function transfer_and_assemble...
+  ! do iinterface = 1, num_interfaces
+  !   do ipoin = 1, nibool_interfaces(iinterface)
+  !     array_val(ibool_interfaces(ipoin,iinterface)) = &
+  !          array_val(ibool_interfaces(ipoin,iinterface)) + buffer_recv_scalar(ipoin,iinterface)
+  !   enddo
+  ! enddo
+
+  end subroutine transfer_boundarypot_to_device
+
+

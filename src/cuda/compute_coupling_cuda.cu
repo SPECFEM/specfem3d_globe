@@ -125,7 +125,7 @@ void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
 
   // launches GPU kernel
   if( *FORWARD_OR_ADJOINT == 1 ){
-    compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+    compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle,
                                                         mp->d_accel_outer_core,
                                                         mp->d_ibool_crust_mantle,
                                                         mp->d_ibelm_bottom_crust_mantle,
@@ -140,7 +140,7 @@ void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
     DEBUG_BACKWARD_COUPLING();
 
     // adjoint simulations
-    compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
+    compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle,
                                                         mp->d_b_accel_outer_core,
                                                         mp->d_ibool_crust_mantle,
                                                         mp->d_ibelm_bottom_crust_mantle,
@@ -245,7 +245,7 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
 
   // launches GPU kernel
   if( *FORWARD_OR_ADJOINT == 1 ){
-    compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+    compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core,
                                                         mp->d_accel_outer_core,
                                                         mp->d_ibool_inner_core,
                                                         mp->d_ibelm_top_inner_core,
@@ -260,7 +260,7 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
     DEBUG_BACKWARD_COUPLING();
 
     // adjoint simulations
-    compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
+    compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core,
                                                         mp->d_b_accel_outer_core,
                                                         mp->d_ibool_inner_core,
                                                         mp->d_ibelm_top_inner_core,
@@ -371,7 +371,7 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
 
   // launches GPU kernel
   if( *FORWARD_OR_ADJOINT == 1 ){
-    compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+    compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle,
                                                         mp->d_accel_crust_mantle,
                                                         mp->d_accel_outer_core,
                                                         mp->d_ibool_crust_mantle,
@@ -390,7 +390,7 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
     DEBUG_BACKWARD_COUPLING();
 
     //  adjoint simulations
-    compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
+    compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle,
                                                         mp->d_b_accel_crust_mantle,
                                                         mp->d_b_accel_outer_core,
                                                         mp->d_ibool_crust_mantle,
@@ -504,7 +504,7 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
 
   // launches GPU kernel
   if( *FORWARD_OR_ADJOINT == 1 ){
-    compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+    compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core,
                                                         mp->d_accel_inner_core,
                                                         mp->d_accel_outer_core,
                                                         mp->d_ibool_inner_core,
@@ -523,7 +523,7 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
     DEBUG_BACKWARD_COUPLING();
 
     //  adjoint simulations
-    compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
+    compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core,
                                                         mp->d_b_accel_inner_core,
                                                         mp->d_b_accel_outer_core,
                                                         mp->d_ibool_inner_core,
@@ -624,7 +624,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
   // uses corrected mass matrices
   if( *FORWARD_OR_ADJOINT == 1 ){
-    compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
+    compute_coupling_ocean_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle,
                                                          mp->d_rmassx_crust_mantle,
                                                          mp->d_rmassy_crust_mantle,
                                                          mp->d_rmassz_crust_mantle,
@@ -637,7 +637,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
     DEBUG_BACKWARD_COUPLING();
 
     // for backward/reconstructed potentials
-    compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
+    compute_coupling_ocean_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle,
                                                          mp->d_b_rmassx_crust_mantle,
                                                          mp->d_b_rmassy_crust_mantle,
                                                          mp->d_b_rmassz_crust_mantle,

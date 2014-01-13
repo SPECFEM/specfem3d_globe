@@ -67,10 +67,10 @@
   integer :: ier
 
   ! allocate crustal arrays
-  allocate( thlr(NKEYS_CRUST,NLAYERS_CRUST), &
-           velocp(NKEYS_CRUST,NLAYERS_CRUST), &
-           velocs(NKEYS_CRUST,NLAYERS_CRUST), &
-           dens(NKEYS_CRUST,NLAYERS_CRUST), &
+  allocate(thlr(NLAYERS_CRUST,NKEYS_CRUST), &
+           velocp(NLAYERS_CRUST,NKEYS_CRUST), &
+           velocs(NLAYERS_CRUST,NKEYS_CRUST), &
+           dens(NLAYERS_CRUST,NKEYS_CRUST), &
            stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustal arrays')
 
@@ -184,7 +184,9 @@
 
  end subroutine model_crust
 
-!---------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine read_crust_model()
 
@@ -226,12 +228,14 @@
 
   do ikey=1,NKEYS_CRUST
     read (1,"(a2)") code(ikey)
-    read (1,*) (velocp(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (velocs(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (dens(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (thlr(ikey,i),i=1,NLAYERS_CRUST-1),thlr(ikey,NLAYERS_CRUST)
-    if(thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max = thlr(ikey,NLAYERS_CRUST)
-    if(thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min = thlr(ikey,NLAYERS_CRUST)
+    read (1,*) (velocp(i,ikey),i=1,NLAYERS_CRUST)
+    read (1,*) (velocs(i,ikey),i=1,NLAYERS_CRUST)
+    read (1,*) (dens(i,ikey),i=1,NLAYERS_CRUST)
+    read (1,*) (thlr(i,ikey),i=1,NLAYERS_CRUST-1),thlr(NLAYERS_CRUST,ikey)
+
+    ! limit moho thickness
+    if(thlr(NLAYERS_CRUST,ikey) > h_moho_max) h_moho_max = thlr(NLAYERS_CRUST,ikey)
+    if(thlr(NLAYERS_CRUST,ikey) < h_moho_min) h_moho_min = thlr(NLAYERS_CRUST,ikey)
   enddo
   close(1)
 
@@ -240,7 +244,9 @@
 
   end subroutine read_crust_model
 
-!---------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine crust_CAPsmoothed(lat,lon,velp,vels,rho,thick,abbreviation,&
                               code,thlr,velocp,velocs,dens)
@@ -263,7 +269,7 @@
   ! argument variables
   double precision :: lat,lon
   double precision,dimension(NLAYERS_CRUST) :: rho,thick,velp,vels
-  double precision,dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr,velocp,velocs,dens
+  double precision,dimension(NLAYERS_CRUST,NKEYS_CRUST) :: thlr,velocp,velocs,dens
 
   character(len=2) :: code(NKEYS_CRUST)
   character(len=2) :: abbreviation(NCAP_CRUST/2,NCAP_CRUST)
@@ -280,12 +286,14 @@
   !-------------------------------
 
   ! local variables
-  double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
-  double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
-  double precision weightl,cap_degree,dist
-  double precision h_sed
-  integer i,icolat,ilon,ierr
-  character(len=2) crustaltype
+  double precision :: xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
+  double precision :: rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
+
+  double precision :: weightl,cap_degree,dist
+  double precision :: h_sed
+  integer :: i,icolat,ilon
+  character(len=2) :: crustaltype
+
 
   ! checks latitude/longitude
   if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
@@ -328,10 +336,11 @@
   do i=1,NTHETA*NPHI
     ! gets crust values
     call icolat_ilon(xlat(i),xlon(i),icolat,ilon)
+
     crustaltype = abbreviation(icolat,ilon)
+
     call get_crust_structure(crustaltype,velpl,velsl,rhol,thickl, &
-                            code,thlr,velocp,velocs,dens,ierr)
-    if(ierr /= 0) stop 'error in routine get_crust_structure'
+                             code,thlr,velocp,velocs,dens)
 
     ! sediment thickness
     h_sed = thickl(3) + thickl(4)
@@ -359,7 +368,9 @@
   end subroutine crust_CAPsmoothed
 
 
-!------------------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine icolat_ilon(xlat,xlon,icolat,ilon)
 
@@ -372,57 +383,65 @@
 
   if(xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
     stop 'error in latitude/longitude range in icolat_ilon'
-  icolat=int(1+( (90.d0-xlat)*0.5d0 ))
-  if(icolat == 91) icolat=90
-  ilon=int(1+( (180.d0+xlon)*0.5d0 ))
-  if(ilon == 181) ilon=1
+
+  icolat = int(1+( (90.d0-xlat)*0.5d0 ))
+  if(icolat == 91) icolat = 90
+
+  ilon = int(1+( (180.d0+xlon)*0.5d0 ))
+  if(ilon == 181) ilon = 1
 
   if(icolat>90 .or. icolat<1) stop 'error in routine icolat_ilon'
   if(ilon<1 .or. ilon>180) stop 'error in routine icolat_ilon'
 
   end subroutine icolat_ilon
 
-!---------------------------------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-  subroutine get_crust_structure(type,vptyp,vstyp,rhtyp,thtp, &
-               code,thlr,velocp,velocs,dens,ierr)
+  subroutine get_crust_structure(crustaltype,vptyp,vstyp,rhtyp,thtp, &
+               code,thlr,velocp,velocs,dens)
 
   use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST
 
   implicit none
 
   ! argument variables
-  integer ierr
-  double precision rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)
-  double precision vptyp(NLAYERS_CRUST),vstyp(NLAYERS_CRUST)
-  character(len=2) type,code(NKEYS_CRUST)
-  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
+  character(len=2) :: crustaltype
+  double precision :: rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)
+  double precision :: vptyp(NLAYERS_CRUST),vstyp(NLAYERS_CRUST)
+  character(len=2) :: code(NKEYS_CRUST)
+  double precision :: thlr(NLAYERS_CRUST,NKEYS_CRUST),velocp(NLAYERS_CRUST,NKEYS_CRUST)
+  double precision :: velocs(NLAYERS_CRUST,NKEYS_CRUST),dens(NLAYERS_CRUST,NKEYS_CRUST)
 
   ! local variables
-  integer i,ikey
+  integer :: ikey,ikey_selected
 
-  ierr=1
+  ! determines layer index
+  ikey_selected = 0
   do ikey=1,NKEYS_CRUST
-    if (code(ikey) == type) then
-      do i=1,NLAYERS_CRUST
-        vptyp(i)=velocp(ikey,i)
-        vstyp(i)=velocs(ikey,i)
-        rhtyp(i)=dens(ikey,i)
-      enddo
-      do i=1,NLAYERS_CRUST-1
-        thtp(i)=thlr(ikey,i)
-      enddo
-      !   get distance to Moho from the bottom of the ocean or the ice
-      thtp(NLAYERS_CRUST)=thlr(ikey,NLAYERS_CRUST)-thtp(1)-thtp(2)
-      ierr=0
+    if (code(ikey) == crustaltype) then
+      ikey_selected = ikey
+      exit
     endif
   enddo
+  if( ikey_selected == 0 ) stop 'error in get_crust_structure: could not find ikey for selected crustal type'
+
+  ! sets vp,vs and rho for all layers
+  vptyp(:) = velocp(:,ikey_selected)
+  vstyp(:) = velocs(:,ikey_selected)
+  rhtyp(:) = dens(:,ikey_selected)
+  thtp(:) = thlr(:,ikey_selected)
+
+  !   get distance to Moho from the bottom of the ocean or the ice
+  thtp(NLAYERS_CRUST) = thtp(NLAYERS_CRUST) - thtp(1) - thtp(2)
 
   end subroutine get_crust_structure
 
 
-!---------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine CAP_vardegree(lon,lat,xlon,xlat,weight,CAP_DEGREE,NTHETA,NPHI)
 

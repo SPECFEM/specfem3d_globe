@@ -515,7 +515,7 @@ void FC_FUNC_(compute_kernels_cm_cuda,
   dim3 threads(blocksize,1,1);
 
   // density kernel
-  compute_kernels_rho_cudakernel<<<grid,threads>>>(mp->d_ibool_crust_mantle,
+  compute_kernels_rho_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_crust_mantle,
                                                    mp->d_accel_crust_mantle,
                                                    mp->d_b_displ_crust_mantle,
                                                    mp->d_rho_kl_crust_mantle,
@@ -533,7 +533,7 @@ void FC_FUNC_(compute_kernels_cm_cuda,
     // computes strain locally based on current backward/reconstructed (b_displ) wavefield
     if(! mp->anisotropic_kl){
       // isotropic kernels
-      compute_kernels_iso_undo_att_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,
+      compute_kernels_iso_undo_att_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle,
                                                        mp->d_epsilondev_yy_crust_mantle,
                                                        mp->d_epsilondev_xy_crust_mantle,
                                                        mp->d_epsilondev_xz_crust_mantle,
@@ -551,7 +551,7 @@ void FC_FUNC_(compute_kernels_cm_cuda,
                                                        mp->d_hprime_xx);
     }else{
       // anisotropic kernels
-      compute_kernels_ani_undo_att_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,
+      compute_kernels_ani_undo_att_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle,
                                                        mp->d_epsilondev_yy_crust_mantle,
                                                        mp->d_epsilondev_xy_crust_mantle,
                                                        mp->d_epsilondev_xz_crust_mantle,
@@ -572,7 +572,7 @@ void FC_FUNC_(compute_kernels_cm_cuda,
     // takes strain arrays computed from previous compute_forces call
     if(! mp->anisotropic_kl){
       // isotropic kernels
-    compute_kernels_iso_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,
+    compute_kernels_iso_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle,
                                                      mp->d_epsilondev_yy_crust_mantle,
                                                      mp->d_epsilondev_xy_crust_mantle,
                                                      mp->d_epsilondev_xz_crust_mantle,
@@ -590,7 +590,7 @@ void FC_FUNC_(compute_kernels_cm_cuda,
                                                      deltat);
     }else{
       // anisotropic kernels
-    compute_kernels_ani_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,
+    compute_kernels_ani_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle,
                                                      mp->d_epsilondev_yy_crust_mantle,
                                                      mp->d_epsilondev_xy_crust_mantle,
                                                      mp->d_epsilondev_xz_crust_mantle,
@@ -640,7 +640,7 @@ void FC_FUNC_(compute_kernels_ic_cuda,
 
   // only isotropic kernels in inner core so far implemented
   // density kernel
-  compute_kernels_rho_cudakernel<<<grid,threads>>>(mp->d_ibool_inner_core,
+  compute_kernels_rho_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_inner_core,
                                                    mp->d_accel_inner_core,
                                                    mp->d_b_displ_inner_core,
                                                    mp->d_rho_kl_inner_core,
@@ -657,7 +657,7 @@ void FC_FUNC_(compute_kernels_ic_cuda,
 
     // computes strain locally based on current backward/reconstructed (b_displ) wavefield
     // isotropic kernels (shear, bulk)
-    compute_kernels_iso_undo_att_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_inner_core,
+    compute_kernels_iso_undo_att_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core,
                                                                mp->d_epsilondev_yy_inner_core,
                                                                mp->d_epsilondev_xy_inner_core,
                                                                mp->d_epsilondev_xz_inner_core,
@@ -678,7 +678,7 @@ void FC_FUNC_(compute_kernels_ic_cuda,
     // takes strain arrays computed from previous compute_forces call
 
     // isotropic kernels (shear, bulk)
-    compute_kernels_iso_cudakernel<<<grid,threads>>>(mp->d_epsilondev_xx_inner_core,
+    compute_kernels_iso_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core,
                                                      mp->d_epsilondev_yy_inner_core,
                                                      mp->d_epsilondev_xy_inner_core,
                                                      mp->d_epsilondev_xz_inner_core,
@@ -881,7 +881,7 @@ TRACE("compute_kernels_oc_cuda");
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  compute_kernels_acoustic_kernel<<<grid,threads>>>(mp->d_ibool_outer_core,
+  compute_kernels_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_outer_core,
                                                     mp->d_rhostore_outer_core,
                                                     mp->d_kappavstore_outer_core,
                                                     mp->d_hprime_xx,
@@ -975,7 +975,7 @@ void FC_FUNC_(compute_kernels_strgth_noise_cu,
                                      cudaMemcpyHostToDevice),90900);
 
   // calculates noise strength kernel
-  compute_kernels_strength_noise_cuda_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+  compute_kernels_strength_noise_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle,
                                                                mp->d_ibelm_top_crust_mantle,
                                                                mp->d_ibool_crust_mantle,
                                                                mp->d_noise_surface_movie,
@@ -1032,7 +1032,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks
-  if( ! mp->approximate_hess_kl ){exit_on_cuda_error("approximate_hess_kl flag not properly initialized");}
+  if( ! mp->approximate_hess_kl ){exit_on_error("approximate_hess_kl flag not properly initialized");}
 
   int blocksize = NGLL3; // NGLLX*NGLLY*NGLLZ
   realw deltat = *deltat_f;
@@ -1043,7 +1043,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  compute_kernels_hess_cudakernel<<<grid,threads>>>(mp->d_ibool_crust_mantle,
+  compute_kernels_hess_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_crust_mantle,
                                                     mp->d_accel_crust_mantle,
                                                     mp->d_b_accel_crust_mantle,
                                                     mp->d_hess_kl_crust_mantle,

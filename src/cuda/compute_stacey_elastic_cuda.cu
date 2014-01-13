@@ -237,7 +237,7 @@ TRACE("compute_stacey_elastic_cuda");
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_elastic_cuda: unknown interface type");
+      exit_on_error("compute_stacey_elastic_cuda: unknown interface type");
       break;
   }
 
@@ -259,7 +259,7 @@ TRACE("compute_stacey_elastic_cuda");
   dim3 threads(blocksize,1,1);
 
   // absorbing boundary contributions
-  compute_stacey_elastic_kernel<<<grid,threads>>>(mp->d_veloc_crust_mantle,
+  compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_crust_mantle,
                                                   mp->d_accel_crust_mantle,
                                                   interface_type,
                                                   num_abs_boundary_faces,
@@ -281,7 +281,11 @@ TRACE("compute_stacey_elastic_cuda");
 
 
   // adjoint simulations: stores absorbed wavefield part
-  if(mp->save_forward && num_abs_boundary_faces > 0 ) {
+  if( mp->save_forward ) {
+    // explicitly waits until previous compute stream finishes
+    // (cudaMemcpy implicitly synchronizes all other cuda operations)
+    cudaStreamSynchronize(mp->compute_stream);
+
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(absorb_field,d_b_absorb_field,
                             NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
@@ -438,7 +442,7 @@ void FC_FUNC_(compute_stacey_elastic_backward_cuda,
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_elastic_cuda: unknown interface type");
+      exit_on_error("compute_stacey_elastic_cuda: unknown interface type");
       break;
   }
 
@@ -465,7 +469,7 @@ void FC_FUNC_(compute_stacey_elastic_backward_cuda,
                                      NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
 
   // absorbing boundary contributions
-  compute_stacey_elastic_backward_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
+  compute_stacey_elastic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle,
                                                            d_b_absorb_field,
                                                            interface_type,
                                                            num_abs_boundary_faces,
@@ -548,7 +552,7 @@ void FC_FUNC_(compute_stacey_elastic_undoatt_cuda,
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_elastic_undoatt_cuda: unknown interface type");
+      exit_on_error("compute_stacey_elastic_undoatt_cuda: unknown interface type");
       break;
   }
 
@@ -570,7 +574,7 @@ void FC_FUNC_(compute_stacey_elastic_undoatt_cuda,
   dim3 threads(blocksize,1,1);
 
   // absorbing boundary contributions
-  compute_stacey_elastic_kernel<<<grid,threads>>>(mp->d_b_veloc_crust_mantle,
+  compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_crust_mantle,
                                                   mp->d_b_accel_crust_mantle,
                                                   interface_type,
                                                   num_abs_boundary_faces,

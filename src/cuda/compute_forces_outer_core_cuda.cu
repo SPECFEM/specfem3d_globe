@@ -494,7 +494,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   // cudaEventRecord( start, 0 );
 
   if( FORWARD_OR_ADJOINT == 1 ){
-    Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
+    Kernel_2_outer_core_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                 mp->NGLOB_OUTER_CORE,
                                                 d_ibool,
                                                 mp->d_phase_ispec_inner_outer_core,
@@ -525,7 +525,7 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
     // debug
     DEBUG_BACKWARD_FORCES();
 
-    Kernel_2_outer_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
+    Kernel_2_outer_core_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                 mp->NGLOB_OUTER_CORE,
                                                 d_ibool,
                                                 mp->d_phase_ispec_inner_outer_core,

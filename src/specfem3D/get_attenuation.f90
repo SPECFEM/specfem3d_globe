@@ -171,7 +171,7 @@
 
   subroutine get_attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
-  use constants
+  use constants,only: ZERO,ONE,TWO,PI,GRAV,RHOAV,TWO_PI,N_SLS
 
   implicit none
 
@@ -227,8 +227,8 @@
   scale_factor = factor_scale_mu * factor_scale_mu0
 
   !--- check that the correction factor is close to one
-  if(scale_factor < 0.8 .or. scale_factor > 1.2) then
-     write(*,*)'scale factor: ', scale_factor
+  if(scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
+     print*,'error: incorrect scale factor: ', scale_factor
      call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 

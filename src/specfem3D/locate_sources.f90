@@ -669,9 +669,9 @@
         write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
 
         ! writes out actual source position to vtk file
-        write(IOVTK,*) sngl(x_found_source(isource_in_this_subset)), &
-                      sngl(y_found_source(isource_in_this_subset)), &
-                      sngl(z_found_source(isource_in_this_subset))
+        write(IOVTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
+                                sngl(y_found_source(isource_in_this_subset)), &
+                                sngl(z_found_source(isource_in_this_subset))
 
         ! get latitude, longitude and depth of the source that will be used
         call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset), &

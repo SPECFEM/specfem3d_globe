@@ -311,6 +311,12 @@
   !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
   !  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
+  ! subsets used to save adjoint sources must not be larger than the whole time series,
+  ! otherwise we waste memory
+  if( SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 ) then
+    if(NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
+  endif
+
   end subroutine setup_timesteps
 
 !
@@ -332,6 +338,9 @@
   character(len=256) :: filename,adj_source_file
   character(len=2) :: bic
   integer :: ier
+  integer,dimension(:),allocatable :: tmp_rec_local_all
+  integer :: maxrec,maxproc(1)
+  double precision :: size
 
   ! user output
   if( myrank == 0 ) then
@@ -430,9 +439,12 @@
               read(IIN,*,iostat=ier) junk,junk
               if( ier == 0 ) itime = itime + 1
             enddo
-            if( itime /= NSTEP) &
+            ! checks length
+            if( itime /= NSTEP) then
+              print*,'adjoint source error: ',trim(filename),' has length',itime,' but should be',NSTEP
               call exit_MPI(myrank,&
                 'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+            endif
 
             ! updates counter for found files
             nadj_files_found = nadj_files_found + 1
@@ -477,6 +489,86 @@
     if(myrank == 0 .and. nrec_tot_found /= nrec) &
       call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
+
+  ! statistics about allocation memory for seismograms & adj_sourcearrays
+  ! gathers info about receivers on master
+  if( myrank == 0 ) then
+    ! only master process needs full arrays allocated
+    allocate(tmp_rec_local_all(NPROCTOT_VAL),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
+  else
+    ! dummy arrays
+    allocate(tmp_rec_local_all(1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
+  endif
+
+  ! seismograms
+  ! gather from slaves on master
+  tmp_rec_local_all(:) = 0
+  tmp_rec_local_all(1) = nrec_local
+  if( NPROCTOT_VAL > 1 ) then
+    call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
+  endif
+  ! user output
+  if( myrank == 0 ) then
+    ! determines maximum number of local receivers and corresponding rank
+    maxrec = maxval(tmp_rec_local_all(:))
+    maxproc = maxloc(tmp_rec_local_all(:))
+    ! seismograms array size in MB
+    if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
+      ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+      size = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+    else
+      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+      size = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+    endif
+    ! outputs info
+    write(IMAIN,*)
+    write(IMAIN,*) 'seismograms:'
+    write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
+    write(IMAIN,*) '  size of maximum seismogram array = ', sngl(size),'MB'
+    write(IMAIN,*) '                                   = ', sngl(size/1024.d0),'GB'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! adjoint sources
+  if( SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 ) then
+    ! gather from slaves on master
+    tmp_rec_local_all(:) = 0
+    tmp_rec_local_all(1) = nadj_rec_local
+    if( NPROCTOT_VAL > 1 ) then
+      call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
+    endif
+    ! user output
+    if( myrank == 0 ) then
+      ! determines maximum number of local receivers and corresponding rank
+      maxrec = maxval(tmp_rec_local_all(:))
+      maxproc = maxloc(tmp_rec_local_all(:))
+      !do i = 1, NPROCTOT_VAL
+      !  if( tmp_rec_local_all(i) > maxrec ) then
+      !    maxrec = tmp_rec_local_all(i)
+      !    maxproc = i-1
+      !  endif
+      !enddo
+      ! adj_sourcearrays size in MB
+      ! adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
+      size = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+
+      ! outputs info
+      write(IMAIN,*) 'adjoint source arrays:'
+      write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
+      write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
+      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(size),'MB'
+      write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
+
+  deallocate(tmp_rec_local_all)
+
 
   end subroutine setup_receivers
 
@@ -545,36 +637,38 @@
 
     ! stores source arrays
     call setup_sources_receivers_srcarr()
-
   endif
 
   ! adjoint source arrays
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    ! adjoint source buffer length
-    NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
+    ! initializes adjoint source buffer
+    ! reverse indexing
     allocate(iadj_vec(NSTEP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating iadj_vec')
-
     ! initializes iadj_vec
     do it=1,NSTEP
-       iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
+       iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record, e.g. 3000,2999,..,1
     enddo
+
+    ! number of adjoint source blocks to read in
+    NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     if(nadj_rec_local > 0) then
       ! allocate adjoint source arrays
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
-              stat=ier)
+               stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
       ! allocate indexing arrays
       allocate(iadjsrc(NSTEP_SUB_ADJ,2), &
-              iadjsrc_len(NSTEP_SUB_ADJ),stat=ier)
+               iadjsrc_len(NSTEP_SUB_ADJ),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint indexing arrays')
+
       ! initializes iadjsrc, iadjsrc_len and iadj_vec
       call setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
-                      NTSTEP_BETWEEN_READ_ADJSRC, &
-                      iadjsrc,iadjsrc_len,iadj_vec)
+                                           NTSTEP_BETWEEN_READ_ADJSRC, &
+                                           iadjsrc,iadjsrc_len,iadj_vec)
     endif
   endif
 
@@ -659,8 +753,8 @@
 !
 
   subroutine setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
-                      NTSTEP_BETWEEN_READ_ADJSRC, &
-                      iadjsrc,iadjsrc_len,iadj_vec)
+                                             NTSTEP_BETWEEN_READ_ADJSRC, &
+                                             iadjsrc,iadjsrc_len,iadj_vec)
 
   use constants
 
@@ -674,9 +768,9 @@
 
   ! local parameters
   integer :: iadj_block,it,it_sub_adj
+  integer :: istart,iend
 
-  iadj_block = 1  !counts blocks
-
+  ! initializes
   iadjsrc(:,:) = 0
   iadjsrc_len(:) = 0
 
@@ -690,29 +784,49 @@
   !
   ! see routine: compute_add_sources_adjoint()
   !                     how the adjoint source is added to the (adjoint) acceleration field
+  !counts blocks
+  ! block number
+  ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
+  it_sub_adj = 0
+  iadj_block = 1
   do it=1,NSTEP
 
     ! block number
     ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
-    it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
+    ! beware: the call below might return a wrong integer number due to machine precision, i.e. 1000./1000. -> 2
+    !it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     ! we are at the edge of a block
     if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then
-     ! block start time ( e.g. 2001)
-     iadjsrc(iadj_block,1) = NSTEP-it_sub_adj*NTSTEP_BETWEEN_READ_ADJSRC+1
-     ! block end time (e.g. 3000)
-     iadjsrc(iadj_block,2) = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
+      ! sets it_sub_adj subset number
+      it_sub_adj = iadj_block
 
-     ! final adj src array
-     ! e.g. will be from 1000 to 1, but doesn't go below 1 in cases where NSTEP isn't
-     ! a multiple of NTSTEP_BETWEEN_READ_ADJSRC
-     if(iadjsrc(iadj_block,1) < 0) iadjsrc(iadj_block,1) = 1
+      ! block start time ( e.g. 2001)
+      istart = NSTEP-it_sub_adj*NTSTEP_BETWEEN_READ_ADJSRC+1
+      ! final adj src array
+      ! e.g. will be from 1000 to 1, but doesn't go below 1 in cases where NSTEP isn't
+      ! a multiple of NTSTEP_BETWEEN_READ_ADJSRC
+      if( istart < 1 ) istart = 1
 
-     ! actual block length
-     iadjsrc_len(iadj_block) = iadjsrc(iadj_block,2)-iadjsrc(iadj_block,1)+1
+      ! block end time (e.g. 3000)
+      iend = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
 
-     ! increases block number
-     iadj_block = iadj_block+1
+      iadjsrc(iadj_block,1) = istart
+      iadjsrc(iadj_block,2) = iend
+
+      ! actual block length
+      iadjsrc_len(iadj_block) = iend - istart + 1
+
+      ! increases block number
+      iadj_block = iadj_block + 1
+    endif
+
+    ! checks that ceiling function above returns correct integer values
+    if( it_sub_adj /= iadj_block-1 ) then
+      print*,'error: confusing block number for reverse adjoint source indexing'
+      print*,'  it_sub_adj = ',it_sub_adj,'should be equal to ',iadj_block-1
+      print*,'  it = ',it,' istart/iend = ',istart,iend,' NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
+      stop 'error reverse adjoint source indexing'
     endif
 
     ! time stepping for adjoint sources:
@@ -724,6 +838,9 @@
     !         so iadj_vec(1001) = 1000 - 0, iadj_vec(1002) = 1000 - 1, .. and so on again down to 1
     !         then block 3 and your guess is right now... iadj_vec(2001) to iadj_vec(3000) is 1000 down to 1. :)
     iadj_vec(it) = iadjsrc_len(it_sub_adj) - mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC)
+
+    ! checks that index is non-negative
+    if( iadj_vec(it) < 1 ) iadj_vec(it) = 1
   enddo
 
   end subroutine setup_sources_receivers_adjindx
@@ -800,7 +917,7 @@
   else
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
-    allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     if( ier /= 0) stop 'error while allocating zero seismograms'
   endif
 

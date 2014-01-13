@@ -55,7 +55,7 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 #######################################
 ####
 #### CUDA
-#### with configure: ./configure --with-cuda CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
+#### with configure: ./configure --with-cuda=cuda5 CUDA_FLAGS=.. CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
 ####
 #######################################
 
@@ -66,7 +66,8 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 @COND_CUDA5_FALSE@CUDA5 = no
 
 MPI_INCLUDES = @MPI_INCLUDES@
-CUDA_INC = @CUDA_FLAGS@ @CUDA_CPPFLAGS@ -I${SETUP}
+CUDA_FLAGS = @CUDA_FLAGS@
+CUDA_INC = @CUDA_CPPFLAGS@ -I${SETUP}
 CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
 
 @COND_CUDA_TRUE@NVCC = nvcc
@@ -89,7 +90,7 @@ GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 @COND_CUDA_TRUE@@COND_CUDA5_FALSE@GENCODE = $(GENCODE_20)
 
 # CUDA flags and linking
-@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_INC) $(MPI_INCLUDES)
+@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_FLAGS) $(CUDA_INC) $(MPI_INCLUDES)
 @COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -dc $(GENCODE)
 @COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
 

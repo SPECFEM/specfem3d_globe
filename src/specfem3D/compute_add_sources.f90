@@ -151,10 +151,13 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearray
-  integer :: irec,irec_local,i,j,k,iglob,it_sub_adj,itime
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tmp_sourcearray
+  integer :: irec,irec_local,i,j,k,iglob,it_sub_adj,itime,ier
+  integer :: ivec_index
   character(len=150) :: adj_source_file
   logical :: ibool_read_adj_arrays
+
+  ! note: we check if nadj_rec_local > 0 before calling this routine
 
   ! figure out if we need to read in a chunk of the adjoint source at this timestep
   it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )   !chunk_number
@@ -163,12 +166,13 @@
 
   ! needs to read in a new chunk/block of the adjoint source
   if(ibool_read_adj_arrays) then
+    ! allocates temporary source array
+    allocate(tmp_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating array tmp_sourcearray')
 
-    ! temporary source array
-    allocate(adj_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC))
-    adj_sourcearray = 0._CUSTOM_REAL
-
+    tmp_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
     irec_local = 0
+
     do irec = 1, nrec
       ! check that the source slice number is okay
       if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) then
@@ -184,23 +188,25 @@
         adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
         call compute_arrays_source_adjoint(myrank,adj_source_file, &
                   xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
-                  nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
+                  nu(:,:,irec),tmp_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
                   iadjsrc,it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
         ! stores source array
         ! note: the adj_sourcearrays has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC
         !          this gets overwritten every time a new block/chunk is read in
         do itime = 1,NTSTEP_BETWEEN_READ_ADJSRC
-          adj_sourcearrays(:,:,:,:,irec_local,itime) = adj_sourcearray(:,:,:,:,itime)
+          adj_sourcearrays(:,:,:,:,irec_local,itime) = tmp_sourcearray(:,:,:,:,itime)
         enddo
 
       endif
     enddo
+
+    ! checks that number of read sources is valid
     if(irec_local /= nadj_rec_local) &
       call exit_MPI(myrank,'irec_local /= nadj_rec_local in adjoint simulation')
 
-    deallocate(adj_sourcearray)
-
+    ! frees temporary array
+    deallocate(tmp_sourcearray)
   endif
 
   ! adds adjoint sources
@@ -212,6 +218,9 @@
       ! adds source (only if this proc carries the source)
       if(myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
+
+        ! adjoint source array index
+        ivec_index = iadj_vec(it)
 
         ! adds source contributions
         do k=1,NGLLZ
@@ -277,7 +286,7 @@
               !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
               !           have a zero contribution to adjoint kernels.
               accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                            + adj_sourcearrays(:,i,j,k,irec_local,iadj_vec(it))
+                            + adj_sourcearrays(:,i,j,k,irec_local,ivec_index)
 
             enddo
           enddo
@@ -287,10 +296,54 @@
     enddo
 
   else
+
     ! on GPU
-    call compute_add_sources_adjoint_cuda(Mesh_pointer,nrec,adj_sourcearrays, &
-                                          islice_selected_rec,ispec_selected_rec, &
-                                          iadj_vec(it))
+    ! note: adjoint sourcearrays can become very big when used with many receiver stations
+    !       we overlap here the memory transfer to GPUs
+
+    ! current time index
+    ivec_index = iadj_vec(it)
+
+    if( GPU_ASYNC_COPY ) then
+      ! only synchronuously transfers array at beginning or whenever new arrays were read in
+      if( ibool_read_adj_arrays ) then
+        ! transfers adjoint arrays to GPU device memory
+        ! note: function call passes pointer to array adj_sourcearrays at corresponding time slice
+        call transfer_adj_to_device(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
+                                    islice_selected_rec)
+      endif
+    else
+      ! synchronuously transfers adjoint arrays to GPU device memory before adding adjoint sources on GPU
+      call transfer_adj_to_device(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
+                                  islice_selected_rec)
+    endif
+
+    ! adds adjoint source contributions
+    call compute_add_sources_adjoint_cuda(Mesh_pointer,nrec)
+
+    if( GPU_ASYNC_COPY ) then
+      ! starts asynchronuously transfer of next adjoint arrays to GPU device memory
+      ! (making sure the next adj_sourcearrays values were already read in)
+      if( (.not. ibool_read_adj_arrays) .and. &
+          (.not. mod(it,NTSTEP_BETWEEN_READ_ADJSRC) == 0) .and. &
+          (.not. it == it_end) ) then
+        ! next time index
+        ivec_index = iadj_vec(it+1)
+
+        ! checks next index
+        if( ivec_index < 1 .or. ivec_index > NTSTEP_BETWEEN_READ_ADJSRC ) then
+          print*,'error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
+                 'out of bounds ',1,'to',NTSTEP_BETWEEN_READ_ADJSRC
+          call exit_MPI(myrank,'error iadj_vec index bounds')
+        endif
+
+        ! asynchronuously transfers next time slice
+        call transfer_adj_to_device_async(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
+                                          islice_selected_rec)
+      endif
+    endif
+
+
   endif
 
   end subroutine compute_add_sources_adjoint
