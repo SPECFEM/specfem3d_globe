@@ -114,7 +114,7 @@ program combine_vol_data_vtk
   print  *, sizeprocs, "procs"
   if (sizeprocs .ne. 1) then
     print *, "sequential program. Only mpirun -np 1 ..."
-    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)  
+    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
   endif
 #endif
 
@@ -357,7 +357,7 @@ print *, irs, ire
       print *
 
       ! topology file
-#ifndef ADIOS_INPUT      
+#ifndef ADIOS_INPUT
       topo_file = trim(prname_topo) // 'solver_data.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
@@ -461,7 +461,7 @@ print *, irs, ire
                   total_dat_xyz(1,np+numpoin) = x
                   total_dat_xyz(2,np+numpoin) = y
                   total_dat_xyz(3,np+numpoin) = z
-#endif                  
+#endif
                   mask_ibool(iglob) = .true.
                   num_ibool(iglob) = numpoin
                 endif
@@ -521,7 +521,7 @@ print *, irs, ire
           if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
             ! connectivity must be given, otherwise element count would be wrong
             ! maps "fictitious" connectivity, element is all with iglob = 1
-#ifndef USE_VTK_INSTEAD_OF_MESH            
+#ifndef USE_VTK_INSTEAD_OF_MESH
             do k = 1, NGLLZ-1, dk
               do j = 1, NGLLY-1, dj
                 do i = 1, NGLLX-1, di
@@ -635,7 +635,7 @@ print *, irs, ire
     ! VTK
     ! type: hexahedrons
     write(IOVTK,'(a,i12)') "CELL_TYPES ",ne
-    write(IOVTK,*) (12,it=1,ne)
+    write(IOVTK,'(6i12)') (12,it=1,ne)
     write(IOVTK,*) ""
 
     write(IOVTK,'(a,i12)') "POINT_DATA ",np

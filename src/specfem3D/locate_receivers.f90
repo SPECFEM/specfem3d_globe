@@ -762,7 +762,7 @@
         epidist_found(nrec_found) = epidist(irec)
 
         ! writes out actual receiver location to vtk file
-        write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
+        write(IOVTK,'(3e18.6)') sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
     enddo
 

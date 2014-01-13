@@ -230,7 +230,7 @@ TRACE("compute_stacey_acoustic_cuda");
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_acoustic_cuda: unknown interface type");
+      exit_on_error("compute_stacey_acoustic_cuda: unknown interface type");
       break;
   }
 
@@ -251,7 +251,7 @@ TRACE("compute_stacey_acoustic_cuda");
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_veloc_outer_core,
+  compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_outer_core,
                                                    mp->d_accel_outer_core,
                                                    interface_type,
                                                    num_abs_boundary_faces,
@@ -270,7 +270,11 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    d_b_absorb_potential);
 
   //  adjoint simulations: stores absorbed wavefield part
-  if( mp->save_forward && num_abs_boundary_faces > 0 ){
+  if( mp->save_forward ){
+    // explicitly waits until previous compute stream finishes
+    // (cudaMemcpy implicitly synchronizes all other cuda operations)
+    cudaStreamSynchronize(mp->compute_stream);
+
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(absorb_potential,d_b_absorb_potential,
                                        NGLL2*num_abs_boundary_faces*sizeof(realw),
@@ -437,7 +441,7 @@ TRACE("compute_stacey_acoustic_backward_cuda");
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_acoustic_cuda: unknown interface type");
+      exit_on_error("compute_stacey_acoustic_cuda: unknown interface type");
       break;
   }
 
@@ -466,7 +470,7 @@ TRACE("compute_stacey_acoustic_backward_cuda");
                                        cudaMemcpyHostToDevice),7700);
   }
 
-  compute_stacey_acoustic_backward_kernel<<<grid,threads>>>(mp->d_b_accel_outer_core,
+  compute_stacey_acoustic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core,
                                                             d_b_absorb_potential,
                                                             interface_type,
                                                             num_abs_boundary_faces,
@@ -552,7 +556,7 @@ void FC_FUNC_(compute_stacey_acoustic_undoatt_cuda,
       break;
 
     default:
-      exit_on_cuda_error("compute_stacey_acoustic_undoatt_cuda: unknown interface type");
+      exit_on_error("compute_stacey_acoustic_undoatt_cuda: unknown interface type");
       break;
   }
 
@@ -573,7 +577,7 @@ void FC_FUNC_(compute_stacey_acoustic_undoatt_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_b_veloc_outer_core,
+  compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_outer_core,
                                                    mp->d_b_accel_outer_core,
                                                    interface_type,
                                                    num_abs_boundary_faces,

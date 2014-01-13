@@ -978,7 +978,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventCreate(&stop);
   // cudaEventRecord( start, 0 );
   if( FORWARD_OR_ADJOINT == 1 ){
-    Kernel_2_inner_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
+    Kernel_2_inner_core_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                mp->NGLOB_INNER_CORE,
                                                d_ibool,
                                                d_idoubling,
@@ -1026,7 +1026,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
     // debug
     DEBUG_BACKWARD_FORCES();
 
-    Kernel_2_inner_core_impl<<< grid,threads>>>(nb_blocks_to_compute,
+    Kernel_2_inner_core_impl<<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                 mp->NGLOB_INNER_CORE,
                                                 d_ibool,
                                                 d_idoubling,

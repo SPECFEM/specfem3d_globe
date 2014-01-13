@@ -82,7 +82,7 @@ TRACE("update_displacement_ic_cuda");
   int size = NDIM * mp->NGLOB_INNER_CORE;
 
   // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
+#if DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1
   realw max_d,max_v,max_a;
   max_d = get_device_array_maximum_value(mp->d_b_displ_inner_core, size);
   max_v = get_device_array_maximum_value(mp->d_b_veloc_inner_core, size);
@@ -107,7 +107,7 @@ TRACE("update_displacement_ic_cuda");
 
   if( *FORWARD_OR_ADJOINT == 1 ){
     //launch kernel
-    UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+    UpdateDispVeloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core,
                                              mp->d_veloc_inner_core,
                                              mp->d_accel_inner_core,
                                              size,deltat,deltatsqover2,deltatover2);
@@ -116,7 +116,7 @@ TRACE("update_displacement_ic_cuda");
     DEBUG_BACKWARD_UPDATE();
 
     // kernel for backward fields
-    UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
+    UpdateDispVeloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core,
                                              mp->d_b_veloc_inner_core,
                                              mp->d_b_accel_inner_core,
                                              size,deltat,deltatsqover2,deltatover2);
@@ -149,7 +149,7 @@ void FC_FUNC_(update_displacement_cm_cuda,
   int size = NDIM * mp->NGLOB_CRUST_MANTLE;
 
   // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
+#if DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1
   realw max_d,max_v,max_a;
   max_d = get_device_array_maximum_value(mp->d_b_displ_crust_mantle, size);
   max_v = get_device_array_maximum_value(mp->d_b_veloc_crust_mantle, size);
@@ -174,7 +174,7 @@ void FC_FUNC_(update_displacement_cm_cuda,
 
   if( *FORWARD_OR_ADJOINT == 1 ){
     //launch kernel
-    UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+    UpdateDispVeloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle,
                                              mp->d_veloc_crust_mantle,
                                              mp->d_accel_crust_mantle,
                                              size,deltat,deltatsqover2,deltatover2);
@@ -183,7 +183,7 @@ void FC_FUNC_(update_displacement_cm_cuda,
     DEBUG_BACKWARD_UPDATE();
 
     // kernel for backward fields
-    UpdateDispVeloc_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
+    UpdateDispVeloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle,
                                              mp->d_b_veloc_crust_mantle,
                                              mp->d_b_accel_crust_mantle,
                                              size,deltat,deltatsqover2,deltatover2);
@@ -247,7 +247,7 @@ void FC_FUNC_(update_displacement_oc_cuda,
   int size = mp->NGLOB_OUTER_CORE;
 
   // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
+#if DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1
   realw max_d,max_v,max_a;
   max_d = get_device_array_maximum_value(mp->d_b_displ_outer_core, size);
   max_v = get_device_array_maximum_value(mp->d_b_veloc_outer_core, size);
@@ -272,7 +272,7 @@ void FC_FUNC_(update_displacement_oc_cuda,
 
   if( *FORWARD_OR_ADJOINT == 1 ){
     //launch kernel
-    UpdatePotential_kernel<<<grid,threads>>>(mp->d_displ_outer_core,
+    UpdatePotential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core,
                                              mp->d_veloc_outer_core,
                                              mp->d_accel_outer_core,
                                              size,deltat,deltatsqover2,deltatover2);
@@ -280,7 +280,7 @@ void FC_FUNC_(update_displacement_oc_cuda,
     // debug
     DEBUG_BACKWARD_UPDATE();
 
-    UpdatePotential_kernel<<<grid,threads>>>(mp->d_b_displ_outer_core,
+    UpdatePotential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core,
                                              mp->d_b_veloc_outer_core,
                                              mp->d_b_accel_outer_core,
                                              size,deltat,deltatsqover2,deltatover2);
@@ -375,7 +375,7 @@ void FC_FUNC_(multiply_accel_elastic_cuda,
   threads = dim3(blocksize,1,1);
 
   if( *FORWARD_OR_ADJOINT == 1 ){
-    multiply_accel_elastic_cuda_device<<< grid, threads>>>(mp->d_accel_crust_mantle,
+    multiply_accel_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle,
                                                            mp->d_veloc_crust_mantle,
                                                            mp->NGLOB_CRUST_MANTLE,
                                                            mp->two_omega_earth,
@@ -386,7 +386,7 @@ void FC_FUNC_(multiply_accel_elastic_cuda,
     // debug
     DEBUG_BACKWARD_UPDATE();
 
-    multiply_accel_elastic_cuda_device<<< grid, threads>>>(mp->d_b_accel_crust_mantle,
+    multiply_accel_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle,
                                                            mp->d_b_veloc_crust_mantle,
                                                            mp->NGLOB_CRUST_MANTLE,
                                                            mp->b_two_omega_earth,
@@ -404,7 +404,7 @@ void FC_FUNC_(multiply_accel_elastic_cuda,
   threads = dim3(blocksize,1,1);
 
   if( *FORWARD_OR_ADJOINT == 1 ){
-    multiply_accel_elastic_cuda_device<<< grid, threads>>>(mp->d_accel_inner_core,
+    multiply_accel_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_inner_core,
                                                            mp->d_veloc_inner_core,
                                                            mp->NGLOB_INNER_CORE,
                                                            mp->two_omega_earth,
@@ -415,7 +415,7 @@ void FC_FUNC_(multiply_accel_elastic_cuda,
     // debug
     DEBUG_BACKWARD_UPDATE();
 
-    multiply_accel_elastic_cuda_device<<< grid, threads>>>(mp->d_b_accel_inner_core,
+    multiply_accel_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_inner_core,
                                                            mp->d_b_veloc_inner_core,
                                                            mp->NGLOB_INNER_CORE,
                                                            mp->b_two_omega_earth,
@@ -480,12 +480,12 @@ void FC_FUNC_(update_veloc_elastic_cuda,
   threads = dim3(blocksize,1,1);
 
   if( *FORWARD_OR_ADJOINT == 1 ){
-    update_veloc_elastic_cuda_device<<< grid, threads>>>(mp->d_veloc_crust_mantle,
+    update_veloc_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_crust_mantle,
                                                          mp->d_accel_crust_mantle,
                                                          mp->NGLOB_CRUST_MANTLE,
                                                          deltatover2);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
-    update_veloc_elastic_cuda_device<<< grid, threads>>>(mp->d_b_veloc_crust_mantle,
+    update_veloc_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_crust_mantle,
                                                          mp->d_b_accel_crust_mantle,
                                                          mp->NGLOB_CRUST_MANTLE,
                                                          deltatover2);
@@ -500,12 +500,12 @@ void FC_FUNC_(update_veloc_elastic_cuda,
   threads = dim3(blocksize,1,1);
 
   if( *FORWARD_OR_ADJOINT == 1 ){
-    update_veloc_elastic_cuda_device<<< grid, threads>>>(mp->d_veloc_inner_core,
+    update_veloc_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_inner_core,
                                                          mp->d_accel_inner_core,
                                                          mp->NGLOB_INNER_CORE,
                                                          deltatover2);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
-    update_veloc_elastic_cuda_device<<< grid, threads>>>(mp->d_b_veloc_inner_core,
+    update_veloc_elastic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_inner_core,
                                                          mp->d_b_accel_inner_core,
                                                          mp->NGLOB_INNER_CORE,
                                                          deltatover2);
@@ -562,14 +562,14 @@ void FC_FUNC_(multiply_accel_acoustic_cuda,
 
   // multiplies accel with inverse of mass matrix
   if( *FORWARD_OR_ADJOINT == 1 ){
-    multiply_accel_acoustic_cuda_device<<< grid, threads>>>(mp->d_accel_outer_core,
+    multiply_accel_acoustic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_outer_core,
                                                             mp->NGLOB_OUTER_CORE,
                                                             mp->d_rmass_outer_core);
   }else if( *FORWARD_OR_ADJOINT == 3 ){
     // debug
     DEBUG_BACKWARD_UPDATE();
 
-    multiply_accel_acoustic_cuda_device<<< grid, threads>>>(mp->d_b_accel_outer_core,
+    multiply_accel_acoustic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core,
                                                             mp->NGLOB_OUTER_CORE,
                                                             mp->d_b_rmass_outer_core);
   }
@@ -624,7 +624,7 @@ void FC_FUNC_(update_veloc_acoustic_cuda,
 
   // updates velocity
   if( *FORWARD_OR_ADJOINT == 1 ){
-    update_veloc_acoustic_cuda_device<<< grid, threads>>>(mp->d_veloc_outer_core,
+    update_veloc_acoustic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_outer_core,
                                                           mp->d_accel_outer_core,
                                                           mp->NGLOB_OUTER_CORE,
                                                           deltatover2);
@@ -632,7 +632,7 @@ void FC_FUNC_(update_veloc_acoustic_cuda,
     // debug
     DEBUG_BACKWARD_UPDATE();
 
-    update_veloc_acoustic_cuda_device<<< grid, threads>>>(mp->d_b_veloc_outer_core,
+    update_veloc_acoustic_cuda_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_outer_core,
                                                           mp->d_b_accel_outer_core,
                                                           mp->NGLOB_OUTER_CORE,
                                                           deltatover2);

@@ -52,6 +52,7 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
+// debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
 #define TRACE(x) printf("%s\n",x);
@@ -59,6 +60,7 @@
 #define TRACE(x) // printf("%s\n",x);
 #endif
 
+// more outputs
 #define MAXDEBUG 0
 #if MAXDEBUG == 1
 #define LOG(x) printf("%s\n",x)
@@ -90,12 +92,13 @@
 #define DEBUG_BACKWARD_UPDATE()
 #endif
 
-
 // error checking after cuda function calls
-#define ENABLE_VERY_SLOW_ERROR_CHECKING
+// (note: this synchronizes many calls, thus e.g. no asynchronuous memcpy possible)
+//#define ENABLE_VERY_SLOW_ERROR_CHECKING
 
 // maximum function
 #define MAX(x,y)                    (((x) < (y)) ? (y) : (x))
+
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -122,7 +125,8 @@
 
 // region ids
 #define IREGION_CRUST_MANTLE  1
-#define IREGION_INNER_CORE  3
+#define IREGION_OUTER_CORE    2
+#define IREGION_INNER_CORE    3
 
 // inner core : fictitious elements id (from constants.h)
 #define IFLAG_IN_FICTITIOUS_CUBE  11
@@ -131,6 +135,9 @@
 #define R_EARTH_KM 6371.0f
 // uncomment line below for PREM with oceans
 //#define R_EARTH_KM 6368.0f
+
+// Asynchronuous memory copies between GPU and CPU
+#define GPU_ASYNC_COPY 1
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -199,21 +206,13 @@
 
 // indexing
 
-#define INDEX2(xsize,x,y) x + (y)*xsize
+#define INDEX2(isize,i,j) i + isize*j
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 
-#define INDEX3(xsize,ysize,x,y,z) x + xsize*(y + ysize*z)
-//#define INDEX3(xsize,ysize,x,y,z) x + (y)*xsize + (z)*xsize*ysize
-
-#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*(z + zsize*i))
-//#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + (y)*xsize + (z)*xsize*ysize + (i)*xsize*ysize*zsize
-
-#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))
-//#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + (y)*xsize + (z)*xsize*ysize + (i)*xsize*ysize*zsize + (j)*xsize*ysize*zsize*isize
-
-#define INDEX6(xsize,ysize,zsize,isize,jsize,x,y,z,i,j,k) x + xsize*(y + ysize*(z + zsize*(i + isize*(j + jsize*k))))
-
-#define INDEX4_PADDED(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*z) + (i)*NGLL3_PADDED
-//#define INDEX4_PADDED(xsize,ysize,zsize,x,y,z,i) x + (y)*xsize + (z)*xsize*ysize + (i)*NGLL3_PADDED
+//#define INDEX6(isize,jsize,ksize,xsize,ysize,i,j,k,x,y,z) i + isize*(j + jsize*(k + ksize*(x + xsize*(y + ysize*z))))
+//#define INDEX4_PADDED(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*k) + x*NGLL3_PADDED
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -625,9 +624,14 @@ typedef struct mesh_ {
   int* d_number_receiver_global;
   int* d_ispec_selected_rec;
   int* d_islice_selected_rec;
+
   int nrec_local;
+
   realw* d_station_seismo_field;
   realw* h_station_seismo_field;
+
+  realw* d_station_strain_field;
+  realw* h_station_strain_field;
 
   // adjoint receivers/sources
   int nadj_rec_local;
@@ -730,6 +734,33 @@ typedef struct mesh_ {
 
   // noise sensitivity kernel
   realw* d_Sigma_kl;
+
+  // ------------------------------------------------------------------ //
+  // optimizations
+  // ------------------------------------------------------------------ //
+
+  // overlapped memcpy streams
+  cudaStream_t compute_stream;
+  cudaStream_t copy_stream;
+
+  // A buffer for mpi-send/recv, which is duplicated in fortran but is
+  // allocated with pinned memory to facilitate asynchronus device <->
+  // host memory transfers
+  // crust/mantle
+  float* h_send_accel_buffer_cm;
+  float* h_recv_accel_buffer_cm;
+  float* h_b_send_accel_buffer_cm;
+  float* h_b_recv_accel_buffer_cm;
+  // inner core
+  float* h_send_accel_buffer_ic;
+  float* h_recv_accel_buffer_ic;
+  float* h_b_send_accel_buffer_ic;
+  float* h_b_recv_accel_buffer_ic;
+  // outer core
+  float* h_send_accel_buffer_oc;
+  float* h_recv_accel_buffer_oc;
+  float* h_b_send_accel_buffer_oc;
+  float* h_b_recv_accel_buffer_oc;
 
 } Mesh;
 

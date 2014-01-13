@@ -236,19 +236,25 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
-!************************************************************
-! added these parameters for the GPU version of the solver with mesh coloring
+!!-----------------------------------------------------------
+!!
+!! GPU optimization
+!!
+!!-----------------------------------------------------------
+! added these parameters for the GPU version of the solver
 
+! asynchronuous memcopy between CPU and GPU
+  logical, parameter :: GPU_ASYNC_COPY = .true.
+
+! mesh coloring
 ! add mesh coloring for the GPU + MPI implementation
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
   integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
-
 ! enhanced coloring:
 ! using Droux algorithm
 ! try several times with one more color before giving up
   logical, parameter :: USE_DROUX_OPTIMIZATION = .false.
   integer, parameter :: MAX_NB_TRIES_OF_DROUX_1993 = 15
-
 ! using balancing algorithm
 ! postprocess the colors to balance them if Droux (1993) algorithm is not used
   logical, parameter :: BALANCE_COLORS_SIMPLE_ALGO = .true.

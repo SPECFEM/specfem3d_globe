@@ -98,77 +98,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-! interrupt might improve MPI performance
-! see: https://computing.llnl.gov/tutorials/mpi_performance/#Sender-ReceiverSync
-!
-! check: MP_CSS_INTERRUPT environment variable on IBM systems
-
-
-  subroutine assemble_MPI_vector_send_cuda(Mesh_pointer,NPROC, &
-                                          buffer_send_vector,buffer_recv_vector, &
-                                          num_interfaces,max_nibool_interfaces, &
-                                          nibool_interfaces, &
-                                          my_neighbours, &
-                                          request_send_vector,request_recv_vector,&
-                                          IREGION,FORWARD_OR_ADJOINT)
-
-  ! sends data
-  ! note: array to assemble already filled into buffer_send_vector array
-  use constants
-
-  implicit none
-
-  integer(kind=8) :: Mesh_pointer
-
-  integer :: NPROC
-
-  integer :: num_interfaces,max_nibool_interfaces
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: &
-       buffer_send_vector,buffer_recv_vector
-
-  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
-  integer, dimension(num_interfaces) :: request_send_vector,request_recv_vector
-
-  integer :: IREGION
-  integer :: FORWARD_OR_ADJOINT
-
-  ! local parameters
-  integer :: iinterface
-
-  ! send only if more than one partition
-  if(NPROC > 1) then
-
-    ! preparation of the contribution between partitions using MPI
-    ! transfers mpi buffers to CPU
-    call transfer_boun_accel_from_device(Mesh_pointer, &
-                                         buffer_send_vector,&
-                                         IREGION,FORWARD_OR_ADJOINT)
-
-    ! send messages
-    do iinterface = 1, num_interfaces
-      call isend_cr(buffer_send_vector(1,1,iinterface), &
-                    NDIM*nibool_interfaces(iinterface), &
-                    my_neighbours(iinterface), &
-                    itag, &
-                    request_send_vector(iinterface))
-
-      call irecv_cr(buffer_recv_vector(1,1,iinterface), &
-                    NDIM*nibool_interfaces(iinterface), &
-                    my_neighbours(iinterface), &
-                    itag, &
-                    request_recv_vector(iinterface))
-    enddo
-
-  endif
-
-  end subroutine assemble_MPI_vector_send_cuda
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine assemble_MPI_vector_w(NPROC,nglob, &
                                            array_val, &
                                            buffer_recv_vector, &
@@ -227,6 +156,72 @@
 
   end subroutine assemble_MPI_vector_w
 
+
+!-------------------------------------------------------------------------------------------------
+!
+! CUDA routines
+!
+!-------------------------------------------------------------------------------------------------
+
+
+! interrupt might improve MPI performance
+! see: https://computing.llnl.gov/tutorials/mpi_performance/#Sender-ReceiverSync
+!
+! check: MP_CSS_INTERRUPT environment variable on IBM systems
+
+
+  subroutine assemble_MPI_vector_send_cuda(Mesh_pointer,NPROC, &
+                                          buffer_send_vector,buffer_recv_vector, &
+                                          num_interfaces,max_nibool_interfaces, &
+                                          nibool_interfaces, &
+                                          my_neighbours, &
+                                          request_send_vector,request_recv_vector)
+
+  ! sends data
+  ! note: array to assemble already filled into buffer_send_vector array
+  use constants
+
+  implicit none
+
+  integer(kind=8) :: Mesh_pointer
+
+  integer :: NPROC
+
+  integer :: num_interfaces,max_nibool_interfaces
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: &
+       buffer_send_vector,buffer_recv_vector
+
+  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
+  integer, dimension(num_interfaces) :: request_send_vector,request_recv_vector
+
+  ! local parameters
+  integer :: iinterface
+
+  ! note: preparation of the contribution between partitions using MPI
+  !          already done in transfer_boun_from_device() routines
+
+  ! send only if more than one partition
+  if(NPROC > 1) then
+
+    ! send messages
+    do iinterface = 1, num_interfaces
+      call isend_cr(buffer_send_vector(1,1,iinterface), &
+                    NDIM*nibool_interfaces(iinterface), &
+                    my_neighbours(iinterface), &
+                    itag, &
+                    request_send_vector(iinterface))
+
+      call irecv_cr(buffer_recv_vector(1,1,iinterface), &
+                    NDIM*nibool_interfaces(iinterface), &
+                    my_neighbours(iinterface), &
+                    itag, &
+                    request_recv_vector(iinterface))
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_vector_send_cuda
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -291,4 +286,65 @@
   endif
 
   end subroutine assemble_MPI_vector_write_cuda
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! with cuda functions...
+
+  subroutine transfer_boundary_to_device(Mesh_pointer, NPROC, &
+                                            buffer_recv_vector, &
+                                            num_interfaces,max_nibool_interfaces,&
+                                            request_recv_vector, &
+                                            IREGION,FORWARD_OR_ADJOINT)
+
+  use constants
+
+  implicit none
+
+  integer(kind=8) :: Mesh_pointer
+
+  integer :: NPROC
+
+  ! array to assemble
+  integer :: num_interfaces,max_nibool_interfaces
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: &
+       buffer_recv_vector
+
+  integer, dimension(num_interfaces) :: request_recv_vector
+
+  integer :: IREGION
+  integer :: FORWARD_OR_ADJOINT
+
+  ! local parameters
+  integer :: iinterface
+
+  ! here we have to assemble all the contributions between partitions using MPI
+
+  ! assemble only if more than one partition
+  if(NPROC > 1) then
+
+    ! waits for communications completion (recv)
+    do iinterface = 1, num_interfaces
+      call wait_req(request_recv_vector(iinterface))
+    enddo
+
+    ! sends contributions to GPU
+    call transfer_buffer_to_device_async(Mesh_pointer, &
+                                         buffer_recv_vector, &
+                                         IREGION,FORWARD_OR_ADJOINT)
+  endif
+
+  ! This step is done via previous function transfer_and_assemble...
+  ! do iinterface = 1, num_interfaces
+  !   do ipoin = 1, nibool_interfaces(iinterface)
+  !     array_val(:,ibool_interfaces(ipoin,iinterface)) = &
+  !          array_val(:,ibool_interfaces(ipoin,iinterface)) + buffer_recv_vector(:,ipoin,iinterface)
+  !   enddo
+  ! enddo
+
+  end subroutine transfer_boundary_to_device
 

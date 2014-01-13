@@ -63,22 +63,31 @@ __global__ void prepare_boundary_potential_on_device(realw* d_potential_dot_dot_
 
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// MPI transfer
 
 /* ----------------------------------------------------------------------------------------------- */
 
 // prepares and transfers the inter-element edge-nodes to the host to be MPI'd
+// (elements on boundary)
+
 extern "C"
 void FC_FUNC_(transfer_boun_pot_from_device,
               TRANSFER_BOUN_POT_FROM_DEVICE)(long* Mesh_pointer_f,
-                                             realw* send_potential_dot_dot_buffer,
+                                             realw* send_buffer,
                                              int* FORWARD_OR_ADJOINT){
 
   TRACE("transfer_boun_pot_from_device");
+  int size_mpi_buffer;
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
+  // mpi buffer size
+  size_mpi_buffer = (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core);
+
   // checks if anything to do
-  if( mp->num_interfaces_outer_core == 0 ) return;
+  if( size_mpi_buffer <= 0 ) return;
 
   int blocksize = BLOCKSIZE_TRANSFER;
   int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_oc))/((double)blocksize)))*blocksize;
@@ -90,40 +99,64 @@ void FC_FUNC_(transfer_boun_pot_from_device,
   dim3 threads(blocksize,1,1);
 
   if(*FORWARD_OR_ADJOINT == 1) {
-    prepare_boundary_potential_on_device<<<grid,threads>>>(mp->d_accel_outer_core,
-                                                           mp->d_send_accel_buffer_outer_core,
-                                                           mp->num_interfaces_outer_core,
-                                                           mp->max_nibool_interfaces_oc,
-                                                           mp->d_nibool_interfaces_outer_core,
-                                                           mp->d_ibool_interfaces_outer_core);
+    prepare_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_outer_core,
+                                                                                mp->d_send_accel_buffer_outer_core,
+                                                                                mp->num_interfaces_outer_core,
+                                                                                mp->max_nibool_interfaces_oc,
+                                                                                mp->d_nibool_interfaces_outer_core,
+                                                                                mp->d_ibool_interfaces_outer_core);
 
-    print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_send_accel_buffer_outer_core,
-                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
+    // copies buffer to CPU
+    if( GPU_ASYNC_COPY ){
+      // waits until kernel is finished before starting async memcpy
+      cudaStreamSynchronize(mp->compute_stream);
+      // copies buffer to CPU
+      cudaMemcpyAsync(mp->h_send_accel_buffer_oc,mp->d_send_accel_buffer_outer_core,size_mpi_buffer*sizeof(realw),
+                      cudaMemcpyDeviceToHost,mp->copy_stream);
+    }else{
+      // synchronuous copy
+      print_CUDA_error_if_any(cudaMemcpy(send_buffer,mp->d_send_accel_buffer_outer_core,
+                                       size_mpi_buffer*sizeof(realw),
                                        cudaMemcpyDeviceToHost),98000);
+    }
 
   }
   else if(*FORWARD_OR_ADJOINT == 3) {
     // debug
     DEBUG_BACKWARD_ASSEMBLY();
 
-    prepare_boundary_potential_on_device<<<grid,threads>>>(mp->d_b_accel_outer_core,
-                                                           mp->d_b_send_accel_buffer_outer_core,
-                                                           mp->num_interfaces_outer_core,
-                                                           mp->max_nibool_interfaces_oc,
-                                                           mp->d_nibool_interfaces_outer_core,
-                                                           mp->d_ibool_interfaces_outer_core);
+    prepare_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core,
+                                                                                mp->d_b_send_accel_buffer_outer_core,
+                                                                                mp->num_interfaces_outer_core,
+                                                                                mp->max_nibool_interfaces_oc,
+                                                                                mp->d_nibool_interfaces_outer_core,
+                                                                                mp->d_ibool_interfaces_outer_core);
 
-    print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_b_send_accel_buffer_outer_core,
-                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
+
+    // copies buffer to CPU
+    if( GPU_ASYNC_COPY ){
+      // waits until kernel is finished before starting async memcpy
+      cudaStreamSynchronize(mp->compute_stream);
+      // copies buffer to CPU
+      cudaMemcpyAsync(mp->h_b_send_accel_buffer_oc,mp->d_b_send_accel_buffer_outer_core,size_mpi_buffer*sizeof(realw),
+                      cudaMemcpyDeviceToHost,mp->copy_stream);
+    }else{
+      // synchronuous copy
+      print_CUDA_error_if_any(cudaMemcpy(send_buffer,mp->d_b_send_accel_buffer_outer_core,
+                                       size_mpi_buffer*sizeof(realw),
                                        cudaMemcpyDeviceToHost),98001);
+    }
 
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_boundary_kernel");
+  exit_on_cuda_error("transfer_boun_pot_from_device");
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// ASSEMBLY
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -161,12 +194,15 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
                                             int* FORWARD_OR_ADJOINT) {
 
   TRACE("transfer_asmbl_pot_to_device");
+  int size_mpi_buffer;
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-  //double start_time = get_time();
+
+  // buffer size
+  size_mpi_buffer = (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core);
 
   // checks if anything to do
-  if( mp->num_interfaces_outer_core == 0 ) return;
+  if( size_mpi_buffer <= 0 ) return;
 
   // assembles on GPU
   int blocksize = BLOCKSIZE_TRANSFER;
@@ -179,35 +215,46 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
   dim3 threads(blocksize,1,1);
 
   if(*FORWARD_OR_ADJOINT == 1) {
-    // copies scalar buffer onto GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_outer_core, buffer_recv_scalar,
-                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
-                                       cudaMemcpyHostToDevice),99000);
 
-    //assemble forward field
-    assemble_boundary_potential_on_device<<<grid,threads>>>(mp->d_accel_outer_core,
-                                                            mp->d_send_accel_buffer_outer_core,
-                                                            mp->num_interfaces_outer_core,
-                                                            mp->max_nibool_interfaces_oc,
-                                                            mp->d_nibool_interfaces_outer_core,
-                                                            mp->d_ibool_interfaces_outer_core);
-  }
-  else if(*FORWARD_OR_ADJOINT == 3) {
+    // asynchronuous copy
+    if( GPU_ASYNC_COPY ){
+      // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
+      cudaStreamSynchronize(mp->copy_stream);
+    }else{
+      // copies scalar buffer onto GPU
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_accel_buffer_outer_core, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                         cudaMemcpyHostToDevice),99000);
+    }
+
+    //assembles forward field
+    assemble_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_outer_core,
+                                                                                 mp->d_send_accel_buffer_outer_core,
+                                                                                 mp->num_interfaces_outer_core,
+                                                                                 mp->max_nibool_interfaces_oc,
+                                                                                 mp->d_nibool_interfaces_outer_core,
+                                                                                 mp->d_ibool_interfaces_outer_core);
+  }else if(*FORWARD_OR_ADJOINT == 3) {
     // debug
     DEBUG_BACKWARD_ASSEMBLY();
 
-    // copies scalar buffer onto GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer_outer_core, buffer_recv_scalar,
-                                       (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw),
-                                       cudaMemcpyHostToDevice),99001);
+    // asynchronuous copy
+    if( GPU_ASYNC_COPY ){
+      // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
+      cudaStreamSynchronize(mp->copy_stream);
+    }else{
+      // (cudaMemcpy implicitly synchronizes all other cuda operations)
+      // copies scalar buffer onto GPU
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer_outer_core, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                         cudaMemcpyHostToDevice),99001);
+    }
 
-    //assemble reconstructed/backward field
-    assemble_boundary_potential_on_device<<<grid,threads>>>(mp->d_b_accel_outer_core,
-                                                            mp->d_b_send_accel_buffer_outer_core,
-                                                            mp->num_interfaces_outer_core,
-                                                            mp->max_nibool_interfaces_oc,
-                                                            mp->d_nibool_interfaces_outer_core,
-                                                            mp->d_ibool_interfaces_outer_core);
+    //assembles reconstructed/backward field
+    assemble_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core,
+                                                                                 mp->d_b_send_accel_buffer_outer_core,
+                                                                                 mp->num_interfaces_outer_core,
+                                                                                 mp->max_nibool_interfaces_oc,
+                                                                                 mp->d_nibool_interfaces_outer_core,
+                                                                                 mp->d_ibool_interfaces_outer_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
