@@ -80,10 +80,12 @@ typedef float realw;  // type of "working" variables
 // note: we use definition __device__ to use global memory rather than constant memory registers
 //          to avoid over-loading registers; this should help increasing the occupancy on the GPU
 
+// note: using __constant__ here makes hardly any performance improvement < 0.1%
 __device__ realw d_hprime_xx[NGLL2];
 //__device__ realw d_hprime_yy[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
 //__device__ realw d_hprime_zz[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
 
+// note: using __constant__ here makes hardly any performance improvement < 0.1%
 __device__ realw d_hprimewgll_xx[NGLL2];
 //__device__ realw d_hprimewgll_yy[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
 //__device__ realw d_hprimewgll_zz[NGLL2]; // only needed if NGLLX != NGLLY != NGLLZ
@@ -95,6 +97,7 @@ __device__ realw d_wgllwgll_yz[NGLL2];
 // wgll_cube: needed only for gravity case
 __device__ realw d_wgll_cube[NGLL3];
 
+/* ----------------------------------------------------------------------------------------------- */
 
 // setup functions
 void setConst_hprime_xx(realw* array,Mesh* mp)
@@ -104,7 +107,7 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
   if (err != cudaSuccess)
   {
     fprintf(stderr, "Error in setConst_hprime_xx: %s\n", cudaGetErrorString(err));
-    fprintf(stderr, "The problem is maybe the target architecture: -arch sm_** in src/specfem3D/Makefile\n");
+    fprintf(stderr, "The problem is maybe the target architecture: -arch sm_** in your Makefile\n");
     fprintf(stderr, "Please double-check with your GPU card\n");
     exit(1);
   }
@@ -302,5 +305,5 @@ void setConst_wgll_cube(realw* array,Mesh* mp)
 
 }
 
-
-#endif //CUDA_PREPARE_H
+#endif
+//CUDA_PREPARE_H

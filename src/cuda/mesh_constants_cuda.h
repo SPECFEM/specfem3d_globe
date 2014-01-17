@@ -164,7 +164,7 @@
 
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
-// Use textures for d_displ and d_accel -- 10% performance boost
+// Use textures for d_displ and d_accel ~ 1% performance boost
 //#define USE_TEXTURES_FIELDS
 
 // Using texture memory for the hprime-style constants is slower on
@@ -190,6 +190,24 @@
 // (optional) unrolling loops
 // leads up to ~1% performance increase
 //#define MANUALLY_UNROLLED_LOOPS
+
+// compiler specifications
+// (optional) use launch_bounds specification to increase compiler optimization
+//
+// note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
+//       while shared memory usage would allow up to 7 blocks (see profiling with nvcc...)
+//       here we specifiy to launch 7 blocks to increase occupancy and let the compiler reduce registers
+//       (depending on GPU type, register spilling might slow down the performance)
+//
+// performance statistics: main kernel Kernel_2_crust_mantle_impl():
+//       shared memory per block = 6200    for Kepler: total = 49152 -> limits active blocks to 7
+//       registers per thread    = 72                                   (limited by LAUNCH_MIN_BLOCKS 7)
+//       registers per block     = 9216                total = 65536    (limited by LAUNCH_MIN_BLOCKS 7)
+//
+// using launch_bounds leads to ~ 20% performance increase on Kepler GPUs
+// (uncomment if not desired)
+#define USE_LAUNCH_BOUNDS
+#define LAUNCH_MIN_BLOCKS 7
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -224,6 +242,10 @@ typedef float realw;
 // textures
 typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
 
+// restricted pointers: improves performance on Kepler ~ 10%
+// see: http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#restrict
+typedef const float* __restrict__ realw_const_p; // otherwise use: //typedef const float* realw_const_p;
+typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -239,10 +261,10 @@ void exit_on_cuda_error(char* kernel_name);
 void exit_on_error(char* info);
 void synchronize_cuda();
 void synchronize_mpi();
+void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop);
+void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str);
 void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y);
 realw get_device_array_maximum_value(realw* array,int size);
-
-
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -765,4 +787,5 @@ typedef struct mesh_ {
 } Mesh;
 
 
-#endif // CUDA_MESH_H
+#endif
+// CUDA_MESH_H

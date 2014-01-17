@@ -38,12 +38,22 @@
 #include "mesh_constants_cuda.h"
 
 #ifdef USE_TEXTURES_FIELDS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_ic_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_ic_tex;
-#endif
-
-#ifdef USE_TEXTURES_CONSTANTS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_ic_tex;
+//forward
+realw_texture d_displ_ic_tex;
+realw_texture d_accel_ic_tex;
+//backward/reconstructed
+realw_texture d_b_displ_ic_tex;
+realw_texture d_b_accel_ic_tex;
+// templates definitions
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_ic(int x);
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_ic(int x);
+// templates for texture fetching
+// FORWARD_OR_ADJOINT == 1 <- forward arrays
+template<> __device__ float texfetch_displ_ic<1>(int x) { return tex1Dfetch(d_displ_ic_tex, x); }
+template<> __device__ float texfetch_accel_ic<1>(int x) { return tex1Dfetch(d_accel_ic_tex, x); }
+// FORWARD_OR_ADJOINT == 3 <- backward/reconstructed arrays
+template<> __device__ float texfetch_displ_ic<3>(int x) { return tex1Dfetch(d_b_displ_ic_tex, x); }
+template<> __device__ float texfetch_accel_ic<3>(int x) { return tex1Dfetch(d_b_accel_ic_tex, x); }
 #endif
 
 
@@ -56,11 +66,11 @@ texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_ic_tex;
 // updates stress
 
 __device__ void compute_element_ic_att_stress(int tx,int working_element,
-                                             realw* R_xx,
-                                             realw* R_yy,
-                                             realw* R_xy,
-                                             realw* R_xz,
-                                             realw* R_yz,
+                                             realw_p R_xx,
+                                             realw_p R_yy,
+                                             realw_p R_xy,
+                                             realw_p R_xz,
+                                             realw_p R_yz,
                                              realw* sigma_xx,
                                              realw* sigma_yy,
                                              realw* sigma_zz,
@@ -98,12 +108,12 @@ __device__ void compute_element_ic_att_stress(int tx,int working_element,
 // updates R_memory
 
 __device__ void compute_element_ic_att_memory(int tx,int working_element,
-                                              realw* d_muv,
-                                              realw* factor_common,
-                                              realw* alphaval,realw* betaval,realw* gammaval,
-                                              realw* R_xx,realw* R_yy,realw* R_xy,realw* R_xz,realw* R_yz,
-                                              realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
-                                              realw* epsilondev_xz,realw* epsilondev_yz,
+                                              realw_const_p d_muv,
+                                              realw_const_p factor_common,
+                                              realw_const_p alphaval,realw_const_p betaval,realw_const_p gammaval,
+                                              realw_p R_xx,realw_p R_yy,realw_p R_xy,realw_p R_xz,realw_p R_yz,
+                                              realw_p epsilondev_xx,realw_p epsilondev_yy,realw_p epsilondev_xy,
+                                              realw_p epsilondev_xz,realw_p epsilondev_yz,
                                               realw epsilondev_xx_loc,realw epsilondev_yy_loc,realw epsilondev_xy_loc,
                                               realw epsilondev_xz_loc,realw epsilondev_yz_loc,
                                               int USE_3D_ATTENUATION_ARRAYS
@@ -167,12 +177,12 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
 // pre-computes gravity term
 
 __device__ void compute_element_ic_gravity(int tx,int working_element,
-                                           int* d_ibool,
-                                           realw* d_xstore,realw* d_ystore,realw* d_zstore,
-                                           realw* d_minus_gravity_table,
-                                           realw* d_minus_deriv_gravity_table,
-                                           realw* d_density_table,
-                                           realw* wgll_cube,
+                                           const int* d_ibool,
+                                           realw_const_p d_xstore,realw_const_p d_ystore,realw_const_p d_zstore,
+                                           realw_const_p d_minus_gravity_table,
+                                           realw_const_p d_minus_deriv_gravity_table,
+                                           realw_const_p d_density_table,
+                                           realw_const_p wgll_cube,
                                            realw jacobianl,
                                            realw* s_dummyx_loc,
                                            realw* s_dummyy_loc,
@@ -306,47 +316,51 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
-                                         int NGLOB,
-                                         int* d_ibool,
-                                         int* d_idoubling,
-                                         int* d_phase_ispec_inner,
-                                         int num_phase_ispec,
-                                         int d_iphase,
+template<int FORWARD_OR_ADJOINT> __global__ void
+#ifdef USE_LAUNCH_BOUNDS
+// adds compiler specification
+__launch_bounds__(NGLL3_PADDED,LAUNCH_MIN_BLOCKS)
+#endif
+// main kernel
+Kernel_2_inner_core_impl(int nb_blocks_to_compute,
+                                         const int* d_ibool,
+                                         const int* d_idoubling,
+                                         const int* d_phase_ispec_inner,
+                                         const int num_phase_ispec,
+                                         const int d_iphase,
                                          realw deltat,
-                                         int use_mesh_coloring_gpu,
-                                         realw* d_displ,
-                                         realw* d_veloc,
-                                         realw* d_accel,
-                                         realw* d_xix, realw* d_xiy, realw* d_xiz,
-                                         realw* d_etax, realw* d_etay, realw* d_etaz,
-                                         realw* d_gammax, realw* d_gammay, realw* d_gammaz,
-                                         realw* d_hprime_xx,
-                                         realw* d_hprimewgll_xx,
-                                         realw* d_wgllwgll_xy,realw* d_wgllwgll_xz,realw* d_wgllwgll_yz,
-                                         realw* d_kappav,
-                                         realw* d_muv,
-                                         int COMPUTE_AND_STORE_STRAIN,
-                                         realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
-                                         realw* epsilondev_xz,realw* epsilondev_yz,
-                                         realw* epsilon_trace_over_3,
-                                         int ATTENUATION,
-                                         int PARTIAL_PHYS_DISPERSION_ONLY,
-                                         int USE_3D_ATTENUATION_ARRAYS,
-                                         realw* one_minus_sum_beta,realw* factor_common,
-                                         realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
-                                         realw* alphaval,realw* betaval,realw* gammaval,
-                                         int ANISOTROPY,
-                                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                                         realw* d_c33store,realw* d_c44store,
-                                         int GRAVITY,
-                                         realw* d_xstore,realw* d_ystore,realw* d_zstore,
-                                         realw* d_minus_gravity_table,
-                                         realw* d_minus_deriv_gravity_table,
-                                         realw* d_density_table,
-                                         realw* wgll_cube,
-                                         int NSPEC_INNER_CORE_STRAIN_ONLY,
-                                         int NSPEC_INNER_CORE){
+                                         const int use_mesh_coloring_gpu,
+                                         realw_const_p d_displ,
+                                         realw_p d_accel,
+                                         realw_const_p d_xix, realw_const_p d_xiy, realw_const_p d_xiz,
+                                         realw_const_p d_etax, realw_const_p d_etay, realw_const_p d_etaz,
+                                         realw_const_p d_gammax, realw_const_p d_gammay, realw_const_p d_gammaz,
+                                         realw_const_p d_hprime_xx,
+                                         realw_const_p d_hprimewgll_xx,
+                                         realw_const_p d_wgllwgll_xy,realw_const_p d_wgllwgll_xz,realw_const_p d_wgllwgll_yz,
+                                         realw_const_p d_kappav,
+                                         realw_const_p d_muv,
+                                         const int COMPUTE_AND_STORE_STRAIN,
+                                         realw_p epsilondev_xx,realw_p epsilondev_yy,realw_p epsilondev_xy,
+                                         realw_p epsilondev_xz,realw_p epsilondev_yz,
+                                         realw_p epsilon_trace_over_3,
+                                         const int ATTENUATION,
+                                         const int PARTIAL_PHYS_DISPERSION_ONLY,
+                                         const int USE_3D_ATTENUATION_ARRAYS,
+                                         realw_const_p one_minus_sum_beta,realw_const_p factor_common,
+                                         realw_p R_xx, realw_p R_yy, realw_p R_xy, realw_p R_xz, realw_p R_yz,
+                                         realw_const_p alphaval,realw_const_p betaval,realw_const_p gammaval,
+                                         const int ANISOTROPY,
+                                         realw_const_p d_c11store,realw_const_p d_c12store,realw_const_p d_c13store,
+                                         realw_const_p d_c33store,realw_const_p d_c44store,
+                                         const int GRAVITY,
+                                         realw_const_p d_xstore,realw_const_p d_ystore,realw_const_p d_zstore,
+                                         realw_const_p d_minus_gravity_table,
+                                         realw_const_p d_minus_deriv_gravity_table,
+                                         realw_const_p d_density_table,
+                                         realw_const_p wgll_cube,
+                                         const int NSPEC_INNER_CORE_STRAIN_ONLY,
+                                         const int NSPEC_INNER_CORE){
 
   // block id
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -357,8 +371,8 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
   int J = ((tx-K*NGLL2)/NGLLX);
   int I = (tx-K*NGLL2-J*NGLLX);
 
-  int active,offset;
-  int iglob;
+  unsigned short int active;
+  int iglob,offset;
   int working_element;
 
   realw tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l;
@@ -432,9 +446,9 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       iglob = d_ibool[working_element*NGLL3 + tx]-1;
 
 #ifdef USE_TEXTURES_FIELDS
-      s_dummyx_loc[tx] = tex1Dfetch(d_displ_ic_tex, iglob*3);
-      s_dummyy_loc[tx] = tex1Dfetch(d_displ_ic_tex, iglob*3 + 1);
-      s_dummyz_loc[tx] = tex1Dfetch(d_displ_ic_tex, iglob*3 + 2);
+      s_dummyx_loc[tx] = texfetch_displ_ic<FORWARD_OR_ADJOINT>(iglob*3);
+      s_dummyy_loc[tx] = texfetch_displ_ic<FORWARD_OR_ADJOINT>(iglob*3 + 1);
+      s_dummyz_loc[tx] = texfetch_displ_ic<FORWARD_OR_ADJOINT>(iglob*3 + 2);
 #else
       // changing iglob indexing to match fortran row changes fast style
       s_dummyx_loc[tx] = d_displ[iglob*3];
@@ -446,11 +460,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
 
   if (tx < NGLL2) {
     // hprime
-#ifdef USE_TEXTURES_CONSTANTS
-    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_ic_tex,tx);
-#else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
-#endif
     // weighted hprime
     sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
   }
@@ -846,9 +856,9 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
     // no atomic operation needed, colors don't share global points between elements
 
 #ifdef USE_TEXTURES_FIELDS
-    d_accel[iglob*3]     = tex1Dfetch(d_accel_ic_tex, iglob*3) + sum_terms1;
-    d_accel[iglob*3 + 1] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 1) + sum_terms2;
-    d_accel[iglob*3 + 2] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 2) + sum_terms3;
+    d_accel[iglob*3]     = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3) + sum_terms1;
+    d_accel[iglob*3 + 1] = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3 + 1) + sum_terms2;
+    d_accel[iglob*3 + 2] = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3 + 2) + sum_terms3;
 #else
     d_accel[iglob*3]     += sum_terms1;
     d_accel[iglob*3 + 1] += sum_terms2;
@@ -863,9 +873,9 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
       if( NSPEC_INNER_CORE > COLORING_MIN_NSPEC_INNER_CORE ){
         // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
-        d_accel[iglob*3]     = tex1Dfetch(d_accel_ic_tex, iglob*3) + sum_terms1;
-        d_accel[iglob*3 + 1] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 1) + sum_terms2;
-        d_accel[iglob*3 + 2] = tex1Dfetch(d_accel_ic_tex, iglob*3 + 2) + sum_terms3;
+        d_accel[iglob*3]     = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3) + sum_terms1;
+        d_accel[iglob*3 + 1] = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3 + 1) + sum_terms2;
+        d_accel[iglob*3 + 2] = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3 + 2) + sum_terms3;
 #else
         d_accel[iglob*3]     += sum_terms1;
         d_accel[iglob*3 + 1] += sum_terms2;
@@ -972,14 +982,13 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
   dim3 threads(blocksize,1,1);
 
   // Cuda timing
-  // cudaEvent_t start, stop;
-  // realw time;
-  // cudaEventCreate(&start);
-  // cudaEventCreate(&stop);
-  // cudaEventRecord( start, 0 );
+  //cudaEvent_t start, stop;
+  //start_timing_cuda(&start,&stop);
+
+  // calls kernel functions on device
   if( FORWARD_OR_ADJOINT == 1 ){
-    Kernel_2_inner_core_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                               mp->NGLOB_INNER_CORE,
+    // forward wavefields -> FORWARD_OR_ADJOINT == 1
+    Kernel_2_inner_core_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                d_ibool,
                                                d_idoubling,
                                                mp->d_phase_ispec_inner_inner_core,
@@ -988,7 +997,6 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                mp->deltat,
                                                mp->use_mesh_coloring_gpu,
                                                mp->d_displ_inner_core,
-                                               mp->d_veloc_inner_core,
                                                mp->d_accel_inner_core,
                                                d_xix, d_xiy, d_xiz,
                                                d_etax, d_etay, d_etaz,
@@ -1023,11 +1031,11 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                mp->NSPEC_INNER_CORE_STRAIN_ONLY,
                                                mp->NSPEC_INNER_CORE);
   }else if( FORWARD_OR_ADJOINT == 3 ){
+    // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
     // debug
     DEBUG_BACKWARD_FORCES();
 
-    Kernel_2_inner_core_impl<<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                mp->NGLOB_INNER_CORE,
+    Kernel_2_inner_core_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                 d_ibool,
                                                 d_idoubling,
                                                 mp->d_phase_ispec_inner_inner_core,
@@ -1036,7 +1044,6 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->b_deltat,
                                                 mp->use_mesh_coloring_gpu,
                                                 mp->d_b_displ_inner_core,
-                                                mp->d_b_veloc_inner_core,
                                                 mp->d_b_accel_inner_core,
                                                 d_xix, d_xiy, d_xiz,
                                                 d_etax, d_etay, d_etaz,
@@ -1072,15 +1079,9 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
                                                 mp->NSPEC_INNER_CORE);
   }
 
-  // cudaEventRecord( stop, 0 );
-  // cudaEventSynchronize( stop );
-  // cudaEventElapsedTime( &time, start, stop );
-  // cudaEventDestroy( start );
-  // cudaEventDestroy( stop );
-  // printf("Kernel2 Execution Time: %f ms\n",time);
+  // Cuda timing
+  //stop_timing_cuda(&start,&stop,"Kernel_2_inner_core");
 
-  /* cudaThreadSynchronize(); */
-  /* LOG("Kernel 2 finished"); */
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("Kernel_2_inner_core");
 #endif
