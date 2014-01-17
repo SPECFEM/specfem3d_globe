@@ -178,35 +178,46 @@ void FC_FUNC_(initialize_cuda_device,
 
   // output to file
   if( do_output_info ){
-    fp = fopen(filename,"a+");
+    fp = fopen(filename,"w");
     if (fp != NULL){
       // display device properties
       fprintf(fp,"Device Name = %s\n",deviceProp.name);
-      fprintf(fp,"multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
-      fprintf(fp,"totalGlobalMem (in MB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f));
-      fprintf(fp,"totalGlobalMem (in GB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f * 1024.f));
-      fprintf(fp,"sharedMemPerBlock (in bytes): %lu\n",(unsigned long) deviceProp.sharedMemPerBlock);
-      fprintf(fp,"Maximum number of threads per block: %d\n",deviceProp.maxThreadsPerBlock);
-      fprintf(fp,"Maximum size of each dimension of a block: %d x %d x %d\n",
+      fprintf(fp,"memory:\n");
+      fprintf(fp,"  totalGlobalMem (in MB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f));
+      fprintf(fp,"  totalGlobalMem (in GB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f * 1024.f));
+      fprintf(fp,"  totalConstMem (in bytes): %lu\n",(unsigned long) deviceProp.totalConstMem);
+      fprintf(fp,"  Maximum 1D texture size (in bytes): %lu\n",(unsigned long) deviceProp.maxTexture1D);
+      fprintf(fp,"  sharedMemPerBlock (in bytes): %lu\n",(unsigned long) deviceProp.sharedMemPerBlock);
+      fprintf(fp,"  regsPerBlock (in bytes): %lu\n",(unsigned long) deviceProp.regsPerBlock);
+      fprintf(fp,"blocks:\n");
+      fprintf(fp,"  Maximum number of threads per block: %d\n",deviceProp.maxThreadsPerBlock);
+      fprintf(fp,"  Maximum size of each dimension of a block: %d x %d x %d\n",
               deviceProp.maxThreadsDim[0],deviceProp.maxThreadsDim[1],deviceProp.maxThreadsDim[2]);
-      fprintf(fp,"Maximum sizes of each dimension of a grid: %d x %d x %d\n",
+      fprintf(fp,"  Maximum sizes of each dimension of a grid: %d x %d x %d\n",
               deviceProp.maxGridSize[0],deviceProp.maxGridSize[1],deviceProp.maxGridSize[2]);
-      fprintf(fp,"Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
+      fprintf(fp,"features:\n");
+      fprintf(fp,"  Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
+      fprintf(fp,"  multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
       if(deviceProp.canMapHostMemory){
-        fprintf(fp,"canMapHostMemory: TRUE\n");
+        fprintf(fp,"  canMapHostMemory: TRUE\n");
       }else{
-        fprintf(fp,"canMapHostMemory: FALSE\n");
+        fprintf(fp,"  canMapHostMemory: FALSE\n");
       }
       if(deviceProp.deviceOverlap){
-        fprintf(fp,"deviceOverlap: TRUE\n");
+        fprintf(fp,"  deviceOverlap: TRUE\n");
       }else{
-        fprintf(fp,"deviceOverlap: FALSE\n");
+        fprintf(fp,"  deviceOverlap: FALSE\n");
       }
-
+      if(deviceProp.concurrentKernels){
+        fprintf(fp,"  concurrentKernels: TRUE\n");
+      }else{
+        fprintf(fp,"  concurrentKernels: FALSE\n");
+      }
       // outputs initial memory infos via cudaMemGetInfo()
       double free_db,used_db,total_db;
       get_free_memory(&free_db,&used_db,&total_db);
-      fprintf(fp,"%d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n",myrank,
+      fprintf(fp,"memory usage:\n");
+      fprintf(fp,"  rank %d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n",myrank,
               used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
 
       // closes output file
@@ -223,9 +234,38 @@ void FC_FUNC_(initialize_cuda_device,
     fprintf(stderr,"Compute capability should be at least 1.3, exiting...\n");
     exit_on_error("CUDA Compute capability major number should be at least 1.3\n");
   }
+
   // we use pinned memory for asynchronous copy
-  if( ! deviceProp.canMapHostMemory){
-    fprintf(stderr,"Device capability should allow to map host memory, exiting...\n");
-    exit_on_error("CUDA Device capability canMapHostMemory should be TRUE\n");
+  if( GPU_ASYNC_COPY ){
+    if( ! deviceProp.canMapHostMemory){
+      fprintf(stderr,"Device capability should allow to map host memory, exiting...\n");
+      exit_on_error("CUDA Device capability canMapHostMemory should be TRUE\n");
+    }
   }
+
+  // checks kernel optimization setting
+#ifdef USE_LAUNCH_BOUNDS
+  // see: mesh_constants_cuda.h
+  // performance statistics: main kernel Kernel_2_crust_mantle_impl():
+  //       shared memory per block = 6200    for Kepler: total = 49152 -> limits active blocks to 7
+  //       registers per thread    = 72                                   (limited by LAUNCH_MIN_BLOCKS 7)
+  //       registers per block     = 9216                total = 65536    (limited by LAUNCH_MIN_BLOCKS 7)
+
+  // shared memory
+  if( deviceProp.sharedMemPerBlock > 49152 && LAUNCH_MIN_BLOCKS <= 7 ){
+    if(myrank == 0 ){
+      printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
+             LAUNCH_MIN_BLOCKS);
+    }
+  }
+
+  // registers
+  if( deviceProp.regsPerBlock > 65536 && LAUNCH_MIN_BLOCKS <= 7 ){
+    if(myrank == 0 ){
+      printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
+             LAUNCH_MIN_BLOCKS);
+    }
+  }
+#endif
+
 }

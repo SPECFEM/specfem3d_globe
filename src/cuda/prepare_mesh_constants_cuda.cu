@@ -62,9 +62,12 @@
   #endif
 
   #ifdef USE_TEXTURES_CONSTANTS
-    extern realw_texture d_hprime_xx_cm_tex;
-    extern realw_texture d_hprime_xx_oc_tex;
-    extern realw_texture d_hprime_xx_ic_tex;
+    // hprime
+    extern realw_texture d_hprime_xx_tex;
+    extern __constant__ size_t d_hprime_xx_tex_offset;
+    // weighted hprime
+    extern realw_texture d_hprimewgll_xx_tex;
+    extern __constant__ size_t d_hprimewgll_xx_tex_offset;
   #endif
 #endif
 
@@ -159,6 +162,9 @@ void FC_FUNC_(prepare_constants_device,
     exit_on_error("NGLLX must be 5 for CUDA devices");
   }
 
+  // mpi process rank
+  mp->myrank = *myrank_f;
+
   // sets constant arrays
   setConst_hprime_xx(h_hprime_xx,mp);
   //setConst_hprime_yy(h_hprime_yy,mp); // only needed if NGLLX != NGLLY != NGLLZ
@@ -178,34 +184,45 @@ void FC_FUNC_(prepare_constants_device,
   // in the code with #USE_TEXTURES_FIELDS not-defined.
   #ifdef USE_TEXTURES_CONSTANTS
   {
+    // checks that realw is a float
+    if( sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
+
+    // note: device memory returned by cudaMalloc guarantee that the offset is 0,
+    //       however here we use the global memory array d_hprime_xx and need to provide an offset variable
+    size_t offset;
+
+    // binds textures
     #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
-      const textureReference* d_hprime_xx_cm_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_cm_tex_ptr, "d_hprime_xx_cm_tex"), 1101);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_cm_tex_ptr, mp->d_hprime_xx,
+      const textureReference* d_hprime_xx_tex_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_tex_ptr, "d_hprime_xx_tex"), 1101);
+      print_CUDA_error_if_any(cudaBindTexture(&offset, d_hprime_xx_tex_ptr, mp->d_hprime_xx,
                                               &channelDesc, sizeof(realw)*(NGLL2)), 1102);
+      print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprime_xx_tex_offset,&offset,sizeof(offset)),11202);
 
-      const textureReference* d_hprime_xx_oc_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_oc_tex_ptr, "d_hprime_xx_oc_tex"), 1103);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_oc_tex_ptr, mp->d_hprime_xx,
-                                              &channelDesc, sizeof(realw)*(NGLL2)), 1104);
-
-      const textureReference* d_hprime_xx_ic_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_ic_tex_ptr, "d_hprime_xx_ic_tex"), 1105);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_ic_tex_ptr, mp->d_hprime_xx,
-                                              &channelDesc, sizeof(realw)*(NGLL2)), 1106);
+      // weighted
+      const textureReference* d_hprimewgll_xx_tex_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprimewgll_xx_tex_ptr, "d_hprimewgll_xx_tex"), 1107);
+      print_CUDA_error_if_any(cudaBindTexture(&offset, d_hprimewgll_xx_tex_ptr, mp->d_hprimewgll_xx,
+                                              &channelDesc, sizeof(realw)*(NGLL2)), 1108);
+      print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprimewgll_xx_tex_offset,&offset,sizeof(offset)),11205);
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_cm_tex, mp->d_hprime_xx,
-                                              &channelDesc, sizeof(realw)*(NGLL2)), 1102);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_oc_tex, mp->d_hprime_xx,
-                                              &channelDesc, sizeof(realw)*(NGLL2)), 1104);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_ic_tex, mp->d_hprime_xx,
-                                              &channelDesc, sizeof(realw)*(NGLL2)), 1106);
+      print_CUDA_error_if_any(cudaBindTexture(&offset, &d_hprime_xx_tex, mp->d_hprime_xx,
+                                              &channelDesc, sizeof(realw)*(NGLL2)), 11201);
+      print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprime_xx_tex_offset,&offset,sizeof(offset)),11202);
+      // debug
+      //if( mp->myrank == 0 ) printf("texture constants hprime_xx: offset = %lu \n",offset);
+
+      // weighted
+      print_CUDA_error_if_any(cudaBindTexture(&offset, &d_hprimewgll_xx_tex, mp->d_hprimewgll_xx,
+                                              &channelDesc, sizeof(realw)*(NGLL2)), 11204);
+      print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprimewgll_xx_tex_offset,&offset,sizeof(offset)),11205);
+      // debug
+      //if( mp->myrank == 0 ) printf("texture constants hprimewgll_xx: offset = %lu \n",offset);
     #endif
   }
   #endif
-
 
   // sets global parameters
   mp->NSPEC_CRUST_MANTLE = *NSPEC_CRUST_MANTLE;
@@ -243,9 +260,6 @@ void FC_FUNC_(prepare_constants_device,
 
   mp->anisotropic_kl = *ANISOTROPIC_KL_f;
   mp->approximate_hess_kl = *APPROXIMATE_HESS_KL_f;
-
-  // mpi process rank
-  mp->myrank = *myrank_f;
 
   // mesh coloring flag
 #ifdef USE_MESH_COLORING_GPU
@@ -1236,10 +1250,6 @@ void FC_FUNC_(prepare_crust_mantle_device,
   // global indexing
   copy_todevice_int((void**)&mp->d_ibool_crust_mantle,h_ibool,NGLL3*(mp->NSPEC_CRUST_MANTLE));
 
-//  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibool_crust_mantle, size_padded*sizeof(int)),1021);
-//  print_CUDA_error_if_any(cudaMemcpy(mp->d_ibool_crust_mantle, h_ibool,
-//                                     NGLL3*(mp->NSPEC_CRUST_MANTLE)*sizeof(int),cudaMemcpyHostToDevice),1022);
-
   // transverse isotropic elements
   // only needed if not anisotropic 3D mantle
   if( ! mp->anisotropic_3D_mantle ){
@@ -1422,6 +1432,9 @@ void FC_FUNC_(prepare_crust_mantle_device,
 
   #ifdef USE_TEXTURES_FIELDS
   {
+    // checks single precision
+    if( sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
+    // binds textures
     #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
       const textureReference* d_displ_cm_tex_ref_ptr;
@@ -2029,6 +2042,34 @@ TRACE("prepare_cleanup_device");
   // frees memory on GPU
 
   //------------------------------------------
+  // textures
+  //------------------------------------------
+#ifdef USE_TEXTURES_CONSTANTS
+  cudaUnbindTexture(d_hprime_xx_tex);
+  cudaUnbindTexture(d_hprimewgll_xx_tex);
+#endif
+#ifdef USE_TEXTURES_FIELDS
+  cudaUnbindTexture(d_displ_cm_tex);
+  cudaUnbindTexture(d_accel_cm_tex);
+  if( mp->simulation_type == 3 ){
+    cudaUnbindTexture(d_b_displ_cm_tex);
+    cudaUnbindTexture(d_b_accel_cm_tex);
+  }
+  cudaUnbindTexture(d_displ_ic_tex);
+  cudaUnbindTexture(d_accel_ic_tex);
+  if( mp->simulation_type == 3 ){
+    cudaUnbindTexture(d_b_displ_ic_tex);
+    cudaUnbindTexture(d_b_accel_ic_tex);
+  }
+  cudaUnbindTexture(d_displ_oc_tex);
+  cudaUnbindTexture(d_accel_oc_tex);
+  if( mp->simulation_type == 3 ){
+    cudaUnbindTexture(d_b_displ_oc_tex);
+    cudaUnbindTexture(d_b_accel_oc_tex);
+  }
+#endif
+
+  //------------------------------------------
   // sources
   //------------------------------------------
   if( mp->simulation_type == 1  || mp->simulation_type == 3 ){
@@ -2321,15 +2362,15 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_gammay_crust_mantle);
   cudaFree(mp->d_gammaz_crust_mantle);
 
-  cudaFree(mp->d_muvstore_crust_mantle);
   cudaFree(mp->d_ibool_crust_mantle);
 
   if( ! mp->anisotropic_3D_mantle ){
+    cudaFree(mp->d_ispec_is_tiso_crust_mantle);
     cudaFree(mp->d_kappavstore_crust_mantle);
     cudaFree(mp->d_kappahstore_crust_mantle);
+    cudaFree(mp->d_muvstore_crust_mantle);
     cudaFree(mp->d_muhstore_crust_mantle);
     cudaFree(mp->d_eta_anisostore_crust_mantle);
-    cudaFree(mp->d_ispec_is_tiso_crust_mantle);
   }else{
     cudaFree(mp->d_c11store_crust_mantle);
     cudaFree(mp->d_c12store_crust_mantle);
@@ -2367,6 +2408,7 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_phase_ispec_inner_crust_mantle);
   cudaFree(mp->d_ibelm_bottom_crust_mantle);
 
+  // wavefield
   cudaFree(mp->d_displ_crust_mantle);
   cudaFree(mp->d_veloc_crust_mantle);
   cudaFree(mp->d_accel_crust_mantle);
@@ -2374,21 +2416,31 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_b_displ_crust_mantle);
     cudaFree(mp->d_b_veloc_crust_mantle);
     cudaFree(mp->d_b_accel_crust_mantle);
-    cudaFree(mp->d_rho_kl_crust_mantle);
-    if(mp->anisotropic_kl){
-      cudaFree(mp->d_cijkl_kl_crust_mantle);
-    }else{
-      cudaFree(mp->d_alpha_kl_crust_mantle);
-      cudaFree(mp->d_beta_kl_crust_mantle);
-    }
-    if(mp->approximate_hess_kl){ cudaFree(mp->d_hess_kl_crust_mantle);}
   }
+
   // mass matrix
+  cudaFree(mp->d_rmassz_crust_mantle);
   if( *NCHUNKS_VAL != 6 && mp->absorbing_conditions){
     cudaFree(mp->d_rmassx_crust_mantle);
     cudaFree(mp->d_rmassy_crust_mantle);
   }
-  cudaFree(mp->d_rmassz_crust_mantle);
+
+  // kernel simulations
+  if( mp->simulation_type == 3 ){
+    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+      cudaFree(mp->d_b_rmassx_crust_mantle);
+      cudaFree(mp->d_b_rmassy_crust_mantle);
+    }
+    // kernels
+    cudaFree(mp->d_rho_kl_crust_mantle);
+    if(! mp->anisotropic_kl){
+      cudaFree(mp->d_alpha_kl_crust_mantle);
+      cudaFree(mp->d_beta_kl_crust_mantle);
+    }else{
+      cudaFree(mp->d_cijkl_kl_crust_mantle);
+    }
+    if(mp->approximate_hess_kl){ cudaFree(mp->d_hess_kl_crust_mantle);}
+  }
 
   //------------------------------------------
   // outer_core
@@ -2408,11 +2460,12 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_rhostore_outer_core);
   }
 
+  cudaFree(mp->d_ibool_outer_core);
+
   cudaFree(mp->d_xstore_outer_core);
   cudaFree(mp->d_ystore_outer_core);
   cudaFree(mp->d_zstore_outer_core);
 
-  cudaFree(mp->d_ibool_outer_core);
   cudaFree(mp->d_phase_ispec_inner_outer_core);
 
   cudaFree(mp->d_ibelm_top_outer_core);
@@ -2423,6 +2476,7 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_normal_bottom_outer_core);
   cudaFree(mp->d_jacobian2D_bottom_outer_core);
 
+  // wavefield
   cudaFree(mp->d_displ_outer_core);
   cudaFree(mp->d_veloc_outer_core);
   cudaFree(mp->d_accel_outer_core);
@@ -2430,11 +2484,14 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_b_displ_outer_core);
     cudaFree(mp->d_b_veloc_outer_core);
     cudaFree(mp->d_b_accel_outer_core);
-    cudaFree(mp->d_rho_kl_outer_core);
-    cudaFree(mp->d_alpha_kl_outer_core);
   }
   // mass matrix
   cudaFree(mp->d_rmass_outer_core);
+
+  if( mp->simulation_type == 3 ){
+    cudaFree(mp->d_rho_kl_outer_core);
+    cudaFree(mp->d_alpha_kl_outer_core);
+  }
 
   //------------------------------------------
   // inner_core
@@ -2450,17 +2507,6 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_gammaz_inner_core);
 
   cudaFree(mp->d_muvstore_inner_core);
-  cudaFree(mp->d_ibool_inner_core);
-
-  // gravity
-  if( mp->gravity ){
-    cudaFree(mp->d_xstore_inner_core);
-    cudaFree(mp->d_ystore_inner_core);
-    cudaFree(mp->d_zstore_inner_core);
-  }
-
-  cudaFree(mp->d_ibelm_top_inner_core);
-
   if( ! mp->anisotropic_inner_core ){
     cudaFree(mp->d_kappavstore_inner_core);
   }else{
@@ -2474,14 +2520,21 @@ TRACE("prepare_cleanup_device");
   if( mp->simulation_type == 3 && mp->save_boundary_mesh ){
     cudaFree(mp->d_rhostore_inner_core);
   }
+
+  cudaFree(mp->d_ibool_inner_core);
   cudaFree(mp->d_idoubling_inner_core);
+
+  // gravity
   if( mp->gravity ){
     cudaFree(mp->d_xstore_inner_core);
     cudaFree(mp->d_ystore_inner_core);
     cudaFree(mp->d_zstore_inner_core);
   }
-  cudaFree(mp->d_phase_ispec_inner_inner_core);
 
+  cudaFree(mp->d_phase_ispec_inner_inner_core);
+  cudaFree(mp->d_ibelm_top_inner_core);
+
+  // wavefield
   cudaFree(mp->d_displ_inner_core);
   cudaFree(mp->d_veloc_inner_core);
   cudaFree(mp->d_accel_inner_core);
@@ -2489,20 +2542,31 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_b_displ_inner_core);
     cudaFree(mp->d_b_veloc_inner_core);
     cudaFree(mp->d_b_accel_inner_core);
+  }
 
+  // mass matrix
+  cudaFree(mp->d_rmassz_inner_core);
+  if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+    cudaFree(mp->d_rmassx_inner_core);
+    cudaFree(mp->d_rmassy_inner_core);
+  }
+
+  // kernel simulations
+  if( mp->simulation_type == 3 ) {
+    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+      cudaFree(mp->d_b_rmassx_inner_core);
+      cudaFree(mp->d_b_rmassy_inner_core);
+    }
+    // kernels
     cudaFree(mp->d_rho_kl_inner_core);
     cudaFree(mp->d_alpha_kl_inner_core);
     cudaFree(mp->d_beta_kl_inner_core);
   }
-  // mass matrix
-  cudaFree(mp->d_rmassx_inner_core);
-  cudaFree(mp->d_rmassy_inner_core);
-  cudaFree(mp->d_rmassz_inner_core);
 
   // oceans
   if( mp->oceans ){
-    cudaFree(mp->d_rmass_ocean_load);
     cudaFree(mp->d_ibool_ocean_load);
+    cudaFree(mp->d_rmass_ocean_load);
     cudaFree(mp->d_normal_ocean_load);
   }
 

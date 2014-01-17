@@ -38,13 +38,24 @@
 #include "mesh_constants_cuda.h"
 
 #ifdef USE_TEXTURES_FIELDS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_oc_tex;
+//forward
+realw_texture d_displ_oc_tex;
+realw_texture d_accel_oc_tex;
+//backward/reconstructed
+realw_texture d_b_displ_oc_tex;
+realw_texture d_b_accel_oc_tex;
+// templates definitions
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_oc(int x);
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_oc(int x);
+// templates for texture fetching
+// FORWARD_OR_ADJOINT == 1 <- forward arrays
+template<> __device__ float texfetch_displ_oc<1>(int x) { return tex1Dfetch(d_displ_oc_tex, x); }
+template<> __device__ float texfetch_accel_oc<1>(int x) { return tex1Dfetch(d_accel_oc_tex, x); }
+// FORWARD_OR_ADJOINT == 3 <- backward/reconstructed arrays
+template<> __device__ float texfetch_displ_oc<3>(int x) { return tex1Dfetch(d_b_displ_oc_tex, x); }
+template<> __device__ float texfetch_accel_oc<3>(int x) { return tex1Dfetch(d_b_accel_oc_tex, x); }
 #endif
 
-#ifdef USE_TEXTURES_CONSTANTS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_oc_tex;
-#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -58,8 +69,8 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
                                             realw time,
                                             realw two_omega_earth,
                                             realw deltat,
-                                            realw* d_A_array_rotation,
-                                            realw* d_B_array_rotation,
+                                            realw_p d_A_array_rotation,
+                                            realw_p d_B_array_rotation,
                                             realw dpotentialdxl,
                                             realw dpotentialdyl,
                                             realw* dpotentialdx_with_rot,
@@ -105,49 +116,44 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
 /* ----------------------------------------------------------------------------------------------- */
 
 
-__global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
-                                         int NGLOB,
-                                         int* d_ibool,
-                                         int* d_phase_ispec_inner,
-                                         int num_phase_ispec,
-                                         int d_iphase,
-                                         int use_mesh_coloring_gpu,
-                                         realw* d_potential, realw* d_potential_dot_dot,
-                                         realw* d_xix, realw* d_xiy, realw* d_xiz,
-                                         realw* d_etax, realw* d_etay, realw* d_etaz,
-                                         realw* d_gammax, realw* d_gammay, realw* d_gammaz,
-                                         realw* d_hprime_xx,
-                                         realw* d_hprimewgll_xx,
-                                         realw* wgllwgll_xy,realw* wgllwgll_xz,realw* wgllwgll_yz,
-                                         int GRAVITY,
-                                         realw* d_xstore, realw* d_ystore, realw* d_zstore,
-                                         realw* d_d_ln_density_dr_table,
-                                         realw* d_minus_rho_g_over_kappa_fluid,
-                                         realw* wgll_cube,
-                                         int ROTATION,
+template<int FORWARD_OR_ADJOINT> __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
+                                         const int* d_ibool,
+                                         const int* d_phase_ispec_inner,
+                                         const int num_phase_ispec,
+                                         const int d_iphase,
+                                         const int use_mesh_coloring_gpu,
+                                         realw_const_p d_potential,
+                                         realw_p d_potential_dot_dot,
+                                         realw_const_p d_xix, realw_const_p d_xiy, realw_const_p d_xiz,
+                                         realw_const_p d_etax, realw_const_p d_etay, realw_const_p d_etaz,
+                                         realw_const_p d_gammax, realw_const_p d_gammay, realw_const_p d_gammaz,
+                                         realw_const_p d_hprime_xx,
+                                         realw_const_p d_hprimewgll_xx,
+                                         realw_const_p wgllwgll_xy,realw_const_p wgllwgll_xz,realw_const_p wgllwgll_yz,
+                                         const int GRAVITY,
+                                         realw_const_p d_xstore, realw_const_p d_ystore, realw_const_p d_zstore,
+                                         realw_const_p d_d_ln_density_dr_table,
+                                         realw_const_p d_minus_rho_g_over_kappa_fluid,
+                                         realw_const_p wgll_cube,
+                                         const int ROTATION,
                                          realw time,
                                          realw two_omega_earth,
                                          realw deltat,
-                                         realw* d_A_array_rotation,
-                                         realw* d_B_array_rotation,
-                                         int NSPEC_OUTER_CORE){
+                                         realw_p d_A_array_rotation,
+                                         realw_p d_B_array_rotation,
+                                         const int NSPEC_OUTER_CORE){
 
   // block id == spectral-element id
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
   // thread id == GLL point id
   int tx = threadIdx.x;
 
-  // R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
-  //const realw R_EARTH_KM = 6371.0f;
-  // uncomment line below for PREM with oceans
-  //const realw R_EARTH_KM = 6368.0f;
-
   int K = (tx/NGLL2);
   int J = ((tx-K*NGLL2)/NGLLX);
   int I = (tx-K*NGLL2-J*NGLLX);
 
-  int active,offset;
-  int iglob;
+  unsigned short int active;
+  int iglob,offset;
   int working_element;
 
   realw temp1l,temp2l,temp3l;
@@ -201,7 +207,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     iglob = d_ibool[working_element*NGLL3 + tx]-1;
 
 #ifdef USE_TEXTURES_FIELDS
-    s_dummy_loc[tx] = tex1Dfetch(d_displ_oc_tex, iglob);
+    s_dummy_loc[tx] = texfetch_displ_oc<FORWARD_OR_ADJOINT>(iglob);
 #else
     // changing iglob indexing to match fortran row changes fast style
     s_dummy_loc[tx] = d_potential[iglob];
@@ -210,11 +216,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
 
   if (tx < NGLL2) {
     // hprime
-#ifdef USE_TEXTURES_CONSTANTS
-    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_oc_tex,tx);
-#else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
-#endif
     // weighted hprime
     sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
   }
@@ -423,7 +425,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
     // no atomic operation needed, colors don't share global points between elements
 
 #ifdef USE_TEXTURES_FIELDS
-    d_potential_dot_dot[iglob] = tex1Dfetch(d_accel_oc_tex, iglob) + sum_terms;
+    d_potential_dot_dot[iglob] = texfetch_accel_oc<FORWARD_OR_ADJOINT>(iglob) + sum_terms;
 #else
     d_potential_dot_dot[iglob] += sum_terms;
 #endif // USE_TEXTURES_FIELDS
@@ -436,7 +438,7 @@ __global__ void Kernel_2_outer_core_impl(int nb_blocks_to_compute,
       if( NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE ){
         // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
-        d_potential_dot_dot[iglob] = tex1Dfetch(d_accel_oc_tex, iglob) + sum_terms;
+    d_potential_dot_dot[iglob] = texfetch_accel_oc<FORWARD_OR_ADJOINT>(iglob) + sum_terms;
 #else
         d_potential_dot_dot[iglob] += sum_terms;
 #endif // USE_TEXTURES_FIELDS
@@ -486,16 +488,14 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  // Cuda timing
-  // cudaEvent_t start, stop;
-  // realw time;
-  // cudaEventCreate(&start);
-  // cudaEventCreate(&stop);
-  // cudaEventRecord( start, 0 );
+  // CUDA timing
+  //cudaEvent_t start, stop;
+  //start_timing_cuda(&start,&stop);
 
+  // calls kernel functions on GPU device
   if( FORWARD_OR_ADJOINT == 1 ){
-    Kernel_2_outer_core_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                mp->NGLOB_OUTER_CORE,
+    // forward wavefields -> FORWARD_OR_ADJOINT == 1
+    Kernel_2_outer_core_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                 d_ibool,
                                                 mp->d_phase_ispec_inner_outer_core,
                                                 mp->num_phase_ispec_outer_core,
@@ -522,11 +522,11 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                 d_B_array_rotation,
                                                 mp->NSPEC_OUTER_CORE);
   }else if( FORWARD_OR_ADJOINT == 3 ){
+    // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
     // debug
     DEBUG_BACKWARD_FORCES();
 
-    Kernel_2_outer_core_impl<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                mp->NGLOB_OUTER_CORE,
+    Kernel_2_outer_core_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                 d_ibool,
                                                 mp->d_phase_ispec_inner_outer_core,
                                                 mp->num_phase_ispec_outer_core,
@@ -554,14 +554,9 @@ void Kernel_2_outer_core(int nb_blocks_to_compute, Mesh* mp,
                                                 mp->NSPEC_OUTER_CORE);
   }
 
-  // cudaEventRecord( stop, 0 );
-  // cudaEventSynchronize( stop );
-  // cudaEventElapsedTime( &time, start, stop );
-  // cudaEventDestroy( start );
-  // cudaEventDestroy( stop );
-  // printf("Kernel2 Execution Time: %f ms\n",time);
-  /* cudaThreadSynchronize(); */
-  /* TRACE("Kernel 2 finished"); */
+  // Cuda timing
+  //stop_timing_cuda(&start,&stop,"Kernel_2_outer_core");
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("Tried to start with %dx1 blocks\n",nb_blocks_to_compute);
   exit_on_cuda_error("kernel Kernel_2_outer_core");
