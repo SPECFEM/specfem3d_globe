@@ -109,6 +109,11 @@
   double precision,dimension(15) :: tmp
   integer:: ilon,jlat,ier
 
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'incorporating crustal model: EPcrust 1.0'
+  write(IMAIN,*)
+
   call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
 
   open(unit=1001,file=trim(EPCRUST_FNM),status='old',action='read',iostat=ier)
@@ -150,8 +155,10 @@
   implicit none
 
   ! INPUT & OUTPUT
-  double precision:: lat, lon, dep, vp, vs, rho, moho
-  logical :: found_crust, elem_in_crust
+  double precision,intent(in):: lat, lon, dep
+  double precision,intent(out):: vp, vs, rho, moho
+  logical,intent(out) :: found_crust
+  logical,intent(in) :: elem_in_crust
 
   ! INTERIOR
   integer:: ilon, jlat, k

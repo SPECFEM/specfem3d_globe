@@ -32,6 +32,17 @@
 ! The current limits of resolution for surface wave tomography in North America.
 ! EOS, 81: F897, 2000.
 !
+! The 7 crustal layers:
+! ====================
+! 1) ice
+! 2) water
+! 3) soft sediments
+! 4) hard sediments
+! 5) upper crust
+! 6) middle crust
+! 7) lower crust
+! + Parameters VP, VS and rho are given explicitly for these 7 layers as well as the mantle below the Moho. 
+!
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------
 
@@ -99,8 +110,10 @@
 
   implicit none
 
-  double precision :: lat,lon,x,vp,vs,rho,moho
-  logical :: found_crust,elem_in_crust
+  double precision,intent(in) :: lat,lon,x
+  double precision,intent(out) :: vp,vs,rho,moho
+  logical,intent(out) :: found_crust
+  logical,intent(in) :: elem_in_crust
 
   ! local parameters
   double precision :: h_sed,h_uc
@@ -201,6 +214,11 @@
   double precision :: h_moho_min,h_moho_max
 
   character(len=150) :: CNtype2, CNtype2_key_modif
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'incorporating crustal model: CRUST2.0'
+  write(IMAIN,*)
 
   call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
   open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)

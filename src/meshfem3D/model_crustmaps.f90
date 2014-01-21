@@ -131,6 +131,11 @@
 
   integer :: i,l
 
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'incorporating crustal model: crustMap'
+  write(IMAIN,*)
+
   do l=1,NLAYERS_CRUSTMAP
     ! file index: from 3 to 7
     i = l + 2
@@ -237,8 +242,11 @@
 
   implicit none
 
-  double precision :: lat,lon,x,vp,vs,rho,moho
-  logical :: found_crust,elem_in_crust
+  double precision,intent(in) :: lat,lon,x
+  double precision,intent(out) :: vp,vs,rho,moho
+  logical,intent(out) :: found_crust
+  logical,intent(in) :: elem_in_crust
+
   double precision :: h_sed,h_uc
   double precision :: x3,x4,x5,x6,x7,scaleval
   double precision,dimension(NLAYERS_CRUSTMAP) :: vps,vss,rhos,thicks

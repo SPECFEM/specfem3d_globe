@@ -46,7 +46,7 @@
 
   integer :: myrank
   double precision,dimension(NGNOD) :: xelm,yelm,zelm
-  logical :: elem_in_crust,elem_in_mantle
+  logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
   double precision :: r,theta,phi,lat,lon
@@ -108,11 +108,11 @@
     if( .not. USE_VERSION_5_1_5 ) then
       ! limits moho depth to a threshold value to avoid stretching problems
       if( moho < MOHO_MINIMUM ) then
-        print*,'moho value exceeds minimum: ',moho,MOHO_MINIMUM,'in km: ',moho*R_EARTH_KM
+        print*,'moho value exceeds minimum (in km): ',moho*R_EARTH_KM,MOHO_MINIMUM*R_EARTH_KM,'lat/lon:',lat,lon
         moho = MOHO_MINIMUM
       endif
       if( moho > MOHO_MAXIMUM ) then
-        print*,'moho value exceeds maximum: ',moho,MOHO_MAXIMUM,'in km: ',moho*R_EARTH_KM
+        print*,'moho value exceeds maximum (in km): ',moho*R_EARTH_KM,MOHO_MAXIMUM*R_EARTH_KM,'lat/lon:',lat,lon
         moho = MOHO_MAXIMUM
       endif
     endif

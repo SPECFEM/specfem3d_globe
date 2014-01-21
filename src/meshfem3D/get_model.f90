@@ -66,7 +66,7 @@
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   double precision :: rmin,rmax
-  logical :: elem_in_crust,elem_in_mantle
+  logical,intent(in) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
   double precision :: xmesh,ymesh,zmesh

@@ -39,7 +39,16 @@
   double precision, dimension(:),allocatable :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
-  integer :: num_eucrust
+
+  ! original file size entries
+  integer,parameter :: num_eucrust = 36058
+
+  ! eucrust boundary region
+  double precision,parameter :: longitude_min = -24.875
+  double precision,parameter :: longitude_max = 35.375
+
+  double precision,parameter :: latitude_min = 34.375
+  double precision,parameter :: latitude_max = 71.375
 
   end module model_eucrust_par
 
@@ -59,32 +68,28 @@
   integer :: myrank
   integer :: ier
 
+  ! allocates eucrust arrays
+  allocate(eucrust_vp_uppercrust(num_eucrust), &
+           eucrust_vp_lowercrust(num_eucrust),&
+           eucrust_mohodepth(num_eucrust), &
+           eucrust_basement(num_eucrust),&
+           eucrust_ucdepth(num_eucrust), &
+           eucrust_lon(num_eucrust),&
+           eucrust_lat(num_eucrust), &
+           stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating EUcrust arrays')
+
   ! EUcrust07 Vp crustal structure
   if( myrank == 0 ) call read_EuCrust()
 
-  ! broadcast the information read on the master to the nodes
-  call bcast_all_singlei(num_eucrust)
-
-  ! allocates on all other processes
-  if( myrank /= 0 ) then
-    allocate(eucrust_vp_uppercrust(num_eucrust), &
-            eucrust_vp_lowercrust(num_eucrust),&
-            eucrust_mohodepth(num_eucrust), &
-            eucrust_basement(num_eucrust),&
-            eucrust_ucdepth(num_eucrust), &
-            eucrust_lon(num_eucrust),&
-            eucrust_lat(num_eucrust), &
-            stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating EUcrust arrays')
-  endif
-
-  call bcast_all_dp(eucrust_lat(1:num_eucrust),num_eucrust)
-  call bcast_all_dp(eucrust_lon(1:num_eucrust),num_eucrust)
-  call bcast_all_dp(eucrust_vp_uppercrust(1:num_eucrust),num_eucrust)
-  call bcast_all_dp(eucrust_vp_lowercrust(1:num_eucrust),num_eucrust)
-  call bcast_all_dp(eucrust_mohodepth(1:num_eucrust),num_eucrust)
-  call bcast_all_dp(eucrust_basement(1:num_eucrust),num_eucrust)
-  call bcast_all_dp(eucrust_ucdepth(1:num_eucrust),num_eucrust)
+  ! broadcasts arrays from master to all others
+  call bcast_all_dp(eucrust_lat,num_eucrust)
+  call bcast_all_dp(eucrust_lon,num_eucrust)
+  call bcast_all_dp(eucrust_vp_uppercrust,num_eucrust)
+  call bcast_all_dp(eucrust_vp_lowercrust,num_eucrust)
+  call bcast_all_dp(eucrust_mohodepth,num_eucrust)
+  call bcast_all_dp(eucrust_basement,num_eucrust)
+  call bcast_all_dp(eucrust_ucdepth,num_eucrust)
 
   end subroutine model_eucrust_broadcast
 
@@ -104,20 +109,12 @@
   double precision:: vp_uppercrust,vp_lowercrust,vp_avg,topo,basement
   double precision:: upper_lower_depth,moho_depth,lat,lon
 
-  ! original file size entries
-  num_eucrust = 36058
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'incorporating crustal model: EuCrust07'
+  write(IMAIN,*)
 
-  ! only on master we allocate these arrays here
-  allocate(eucrust_vp_uppercrust(num_eucrust), &
-          eucrust_vp_lowercrust(num_eucrust),&
-          eucrust_mohodepth(num_eucrust), &
-          eucrust_basement(num_eucrust),&
-          eucrust_ucdepth(num_eucrust), &
-          eucrust_lon(num_eucrust),&
-          eucrust_lat(num_eucrust), &
-          stat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error allocating EUcrust arrays on master')
-
+  ! initializes
   eucrust_vp_uppercrust(:) = ZERO
   eucrust_vp_lowercrust(:) = ZERO
   eucrust_mohodepth(:) = ZERO
@@ -138,7 +135,7 @@
   read(11,*)
 
   ! data
-  do i=1,36058
+  do i=1,num_eucrust
 
     read(11,'(a80)',iostat=ier) line
     if( ier /= 0 ) stop 'error reading EUcrust file'
@@ -171,22 +168,14 @@
 
   double precision :: lat,lon,x,vp
   logical :: found_crust
-  double precision :: lon_min,lon_max,lat_min,lat_max
-  double precision, external:: crust_eu
 
   ! initializes
   vp = 0.d0
 
-  ! eucrust boundary region
-  lon_min = -24.875
-  lon_max = 35.375
-
-  lat_min = 34.375
-  lat_max = 71.375
-
+  ! checks region range
   found_crust = .false.
-  if( lon < lon_min .or. lon > lon_max ) return
-  if( lat < lat_min .or. lat > lat_max ) return
+  if( lon < longitude_min .or. lon > longitude_max ) return
+  if( lat < latitude_min .or. lat > latitude_max ) return
 
   ! smoothing over 1.0 degrees
   call eu_cap_smoothing(lat,lon,x,vp,found_crust)
@@ -212,7 +201,6 @@
   double precision :: lat,lon,x,vp !,vs,rho,moho
   logical :: found_crust
 
-  double precision :: longitude_min,longitude_max,latitude_min,latitude_max
   double precision :: h_basement,h_uc,h_moho,x3,x4,x5
   double precision :: scaleval
 
@@ -220,13 +208,7 @@
   integer,parameter :: ilons = 242  ! number of different longitudes
   integer,parameter :: ilats = 149  ! number of different latitudes
 
-  ! eucrust boundary region
-  longitude_min = -24.875
-  longitude_max = 35.375
-
-  latitude_min = 34.375
-  latitude_max = 71.375
-
+  ! checks region range
   found_crust = .false.
   crust_eu = 0.0
   if( lon < longitude_min .or. lon > longitude_max ) return
