@@ -668,4 +668,3 @@ FC_FUNC_(read_abs,READ_ABS)(int *fid, char *buffer, int *length , int *index) {
 
 }
 
-

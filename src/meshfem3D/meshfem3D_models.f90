@@ -195,7 +195,12 @@
 
   select case (ITYPE_CRUSTAL_MODEL )
 
+    case (ICRUST_CRUST1)
+      ! crust 1.0
+      call model_crust_1_0_broadcast(myrank)
+
     case (ICRUST_CRUST2)
+      ! default
       ! crust 2.0
       call model_crust_broadcast(myrank)
 
@@ -635,7 +640,7 @@
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  logical :: elem_in_crust
+  logical,intent(in) :: elem_in_crust
   double precision :: moho
 
   ! local parameters
@@ -767,7 +772,12 @@
 
   select case (ITYPE_CRUSTAL_MODEL )
 
+    case (ICRUST_CRUST1)
+      ! crust 1.0
+      call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+
     case (ICRUST_CRUST2)
+      ! default
       ! crust 2.0
       call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
@@ -824,7 +834,7 @@
   double precision, dimension(N_SLS) :: tau_s, tau_e
   double precision  :: T_c_source
 
-  logical :: elem_in_crust
+  logical,intent(in) :: elem_in_crust
 
   ! local parameters
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees

@@ -143,9 +143,10 @@
 !! (uncomment desired model)
 
 ! crustal model constants
-  integer, parameter :: ICRUST_CRUST2 = 1
-  integer, parameter :: ICRUST_CRUSTMAPS = 2
-  integer, parameter :: ICRUST_EPCRUST = 3
+  integer, parameter :: ICRUST_CRUST1 = 1
+  integer, parameter :: ICRUST_CRUST2 = 2
+  integer, parameter :: ICRUST_CRUSTMAPS = 3
+  integer, parameter :: ICRUST_EPCRUST = 4
 
 ! increase smoothing for critical regions  (increases mesh stability)
   logical, parameter :: SMOOTH_CRUST = .true.
@@ -154,7 +155,11 @@
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
-!!-- uncomment for using Crust2.0 (used as default when CRUSTAL flag is set for simulation)
+! default crustal model
+! (used as default when CRUSTAL flag is set for simulation)
+!!-- uncomment for using Crust1.0
+!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
+!!-- uncomment for using Crust2.0
   integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
 !!-- uncomment for using General Crustmaps instead
 !  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS

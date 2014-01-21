@@ -120,10 +120,10 @@
         ! differentiate between regional and global meshing
         if( REGIONAL_MOHO_MESH ) then
           call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
-                                              elem_in_crust,elem_in_mantle)
+                                               elem_in_crust,elem_in_mantle)
         else
           call moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
-                                          elem_in_crust,elem_in_mantle)
+                                           elem_in_crust,elem_in_mantle)
         endif
       else
         ! element below 220km
