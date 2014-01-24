@@ -346,7 +346,7 @@
     z_target(irec) = z_target_rec
 
     ! would write out desired target locations of receivers
-    !if (myrank == 0) write(IOVTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
+    !if (myrank == 0) write(IOUT_VTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
 
     ! flag to check that we located at least one target element
     located_target = .false.
@@ -711,7 +711,7 @@
   if(myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
@@ -762,13 +762,13 @@
         epidist_found(nrec_found) = epidist(irec)
 
         ! writes out actual receiver location to vtk file
-        write(IOVTK,'(3e18.6)') sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
+        write(IOUT_VTK,'(3e18.6)') sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
     enddo
 
     ! finishes sr_tmp.vtk file
-    write(IOVTK,*)
-    close(IOVTK)
+    write(IOUT_VTK,*)
+    close(IOUT_VTK)
 
     ! compute maximal distance for all the receivers
     final_distance_max = maxval(final_distance(:))
