@@ -126,16 +126,16 @@
   if(myrank == 0) then
   ! write source and receiver VTK files for Paraview
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
-    open(IOVTK,file=trim(filename),status='unknown',iostat=ier)
+    open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening temporary file sr_temp.vtk')
-    write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
-    write(IOVTK,'(a)') 'Source and Receiver VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
     !  LQY -- won't be able to know NSOURCES+nrec at this point...
-    write(IOVTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
+    write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
     ! closing file, rest of informations will be appended later on
-    close(IOVTK)
+    close(IOUT_VTK)
   endif
 
   ! locate sources in the mesh
@@ -331,12 +331,8 @@
   implicit none
 
   ! local parameters
-  double precision :: junk
   integer :: irec,isource,nrec_tot_found
-  integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
-  character(len=3),dimension(NDIM) :: comp
-  character(len=256) :: filename,adj_source_file
-  character(len=2) :: bic
+  integer :: nadj_files_found,nadj_files_found_tot
   integer :: ier
   integer,dimension(:),allocatable :: tmp_rec_local_all
   integer :: maxrec,maxproc(1)
@@ -407,12 +403,6 @@
 
   ! counts receivers for adjoint simulations
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    ! by Ebru
-    call band_instrument_code(DT,bic)
-    comp(1) = bic(1:2)//'N'
-    comp(2) = bic(1:2)//'E'
-    comp(3) = bic(1:2)//'Z'
-
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
     do irec = 1,nrec
@@ -425,37 +415,7 @@
         nadj_rec_local = nadj_rec_local + 1
 
         ! checks **sta**.**net**.**MX**.adj files for correct number of time steps
-        adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-        do icomp = 1,NDIM
-
-          ! opens adjoint source file for this component
-          filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
-          open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
-
-          if( ier == 0 ) then
-            ! checks length of file
-            itime = 0
-            do while(ier == 0)
-              read(IIN,*,iostat=ier) junk,junk
-              if( ier == 0 ) itime = itime + 1
-            enddo
-            ! checks length
-            if( itime /= NSTEP) then
-              print*,'adjoint source error: ',trim(filename),' has length',itime,' but should be',NSTEP
-              call exit_MPI(myrank,&
-                'file '//trim(filename)//' has wrong length, please check with your simulation duration')
-            endif
-
-            ! updates counter for found files
-            nadj_files_found = nadj_files_found + 1
-          else
-            ! adjoint source file not found
-            ! stops simulation
-            call exit_MPI(myrank,&
-                'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
-          endif
-          close(IIN)
-        enddo
+        call check_adjoint_sources(irec,nadj_files_found)
       endif
     enddo
 
@@ -481,6 +441,7 @@
     else
       write(IMAIN,*) 'this total is okay'
     endif
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -500,6 +461,24 @@
     ! dummy arrays
     allocate(tmp_rec_local_all(1),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
+  endif
+
+  ! user output infos
+  ! sources
+  if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
+    ! user output
+    if( myrank == 0 ) then
+      ! note: all process allocate the full sourcearrays array
+      ! sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
+      size = dble(NSOURCES) * dble(NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
+      ! outputs info
+      write(IMAIN,*) 'source arrays:'
+      write(IMAIN,*) '  number of sources is ',NSOURCES
+      write(IMAIN,*) '  size of source array                 = ', sngl(size),'MB'
+      write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   ! seismograms
@@ -523,12 +502,11 @@
       size = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
     endif
     ! outputs info
-    write(IMAIN,*)
     write(IMAIN,*) 'seismograms:'
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
-    write(IMAIN,*) '  size of maximum seismogram array = ', sngl(size),'MB'
-    write(IMAIN,*) '                                   = ', sngl(size/1024.d0),'GB'
+    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(size),'MB'
+    write(IMAIN,*) '                                         = ', sngl(size/1024.d0),'GB'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -555,10 +533,15 @@
       ! adj_sourcearrays size in MB
       ! adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
       size = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
-
+      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ, 
+      !       this memory requirement might double. 
+      !       at this point, NSTEP_SUB_ADJ is not set yet...
       ! outputs info
       write(IMAIN,*) 'adjoint source arrays:'
       write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
+      if( IO_ASYNC_COPY ) then
+        write(IMAIN,*) '  using asynchronuous buffer for file i/o of adjoint sources'
+      endif
       write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
       write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(size),'MB'
       write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
@@ -568,7 +551,6 @@
   endif
 
   deallocate(tmp_rec_local_all)
-
 
   end subroutine setup_receivers
 
@@ -627,6 +609,7 @@
 
   ! local parameters
   integer :: ier
+  integer(kind=8) :: arraysize
 
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
@@ -650,7 +633,7 @@
        iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record, e.g. 3000,2999,..,1
     enddo
 
-    ! number of adjoint source blocks to read in
+    ! total number of adjoint source blocks to read in
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     if(nadj_rec_local > 0) then
@@ -659,6 +642,24 @@
                stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
+
+      ! additional buffer for asynchronuous file i/o
+      if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
+        ! allocates read buffer
+        allocate(buffer_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
+                 stat=ier)
+        if( ier /= 0 ) call exit_MPI(myrank,'error allocating array buffer_sourcearrays')
+
+        ! array size in bytes (note: the multiplication is split into two line to avoid integer-overflow)
+        arraysize = NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL
+        arraysize = arraysize * nadj_rec_local * NTSTEP_BETWEEN_READ_ADJSRC
+
+        ! debug
+        !print*,'buffer_sourcearrays: size = ',arraysize,' Bytes = ',arraysize/1024./1024.,'MB'
+
+        ! initializes io thread
+        call prepare_adj_io_thread(buffer_sourcearrays,arraysize,nadj_rec_local)
+      endif
 
       ! allocate indexing arrays
       allocate(iadjsrc(NSTEP_SUB_ADJ,2), &

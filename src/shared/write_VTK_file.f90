@@ -56,26 +56,26 @@
   !write(IMAIN,*) '  vtk file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
-  write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOVTK,'(a)') 'material model VTK file'
-  write(IOVTK,'(a)') 'ASCII'
-  write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOVTK, '(a,i12,a)') 'POINTS ', num_points_globalindices, ' float'
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', num_points_globalindices, ' float'
   do i=1,num_points_globalindices
     iglob = points_globalindices(i)
     if( iglob <= 0 .or. iglob > nglob ) then
       print*,'error: '//prname_file(1:len_trim(prname_file))//'.vtk'
       print*,'error global index: ',iglob,i
-      close(IOVTK)
+      close(IOUT_VTK)
       stop 'error vtk points file'
     endif
 
-    write(IOVTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
+    write(IOUT_VTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
-  close(IOVTK)
+  close(IOUT_VTK)
 
   end subroutine write_VTK_data_points
 
@@ -113,27 +113,27 @@
   !write(IMAIN,*) '  vtk file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
-  write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOVTK,'(a)') 'material model VTK file'
-  write(IOVTK,'(a)') 'ASCII'
-  write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOVTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do iglob=1,nglob
-    write(IOVTK,*) xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
+    write(IOUT_VTK,*) xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! writes out gll-data (velocity) for each element point
-  write(IOVTK,'(a,i12)') "POINT_DATA ",nglob
-  write(IOVTK,'(a)') "SCALARS glob_data float"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
+  write(IOUT_VTK,'(a)') "SCALARS glob_data float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do iglob=1,nglob
-    write(IOVTK,*) glob_values(iglob)
+    write(IOUT_VTK,*) glob_values(iglob)
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
-  close(IOVTK)
+  close(IOUT_VTK)
 
   end subroutine write_VTK_glob_points
 
@@ -172,42 +172,42 @@
   !write(IMAIN,*) '  vtk file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
-  write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOVTK,'(a)') 'material model VTK file'
-  write(IOVTK,'(a)') 'ASCII'
-  write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOVTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i=1,nglob
-    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! note: indices for vtk start at 0
-  write(IOVTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
+  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
-    write(IOVTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+    write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! type: hexahedrons
-  write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOVTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOVTK,*) ""
+  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
+  write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
+  write(IOUT_VTK,*) ""
 
-  write(IOVTK,'(a,i12)') "CELL_DATA ",nspec
-  write(IOVTK,'(a)') "SCALARS elem_flag integer"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
+  write(IOUT_VTK,'(a)') "SCALARS elem_flag integer"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do ispec = 1,nspec
     if( elem_flag(ispec) .eqv. .true. ) then
-      write(IOVTK,*) 1
+      write(IOUT_VTK,*) 1
     else
-      write(IOVTK,*) 0
+      write(IOUT_VTK,*) 0
     endif
   enddo
-  write(IOVTK,*) ""
-  close(IOVTK)
+  write(IOUT_VTK,*) ""
+  close(IOUT_VTK)
 
 
   end subroutine write_VTK_data_elem_l
@@ -247,38 +247,38 @@
   !write(IMAIN,*) '  vtk file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
-  write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOVTK,'(a)') 'material model VTK file'
-  write(IOVTK,'(a)') 'ASCII'
-  write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOVTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i=1,nglob
-    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! note: indices for vtk start at 0
-  write(IOVTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
+  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
-    write(IOVTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+    write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! type: hexahedrons
-  write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOVTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOVTK,*) ""
+  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
+  write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
+  write(IOUT_VTK,*) ""
 
-  write(IOVTK,'(a,i12)') "CELL_DATA ",nspec
-  write(IOVTK,'(a)') "SCALARS elem_val integer"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
+  write(IOUT_VTK,'(a)') "SCALARS elem_val integer"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do ispec = 1,nspec
-    write(IOVTK,*) elem_flag(ispec)
+    write(IOUT_VTK,*) elem_flag(ispec)
   enddo
-  write(IOVTK,*) ""
-  close(IOVTK)
+  write(IOUT_VTK,*) ""
+  close(IOUT_VTK)
 
   end subroutine write_VTK_data_elem_i
 
@@ -317,12 +317,12 @@
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval
 
   ! write source and receiver VTK files for Paraview
-  open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
-  write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOVTK,'(a)') 'material model VTK file'
-  write(IOVTK,'(a)') 'ASCII'
-  write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOVTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i=1,nglob
 
     !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
@@ -331,21 +331,21 @@
     phival = zstore_dummy(i)
     call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
-    !write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    write(IOVTK,'(3e18.6)') xval,yval,zval
+    !write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') xval,yval,zval
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! defines cell on coarse corner points
   ! note: indices for vtk start at 0
-  write(IOVTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
+  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
 
     ! specific to inner core elements
     ! exclude fictitious elements in central cube
     if(idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
       ! valid cell
-      write(IOVTK,'(9i12)') 8,ibool(1,1,1,ispec)-1, &
+      write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1, &
                           ibool(NGLLX,1,1,ispec)-1, &
                           ibool(NGLLX,NGLLY,1,ispec)-1, &
                           ibool(1,NGLLY,1,ispec)-1, &
@@ -356,7 +356,7 @@
     else
       ! fictitious elements in central cube
       ! maps cell onto a randomly chosen point
-      write(IOVTK,'(9i12)') 8,ibool(1,1,1,1)-1, &
+      write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,1)-1, &
                             ibool(1,1,1,1)-1, &
                             ibool(1,1,1,1)-1, &
                             ibool(1,1,1,1)-1, &
@@ -367,43 +367,43 @@
     endif
 
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
   ! type: hexahedrons
-  write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOVTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOVTK,*) ""
+  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
+  write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
+  write(IOUT_VTK,*) ""
 
   ! x components
-  write(IOVTK,'(a,i12)') "POINT_DATA ",nglob
-  write(IOVTK,'(a)') "SCALARS x_comp float"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
+  write(IOUT_VTK,'(a)') "SCALARS x_comp float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOVTK,*) glob_data(1,i)
+      write(IOUT_VTK,*) glob_data(1,i)
   enddo
   ! y components
-  write(IOVTK,'(a)') "SCALARS y_comp float"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a)') "SCALARS y_comp float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOVTK,*) glob_data(2,i)
+      write(IOUT_VTK,*) glob_data(2,i)
   enddo
   ! z components
-  write(IOVTK,'(a)') "SCALARS z_comp float"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a)') "SCALARS z_comp float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOVTK,*) glob_data(3,i)
+      write(IOUT_VTK,*) glob_data(3,i)
   enddo
   ! norm
-  write(IOVTK,'(a)') "SCALARS norm float"
-  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  write(IOUT_VTK,'(a)') "SCALARS norm float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOVTK,*) sqrt( glob_data(1,i)*glob_data(1,i) &
+      write(IOUT_VTK,*) sqrt( glob_data(1,i)*glob_data(1,i) &
                         + glob_data(2,i)*glob_data(2,i) &
                         + glob_data(3,i)*glob_data(3,i))
   enddo
-  write(IOVTK,*) ""
+  write(IOUT_VTK,*) ""
 
-  close(IOVTK)
+  close(IOUT_VTK)
 
 
   end subroutine write_VTK_data_cr
@@ -499,12 +499,12 @@
   if( myrank == 0 ) then
 
     ! write source and receiver VTK files for Paraview
-    open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
-    write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-    write(IOVTK,'(a)') 'material model VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-    write(IOVTK, '(a,i12,a)') 'POINTS ', nglob*NPROCTOT, ' float'
+    open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+    write(IOUT_VTK,'(a)') 'material model VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob*NPROCTOT, ' float'
     do iproc=0, NPROCTOT-1
       do i=1,nglob
 
@@ -514,15 +514,15 @@
         phival = store_val_z_all(i,iproc)
         call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
-        !write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-        write(IOVTK,'(3e18.6)') xval,yval,zval
+        !write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+        write(IOUT_VTK,'(3e18.6)') xval,yval,zval
       enddo
     enddo
-    write(IOVTK,*) ""
+    write(IOUT_VTK,*) ""
 
     ! defines cell on coarse corner points
     ! note: indices for vtk start at 0
-    write(IOVTK,'(a,i12,i12)') "CELLS ",nspec*NPROCTOT,nspec*NPROCTOT*9
+    write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec*NPROCTOT,nspec*NPROCTOT*9
     do iproc=0, NPROCTOT-1
       do ispec=1,nspec
 
@@ -534,7 +534,7 @@
         if(idoubling_all(ispec,iproc) /= IFLAG_IN_FICTITIOUS_CUBE) then
           ! valid cell
           ! cell corner ids
-          write(IOVTK,'(9i12)') 8,ibool_all(1,1,1,ispec,iproc)-1+iproc*nglob, &
+          write(IOUT_VTK,'(9i12)') 8,ibool_all(1,1,1,ispec,iproc)-1+iproc*nglob, &
                             ibool_all(NGLLX,1,1,ispec,iproc)-1+iproc*nglob, &
                             ibool_all(NGLLX,NGLLY,1,ispec,iproc)-1+iproc*nglob, &
                             ibool_all(1,NGLLY,1,ispec,iproc)-1+iproc*nglob, &
@@ -545,7 +545,7 @@
         else
           ! fictitious elements in central cube
           ! maps cell onto a randomly chosen point
-          write(IOVTK,'(9i12)') 8,ibool_all(1,1,1,1,iproc)-1, &
+          write(IOUT_VTK,'(9i12)') 8,ibool_all(1,1,1,1,iproc)-1, &
                             ibool_all(1,1,1,1,iproc)-1, &
                             ibool_all(1,1,1,1,iproc)-1, &
                             ibool_all(1,1,1,1,iproc)-1, &
@@ -557,51 +557,51 @@
 
       enddo
     enddo
-    write(IOVTK,*) ""
+    write(IOUT_VTK,*) ""
 
     ! type: hexahedrons
-    write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec*NPROCTOT
-    write(IOVTK,'(6i12)') (12,ispec=1,nspec*NPROCTOT)
-    write(IOVTK,*) ""
+    write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec*NPROCTOT
+    write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec*NPROCTOT)
+    write(IOUT_VTK,*) ""
 
     ! x components
-    write(IOVTK,'(a,i12)') "POINT_DATA ",nglob*NPROCTOT
-    write(IOVTK,'(a)') "SCALARS x_comp float"
-    write(IOVTK,'(a)') "LOOKUP_TABLE default"
+    write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob*NPROCTOT
+    write(IOUT_VTK,'(a)') "SCALARS x_comp float"
+    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
     do iproc=0, NPROCTOT-1
       do i = 1,nglob
-        write(IOVTK,*) store_val_ux_all(i,iproc)
+        write(IOUT_VTK,*) store_val_ux_all(i,iproc)
       enddo
     enddo
     ! y components
-    write(IOVTK,'(a)') "SCALARS y_comp float"
-    write(IOVTK,'(a)') "LOOKUP_TABLE default"
+    write(IOUT_VTK,'(a)') "SCALARS y_comp float"
+    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
     do iproc=0, NPROCTOT-1
       do i = 1,nglob
-        write(IOVTK,*) store_val_uy_all(i,iproc)
+        write(IOUT_VTK,*) store_val_uy_all(i,iproc)
       enddo
     enddo
     ! z components
-    write(IOVTK,'(a)') "SCALARS z_comp float"
-    write(IOVTK,'(a)') "LOOKUP_TABLE default"
+    write(IOUT_VTK,'(a)') "SCALARS z_comp float"
+    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
     do iproc=0, NPROCTOT-1
       do i = 1,nglob
-        write(IOVTK,*) store_val_uz_all(i,iproc)
+        write(IOUT_VTK,*) store_val_uz_all(i,iproc)
       enddo
     enddo
     ! norm
-    write(IOVTK,'(a)') "SCALARS norm float"
-    write(IOVTK,'(a)') "LOOKUP_TABLE default"
+    write(IOUT_VTK,'(a)') "SCALARS norm float"
+    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
     do iproc=0, NPROCTOT-1
       do i = 1,nglob
-        write(IOVTK,*) sqrt( store_val_ux_all(i,iproc)**2 &
+        write(IOUT_VTK,*) sqrt( store_val_ux_all(i,iproc)**2 &
                           + store_val_uy_all(i,iproc)**2 &
                           + store_val_uz_all(i,iproc)**2 )
       enddo
     enddo
-    write(IOVTK,*) ""
+    write(IOUT_VTK,*) ""
 
-    close(IOVTK)
+    close(IOUT_VTK)
 
   endif
 

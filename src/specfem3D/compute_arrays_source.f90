@@ -128,11 +128,11 @@
 !================================================================
 
   subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
-      xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
-      xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
-      NTSTEP_BETWEEN_READ_ADJSRC,DT)
+                                           xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
+                                           xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
+                                           NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  use constants
+  use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH
 
   implicit none
 
@@ -211,7 +211,7 @@
 
     ! opens adjoint component file
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
-    open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ios)
+    open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
 
     ! note: adjoint source files must be available for all three components E/N/Z, even
     !          if a component is just zeroed out
@@ -221,11 +221,11 @@
       call exit_MPI(myrank,&
           'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
     endif
-    !if (ios /= 0) cycle ! cycles to next file
+    !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
 
     ! jumps over unused trace length
     do itime =1,it_start-1
-      read(IIN,*,iostat=ios) junk,junk
+      read(IIN_ADJ,*,iostat=ios) junk,junk
       if( ios /= 0) &
         call exit_MPI(myrank,&
           'file '//trim(filename)//' has wrong length, please check with your simulation duration')
@@ -244,15 +244,15 @@
       endif
 
       ! reads in adjoint source trace
-      !read(IIN,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
-      read(IIN,*,iostat=ios) junk, adj_src(icomp,index_i)
+      !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
+      read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
 
       if( ios /= 0) &
         call exit_MPI(myrank, &
           'file '//trim(filename)//' has wrong length, please check with your simulation duration')
     enddo
 
-    close(IIN)
+    close(IIN_ADJ)
 
   enddo
 

@@ -179,7 +179,7 @@
     ! get the base pathname for output files
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
-    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
   endif
@@ -669,7 +669,7 @@
         write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
 
         ! writes out actual source position to vtk file
-        write(IOVTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
+        write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
                                 sngl(y_found_source(isource_in_this_subset)), &
                                 sngl(z_found_source(isource_in_this_subset))
 
@@ -747,7 +747,7 @@
     call flush_IMAIN()
 
     ! closing sr_tmp.vtk
-    close(IOVTK)
+    close(IOUT_VTK)
   endif
   call synchronize_all()
 

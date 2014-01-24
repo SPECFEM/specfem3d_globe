@@ -151,62 +151,19 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tmp_sourcearray
-  integer :: irec,irec_local,i,j,k,iglob,it_sub_adj,itime,ier
+  integer :: irec,irec_local,i,j,k,iglob
   integer :: ivec_index
-  character(len=150) :: adj_source_file
   logical :: ibool_read_adj_arrays
 
-  ! note: we check if nadj_rec_local > 0 before calling this routine
+  ! note: we check if nadj_rec_local > 0 before calling this routine, but better be safe...
+  if( nadj_rec_local == 0 ) return
 
   ! figure out if we need to read in a chunk of the adjoint source at this timestep
-  it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )   !chunk_number
-  ibool_read_adj_arrays = (((it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0)) &
-                                                  .and. (nadj_rec_local > 0))
+  ibool_read_adj_arrays = ( (it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) )
 
   ! needs to read in a new chunk/block of the adjoint source
   if(ibool_read_adj_arrays) then
-    ! allocates temporary source array
-    allocate(tmp_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating array tmp_sourcearray')
-
-    tmp_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
-    irec_local = 0
-
-    do irec = 1, nrec
-      ! check that the source slice number is okay
-      if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) then
-        if(islice_selected_rec(irec) < 0) call exit_MPI(myrank,'islice < 0')
-        if(islice_selected_rec(irec) > NPROCTOT_VAL-1) call exit_MPI(myrank,'islice > NPROCTOT_VAL-1')
-        call exit_MPI(myrank,'now: something is wrong with the source slice number in adjoint simulation')
-      endif
-      ! compute source arrays
-      if(myrank == islice_selected_rec(irec)) then
-        irec_local = irec_local + 1
-
-        ! reads in **sta**.**net**.**LH**.adj files
-        adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-        call compute_arrays_source_adjoint(myrank,adj_source_file, &
-                  xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
-                  nu(:,:,irec),tmp_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
-                  iadjsrc,it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
-
-        ! stores source array
-        ! note: the adj_sourcearrays has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC
-        !          this gets overwritten every time a new block/chunk is read in
-        do itime = 1,NTSTEP_BETWEEN_READ_ADJSRC
-          adj_sourcearrays(:,:,:,:,irec_local,itime) = tmp_sourcearray(:,:,:,:,itime)
-        enddo
-
-      endif
-    enddo
-
-    ! checks that number of read sources is valid
-    if(irec_local /= nadj_rec_local) &
-      call exit_MPI(myrank,'irec_local /= nadj_rec_local in adjoint simulation')
-
-    ! frees temporary array
-    deallocate(tmp_sourcearray)
+    call read_adjoint_sources()
   endif
 
   ! adds adjoint sources
@@ -342,7 +299,6 @@
                                           islice_selected_rec)
       endif
     endif
-
 
   endif
 

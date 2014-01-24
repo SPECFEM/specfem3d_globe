@@ -32,6 +32,8 @@
 
   implicit none
 
+  ! note: this routine gets called if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) )
+
   ! update position in seismograms
   seismo_current = seismo_current + 1
 

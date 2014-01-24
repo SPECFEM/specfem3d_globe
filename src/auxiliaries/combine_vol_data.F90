@@ -610,42 +610,42 @@ print *, irs, ire
     ! VTK
     ! opens unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
-    open(IOVTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ios)
+    open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ios)
     if( ios /= 0 ) stop 'error opening vtk output file'
-    write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
-    write(IOVTK,'(a)') 'material model VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+    write(IOUT_VTK,'(a)') 'material model VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
 
     ! points
-    write(IOVTK, '(a,i16,a)') 'POINTS ', np, ' float'
+    write(IOUT_VTK, '(a,i16,a)') 'POINTS ', np, ' float'
     do i = 1,np
-      write(IOVTK,'(3e18.6)') total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)
+      write(IOUT_VTK,'(3e18.6)') total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)
     enddo
-    write(IOVTK,*) ""
+    write(IOUT_VTK,*) ""
 
     ! cells
     ! note: indices for vtk start at 0
-    write(IOVTK,'(a,i12,i12)') "CELLS ",ne,ne*9
+    write(IOUT_VTK,'(a,i12,i12)') "CELLS ",ne,ne*9
     do i = 1,ne
-      write(IOVTK,'(9i12)') 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
+      write(IOUT_VTK,'(9i12)') 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
                             total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)
     enddo
-    write(IOVTK,*) ""
+    write(IOUT_VTK,*) ""
     ! VTK
     ! type: hexahedrons
-    write(IOVTK,'(a,i12)') "CELL_TYPES ",ne
-    write(IOVTK,'(6i12)') (12,it=1,ne)
-    write(IOVTK,*) ""
+    write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",ne
+    write(IOUT_VTK,'(6i12)') (12,it=1,ne)
+    write(IOUT_VTK,*) ""
 
-    write(IOVTK,'(a,i12)') "POINT_DATA ",np
-    write(IOVTK,'(a)') "SCALARS "//trim(filename)//" float"
-    write(IOVTK,'(a)') "LOOKUP_TABLE default"
+    write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
+    write(IOUT_VTK,'(a)') "SCALARS "//trim(filename)//" float"
+    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
     do i = 1,np
-        write(IOVTK,*) total_dat(i)
+        write(IOUT_VTK,*) total_dat(i)
     enddo
-    write(IOVTK,*) ""
-    close(IOVTK)
+    write(IOUT_VTK,*) ""
+    close(IOUT_VTK)
 
     ! free arrays for this region
     deallocate(total_dat,total_dat_xyz,total_dat_con)

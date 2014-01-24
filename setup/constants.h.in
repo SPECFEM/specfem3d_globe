@@ -58,17 +58,24 @@
   logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .@LOCAL_PATH_IS_ALSO_GLOBAL@.
 
 ! input, output and main MPI I/O files
+! note: careful with these unit numbers, we mostly use units in the 40-50 range.
+!       cray fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
   integer, parameter :: ISTANDARD_OUTPUT = 6
-  integer, parameter :: IIN = 40,IOUT = 41,IOUT_SAC = 903
-  integer, parameter :: IIN_NOISE = 43,IOUT_NOISE = 44
-! local file unit for output of buffers
-  integer, parameter :: IOUT_BUFFERS = 35
+  integer, parameter :: IIN = 40,IOUT = 41
 ! uncomment this to write messages to a text file
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+! I/O unit for noise data files
+  integer, parameter :: IIN_NOISE = 43,IOUT_NOISE = 44
+! I/O unit for adjoint source files
+  integer, parameter :: IIN_ADJ = 45
+! local file unit for output of buffers
+  integer, parameter :: IOUT_BUFFERS = 46
 ! I/O unit for source and receiver vtk file
-  integer, parameter :: IOVTK = 98
+  integer, parameter :: IOUT_VTK = 47
+! I/O unit for sac files
+  integer, parameter :: IOUT_SAC = 48
 
 ! I/O Bluegene serial access
   logical, parameter :: IO_BLUEGENE_SERIAL = .false.
@@ -280,6 +287,9 @@
 !! adjoint kernel outputs
 !!
 !!-----------------------------------------------------------
+
+! asynchronuous reading of adjoint sources
+  logical, parameter :: IO_ASYNC_COPY = .true.
 
 ! regular kernel parameters
   character(len=*), parameter :: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt'

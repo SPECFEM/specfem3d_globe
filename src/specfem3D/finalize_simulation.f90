@@ -232,6 +232,7 @@
     deallocate(iadj_vec)
     if(nadj_rec_local > 0) then
       deallocate(adj_sourcearrays)
+      if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) deallocate(buffer_sourcearrays)
       deallocate(iadjsrc,iadjsrc_len)
     endif
   endif

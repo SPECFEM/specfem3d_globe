@@ -40,6 +40,7 @@ specfem3D_OBJECTS = \
 	$O/compute_arrays_source.solver.o \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
+	$O/file_io_threads.cc.o \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
 	$O/get_event_info.solver.o \
@@ -81,6 +82,7 @@ specfem3D_OBJECTS += \
 	$O/multiply_arrays_source.solverstatic.o \
 	$O/noise_tomography.solverstatic.o \
 	$O/prepare_timerun.solverstatic.o \
+	$O/read_adjoint_sources.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
 	$O/read_forward_arrays.solverstatic.o \
 	$O/read_mesh_databases.solverstatic.o \
@@ -334,6 +336,9 @@ $O/%.solver.o: $S/%.f90 $O/shared_par.shared_module.o
 
 $O/%.solver.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.cc.o: $S/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
 
 ###
 ### CUDA 5 only
