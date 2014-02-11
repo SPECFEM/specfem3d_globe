@@ -34,7 +34,14 @@
                              yr,jda,ho,mi,sec, &
                              theta_source,phi_source)
 
-  use constants_solver
+  use constants_solver,only: &
+    ELLIPTICITY_VAL,NCHUNKS_VAL,NEX_XI_VAL,NPROCTOT_VAL, &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NDIM, &
+    MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
+    USE_DISTANCE_CRITERION,DISPLAY_DETAILS_STATIONS,nrec_SUBSET_MAX, &
+    THRESHOLD_EXCLUDE_STATION,NUM_ITER, &
+    HUGEVAL,IMAIN,IIN,IOUT,IOUT_VTK,MIDX,MIDY,MIDZ, &
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,TWO_PI,R_UNIT_SPHERE,R_EARTH,R_EARTH_KM
 
   use specfem_par,only: &
     myrank,DT,NSTEP, &
@@ -47,58 +54,58 @@
 
   implicit none
 
-  integer nspec,nglob
+  integer,intent(in) :: nspec,nglob
 
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   ! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore,ystore,zstore
 
-  integer yr,jda,ho,mi
-  double precision sec
-  double precision theta_source,phi_source
+  integer,intent(in) :: yr,jda,ho,mi
+  double precision,intent(in) :: sec
+  double precision,intent(in) :: theta_source,phi_source
 
   ! local parameters
   integer :: nrec_found
   integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
 
-  integer iorientation
-  integer iprocloop
-  double precision stazi,stdip
+  integer :: iorientation
+  integer :: iprocloop
+  double precision :: stazi,stdip
 
   double precision, allocatable, dimension(:) :: x_target,y_target,z_target
   double precision, allocatable, dimension(:) :: epidist
   double precision, allocatable, dimension(:) :: x_found,y_found,z_found
   double precision, allocatable, dimension(:,:) :: x_found_all,y_found_all,z_found_all
 
-  integer irec
-  integer i,j,k,ispec,iglob
-  integer ier
+  integer :: irec
+  integer :: i,j,k,ispec,iglob
+  integer :: ier
 
-  double precision ell
-  double precision elevation
-  double precision n(3)
-  double precision thetan,phin
-  double precision sint,cost,sinp,cosp
-  double precision r0,p20
-  double precision theta,phi
-  double precision dist
-  double precision xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
+  double precision :: ell
+  double precision :: elevation
+  double precision :: n(3)
+  double precision :: thetan,phin
+  double precision :: sint,cost,sinp,cosp
+  double precision :: r0,p20
+  double precision :: theta,phi
+  double precision :: dist
+  double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
 
 ! topology of the control points of the surface element
-  integer iax,iay,iaz
-  integer iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  integer :: iax,iay,iaz
+  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
 
 ! coordinates of the control points of the surface element
-  double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
+  double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
-  integer iter_loop,ispec_iterate
+  integer :: iter_loop,ispec_iterate
 
-  integer ia
-  double precision x,y,z
-  double precision xix,xiy,xiz
-  double precision etax,etay,etaz
-  double precision gammax,gammay,gammaz
+  integer :: ia
+  double precision :: x,y,z
+  double precision :: xix,xiy,xiz
+  double precision :: etax,etay,etaz
+  double precision :: gammax,gammay,gammaz
 
   ! timer MPI
   double precision :: time_start,tCPU
@@ -143,6 +150,15 @@
 
   ! timing
   double precision, external :: wtime
+
+  ! distance
+  double precision, allocatable, dimension(:,:) :: xyz_midpoints
+
+  ! search range
+  double precision :: lat,lon
+  double precision :: lat_min,lat_max,lon_min,lon_max
+  ! search margin in degrees
+  double precision,parameter :: LAT_LON_MARGIN = 2.d0
 
   ! get MPI starting time
   time_start = wtime()
@@ -192,25 +208,33 @@
           final_distance(nrec),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
 
-  ! initializes
+  ! initializes search distances
   final_distance(:) = HUGEVAL
 
   ! read that STATIONS file on the master
   if(myrank == 0) then
     call get_value_string(STATIONS, 'solver.STATIONS', trim(rec_filename))
-    open(unit=1,file=STATIONS,status='old',action='read',iostat=ier)
+    open(unit=IIN,file=STATIONS,status='old',action='read',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
 
     ! loop on all the stations to read station information
     do irec = 1,nrec
-      read(1,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+      read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
       if( ier /= 0 ) then
         write(IMAIN,*) 'error reading in station ',irec
         call exit_MPI(myrank,'error reading in station in STATIONS file')
       endif
+
+      ! checks latitude
+      if( stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0 ) then
+        print*,'error station ',trim(station_name(irec)),': latitude ',stlat(irec),' is invalid, please check STATIONS record'
+        close(IIN)
+        call exit_MPI(myrank,'error station latitude invalid')
+      endif
+
     enddo
     ! close receiver file
-    close(1)
+    close(IIN)
 
 ! BS BS begin
 ! In case that the same station and network name appear twice (or more times) in the STATIONS
@@ -230,7 +254,7 @@
             if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
               write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
             else
-              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at lease 3')
+              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3')
             endif
 
         endif
@@ -252,27 +276,70 @@
   call bcast_all_dp(stele,nrec)
   call bcast_all_dp(stbur,nrec)
 
+  ! limits receiver search
+  if( USE_DISTANCE_CRITERION ) then
+    ! retrieves latitude/longitude range of this slice
+    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max)
+
+    ! adds search margin
+    lat_min = lat_min - LAT_LON_MARGIN
+    lat_max = lat_max + LAT_LON_MARGIN
+
+    lon_min = lon_min - LAT_LON_MARGIN
+    lon_max = lon_max + LAT_LON_MARGIN
+
+    ! limits latitude to [-90.0,90.0]
+    if( lat_min < -90.d0 ) lat_min = -90.d0
+    if( lat_max > 90.d0 ) lat_max = 90.d0
+
+    ! limits longitude to [0.0,360.0]
+    if( lon_min < 0.d0 ) lon_min = 0.d0
+    if( lon_min > 360.d0 ) lon_min = 360.d0
+    if( lon_max < 0.d0 ) lon_max = 0.d0
+    if( lon_max > 360.d0 ) lon_max = 360.d0
+
+    ! prepares midpoints coordinates
+    allocate(xyz_midpoints(NDIM,nspec),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating array xyz_midpoints')
+    ! store x/y/z coordinates of center point
+    do ispec=1,nspec
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+      xyz_midpoints(1,ispec) =  dble(xstore(iglob))
+      xyz_midpoints(2,ispec) =  dble(ystore(iglob))
+      xyz_midpoints(3,ispec) =  dble(zstore(iglob))
+    enddo
+  endif
+
   ! loop on all the stations to locate them in the mesh
   do irec=1,nrec
 
     ! set distance to huge initial value
     distmin = HUGEVAL
 
-    ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-    call lat_2_geocentric_colat_dble(stlat(irec),theta)
+    ! station lat/lon in degrees
+    lat = stlat(irec)
+    lon = stlon(irec)
 
-    phi = stlon(irec)*DEGREES_TO_RADIANS
+    ! limits longitude to [0.0,360.0]
+    if( lon < 0.d0 ) lon = lon + 360.d0
+    if( lon > 360.d0 ) lon = lon - 360.d0
+
+    ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
+    call lat_2_geocentric_colat_dble(lat,theta)
+
+    phi = lon*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
     ! compute epicentral distance
     epidist(irec) = acos(cos(theta)*cos(theta_source) + &
-              sin(theta)*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
+                         sin(theta)*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
 
     ! print some information about stations
-    if(myrank == 0) &
+    if(myrank == 0) then
       write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
                        '.',network_name(irec)(1:len_trim(network_name(irec))), &
                        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
+    endif
 
     ! record three components for each station
     do iorientation = 1,3
@@ -322,7 +389,7 @@
 
     ! finds elevation of receiver
     if( TOPOGRAPHY ) then
-       call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
+       call get_topo_bathy(lat,lon,elevation,ibathy_topo)
        r0 = r0 + elevation/R_EARTH
     endif
     ! ellipticity
@@ -351,44 +418,69 @@
     ! flag to check that we located at least one target element
     located_target = .false.
 
-    do ispec=1,nspec
-
-      ! exclude elements that are too far from target
-      if( USE_DISTANCE_CRITERION ) then
-        iglob = ibool(MIDX,MIDY,MIDZ,ispec)
-        dist = dsqrt((x_target_rec - dble(xstore(iglob)))**2 &
-                   + (y_target_rec - dble(ystore(iglob)))**2 &
-                   + (z_target_rec - dble(zstore(iglob)))**2)
-        if(dist > typical_size) cycle
+    ! searches closest GLL point
+    if( USE_DISTANCE_CRITERION ) then
+      ! checks if receiver in this slice
+      if( lat >= lat_min .and. lat <= lat_max .and. &
+          lon >= lon_min .and. lon <= lon_max ) then
+        ! loops over all elements
+        do ispec=1,nspec
+          ! exclude elements that are too far from target
+          dist = (x_target_rec - xyz_midpoints(1,ispec))*(x_target_rec - xyz_midpoints(1,ispec)) &
+               + (y_target_rec - xyz_midpoints(2,ispec))*(y_target_rec - xyz_midpoints(2,ispec)) &
+               + (z_target_rec - xyz_midpoints(3,ispec))*(z_target_rec - xyz_midpoints(3,ispec))
+          if(dist > typical_size*typical_size) cycle
+          ! loop only on points inside the element
+          ! exclude edges to ensure this point is not shared with other elements
+          do k=2,NGLLZ-1
+            do j=2,NGLLY-1
+              do i=2,NGLLX-1
+                iglob = ibool(i,j,k,ispec)
+                dist = (x_target_rec - dble(xstore(iglob)))*(x_target_rec - dble(xstore(iglob))) &
+                     + (y_target_rec - dble(ystore(iglob)))*(y_target_rec - dble(ystore(iglob))) &
+                     + (z_target_rec - dble(zstore(iglob)))*(z_target_rec - dble(zstore(iglob)))
+                !  keep this point if it is closer to the receiver
+                if(dist < distmin*distmin) then
+                  distmin = dsqrt(dist)
+                  ispec_selected_rec(irec) = ispec
+                  ix_initial_guess(irec) = i
+                  iy_initial_guess(irec) = j
+                  iz_initial_guess(irec) = k
+                  located_target = .true.
+                endif
+              enddo
+            enddo
+          enddo
+        ! end of loop on all the spectral elements in current slice
+        enddo
       endif
-
-      ! loop only on points inside the element
-      ! exclude edges to ensure this point is not shared with other elements
-      do k=2,NGLLZ-1
-        do j=2,NGLLY-1
-          do i=2,NGLLX-1
-
-            iglob = ibool(i,j,k,ispec)
-            dist = dsqrt((x_target_rec - dble(xstore(iglob)))**2 &
-                        +(y_target_rec - dble(ystore(iglob)))**2 &
-                        +(z_target_rec - dble(zstore(iglob)))**2)
-
-            !  keep this point if it is closer to the receiver
-            if(dist < distmin) then
-              distmin = dist
-              ispec_selected_rec(irec) = ispec
-              ix_initial_guess(irec) = i
-              iy_initial_guess(irec) = j
-              iz_initial_guess(irec) = k
-              located_target = .true.
-            endif
-
+    else
+      ! searches through all elements
+      do ispec=1,nspec
+        ! loop only on points inside the element
+        ! exclude edges to ensure this point is not shared with other elements
+        do k=2,NGLLZ-1
+          do j=2,NGLLY-1
+            do i=2,NGLLX-1
+              iglob = ibool(i,j,k,ispec)
+              dist = (x_target_rec - dble(xstore(iglob)))*(x_target_rec - dble(xstore(iglob))) &
+                   + (y_target_rec - dble(ystore(iglob)))*(y_target_rec - dble(ystore(iglob))) &
+                   + (z_target_rec - dble(zstore(iglob)))*(z_target_rec - dble(zstore(iglob)))
+              !  keep this point if it is closer to the receiver
+              if(dist < distmin*distmin) then
+                distmin = dsqrt(dist)
+                ispec_selected_rec(irec) = ispec
+                ix_initial_guess(irec) = i
+                iy_initial_guess(irec) = j
+                iz_initial_guess(irec) = k
+                located_target = .true.
+              endif
+            enddo
           enddo
         enddo
+      ! end of loop on all the spectral elements in current slice
       enddo
-
-    ! end of loop on all the spectral elements in current slice
-    enddo
+    endif ! USE_DISTANCE_CRITERION
 
     ! if we have not located a target element, the receiver is not in this slice
     ! therefore use first element only for fictitious iterative search
@@ -401,6 +493,8 @@
 
   ! end of loop on all the stations
   enddo
+
+  if( USE_DISTANCE_CRITERION ) deallocate(xyz_midpoints)
 
   ! create RECORDHEADER file with usual format for normal-mode codes
   if(myrank == 0) then
@@ -471,13 +565,13 @@
 
     ! allocate arrays specific to each subset
     allocate(ispec_selected_rec_subset(nrec_SUBSET_current_size), &
-            xi_receiver_subset(nrec_SUBSET_current_size), &
-            eta_receiver_subset(nrec_SUBSET_current_size), &
-            gamma_receiver_subset(nrec_SUBSET_current_size), &
-            x_found_subset(nrec_SUBSET_current_size), &
-            y_found_subset(nrec_SUBSET_current_size), &
-            z_found_subset(nrec_SUBSET_current_size), &
-            final_distance_subset(nrec_SUBSET_current_size),stat=ier)
+             xi_receiver_subset(nrec_SUBSET_current_size), &
+             eta_receiver_subset(nrec_SUBSET_current_size), &
+             gamma_receiver_subset(nrec_SUBSET_current_size), &
+             x_found_subset(nrec_SUBSET_current_size), &
+             y_found_subset(nrec_SUBSET_current_size), &
+             z_found_subset(nrec_SUBSET_current_size), &
+             final_distance_subset(nrec_SUBSET_current_size),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
 
     ! gather arrays
@@ -504,7 +598,10 @@
                final_distance_all(1,1),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary dummy receiver arrays')
     endif
+
+    ! initializes search results
     final_distance_all(:,:) = HUGEVAL
+    final_distance_subset(:) = HUGEVAL
 
     ! loop over the stations within this subset
     do irec_in_this_subset = 1,nrec_SUBSET_current_size
@@ -512,8 +609,8 @@
       ! mapping from station number in current subset to real station number in all the subsets
       irec = irec_in_this_subset + irec_already_done
 
-      ispec_selected_rec_subset(irec_in_this_subset) = ispec_selected_rec(irec)
       ispec_iterate = ispec_selected_rec(irec)
+      ispec_selected_rec_subset(irec_in_this_subset) = ispec_iterate
 
       ! define coordinates of the control points of the element
       do ia=1,NGNOD
@@ -575,7 +672,7 @@
 
         ! recompute jacobian for the new point
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
         ! compute distance to target location
         dx = - (x - x_target_rec)
@@ -617,7 +714,7 @@
 
       ! compute final coordinates of point found
       call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
       ! store xi,eta and x,y,z of point found
       xi_receiver_subset(irec_in_this_subset) = xi
@@ -635,7 +732,7 @@
       ! compute final distance between asked and found (converted to km)
       final_distance(irec) = dsqrt((x_target_rec-x)**2 + &
                                    (y_target_rec-y)**2 + &
-                                   (z_target_rec-z)**2)*R_EARTH/1000.d0
+                                   (z_target_rec-z)**2)*R_EARTH_KM
 
       final_distance_subset(irec_in_this_subset) = final_distance(irec)
 
@@ -674,6 +771,7 @@
         do iprocloop = 0,NPROCTOT_VAL-1
           if(final_distance_all(irec_in_this_subset,iprocloop) < distmin) then
             distmin = final_distance_all(irec_in_this_subset,iprocloop)
+
             islice_selected_rec(irec) = iprocloop
             ispec_selected_rec(irec) = ispec_selected_rec_all(irec_in_this_subset,iprocloop)
             xi_receiver(irec) = xi_receiver_all(irec_in_this_subset,iprocloop)
