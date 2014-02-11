@@ -786,7 +786,7 @@ __device__ void load_shared_memory_hprime_hprimewgll(const int* tx,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// loads displacement into shared memory for element
+// loads hprime into shared memory for element
 
 __device__ void load_shared_memory_hprime(const int* tx,
                                           realw_const_p d_hprime_xx,
@@ -806,7 +806,7 @@ __device__ void load_shared_memory_hprime(const int* tx,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// loads displacement into shared memory for element
+// loads hprimewgll into shared memory for element
 
 __device__ void load_shared_memory_hprimewgll(const int* tx,
                                               realw_const_p d_hprimewgll_xx,
@@ -1192,8 +1192,8 @@ Kernel_2_crust_mantle_impl( int nb_blocks_to_compute,
 
     // jacobian
     jacobianl = 1.0f / (xixl*(etayl*gammazl-etazl*gammayl)
-                     - xiyl*(etaxl*gammazl-etazl*gammaxl)
-                     + xizl*(etaxl*gammayl-etayl*gammaxl));
+                      - xiyl*(etaxl*gammazl-etazl*gammaxl)
+                      + xizl*(etaxl*gammayl-etayl*gammaxl));
 
     if( GRAVITY ){
       //  computes non-symmetric terms for gravity

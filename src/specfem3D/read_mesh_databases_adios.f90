@@ -87,15 +87,6 @@ subroutine read_mesh_databases_coupling_adios()
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  ! daniel debug
-  !call synchronize_all()
-  !print*,myrank,'crust mantle'
-  !print*,myrank,'nspec2d xmin:',nspec2d_xmin_crust_mantle
-  !print*,myrank,'nspec2d xmax:',nspec2d_xmax_crust_mantle
-  !print*,myrank,'nspec2d ymin:',nspec2d_ymin_crust_mantle
-  !print*,myrank,'nspec2d ymax:',nspec2d_ymax_crust_mantle
-  !call synchronize_all()
-
   ! boundary elements
 
   local_dim = NSPEC2DMAX_XMIN_XMAX_CM
@@ -267,15 +258,6 @@ subroutine read_mesh_databases_coupling_adios()
 
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
-
-  ! daniel debug
-  !call synchronize_all()
-  !print*,myrank,'outer core'
-  !print*,myrank,'nspec2d xmin:',nspec2d_xmin_outer_core
-  !print*,myrank,'nspec2d xmax:',nspec2d_xmax_outer_core
-  !print*,myrank,'nspec2d ymin:',nspec2d_ymin_outer_core
-  !print*,myrank,'nspec2d ymax:',nspec2d_ymax_outer_core
-  !call synchronize_all()
 
   ! boundary elements
 
@@ -451,15 +433,6 @@ subroutine read_mesh_databases_coupling_adios()
 
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
-
-  ! daniel debug
-  !call synchronize_all()
-  !print*,myrank,'inner core'
-  !print*,myrank,'nspec2d xmin:',nspec2d_xmin_inner_core
-  !print*,myrank,'nspec2d xmax:',nspec2d_xmax_inner_core
-  !print*,myrank,'nspec2d ymin:',nspec2d_ymin_inner_core
-  !print*,myrank,'nspec2d ymax:',nspec2d_ymax_inner_core
-  !call synchronize_all()
 
   ! boundary elements
 
