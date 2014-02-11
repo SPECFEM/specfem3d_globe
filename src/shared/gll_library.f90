@@ -539,9 +539,14 @@
     call zwgjd(z(2),w(2),nm1,alpg,betg)
   endif
 
+! start and end point at exactly -1 and 1
   z(1)  = - one
   z(np) =  one
 
+! if number of points is odd, the middle abscissa is exactly zero
+  if(mod(np,2) /= 0) z((np-1)/2+1) = zero
+
+! weights
   do i=2,np-1
    w(i) = w(i)/(one-z(i)**2)
   enddo

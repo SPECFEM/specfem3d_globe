@@ -88,11 +88,6 @@
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
-! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
-  if(mod(NGLLY,2) /= 0) yigll((NGLLY-1)/2+1) = ZERO
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
-
 ! get the 3-D shape functions
   call get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
 
