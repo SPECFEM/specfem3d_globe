@@ -50,51 +50,51 @@
 
   implicit none
 
-  integer nspec,nglob
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer,intent(in) :: nspec,nglob
+  integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   ! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore,ystore,zstore
 
-  logical ELLIPTICITY
+  logical,intent(in) :: ELLIPTICITY
 
-  double precision min_tshift_cmt_original
+  double precision,intent(out) :: min_tshift_cmt_original
 
   ! local parameters
-  integer isource
-  integer iprocloop
-  integer i,j,k,ispec,iglob
-  integer ier
+  integer :: isource
+  integer :: iprocloop
+  integer :: i,j,k,ispec,iglob
+  integer :: ier
 
-  double precision ell
-  double precision elevation
-  double precision r0,dcost,p20
-  double precision theta,phi
-  double precision dist,typical_size
-  double precision xi,eta,gamma,dx,dy,dz,dxi,deta
+  double precision :: ell
+  double precision :: elevation
+  double precision :: r0,dcost,p20
+  double precision :: theta,phi
+  double precision :: dist,typical_size
+  double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta
 
   ! topology of the control points of the surface element
-  integer iax,iay,iaz
-  integer iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  integer :: iax,iay,iaz
+  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
 
   ! coordinates of the control points of the surface element
-  double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
+  double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
-  integer iter_loop
-  integer ia
-  double precision x,y,z
-  double precision xix,xiy,xiz
-  double precision etax,etay,etaz
-  double precision gammax,gammay,gammaz
-  double precision dgamma
+  integer :: iter_loop
+  integer :: ia
+  double precision :: x,y,z
+  double precision :: xix,xiy,xiz
+  double precision :: etax,etay,etaz
+  double precision :: gammax,gammay,gammaz
+  double precision :: dgamma
 
-  double precision final_distance_source(NSOURCES)
+  double precision, dimension(NSOURCES) :: final_distance_source
   double precision, dimension(:), allocatable :: final_distance_source_subset
 
-  double precision x_target_source,y_target_source,z_target_source
-  double precision r_target_source
+  double precision :: x_target_source,y_target_source,z_target_source
+  double precision :: r_target_source
 
-  integer isources_already_done,isource_in_this_subset
+  integer :: isources_already_done,isource_in_this_subset
   integer, dimension(:), allocatable :: ispec_selected_source_subset
 
   integer, dimension(:,:), allocatable :: ispec_selected_source_all
@@ -104,24 +104,24 @@
   double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
 
   double precision, dimension(NSOURCES) :: lat,long,depth
-  double precision moment_tensor(6,NSOURCES)
-  double precision radius
+  double precision, dimension(6,NSOURCES) :: moment_tensor
+  double precision :: radius
 
   double precision, dimension(:), allocatable :: x_found_source,y_found_source,z_found_source
-  double precision r_found_source
-  double precision st,ct,sp,cp
-  double precision Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
-  double precision colat_source
-  double precision distmin
+  double precision :: r_found_source
+  double precision :: st,ct,sp,cp
+  double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
+  double precision :: colat_source
+  double precision :: distmin
 
   integer :: ix_initial_guess_source,iy_initial_guess_source,iz_initial_guess_source
   integer :: NSOURCES_SUBSET_current_size
 
-  logical located_target
+  logical :: located_target
 
-  integer iorientation
-  double precision stazi,stdip,thetan,phin,n(3)
-  integer imin,imax,jmin,jmax,kmin,kmax
+  integer :: iorientation
+  double precision :: stazi,stdip,thetan,phin,n(3)
+  integer :: imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker
 
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
@@ -670,14 +670,14 @@
 
         ! writes out actual source position to vtk file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
-                                sngl(y_found_source(isource_in_this_subset)), &
-                                sngl(z_found_source(isource_in_this_subset))
+                                   sngl(y_found_source(isource_in_this_subset)), &
+                                   sngl(z_found_source(isource_in_this_subset))
 
         ! get latitude, longitude and depth of the source that will be used
         call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset), &
-                                 y_found_source(isource_in_this_subset), &
-                                 z_found_source(isource_in_this_subset), &
-                                 r_found_source,theta_source(isource),phi_source(isource))
+                                  y_found_source(isource_in_this_subset), &
+                                  z_found_source(isource_in_this_subset), &
+                                  r_found_source,theta_source(isource),phi_source(isource))
         call reduce(theta_source(isource),phi_source(isource))
 
         ! converts geocentric to geographic colatitude
