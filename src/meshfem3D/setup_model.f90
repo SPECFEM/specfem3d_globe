@@ -41,26 +41,23 @@
 
   ! creates global slice addressing for solver
   call create_addressing(myrank,NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &
-                        addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
-                        OUTPUT_FILES)
-
+                         addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
+                         OUTPUT_FILES)
 
   ! this for the different counters (which are now different if the superbrick is cut in the outer core)
   call setup_counters(myrank, &
-                        NSPEC1D_RADIAL,NSPEC2D_XI,NSPEC2D_ETA,NGLOB1D_RADIAL, &
-                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                        CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                        NPROCTOT,iproc_xi_slice,iproc_eta_slice, &
-                        NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE, &
-                        NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
-
+                      NSPEC1D_RADIAL,NSPEC2D_XI,NSPEC2D_ETA,NGLOB1D_RADIAL, &
+                      DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
+                      CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+                      NPROCTOT,iproc_xi_slice,iproc_eta_slice, &
+                      NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE, &
+                      NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
 
   ! distributes 3D models
   call meshfem3D_models_broadcast(myrank,NSPEC, &
-                                MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
-                                R80,R220,R670,RCMB,RICB, &
-                                LOCAL_PATH)
-
+                                  MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+                                  R80,R220,R670,RCMB,RICB, &
+                                  LOCAL_PATH)
 
   ! user output
   if(myrank == 0 ) then

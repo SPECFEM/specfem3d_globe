@@ -232,7 +232,7 @@
   if(nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
 
   ! initializes GPU cards
-  if( GPU_MODE ) call initialize_GPU()
+  call initialize_GPU()
 
   ! initializes VTK window
   if( VTK_MODE ) then
@@ -450,36 +450,86 @@
   implicit none
   ! local parameters
   integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+  integer :: iproc
+
+  !----------------------------------------------------------------
+  ! user test parameters
+  !
+  ! for hybrid computing: distributes mpi processes to use CPU and GPU
+  ! note that a single mpi process on GPU is about >30x faster than on single CPU-core
+  !
+  ! cray xk7 node: 16-core CPU, 1 K20x GPU card
+  !                using 15 processes on single GPU and 1 processes on CPU still slows down the computation
+  !                as the GPU slices will be waiting for the CPU one...
+  !
+  ! turns on/off hybrid CPU-GPU computing
+  logical,parameter :: USE_HYBRID_CPU_GPU = .false.
+  ! total number of mpi processes run on a single node
+  integer, parameter :: TOTAL_PROCESSES_PER_NODE = 16
+  ! number of mpi processes run on CPU-cores
+  integer, parameter :: PROCESSES_PER_CPU = 1
+
+  !----------------------------------------------------------------
+
+  if( GPU_MODE .and. USE_HYBRID_CPU_GPU ) then
+    ! distributes processes on GPU and CPU
+    if( mod(myrank,TOTAL_PROCESSES_PER_NODE) < PROCESSES_PER_CPU ) then
+      ! turns of GPU mode for this process
+      GPU_MODE = .false.
+    else
+      !leaves GPU_MODE == .true.
+      continue
+    endif
+
+    ! user output
+    if( myrank == 0 ) print*,'Hybrid CPU-GPU computation:'
+    do iproc = 0, NPROCTOT_VAL-1
+      if( myrank == iproc ) then
+        if( myrank < TOTAL_PROCESSES_PER_NODE ) then
+          print*,'rank ',myrank,' has GPU_MODE set to ',GPU_MODE
+        endif
+      endif
+      call synchronize_all()
+    enddo
+  endif
+
+  ! initializes number of local cuda devices
+  ncuda_devices = 0
 
   ! GPU_MODE now defined in Par_file
-  if(myrank == 0 ) then
-    write(IMAIN,*)
-    write(IMAIN,*) "GPU_MODE Active."
-  endif
+  if( GPU_MODE ) then
+    if(myrank == 0 ) then
+      write(IMAIN,*)
+      write(IMAIN,*) "GPU_MODE Active."
+      call flush_IMAIN()
+    endif
 
-  ! check for GPU runs
-  if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
-    stop 'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5'
-  if( CUSTOM_REAL /= 4 ) &
-    stop 'GPU mode runs only with CUSTOM_REAL == 4'
-  if( ATTENUATION_VAL ) then
-    if( N_SLS /= 3 ) &
-      stop 'GPU mode does not support N_SLS /= 3 yet'
-  endif
+    ! check for GPU runs
+    if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
+      stop 'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5'
+    if( CUSTOM_REAL /= 4 ) &
+      stop 'GPU mode runs only with CUSTOM_REAL == 4'
+    if( ATTENUATION_VAL ) then
+      if( N_SLS /= 3 ) &
+        stop 'GPU mode does not support N_SLS /= 3 yet'
+    endif
 
-  ! initializes GPU and outputs info to files for all processes
-  call initialize_cuda_device(myrank,ncuda_devices)
+    ! initializes GPU and outputs info to files for all processes
+    call initialize_cuda_device(myrank,ncuda_devices)
+  endif
 
   ! collects min/max of local devices found for statistics
   call synchronize_all()
   call min_all_i(ncuda_devices,ncuda_devices_min)
   call max_all_i(ncuda_devices,ncuda_devices_max)
 
-  if( myrank == 0 ) then
-    write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min
-    write(IMAIN,*) "                                max =",ncuda_devices_max
-    write(IMAIN,*)
-    call flush_IMAIN()
+  if( GPU_MODE ) then
+    if( myrank == 0 ) then
+      write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min
+      write(IMAIN,*) "                                max =",ncuda_devices_max
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   end subroutine initialize_GPU

@@ -1876,11 +1876,11 @@
   if(myrank == 0 ) write(IMAIN,*) "  loading non-gravity/gravity arrays"
 
   allocate(cr_d_ln_density_dr_table(NRAD_GRAVITY), &
-          cr_minus_rho_g_over_kappa_fluid(NRAD_GRAVITY), &
-          cr_minus_gravity_table(NRAD_GRAVITY), &
-          cr_minus_deriv_gravity_table(NRAD_GRAVITY), &
-          cr_density_table(NRAD_GRAVITY), &
-          stat=ier)
+           cr_minus_rho_g_over_kappa_fluid(NRAD_GRAVITY), &
+           cr_minus_gravity_table(NRAD_GRAVITY), &
+           cr_minus_deriv_gravity_table(NRAD_GRAVITY), &
+           cr_density_table(NRAD_GRAVITY), &
+           stat=ier)
   if( ier /= 0 ) stop 'error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
 
   allocate(cr_wgll_cube(NGLLX,NGLLY,NGLLZ),stat=ier)
@@ -2126,6 +2126,7 @@
 
   ! outer core region
   if(myrank == 0 ) write(IMAIN,*) "  loading outer core region"
+
   call prepare_outer_core_device(Mesh_pointer, &
                                 xix_outer_core,xiy_outer_core,xiz_outer_core, &
                                 etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -2150,6 +2151,7 @@
 
   ! inner core region
   if(myrank == 0 ) write(IMAIN,*) "  loading inner core region"
+
   call prepare_inner_core_device(Mesh_pointer, &
                                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                  etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -2171,6 +2173,7 @@
 
   ! transfer forward and backward fields to device with initial values
   if(myrank == 0 ) write(IMAIN,*) "  transfering initial wavefield"
+
   call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                                    Mesh_pointer)
 
@@ -2193,9 +2196,6 @@
                                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                                     Mesh_pointer)
   endif
-
-  ! synchronizes processes
-  call synchronize_all()
 
   ! outputs GPU usage to files for all processes
   call output_free_device_memory(myrank)
