@@ -5,23 +5,23 @@ NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three ste
 SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
-NCHUNKS                         = 6
+NCHUNKS                         = 1
 
 # angular width of the first chunk (not used if full sphere with six chunks)
-ANGULAR_WIDTH_XI_IN_DEGREES   = 90.d0      # angular size of a chunk
-ANGULAR_WIDTH_ETA_IN_DEGREES  = 90.d0
-CENTER_LATITUDE_IN_DEGREES    = 90.d0
-CENTER_LONGITUDE_IN_DEGREES   =  0.d0
-GAMMA_ROTATION_AZIMUTH        =  0.d0
+ANGULAR_WIDTH_XI_IN_DEGREES   = 20.d0      # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES  = 20.d0
+CENTER_LATITUDE_IN_DEGREES    = 40.d0
+CENTER_LONGITUDE_IN_DEGREES   = 25.d0
+GAMMA_ROTATION_AZIMUTH        = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 240
-NEX_ETA                         = 240
+NEX_XI                          = 64
+NEX_ETA                         = 64
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 5
-NPROC_ETA                       = 5
+NPROC_XI                        = 2
+NPROC_ETA                       = 2
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135f_no_mud, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
@@ -38,7 +38,7 @@ NPROC_ETA                       = 5
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = s362ani
+MODEL                           = 1D_transversely_isotropic_prem
 
 # parameters describing the Earth model
 OCEANS                          = .true.
@@ -49,16 +49,16 @@ ROTATION                        = .true.
 ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
-ABSORBING_CONDITIONS            = .false.
+ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 15.0d0
+RECORD_LENGTH_IN_MINUTES        = 2.5d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
 ATTENUATION_1D_WITH_3D_STORAGE  = .true.
-PARTIAL_PHYS_DISPERSION_ONLY    = .false.
+PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
 NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
 
@@ -88,10 +88,12 @@ INCREASE_CFL_FOR_LDDRK          = .true.
 RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
 
 # save AVS or OpenDX movies
+#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
+#MOVIE_COARSE does not work with create_movie_AVS_DX
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
-MOVIE_COARSE                    = .false.
-NTSTEP_BETWEEN_FRAMES           = 100
+MOVIE_COARSE                    = .true.
+NTSTEP_BETWEEN_FRAMES           = 50
 HDUR_MOVIE                      = 0.d0
 
 # save movie in volume.  Will save element if center of element is in prescribed volume
@@ -111,20 +113,19 @@ MOVIE_START                     = 0
 MOVIE_STOP                      = 40000
 
 # save mesh files to check the mesh
-SAVE_MESH_FILES                 = .false.
+SAVE_MESH_FILES                 = .true.
 
 # restart files (number of runs can be 1 or higher, choose 1 for no restart files)
 NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-# mesh files
 LOCAL_PATH                      = ./DATABASES_MPI
 # temporary wavefield/kernel/movie files
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
@@ -134,12 +135,13 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
 OUTPUT_SEISMOS_SAC_BINARY       = .false.
+OUTPUT_SEISMOS_ASDF             = .false.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
 
 # decide if master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .true.
+WRITE_SEISMOGRAMS_BY_MASTER     = .false.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as GPFS for instance
@@ -173,7 +175,7 @@ SAVE_TRANSVERSE_KL_ONLY         = .false.
 APPROXIMATE_HESS_KL             = .false.
 
 # forces transverse isotropy for all mantle elements
-# (default is to use transverse isotropy only between MOHO and 220).
+# (default is to use transverse isotropy only between MOHO and 220)
 # means we allow radial anisotropy between the bottom of the crust to the bottom of the transition zone, i.e., 660~km depth.
 USE_FULL_TISO_MANTLE            = .false.
 
