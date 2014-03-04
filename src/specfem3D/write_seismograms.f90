@@ -119,6 +119,7 @@
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
+  use asdf_data
   use constants_solver
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
@@ -126,6 +127,7 @@
           islice_selected_rec, &
           seismo_offset,seismo_current, &
           OUTPUT_SEISMOS_ASCII_TEXT, &
+          OUTPUT_SEISMOS_ASDF, DT, &
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
@@ -137,13 +139,17 @@
   double precision :: write_time_begin,write_time
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
 
-  integer :: iproc,sender,irec_local,irec,ier,receiver
-  integer :: nrec_local_received
-  integer :: total_seismos,total_seismos_local
-  integer,dimension(:),allocatable:: islice_num_rec_local
+  integer :: iproc,sender,irec_local,iorientation,irec,ier,receiver
+  integer :: nrec_local_received, sizeprocs, offset
+  integer :: total_seismos,total_seismos_local,total_seismos_global
+  integer,dimension(:),allocatable:: islice_num_rec_local,nrecords_all
   character(len=256) :: sisname
+  character(len=4) :: chn
+  character(len=2) :: bic
   ! timing
   double precision, external :: wtime
+  ! todo: only needed for asdf output but I am passing this around
+  type(asdf_event) :: my_asdf
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -179,8 +185,18 @@
       endif
     endif
 
-    total_seismos_local = 0
+   ! todo: this initializes the asdf data structure by allocating arrays
+   if (OUTPUT_SEISMOS_ASDF) then
+      total_seismos_local = 0
+      do irec_local = 1, nrec_local
+        do iorientation = 1, 3
+          total_seismos_local=total_seismos_local+1
+        enddo
+      enddo
+      call init_asdf_data(my_asdf,total_seismos_local)
+    endif
 
+    total_seismos_local = 0
     ! loop on all the local receivers
     do irec_local = 1,nrec_local
 
@@ -192,9 +208,17 @@
       one_seismogram = seismograms(:,irec_local,:)
 
       ! write this seismogram
-      call write_one_seismogram(one_seismogram,irec)
-
+      ! todo: my_asdf data structure is passed here which is a bit ugly
+      call write_one_seismogram(one_seismogram,irec,irec_local,my_asdf)
     enddo
+
+    ! this is wheere the asdf data structure is written to the file and
+    ! everything is deallocated
+    if (OUTPUT_SEISMOS_ASDF) then
+      call synchronize_all()
+      call write_asdf(my_asdf)
+      call close_asdf_data(my_asdf, total_seismos_local)
+    endif
 
     ! create one large file instead of one small file per station to avoid file system overload
     if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
@@ -342,15 +366,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_one_seismogram(one_seismogram,irec)
+  subroutine write_one_seismogram(one_seismogram,irec,irec_local,my_asdf)
 
+  use asdf_data
   use constants_solver
   use specfem_par,only: &
           myrank, &
           station_name,network_name,stlat,stlon, &
           DT, &
           seismo_current, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF,&
           OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   use specfem_par,only: &
@@ -358,7 +383,7 @@
 
   implicit none
 
-  integer :: irec
+  integer :: irec,irec_local
   real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 
   ! local parameters
@@ -366,7 +391,7 @@
   integer :: iorientation,length_station_name,length_network_name
 
   character(len=4) :: chn
-  character(len=256) :: sisname,sisname_big_file
+  character(len=256) :: sisname,sisname2,sisname_big_file
   character(len=2) :: bic
 
   ! variables used for calculation of backazimuth and
@@ -376,6 +401,7 @@
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
+  type(asdf_event) :: my_asdf
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
@@ -480,6 +506,10 @@
     ! ASCII output format
     if(OUTPUT_SEISMOS_ASCII_TEXT) &
       call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
+
+    ! ASDF output format
+    if(OUTPUT_SEISMOS_ASDF) &
+      call store_asdf_data(my_asdf,seismogram_tmp,irec_local,irec,chn,iorientation)
 
   enddo ! do iorientation
 

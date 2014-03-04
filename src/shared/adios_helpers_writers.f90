@@ -46,6 +46,7 @@ module adios_helpers_writers_mod
   public :: write_adios_global_integer_1d_array
   public :: write_adios_global_long_1d_array
   public :: write_adios_global_logical_1d_array
+  public :: write_adios_global_string_1d_array
   public :: write_adios_global_1d_array
 
   interface write_adios_global_real_1d_array
@@ -87,6 +88,10 @@ module adios_helpers_writers_mod
     module procedure write_adios_global_1d_logical_4d
     module procedure write_adios_global_1d_logical_5d
   end interface write_adios_global_logical_1d_array
+
+  interface write_adios_global_string_1d_array
+    module procedure write_adios_global_1d_string_1d
+  end interface write_adios_global_string_1d_array
 
   interface write_adios_global_1d_array
     module procedure write_adios_global_1d_integer_1d
@@ -902,5 +907,46 @@ subroutine write_adios_global_1d_logical_5d(adios_handle, myrank, sizeprocs, &
 
 end subroutine write_adios_global_1d_logical_5d
 
+!===============================================================================
+subroutine write_1D_string_array_adios_dims(adios_handle, myrank, &
+    local_dim, global_dim, offset, sizeprocs, path)
+  use adios_write_mod
+
+  implicit none
+
+  integer(kind=8), intent(in) :: adios_handle
+  integer, intent(in) :: sizeprocs, local_dim, myrank
+  integer, intent(in) :: global_dim, offset
+  character(len=*), intent(in) :: path
+
+  integer :: adios_err
+
+  call adios_write(adios_handle, trim(path)// "/local_dim", &
+                   local_dim, adios_err)
+  call adios_write(adios_handle, trim(path)// "/global_dim", &
+                   global_dim, adios_err)
+  call adios_write(adios_handle, trim(path)// "/offset", &
+                   offset, adios_err)
+end subroutine write_1D_string_array_adios_dims
+
+!===============================================================================
+!string subroutine added
+subroutine write_adios_global_1d_string_1d(adios_handle, myrank, sizeprocs, &
+    local_dim, global_dim, offset, array_name, array)
+  ! Parameters
+  integer(kind=8), intent(in) :: adios_handle
+  integer, intent(in) :: myrank, sizeprocs, local_dim
+  integer, intent(in) :: global_dim, offset
+  character(len=*) :: array_name
+  character(len=*), intent(in) :: array
+  ! Variables
+  integer :: adios_err
+
+        print *,"tag2:",trim(array_name)
+        print *,"tag2:",trim(array)
+  call write_1D_string_array_adios_dims(adios_handle, myrank, &
+      local_dim, global_dim, offset, sizeprocs, array_name)
+  call adios_write(adios_handle, trim(array_name)// "/array", array(1:local_dim), adios_err)
+end subroutine write_adios_global_1d_string_1d
 
 end module adios_helpers_writers_mod

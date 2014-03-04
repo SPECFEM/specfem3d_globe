@@ -196,6 +196,8 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_SEISMOS_SAC_ALPHANUM'
   call read_value_logical(OUTPUT_SEISMOS_SAC_BINARY, 'solver.OUTPUT_SEISMOS_SAC_BINARY', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_SEISMOS_SAC_BINARY'
+  call read_value_logical(OUTPUT_SEISMOS_ASDF, 'solver.OUTPUT_SEISMOS_ASDF', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_ASDF'
   call read_value_logical(ROTATE_SEISMOGRAMS_RT, 'solver.ROTATE_SEISMOGRAMS_RT', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ROTATE_SEISMOGRAMS_RT'
   call read_value_logical(WRITE_SEISMOGRAMS_BY_MASTER, 'solver.WRITE_SEISMOGRAMS_BY_MASTER', ierr)

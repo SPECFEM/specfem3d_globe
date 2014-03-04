@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!             and University of Pau / CNRS / INRIA, France
+! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -32,13 +32,11 @@
 !! * Scalar definition
 !! * Global arrays definition
 !!
-!! \author MPBL
+!! \author MPBL      
 !-------------------------------------------------------------------------------
-module adios_helpers_mod
-
-  use adios_helpers_definitions_mod
-  use adios_helpers_writers_mod
-
+module asdf_helpers_mod
+  use asdf_helpers_definitions_mod
+  use asdf_helpers_writers_mod
   implicit none
 
   private
@@ -78,9 +76,9 @@ subroutine check_adios_err(myrank, adios_err)
 
   if (adios_err /= 0) then
     call adios_errmsg(msg)
-    print *, "process: ", myrank, ", error: ", trim(msg)
-    stop 'adios error'
+    print *, "process: ", myrank, ", error: ", msg
+    stop
   endif
 end subroutine check_adios_err
 
-end module adios_helpers_mod
+end module asdf_helpers_mod

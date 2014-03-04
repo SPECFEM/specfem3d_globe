@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!             and University of Pau / CNRS / INRIA, France
+! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@
 !! * Scalar definition
 !! * Global arrays definition
 !!
-!! \author MPBL
+!! \author MPBL      
 !-------------------------------------------------------------------------------
-module adios_helpers_definitions_mod
+module asdf_helpers_definitions_mod
   implicit none
 
   private
@@ -48,7 +48,7 @@ module adios_helpers_definitions_mod
   public :: define_adios_local_string_1d_array
   public :: define_adios_global_array1D
 
-  ! Generic interface to define scalar variables in ADIOS
+  ! Generic interface to define scalar variables in ADIOS 
   interface define_adios_scalar
     module procedure define_adios_double_scalar
     module procedure define_adios_float_scalar
@@ -58,99 +58,58 @@ module adios_helpers_definitions_mod
 
   interface define_adios_global_real_1d_array
     module procedure define_adios_global_1d_real_1d
-    module procedure define_adios_global_1d_real_2d
-    module procedure define_adios_global_1d_real_3d
-    module procedure define_adios_global_1d_real_4d
-    module procedure define_adios_global_1d_real_5d
   end interface define_adios_global_real_1d_array
 
   interface define_adios_global_double_1d_array
     module procedure define_adios_global_1d_double_1d
-    module procedure define_adios_global_1d_double_2d
-    module procedure define_adios_global_1d_double_3d
-    module procedure define_adios_global_1d_double_4d
-    module procedure define_adios_global_1d_double_5d
   end interface define_adios_global_double_1d_array
 
   interface define_adios_global_integer_1d_array
     module procedure define_adios_global_1d_int_1d
-    module procedure define_adios_global_1d_int_2d
-    module procedure define_adios_global_1d_int_3d
-    module procedure define_adios_global_1d_int_4d
-    module procedure define_adios_global_1d_int_5d
   end interface define_adios_global_integer_1d_array
 
   interface define_adios_global_long_1d_array
     module procedure define_adios_global_1d_long_1d
-    module procedure define_adios_global_1d_long_2d
-    module procedure define_adios_global_1d_long_3d
-    module procedure define_adios_global_1d_long_4d
-    module procedure define_adios_global_1d_long_5d
   end interface define_adios_global_long_1d_array
 
   interface define_adios_global_logical_1d_array
     module procedure define_adios_global_1d_logical_1d
-    module procedure define_adios_global_1d_logical_2d
-    module procedure define_adios_global_1d_logical_3d
-    module procedure define_adios_global_1d_logical_4d
-    module procedure define_adios_global_1d_logical_5d
   end interface define_adios_global_logical_1d_array
 
   interface define_adios_global_string_1d_array
     module procedure define_adios_global_1d_string_1d
   end interface define_adios_global_string_1d_array
 
-  interface define_adios_local_string_1d_array
-    module procedure define_adios_local_1d_string_1d
-  end interface define_adios_local_string_1d_array
+	interface define_adios_local_string_1d_array
+		module procedure define_adios_local_1d_string_1d
+	end interface define_adios_local_string_1d_array
 
   ! Cannot include an interface in another interface
   interface define_adios_global_array1D
     module procedure define_adios_global_1d_int_1d
-    module procedure define_adios_global_1d_int_2d
-    module procedure define_adios_global_1d_int_3d
-    module procedure define_adios_global_1d_int_4d
-    module procedure define_adios_global_1d_int_5d
 
     module procedure define_adios_global_1d_long_1d
-    module procedure define_adios_global_1d_long_2d
-    module procedure define_adios_global_1d_long_3d
-    module procedure define_adios_global_1d_long_4d
-    module procedure define_adios_global_1d_long_5d
 
     module procedure define_adios_global_1d_logical_1d
-    module procedure define_adios_global_1d_logical_2d
-    module procedure define_adios_global_1d_logical_3d
-    module procedure define_adios_global_1d_logical_4d
-    module procedure define_adios_global_1d_logical_5d
 
     module procedure define_adios_global_1d_real_1d
-    module procedure define_adios_global_1d_real_2d
-    module procedure define_adios_global_1d_real_3d
-    module procedure define_adios_global_1d_real_4d
-    module procedure define_adios_global_1d_real_5d
 
     module procedure define_adios_global_1d_double_1d
-    module procedure define_adios_global_1d_double_2d
-    module procedure define_adios_global_1d_double_3d
-    module procedure define_adios_global_1d_double_4d
-    module procedure define_adios_global_1d_double_5d
 
     module procedure define_adios_global_1d_string_1d
-
   end interface define_adios_global_array1D
 
 contains
 
 
 !===============================================================================
-!> Define an ADIOS scalar double precision variable and autoincrement
+!> Define an ADIOS scalar double precision variable and autoincrement 
 !! the adios group size by (8).
 !! \param adios_group The adios group where the variables belongs
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable
+!!             the variable 
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !!            ignored.
@@ -175,20 +134,20 @@ subroutine define_adios_double_scalar (adios_group, group_size_inc,  &
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, name, trim(path), 6,  "", "", "", varid)
+  ! adios: 6 == real(kind=8) 
+  call adios_define_var (adios_group, trim(name), trim(path), 6,  "", "", "", varid)
   group_size_inc = group_size_inc + 8
 end subroutine define_adios_double_scalar
 
 
 !===============================================================================
-!> Define an ADIOS scalar single precision variable and autoincrement
+!> Define an ADIOS scalar single precision variable and autoincrement 
 !! the adios group size by (8).
 !! \param adios_group The adios group where the variables belongs
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable
+!!             the variable 
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !             ignored.
@@ -206,8 +165,11 @@ subroutine define_adios_float_scalar(adios_group, group_size_inc,  &
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, name, trim(path), 5,  "", "", "", varid)
+  ! adios: 6 == real(kind=8) 
+	!print *, len_trim(name)
+	!print *, trim(path)
+	!print *, len_trim(path)
+  call adios_define_var (adios_group, trim(name), trim(path), 5,  "", "", "", varid)
   group_size_inc = group_size_inc + 4
 end subroutine define_adios_float_scalar
 
@@ -219,7 +181,7 @@ end subroutine define_adios_float_scalar
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable
+!!             the variable 
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !             ignored.
@@ -241,8 +203,9 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc,  &
 
   !full_name = trim(path) // trim(name)
 
-  ! adios: 2 ~ integer(kind=4)
-  call adios_define_var (adios_group, name, trim(path), adios_integer,  &
+  ! adios: 2 ~ integer(kind=4) 
+  !write (*,'("--- adios_define_var scalar path=",a20," name=",a20)') path, name
+  call adios_define_var (adios_group, trim(name), trim(path), adios_integer,  &
       "", "", "", varid)
   group_size_inc = group_size_inc + 4
 end subroutine define_adios_integer_scalar
@@ -254,7 +217,7 @@ end subroutine define_adios_integer_scalar
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable
+!!             the variable 
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !             ignored.
@@ -272,8 +235,8 @@ subroutine define_adios_byte_scalar (adios_group, group_size_inc, &
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 0 == byte == any_data_type(kind=1)
-  call adios_define_var (adios_group, name, trim(path), 0,  "", "", "", varid)
+  ! adios: 0 == byte == any_data_type(kind=1) 
+  call adios_define_var (adios_group, trim(name), trim(path), 0,  "", "", "", varid)
   group_size_inc = group_size_inc + 1
 end subroutine define_adios_byte_scalar
 
@@ -295,9 +258,15 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, &
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
 
-  call define_adios_integer_scalar (adios_group, group_size_inc, trim(array_name), "local_dim", local_dim)
-  call define_adios_integer_scalar (adios_group, group_size_inc, trim(array_name), "global_dim", local_dim)
-  call define_adios_integer_scalar (adios_group, group_size_inc, trim(array_name), "offset", local_dim)
+	!print *,"in define dims"
+	!print *,"array_name:", trim(array_name)
+
+  call define_adios_integer_scalar (adios_group, &
+      group_size_inc, trim(array_name), "local_dim", local_dim)
+  call define_adios_integer_scalar (adios_group, &
+      group_size_inc, trim(array_name), "global_dim", local_dim)
+  call define_adios_integer_scalar (adios_group, &
+      group_size_inc, trim(array_name), "offset", local_dim)
 end subroutine define_adios_global_dims_1d
 
 
@@ -320,16 +289,17 @@ subroutine define_adios_global_1d_real_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-
+  
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, trim(array_name),local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
+      local_dim)
 
+  !write (*,'("--- adios_define_var 1d_real path=",a20,"/array")') trim(array_name)
   call adios_define_var(adios_group, "array", trim(array_name), 5, &
-      trim(array_name) // "/local_dim", array_name // "/global_dim", &
+      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
       trim(array_name) // "/offset", var_id)
   group_size_inc = group_size_inc + local_dim*4
-
 end subroutine define_adios_global_1d_real_generic
 
 !===============================================================================
@@ -359,9 +329,10 @@ subroutine define_adios_global_1d_real_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+	!print *, "in define:", trim(full_name)
+ 
+  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_real_1d
 
 
@@ -393,8 +364,8 @@ subroutine define_adios_global_1d_real_2d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_real_2d
 
 
@@ -426,8 +397,8 @@ subroutine define_adios_global_1d_real_3d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_real_3d
 
 
@@ -459,8 +430,8 @@ subroutine define_adios_global_1d_real_4d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_real_4d
 
 
@@ -492,8 +463,8 @@ subroutine define_adios_global_1d_real_5d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_real_5d
 
 
@@ -516,16 +487,16 @@ subroutine define_adios_global_1d_double_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-
+  
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, trim(array_name), local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
+      local_dim)
 
-  call adios_define_var(adios_group, "array", trim(array_name), 6, &
-      trim(array_name) // "/local_dim", array_name // "/global_dim", &
+  call adios_define_var(adios_group, "array", array_name, 6, &
+      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
       trim(array_name) // "/offset", var_id)
   group_size_inc = group_size_inc + local_dim*8
-
 end subroutine define_adios_global_1d_double_generic
 
 !===============================================================================
@@ -555,9 +526,9 @@ subroutine define_adios_global_1d_double_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+ 
+  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_double_1d
 
 
@@ -589,8 +560,8 @@ subroutine define_adios_global_1d_double_2d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_double_2d
 
 
@@ -622,8 +593,8 @@ subroutine define_adios_global_1d_double_3d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_double_3d
 
 
@@ -655,8 +626,8 @@ subroutine define_adios_global_1d_double_4d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_double_4d
 
 
@@ -688,8 +659,8 @@ subroutine define_adios_global_1d_double_5d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_double_5d
 
 
@@ -715,13 +686,14 @@ subroutine define_adios_global_1d_int_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, trim(array_name), local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
+      local_dim)
 
-  call adios_define_var(adios_group, "array", trim(array_name), 2, &
-      trim(array_name) // "/local_dim", array_name // "/global_dim", &
+  !write (*,'("--- adios_define_var 1d_int path=[",a,"] name=/array, path len=",i3)') trim(array_name)
+  call adios_define_var(adios_group, "array", array_name, 2, &
+      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
       trim(array_name) // "/offset", var_id)
   group_size_inc = group_size_inc + local_dim*4
-
 end subroutine define_adios_global_1d_int_generic
 
 !===============================================================================
@@ -751,9 +723,9 @@ subroutine define_adios_global_1d_int_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+ 
+  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_int_1d
 
 
@@ -785,8 +757,8 @@ subroutine define_adios_global_1d_int_2d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_int_2d
 
 
@@ -818,8 +790,8 @@ subroutine define_adios_global_1d_int_3d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_int_3d
 
 
@@ -851,8 +823,8 @@ subroutine define_adios_global_1d_int_4d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_int_4d
 
 
@@ -884,8 +856,8 @@ subroutine define_adios_global_1d_int_5d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_int_5d
 
 
@@ -908,16 +880,16 @@ subroutine define_adios_global_1d_long_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-
+  
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, trim(array_name), local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
+      local_dim)
 
-  call adios_define_var(adios_group, "array", trim(array_name), adios_long, &
-      trim(array_name) // "/local_dim", array_name // "/global_dim", &
+  call adios_define_var(adios_group, "array", array_name, adios_long, &
+      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
       trim(array_name) // "/offset", var_id)
   group_size_inc = group_size_inc + local_dim*8
-
 end subroutine define_adios_global_1d_long_generic
 
 !===============================================================================
@@ -947,9 +919,9 @@ subroutine define_adios_global_1d_long_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+ 
+  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_long_1d
 
 
@@ -981,8 +953,8 @@ subroutine define_adios_global_1d_long_2d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_long_2d
 
 
@@ -1014,8 +986,8 @@ subroutine define_adios_global_1d_long_3d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_long_3d
 
 
@@ -1047,8 +1019,8 @@ subroutine define_adios_global_1d_long_4d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_long_4d
 
 
@@ -1080,8 +1052,8 @@ subroutine define_adios_global_1d_long_5d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_long_5d
 
 !===============================================================================
@@ -1103,21 +1075,20 @@ subroutine define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-
+  
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
       local_dim)
 
   ! The Fortran standard does not specify how variables of LOGICAL type are
-  ! represented, beyond requiring that LOGICAL variables of default kind
-  ! have the same storage size as default INTEGER and REAL variables.
+  ! represented, beyond requiring that LOGICAL variables of default kind 
+  ! have the same storage size as default INTEGER and REAL variables. 
   ! Hence the 'adios_integer' (2) data type to store logical values
-  call adios_define_var(adios_group, "array", trim(array_name), 2, &
-      trim(array_name) // "/local_dim", array_name // "/global_dim", &
+  call adios_define_var(adios_group, "array", array_name, 2, &
+      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
       trim(array_name) // "/offset", var_id)
   group_size_inc = group_size_inc + local_dim*4
-
 end subroutine define_adios_global_1d_logical_generic
 
 !===============================================================================
@@ -1147,9 +1118,9 @@ subroutine define_adios_global_1d_logical_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+ 
+  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_logical_1d
 
 
@@ -1181,8 +1152,8 @@ subroutine define_adios_global_1d_logical_2d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_logical_2d
 
 
@@ -1214,8 +1185,8 @@ subroutine define_adios_global_1d_logical_3d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_logical_3d
 
 
@@ -1247,8 +1218,8 @@ subroutine define_adios_global_1d_logical_4d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_logical_4d
 
 
@@ -1280,8 +1251,8 @@ subroutine define_adios_global_1d_logical_5d(adios_group, group_size_inc, &
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, trim(full_name), local_dim)
-
+  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+      full_name, local_dim)
 end subroutine define_adios_global_1d_logical_5d
 
 !string added
@@ -1296,7 +1267,7 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-
+  
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
@@ -1322,34 +1293,34 @@ subroutine define_adios_global_1d_string_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-        print *,"full name", trim(full_name),"local_dim:",local_dim
-
+	print *,"full name", trim(full_name),"local_dim:",local_dim
+ 
   call define_adios_global_1d_string_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_string_1d
 
 subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
-                local_dim, path, array_name, var)
-                
-  implicit none
-  ! Parameters
+		local_dim, path, array_name, var)
+		
+	implicit none
+	! Parameters
   integer(kind=8), intent(in) :: adios_group
   character(len=*), intent(in) :: path, array_name
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
   character(len=*), intent(in) :: var
-  ! Local 
-  character(len=256) :: full_name
-  integer(kind=8) :: var_id
+	! Local 
+	character(len=256) :: full_name
+	integer(kind=8) :: var_id
 
-  full_name = trim(path)//trim(array_name)
+	full_name = trim(path)//trim(array_name)
 
-  !print *,"in define local:"
-  !print *,"full_name:", trim(full_name)
+	!print *,"in define local:"
+	!print *,"full_name:", trim(full_name)
 
-  call adios_define_var(adios_group, array_name, path, 9, "", "", "", var_id )
-  group_size_inc = group_size_inc + 1*local_dim
+	call adios_define_var(adios_group, array_name, path, 9, "", "", "", var_id )
+	group_size_inc = group_size_inc + 1*local_dim
 
 end subroutine define_adios_local_1d_string_1d
 
-end module adios_helpers_definitions_mod
+end module asdf_helpers_definitions_mod

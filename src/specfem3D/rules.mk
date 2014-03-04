@@ -51,6 +51,7 @@ specfem3D_OBJECTS = \
 # solver objects with statically allocated arrays; dependent upon
 # values_from_mesher.h
 specfem3D_OBJECTS += \
+	$O/asdf_data.solverstatic_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/check_stability.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
@@ -104,6 +105,7 @@ specfem3D_OBJECTS += \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
+	$(FC_MODDIR)/asdf_data.$(FC_MODEXT) \
 	$(FC_MODDIR)/constants_solver.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
@@ -203,6 +205,7 @@ adios_specfem3D_OBJECTS = \
 	$O/save_forward_arrays_adios.solverstatic_adios.o \
 	$O/save_kernels_adios.solverstatic_adios.o \
 	$O/write_specfem_adios_header.solverstatic_adios.o \
+	$O/write_output_ASDF.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_SHARED_OBJECTS = \
@@ -210,6 +213,9 @@ adios_specfem3D_SHARED_OBJECTS = \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios.o \
+	$O/asdf_helpers_definitions.shared_adios_module.o \
+	$O/asdf_helpers_writers.shared_adios_module.o \
+	$O/asdf_helpers.shared_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_STUBS = \
@@ -308,6 +314,9 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ### specfem3D - optimized flags and dependence on values from mesher here
 ###
 $O/%.solverstatic_module.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic_module.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solverstatic.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
