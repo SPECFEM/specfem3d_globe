@@ -288,7 +288,8 @@ end subroutine write_asdf
 !! \param nproc The number of processors
 !! \param comm The communication group of processors
 !! \param ierr The error for adios subroutine calls
-subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, nproc, comm, ierr)
+subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, &
+                           nproc, comm, ierr)
 
   use asdf_data
   use adios_write_mod
@@ -465,15 +466,15 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
   enddo
 
   !define attribute
-  call adios_define_attribute ( adios_group , "nreceivers", "desc", &
+  call adios_define_attribute ( adios_group , "nreceivers", "desc",      & 
       adios_string, "Number of receivers ", "" , adios_err )
-  call adios_define_attribute ( adios_group , "nrecords", "desc", &
+  call adios_define_attribute ( adios_group , "nrecords", "desc",        & 
       adios_string, "Number of records ", "" , adios_err )
-  call adios_define_attribute ( adios_group , "min_period", "desc",    &
-      adios_string, "Low pass filter in Hz (0 if none applied)  ", "", &
+  call adios_define_attribute ( adios_group , "min_period", "desc",      & 
+      adios_string, "Low pass filter in Hz (0 if none applied)  ", "",   & 
       adios_err)
-  call adios_define_attribute ( adios_group , "max_period", "desc", &
-      adios_string, "High pass filter in Hz (0 if none applied)  ", "" , &
+  call adios_define_attribute ( adios_group , "max_period", "desc",      & 
+      adios_string, "High pass filter in Hz (0 if none applied)  ", "" , & 
       adios_err )
   call adios_define_attribute (adios_group , "event_lat", "desc",adios_string, &
                                "Event CMT latitude (degrees, north positive) ",&
@@ -648,17 +649,17 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
 
   !write all local strings into global string
-  call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset, &
-                                        receiver_name, receiver_name_total,&
+  call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset,  & 
+                                        receiver_name, receiver_name_total,  & 
                                         rank, nproc, comm, ierr)
-  call gather_string_offset_info(network_len, nw_len_total, nw_offset, &
-                                        network, network_total,&
+  call gather_string_offset_info(network_len, nw_len_total, nw_offset,       & 
+                                        network, network_total,              & 
                                         rank, nproc, comm, ierr)
-  call gather_string_offset_info(component_len, comp_len_total, comp_offset, &
-                                        component, component_total,&
+  call gather_string_offset_info(component_len, comp_len_total, comp_offset, & 
+                                        component, component_total,          & 
                                         rank, nproc, comm, ierr)
-  call gather_string_offset_info(receiver_id_len, rid_len_total,rid_offset, &
-                                        receiver_id, receiver_id_total,&
+  call gather_string_offset_info(receiver_id_len, rid_len_total,rid_offset,  & 
+                                        receiver_id, receiver_id_total,      & 
                                         rank, nproc, comm, ierr)
   !===========================
   !write out the string info
@@ -952,12 +953,12 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
     enddo
   else
    call MPI_Send(string_piece, local_dim, MPI_CHARACTER,&
-                                                        0, 1, comm, ierr)
+                 0, 1, comm, ierr)
   endif
 
   call synchronize_all()
   call MPI_Scatter(offset_all_proc, 1, MPI_INTEGER, offset, &
-                                       1, MPI_INTEGER, 0, comm, ierr)
+                   1, MPI_INTEGER, 0, comm, ierr)
   call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
 
   if (rank.eq.0) then
