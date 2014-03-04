@@ -140,16 +140,14 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
 
   integer :: iproc,sender,irec_local,iorientation,irec,ier,receiver
-  integer :: nrec_local_received, sizeprocs, offset
-  integer :: total_seismos,total_seismos_local,total_seismos_global
-  integer,dimension(:),allocatable:: islice_num_rec_local,nrecords_all
+  integer :: nrec_local_received
+  integer :: total_seismos,total_seismos_local
+  integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=256) :: sisname
-  character(len=4) :: chn
-  character(len=2) :: bic
   ! timing
   double precision, external :: wtime
   ! todo: only needed for asdf output but I am passing this around
-  type(asdf_event) :: my_asdf
+  type(asdf_event) :: asdf_container
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -185,7 +183,7 @@
       endif
     endif
 
-   ! todo: this initializes the asdf data structure by allocating arrays
+   ! initializes the asdf data structure by allocating arrays
    if (OUTPUT_SEISMOS_ASDF) then
       total_seismos_local = 0
       do irec_local = 1, nrec_local
@@ -193,7 +191,7 @@
           total_seismos_local=total_seismos_local+1
         enddo
       enddo
-      call init_asdf_data(my_asdf,total_seismos_local)
+      call init_asdf_data(asdf_container, total_seismos_local)
     endif
 
     total_seismos_local = 0
@@ -208,22 +206,22 @@
       one_seismogram = seismograms(:,irec_local,:)
 
       ! write this seismogram
-      ! todo: my_asdf data structure is passed here which is a bit ugly
-      call write_one_seismogram(one_seismogram,irec,irec_local,my_asdf)
+      ! asdf data structure is passed as an argument
+      call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
     enddo
 
-    ! this is wheere the asdf data structure is written to the file and
-    ! everything is deallocated
+    ! write asdf container to the file
     if (OUTPUT_SEISMOS_ASDF) then
       call synchronize_all()
-      call write_asdf(my_asdf)
-      call close_asdf_data(my_asdf, total_seismos_local)
+      call write_asdf(asdf_container)
+      ! deallocate the contanier
+      call close_asdf_data(asdf_container, total_seismos_local)
     endif
 
     ! create one large file instead of one small file per station to avoid file system overload
     if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
-    if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
+    !if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
     ! user output
     if(myrank == 0) then
@@ -315,7 +313,7 @@
 
            total_seismos = total_seismos + 1
            ! write this seismogram
-           call write_one_seismogram(one_seismogram,irec)
+           call write_one_seismogram(one_seismogram,irec,irec_local)
 
          enddo
        endif
@@ -366,7 +364,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_one_seismogram(one_seismogram,irec,irec_local,my_asdf)
+  subroutine write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
 
   use asdf_data
   use constants_solver
@@ -391,7 +389,7 @@
   integer :: iorientation,length_station_name,length_network_name
 
   character(len=4) :: chn
-  character(len=256) :: sisname,sisname2,sisname_big_file
+  character(len=256) :: sisname,sisname_big_file
   character(len=2) :: bic
 
   ! variables used for calculation of backazimuth and
@@ -401,7 +399,7 @@
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
-  type(asdf_event) :: my_asdf
+  type(asdf_event) :: asdf_container
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
@@ -509,7 +507,7 @@
 
     ! ASDF output format
     if(OUTPUT_SEISMOS_ASDF) &
-      call store_asdf_data(my_asdf,seismogram_tmp,irec_local,irec,chn,iorientation)
+      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation)
 
   enddo ! do iorientation
 

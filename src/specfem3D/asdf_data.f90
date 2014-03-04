@@ -1,3 +1,9 @@
+
+!> Module defining the data structure for asdf
+!!     * Waveforms defined per event
+!!     * Waveform attributes defined per seismogram per event
+!! \author JAS and Wenjie
+
 module asdf_data
 
   type asdf_record
