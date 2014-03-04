@@ -26,68 +26,68 @@ subroutine init_asdf_data(asdf_container,total_seismos_local)
   asdf_container%event = trim(event_name_SAC)
 
   allocate (asdf_container%npoints(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%gmt_year(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%gmt_hour(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%gmt_day(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%gmt_min(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%gmt_sec(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%gmt_msec(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%event_lat(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%event_lo(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%event_dpt(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%receiver_lat(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%receiver_lo(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%receiver_el(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%receiver_dpt(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%begin_value(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%end_value(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%cmp_azimuth(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%cmp_incident_ang(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%sample_rate(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%scale_factor(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%ev_to_sta_AZ(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%sta_to_ev_AZ(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%great_circle_arc(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%dist(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%P_pick(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%S_pick(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%records(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%receiver_name_array(asdf_container%nrecords), &
             STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%network_array(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%component_array(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%receiver_id_array(asdf_container%nrecords), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
 
 end subroutine init_asdf_data
 
@@ -183,69 +183,69 @@ subroutine close_asdf_data(asdf_container, total_seismos_local)
   integer :: i, ierr
 
   deallocate (asdf_container%npoints, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%gmt_year, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%gmt_hour, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%gmt_day, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%gmt_min, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%gmt_sec, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%gmt_msec, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%event_lat, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%event_lo, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%event_dpt, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%receiver_lat, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%receiver_lo, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%receiver_el, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%receiver_dpt, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%begin_value, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%end_value, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%cmp_azimuth, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%cmp_incident_ang, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%sample_rate, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%scale_factor, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%ev_to_sta_AZ, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%sta_to_ev_AZ, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%great_circle_arc, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%dist, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%P_pick, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%S_pick, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   do i = 1, total_seismos_local
     deallocate(asdf_container%records(i)%record, STAT=ierr)
-    if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   enddo 
   deallocate (asdf_container%receiver_name_array, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%network_array, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%component_array, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
   deallocate (asdf_container%receiver_id_array, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
 
 end subroutine close_asdf_data
 
@@ -466,13 +466,15 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
 
   !define attribute
   call adios_define_attribute ( adios_group , "nreceivers", "desc", &
-        adios_string, "Number of receivers ", "" , adios_err )
+      adios_string, "Number of receivers ", "" , adios_err )
   call adios_define_attribute ( adios_group , "nrecords", "desc", &
-        adios_string, "Number of records ", "" , adios_err )
-  call adios_define_attribute ( adios_group , "min_period", "desc", &
-        adios_string, "Low pass filter in Hz (0 if none applied)  ", "" , adios_err )
+      adios_string, "Number of records ", "" , adios_err )
+  call adios_define_attribute ( adios_group , "min_period", "desc",    &
+      adios_string, "Low pass filter in Hz (0 if none applied)  ", "", &
+      adios_err)
   call adios_define_attribute ( adios_group , "max_period", "desc", &
-        adios_string, "High pass filter in Hz (0 if none applied)  ", "" , adios_err )
+      adios_string, "High pass filter in Hz (0 if none applied)  ", "" , &
+      adios_err )
   call adios_define_attribute (adios_group , "event_lat", "desc",adios_string, &
                                "Event CMT latitude (degrees, north positive) ",&
                                "", adios_err )
@@ -503,7 +505,7 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
   call adios_define_attribute (adios_group, "gmt_msec", "desc", adios_string,  &
            "GMT millisecond corresponding to reference (zero) time in file. ", &
                                "" , adios_err)
-  call adios_define_attribute (adios_group , "receiver_lat", "desc",           & 
+  call adios_define_attribute (adios_group , "receiver_lat", "desc",           &
                                adios_string,                                   &
                                "Receiver latitude (degrees, north positive)  ",&
                                "" , adios_err )
@@ -527,7 +529,7 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
                                adios_string,                                   &
                           "Component azimuth (degrees clockwise from north) ", &
                                "", adios_err )
-  call adios_define_attribute (adios_group , "cmp_incident_ang", "desc",       & 
+  call adios_define_attribute (adios_group , "cmp_incident_ang", "desc",       &
                                adios_string,                                   &
                           "Component incident angle (degrees from vertical) ", &
                                "", adios_err )
@@ -539,7 +541,7 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
    "Scale factor to convert the unit of synthetics from meters to nanometer ", &
                                "" , adios_err )
   call adios_define_attribute (adios_group , "ev_to_sta_AZ", "desc",           &
-                               adios_string,                                   & 
+                               adios_string,                                   &
                                "Event to station azimuth (degrees) ", "" ,     &
                                adios_err )
   call adios_define_attribute (adios_group , "sta_to_ev_AZ", "desc",           &
@@ -603,13 +605,13 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
 
   !ensemble the string for receiver_name, network, componen and receiver_id
   allocate(character(len=6*asdf_container%nrecords) :: receiver_name, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: network, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: component, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: receiver_id, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   receiver_name=''
   network=''
   component=''
@@ -637,13 +639,13 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   call gather_string_total_length(component_len, comp_len_total,&
                                           rank, nproc, comm, ierr)
   allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=nw_len_total) :: network_total, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=rid_len_total) :: receiver_id_total, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
 
   !write all local strings into global string
   call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset, &
@@ -664,7 +666,7 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
     call adios_write(adios_handle, "receiver_name", trim(receiver_name_total), &
                      adios_err)
     call adios_write(adios_handle, "network", trim(network_total), adios_err)
-    call adios_write(adios_handle, "component", trim(component_total), adios_err)
+    call adios_write(adios_handle, "component",trim(component_total), adios_err)
     call adios_write(adios_handle, "receiver_id", trim(receiver_id_total), &
                      adios_err)
   endif
@@ -682,9 +684,9 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
                trim(asdf_container%network_array(i))//"."//       &
                trim(asdf_container%component_array(i))//"."//     &
                trim(asdf_container%receiver_id_array(i))
-     call write_adios_global_1d_array(adios_handle, rank, nproc,                &
-                       asdf_container%npoints(i), asdf_container%npoints(i), 0, &
-                       loc_string, asdf_container%records(i)%record)
+     call write_adios_global_1d_array(adios_handle, rank, nproc,  &
+         asdf_container%npoints(i), asdf_container%npoints(i), 0, &
+         loc_string, asdf_container%records(i)%record)
   enddo
 
   !===========================
@@ -785,13 +787,13 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
       nrecords_total, offset, "S_pick", asdf_container%S_pick)
 
   deallocate(receiver_name, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   deallocate(network, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   deallocate(receiver_id, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   deallocate(component, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
 end subroutine write_asdf_data_sub
 
 
@@ -818,9 +820,9 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
   integer :: i
 
   allocate(local_dim_all_proc(nproc), STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(offset_all_proc(nproc), STAT=ierr)
-  if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
         
   call synchronize_all()
   call MPI_Gather(local_dim, 1, MPI_INTEGER, local_dim_all_proc, 1, &
@@ -839,11 +841,12 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
   call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
 
   deallocate(local_dim_all_proc, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   deallocate(offset_all_proc, STAT=ierr)
-  if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
 
 end subroutine gather_offset_info
+
 
 !> Gets total length of strings from each processor
 !! \param local_dim The local dimension on the processor
@@ -866,7 +869,7 @@ subroutine gather_string_total_length(local_dim, global_dim,&
 
   if(rank.eq.0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
-    if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   endif
 
   call synchronize_all()
@@ -876,10 +879,11 @@ subroutine gather_string_total_length(local_dim, global_dim,&
   if(rank.eq.0)then
     global_dim=sum(local_dim_all_proc(1:nproc))
     deallocate(local_dim_all_proc,STAT=ierr)
-    if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   endif
 
 end subroutine gather_string_total_length
+
 
 !> Gets offset values for strings
 !! \param local_dim The local dimension on the processor
@@ -892,8 +896,8 @@ end subroutine gather_string_total_length
 !! \param comm The communication group of processors
 !! \param ierr The error
 subroutine gather_string_offset_info(local_dim, global_dim, offset,  & 
-                                         string_piece, string_total, & 
-                                                rank, nproc, comm, ierr)
+                                     string_piece, string_total, & 
+                                     rank, nproc, comm, ierr)
   use mpi
   implicit none
 
@@ -909,9 +913,9 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
 
   if(rank.eq.0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
-    if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(offset_all_proc(nproc),STAT=ierr)
-    if (ierr /= 0) print *, 'Allocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   endif
 
   call synchronize_all()
@@ -958,9 +962,9 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
 
   if (rank.eq.0) then
     deallocate(local_dim_all_proc,STAT=ierr)
-    if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
     deallocate(offset_all_proc,STAT=ierr)
-    if (ierr /= 0) print *, 'Deallocate failed. status = ', ierr
+    if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   endif
 
 end subroutine gather_string_offset_info
