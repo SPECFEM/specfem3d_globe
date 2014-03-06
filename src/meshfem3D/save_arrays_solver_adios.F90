@@ -1389,7 +1389,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   if( num_interfaces > 0 ) then
     call adios_write(handle, trim(region_name) // "max_nibool_interfaces", &
         max_nibool_interfaces, adios_err)
-    local_dim = num_interfaces_wmax
+    local_dim = num_interfaces
     call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
                                      local_dim, trim(region_name) // &
                                      STRINGIFY_VAR(my_neighbours))
@@ -1397,7 +1397,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
                                      local_dim,  trim(region_name) // &
                                      STRINGIFY_VAR(nibool_interfaces))
 
-    local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
+    local_dim = max_nibool_interfaces * num_interfaces
     call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
                                      local_dim, trim(region_name) // &
                                      STRINGIFY_VAR(ibool_interfaces))
@@ -1412,7 +1412,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
                    num_phase_ispec, adios_err)
 
   if(num_phase_ispec > 0 ) then
-    local_dim = num_phase_ispec_wmax * 2
+    local_dim = num_phase_ispec * 2
     call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                           trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
   endif
@@ -1424,7 +1424,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
     call adios_write(handle, trim(region_name) // "num_colors_inner", &
                      nspec_inner, adios_err)
 
-    local_dim = num_colors_outer_wmax + num_colors_inner_wmax
+    local_dim = num_colors_outer + num_colors_inner
     call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(num_elem_colors))
   endif
