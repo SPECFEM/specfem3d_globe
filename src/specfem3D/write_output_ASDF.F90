@@ -297,8 +297,8 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, &
   ! Parameters
   character(len=*),intent(inout) :: asdf_fn
   type(asdf_event),intent(inout) :: asdf_container
-  integer,intent(inout) :: adios_group
-  integer,intent(in) :: rank, nproc, comm, ierr
+  integer(kind=8),intent(inout) :: adios_group
+  integer,intent(inout) :: rank, nproc, comm, ierr
   ! Variables
   integer         :: adios_err
   integer(kind=8) :: adios_groupsize, adios_totalsize
