@@ -170,7 +170,7 @@
 ! check: MP_CSS_INTERRUPT environment variable on IBM systems
 
 
-  subroutine assemble_MPI_vector_send_cuda(Mesh_pointer,NPROC, &
+  subroutine assemble_MPI_vector_send_cuda(NPROC, &
                                           buffer_send_vector,buffer_recv_vector, &
                                           num_interfaces,max_nibool_interfaces, &
                                           nibool_interfaces, &
@@ -182,8 +182,6 @@
   use constants
 
   implicit none
-
-  integer(kind=8) :: Mesh_pointer
 
   integer :: NPROC
 
