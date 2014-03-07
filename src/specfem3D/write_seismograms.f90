@@ -313,7 +313,9 @@
 
            total_seismos = total_seismos + 1
            ! write this seismogram
-           call write_one_seismogram(one_seismogram,irec,irec_local)
+!! DK DK added this temporarily to suppress a warning
+!! DK DK and contacte Matthieu about this           call write_one_seismogram(one_seismogram,irec,irec_local)
+           call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container) !! DK DK last argument is fictitious
 
          enddo
        endif
