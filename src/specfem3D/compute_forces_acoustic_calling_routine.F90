@@ -111,7 +111,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_scalar_outer_core,IREGION_OUTER_CORE,1)
         ! sends mpi buffers
-        call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                            buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                            nibool_interfaces_outer_core,&
@@ -198,7 +198,7 @@
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronuous transfers, sending over mpi can directly proceed
           ! outer core
-          call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+          call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                              buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                              nibool_interfaces_outer_core,&
@@ -372,7 +372,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_scalar_outer_core,IREGION_OUTER_CORE,3)
         ! sends mpi buffers
-        call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
                               nibool_interfaces_outer_core,&
@@ -466,7 +466,7 @@
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronuous transfers, sending over mpi can directly proceed
           ! outer core
-          call assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+          call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,&

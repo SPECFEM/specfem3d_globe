@@ -246,7 +246,7 @@
 !-------------------------------------------------------------------------------------------------
 
 
-  subroutine assemble_MPI_scalar_send_cuda(Mesh_pointer,NPROC, &
+  subroutine assemble_MPI_scalar_send_cuda(NPROC, &
                                           buffer_send_scalar,buffer_recv_scalar, &
                                           num_interfaces,max_nibool_interfaces, &
                                           nibool_interfaces, &
@@ -261,8 +261,6 @@
   use constants
 
   implicit none
-
-  integer(kind=8) :: Mesh_pointer
 
   integer :: NPROC
   integer :: num_interfaces,max_nibool_interfaces

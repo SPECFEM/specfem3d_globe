@@ -159,7 +159,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_crust_mantle,IREGION_CRUST_MANTLE,1)
         ! sends mpi buffers
-        call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
@@ -176,7 +176,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_inner_core,IREGION_INNER_CORE,1)
         ! sends mpi buffers
-        call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -321,14 +321,14 @@
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronuous transfers, sending over mpi can directly proceed
           ! crust mantle
-          call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                         buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                         nibool_interfaces_crust_mantle,&
                         my_neighbours_crust_mantle, &
                         request_send_vector_cm,request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                         buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_ic, &
                         nibool_interfaces_inner_core,&
@@ -609,7 +609,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_cm,IREGION_CRUST_MANTLE,3)
         ! sends mpi buffers
-        call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
@@ -627,7 +627,7 @@
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_inner_core,IREGION_INNER_CORE,3)
 
         ! sends mpi buffers
-        call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -757,14 +757,14 @@
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronuous transfers, sending over mpi can directly proceed
           ! crust mantle
-          call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
                       my_neighbours_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_send_cuda(Mesh_pointer,NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
