@@ -89,7 +89,7 @@ case $my_FC in
 # parallel file systems like SFS 3.2 / Lustre 1.8. If omitted
 # I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
 # However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
-        DEF_FFLAGS="-O3 -check nobounds -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -gen-interface -warn all" # -mcmodel=medium -shared-intel
+        DEF_FFLAGS="-O3 -check nobounds -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -gen-interfaces -warn all" # -mcmodel=medium -shared-intel
 ##############################################################################################################################
 ##############################################################################################################################
 ##############################################################################################################################
