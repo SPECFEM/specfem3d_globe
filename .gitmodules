@@ -4,3 +4,6 @@
 [submodule "EXAMPLES"]
 	path = EXAMPLES
 	url = git://vcs.geodynamics.org/specfem3d_globe_examples
+[submodule "DATA"]
+	path = DATA
+	url = git://vcs.geodynamics.org/specfem3d_globe_data
