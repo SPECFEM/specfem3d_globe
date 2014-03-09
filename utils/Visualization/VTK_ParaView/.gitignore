@@ -1,0 +1,14 @@
+xglobal_slice_number
+xnormal_plane
+xmake_az_stations
+
+global_slice_util/mod/*.mod
+global_slice_util/obj/*.o
+
+mesh2vtu/CMakeFiles
+mesh2vtu/cell2vtu
+mesh2vtu/mesh2vtu
+mesh2vtu/surf2vtu
+mesh2vtu/ugrid
+mesh2vtu/ugrid_pts
+
