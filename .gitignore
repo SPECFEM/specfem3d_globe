@@ -3,5 +3,23 @@
 .*swo
 .*swn
 *~
-*.mod
-obj/*
+
+# Configure time
+Makefile
+aclocal.m4
+autom4te.cache
+config.log
+config.status
+setup/config.fh
+setup/config.h
+setup/constants.h
+setup/precision.h
+
+# Build time
+bin/
+obj/
+OUTPUT_FILES/
+
+# Documentation
+doc/USER_MANUAL/figures/*-eps-converted-to.pdf
+
