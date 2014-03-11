@@ -37,7 +37,6 @@ specfem3D_OBJECTS = \
 	$O/comp_source_spectrum.solver.o \
 	$O/comp_source_time_function.solver.o \
 	$O/compute_adj_source_frechet.solver.o \
-	$O/compute_arrays_source.solver.o \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
 	$O/file_io_threads.cc.o \
@@ -53,8 +52,10 @@ specfem3D_OBJECTS = \
 specfem3D_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/write_seismograms.solverstatic_module.o \
 	$O/check_stability.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
+	$O/compute_arrays_source.solverstatic.o \
 	$O/compute_boundary_kernel.solverstatic.o \
 	$O/compute_coupling.solverstatic.o \
 	$O/compute_element.solverstatic.o \
@@ -101,7 +102,6 @@ specfem3D_OBJECTS += \
 	$O/write_movie_surface.solverstatic.o \
 	$O/write_output_ASCII.solverstatic.o \
 	$O/write_output_SAC.solverstatic.o \
-	$O/write_seismograms.solverstatic.o \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
@@ -112,6 +112,7 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
+	$(FC_MODDIR)/write_seismograms_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory

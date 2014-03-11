@@ -199,6 +199,7 @@
   subroutine check_adjoint_sources(irec,nadj_files_found)
 
   use specfem_par
+  use write_seismograms_mod, only: band_instrument_code
 
   implicit none
 
