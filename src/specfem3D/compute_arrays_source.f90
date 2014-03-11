@@ -133,6 +133,7 @@
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH
+  use write_seismograms_mod, only: band_instrument_code
 
   implicit none
 

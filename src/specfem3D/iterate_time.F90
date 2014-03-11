@@ -32,6 +32,7 @@
   use specfem_par_innercore
   use specfem_par_outercore
   use specfem_par_movie
+  use write_seismograms_mod, only: write_seismograms
   implicit none
 
   ! timing
