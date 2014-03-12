@@ -99,8 +99,9 @@ end subroutine init_asdf_data
 !! \param irec The global index of the receiver
 !! \param chn The broadband channel simulated
 !! \param iorientation The recorded seismogram's orientation direction
+!! \param phi The angle used for calculating azimuth and incident angle
 subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
-                           irec, chn, iorientation)
+                           irec, chn, iorientation, phi)
 
   use asdf_data
   use specfem_par,only: &
@@ -127,6 +128,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   ! Variables
   integer :: length_station_name, length_network_name
   integer :: ier, i
+  double precision,intent(in) :: phi
 
   i = (irec_local-1)*(3) + (iorientation)
   asdf_container%npoints(i) = seismo_current
@@ -145,10 +147,25 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%receiver_dpt(i) = stbur(irec_local)
   asdf_container%begin_value(i) = seismo_offset*DT-t0+tshift_cmt 
   asdf_container%end_value(i) = -12345
-  asdf_container%cmp_azimuth(i) = 0.0
-  asdf_container%cmp_incident_ang(i) = 0.0
+  ! instrument orientation
+  if(iorientation == 1) then !N
+    asdf_container%cmp_azimuth(i)  = 0.00
+    asdf_container%cmp_incident_ang(i) =90.00
+  else if(iorientation == 2) then !E
+    asdf_container%cmp_azimuth(i)  =90.00
+    asdf_container%cmp_incident_ang(i) =90.00
+  else if(iorientation == 3) then !Z
+    asdf_container%cmp_azimuth(i)  = 0.00
+    asdf_container%cmp_incident_ang(i) = 0.00
+  else if(iorientation == 4) then !R
+    asdf_container%cmp_azimuth(i) = sngl(modulo(phi,360.0))
+    asdf_container%cmp_incident_ang(i) =90.00
+  else if(iorientation == 5) then !T
+    asdf_container%cmp_azimuth(i) = sngl(modulo(phi+90.0,360.0))
+    asdf_container%cmp_incident_ang(i) =90.00
+  endif
   asdf_container%sample_rate(i) = DT
-  asdf_container%scale_factor(i) = -12345
+  asdf_container%scale_factor(i) = 1000000000
   asdf_container%ev_to_sta_AZ(i) = -12345
   asdf_container%sta_to_ev_AZ(i) = -12345
   asdf_container%great_circle_arc(i) = -12345
