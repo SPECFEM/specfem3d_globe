@@ -181,7 +181,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%receiver_id_array(i) = ""
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
 
 end subroutine store_asdf_data
@@ -284,18 +284,12 @@ subroutine write_asdf(asdf_container)
   character(len=200) :: ASDF_FN
 
   call world_duplicate(comm)
-print *, comm
   call world_size(sizeprocs)
-print *, sizeprocs
-print *, "declaring group"
   ! declare new group that uses MPI
   call adios_declare_group (adios_group, "EVENTS", "iter", 1, adios_err)
-print *, "declared group"
   call adios_select_method (adios_group, "MPI", "", "", adios_err)
-print *, "selected method"
   
   ASDF_FN="OUTPUT_FILES/"//trim(event_name_SAC)//"_sem.bp"
-  print *, "write_data"
   call write_asdf_data (ASDF_FN, asdf_container, adios_group, myrank, &
                         sizeprocs, comm, ierr)
 
@@ -335,7 +329,6 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, &
                          adios_err)
 
   !call the write sub
-print *, "write_asdf_data_sub"
   call write_asdf_data_sub (asdf_container, adios_handle, rank, nproc, &
                             comm, ierr)
 
@@ -404,7 +397,6 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
                             dum_real)
 
   !string info
-print *, "string info"
   call define_adios_scalar (adios_group, my_group_size, "", &
                             "receiver_name_len", dum_int)
   call define_adios_scalar (adios_group, my_group_size, "", &
@@ -439,7 +431,6 @@ print *, "string info"
   call define_adios_local_string_1d_array (adios_group, my_group_size,&
                     string_total_length, "", "receiver_id", dum_string)
 
-print *, "global arrays"
   call define_adios_global_real_1d_array (adios_group, my_group_size, &
                    nrecords, "", "event_lat", real_array)
   call define_adios_global_real_1d_array (adios_group, my_group_size, &
@@ -480,7 +471,6 @@ print *, "global arrays"
                    nrecords, "", "S_pick", real_array)
 
   !DISPLACEMENT
-print *, "records"
   do i = 1, nrecords
     write(i_string, '(I10)' ) i+offset
     record=trim(asdf_container%receiver_name_array(i))//"."// &
@@ -631,7 +621,6 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
                                         rank, nproc, comm, ierr)
 
   !ensemble the string for receiver_name, network, componen and receiver_id
-print *, "first allocate"
   allocate(character(len=6*asdf_container%nrecords) :: receiver_name, STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: network, STAT=ierr)
@@ -669,25 +658,13 @@ print *, "first allocate"
                                           rank, nproc, comm, ierr)
   if (rank .eq. 0) then
     allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
-    if (ierr /= 0) then 
-      print *, ierr
-      call exit_MPI (rank, 'Allocate failed.')
-    endif
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(character(len=nw_len_total) :: network_total, STAT=ierr)
-    if (ierr /= 0) then
-      print *, ierr
-      call exit_MPI (rank, 'Allocate failed.')
-    endif
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(character(len=rid_len_total) :: receiver_id_total, STAT=ierr)
-    if (ierr /= 0) then
-      print *, ierr
-      call exit_MPI (rank, 'Allocate failed.')
-    endif
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
-    if (ierr /= 0) then
-      print *, ierr
-      call exit_MPI (rank, 'Allocate failed.')
-    endif
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   endif
 
   call synchronize_all()
@@ -862,7 +839,6 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
   integer, allocatable :: offset_proc(:)
   integer :: i
 
-print *, "local_dim"
   allocate(dim_all_proc(nproc), STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(offset_proc(nproc), STAT=ierr)
@@ -911,7 +887,6 @@ subroutine gather_string_total_length(local_dim, global_dim,&
 
   integer, allocatable :: local_dim_all_proc(:)
 
-print *, "master"
   if(rank.eq.0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
