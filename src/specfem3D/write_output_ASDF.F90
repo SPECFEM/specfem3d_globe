@@ -125,10 +125,10 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
       intent(in) :: seismogram_tmp
   integer,intent(in) :: iorientation
   type(asdf_event),intent(inout) :: asdf_container
+  double precision,intent(in) :: phi
   ! Variables
   integer :: length_station_name, length_network_name
   integer :: ier, i
-  double precision,intent(in) :: phi
 
   i = (irec_local-1)*(3) + (iorientation)
   asdf_container%npoints(i) = seismo_current
@@ -181,7 +181,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%receiver_id_array(i) = ""
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
-  if (ier /= 0) print *, 'Allocate failed. status = ', ier
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
 
 end subroutine store_asdf_data
@@ -285,7 +285,6 @@ subroutine write_asdf(asdf_container)
 
   call world_duplicate(comm)
   call world_size(sizeprocs)
-
   ! declare new group that uses MPI
   call adios_declare_group (adios_group, "EVENTS", "iter", 1, adios_err)
   call adios_select_method (adios_group, "MPI", "", "", adios_err)
@@ -647,6 +646,7 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   component_len = len_trim(component)
   receiver_id_len = len_trim(receiver_id)
 
+  call synchronize_all()
   !get global dimensions for strings
   call gather_string_total_length(receiver_name_len, rn_len_total,&
                                           rank, nproc, comm, ierr)
@@ -656,29 +656,32 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
                                           rank, nproc, comm, ierr)
   call gather_string_total_length(component_len, comp_len_total,&
                                           rank, nproc, comm, ierr)
-  allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(character(len=nw_len_total) :: network_total, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(character(len=rid_len_total) :: receiver_id_total, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  if (rank .eq. 0) then
+    allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+    allocate(character(len=nw_len_total) :: network_total, STAT=ierr)
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+    allocate(character(len=rid_len_total) :: receiver_id_total, STAT=ierr)
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+    allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  endif
 
+  call synchronize_all()
   !write all local strings into global string
   call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset,  & 
-                                        receiver_name, receiver_name_total,  & 
-                                        rank, nproc, comm, ierr)
+                                      receiver_name, receiver_name_total,  & 
+                                      rank, nproc, comm, ierr)
   call gather_string_offset_info(network_len, nw_len_total, nw_offset,       & 
-                                        network, network_total,              & 
-                                        rank, nproc, comm, ierr)
+                                      network, network_total,              & 
+                                      rank, nproc, comm, ierr)
   call gather_string_offset_info(component_len, comp_len_total, comp_offset, & 
-                                        component, component_total,          & 
-                                        rank, nproc, comm, ierr)
+                                      component, component_total,          & 
+                                      rank, nproc, comm, ierr)
   call gather_string_offset_info(receiver_id_len, rid_len_total,rid_offset,  & 
-                                        receiver_id, receiver_id_total,      & 
-                                        rank, nproc, comm, ierr)
-  !===========================
+                                      receiver_id, receiver_id_total,      & 
+                                      rank, nproc, comm, ierr)
+  !==========================
   !write out the string info
   if(rank.eq.0)then
     call adios_write(adios_handle, "receiver_name", trim(receiver_name_total), &
@@ -687,12 +690,11 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
     call adios_write(adios_handle, "component",trim(component_total), adios_err)
     call adios_write(adios_handle, "receiver_id", trim(receiver_id_total), &
                      adios_err)
+    deallocate(receiver_name_total)
+    deallocate(network_total)
+    deallocate(receiver_id_total)
+    deallocate(component_total)
   endif
-
-  deallocate(receiver_name_total)
-  deallocate(network_total)
-  deallocate(receiver_id_total)
-  deallocate(component_total)
 
   !===========================
   ! write seismic records
@@ -833,34 +835,34 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
   integer,intent(in) :: rank, nproc, comm
   integer,intent(inout) :: ierr
 
-  integer, allocatable :: local_dim_all_proc(:)
-  integer, allocatable :: offset_all_proc(:)
+  integer, allocatable :: dim_all_proc(:)
+  integer, allocatable :: offset_proc(:)
   integer :: i
 
-  allocate(local_dim_all_proc(nproc), STAT=ierr)
+  allocate(dim_all_proc(nproc), STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(offset_all_proc(nproc), STAT=ierr)
+  allocate(offset_proc(nproc), STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
         
   call synchronize_all()
-  call MPI_Gather(local_dim, 1, MPI_INTEGER, local_dim_all_proc, 1, &
+  call MPI_Gather(local_dim, 1, MPI_INTEGER, dim_all_proc, 1, &
                   MPI_INTEGER, 0, comm, ierr)
 
   if(rank.eq.0)then
-    offset_all_proc(1)=0
+    offset_proc(1)=0
     do i=2, nproc
-      offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
+      offset_proc(i)=sum(dim_all_proc(1:(i-1)))
     enddo
-    global_dim=sum(local_dim_all_proc(1:nproc))
+    global_dim=sum(dim_all_proc(1:nproc))
   endif
 
-  call MPI_Scatter(offset_all_proc, 1, MPI_INTEGER, offset, &
+  call MPI_Scatter(offset_proc, 1, MPI_INTEGER, offset, &
                               1, MPI_INTEGER, 0, comm, ierr)
   call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
 
-  deallocate(local_dim_all_proc, STAT=ierr)
+  deallocate(dim_all_proc, STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-  deallocate(offset_all_proc, STAT=ierr)
+  deallocate(offset_proc, STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
 
 end subroutine gather_offset_info
