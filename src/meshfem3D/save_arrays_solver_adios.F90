@@ -1389,18 +1389,45 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   if( num_interfaces > 0 ) then
     call adios_write(handle, trim(region_name) // "max_nibool_interfaces", &
         max_nibool_interfaces, adios_err)
-    local_dim = num_interfaces_wmax
-    call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
-                                     local_dim, trim(region_name) // &
-                                     STRINGIFY_VAR(my_neighbours))
-    call write_adios_global_1d_array(handle, myrank, sizeprocs,       &
-                                     local_dim,  trim(region_name) // &
-                                     STRINGIFY_VAR(nibool_interfaces))
+    !local_dim = num_interfaces_wmax
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
+                                     !local_dim, trim(region_name) // &
+                                     !STRINGIFY_VAR(my_neighbours))
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs,       &
+                                     !local_dim,  trim(region_name) // &
+                                     !STRINGIFY_VAR(nibool_interfaces))
 
-    local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
-    call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
-                                     local_dim, trim(region_name) // &
-                                     STRINGIFY_VAR(ibool_interfaces))
+    !local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
+                                     !local_dim, trim(region_name) // &
+                                     !STRINGIFY_VAR(ibool_interfaces))
+
+    call adios_write(handle, trim(region_name) // "my_neighbours/local_dim", &
+                     num_interfaces, adios_err)
+    call adios_write(handle, trim(region_name) // "my_neighbours/global_dim", &
+                     num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "my_neighbours/offset", &
+                     num_interfaces_wmax*myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "my_neighbours/array", &
+                     my_neighbours, adios_err)
+
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/local_dim", &
+                     num_interfaces, adios_err)
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/global_dim", &
+                     num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/offset", &
+                     num_interfaces_wmax*myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/array", &
+                     nibool_interfaces, adios_err)
+
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/local_dim", &
+                     max_nibool_interfaces * num_interfaces, adios_err)
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/global_dim", &
+                     max_nibool_interfaces_wmax * num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/offset", &
+                     max_nibool_interfaces_wmax * num_interfaces_wmax*myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/array", &
+                     ibool_interfaces, adios_err)
   endif
 
   ! inner/outer elements
