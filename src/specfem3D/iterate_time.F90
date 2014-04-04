@@ -135,7 +135,11 @@
     endif ! kernel simulations
 
     ! write the seismograms with time shift
-    if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) ) then
+    if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )) then
+      call write_seismograms()
+    ! asdf uses adios that defines the MPI communicator group that the solver is
+    ! run with. this means every processor in the group is needed for write_seismograms
+    elseif (OUTPUT_SEISMOS_ASDF) then
       call write_seismograms()
     endif
 
