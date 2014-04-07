@@ -433,7 +433,7 @@
   !integer i,j,k
   !double precision r_top,r_bottom
 
-  integer index,num_latperlon,num_lonperdepth
+  integer indexval,num_latperlon,num_lonperdepth
 
   dvs = 0.0
 
@@ -448,10 +448,10 @@
   num_latperlon = PPM_num_latperlon ! int( (PPM_maxlat - PPM_minlat) / PPM_dlat) + 1
   num_lonperdepth = PPM_num_lonperdepth ! int( (PPM_maxlon - PPM_minlon) / PPM_dlon ) + 1
 
-  index = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon  &
-          + int( (lon-PPM_minlon)/PPM_dlon )*num_latperlon &
-          + int( (lat-PPM_minlat)/PPM_dlat ) + 1
-  dvs = PPM_dvs(index)
+  indexval = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon  &
+           + int( (lon-PPM_minlon)/PPM_dlon )*num_latperlon &
+           + int( (lat-PPM_minlat)/PPM_dlat ) + 1
+  dvs = PPM_dvs(indexval)
 
   !  ! loop-wise: slower performance
   !  do i=1,PPM_num_v

@@ -119,7 +119,7 @@
 
   ! local parameters
   integer :: j,k,l,m,ier
-  integer :: index,ll,mm
+  integer :: indexval,ll,mm
   double precision :: v1,v2
 
   character(len=150) :: QRFSI12,QRFSI12_ref
@@ -137,7 +137,7 @@
   endif
 
   do k=1,NKQ
-    read(10,*)index
+    read(10,*) indexval
     j=0
     do l=0,MAXL_Q
       do m=0,l
@@ -148,7 +148,7 @@
         else
           j=j+2
           read(10,*)ll,mm,v1,v2
-  !        write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
+  !       write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
           QRFSI12_Q_dqmu(k,j-1)=2.*v1
           QRFSI12_Q_dqmu(k,j)=-2.*v2
         endif

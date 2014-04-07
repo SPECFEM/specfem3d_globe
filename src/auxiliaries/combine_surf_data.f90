@@ -37,7 +37,7 @@ program combine_surf_data
 
   integer,parameter :: MAX_NUM_NODES = 400
 
-  integer i,j,k,ispec_surf,ios,it,num_node,njunk,ires,idim,iproc,njunk1,njunk2,njunk3,inx,iny
+  integer i,j,k,ispec_surf,ios,it,num_node,njunk,ires,idimval,iproc,njunk1,njunk2,njunk3,inx,iny
   character(len=150) :: arg(20),sline,filename,surfname,reg_name,belm_name, indir, outdir
   character(len=150) :: mesh_file, pt_mesh_file, em_mesh_file, command_name
   logical :: HIGH_RESOLUTION_MESH,FILE_ARRAY_IS_3D
@@ -128,8 +128,8 @@ program combine_surf_data
   endif
 
   ! file dimension
-  read(arg(7),*) idim
-  if (idim == 0) then
+  read(arg(7),*) idimval
+  if (idimval == 0) then
     FILE_ARRAY_IS_3D = .false.
   else
     FILE_ARRAY_IS_3D = .true.

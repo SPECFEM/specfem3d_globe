@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-module write_seismograms_mod 
+module write_seismograms_mod
 
 contains
 
@@ -641,4 +641,4 @@ contains
 
  end subroutine band_instrument_code
 
-end module write_seismograms_mod 
+end module write_seismograms_mod

@@ -41,7 +41,7 @@
 ! 5) upper crust
 ! 6) middle crust
 ! 7) lower crust
-! + Parameters VP, VS and rho are given explicitly for these 7 layers as well as the mantle below the Moho. 
+! + Parameters VP, VS and rho are given explicitly for these 7 layers as well as the mantle below the Moho.
 !
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------

@@ -149,8 +149,8 @@ end subroutine read_scalars_adios_mesh
 !=============================================================================
 subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
                                        xstore, ystore, zstore, ibool)
+  use constants
   implicit none
-  include 'constants.h'
   ! Parameters
   integer(kind=8), intent(in) :: mesh_handle
   integer, intent(in) :: iproc, ir, nglob, nspec
@@ -199,8 +199,8 @@ end subroutine read_coordinates_adios_mesh
 !=============================================================================
 subroutine read_values_adios(value_handle, var_name, iproc, ir, &
                              nspec, data)
+  use constants
   implicit none
-  include 'constants.h'
   ! Parameters
   integer(kind=8), intent(in) :: value_handle
   character(len=*), intent(in) :: var_name
