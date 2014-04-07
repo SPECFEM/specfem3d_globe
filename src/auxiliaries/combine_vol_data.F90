@@ -112,7 +112,7 @@ program combine_vol_data_vtk
   call MPI_Init(ierr)
   call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
   print  *, sizeprocs, "procs"
-  if (sizeprocs .ne. 1) then
+  if (sizeprocs /= 1) then
     print *, "sequential program. Only mpirun -np 1 ..."
     call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
   endif

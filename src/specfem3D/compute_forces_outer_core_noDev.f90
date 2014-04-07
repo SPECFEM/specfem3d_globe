@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_outer_core(time,deltat,two_omega_earth, &
+  subroutine compute_forces_outer_core(timeval,deltat,two_omega_earth, &
                                        NSPEC,NGLOB, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
@@ -56,7 +56,7 @@
   integer :: NSPEC,NGLOB
 
   ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL) timeval,deltat,two_omega_earth
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     A_array_rotation,B_array_rotation
@@ -163,8 +163,8 @@
             ! store the source for the Euler scheme for A_rotation and B_rotation
             two_omega_deltat = deltat * two_omega_earth
 
-            cos_two_omega_t = cos(two_omega_earth*time)
-            sin_two_omega_t = sin(two_omega_earth*time)
+            cos_two_omega_t = cos(two_omega_earth*timeval)
+            sin_two_omega_t = sin(two_omega_earth*timeval)
 
             ! time step deltat of Euler scheme is included in the source
             source_euler_A(i,j,k) = two_omega_deltat &

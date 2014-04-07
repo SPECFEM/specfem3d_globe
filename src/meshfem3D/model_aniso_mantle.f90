@@ -554,7 +554,7 @@
   double precision epa(14,47),ra(47),dcori(47),ri(47)
   double precision corpar(21,47)
   double precision aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
-  character(len=80) null
+  character(len=80) nullval
   character(len=150) Adrem119
 
      ifanis = 1
@@ -562,7 +562,7 @@
 
      call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
      open(unit=13,file=Adrem119,status='old',action='read')
-     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
+     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
 
      if(kiti == 0) read(13,"(20a4)",end = 77) idum1
      read(13,"(20a4)",end = 77) idum2

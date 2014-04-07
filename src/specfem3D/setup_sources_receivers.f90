@@ -336,7 +336,7 @@
   integer :: ier
   integer,dimension(:),allocatable :: tmp_rec_local_all
   integer :: maxrec,maxproc(1)
-  double precision :: size
+  double precision :: sizeval
 
   ! user output
   if( myrank == 0 ) then
@@ -470,12 +470,12 @@
     if( myrank == 0 ) then
       ! note: all process allocate the full sourcearrays array
       ! sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
-      size = dble(NSOURCES) * dble(NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
+      sizeval = dble(NSOURCES) * dble(NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
       ! outputs info
       write(IMAIN,*) 'source arrays:'
       write(IMAIN,*) '  number of sources is ',NSOURCES
-      write(IMAIN,*) '  size of source array                 = ', sngl(size),'MB'
-      write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
+      write(IMAIN,*) '  size of source array                 = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                       = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -496,17 +496,17 @@
     ! seismograms array size in MB
     if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
       ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      size = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
     else
       ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      size = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      sizeval = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
     endif
     ! outputs info
     write(IMAIN,*) 'seismograms:'
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
-    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(size),'MB'
-    write(IMAIN,*) '                                         = ', sngl(size/1024.d0),'GB'
+    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
+    write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -532,9 +532,9 @@
       !enddo
       ! adj_sourcearrays size in MB
       ! adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
-      size = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
-      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ, 
-      !       this memory requirement might double. 
+      sizeval = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
+      !       this memory requirement might double.
       !       at this point, NSTEP_SUB_ADJ is not set yet...
       ! outputs info
       write(IMAIN,*) 'adjoint source arrays:'
@@ -543,8 +543,8 @@
         write(IMAIN,*) '  using asynchronuous buffer for file i/o of adjoint sources'
       endif
       write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
-      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(size),'MB'
-      write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
+      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                       = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif

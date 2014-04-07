@@ -139,7 +139,7 @@
       call write_seismograms()
     ! asdf uses adios that defines the MPI communicator group that the solver is
     ! run with. this means every processor in the group is needed for write_seismograms
-    elseif (OUTPUT_SEISMOS_ASDF) then
+    else if (OUTPUT_SEISMOS_ASDF) then
       call write_seismograms()
     endif
 

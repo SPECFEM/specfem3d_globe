@@ -145,7 +145,7 @@
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
 
-  ! note: we ignore water & ice sheets 
+  ! note: we ignore water & ice sheets
   ! (only elastic layers are considered)
 
   ! whole sediment thickness

@@ -32,7 +32,7 @@
 !! * Scalar definition
 !! * Global arrays definition
 !!
-!! \author MPBL      
+!! \author MPBL
 !-------------------------------------------------------------------------------
 module asdf_helpers_mod
   use asdf_helpers_definitions_mod

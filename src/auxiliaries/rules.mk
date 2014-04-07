@@ -84,8 +84,8 @@ all_aux: required $(auxiliaries_TARGETS)
 
 aux: required $(auxiliaries_TARGETS)
 
-${E}/xconvolve_source_timefunction: $O/convolve_source_timefunction.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.aux.o
+${E}/xconvolve_source_timefunction: $(auxiliaries_SHARED_OBJECTS) $O/convolve_source_timefunction.aux.o
+	${FCCOMPILE_CHECK} -o ${E}/xconvolve_source_timefunction $(auxiliaries_SHARED_OBJECTS) $O/convolve_source_timefunction.aux.o
 
 ${E}/xcombine_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_AVS_DX $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o

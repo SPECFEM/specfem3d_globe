@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine calerf(ARG,RESULT,JINT)
+  subroutine calerf(ARG,RESULT,jintval)
 
 !------------------------------------------------------------------
 !
@@ -50,12 +50,12 @@
 !   routine.  The function subprograms invoke  CALERF  with the
 !   statement
 !
-!          call CALERF(ARG,RESULT,JINT)
+!          call CALERF(ARG,RESULT,jintval)
 !
 !   where the parameter usage is as follows
 !
 !      Function                     Parameters for CALERF
-!       call              ARG                  Result          JINT
+!       call              ARG                  Result          jintval
 !
 !     ERF(ARG)      ANY REAL ARGUMENT         ERF(ARG)          0
 !
@@ -114,7 +114,7 @@
 
   implicit none
 
-  integer I,JINT
+  integer I,jintval
   double precision A,ARG,B,C,D,DEL,FOUR,HALF,P,ONE,Q,RESULT,SIXTEEN,SQRPI, &
        TWO,THRESHOLD,X,XBIG,XDEN,XHUGE,XINF,XMAX,XNEG,XNUM,XSMALL, &
        Y,YSQ,ZERO
@@ -183,8 +183,8 @@
       enddo
 
       RESULT = X * (XNUM + A(4)) / (XDEN + B(4))
-      if (JINT  /=  0) RESULT = ONE - RESULT
-      if (JINT  ==  2) RESULT = EXP(YSQ) * RESULT
+      if (jintval  /=  0) RESULT = ONE - RESULT
+      if (jintval  ==  2) RESULT = EXP(YSQ) * RESULT
       goto 800
 
 !------------------------------------------------------------------
@@ -200,7 +200,7 @@
       enddo
 
       RESULT = (XNUM + C(8)) / (XDEN + D(8))
-      if (JINT  /=  2) then
+      if (jintval  /=  2) then
          YSQ = AINT(Y*SIXTEEN)/SIXTEEN
          DEL = (Y-YSQ)*(Y+YSQ)
          RESULT = EXP(-YSQ*YSQ) * EXP(-DEL) * RESULT
@@ -212,7 +212,7 @@
    else
       RESULT = ZERO
       if (Y >= XBIG) then
-         if (JINT /= 2 .OR. Y >= XMAX) goto 300
+         if (jintval /= 2 .OR. Y >= XMAX) goto 300
          if (Y >= XHUGE) then
             RESULT = SQRPI / Y
             goto 300
@@ -229,7 +229,7 @@
 
       RESULT = YSQ *(XNUM + P(5)) / (XDEN + Q(5))
       RESULT = (SQRPI -  RESULT) / Y
-      if (JINT /= 2) then
+      if (jintval /= 2) then
          YSQ = AINT(Y*SIXTEEN)/SIXTEEN
          DEL = (Y-YSQ)*(Y+YSQ)
          RESULT = EXP(-YSQ*YSQ) * EXP(-DEL) * RESULT
@@ -239,10 +239,10 @@
 !------------------------------------------------------------------
 !  Fix up for negative argument, erf, etc.
 !------------------------------------------------------------------
-  300 if (JINT == 0) then
+  300 if (jintval == 0) then
       RESULT = (HALF - RESULT) + HALF
       if (X < ZERO) RESULT = -RESULT
-   else if (JINT == 1) then
+   else if (jintval == 1) then
       if (X < ZERO) RESULT = TWO - RESULT
    else
       if (X < ZERO) then
@@ -272,11 +272,11 @@
 
   implicit none
 
-  integer JINT
+  integer jintval
   double precision X, RESULT
 
-  JINT = 0
-  call calerf(X,RESULT,JINT)
+  jintval = 0
+  call calerf(X,RESULT,jintval)
   netlib_specfun_erf = RESULT
 
   end function netlib_specfun_erf
