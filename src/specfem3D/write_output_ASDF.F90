@@ -115,6 +115,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
           event_name=>event_name_SAC,cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,&
           cmt_depth=>cmt_depth_SAC,cmt_hdur=>cmt_hdur_SAC
 
+  use specfem_par, only: myrank
   implicit none
   include "constants.h"
 
@@ -158,10 +159,10 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
     asdf_container%cmp_azimuth(i)  = 0.00
     asdf_container%cmp_incident_ang(i) = 0.00
   else if(iorientation == 4) then !R
-    asdf_container%cmp_azimuth(i) = sngl(modulo(phi,360.0))
+    asdf_container%cmp_azimuth(i) = sngl(modulo(phi,360.0d+0))
     asdf_container%cmp_incident_ang(i) =90.00
   else if(iorientation == 5) then !T
-    asdf_container%cmp_azimuth(i) = sngl(modulo(phi+90.0,360.0))
+    asdf_container%cmp_azimuth(i) = sngl(modulo(phi+90.0,360.0d+0))
     asdf_container%cmp_incident_ang(i) =90.00
   endif
   asdf_container%sample_rate(i) = DT
