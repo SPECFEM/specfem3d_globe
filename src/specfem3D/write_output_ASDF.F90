@@ -112,7 +112,6 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
           yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC,          &
           tshift_cmt=>t_cmt_SAC,t_shift=>t_shift_SAC,                          &
           elat=>elat_SAC,elon=>elon_SAC,depth=>depth_SAC,                      &
-          event_name=>event_name_SAC,cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,&
           cmt_depth=>cmt_depth_SAC,cmt_hdur=>cmt_hdur_SAC
 
   use specfem_par, only: myrank
