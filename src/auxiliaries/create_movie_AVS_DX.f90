@@ -97,7 +97,7 @@
 ! for sorting routine
   integer :: npointot,ilocnum,nglob,ielm,ieoff,ispecloc
   integer :: NIT
-  integer, dimension(:), allocatable :: iglob,loc,ireorder
+  integer, dimension(:), allocatable :: iglob,locval,ireorder
   logical, dimension(:), allocatable :: ifseg,mask_point
   double precision, dimension(:), allocatable :: xp,yp,zp,xp_save,yp_save,zp_save,field_display
 
@@ -266,7 +266,7 @@
   allocate(iglob(npointot),stat=ierror)
   if(ierror /= 0) stop 'error while allocating iglob'
 
-  allocate(loc(npointot),stat=ierror)
+  allocate(locval(npointot),stat=ierror)
   if(ierror /= 0) stop 'error while allocating loc'
 
   allocate(ifseg(npointot),stat=ierror)
@@ -610,7 +610,7 @@
 
     !--- sort the list based upon coordinates to get rid of multiples
     print *,'sorting list of points'
-    call get_global_AVS(nspectot_AVS_max,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
+    call get_global_AVS(nspectot_AVS_max,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
 
     !--- print total number of points found
     print *
@@ -866,7 +866,7 @@
 !
 
 
-  subroutine get_global_AVS(nspec,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
+  subroutine get_global_AVS(nspec,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
 
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
@@ -878,7 +878,7 @@
   implicit none
 
   integer npointot
-  integer iglob(npointot),loc(npointot)
+  integer iglob(npointot),locval(npointot)
   logical ifseg(npointot)
   double precision xp(npointot),yp(npointot),zp(npointot)
   integer nspec,nglob
@@ -913,7 +913,7 @@
   do ispec=1,nspec
     ieoff=NGNOD2D_AVS_DX*(ispec-1)
     do ilocnum=1,NGNOD2D_AVS_DX
-      loc(ieoff+ilocnum)=ieoff+ilocnum
+      locval(ieoff+ilocnum)=ieoff+ilocnum
     enddo
   enddo
 
@@ -935,7 +935,7 @@
     else
       call rank(zp(ioff),ind,ninseg(iseg))
     endif
-    call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
+    call swap_all(locval(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
     ioff=ioff+ninseg(iseg)
   enddo
 
@@ -971,7 +971,7 @@
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
-    iglob(loc(i))=ig
+    iglob(locval(i))=ig
   enddo
 
   nglob=ig

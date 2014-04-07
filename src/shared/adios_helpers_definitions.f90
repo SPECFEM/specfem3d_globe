@@ -1330,7 +1330,7 @@ end subroutine define_adios_global_1d_string_1d
 
 subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
                 local_dim, path, array_name, var)
-                
+
   implicit none
   ! Parameters
   integer(kind=8), intent(in) :: adios_group
@@ -1338,7 +1338,7 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
   character(len=*), intent(in) :: var
-  ! Local 
+  ! Local
   character(len=256) :: full_name
   integer(kind=8) :: var_id
 

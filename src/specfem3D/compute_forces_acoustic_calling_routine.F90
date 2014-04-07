@@ -39,7 +39,7 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: time
+  real(kind=CUSTOM_REAL) :: timeval
   ! non blocking MPI
   ! iphase: iphase = 1 is for computing outer elements in the outer_core,
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
@@ -51,15 +51,15 @@
   ! current simulated time
   if(USE_LDDRK)then
     if(CUSTOM_REAL == SIZE_REAL) then
-      time = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
+      timeval = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
     else
-      time = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
+      timeval = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
     endif
   else
     if(CUSTOM_REAL == SIZE_REAL) then
-      time = sngl((dble(it-1)*DT-t0)*scale_t_inv)
+      timeval = sngl((dble(it-1)*DT-t0)*scale_t_inv)
     else
-      time = (dble(it-1)*DT-t0)*scale_t_inv
+      timeval = (dble(it-1)*DT-t0)*scale_t_inv
     endif
   endif
 
@@ -85,7 +85,7 @@
       ! on CPU
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
-        call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+        call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
                                            NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
                                            A_array_rotation,B_array_rotation, &
                                            A_array_rotation_lddrk,B_array_rotation_lddrk, &
@@ -93,7 +93,7 @@
                                            div_displ_outer_core,phase_is_inner)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
-        call compute_forces_outer_core(time,deltat,two_omega_earth, &
+        call compute_forces_outer_core(timeval,deltat,two_omega_earth, &
                                        NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
@@ -103,7 +103,7 @@
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
-      call compute_forces_outer_core_cuda(Mesh_pointer,iphase,time,1)
+      call compute_forces_outer_core_cuda(Mesh_pointer,iphase,timeval,1)
 
       ! initiates asynchronuous mpi transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then

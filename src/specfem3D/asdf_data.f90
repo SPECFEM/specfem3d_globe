@@ -35,7 +35,7 @@ module asdf_data
     real, allocatable       :: sample_rate(:),  scale_factor(:)
 
     real, allocatable       :: ev_to_sta_AZ(:), sta_to_ev_AZ(:)
-    real, allocatable       :: great_circle_arc(:) 
+    real, allocatable       :: great_circle_arc(:)
     real, allocatable       :: dist(:)
     real, allocatable       :: P_pick(:), S_pick(:)
 

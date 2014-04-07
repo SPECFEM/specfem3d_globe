@@ -1839,7 +1839,7 @@
 
   !real(kind=4) :: X(2),XP(2),XCOSEC(2) !! X, XP, XCOSEC should go from 1 to M+1
 
-  double precision :: SMALL,SUM,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
+  double precision :: SMALL,sumval,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
 
   double precision, parameter :: FPI = 12.56637062D0
 
@@ -1851,7 +1851,7 @@
 
 !!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
 
-  SUM=0.D0
+  sumval=0.D0
   LP1=L+1
   TH=THETA
   CT=DCOS(TH)
@@ -1895,14 +1895,14 @@
   X2=dble(L)*(X1-CT*X2)*FCT/ST
   X(1)=X3
   X(2)=X2
-  SUM=X3*X3
+  sumval=X3*X3
   XP(1)=-X2
   XP(2)=dble(L*(L+1))*X3-COT*X2
   X(2)=-X(2)/SFL3
   XCOSEC(2)=X(2)*COSEC
   XP(2)=-XP(2)/SFL3
-  SUM=SUM+2.D0*X(2)*X(2)
-  IF(SUM-COMPAR > SMALL) RETURN
+  sumval=sumval+2.D0*X(2)*X(2)
+  IF(sumval-COMPAR > SMALL) RETURN
   X1=X3
   X2=-X2/DSQRT(dble(L*(L+1)))
 
@@ -1912,8 +1912,8 @@
     F2=DSQRT(dble((L+I-2)*(L-I+3)))
     XM=K
     X3=-(2.D0*COT*(XM-1.D0)*X2+F2*X1)/F1
-    SUM=SUM+2.D0*X3*X3
-    IF(SUM-COMPAR > SMALL.AND.I /= LP1) RETURN
+    sumval=sumval+2.D0*X3*X3
+    IF(sumval-COMPAR > SMALL.AND.I /= LP1) RETURN
     X(I)=X3
     XCOSEC(I)=X(I)*COSEC
     X1=X2

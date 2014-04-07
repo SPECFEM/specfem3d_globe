@@ -69,12 +69,12 @@
       call read_adj_io_thread(it_sub_adj)
 
       ! first chunk of adjoint sources must ready at begining, so we wait.
-      ! waits for previous read to finish and 
+      ! waits for previous read to finish and
       ! copy over buffered data into tmp_sourcearray
       call sync_adj_io_thread(adj_sourcearrays)
 
     else
-      ! waits for previous read to finish and 
+      ! waits for previous read to finish and
       ! copy over buffered data into tmp_sourcearray
       call sync_adj_io_thread(adj_sourcearrays)
     endif

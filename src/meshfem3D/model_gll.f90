@@ -63,7 +63,7 @@
 
   ! local parameters
   double precision :: scaleval
-  real(kind=CUSTOM_REAL) :: min,max,min_all,max_all
+  real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
   integer :: ier
 
   ! allocates arrays
@@ -103,26 +103,26 @@
     endif
 
     ! Vs
-    max = maxval( MGLL_V%vs_new )
-    min = minval( MGLL_V%vs_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vs_new )
+    minvalue = minval( MGLL_V%vs_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vs new min/max: ',min_all,max_all
     endif
     ! Vp
-    max = maxval( MGLL_V%vp_new )
-    min = minval( MGLL_V%vp_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vp_new )
+    minvalue = minval( MGLL_V%vp_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vp new min/max: ',min_all,max_all
     endif
     ! density
-    max = maxval( MGLL_V%rho_new )
-    min = minval( MGLL_V%rho_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%rho_new )
+    minvalue = minval( MGLL_V%rho_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
       write(IMAIN,*)
@@ -137,50 +137,50 @@
     endif
 
     ! Vsv
-    max = maxval( MGLL_V%vsv_new )
-    min = minval( MGLL_V%vsv_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vsv_new )
+    minvalue = minval( MGLL_V%vsv_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vsv new min/max: ',min_all,max_all
     endif
     ! Vsh
-    max = maxval( MGLL_V%vsh_new )
-    min = minval( MGLL_V%vsh_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vsh_new )
+    minvalue = minval( MGLL_V%vsh_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vsh new min/max: ',min_all,max_all
     endif
     ! Vpv
-    max = maxval( MGLL_V%vpv_new )
-    min = minval( MGLL_V%vpv_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vpv_new )
+    minvalue = minval( MGLL_V%vpv_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vpv new min/max: ',min_all,max_all
     endif
     ! Vph
-    max = maxval( MGLL_V%vph_new )
-    min = minval( MGLL_V%vph_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vph_new )
+    minvalue = minval( MGLL_V%vph_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vph new min/max: ',min_all,max_all
     endif
     ! density
-    max = maxval( MGLL_V%rho_new )
-    min = minval( MGLL_V%rho_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%rho_new )
+    minvalue = minval( MGLL_V%rho_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
     endif
     ! eta
-    max = maxval( MGLL_V%eta_new )
-    min = minval( MGLL_V%eta_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%eta_new )
+    minvalue = minval( MGLL_V%eta_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  eta new min/max: ',min_all,max_all
       write(IMAIN,*)

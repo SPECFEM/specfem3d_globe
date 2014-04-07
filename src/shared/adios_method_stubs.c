@@ -117,10 +117,10 @@ void FC_FUNC_(init_asdf_data, INIT_ASDF_DATA)(void* asdf_event,
                                              int* total_seismos_local){}
 
 void FC_FUNC_(store_asdf_data, STORE_ASDF_DATA)
-    (void* my_asdf, realw* seismogram_tmp, int* irec_local, int *irec, 
+    (void* my_asdf, realw* seismogram_tmp, int* irec_local, int *irec,
      char* chn, int* iorientation){}
 
-void FC_FUNC_(close_asdf_data, CLOSE_ASDF_DATA)(void *my_asdf, 
+void FC_FUNC_(close_asdf_data, CLOSE_ASDF_DATA)(void *my_asdf,
                                                 int *total_seismos_local){}
 
 void FC_FUNC_(write_asdf, WRITE_ASDF)(void* my_asdf){}
