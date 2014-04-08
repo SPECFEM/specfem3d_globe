@@ -607,7 +607,8 @@
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
 
-  call write_movie_volume_mesh()
+  call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
+                                          muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
   if(myrank == 0) then
     write(IMAIN,*)

@@ -149,15 +149,25 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_mesh()
+!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
+!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+  subroutine write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
+                                          muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
 ! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
 ! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
   use specfem_par
   use specfem_par_crustmantle
-  use specfem_par_movie
+
   implicit none
+
+  integer :: npoints_3dmovie
+  integer, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: num_ibool_3dmovie
+  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
+  logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
 
   ! local parametes
   integer :: ipoints_3dmovie,ispecele,ispec,i,j,k
@@ -176,8 +186,9 @@
     iNIT = 1
   endif
 
-  ! loops over all elements
   ipoints_3dmovie = 0
+
+  ! loops over all elements
   do ispec = 1,NSPEC_CRUST_MANTLE
 
     do k = 1,NGLLZ,iNIT
@@ -323,8 +334,7 @@
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
-    muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
 
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
 
@@ -362,6 +372,7 @@
   else if(MOVIE_VOLUME_TYPE == 3) then
     movie_prefix='P' ! potency, or integral of strain x \mu
   endif
+
   if(MOVIE_COARSE) then
    iNIT = NGLLX-1
   else

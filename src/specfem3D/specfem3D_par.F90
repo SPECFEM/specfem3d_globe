@@ -627,8 +627,7 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-    rhostore_outer_core,kappavstore_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE), target :: rmass_outer_core
@@ -686,13 +685,12 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
 
   ! adjoint kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
-    rho_kl_outer_core,alpha_kl_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core,alpha_kl_outer_core
 
   ! check for deviatoric kernel for outer core region
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
-  logical,parameter:: deviatoric_outercore = .false.
+  logical, parameter :: deviatoric_outercore = .false.
 
   ! inner / outer elements outer core region
   integer :: num_phase_ispec_outer_core

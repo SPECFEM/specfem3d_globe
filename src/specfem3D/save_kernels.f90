@@ -27,11 +27,16 @@
 
   subroutine save_kernels()
 
-  use constants_solver,only: SAVE_BOUNDARY_MESH
+  use constants_solver, only: SAVE_BOUNDARY_MESH
 
-  use specfem_par,only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
+  use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
     APPROXIMATE_HESS_KL,SAVE_REGULAR_KL, &
     current_adios_handle,ADIOS_ENABLED,ADIOS_FOR_KERNELS
+
+  use specfem_par_innercore, only: rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
+    rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core
+
+  use specfem_par_outercore, only: rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core
 
   implicit none
 
@@ -56,10 +61,11 @@
     endif
 
     ! outer core
-    call save_kernels_outer_core()
+    call save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
 
     ! inner core
-    call save_kernels_inner_core()
+    call save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
+                                     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
 
     ! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
@@ -509,19 +515,25 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_outer_core()
+!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
+!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+  subroutine save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
 
   use specfem_par
-  use specfem_par_outercore
 
   implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
+
+  ! adjoint kernels
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core,alpha_kl_outer_core
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
   real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl
   integer :: ispec,i,j,k
 
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t / scale_displ * 1.d9
 
   ! outer_core
   do ispec = 1, NSPEC_OUTER_CORE
@@ -561,19 +573,30 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_inner_core()
+!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
+!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+  subroutine save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
+                                     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
 
   use specfem_par
-  use specfem_par_innercore
 
   implicit none
+
+  ! material parameters
+  ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+    rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
+
+  ! adjoint kernels
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+    rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
 
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t / scale_displ * 1.d9
 
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
