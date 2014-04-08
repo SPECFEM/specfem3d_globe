@@ -115,6 +115,7 @@ void *fread_adj_thread(void* dummy){
 
   // exit thread
   pthread_exit(NULL);
+  return NULL;  // Never used, but remove warnings.
 }
 
 // Waits until thread is finished with I/O
