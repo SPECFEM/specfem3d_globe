@@ -1439,9 +1439,17 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
                    num_phase_ispec, adios_err)
 
   if(num_phase_ispec > 0 ) then
-    local_dim = num_phase_ispec_wmax * 2
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                          trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
+    !local_dim = num_phase_ispec_wmax * 2
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+                          !trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/local_dim", &
+                     2 * num_phase_ispec, adios_err)
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/global_dim", &
+                     2 * num_phase_ispec_wmax * sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/offset", &
+                     2 * num_phase_ispec_wmax * myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/array", &
+                     phase_ispec_inner, adios_err)
   endif
 
   ! mesh coloring
@@ -1451,9 +1459,18 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
     call adios_write(handle, trim(region_name) // "num_colors_inner", &
                      nspec_inner, adios_err)
 
-    local_dim = num_colors_outer_wmax + num_colors_inner_wmax
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                            trim(region_name) // STRINGIFY_VAR(num_elem_colors))
+    !local_dim = num_colors_outer_wmax + num_colors_inner_wmax
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+                            !trim(region_name) // STRINGIFY_VAR(num_elem_colors))
+
+    call adios_write(handle, trim(region_name) // "num_elem_colors/local_dim", &
+                     (num_colors_inner + num_colors_outer), adios_err)
+     call adios_write(handle, trim(region_name) // "num_elem_colors/global_dim", &
+                      (num_colors_inner_wmax + num_colors_outer_wmax)* sizeprocs, adios_err)
+     call adios_write(handle, trim(region_name) // "num_elem_colors/offset", &
+                      (num_colors_inner_wmax + num_colors_outer_wmax)* myrank, adios_err)
+     call adios_write(handle, trim(region_name) // "num_elem_colors/array", &
+                      num_elem_colors, adios_err)
   endif
 
   !--- Reset the path to zero and perform the actual write to disk
