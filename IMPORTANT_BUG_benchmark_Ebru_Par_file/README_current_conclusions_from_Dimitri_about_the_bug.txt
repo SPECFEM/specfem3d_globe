@@ -7,7 +7,7 @@ runs are OK when attenuation is turned off in the Par_file; thus the bug is rela
 the problem (very likely) seems to be in the mesher because when not using mcmodel=medium to compile the mesher only and create the mesh, the results are then unchanged whether we compile the solver with mcmodel=medium or not; however, if we compile the mesher with mcmodel=medium instead of without, then the seismograms are (very) different
 
 attenuation with a 1D Earth model is OK (GJI 2002 attenuation benchmark is OK);
-note from Dimitri: confirmed also by this comment from last August "All 1D examples we have tested are fine (i.e. give identical seismograms with and without -mcmodel=medium -shared-intel), thus the bug is likely in the 3D routines."
+note from Dimitri: also confirmed by this comment from last August "All 1D examples we have tested are fine (i.e. give identical seismograms with and without -mcmodel=medium -shared-intel), thus the bug is likely in the 3D routines."
 
 thus the bug seems to be in the mesher, and come from attenuation in 3D models (or at least in the 3D model used by Ebru, which is s362ani); a good test could be to try another 3D model (e.g. s40rts) with attenuation, to see if the bug is still there. I think I remember from last August that the answer is yes (the bug is still there) but I am only 90% sure because it was several months ago; we should redo the test
 
