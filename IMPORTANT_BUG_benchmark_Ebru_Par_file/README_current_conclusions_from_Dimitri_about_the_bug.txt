@@ -1,4 +1,4 @@
-The three input files needed: Par_file, CMTSOLUTION and STATIONS are in this directory. (and should be moved to directory "DATA" before starting a run)
+The three input files needed: Par_file, CMTSOLUTION and STATIONS are in each directory. (and should be moved to directory "DATA" before starting a run)
 
 ====================
 
@@ -30,4 +30,30 @@ However, it is reproducible: running the same weird case twice seems to always g
 All stations are affected (some more than others), thus I only use and plot the first one (station "AAE").
 
 to all: please confirm the random behavior, but the machine I used is very reliable (European supercomputing center) and the 1D results with attenuation are always OK and fit the normal-mode exact solution perfectly, thus I am 99.99% sure it is a bug in the code rather than a problem on that machine. However, let us confirm that.
+
+====================
+
+Hi,
+
+No, sorry about the confusion, here are the conclusions:
+
+- for Ebru's Par_file, ifort with -mcmodel=medium -shared-intel and ifort without -mcmodel=medium -shared-intel give very different seismograms
+
+- for that same Par_file, GNU gfortran gives the same seismograms with or without -mcmodel=medium, *BUT* gfortran v4.6 gives very different seismograms from gfortran v4.8 (and in addition they also differ from the seismograms given by Intel ifort)
+
+So basically some memory gets corrupted at some point, and the problem is severe because memory is altered very differently between ifort, gfortran v4.6 and gfortran v4.8 and thus the seismograms change drastically.
+
+The bug is triggered only when a 3D Earth model is used *and* attenuation is turned on. 3D models without attenuation are OK, and 1D models with attenuation are also OK.
+
+Thanks,
+Dimitri.
+
+On 10/04/2014 17:16, Matthieu Lefebvre wrote:
+> @komatits
+> In this thread you are saying that -mcmodel=medium -shared-intel with
+> intel compiler sis a problem.
+> and in README_current_conclusions_from_Dimitri_about_the_bug.txt you are
+> saying that mcmodel=medium is also a problem with gnu compilers.
+>
+> Am I right?
 
