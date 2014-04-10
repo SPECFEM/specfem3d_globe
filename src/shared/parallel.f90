@@ -164,8 +164,8 @@
 
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -207,8 +207,8 @@
 
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -301,8 +301,8 @@
 
   subroutine min_all_cr(sendbuf, recvbuf)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -366,8 +366,8 @@
 
   subroutine max_all_cr(sendbuf, recvbuf)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -477,8 +477,8 @@
 
   subroutine bcast_all_cr(buffer, countval)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -537,7 +537,7 @@
 
   subroutine bcast_all_dp(buffer, countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -556,7 +556,7 @@
 
   subroutine bcast_all_singledp(buffer)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -575,7 +575,7 @@
 
   subroutine bcast_all_ch(buffer, countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -594,7 +594,7 @@
 
   subroutine bcast_all_ch_array(buffer,ndim,countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -613,7 +613,7 @@
 
   subroutine bcast_all_ch_array2(buffer,ndim1,ndim2,countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -632,7 +632,7 @@
 
   subroutine bcast_all_l(buffer, countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -720,8 +720,8 @@
 
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -827,8 +827,8 @@
 
   subroutine send_cr(sendbuf, sendcount, dest, sendtag)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -870,8 +870,8 @@
   subroutine sendrecv_cr(sendbuf, sendcount, dest, sendtag, &
                          recvbuf, recvcount, source, recvtag)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -968,8 +968,8 @@
 
   subroutine gather_all_cr(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -1016,8 +1016,8 @@
 
   subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -1042,8 +1042,8 @@
 
   subroutine gatherv_all_cr(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 

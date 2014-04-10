@@ -1,7 +1,7 @@
 
 module combine_vol_data_adios_mod
-  use mpi
   use adios_read_mod
+  use mpi
   implicit none
 contains
 

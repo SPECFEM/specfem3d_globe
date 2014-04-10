@@ -602,6 +602,7 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   use mpi
 
   implicit none
+
   integer                       :: adios_err, i
   integer(kind=8),intent(in)    :: adios_handle
   integer,intent(in)            :: rank, nproc, comm
@@ -831,6 +832,7 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
                               rank, nproc, comm, ierr)
 
   use mpi
+
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim, offset
@@ -881,6 +883,7 @@ subroutine gather_string_total_length(local_dim, global_dim,&
                                           rank, nproc, comm, ierr)
 
   use mpi
+
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim
@@ -921,6 +924,7 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
                                      string_piece, string_total, &
                                      rank, nproc, comm, ierr)
   use mpi
+
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim, offset

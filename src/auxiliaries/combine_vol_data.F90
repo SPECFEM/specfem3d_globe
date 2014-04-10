@@ -28,15 +28,15 @@ program combine_vol_data_vtk
 
   ! outputs vtk-files (ascii format)
 
+  use constants
+
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 #ifdef ADIOS_INPUT
-  use mpi
   use adios_read_mod
   use combine_vol_data_adios_mod
+  use mpi
 #endif
-
-  use constants
 
   implicit none
 
