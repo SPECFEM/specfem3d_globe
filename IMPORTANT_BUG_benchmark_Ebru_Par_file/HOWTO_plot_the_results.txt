@@ -1,0 +1,13 @@
+
+if not already installed on your machine, install "gnuplot"   (apt-get install gnuplot  for instance on Ubuntu Linux)
+
+then in each directory, just type:
+
+
+  gnuplot gnuplot_script_plotall_curves.gnu
+
+
+
+
+
+
