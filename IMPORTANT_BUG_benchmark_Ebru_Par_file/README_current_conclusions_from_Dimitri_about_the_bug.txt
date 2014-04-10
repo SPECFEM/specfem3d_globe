@@ -31,6 +31,8 @@ All stations are affected (some more than others), thus I only use and plot the 
 
 to all: please confirm the random behavior, but the machine I used is very reliable (European supercomputing center) and the 1D results with attenuation are always OK and fit the normal-mode exact solution perfectly, thus I am 99.99% sure it is a bug in the code rather than a problem on that machine. However, let us confirm that.
 
+Elliott can reproduce it.
+
 ====================
 
 Hi,
