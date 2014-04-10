@@ -17,7 +17,7 @@ the bug is probably not in the MPI routines, since the 1D attenuation benchmark 
 
 the bug is not something obvious such as an array index going out of bounds, because the code does not display any error message for that benchmark when running with full range checking options (as well as stack checking, unassigned variable detection and so on)
 
-the bug is not related to the new UNDO_ATTENUATION option, because the bug is already present in older versions (UNDO_ATTENUATION was added only recently), and in addition UNDO_ATTENUATION is off in the Par_file of this test
+the bug is not related to the new UNDO_ATTENUATION option, because it is already present in older versions (UNDO_ATTENUATION was added only recently), and in addition UNDO_ATTENUATION is off in the Par_file of this test
 
 Ebru's current runs are highly affected (the example is her Par_file, with a single change: 60 min instead of 100 min for the total duration of the seismograms, just to reduce the cost of the tests)
 
