@@ -1,4 +1,3 @@
-
 The three input files needed: Par_file, CMTSOLUTION and STATIONS are in this directory. (and should be moved to directory "DATA" before starting a run)
 
 ====================
@@ -14,6 +13,8 @@ thus the bug seems to be in the mesher, and come from attenuation in 3D models (
 the bug does not come from option -ftz (Flush to Zero) used to compile the code, which in principle can slightly change roundoff results, because the seismograms are unchanged whether we use it or not
 
 the bug is probably not in the MPI routines, since the 1D attenuation benchmark is OK (and the MPI routines do not know if the model is 1D or 3D), and last summer Daniel rewrote the MPI routines almost entirely but the bug is still there
+
+the bug is not something obvious such as an array index going out of bounds, because the code does not display any error message for that benchmark when running with full range checking options (as well as stack checking, unassigned variable detection and so on)
 
 Ebru's current runs are highly affected (the example is her Par_file, with a single change: 60 min instead of 100 min for the total duration of the seismograms, just to reduce the cost of the tests)
 
