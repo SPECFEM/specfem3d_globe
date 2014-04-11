@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, enddo_LOOP_IJK defined in config.fh
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
 
@@ -83,7 +83,7 @@
     dummyy_loc(INDEX_IJK) = displ(2,iglob)
     dummyz_loc(INDEX_IJK) = displ(3,iglob)
 
-  enddo_LOOP_IJK
+  ENDDO_LOOP_IJK
 
   ! deville optimizations
   ! computes 1. matrix multiplication for tempx1,..
@@ -135,7 +135,7 @@
     epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
     epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
-  enddo_LOOP_IJK
+  ENDDO_LOOP_IJK
 
   contains
 
@@ -501,7 +501,7 @@
     dummyy_loc(INDEX_IJK) = displ(2,iglob) + deltat * veloc(2,iglob)
     dummyz_loc(INDEX_IJK) = displ(3,iglob) + deltat * veloc(3,iglob)
 
-  enddo_LOOP_IJK
+  ENDDO_LOOP_IJK
 
   ! deville optimizations
   ! computes 1. matrix multiplication for tempx1,..
@@ -563,7 +563,7 @@
     epsilondev_xz_loc_nplus1(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
     epsilondev_yz_loc_nplus1(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
-  enddo_LOOP_IJK
+  ENDDO_LOOP_IJK
 
   contains
 
