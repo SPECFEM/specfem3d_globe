@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+! and macros INDEX_IJK, DO_LOOP_IJK, enddo_LOOP_IJK defined in config.fh
 #include "config.fh"
 
 
@@ -180,7 +180,7 @@
         temp_gzl(INDEX_IJK) = cos_theta
       endif
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -331,7 +331,7 @@
       tempx3(INDEX_IJK) = jacobianl*(gammaxl*dpotentialdx_with_rot &
                                + gammayl*dpotentialdy_with_rot + gammazl*dpotentialdzl)
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -352,7 +352,7 @@
                                    + wgllwgll_xz_3D(INDEX_IJK)*newtempx2(INDEX_IJK) &
                                    + wgllwgll_xy_3D(INDEX_IJK)*newtempx3(INDEX_IJK))
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
     ! adds gravity
     if(GRAVITY_VAL) then
@@ -361,7 +361,7 @@
 
         sum_terms(INDEX_IJK) = sum_terms(INDEX_IJK) + gravity_term(INDEX_IJK)
 
-      ENDDO_LOOP_IJK
+      enddo_LOOP_IJK
 
     endif
 
@@ -411,7 +411,7 @@
           B_array_rotation(INDEX_IJK,ispec) = B_array_rotation(INDEX_IJK,ispec) &
                                               + BETA_LDDRK(istage) * B_array_rotation_lddrk(INDEX_IJK,ispec)
 
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
 
       else
 
@@ -420,7 +420,7 @@
           A_array_rotation(INDEX_IJK,ispec) = A_array_rotation(INDEX_IJK,ispec) + source_euler_A(INDEX_IJK)
           B_array_rotation(INDEX_IJK,ispec) = B_array_rotation(INDEX_IJK,ispec) + source_euler_B(INDEX_IJK)
 
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
 
       endif
     endif

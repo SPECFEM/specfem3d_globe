@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+! and macros INDEX_IJK, DO_LOOP_IJK, enddo_LOOP_IJK defined in config.fh
 #include "config.fh"
 
 
@@ -406,7 +406,7 @@
     tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
     tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
 
-  ENDDO_LOOP_IJK
+  enddo_LOOP_IJK
 
   end subroutine compute_element_iso
 
@@ -978,7 +978,7 @@
     tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
     tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
 
-  ENDDO_LOOP_IJK
+  enddo_LOOP_IJK
 
   end subroutine compute_element_tiso
 
@@ -1385,7 +1385,7 @@
     tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
     tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
 
-  ENDDO_LOOP_IJK
+  enddo_LOOP_IJK
 
   end subroutine compute_element_aniso
 

@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+! and macros INDEX_IJK, DO_LOOP_IJK, enddo_LOOP_IJK defined in config.fh
 #include "config.fh"
 
 
@@ -114,13 +114,13 @@
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
 
       else
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
 
       endif
 
@@ -130,13 +130,13 @@
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
 
       else
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
 
       endif
     endif
@@ -159,7 +159,7 @@
       R_yz(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_yz(INDEX_IJK,i_SLS,ispec) + factor_common_c44_muv(INDEX_IJK) * &
           (betaval(i_SLS) * epsilondev_yz(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,5))
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
   enddo ! i_SLS
 
@@ -246,11 +246,11 @@
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
       else
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
       endif
 
     else
@@ -258,11 +258,11 @@
       if(ANISOTROPIC_3D_MANTLE_VAL) then
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
       else
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
+        enddo_LOOP_IJK
       endif
 
     endif
@@ -296,7 +296,7 @@
       R_xz(INDEX_IJK,i_SLS,ispec) = R_xz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec)
       R_yz(INDEX_IJK,i_SLS,ispec) = R_yz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec)
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
   enddo ! i_SLS
 
@@ -384,13 +384,13 @@
 
       DO_LOOP_IJK
         factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-      ENDDO_LOOP_IJK
+      enddo_LOOP_IJK
 
     else
 
       DO_LOOP_IJK
         factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-      ENDDO_LOOP_IJK
+      enddo_LOOP_IJK
 
     endif
 
@@ -412,7 +412,7 @@
       R_yz(INDEX_IJK,i_SLS,ispec) = alphaval(i_SLS) * R_yz(INDEX_IJK,i_SLS,ispec) + factor_common_use(INDEX_IJK) * &
            (betaval(i_SLS) * epsilondev_yz(INDEX_IJK,ispec) + gammaval(i_SLS) * epsilondev_loc(INDEX_IJK,5))
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
   enddo ! N_SLS
 
@@ -497,11 +497,11 @@
     if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
       DO_LOOP_IJK
         factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-      ENDDO_LOOP_IJK
+      enddo_LOOP_IJK
     else
       DO_LOOP_IJK
         factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-      ENDDO_LOOP_IJK
+      enddo_LOOP_IJK
     endif
 
     ! updates memory variables
@@ -533,7 +533,7 @@
       R_xz(INDEX_IJK,i_SLS,ispec) = R_xz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec)
       R_yz(INDEX_IJK,i_SLS,ispec) = R_yz(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec)
 
-    ENDDO_LOOP_IJK
+    enddo_LOOP_IJK
 
   enddo
 

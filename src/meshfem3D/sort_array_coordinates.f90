@@ -168,7 +168,7 @@
          return
       endif
 
-    ENDIF
+    endif
 
     i = l
     j = l+l
@@ -176,14 +176,14 @@
     do while( J <= IR )
       IF ( J < IR ) THEN
         IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
-      ENDIF
+      endif
       IF ( q < A(IND(j)) ) THEN
         IND(I) = IND(J)
         I = J
         J = J+J
       ELSE
         J = IR+1
-      ENDIF
+      endif
 
     enddo
 
