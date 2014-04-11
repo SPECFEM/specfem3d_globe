@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, enddo_LOOP_IJK defined in config.fh
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
 
@@ -168,7 +168,7 @@
       dummyy_loc(INDEX_IJK) = displ_crust_mantle(2,iglob)
       dummyz_loc(INDEX_IJK) = displ_crust_mantle(3,iglob)
 
-    enddo_LOOP_IJK
+    ENDDO_LOOP_IJK
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -257,7 +257,7 @@
       sum_terms(INDEX_IJK,2) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
       sum_terms(INDEX_IJK,3) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
 
-    enddo_LOOP_IJK
+    ENDDO_LOOP_IJK
 
     ! adds gravity terms
     if(GRAVITY_VAL) then
