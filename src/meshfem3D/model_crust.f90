@@ -312,6 +312,17 @@
   integer :: i,icolat,ilon
   character(len=2) :: crustaltype
 
+  ! small hash map to convert crustal types to key
+  integer, dimension(128*128) :: crustalhash_to_key
+  integer :: ihash, crustalkey
+
+  ! fill in the hash map
+  crustalhash_to_key = -1
+  do i=1,NKEYS_CRUST
+    call hash_crustal_type(code(i), ihash)
+    if (crustalhash_to_key(ihash) /= -1) stop 'error in crust_CAPsmoothed: hash collision'
+    crustalhash_to_key(ihash) = i
+  enddo
 
   ! checks latitude/longitude
   if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
@@ -357,8 +368,12 @@
 
     crustaltype = abbreviation(icolat,ilon)
 
-    call get_crust_structure(crustaltype,velpl,velsl,rhol,thickl, &
-                             code,thlr,velocp,velocs,dens)
+    call hash_crustal_type(crustaltype, ihash)
+    crustalkey = crustalhash_to_key(ihash)
+    if(crustalkey == -1) stop 'error in retrieving crust type key'
+
+    call get_crust_structure(crustalkey,velpl,velsl,rhol,thickl, &
+                            thlr,velocp,velocs,dens)
 
     ! sediment thickness
     h_sed = thickl(3) + thickl(4)
@@ -385,6 +400,17 @@
 
   end subroutine crust_CAPsmoothed
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! hash table to define the crustal type using an integer instead of characters
+! because working with integers in the rest of the routines results in much faster code
+  subroutine hash_crustal_type(crustaltype, ihash)
+    character(len=2), intent(in) :: crustaltype
+    integer, intent(out) :: ihash
+    ihash = iachar(crustaltype(1:1)) + 128*iachar(crustaltype(2:2)) + 1
+  end subroutine hash_crustal_type
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -417,42 +443,35 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_crust_structure(crustaltype,vptyp,vstyp,rhtyp,thtp, &
-               code,thlr,velocp,velocs,dens)
+  subroutine get_crust_structure(ikey,vptyp,vstyp,rhtyp,thtp, &
+               thlr,velocp,velocs,dens)
 
   use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST
 
   implicit none
 
   ! argument variables
-  character(len=2) :: crustaltype
   double precision :: rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)
   double precision :: vptyp(NLAYERS_CRUST),vstyp(NLAYERS_CRUST)
-  character(len=2) :: code(NKEYS_CRUST)
   double precision :: thlr(NLAYERS_CRUST,NKEYS_CRUST),velocp(NLAYERS_CRUST,NKEYS_CRUST)
   double precision :: velocs(NLAYERS_CRUST,NKEYS_CRUST),dens(NLAYERS_CRUST,NKEYS_CRUST)
+  integer :: ikey
 
   ! local variables
-  integer :: ikey,ikey_selected
+  integer :: i
 
-  ! determines layer index
-  ikey_selected = 0
-  do ikey=1,NKEYS_CRUST
-    if (code(ikey) == crustaltype) then
-      ikey_selected = ikey
-      exit
-    endif
+  do i=1,NLAYERS_CRUST
+    vptyp(i)=velocp(i,ikey)
+    vstyp(i)=velocs(i,ikey)
+    rhtyp(i)=dens(i,ikey)
   enddo
-  if( ikey_selected == 0 ) stop 'error in get_crust_structure: could not find ikey for selected crustal type'
 
-  ! sets vp,vs and rho for all layers
-  vptyp(:) = velocp(:,ikey_selected)
-  vstyp(:) = velocs(:,ikey_selected)
-  rhtyp(:) = dens(:,ikey_selected)
-  thtp(:) = thlr(:,ikey_selected)
+  do i=1,NLAYERS_CRUST-1
+    thtp(i)=thlr(i,ikey)
+  enddo
 
   !   get distance to Moho from the bottom of the ocean or the ice
-  thtp(NLAYERS_CRUST) = thtp(NLAYERS_CRUST) - thtp(1) - thtp(2)
+  thtp(NLAYERS_CRUST) = thlr(NLAYERS_CRUST,ikey) - thtp(1) - thtp(2)
 
   end subroutine get_crust_structure
 
