@@ -312,15 +312,15 @@
   integer :: i,icolat,ilon
   character(len=2) :: crustaltype
 
-  ! small hash map to convert crustal types to key
+  ! small hash table to convert crustal types to key
   integer, dimension(128*128) :: crustalhash_to_key
   integer :: ihash, crustalkey
 
-  ! fill in the hash map
+  ! fill in the hash table
   crustalhash_to_key = -1
   do i=1,NKEYS_CRUST
     call hash_crustal_type(code(i), ihash)
-    if (crustalhash_to_key(ihash) /= -1) stop 'error in crust_CAPsmoothed: hash collision'
+    if (crustalhash_to_key(ihash) /= -1) stop 'error in crust_CAPsmoothed: hash table collision'
     crustalhash_to_key(ihash) = i
   enddo
 
@@ -407,9 +407,14 @@
 ! hash table to define the crustal type using an integer instead of characters
 ! because working with integers in the rest of the routines results in much faster code
   subroutine hash_crustal_type(crustaltype, ihash)
+
+    implicit none
+
     character(len=2), intent(in) :: crustaltype
     integer, intent(out) :: ihash
+
     ihash = iachar(crustaltype(1:1)) + 128*iachar(crustaltype(2:2)) + 1
+
   end subroutine hash_crustal_type
 
 !
@@ -419,7 +424,6 @@
   subroutine icolat_ilon(xlat,xlon,icolat,ilon)
 
   implicit none
-
 
 ! argument variables
   double precision :: xlat,xlon
@@ -443,8 +447,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_crust_structure(ikey,vptyp,vstyp,rhtyp,thtp, &
-               thlr,velocp,velocs,dens)
+  subroutine get_crust_structure(ikey,vptyp,vstyp,rhtyp,thtp,thlr,velocp,velocs,dens)
 
   use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST
 
@@ -606,3 +609,4 @@
   endif
 
   end subroutine CAP_vardegree
+
