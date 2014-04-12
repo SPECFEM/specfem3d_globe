@@ -30,7 +30,7 @@
 !
 ! A global shear-wave speed model developed by Kustowski et al. [2006].
 !
-! In this model, radial anisotropy is conﬁned to the uppermost mantle.
+! In this model, radial anisotropy is confined to the uppermost mantle.
 ! The model (and the corresponding mesh) incorporate
 ! tomography on the 650~km and 410~km discontinuities in the 1D reference model REF.
 !
@@ -224,9 +224,9 @@
   logical lower,lower_650
 
   real(kind=4), parameter :: r0=6371.
-  real(kind=4), parameter :: rmoho=6371.0-24.4
-  real(kind=4), parameter :: r670=6371.-670.
-  real(kind=4), parameter :: r650=6371.-650.
+  real(kind=4), parameter :: rmoho=6371.0 - 24.4  ! subtracting the thickness here
+  real(kind=4), parameter :: r670=6371. - 670.    ! subtracting the thickness here
+  real(kind=4), parameter :: r650=6371. - 650.    ! subtracting the thickness here
   real(kind=4), parameter :: rcmb=3480.0
 
   integer :: i,nspl,nskip,nlower,nupper,iker,lstr
@@ -265,7 +265,7 @@
   if(upper) then
     u=(radius+radius-rmoho-r670)/(rmoho-r670)
     u2=(radius2+radius2-rmoho-r670)/(rmoho-r670)
-!          write(6,"('upper mantle:',2f10.3)") u,u2
+!   write(6,"('upper mantle:',2f10.3)") u,u2
     call chebyfun(u,13,chebyshev)
     do i=1+nskip,nskip+nupper
       vercof(i)=chebyshev(i-nskip)
@@ -277,7 +277,7 @@
   else if(lower) then
     u=(radius+radius-r670-rcmb)/(r670-rcmb)
     u2=(radius2+radius2-r670-rcmb)/(r670-rcmb)
-!          write(6,"('lower mantle:',2f10.3)") u,u2
+!   write(6,"('lower mantle:',2f10.3)") u,u2
     call chebyfun(u,13,chebyshev)
     do i=1+nskip+nupper,nskip+nupper+nlower
       vercof(i)=chebyshev(i-nskip-nupper)
