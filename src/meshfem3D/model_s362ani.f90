@@ -1745,9 +1745,9 @@
 !     WK1,WK2,WK3 SHOULD BE DIMENSIONED AT LEAST (LMAX+1)*4
 !
 ! real(kind=4) WK1(1),WK2(1),WK3(1),Y(1),XLAT,XLON
-  real(kind=4),dimension(LMAX+1) :: WK1,WK2,WK3
+  real(kind=4), dimension(LMAX+1) :: WK1,WK2,WK3
   real(kind=4) :: XLAT,XLON
-  real(kind=4),dimension((LMAX+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
+  real(kind=4), dimension((LMAX+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
 
   real(kind=4), parameter :: RADIAN = 57.2957795
 
@@ -1797,7 +1797,7 @@
 
   implicit none
 
-  !real(kind=4) :: X(2),XP(2),XCOSEC(2) !! X, XP, XCOSEC should go from 1 to M+1
+! real(kind=4) :: X(2),XP(2),XCOSEC(2) !! X, XP, XCOSEC should go from 1 to M+1
   real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1) !! X, XP, XCOSEC should go from 1 to M+1
 
   double precision :: SMALL,sumval,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
