@@ -52,7 +52,7 @@ specfem3D_OBJECTS = \
 specfem3D_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
-	$O/write_seismograms.solverstatic_module.o \
+	$O/write_seismograms.solverstatic.o \
 	$O/check_stability.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
 	$O/compute_arrays_source.solverstatic.o \
@@ -312,6 +312,20 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ####
 
 ###
+### additional dependencies
+###
+
+$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_helpers.shared_adios.o $O/asdf_helpers_writers.shared_adios.o $O/asdf_data.solverstatic_module.o
+
+$O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
+
+$O/compute_arrays_source.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
+
+###
 ### specfem3D - optimized flags and dependence on values from mesher here
 ###
 $O/%.solverstatic_module.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
@@ -331,7 +345,7 @@ $O/%.solverstatic_openmp.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_pa
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 
 
-$O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o $O/asdf_helpers.shared_adios.o
+$O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solverstatic_adios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
