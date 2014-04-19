@@ -236,7 +236,7 @@ endif
 
 ${E}/xmeshfem3D: $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 #######################################
 

@@ -81,11 +81,11 @@ ${OUTPUT}/values_from_mesher.h: $E/xcreate_header_file $B/DATA/Par_file
 ####
 
 ${E}/xcreate_header_file: $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
-	${FCCOMPILE_CHECK} -o ${E}/xcreate_header_file $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ## uses MPI compiler to link executable instead (useful for cross-compilation)
 #${E}/xcreate_header_file: $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
-#	${MPIFCCOMPILE_CHECK} -o ${E}/xcreate_header_file $(create_header_file_SHARED_OBJECTS) $(create_header_file_OBJECTS)
+#	${MPIFCCOMPILE_CHECK} -o $@ $+
 
 #######################################
 
