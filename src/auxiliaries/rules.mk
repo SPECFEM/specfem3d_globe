@@ -33,13 +33,18 @@ auxiliaries_TARGETS = \
 	$E/xcombine_paraview_strain_data \
 	$E/xcombine_vol_data \
 	$E/xcombine_vol_data_vtk \
-	$E/xcombine_vol_data_adios \
-	$E/xcombine_vol_data_vtk_adios \
 	$E/xcombine_surf_data \
 	$E/xcreate_movie_AVS_DX \
 	$E/xcreate_movie_GMT_global \
 	$E/xextract_database \
 	$(EMPTY_MACRO)
+
+ifeq ($(ADIOS),yes)
+auxiliaries_TARGETS += \
+	$E/xcombine_vol_data_adios \
+	$E/xcombine_vol_data_vtk_adios \
+	$(EMPTY_MACRO)
+endif
 
 auxiliaries_OBJECTS = \
 	$O/combine_AVS_DX.aux.o \
@@ -80,39 +85,41 @@ auxiliaries_SHARED_OBJECTS = \
 #### rules for executables
 ####
 
-all_aux: required $(auxiliaries_TARGETS)
+.PHONY: all_aux aux
 
-aux: required $(auxiliaries_TARGETS)
+all_aux: $(auxiliaries_TARGETS)
+
+aux: $(auxiliaries_TARGETS)
 
 ${E}/xconvolve_source_timefunction: $(auxiliaries_SHARED_OBJECTS) $O/convolve_source_timefunction.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xconvolve_source_timefunction $(auxiliaries_SHARED_OBJECTS) $O/convolve_source_timefunction.aux.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcombine_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_AVS_DX $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcombine_paraview_strain_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_paraview_strain_data $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcombine_vol_data_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
-	${MPIFCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_adios $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ${E}/xcombine_vol_data_vtk_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
-	${MPIFCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk_adios $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/write_c_binary.cc.o $O/combine_vol_data_shared.aux.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcombine_surf_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_surf_data $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcreate_movie_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_AVS_DX.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcreate_movie_AVS_DX $(auxiliaries_SHARED_OBJECTS) $O/create_movie_AVS_DX.aux.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcreate_movie_GMT_global: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_GMT_global.aux.o
-	${FCCOMPILE_CHECK} -o ${E}/xcreate_movie_GMT_global $(auxiliaries_SHARED_OBJECTS) $O/create_movie_GMT_global.aux.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xextract_database: $(S_TOP)/utils/extract_database/extract_database.f90 ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_CHECK} -o ${E}/xextract_database ${FCFLAGS_f90} $(S_TOP)/utils/extract_database/extract_database.f90
@@ -126,6 +133,13 @@ $(auxiliaries_OBJECTS): S := ${S_TOP}/src/auxiliaries
 ####
 #### rule for each .o file below
 ####
+
+##
+## additional rules
+##
+
+$O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxmpi.o
+$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
 
 ##
 ## auxiliaries

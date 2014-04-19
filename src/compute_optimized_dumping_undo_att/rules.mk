@@ -65,11 +65,11 @@ compute_optimized_dumping_undo_att_SHARED_OBJECTS = \
 ####
 
 ${E}/xcompute_optimized_dumping_undo_att: $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
-	${FCCOMPILE_CHECK} -o ${E}/xcompute_optimized_dumping_undo_att $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
 
-## uses MPI compiler to link executable instead (usedful for cross-compilation)
+## uses MPI compiler to link executable instead (useful for cross-compilation)
 #${E}/xcompute_optimized_dumping_undo_att: $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
-#	${MPIFCCOMPILE_CHECK} -o ${E}/xcompute_optimized_dumping_undo_att $(compute_optimized_dumping_undo_att_SHARED_OBJECTS) $(compute_optimized_dumping_undo_att_OBJECTS)
+#	${MPIFCCOMPILE_CHECK} -o $@ $+
 
 #######################################
 

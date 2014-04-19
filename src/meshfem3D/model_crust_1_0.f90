@@ -103,7 +103,7 @@
   crust1_rho(:,:,:) = ZERO
   crust1_thk(:,:,:) = ZERO
 
-  ! the variables read are declared and stored in structure model_crust_par
+  ! the variables read are declared and stored in structure model_crust_1_0_par
   if(myrank == 0) call read_crust_1_0_model()
 
   ! broadcast the information read on the master to the nodes

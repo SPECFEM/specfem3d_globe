@@ -236,7 +236,7 @@ endif
 
 ${E}/xmeshfem3D: $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o ${E}/xmeshfem3D $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 #######################################
 
@@ -247,6 +247,22 @@ $(meshfem3D_OBJECTS): S = ${S_TOP}/src/meshfem3D
 ####
 #### rule for each .o file below
 ####
+
+## additional module dependencies
+
+$O/create_regions_mesh_adios.check_adios.o: \
+	$O/write_AVS_DX_global_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_global_chunks_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_global_faces_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_surface_data_adios.check_adios_module.o
+
+$O/model_attenuation.check.o: \
+	$O/model_1dref.check.o \
+	$O/model_ak135.check.o \
+	$O/model_1066a.check.o \
+	$O/model_sea1d.check.o
+
+## general rules
 
 $O/%.check_module.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
@@ -271,9 +287,9 @@ $O/%.check_adios_module.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_p
 $O/%.check_adios_module.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o $O/write_AVS_DX_surface_data_adios.check_adios_module.o
+$O/%.check_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.check_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o $O/write_AVS_DX_global_data_adios.check_adios_module.o $O/write_AVS_DX_surface_data_adios.check_adios_module.o
+$O/%.check_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
