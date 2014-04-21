@@ -1754,15 +1754,14 @@
 
   implicit none
 
+  integer :: i,M,MP1,k,l,LP1
+  real(kind=4) :: THETA,DSFL3,COSEC,SFL3
+
   real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1)
 
   double precision :: SMALL,sumval,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
 
   double precision, parameter :: FPI = 12.56637062D0
-
-  integer :: i,M,MP1,k,l,LP1
-
-  real(kind=4) :: THETA,DSFL3,COSEC,SFL3
 
 !!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
 
