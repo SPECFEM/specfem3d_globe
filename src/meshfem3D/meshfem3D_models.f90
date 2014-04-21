@@ -814,6 +814,13 @@
                                            tau_e,tau_s,T_c_source, &
                                            moho,Qmu,Qkappa,elem_in_crust)
 
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
+!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 )
+!! DK DK BUG
+!! DK DK BUG
+
 ! sets attenuation values tau_e and Qmu for a given point
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
@@ -840,6 +847,15 @@
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision :: r_used
   double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
+
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
+!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 )
+!! DK DK BUG   and thus for now I add a stop statement here.
+!! DK DK BUG
+!! DK DK BUG
+  stop 'DK DK BUG routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation, thus removed'
 
   ! initializes
   tau_e(:)   = 0.0d0
