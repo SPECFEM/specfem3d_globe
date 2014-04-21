@@ -81,7 +81,7 @@
       call model_ak135_broadcast(myrank,CRUSTAL)
 
     case(REFERENCE_MODEL_1DREF)
-      call model_1dref_broadcast(myrank,CRUSTAL)
+      call model_1dref_broadcast(CRUSTAL)
 
     case(REFERENCE_MODEL_SEA1D)
       call model_sea1d_broadcast(myrank,CRUSTAL)

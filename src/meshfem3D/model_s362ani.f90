@@ -224,11 +224,11 @@
   logical upper,upper_650
   logical lower,lower_650
 
-  real(kind=4), parameter :: r0=6371.
-  real(kind=4), parameter :: rmoho=6371.0 - 24.4  ! subtracting the thickness here
-  real(kind=4), parameter :: r670=6371. - 670.    ! subtracting the thickness here
-  real(kind=4), parameter :: r650=6371. - 650.    ! subtracting the thickness here
-  real(kind=4), parameter :: rcmb=3480.0
+  real(kind=4), parameter :: r0 = 6371.
+  real(kind=4), parameter :: rmoho = 6371.0 - 24.4  ! subtracting the thickness here
+  real(kind=4), parameter :: r670 = 6371. - 670.    ! subtracting the thickness here
+  real(kind=4), parameter :: r650 = 6371. - 650.    ! subtracting the thickness here
+  real(kind=4), parameter :: rcmb = 3480.0
 
   integer :: i,nspl,nskip,nlower,nupper,iker,lstr
 
@@ -782,7 +782,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine gt3dmodl(lu,targetfile, &
                       maxhpa,maxker,maxcoe, &
                       numhpa,numker,numcoe,lmxhpa, &
@@ -910,7 +909,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine rd3dmodl(lu,filename,ierror, &
     nmodkern,nhorpar,ityphpar, &
@@ -1073,16 +1071,6 @@
   integer, intent(in) :: nver
   integer, intent(out) :: ncon
 
-! Daniel Peter: original define
-!
-!  real(kind=4) verlat(1)
-!  real(kind=4) verlon(1)
-!  real(kind=4) verrad(1)
-!
-!  integer icon(1)
-!  real(kind=4) con(1)
-
-! Daniel Peter: avoiding out-of-bounds errors
   real(kind=4), intent(in) :: verlat(nver)
   real(kind=4), intent(in) :: verlon(nver)
   real(kind=4), intent(in) :: verrad(nver)
@@ -1137,7 +1125,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! --- evaluate perturbations in percent
+! --- evaluate perturbations
 
   subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
@@ -1190,22 +1178,9 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
-
-! originally called
-         call splcon(y,x,numcof,xlaspl(1,ihpa), &
+        call splcon(y,x,numcof,xlaspl(1,ihpa), &
                xlospl(1,ihpa),radspl(1,ihpa), &
                nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
-
-! making sure of array bounds
-!! note from DK DK, July 2013: the code below is correct but it is exactly the same as the code
-!! note from DK DK, July 2013: above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
-!! note from DK DK, July 2013: using a pointer to it such as xlaspl(1,ihpa) in the call seems fine as well;
-!! note from DK DK, July 2013: and some compilers could create expensive and useless memory copies for each call
-!! note from DK DK, July 2013: with the new syntax below
-!       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
-!             xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-!             nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
-
       else
         write(6,"('problem 1')")
       endif
@@ -1259,7 +1234,6 @@
   enddo ! --- ieval
 
 ! evaluate perturbations in vsh and vsv
-
   if(ish == 1) then
     vsh3drel=valu(1)+0.5*valu(2)
   else if(ish == 0) then
@@ -1270,8 +1244,7 @@
 
   enddo ! --- by ish
 
-! evaluate perturbations in percent
-
+! evaluate perturbations
   dvsh=vsh3drel
   dvsv=vsv3drel
   dvph=0.55*dvsh    ! scaling used in the inversion
@@ -1319,22 +1292,9 @@
       call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
     else if(itypehpa(ihpa) == 2) then
       numcof=numcoe(ihpa)
-
-! originally called
-         call splcon(y,x,numcof,xlaspl(1,ihpa), &
+      call splcon(y,x,numcof,xlaspl(1,ihpa), &
                xlospl(1,ihpa),radspl(1,ihpa), &
                nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
-
-! making sure of array bounds
-!! note from DK DK, July 2013: the code below is correct but it is exactly the same as the code
-!! note from DK DK, July 2013: above because xlaspl(1:numcof,ihpa) is contiguous in memory, and thus
-!! note from DK DK, July 2013: using a pointer to it such as xlaspl(1,ihpa) in the call seems fine as well;
-!! note from DK DK, July 2013: and some compilers could create expensive and useless memory copies for each call
-!! note from DK DK, July 2013: with the new syntax below
-!       call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
-!             xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-!             nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
-
     else
       write(6,"('problem 1')")
     endif
@@ -1744,10 +1704,9 @@
 !
 !     WK1,WK2,WK3 SHOULD BE DIMENSIONED AT LEAST (LMAX+1)*4
 !
-! real(kind=4) WK1(1),WK2(1),WK3(1),Y(1),XLAT,XLON
   real(kind=4), dimension(LMAX+1) :: WK1,WK2,WK3
   real(kind=4) :: XLAT,XLON
-  real(kind=4), dimension((LMAX+1)**2) :: Y !! Y should go at least from 1 to fac(LMAX)
+  real(kind=4), dimension((LMAX+1)**2) :: Y
 
   real(kind=4), parameter :: RADIAN = 57.2957795
 
@@ -1766,9 +1725,7 @@
     ! index L goes from 0 to LMAX
     L=IL1-1
 
-    ! see legndr(): WK1,WK2,WK3 should go from 1 to L+1
-    ! CALL legndr(THETA,L,L,WK1,WK2,WK3)
-    CALL legndr(THETA,L,L,WK1(1:L+1),WK2(1:L+1),WK3(1:L+1))
+    CALL legndr(THETA,L,L,WK1,WK2,WK3)
 
     FAC=(1.,0.)
     DFAC=CEXP(CMPLX(0.,PHI))
@@ -1797,8 +1754,7 @@
 
   implicit none
 
-! real(kind=4) :: X(2),XP(2),XCOSEC(2) !! X, XP, XCOSEC should go from 1 to M+1
-  real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1) !! X, XP, XCOSEC should go from 1 to M+1
+  real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1)
 
   double precision :: SMALL,sumval,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
 

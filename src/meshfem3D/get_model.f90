@@ -305,18 +305,41 @@
 
         if(ATTENUATION) then
           if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-            do i_sls = 1,N_SLS
-              tau_e_store(i,j,k,i_sls,ispec) = tau_e(i_sls)
-            enddo
-            Qmu_store(i,j,k,ispec)     = Qmu
-          else
-            ! store values from mid-point for whole element
-            if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+
+            ! distinguish between single and double precision for reals
+            if(CUSTOM_REAL == SIZE_REAL) then
               do i_sls = 1,N_SLS
-                tau_e_store(1,1,1,i_sls,ispec) = tau_e(i_sls)
+                tau_e_store(i,j,k,i_sls,ispec) = sngl(tau_e(i_sls))
               enddo
-              Qmu_store(1,1,1,ispec)     = Qmu
+              Qmu_store(i,j,k,ispec)     = sngl(Qmu)
+            else
+              do i_sls = 1,N_SLS
+                tau_e_store(i,j,k,i_sls,ispec) = tau_e(i_sls)
+              enddo
+              Qmu_store(i,j,k,ispec)     = Qmu
             endif
+
+          else
+
+            ! distinguish between single and double precision for reals
+            if(CUSTOM_REAL == SIZE_REAL) then
+              ! store values from mid-point for whole element
+              if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+                do i_sls = 1,N_SLS
+                  tau_e_store(1,1,1,i_sls,ispec) = sngl(tau_e(i_sls))
+                enddo
+                Qmu_store(1,1,1,ispec)     = sngl(Qmu)
+              endif
+            else
+              ! store values from mid-point for whole element
+              if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+                do i_sls = 1,N_SLS
+                  tau_e_store(1,1,1,i_sls,ispec) = tau_e(i_sls)
+                enddo
+                Qmu_store(1,1,1,ispec)     = Qmu
+              endif
+            endif
+
           endif
         endif
 
