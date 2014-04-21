@@ -174,16 +174,23 @@
           call exit_mpi(myrank,'error get_model values')
         endif
 
-        !> Hejun
-        ! New Attenuation assignment
-        ! Define 3D and 1D Attenuation after moho stretch
-        ! and before TOPOGRAPHY/ELLIPCITY
+        !> Hejun, New attenuation assignment
+        ! Define 3D and 1D attenuation after Moho stretch
+        ! and before TOPOGRAPHY / ELLIPTICITY
         !
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
-        if( ATTENUATION ) &
-          call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
-                                             tau_e,tau_s,T_c_source, &
-                                             moho,Qmu,Qkappa,elem_in_crust)
+!! DK DK BUG
+!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
+!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 )
+!! DK DK BUG   and thus for now I comment it out here.
+!! DK DK BUG
+!! DK DK BUG   It is also not clear to me if the if() statement below is sufficient or if the routine should
+!! DK DK BUG   be called in the case of 3D Earth models only.
+!! DK DK BUG
+!! DK DK BUG        if( ATTENUATION ) &
+!! DK DK BUG          call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
+!! DK DK BUG                                             tau_e,tau_s,T_c_source, &
+!! DK DK BUG                                             moho,Qmu,Qkappa,elem_in_crust)
 
 ! define elastic parameters in the model
 
