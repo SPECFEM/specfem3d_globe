@@ -35,7 +35,9 @@ program combine_vol_data_vtk
 #ifdef ADIOS_INPUT
   use adios_read_mod
   use combine_vol_data_adios_mod
-  use mpi
+!!!!!!!! DK DK removed because this breaks the build system
+!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
+!!!!!!!! DK DK   use mpi
 #endif
 
   implicit none
@@ -109,12 +111,16 @@ program combine_vol_data_vtk
 
   ! starts here---------------------------------------------------------------
 #ifdef ADIOS_INPUT
-  call MPI_Init(ierr)
-  call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
+!!!!!!!! DK DK removed because this breaks the build system
+!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
+!!!!!!!! DK DK added this
+  stop 'DK DK added this because this part of the code breaks the build system'
+!!!!!!!! DK DK removed because this breaks the build system  call MPI_Init(ierr)
+!!!!!!!! DK DK removed because this breaks the build system  call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
   print  *, sizeprocs, "procs"
   if (sizeprocs /= 1) then
     print *, "sequential program. Only mpirun -np 1 ..."
-    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
+!!!!!!!! DK DK removed because this breaks the build system    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
   endif
 #endif
 
@@ -672,7 +678,11 @@ print *, irs, ire
 
 #ifdef ADIOS_INPUT
   call clean_adios(value_handle, mesh_handle)
-  call MPI_Finalize(ierr)
+!!!!!!!! DK DK removed because this breaks the build system
+!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
+!!!!!!!! DK DK added this
+  stop 'DK DK added this because this part of the code breaks the build system'
+!!!!!!!! DK DK removed because this breaks the build system  call MPI_Finalize(ierr)
 #endif
 
 
