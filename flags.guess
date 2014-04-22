@@ -5,6 +5,11 @@
 # can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
 # to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
 
+# can also add -DFORCE_VECTORIZATION to force vectorization and unrolling of some critical loops, however this breaks
+# range checking options at run time (for instance -check all for Intel ifort) and, more importantly, modern compilers
+# vectorize the SPECFEM3D_GLOBE code very well and in practice this option only makes the code 3% to 5% faster in the best case,
+# therefore we suggest not activating it.
+
 ###########################################################################################################################
 ###########################################################################################################################
 ###########################################################################################################################
