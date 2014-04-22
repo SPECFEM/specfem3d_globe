@@ -32,7 +32,7 @@
 !
 ! In this model, radial anisotropy is confined to the uppermost mantle.
 ! The model (and the corresponding mesh) incorporate
-! tomography on the 650~km and 410~km discontinuities in the 1D reference model REF.
+! tomography on the 650-km and 410-km discontinuities in the 1D reference model REF.
 !
 ! s362wmani: A version of S362ANI with anisotropy allowed throughout the mantle.
 !
@@ -1091,8 +1091,8 @@
   ncon=0
 
   do iver=1,nver
-    if(xlat > verlat(iver)-2.*verrad(iver)) then
-      if(xlat < verlat(iver)+2.*verrad(iver)) then
+    if(xlat > verlat(iver) - 2.*verrad(iver)) then
+      if(xlat < verlat(iver) + 2.*verrad(iver)) then
         ver8=DEGREES_TO_RADIANS*(verlat(iver))
         xla8=DEGREES_TO_RADIANS*(xlat)
         dd=sin(ver8)*sin(xla8) + cos(ver8)*cos(xla8)* cos(DEGREES_TO_RADIANS*(xlon-verlon(iver)))
@@ -1755,6 +1755,7 @@
   implicit none
 
   integer :: i,M,MP1,k,l,LP1
+
   real(kind=4) :: THETA,DSFL3,COSEC,SFL3
 
   real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1)
