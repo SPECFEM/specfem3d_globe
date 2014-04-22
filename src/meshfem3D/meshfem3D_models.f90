@@ -817,7 +817,9 @@
 !! DK DK BUG
 !! DK DK BUG
 !! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
-!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 )
+!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 ).
+!! DK DK BUG   I thus temporarily patched it to avoid the problematic lines;
+!! DK DK BUG   of course this should be changed / fixed in the future.
 !! DK DK BUG
 !! DK DK BUG
 
@@ -847,15 +849,6 @@
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision :: r_used
   double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
-
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
-!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 )
-!! DK DK BUG   and thus for now I add a stop statement here.
-!! DK DK BUG
-!! DK DK BUG
-  stop 'DK DK BUG routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation, thus removed'
 
   ! initializes
   tau_e(:)   = 0.0d0
@@ -896,6 +889,13 @@
 
   else
 
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG since using the routines below is unsafe (see the above comment), I remove them for now
+!! DK DK BUG
+!! DK DK BUG
+    goto 777
+
     select case (REFERENCE_1D_MODEL)
 
       ! case(REFERENCE_MODEL_PREM)
@@ -929,6 +929,13 @@
         endif
 
     end select
+
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG since using the routines above is unsafe (see the above comment), I remove them for now
+!! DK DK BUG
+!! DK DK BUG
+  777 continue
 
   endif
 
