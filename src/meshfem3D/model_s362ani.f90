@@ -1062,7 +1062,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine splcon(xlat,xlon,nver,verlat,verlon,verrad,ncon,icon,con)
+  subroutine splcon(xlat,xlon,nver,verlat,verlon,verrad,ncon,icon,con,dd)
 
   use constants
 
@@ -1079,7 +1079,7 @@
   integer, intent(out) :: icon(maxver)
   real(kind=4), intent(out) :: con(maxver)
 
-  double precision dd
+  double precision, dimension(maxver) :: dd
   double precision rn
   double precision dr
   double precision ver8
@@ -1091,21 +1091,26 @@
   ncon=0
 
   do iver=1,nver
-    if(xlat > verlat(iver) - 2.*verrad(iver)) then
-      if(xlat < verlat(iver) + 2.*verrad(iver)) then
+    if(abs(xlat - verlat(iver)) < 2.*verrad(iver)) then
         ver8=DEGREES_TO_RADIANS*(verlat(iver))
         xla8=DEGREES_TO_RADIANS*(xlat)
-        dd=sin(ver8)*sin(xla8) + cos(ver8)*cos(xla8)* cos(DEGREES_TO_RADIANS*(xlon-verlon(iver)))
-        dd=acos(dd) * RADIANS_TO_DEGREES
-        if(dd > (verrad(iver))*2.d0) then
-        else
+        dd(iver)=sin(ver8)*sin(xla8) + cos(ver8)*cos(xla8)* cos(DEGREES_TO_RADIANS*(xlon-verlon(iver)))
+        dd(iver)=acos(dd(iver)) * RADIANS_TO_DEGREES
+    else
+        ! acos can never be negative, thus use -1 to mark "invalid"
+        dd(iver)=-1.0
+    endif
+  enddo
+
+  do iver=1,nver
+        if(dd(iver) >= 0.0 .and. .not. (dd(iver) > (verrad(iver))*2.d0)) then
           ncon=ncon+1
 
 !! DK DK added this safety test
           if(ncon > maxver) stop 'error: ncon > maxver in splcon()'
 
           icon(ncon)=iver
-          rn=dd/(verrad(iver))
+          rn=dd(iver)/verrad(iver)
           dr=rn-1.d0
           if(rn <= 1.d0) then
             con(ncon)=(0.75d0*rn-1.5d0)*(rn**2)+1.d0
@@ -1115,8 +1120,6 @@
             con(ncon)=0.
           endif
         endif
-      endif
-    endif
   enddo
 
   end subroutine splcon
@@ -1141,7 +1144,7 @@
   integer ish ! --- 0 if SV, 1 if SH
   integer ieval     ! --- 1 for velocity, 2 for anisotropy
   real(kind=4) :: valu(2)    ! --- valu(1) if S; valu(1)=velo, valu(2)=aniso
-  real(kind=4) :: value      ! --- used in single evaluation of perturbation
+  real(kind=4) :: valueval   ! --- used in single evaluation of perturbation
   integer isel      ! --- if variable should be included
   real(kind=4) :: depth      ! --- depth
   real(kind=4) :: x,y  ! --- lat lon
@@ -1154,6 +1157,8 @@
   character(len=40) vstr
   integer lstr
   integer ierror
+
+  double precision, dimension(maxver) :: dd
 
 ! -------------------------------------
   vsv3drel = 0.
@@ -1180,7 +1185,7 @@
         numcof=numcoe(ihpa)
         call splcon(y,x,numcof,xlaspl(1,ihpa), &
                xlospl(1,ihpa),radspl(1,ihpa), &
-               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa),dd)
       else
         write(6,"('problem 1')")
       endif
@@ -1192,7 +1197,7 @@
   valu(2)=0. ! --- anisotropy
 
   do ieval=1,2
-    value=0.
+    valueval=0.
     do iker=1,numker
       isel=0
       lstr=len_trim(varstr(ivarkern(iker)))
@@ -1215,13 +1220,13 @@
           ihpa=ihpakern(iker)
               nylm=(lmxhpa(ihpakern(iker))+1)**2
               do i=1,nylm
-                value=value+vercof(iker)*ylmcof(i,ihpa)*coe(i,iker)
+                valueval=valueval+vercof(iker)*ylmcof(i,ihpa)*coe(i,iker)
               enddo
             else if(itypehpa(ihpakern(iker)) == 2) then
           ihpa=ihpakern(iker)
               do i=1,nconpt(ihpa)
                 iver=iconpt(i,ihpa)
-                value=value+vercof(iker)*conpt(i,ihpa)*coe(iver,iker)
+                valueval=valueval+vercof(iker)*conpt(i,ihpa)*coe(iver,iker)
               enddo
             else
               stop 'problem 2'
@@ -1230,7 +1235,7 @@
       endif ! --- isel == 1
     enddo ! --- end of do iker=1,numker
 
-    valu(ieval)=value
+    valu(ieval)=valueval
   enddo ! --- ieval
 
 ! evaluate perturbations in vsh and vsv
@@ -1271,7 +1276,7 @@
 
   integer ieval     ! --- 1 for velocity, 2 for anisotropy
   real(kind=4) :: valu(2)    ! --- valu(1) if S; valu(1)=velo, valu(2)=aniso
-  real(kind=4) :: value      ! --- used in single evaluation of perturbation
+  real(kind=4) :: valueval   ! --- used in single evaluation of perturbation
   integer isel      ! --- if variable should be included
   real(kind=4) :: x,y  ! --- lat lon
 
@@ -1279,6 +1284,8 @@
   integer iker,i
   character(len=40) vstr
   integer lstr
+
+  double precision, dimension(maxver) :: dd
 
 ! -------------------------------------
 
@@ -1294,7 +1301,7 @@
       numcof=numcoe(ihpa)
       call splcon(y,x,numcof,xlaspl(1,ihpa), &
                xlospl(1,ihpa),radspl(1,ihpa), &
-               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa),dd)
     else
       write(6,"('problem 1')")
     endif
@@ -1306,7 +1313,7 @@
   valu(2)=0. ! --- 650
 
   do ieval=1,2
-    value=0.
+    valueval=0.
     do iker=1,numker
       isel=0
       lstr=len_trim(varstr(ivarkern(iker)))
@@ -1326,13 +1333,13 @@
           ihpa=ihpakern(iker)
               nylm=(lmxhpa(ihpakern(iker))+1)**2
               do i=1,nylm
-                value=value+ylmcof(i,ihpa)*coe(i,iker)
+                valueval=valueval+ylmcof(i,ihpa)*coe(i,iker)
               enddo
             else if(itypehpa(ihpakern(iker)) == 2) then
           ihpa=ihpakern(iker)
               do i=1,nconpt(ihpa)
                 iver=iconpt(i,ihpa)
-                value=value+conpt(i,ihpa)*coe(iver,iker)
+                valueval=valueval+conpt(i,ihpa)*coe(iver,iker)
               enddo
             else
               stop 'problem 2'
@@ -1340,7 +1347,7 @@
       endif ! --- isel == 1
     enddo ! --- end of do iker=1,numker
 
-    valu(ieval)=value
+    valu(ieval)=valueval
   enddo ! --- ieval
 
   topo410=valu(1)
@@ -1683,8 +1690,10 @@
       val=0.
     endif
   endif
+
   splcon(ib)=val
   splcond(ib)=vald
+
   enddo
 
   end subroutine vbspl
