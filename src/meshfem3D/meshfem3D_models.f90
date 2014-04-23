@@ -903,7 +903,8 @@
 ! and / or that r_prem >(ONE-moho) is sensitive to roundoff noise and thus compiler-dependent,
 ! in which case it should be changed to:
 !
-! if (abs(r_prem - (ONE-moho)) < some_epsilon_to_define) then...
+! if (r_prem - (ONE-moho) < some_epsilon_to_define) then...
+!      or something like that
 !
 ! To be safe I have commented out the current code and checked that the bug (i.e. getting compiler-dependent results) is now gone.
 ! If you fix that routine and check with Matthieu and Elliott that it then works fine on different machines
