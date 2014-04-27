@@ -96,7 +96,7 @@
 %
 \author{$\copyright$ Princeton University (USA) and CNRS / University of Marseille (France),\\
 ETH Z\"urich (Switzerland),\\
-Version 5.1}
+Version 6.0}
 
 \date{\noindent \today}
 
@@ -193,7 +193,7 @@ In particular, it can accurately handle very distorted mesh elements \citep{OlSe
 
 It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08,AiWa09,AiWa10,MeStTh12}.
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
-It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
+It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{Kom11,MiKo10,KoMiEr09,KoErGoMi10}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
 
 Note that in many geological models in the context of seismic wave propagation studies
 (except for instance for fault dynamic rupture studies, in which very high frequencies or supershear rupture need to be modeled near the fault, see e.g. \cite{BeGlCrViPi07,BeGlCrVi09,PuAmKa09,TaCrEtViBeSa10})
@@ -234,8 +234,13 @@ and \url{www.sc-conference.org/sc2003/nr_finalaward.html}).
 It was a finalist again in 2008 for a run at 0.16 petaflops (sustained) on 149,784 processors of the `Jaguar' Cray XT5 system at Oak Ridge National Laboratories (USA) \citep{CaKoLaTiMiLeSnTr08}.
 It also won the BULL Joseph Fourier supercomputing award in 2010.\\
 
-The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}
-as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML)
+It reached the sustained one petaflop performance level for the first time in February 2013
+on the Blue Waters Cray supercomputer at the National Center for Supercomputing Applications (NCSA), located at the University of Illinois at Urbana-Champaign (USA).\\
+
+The package includes support for GPU graphics card acceleration \citep{Kom11,MiKo10,KoMiEr09,KoErGoMi10} and also supports OpenCL.\\
+
+The next release of the code will include support for
+Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML)
 \citep{MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10,KoMa07} for the case of single-chunk simulations in regional models.
 
 \section{Citation}
@@ -243,8 +248,10 @@ as well as Convolutional or Auxiliary Differential Equation Perfectly Matched ab
 If you use SPECFEM3D\_GLOBE for your own research, please cite at least one
 of the following articles: \cite{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
 
-If you use this new version 5.1, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
+If you use this new version 6.0, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
 in which results of 3D non blocking MPI runs are presented: \cite{KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.\\
+
+If you use GPU graphics card acceleration please cite e.g. \cite{Kom11}, \cite{MiKo10}, \cite{KoMiEr09}, and/or \cite{KoErGoMi10}.\\
 
 If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others:
 \cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
@@ -273,14 +280,11 @@ Marie Curie program.
 
 \section{Configuring and compiling the source code}
 
-The SPECFEM3D\_GLOBE software package comes in a gzipped tar ball.
-In the directory in which you want to install the package, type
+To get the SPECFEM3D\_GLOBE software package, type this:
 
 \begin{lyxcode}
-tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.5.tar.gz
+git clone --recursive --branch devel https://github.com/geodynamics/specfem3d\_globe.git
 \end{lyxcode}
-The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.5} will then contain
-the source code.\\
 
 We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
 
@@ -321,16 +325,6 @@ or \texttt{``-mcmodel=medium -shared-intel}'' (if you use the Intel ifort / icc 
 to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
-
-\textbf{BEWARE that using \texttt{``-mcmodel=medium -shared-intel}'' is known for currently leading to incorrect seismograms,
-at least when flag ATTENUATION is on (and maybe even without), at least in the case of the Intel ifort / icc compiler.
-This likely comes from intrinsic functions such as size() that return and integer8 instead of an integer4, thus leading
-to incorrect results when used in function calls is the -i8 flag is not added to the compiler options;
-however, when adding -i8 the code does not compile because the MPI calls then refuse to compile (they need integer4 as arguments).
-It seems that this problem is triggered when 3D models are used and mostly (only?) when attenuation is on, but not triggered for 1D Earth model benchmarks
-even with attenuation (at least not triggered for EXAMPLES/benchmarks/attenuation\_benchmark\_GJI\_2002\_versus\_normal\_modes  nor for Anne Sieminski's three 1D benchmarks), which makes it uneasy to locate.
-Since most current users run the code with less than 2 GB of static memory per core, we have not investigated that problem carefully for now,
-and thus recommend that you do NOT use these compiler flags until this problem is located and fixed.}\\
 
 A summary of the most important configuration variables follows.
 
@@ -419,11 +413,6 @@ shared file system is fast and reliable.
 
 If you run scaling benchmarks of the code, for instance to measure its performance on a new machine, and are not interested in the physical results
 (the seismograms) for these runs, you can set \texttt{DO\_BENCHMARK\_RUN\_ONLY} to \texttt{.true.} in file \texttt{setup/constants.h.in} before running the \texttt{configure} script.
-
-Finally, before compiling, make sure that the subdirectories \texttt{obj},
-\texttt{bak} and \texttt{OUTPUT\_FILES} exist within the directory
-with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.5}). The \texttt{go\_mesher}
-script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES} directory.
 
 If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
 \texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
@@ -3316,10 +3305,7 @@ disk.
 \chapter*{\label{cha:Bug-Reports-and}Bug Reports and Suggestions for Improvements}
 
 To report bugs or suggest improvements to the code, please send an
-e-mail to the CIG Computational Seismology Mailing List \urlwithparentheses{cig-seismo@geodynamics.org}
-or Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu}, and/or use our online
-bug tracking system Roundup \urlwithparentheses{www.geodynamics.org/roundup}.
-
+e-mail to the CIG Computational Seismology Mailing List \urlwithparentheses{cig-seismo@geodynamics.org}.
 
 \chapter*{\label{cha:Notes-and-Acknowledgements}Notes and Acknowledgements}
 
@@ -3341,16 +3327,16 @@ and ParaView \urlwithparentheses{www.paraview.org} is an open-source visualizati
 platform.{\small{} }{\small \par}
 
 Please e-mail your feedback, questions, comments, and suggestions
-to Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu} or to the CIG Computational Seismology Mailing List \urlwithparentheses{cig-seismo@geodynamics.org}.
+to the CIG Computational Seismology Mailing List \urlwithparentheses{cig-seismo@geodynamics.org}.
 
 
 \chapter*{\label{cha:Copyright}Copyright}
 
-Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+Main `historical' authors: Dimitri Komatitsch and Jeroen Tromp (there are now many more!).
 
-Princeton University, USA, and CNRS / INRIA / University of Pau, France
+Princeton University, USA, and CNRS / University of Marseille, France.
 
-$\copyright$ Princeton University and CNRS / INRIA / University of Pau, April 2011
+$\copyright$ Princeton University, USA and CNRS / University of Marseille, France, April 2014
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -3358,13 +3344,16 @@ by the Free Software Foundation (see Appendix \ref{cha:License}).\\
 
 \textbf{\underline{Evolution of the code:}}\\
 
+ v. 6.0, Daniel Peter (ETH Z\"urich, Switzerland), Dimitri Komatitsch and Zhinan Xie (CNRS / University of Marseille, France), Elliott Sales de Andrade (University of Toronto, Canada), and
+ many others, in particular from Princeton University, USA, April 2014: more flexible MPI implementation, GPU support, exact undoing of attenuation, LDDRK4-6 higher-order time scheme, etc...\\
+
  v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
      non blocking MPI for much better scaling on large clusters;
      new convention for the name of seismograms, to conform to the IRIS standard;
      new directory structure.\\
 
  v. 5.0, many developers, February 2010:
-     new moho mesh stretching honoring crust2.0 moho depths,
+     new Moho mesh stretching honoring crust2.0 Moho depths,
      new attenuation assignment, new SAC headers, new general crustal models,
      faster performance due to Deville routines and enhanced loop unrolling,
      slight changes in code structure (see also trivia at program start).\\
