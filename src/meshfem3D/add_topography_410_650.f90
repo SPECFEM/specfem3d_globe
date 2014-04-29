@@ -51,11 +51,6 @@
 ! note: adding topography to 410 and 660 strongly affects PcP, PKiKP, etc. phases,
 !       we leave it in and check whether the stretching makes simulation unstable
 
-!  if( .not. USE_VERSION_5_1_5 ) then
-!    !! DK DK added this safety test for now
-!    !stop 'there is a currently a bug in this routine, it makes the mesher crash'
-!  endif
-
 ! we loop on all the points of the element
   do ia = 1,NGNOD
 
@@ -63,7 +58,7 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    if( USE_VERSION_5_1_5) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT) then
       ! convert to r theta phi
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       call reduce(theta,phi)
@@ -153,11 +148,6 @@
 ! note: adding topography to 410 and 660 strongly affects PcP, PKiKP, etc. phases,
 !       we leave it in and check whether the stretching makes simulation unstable
 
-!  if( .not. USE_VERSION_5_1_5 ) then
-!    !! DK DK added this safety test for now
-!    !stop 'there is a currently a bug in this routine, it makes the mesher crash'
-!  endif
-
   ! we loop on all GLL points of the element
   do k = 1,NGLLZ
      do j = 1,NGLLY
@@ -167,7 +157,7 @@
           y = ystore(i,j,k,ispec)
           z = zstore(i,j,k,ispec)
 
-          if( USE_VERSION_5_1_5) then
+          if( USE_OLD_VERSION_5_1_5_FORMAT) then
             ! convert to r theta phi
             call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
             call reduce(theta,phi)

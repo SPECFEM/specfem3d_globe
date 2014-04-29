@@ -47,7 +47,7 @@
 
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
-    IMAIN,volume_total,myrank,LOCAL_PATH, &
+    IMAIN,volume_total,Earth_mass_total,myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
@@ -56,7 +56,7 @@
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ROLAND_SYLVAIN
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -104,6 +104,7 @@
   ! check area and volume of the final mesh
   double precision :: area_local_bottom,area_local_top
   double precision :: volume_local
+  double precision :: Earth_mass_local
 
   ! user output
   if(myrank == 0 ) then
@@ -358,6 +359,8 @@
 
     ! save the binary files
     call synchronize_all()
+!! DK DK for Roland_Sylvain
+  if(.not. ROLAND_SYLVAIN) then
     if( myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '  ...saving binary files'
@@ -375,6 +378,7 @@
                               iregion_code,xstore,ystore,zstore, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM)
     endif
+  endif
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
@@ -413,7 +417,15 @@
 
     ! computes total area and volume
     call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
-        area_local_top, volume_local,volume_total, RCMB,RICB,R_CENTRAL_CUBE)
+        area_local_top,volume_local,volume_total,RCMB,RICB,R_CENTRAL_CUBE)
+
+    ! compute Earth mass of that part of the slice
+    call compute_Earth_mass(Earth_mass_local, &
+        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore)
+
+    ! computes total Earth mass
+    call compute_total_Earth_mass(myrank,Earth_mass_local,Earth_mass_total)
 
     ! create AVS or DX mesh data for the slices
     if(SAVE_MESH_FILES) then
@@ -1023,7 +1035,7 @@
       ! user output
       write(IMAIN,'(a,f5.1,a,a,i2.2,a,i2.2,a,i2.2,a)') &
         "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
-        "    current clock time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
+        "    current clock (NOT elapsed) time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
 
       ! flushes I/O buffer
       call flush_IMAIN()

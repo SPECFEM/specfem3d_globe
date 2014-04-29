@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_area(myrank,NCHUNKS,iregion_code, &
                                     area_local_bottom,area_local_top,&
                                     volume_local,volume_total, &
@@ -95,3 +94,31 @@
   endif
 
   end subroutine compute_area
+
+!=====================================================================
+
+  ! computes total Earth mass
+
+  subroutine compute_total_Earth_mass(myrank,Earth_mass_local,Earth_mass_total)
+
+  use meshfem3D_models_par
+
+  implicit none
+
+  integer :: myrank
+
+  double precision :: Earth_mass_local
+  double precision :: Earth_mass_total
+
+  ! local parameters
+  double precision :: Earth_mass_total_region
+
+  ! use an MPI reduction to compute the total Earth mass
+  Earth_mass_total_region = ZERO
+  call sum_all_dp(Earth_mass_local,Earth_mass_total_region)
+
+  !   sum volume over all the regions
+  if(myrank == 0) Earth_mass_total = Earth_mass_total + Earth_mass_total_region
+
+  end subroutine compute_total_Earth_mass
+

@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine finalize_mesher()
 
   use meshfem3D_par
@@ -54,6 +53,17 @@
         write(IMAIN,*) '     exact volume: ', &
           dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)-(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
       endif
+    endif
+
+    ! check total Earth mass
+    if(NCHUNKS == 6) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Earth mass for this density model and mesh: ',Earth_mass_total
+      write(IMAIN,*) '   (should be not too far from 5.97E+24 kg)'
+      write(IMAIN,*)
+      ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
+      write(IMAIN,*) 'average density for this density model and mesh: ',Earth_mass_total / (volume_total * R_EARTH**3)
+      write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
     endif
 
     ! infos output

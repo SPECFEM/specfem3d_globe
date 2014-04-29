@@ -460,9 +460,9 @@ module specfem_par_crustmantle
   integer :: npoints_slice
   integer, dimension(NM_KL_REG_PTS_VAL) :: points_slice
   integer, dimension(NM_KL_REG_PTS_VAL) :: ispec_reg
-  real, dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
-  real, dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
-  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
 
   ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray

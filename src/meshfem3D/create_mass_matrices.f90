@@ -832,7 +832,7 @@
 
   ! note: old version (5.1.5)
   ! only for models where 3D crustal stretching was used (even without topography?)
-  if( USE_VERSION_5_1_5 ) then
+  if( USE_OLD_VERSION_5_1_5_FORMAT ) then
     if( CASE_3D ) then
       do_ocean_load = .true.
     endif
@@ -873,9 +873,9 @@
           ! slightly move points to avoid roundoff problem when exactly on the polar axis
           call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
-          if( .not. USE_VERSION_5_1_5 ) then
+          if( .not. USE_OLD_VERSION_5_1_5_FORMAT ) then
             ! adds small margins
-  !! DK DK Jul 2013: added a test to only do this if we are on the axis
+  !! DK DK: added a test to only do this if we are on the axis
             if(abs(theta) > 89.99d0) then
               theta = theta + 0.0000001d0
               phi = phi + 0.0000001d0
@@ -888,7 +888,7 @@
           ! note: bathymetry is given in geographic lat/lon
           !       (i.e., latitutde with respect to reference ellipsoid)
           !       we will need convert the geocentric positions here to geographic ones
-          if( USE_VERSION_5_1_5 ) then
+          if( USE_OLD_VERSION_5_1_5_FORMAT ) then
             ! always converts
             theta = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
           else

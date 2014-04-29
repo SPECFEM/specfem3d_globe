@@ -158,7 +158,7 @@
         ! THREE_D_MODEL_S29EA
         ! THREE_D_MODEL_GLL
         ! which show significant transverse isotropy also below 220km depth
-        if( USE_VERSION_5_1_5) then
+        if( USE_OLD_VERSION_5_1_5_FORMAT) then
           ! assignes TI only to elements below (2-layer) ficticious moho down to 670
           if( idoubling(ispec)==IFLAG_220_80 &
             .or. idoubling(ispec)==IFLAG_80_MOHO &

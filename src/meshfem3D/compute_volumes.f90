@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_volumes(volume_local,area_local_bottom,area_local_top, &
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
@@ -108,4 +107,72 @@
   enddo
 
   end subroutine compute_volumes
+
+!=====================================================================
+
+  ! compute Earth mass of that part of the slice
+
+  subroutine compute_Earth_mass(Earth_mass_local, &
+                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore)
+
+  use constants
+
+  implicit none
+
+  double precision :: Earth_mass_local
+
+  integer :: nspec
+  double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore
+
+  ! local parameters
+  double precision :: weight
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  integer :: i,j,k,ispec
+
+  ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  double precision, parameter :: non_dimensionalizing_factor = RHOAV*R_EARTH**3
+
+  ! initializes
+  Earth_mass_local = ZERO
+
+  ! calculates volume of all elements in mesh
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+
+          weight = wxgll(i)*wygll(j)*wzgll(k)
+
+          ! compute the jacobian
+          xixl = xixstore(i,j,k,ispec)
+          xiyl = xiystore(i,j,k,ispec)
+          xizl = xizstore(i,j,k,ispec)
+          etaxl = etaxstore(i,j,k,ispec)
+          etayl = etaystore(i,j,k,ispec)
+          etazl = etazstore(i,j,k,ispec)
+          gammaxl = gammaxstore(i,j,k,ispec)
+          gammayl = gammaystore(i,j,k,ispec)
+          gammazl = gammazstore(i,j,k,ispec)
+
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+          Earth_mass_local = Earth_mass_local + dble(jacobianl)*rhostore(i,j,k,ispec)*weight
+
+        enddo
+      enddo
+    enddo
+  enddo
+
+  ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor
+
+  end subroutine compute_Earth_mass
 

@@ -156,6 +156,9 @@
   ! check area and volume of the final mesh
   double precision :: volume_total
 
+  ! check Earth mass computed in the final mesh
+  double precision :: Earth_mass_total
+
   ! for loop on all the slices
   integer :: iregion_code
   integer :: iproc_xi,iproc_eta,ichunk

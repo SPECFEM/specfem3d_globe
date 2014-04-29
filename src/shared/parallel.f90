@@ -1066,6 +1066,30 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gatherv_all_cr_single_prec(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
+
+  use constants
+  use mpi
+
+  implicit none
+
+  integer :: sendcnt,recvcounttot,NPROC
+  integer, dimension(NPROC) :: recvcount,recvoffset
+  real, dimension(sendcnt) :: sendbuf
+  real, dimension(recvcounttot) :: recvbuf
+
+  integer :: ier
+
+  call MPI_GATHERV(sendbuf,sendcnt,MPI_REAL, &
+                  recvbuf,recvcount,recvoffset,MPI_REAL, &
+                  0,MPI_COMM_WORLD,ier)
+
+  end subroutine gatherv_all_cr_single_prec
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
 
   subroutine world_size(sizeval)
