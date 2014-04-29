@@ -259,7 +259,7 @@
   if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
 
   ! produces simulations compatible with old globe version 5.1.5
-  if( USE_VERSION_5_1_5 ) then
+  if( USE_OLD_VERSION_5_1_5_FORMAT ) then
     print*
     print*,'**************'
     print*,'using globe version 5.1.5 compatible simulation parameters'

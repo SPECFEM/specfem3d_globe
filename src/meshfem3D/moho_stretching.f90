@@ -34,7 +34,7 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_VERSION_5_1_5
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT
 
   use meshfem3D_par,only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
@@ -74,7 +74,7 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if( USE_VERSION_5_1_5 ) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
       ! note: at this point, the mesh is still perfectly spherical, thus no need to
       !         convert the geocentric colatitude to a geographic colatitude
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
@@ -105,7 +105,7 @@
     !          nevertheless its moho depth should be set and will be used in linear stretching
     if( moho < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
 
-    if( .not. USE_VERSION_5_1_5 ) then
+    if( .not. USE_OLD_VERSION_5_1_5_FORMAT ) then
       ! limits moho depth to a threshold value to avoid stretching problems
       if( moho < MOHO_MINIMUM ) then
         print*,'moho value exceeds minimum (in km): ',moho*R_EARTH_KM,MOHO_MINIMUM*R_EARTH_KM,'lat/lon:',lat,lon
@@ -236,7 +236,7 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_VERSION_5_1_5
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT
 
   use meshfem3D_par,only: &
     R220
@@ -267,7 +267,7 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if( USE_VERSION_5_1_5 ) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
       ! note: at this point, the mesh is still perfectly spherical, thus no need to
       !         convert the geocentric colatitude to a geographic colatitude
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)

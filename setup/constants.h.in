@@ -48,6 +48,9 @@
 
 !*********************************************************************************************************
 
+!! DK DK for Roland_Sylvain
+  logical, parameter :: ROLAND_SYLVAIN = .false.
+
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
 ! set to .false. typically on a cluster of nodes with local disks used to store the mesh (not very common these days)
@@ -128,7 +131,7 @@
 !! pathname of the topography file (un-smoothed)
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
 
-! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature)
+! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature, currently does not work, DO NOT USE)
   logical,parameter :: USE_GLL = .false.
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
@@ -306,13 +309,9 @@
 !! new version compatibility
 !!
 !!-----------------------------------------------------------
-!! (uncomment desired resolution)
-! old version
 ! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
-!  logical, parameter :: USE_VERSION_5_1_5 = .true.
-! new version
 ! new version uses optional full 3d attenuation
-  logical, parameter :: USE_VERSION_5_1_5 = .false.
+  logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
 
 
 !!-----------------------------------------------------------
@@ -406,7 +405,7 @@
   integer, parameter :: MIDY = (NGLLY+1)/2
   integer, parameter :: MIDZ = (NGLLZ+1)/2
 
-! gravitational constant
+! gravitational constant in S.I. units i.e. in m3 kg-1 s-2
   double precision, parameter :: GRAV = 6.6723d-11
 
 ! a few useful constants

@@ -2257,8 +2257,8 @@
   integer, dimension(:,:),allocatable :: vol_conn_all
   integer, dimension(:),allocatable :: vol_conn_offset_all,vol_conn_nspec_all
   integer :: vol_nspec_all,ispec_start,ispec_end
-  real(kind=CUSTOM_REAL),dimension(1):: dummy
-  integer,dimension(1):: dummy_i
+  real,dimension(1) :: dummy
+  integer,dimension(1) :: dummy_i
 
   real(kind=CUSTOM_REAL) :: x,y,z
 
@@ -2480,13 +2480,13 @@
       if( myrank == 0 ) then
         ! locations
         !if( myrank == 0 ) print*,"    locations..."
-        call gatherv_all_cr(free_x,free_np, &
+        call gatherv_all_cr_single_prec(free_x,free_np, &
                             free_x_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
-        call gatherv_all_cr(free_y,free_np, &
+        call gatherv_all_cr_single_prec(free_y,free_np, &
                             free_y_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
-        call gatherv_all_cr(free_z,free_np, &
+        call gatherv_all_cr_single_prec(free_z,free_np, &
                             free_z_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
 
@@ -2513,15 +2513,14 @@
                                     free_nspec_all,free_conn_all)
 
       else
-        ! all other process just send data
-        ! locations
-        call gatherv_all_cr(free_x,free_np, &
+        ! all other process just send data locations
+        call gatherv_all_cr_single_prec(free_x,free_np, &
                             dummy,free_points_all,free_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(free_y,free_np, &
+        call gatherv_all_cr_single_prec(free_y,free_np, &
                             dummy,free_points_all,free_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(free_z,free_np, &
+        call gatherv_all_cr_single_prec(free_z,free_np, &
                             dummy,free_points_all,free_offset_all, &
                             1,NPROC)
         ! connectivity
@@ -2756,13 +2755,13 @@
       if( myrank == 0 ) then
         ! locations
         !if( myrank == 0 ) print*,"    locations..."
-        call gatherv_all_cr(vol_x,vol_np, &
+        call gatherv_all_cr_single_prec(vol_x,vol_np, &
                             vol_x_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
-        call gatherv_all_cr(vol_y,vol_np, &
+        call gatherv_all_cr_single_prec(vol_y,vol_np, &
                             vol_y_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
-        call gatherv_all_cr(vol_z,vol_np, &
+        call gatherv_all_cr_single_prec(vol_z,vol_np, &
                             vol_z_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
 
@@ -2791,13 +2790,13 @@
       else
         ! all other process just send data
         ! locations
-        call gatherv_all_cr(vol_x,vol_np, &
+        call gatherv_all_cr_single_prec(vol_x,vol_np, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(vol_y,vol_np, &
+        call gatherv_all_cr_single_prec(vol_y,vol_np, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(vol_z,vol_np, &
+        call gatherv_all_cr_single_prec(vol_z,vol_np, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROC)
         ! connectivity

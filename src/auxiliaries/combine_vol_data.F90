@@ -61,7 +61,8 @@ program combine_vol_data_vtk
   integer num_ibool(NGLOB_CRUST_MANTLE)
   logical mask_ibool(NGLOB_CRUST_MANTLE), HIGH_RESOLUTION_MESH
 
-  real x, y, z, dat
+  real(kind=CUSTOM_REAL) x, y, z
+  real dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
   ! instead of taking the first value which appears for a global point, average the values

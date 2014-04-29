@@ -213,7 +213,7 @@
 !               = PI/2 - atan( 1/(1 - e**2) * cos(theta)/sin(theta) )
 !               = PI/2 - atan( 1.00670466  * cos(theta)/sin(theta) )
 
-  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_VERSION_5_1_5
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
 
   implicit none
 
@@ -224,7 +224,7 @@
 
   if(.not. ASSUME_PERFECT_SPHERE) then
     ! mesh is elliptical
-    if( USE_VERSION_5_1_5 ) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
       theta_prime = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
     else
       ! converts geocentric colatitude theta to geographic colatitude theta_prime
@@ -280,7 +280,7 @@
 
 ! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
 
-  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,USE_VERSION_5_1_5
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
 
   implicit none
 
@@ -289,10 +289,9 @@
   ! co-latitude (in radians)
   double precision,intent(out) :: theta
 
-
   if( .not. ASSUME_PERFECT_SPHERE ) then
     ! converts geographic (lat_prime) to geocentric latitude and converts to co-latitude (theta)
-    if( USE_VERSION_5_1_5) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT) then
       ! note: factor 0.99329534 = 1 - e**2 with eccentricity e**2 = 0.00670466
       theta = PI_OVER_TWO - atan( 0.99329534d0*dtan(lat_prime * DEGREES_TO_RADIANS) )
     else
