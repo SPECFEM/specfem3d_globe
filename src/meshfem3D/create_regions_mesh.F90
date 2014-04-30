@@ -101,10 +101,6 @@
   ! local parameters
   integer :: ier
   integer :: nglob
-  ! check area and volume of the final mesh
-  double precision :: area_local_bottom,area_local_top
-  double precision :: volume_local
-  double precision :: Earth_mass_local
 
   ! user output
   if(myrank == 0 ) then
@@ -410,18 +406,14 @@
 
     endif
 
-    ! compute volume, bottom and top area of that part of the slice
-    call compute_volumes(volume_local,area_local_bottom,area_local_top, &
-        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling)
+    ! compute volume, bottom and top area of that part of the slice, and then the total
+    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
+                            volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
-    ! computes total area and volume
-    call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
-        area_local_top,volume_local,volume_total,RCMB,RICB,R_CENTRAL_CUBE)
-
-    ! compute Earth mass of that part of the slice and then total Earth mass
-    call compute_Earth_mass(myrank,Earth_mass_local,Earth_mass_total, &
+    ! compute Earth mass of that part of the slice, and then total Earth mass
+    call compute_Earth_mass(myrank,Earth_mass_total, &
         nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
         etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
