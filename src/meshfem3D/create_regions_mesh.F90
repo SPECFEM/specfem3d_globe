@@ -349,7 +349,7 @@
     if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
-    ! note: for stacey boundaries, needs indexing nimin,.. filled in in first pass
+    ! note: for Stacey boundaries, needs indexing nimin,.. filled in in first pass
     call create_mass_matrices(nspec,nglob,idoubling,ibool, &
                               iregion_code,xstore,ystore,zstore, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM)
@@ -360,25 +360,25 @@
     ! save the binary files
     call synchronize_all()
 !! DK DK for Roland_Sylvain
-  if(.not. ROLAND_SYLVAIN) then
-    if( myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) '  ...saving binary files'
-      call flush_IMAIN()
+    if(.not. ROLAND_SYLVAIN) then
+      if( myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...saving binary files'
+        call flush_IMAIN()
+      endif
+      ! saves mesh and model parameters
+      if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+        if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
+        call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
+                                      iregion_code,xstore,ystore,zstore,  &
+                                      NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+                                      NSPEC2D_TOP,NSPEC2D_BOTTOM)
+      else
+        call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+                                iregion_code,xstore,ystore,zstore, &
+                                NSPEC2D_TOP,NSPEC2D_BOTTOM)
+      endif
     endif
-    ! saves mesh and model parameters
-    if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-      if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
-      call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
-                                    iregion_code,xstore,ystore,zstore,  &
-                                    NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
-                                    NSPEC2D_TOP,NSPEC2D_BOTTOM)
-    else
-      call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
-                              iregion_code,xstore,ystore,zstore, &
-                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
-    endif
-  endif
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
@@ -665,7 +665,7 @@
     endif
 
     ! initializes boundary indices only during first pass, we need then the stored index values
-    ! for creating mass matrices for stacey in second pass
+    ! for creating mass matrices for Stacey in second pass
     nimin(:,:) = 0; nimax(:,:) = 0
     njmin(:,:) = 0; njmax(:,:) = 0
     nkmin_xi(:,:) = 0; nkmin_eta(:,:) = 0

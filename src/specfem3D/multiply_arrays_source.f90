@@ -112,7 +112,7 @@
   ! local parameters
   integer :: i
 
-  ! note: mass matrices for fluid region has no stacey or rotation correction
+  ! note: mass matrices for fluid region has no Stacey or rotation correction
   !       it is also the same for forward and backward/reconstructed wavefields
 
   do i=1,NGLOB

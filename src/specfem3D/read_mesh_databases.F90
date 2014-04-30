@@ -117,7 +117,7 @@
     ! reads "stacey.bin" files
     if( SYNC_READING ) call synchronize_all()
     if( myrank == 0 ) then
-      write(IMAIN,*) '  reading in stacey databases...'
+      write(IMAIN,*) '  reading in Stacey databases...'
       call flush_IMAIN()
     endif
     call read_mesh_databases_stacey()
