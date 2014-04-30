@@ -597,6 +597,7 @@
 
 ! number of hours per day for rotation rate of the Earth
   double precision, parameter :: HOURS_PER_DAY = 24.d0
+  double precision, parameter :: SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
