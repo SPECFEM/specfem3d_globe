@@ -94,7 +94,7 @@
   subroutine find_regular_grid_slice_number(slice_number, GRID)
 
   use constants
-  use specfem_par, only: myrank, &
+  use specfem_par, only: myrank, addressing, &
                          NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
 
   implicit none
@@ -151,7 +151,7 @@
     xi1 = xi_isp / xi_width * 2; eta1 = eta_isp / eta_width * 2
     iproc_xi = floor((xi1+1)/2 * nproc)
     iproc_eta = floor((eta1+1)/2 * nproc)
-    slice_number(isp) = nproc * nproc * (chunk_isp-1) + nproc * iproc_eta + iproc_xi
+    slice_number(isp) = addressing(chunk_isp, iproc_xi, iproc_eta)
   enddo
 
   end subroutine find_regular_grid_slice_number
