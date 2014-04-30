@@ -700,23 +700,23 @@
     ! distinguish between single and double precision for reals
     if (SIMULATION_TYPE == 1) then
       if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
+        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
       else
-        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
+        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
       endif
     else
       if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
+        two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
       else
-        two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
+        two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
       endif
     endif
 
     if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
-        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
+        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
       else
-        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
+        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
       endif
     endif
   else

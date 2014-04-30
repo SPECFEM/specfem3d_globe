@@ -205,8 +205,9 @@
   real(kind=4) :: shdep(NSQ)
   real(kind=4) :: wk1(NSQ),wk2(NSQ),wk3(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
-  double precision, parameter :: rmoho_prem = 6371.0-24.4
-  double precision, parameter :: rcmb = 3480.0
+
+  double precision, parameter :: rmoho_prem = 6371.0d0 - 24.4d0
+  double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem
@@ -265,7 +266,8 @@
     smallq_ref=QRFSI12_Q_refqmu(ifnd)
     smallq = smallq_ref
 
-    if(depth < 650.d0) then !Colleen's model is only defined between depths of 24.4 and 650km
+! Colleen's model is only defined between depths of 24.4 and 650km
+    if(depth < 650.d0) then
       do j=1,NSQ
         shdep(j)=0.
       enddo

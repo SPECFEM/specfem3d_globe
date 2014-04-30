@@ -269,15 +269,15 @@
 
   ! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
-    two_omega_earth_dt = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+    two_omega_earth_dt = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat)
   else
-    two_omega_earth_dt = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
+    two_omega_earth_dt = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat
   endif
 
   if(CUSTOM_REAL == SIZE_REAL) then
-    b_two_omega_earth_dt = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+    b_two_omega_earth_dt = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat)
   else
-    b_two_omega_earth_dt = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
+    b_two_omega_earth_dt = - 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat
   endif
 
   ! definition depends if region is fluid or solid
