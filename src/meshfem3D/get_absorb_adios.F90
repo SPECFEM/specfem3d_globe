@@ -27,14 +27,14 @@
 
 !-------------------------------------------------------------------------------
 !> \file get_absorb_adios.f90
-!! \brief Function to write stacey boundary condition to disk with ADIOS.
+!! \brief Function to write Stacey boundary condition to disk with ADIOS.
 !! \author MPBL
 !-------------------------------------------------------------------------------
 
 #include "config.fh"
 
 !===============================================================================
-!> \brief Write stacey boundary conditions to a single file using ADIOS
+!> \brief Write Stacey boundary conditions to a single file using ADIOS
 !!
 !! \param myrank The MPI rank of the current process
 !! \param iregion The region the absorbing conditon is written for. Check

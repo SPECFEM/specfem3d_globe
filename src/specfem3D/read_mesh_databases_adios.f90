@@ -710,7 +710,7 @@ subroutine read_mesh_databases_addressing_adios()
   endif
 
   ! determine chunk number and local slice coordinates using addressing
-  ! (needed for stacey conditions)
+  ! (needed for Stacey conditions)
   ichunk = ichunk_slice(myrank)
 
 end subroutine read_mesh_databases_addressing_adios

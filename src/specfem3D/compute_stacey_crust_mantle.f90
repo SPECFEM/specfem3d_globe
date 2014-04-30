@@ -27,7 +27,7 @@
 
   subroutine compute_stacey_crust_mantle_forward()
 
-! stacey conditions for forward or adjoint wavefields (SIMULATION_TYPE == 1 or 2)
+! Stacey conditions for forward or adjoint wavefields (SIMULATION_TYPE == 1 or 2)
 
   use constants_solver
 
@@ -326,7 +326,7 @@
 
   subroutine compute_stacey_crust_mantle_backward()
 
-! stacey for backward/reconstructed wavefield
+! Stacey for backward/reconstructed wavefield
 
   use constants_solver
 
@@ -518,7 +518,7 @@
 
   subroutine compute_stacey_crust_mantle_backward_undoatt()
 
-! stacey conditions for backward/reconstructed wavefields in UNDO_ATTENUATION case
+! Stacey conditions for backward/reconstructed wavefields in UNDO_ATTENUATION case
 
   use constants_solver
 

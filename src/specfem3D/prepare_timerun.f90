@@ -76,7 +76,7 @@
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
   call read_forward_arrays_startrun()
 
-  ! prepares stacey boundary arrays for re-construction of wavefields
+  ! prepares Stacey boundary arrays for re-construction of wavefields
   if( ABSORBING_CONDITIONS ) call prepare_timerun_stacey()
 
   ! prepares noise simulations
