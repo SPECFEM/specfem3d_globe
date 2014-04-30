@@ -216,7 +216,7 @@ module specfem_par
   ! proc numbers for MPI
   integer :: myrank
   integer :: ichunk ! needed for Stacey boundaries
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+  integer, dimension(:,:,:), allocatable :: addressing
 
   ! time loop timing
   double precision :: time_start
