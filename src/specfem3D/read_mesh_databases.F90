@@ -95,14 +95,18 @@
   endif
   call read_mesh_databases_coupling()
 
-  ! reads "addressing.txt" 2-D addressing (needed for Stacey boundaries)
+  ! reads "addressing.txt" 2-D addressing (needed for Stacey boundaries and
+  ! regular grid kernels)
   if( SYNC_READING ) call synchronize_all()
   if( myrank == 0 ) then
     write(IMAIN,*) '  reading in addressing...'
     call flush_IMAIN()
   endif
+  allocate(addressing(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1))
   call read_mesh_databases_addressing()
-
+  if (.not.SAVE_REGULAR_KL) then
+    deallocate(addressing)
+  endif
 
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
   if( SYNC_READING ) call synchronize_all()
@@ -131,6 +135,7 @@
       call flush_IMAIN()
     endif
     call read_mesh_databases_regular_kl()
+    deallocate(addressing)
   endif
 
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
@@ -783,7 +788,6 @@
   implicit none
 
   ! local parameters
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
   integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
   integer :: ier,iproc,iproc_read,iproc_xi,iproc_eta
 
@@ -1329,7 +1333,7 @@
   end type kl_reg_grid_variables
   type (kl_reg_grid_variables) KL_REG_GRID
 
-  call read_kl_regular_grid(myrank, KL_REG_GRID)
+  call read_kl_regular_grid(KL_REG_GRID)
 
   if( myrank == 0 ) then
     ! master process
@@ -1337,8 +1341,7 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating slice_number array')
 
     ! print *, 'slice npts =', KL_REG_GRID%npts_total
-    call find_regular_grid_slice_number(slice_number, KL_REG_GRID, NCHUNKS_VAL, &
-                                        NPROC_XI_VAL, NPROC_ETA_VAL)
+    call find_regular_grid_slice_number(slice_number, KL_REG_GRID)
 
     do i = NPROCTOT_VAL-1,0,-1
       npoints_slice = 0
@@ -1376,11 +1379,11 @@
   ! and presumably the more processors involved the faster.
   if (npoints_slice > 0) then
     call locate_regular_points(npoints_slice, points_slice, KL_REG_GRID, &
-                           NEX_XI, NSPEC_CRUST_MANTLE, &
-                           xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
-                           ibool_crust_mantle, &
-                           xigll, yigll, zigll, &
-                           ispec_reg, hxir_reg, hetar_reg, hgammar_reg)
+                               NSPEC_CRUST_MANTLE, &
+                               xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
+                               ibool_crust_mantle, &
+                               xigll, yigll, zigll, &
+                               ispec_reg, hxir_reg, hetar_reg, hgammar_reg)
   endif
 
   ! user output
