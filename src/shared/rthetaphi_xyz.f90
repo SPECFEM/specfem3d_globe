@@ -280,7 +280,7 @@
 
 ! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
 
-  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,ONE_MINUS_F_SQUARED
 
   implicit none
 
@@ -291,13 +291,7 @@
 
   if( .not. ASSUME_PERFECT_SPHERE ) then
     ! converts geographic (lat_prime) to geocentric latitude and converts to co-latitude (theta)
-    if( USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! note: factor 0.99329534 = 1 - e**2 with eccentricity e**2 = 0.00670466
-      theta = PI_OVER_TWO - atan( 0.99329534d0*dtan(lat_prime * DEGREES_TO_RADIANS) )
-    else
-      ! note: factor 0.99333999308198295 = 1 - e**2 with eccentricity e**2 = 0.0066600069180170474
-      theta = PI_OVER_TWO - atan( 0.99333999308198295d0*dtan(lat_prime * DEGREES_TO_RADIANS) )
-    endif
+    theta = PI_OVER_TWO - atan( ONE_MINUS_F_SQUARED*dtan(lat_prime * DEGREES_TO_RADIANS) )
   else
     ! for perfect sphere, geocentric and geographic latitudes are the same
     ! converts latitude (in degrees to co-latitude (in radians)

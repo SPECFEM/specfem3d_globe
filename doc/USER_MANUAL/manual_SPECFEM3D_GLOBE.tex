@@ -780,6 +780,17 @@ is on.
 \item [{\texttt{ELLIPTICITY}}] Set to \texttt{.true.} if the mesh should
 make the Earth model elliptical in shape according to Clairaut's equation
 \citep{DaTr98}. This feature adds no cost to the simulation.
+%
+From \cite{DaTr98}: "Spherically-symmetric Earth models all have the same hydrostatic surface ellipticity 1/299.8. This is 0.5 percent smaller than observed flattening of best-fitting ellipsoid 1/298.3. The discrepancy is referred to as the "excess equatorial bulge of the Earth", an early discovery of artificial satellite geodesy."
+%
+From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture, available at http://www.agu.org/books: "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A) by using the Clairaut differential equation to calculate the flattening 
+in function of the radius vector imply hydrostaticity. These have surface ellipticity 1/299.8 and
+a corresponding dynamical flattening of .0033 (PREM). The actual ellipticty of the Earth for a best-fitting ellipsoid is 1/298.3 with a corresponding dynamical flattening of .0034."
+%
+Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. And thus eccentricity squared $e^2 = 1 - (1-f)^2 = 1 - (1 - 1/299.8)^2 = 0.00665998813529$, and the correction factor used in the code to convert geographic latitudes to geocentric is $1 - e^2 = (1-f)^2 = (1 - 1/299.8)^2 = 0.9933400118647$.
+%
+As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. http://en.wikipedia.org/wiki/World\_Geodetic\_System) has $f = 1/298.2572236$.
+%
 \item [{\texttt{TOPOGRAPHY}}] Set to \texttt{.true.} if topography and
 bathymetry should be incorporated based upon model ETOPO5 \citep{Etopo5}.
 This feature adds no cost to the simulation.
