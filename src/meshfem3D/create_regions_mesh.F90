@@ -392,7 +392,8 @@
     call crm_free_MPI_arrays(iregion_code)
 
     ! boundary mesh for MOHO, 400 and 670 discontinuities
-    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+!! DK DK for Roland_Sylvain
+    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. ROLAND_SYLVAIN) then
       ! user output
       call synchronize_all()
       if( myrank == 0) then
@@ -413,27 +414,35 @@
     call compute_volumes(volume_local,area_local_bottom,area_local_top, &
         nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
         etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling)
 
     ! computes total area and volume
     call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
         area_local_top,volume_local,volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
-    ! compute Earth mass of that part of the slice
-    call compute_Earth_mass(Earth_mass_local, &
+    ! compute Earth mass of that part of the slice and then total Earth mass
+    call compute_Earth_mass(myrank,Earth_mass_local,Earth_mass_total, &
         nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore)
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
-    ! computes total Earth mass
-    call compute_total_Earth_mass(myrank,Earth_mass_local,Earth_mass_total)
+!! DK DK for Roland_Sylvain
+    if(ROLAND_SYLVAIN) then
+      call synchronize_all()
+      if( myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...computing Roland_Sylvain integrals'
+        call flush_IMAIN()
+      endif
+    endif
 
     ! create AVS or DX mesh data for the slices
-    if(SAVE_MESH_FILES) then
+!! DK DK for Roland_Sylvain
+    if(SAVE_MESH_FILES .and. .not. ROLAND_SYLVAIN) then
       ! user output
       call synchronize_all()
       if( myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) '  ...saving AVS mesh files'
+        write(IMAIN,*) '  ...saving AVS or DX mesh files'
         call flush_IMAIN()
       endif
       call crm_save_mesh_files(nspec,npointot,iregion_code)

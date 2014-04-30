@@ -28,7 +28,7 @@
   subroutine compute_volumes(volume_local,area_local_bottom,area_local_top, &
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling)
 
   use constants
 
@@ -38,6 +38,8 @@
 
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+
+  integer,dimension(nspec) :: idoubling
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
@@ -58,6 +60,10 @@
 
   ! calculates volume of all elements in mesh
   do ispec = 1,nspec
+
+    ! suppress fictitious elements in central cube
+    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -110,20 +116,23 @@
 
 !=====================================================================
 
-  ! compute Earth mass of that part of the slice
+  ! compute Earth mass of that part of the slice and then total Earth mass
 
-  subroutine compute_Earth_mass(Earth_mass_local, &
+  subroutine compute_Earth_mass(myrank,Earth_mass_local,Earth_mass_total, &
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore)
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
   use constants
 
   implicit none
 
-  double precision :: Earth_mass_local
+  double precision :: Earth_mass_local,Earth_mass_total
 
+  integer :: myrank
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+
+  integer,dimension(nspec) :: idoubling
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
@@ -134,6 +143,7 @@
   double precision :: weight
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   integer :: i,j,k,ispec
+  double precision :: Earth_mass_total_region
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
   double precision, parameter :: non_dimensionalizing_factor = RHOAV*R_EARTH**3
@@ -143,6 +153,10 @@
 
   ! calculates volume of all elements in mesh
   do ispec = 1,nspec
+
+    ! suppress fictitious elements in central cube
+    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -173,6 +187,13 @@
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
   Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor
+
+  ! use an MPI reduction to compute the total Earth mass
+  Earth_mass_total_region = ZERO
+  call sum_all_dp(Earth_mass_local,Earth_mass_total_region)
+
+  !   sum volume over all the regions
+  if(myrank == 0) Earth_mass_total = Earth_mass_total + Earth_mass_total_region
 
   end subroutine compute_Earth_mass
 
