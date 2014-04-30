@@ -165,7 +165,7 @@
                                    hxir_reg,hetar_reg,hgammar_reg)
 
   use constants_solver
-  use specfem_par, only: NEX_XI
+  use specfem_par, only: myrank, NEX_XI
 
   implicit none
 
@@ -288,9 +288,13 @@
           enddo
         enddo
       enddo
-
     enddo
-    if (.not. locate_target) stop 'error in point_source() array'
+
+    if (.not. locate_target) then
+      print *, 'Looking for point', isp, ilayer, ilat, ilon, lat, lon, &
+               x_target, y_target, z_target, myrank
+      call exit_MPI(myrank, 'error in point_source() array')
+    endif
 
     xi = xigll(ix_in)
     eta = yigll(iy_in)
@@ -497,5 +501,7 @@
      stop 'chunk number k < 6'
   endif
 
+  xi = EPS * nint(xi / EPS)
+  eta = EPS * nint(eta / EPS)
   end subroutine chunk_map
 
