@@ -25,9 +25,10 @@
 !
 !=====================================================================
 
-  subroutine read_kl_regular_grid(myrank, GRID)
+  subroutine read_kl_regular_grid(GRID)
 
   use constants
+  use specfem_par, only: myrank
 
   implicit none
 
@@ -46,7 +47,7 @@
 
   type (kl_reg_grid_variables), intent(inout) :: GRID
 
-  integer :: myrank,ios,nlayer,i,nlat,nlon,npts_this_layer
+  integer :: ios,nlayer,i,nlat,nlon,npts_this_layer
   real :: r
 
   ! improvements to make: read-in by master and broadcast to all slaves
@@ -90,10 +91,11 @@
 
 !==============================================================
 
-  subroutine find_regular_grid_slice_number(slice_number, GRID, &
-                                          NCHUNKS, NPROC_XI, NPROC_ETA)
+  subroutine find_regular_grid_slice_number(slice_number, GRID)
 
   use constants
+  use specfem_par, only: myrank, &
+                         NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
 
   implicit none
 
@@ -113,19 +115,17 @@
   end type kl_reg_grid_variables
   type (kl_reg_grid_variables), intent(in) :: GRID
 
-  integer, intent(in) :: NCHUNKS,NPROC_XI,NPROC_ETA
-
   real(kind=CUSTOM_REAL) :: xi_width, eta_width
   integer :: nproc, ilayer, isp, ilat, ilon, k, chunk_isp
   integer :: iproc_xi, iproc_eta
   real :: lat,lon,th,ph,x,y,z,xik,etak,xi_isp,eta_isp,xi1,eta1
 
   ! assuming 6 chunks full global simulations right now
-  if (NCHUNKS /= 6 .or. NPROC_XI /= NPROC_ETA) then
-    call exit_MPI(0, 'Only deal with 6 chunks at this moment')
+  if (NCHUNKS_VAL /= 6 .or. NPROC_XI_VAL /= NPROC_ETA_VAL) then
+    call exit_MPI(myrank, 'Only deal with 6 chunks at this moment')
   endif
 
-  xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI
+  xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI_VAL
   ilayer=0
 
   do isp = 1,GRID%npts_total
@@ -142,7 +142,7 @@
 
     ! figure out slice number
     chunk_isp = 1; xi_isp = 0; eta_isp = 0
-    do k = 1, NCHUNKS
+    do k = 1, NCHUNKS_VAL
       call chunk_map(k, x, y, z, xik, etak)
       if (abs(xik) <= PI/4 .and. abs(etak) <= PI/4) then
         chunk_isp = k;  xi_isp = xik; eta_isp = etak; exit
@@ -160,11 +160,12 @@
 
 ! how about using single precision for the iterations?
   subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
-                                   NEX_XI,nspec,xstore,ystore,zstore,ibool, &
+                                   nspec,xstore,ystore,zstore,ibool, &
                                    xigll,yigll,zigll,ispec_reg, &
                                    hxir_reg,hetar_reg,hgammar_reg)
 
   use constants_solver
+  use specfem_par, only: NEX_XI
 
   implicit none
 
@@ -187,7 +188,7 @@
   type (kl_reg_grid_variables), intent(in) :: GRID
 
   ! simulation geometry
-  integer, intent(in) :: NEX_XI, nspec
+  integer, intent(in) :: nspec
   real(kind=CUSTOM_REAL), dimension(*), intent(in) :: xstore,ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,*), intent(in) :: ibool
 
