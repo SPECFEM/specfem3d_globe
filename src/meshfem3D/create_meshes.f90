@@ -40,8 +40,9 @@
   iproc_xi = iproc_xi_slice(myrank)
   iproc_eta = iproc_eta_slice(myrank)
 
-  ! volume of the slice
+  ! volume of the final mesh, and Earth mass computed in the final mesh
   volume_total = ZERO
+  Earth_mass_total = ZERO
 
   ! make sure everybody is synchronized
   call synchronize_all()

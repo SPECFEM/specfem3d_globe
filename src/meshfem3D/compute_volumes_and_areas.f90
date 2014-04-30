@@ -25,19 +25,24 @@
 !
 !=====================================================================
 
-  subroutine compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+  subroutine compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling)
+                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
+                            volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
   use constants
 
-  implicit none
+  use meshfem3D_models_par
 
-  double precision :: volume_local,area_local_bottom,area_local_top
+  implicit none
 
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+
+  integer :: myrank,NCHUNKS,iregion_code
+
+  double precision :: volume_total
+  double precision :: RCMB,RICB,R_CENTRAL_CUBE
 
   integer,dimension(nspec) :: idoubling
 
@@ -49,6 +54,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
 
   ! local parameters
+  double precision :: volume_local,area_local_bottom,area_local_top
+  double precision :: volume_total_region,area_total_bottom,area_total_top
   double precision :: weight
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   integer :: i,j,k,ispec
@@ -112,13 +119,64 @@
     enddo
   enddo
 
-  end subroutine compute_volumes
+  ! use an MPI reduction to compute the total area and volume
+  volume_total_region = ZERO
+  area_total_bottom   = ZERO
+  area_total_top   = ZERO
+
+  call sum_all_dp(area_local_bottom,area_total_bottom)
+  call sum_all_dp(area_local_top,area_total_top)
+  call sum_all_dp(volume_local,volume_total_region)
+
+  if(myrank == 0) then
+    !   sum volume over all the regions
+    volume_total = volume_total + volume_total_region
+
+    !   check volume of chunk, and bottom and top area
+    write(IMAIN,*)
+    write(IMAIN,*) '   calculated top area: ',area_total_top
+
+    ! compare to exact theoretical value
+    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
+      select case(iregion_code)
+        case(IREGION_CRUST_MANTLE)
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
+        case(IREGION_OUTER_CORE)
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
+        case(IREGION_INNER_CORE)
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
+        case default
+          call exit_MPI(myrank,'incorrect region code')
+      end select
+    endif
+
+    write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
+
+    ! compare to exact theoretical value
+    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
+      select case(iregion_code)
+        case(IREGION_CRUST_MANTLE)
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
+        case(IREGION_OUTER_CORE)
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
+        case(IREGION_INNER_CORE)
+          write(IMAIN,*) '            more or less similar area (central cube): ', &
+                                           dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
+        case default
+          call exit_MPI(myrank,'incorrect region code')
+      end select
+    endif
+    call flush_IMAIN()
+
+  endif
+
+  end subroutine compute_volumes_and_areas
 
 !=====================================================================
 
   ! compute Earth mass of that part of the slice and then total Earth mass
 
-  subroutine compute_Earth_mass(myrank,Earth_mass_local,Earth_mass_total, &
+  subroutine compute_Earth_mass(myrank,Earth_mass_total, &
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
@@ -126,7 +184,7 @@
 
   implicit none
 
-  double precision :: Earth_mass_local,Earth_mass_total
+  double precision :: Earth_mass_total
 
   integer :: myrank
   integer :: nspec
@@ -143,7 +201,7 @@
   double precision :: weight
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   integer :: i,j,k,ispec
-  double precision :: Earth_mass_total_region
+  double precision :: Earth_mass_local,Earth_mass_total_region
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
   double precision, parameter :: non_dimensionalizing_factor = RHOAV*R_EARTH**3

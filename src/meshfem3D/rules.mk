@@ -44,10 +44,9 @@ meshfem3D_OBJECTS = \
 	$O/assemble_MPI_scalar_mesh.check.o \
 	$O/assemble_MPI_vector_mesh.check.o \
 	$O/calc_jacobian.check.o \
-	$O/compute_area.check.o \
 	$O/compute_coordinates_grid.check.o \
 	$O/compute_element_properties.check.o \
-	$O/compute_volumes.check.o \
+	$O/compute_volumes_and_areas.check.o \
 	$O/create_addressing.check.o \
 	$O/create_central_cube.check.o \
 	$O/create_central_cube_buffers.check.o \
