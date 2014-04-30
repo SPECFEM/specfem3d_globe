@@ -43,17 +43,8 @@
     ! check volume of chunk
     write(IMAIN,*)
     write(IMAIN,*) 'calculated volume: ',volume_total
-    if(.not. TOPOGRAPHY) then
-      ! take the central cube into account
-      ! it is counted 6 times because of the fictitious elements
-      if(INCLUDE_CENTRAL_CUBE) then
-        write(IMAIN,*) '     exact volume: ', &
-          dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)+5.*(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
-      else
-        write(IMAIN,*) '     exact volume: ', &
-          dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)-(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
-      endif
-    endif
+    if(NCHUNKS == 6 .and. .not. ELLIPTICITY .and. .not. TOPOGRAPHY) &
+        write(IMAIN,*) '     exact volume: ',(4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)
 
     ! check total Earth mass
     if(NCHUNKS == 6) then

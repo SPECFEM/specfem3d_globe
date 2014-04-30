@@ -84,7 +84,8 @@
         case(IREGION_OUTER_CORE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
         case(IREGION_INNER_CORE)
-          write(IMAIN,*) '            similar area (central cube): ',dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
+          write(IMAIN,*) '            more or less similar area (central cube): ', &
+                                           dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -94,31 +95,4 @@
   endif
 
   end subroutine compute_area
-
-!=====================================================================
-
-  ! computes total Earth mass
-
-  subroutine compute_total_Earth_mass(myrank,Earth_mass_local,Earth_mass_total)
-
-  use meshfem3D_models_par
-
-  implicit none
-
-  integer :: myrank
-
-  double precision :: Earth_mass_local
-  double precision :: Earth_mass_total
-
-  ! local parameters
-  double precision :: Earth_mass_total_region
-
-  ! use an MPI reduction to compute the total Earth mass
-  Earth_mass_total_region = ZERO
-  call sum_all_dp(Earth_mass_local,Earth_mass_total_region)
-
-  !   sum volume over all the regions
-  if(myrank == 0) Earth_mass_total = Earth_mass_total + Earth_mass_total_region
-
-  end subroutine compute_total_Earth_mass
 
