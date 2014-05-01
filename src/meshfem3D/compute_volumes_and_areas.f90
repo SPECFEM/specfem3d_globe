@@ -288,10 +288,16 @@
   double precision :: jacobianl
   integer :: i,j,k,ispec
   double precision :: xval,yval,zval
+  double precision :: xval_squared,yval_squared,zval_squared
+  double precision :: x_meshpoint,y_meshpoint,z_meshpoint,rho_meshpoint
   double precision :: distance,distance_squared,distance_cubed,distance_fifth_power, &
-                      one_over_distance_squared,one_over_distance_cubed,one_over_distance_fifth_power
+                      three_over_distance_squared,one_over_distance_cubed,three_over_distance_fifth_power
+  double precision :: common_multiplying_factor
 
-  double precision, dimension(9) :: Roland_Sylvain_int_local,Roland_Sylvain_int_total_region,elemental_contribution
+  double precision, dimension(9) :: Roland_Sylvain_int_local,Roland_Sylvain_int_total_region
+  double precision :: elemental_contribution_1,elemental_contribution_2,elemental_contribution_3, &
+                      elemental_contribution_4,elemental_contribution_5,elemental_contribution_6, &
+                      elemental_contribution_7,elemental_contribution_8,elemental_contribution_9
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
   ! for the gravity vector force, a distance is involved in the dimensions
@@ -333,50 +339,75 @@
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-    xval = xstore(i,j,k,ispec) - xobs
-    yval = ystore(i,j,k,ispec) - yobs
-    zval = zstore(i,j,k,ispec) - zobs
+    x_meshpoint = xstore(i,j,k,ispec)
+    y_meshpoint = ystore(i,j,k,ispec)
+    z_meshpoint = zstore(i,j,k,ispec)
 
-!! DK DK see later if the non-dimensional values are correctly handled here (I will check more carefully)
-    distance_squared = xval**2 + yval**2 + zval**2
+    rho_meshpoint = rhostore(i,j,k,ispec)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!! beginning of loop on all the data to create
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    xval = x_meshpoint - x_observation
+    yval = y_meshpoint - y_observation
+    zval = z_meshpoint - z_observation
+
+    xval_squared = xval**2
+    yval_squared = yval**2
+    zval_squared = zval**2
+
+    distance_squared = xval_squared + yval_squared + zval_squared
     distance = sqrt(distance_squared)
     distance_cubed = distance_squared*distance
     distance_fifth_power = distance_squared*distance_cubed
 
-    one_over_distance_squared = 1.d0 / distance_squared
+    three_over_distance_squared = 3.d0 / distance_squared
     one_over_distance_cubed = 1.d0 / distance_cubed
-!!!!!!!!!!!!!    one_over_distance_fifth_power = 1.d0 / distance_fifth_power
-!! DK DK this will be faster
-    one_over_distance_fifth_power = one_over_distance_squared * one_over_distance_cubed
+    three_over_distance_fifth_power = three_over_distance_squared * one_over_distance_cubed
 
 ! g_x
-    elemental_contribution(1) = xval * one_over_distance_cubed
+    elemental_contribution_1 = xval * one_over_distance_cubed
 
 ! g_y
-    elemental_contribution(2) = yval * one_over_distance_cubed
+    elemental_contribution_2 = yval * one_over_distance_cubed
 
 ! g_z
-    elemental_contribution(3) = zval * one_over_distance_cubed
+    elemental_contribution_3 = zval * one_over_distance_cubed
 
 ! G_xx
-    elemental_contribution(4) = (3.d0 * xval**2 * one_over_distance_squared - 1.d0) * one_over_distance_cubed
+    elemental_contribution_4 = (xval_squared * three_over_distance_squared - 1.d0) * one_over_distance_cubed
 
 ! G_yy
-    elemental_contribution(5) = (3.d0 * yval**2 * one_over_distance_squared - 1.d0) * one_over_distance_cubed
+    elemental_contribution_5 = (yval_squared * three_over_distance_squared - 1.d0) * one_over_distance_cubed
 
 ! G_zz
-    elemental_contribution(6) = (3.d0 * zval**2 * one_over_distance_squared - 1.d0) * one_over_distance_cubed
+    elemental_contribution_6 = (zval_squared * three_over_distance_squared - 1.d0) * one_over_distance_cubed
 
 ! G_xy
-    elemental_contribution(7) = 3.d0 * xval*yval * one_over_distance_fifth_power
+    elemental_contribution_7 = xval*yval * three_over_distance_fifth_power
 
 ! G_xz
-    elemental_contribution(8) = 3.d0 * xval*zval * one_over_distance_fifth_power
+    elemental_contribution_8 = xval*zval * three_over_distance_fifth_power
 
 ! G_yz
-    elemental_contribution(9) = 3.d0 * yval*zval * one_over_distance_fifth_power
+    elemental_contribution_9 = yval*zval * three_over_distance_fifth_power
 
-    Roland_Sylvain_int_local(:) = Roland_Sylvain_int_local(:) + jacobianl*weight*rhostore(i,j,k,ispec)*elemental_contribution(:)
+    common_multiplying_factor = jacobianl * weight * rho_meshpoint
+
+    Roland_Sylvain_int_local(1) = Roland_Sylvain_int_local(1) + common_multiplying_factor*elemental_contribution_1
+    Roland_Sylvain_int_local(2) = Roland_Sylvain_int_local(2) + common_multiplying_factor*elemental_contribution_2
+    Roland_Sylvain_int_local(3) = Roland_Sylvain_int_local(3) + common_multiplying_factor*elemental_contribution_3
+    Roland_Sylvain_int_local(4) = Roland_Sylvain_int_local(4) + common_multiplying_factor*elemental_contribution_4
+    Roland_Sylvain_int_local(5) = Roland_Sylvain_int_local(5) + common_multiplying_factor*elemental_contribution_5
+    Roland_Sylvain_int_local(6) = Roland_Sylvain_int_local(6) + common_multiplying_factor*elemental_contribution_6
+    Roland_Sylvain_int_local(7) = Roland_Sylvain_int_local(7) + common_multiplying_factor*elemental_contribution_7
+    Roland_Sylvain_int_local(8) = Roland_Sylvain_int_local(8) + common_multiplying_factor*elemental_contribution_8
+    Roland_Sylvain_int_local(9) = Roland_Sylvain_int_local(9) + common_multiplying_factor*elemental_contribution_9
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!! end of loop on all the data to create
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         enddo
       enddo

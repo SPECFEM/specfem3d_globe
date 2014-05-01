@@ -413,20 +413,19 @@
 ! position of the observation point in non-dimensionalized value
 
 !! DK DK along X only
-! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
-! double precision, parameter :: yobs = 0.d0
-! double precision, parameter :: zobs = 0.d0
+! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
+! double precision, parameter :: y_observation = 0.d0
+! double precision, parameter :: z_observation = 0.d0
 
 !! DK DK along diagonal
-! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-! double precision, parameter :: yobs = xobs
-! double precision, parameter :: zobs = xobs
+! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+! double precision, parameter :: y_observation = x_observation
+! double precision, parameter :: z_observation = x_observation
 
 !! DK DK point randomly chosen in space, not at the right elevation we want
-  double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-  double precision, parameter :: yobs = xobs * 1.12d0
-  double precision, parameter :: zobs = xobs * 1.38d0
-
+  double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+  double precision, parameter :: y_observation = x_observation * 1.12d0
+  double precision, parameter :: z_observation = x_observation * 1.38d0
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------

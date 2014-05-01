@@ -84,7 +84,7 @@
       write(IMAIN,*)
       write(IMAIN,*) 'computed norm of g vector = ',sqrt(g_x**2 + g_y**2 + g_z**2),' m.s-2'
 
-      real_altitude_of_observ_point = sqrt(xobs**2 + yobs**2 + zobs**2)
+      real_altitude_of_observ_point = sqrt(x_observation**2 + y_observation**2 + z_observation**2)
 ! gravity force vector norm decays approximately as (r / r_prime)^2 above the surface of the Earth
       write(IMAIN,*) '  (should be not too far from ', &
                              sngl(STANDARD_GRAVITY_EARTH * (R_UNIT_SPHERE / real_altitude_of_observ_point)**2),' m.s-2)'
