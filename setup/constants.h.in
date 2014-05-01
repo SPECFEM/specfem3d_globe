@@ -453,7 +453,7 @@
 ! normalized radius of free surface
   double precision, parameter :: R_UNIT_SPHERE = ONE
 
-! same radius in km
+! radius of the Earth in km
   double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
 
 ! fixed thickness of 3 km for PREM oceans
