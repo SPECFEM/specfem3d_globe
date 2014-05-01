@@ -47,7 +47,7 @@
 
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
-    IMAIN,volume_total,Earth_mass_total,myrank,LOCAL_PATH, &
+    IMAIN,volume_total,Earth_mass_total,Roland_Sylvain_integr_total,myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
@@ -382,7 +382,8 @@
     deallocate(rmass_ocean_load)
 
     ! saves MPI interface info
-    call save_arrays_solver_MPI(iregion_code)
+!! DK DK for Roland_Sylvain
+    if(.not. ROLAND_SYLVAIN) call save_arrays_solver_MPI(iregion_code)
 
     ! frees MPI arrays memory
     call crm_free_MPI_arrays(iregion_code)
@@ -425,6 +426,12 @@
         write(IMAIN,*) '  ...computing Roland_Sylvain integrals'
         call flush_IMAIN()
       endif
+
+      ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
+      call compute_Roland_Sylvain_integr(myrank,Roland_Sylvain_integr_total, &
+          nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
+          etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+
     endif
 
     ! create AVS or DX mesh data for the slices

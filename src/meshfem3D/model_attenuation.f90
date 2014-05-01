@@ -473,9 +473,6 @@
   endif
   ! Generate index for Storage Array
   ! and Recast Qmu using this index
-  ! According to Brian, use float
-  !Qtmp = Qmu * Q_resolution
-  !Qmu = Qtmp / Q_resolution;
 
   ! by default: resolution is Q_resolution = 10
   ! converts Qmu to an array integer index:
@@ -1219,7 +1216,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !      n = Input
 !         Length of X
 !      I = Output
-!         Sorted Indices of vecotr X
+!         Sorted Indices of vector X
 !
 !      Example:
 !         X = [ 4 3 1 2 ] on Input

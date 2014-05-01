@@ -85,7 +85,7 @@
   logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY,ATTENUATION_1D_WITH_3D_STORAGE
   integer :: NT_DUMP_ATTENUATION
 
-  ! ldd Runge-Kutta time scheme
+  ! LDD Runge-Kutta time scheme
   logical :: USE_LDDRK,INCREASE_CFL_FOR_LDDRK
   double precision :: RATIO_BY_WHICH_TO_INCREASE_IT
 

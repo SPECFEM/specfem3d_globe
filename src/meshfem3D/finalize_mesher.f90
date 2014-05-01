@@ -57,7 +57,34 @@
       write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
     endif
 
-    ! info output
+!! DK DK for Roland_Sylvain
+    ! Roland_Sylvain integrals
+    if(ROLAND_SYLVAIN) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 1 g_x  = ',Roland_Sylvain_integr_total(1)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 2 g_y  = ',Roland_Sylvain_integr_total(2)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 3 g_z  = ',Roland_Sylvain_integr_total(3)
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 4 G_xx = ',Roland_Sylvain_integr_total(4)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 5 G_yy = ',Roland_Sylvain_integr_total(5)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 6 G_zz = ',Roland_Sylvain_integr_total(6)
+      write(IMAIN,*)
+      write(IMAIN,*) 'G tensor should be traceless, G_xx + G_yy + G_zz = 0'
+      write(IMAIN,*) 'actual sum obtained = ', &
+            Roland_Sylvain_integr_total(4) + Roland_Sylvain_integr_total(5) + Roland_Sylvain_integr_total(6)
+      if(max(abs(Roland_Sylvain_integr_total(4)),abs(Roland_Sylvain_integr_total(5)),&
+            abs(Roland_Sylvain_integr_total(6))) > TINYVAL) &
+        write(IMAIN,*) ' i.e., ',sngl(100.d0*(Roland_Sylvain_integr_total(4) + Roland_Sylvain_integr_total(5) + &
+            Roland_Sylvain_integr_total(6)) / max(abs(Roland_Sylvain_integr_total(4)),abs(Roland_Sylvain_integr_total(5)),&
+            abs(Roland_Sylvain_integr_total(6)))),'% of max(abs(Gxx),abs(Gyy),abs(Gzz))'
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 7 G_xy = ',Roland_Sylvain_integr_total(7)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 8 G_xz = ',Roland_Sylvain_integr_total(8)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral 9 G_yz = ',Roland_Sylvain_integr_total(9)
+
+    endif
+
+    ! infos output
     numelem_crust_mantle = NSPEC(IREGION_CRUST_MANTLE)
     numelem_outer_core = NSPEC(IREGION_OUTER_CORE)
     numelem_inner_core = NSPEC(IREGION_INNER_CORE)

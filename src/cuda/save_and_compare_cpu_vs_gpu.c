@@ -265,7 +265,7 @@ void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
   size_t res;
 
   float* compare_vector = (float*)malloc(*size*sizeof(float));
-  if(*cpu_or_gpu == 0) { //swap GPU/CPU for compare
+  if(*cpu_or_gpu == 0) { //swap GPU/CPU to compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
   }
   else {
@@ -313,7 +313,7 @@ void compare_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
   size_t res;
 
   int* compare_vector = (int*)malloc(*size*sizeof(int));
-  if(*cpu_or_gpu == 0) { //swap GPU/CPU for compare
+  if(*cpu_or_gpu == 0) { //swap GPU/CPU to compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
   }
   else {
