@@ -1066,7 +1066,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gatherv_all_cr_single_prec(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
+  subroutine gatherv_all_r(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
   use constants
   use mpi
@@ -1084,7 +1084,7 @@
                   recvbuf,recvcount,recvoffset,MPI_REAL, &
                   0,MPI_COMM_WORLD,ier)
 
-  end subroutine gatherv_all_cr_single_prec
+  end subroutine gatherv_all_r
 
 !
 !-------------------------------------------------------------------------------------------------
