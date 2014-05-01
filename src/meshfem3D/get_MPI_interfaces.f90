@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine get_MPI_interfaces(myrank,NGLOB,NSPEC, &
                                     test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                                     num_interfaces,max_nibool_interfaces, &

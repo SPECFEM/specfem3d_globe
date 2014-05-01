@@ -325,7 +325,7 @@
   ! frees memory
   deallocate(bnd)
 
-  ! additional info:
+  ! additional info
   if( DEBUG_FILE_OUTPUT ) then
     ! allocates temporary arrays
     allocate(thc(CRUST1_NLA,CRUST1_NLO), &

@@ -28,7 +28,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 !   This file contains subroutines to read in and get values for
-!   3-D attenuation model QRFSI12 (Dalton, Ekström, & Dziewonski, 2008)
+!   3-D attenuation model QRFSI12 (Dalton, Ekstr"om, & Dziewonski, 2008)
 !
 ! C.A. Dalton, G. Ekstr\"om and A.M. Dziewonski, 2008.
 ! The global attenuation structure of the upper mantle,

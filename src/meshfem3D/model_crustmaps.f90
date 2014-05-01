@@ -156,7 +156,7 @@
   velocsnp(:) = ZERO
   velocssp(:) = ZERO
 
-  !compute average values for North and South pole
+  ! compute average values for North and South pole
   do l=1,NLAYERS_CRUSTMAP
     do i=1,360*CRUSTMAP_RESOLUTION
       thicknessnp(l) =  thicknessnp(l)+thickness(1,i,l)

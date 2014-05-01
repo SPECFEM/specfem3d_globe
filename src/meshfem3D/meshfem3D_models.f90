@@ -397,7 +397,7 @@
 
   ! gets parameters for isotropic 3D mantle model
   !
-  ! note: there can be transverse isotropy in the mantle, but only Lamé parameters
+  ! note: there can be transverse isotropy in the mantle, but only Lam'e parameters
   !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
   !
   ! note: in general, models here make use of perturbation values with respect to their

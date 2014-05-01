@@ -25,8 +25,6 @@
 !
 !=====================================================================
 
-
-
   subroutine create_MPI_interfaces(iregion_code)
 
   implicit none

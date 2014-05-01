@@ -107,6 +107,7 @@
 !! pathname of the topography file
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
 
+!! DK DK for Roland_Sylvain this below could be changed if needed (i.e. using a non-smoothed version for instance)
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
   integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
@@ -462,6 +463,12 @@
 ! shortest radius at which crust is implemented (80 km depth)
 ! to be constistent with the D80 discontinuity, we impose the crust only above it
   double precision, parameter :: R_DEEPEST_CRUST = (R_EARTH - 80000.d0) / R_EARTH
+
+! definition of an Eotvos compared to S.I. units.
+! The unit of gravity gradient is the Eotvos, which is equivalent to 1e-9 s-2 (or 1e-4 mGal/m).
+! A person walking at a distance of 2 meters provides a gravity gradient signal of approximately one Eotvos.
+! Mountains can create signals of several hundred Eotvos.
+  double precision, parameter :: SI_UNITS_TO_EOTVOS = 1.d+9
 
 ! maximum number of chunks (full sphere)
   integer, parameter :: NCHUNKS_MAX = 6

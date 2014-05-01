@@ -159,6 +159,9 @@
   ! check Earth mass computed in the final mesh
   double precision :: Earth_mass_total
 
+  ! compute Roland_Sylvain integrals in the final mesh
+  double precision, dimension(9) :: Roland_Sylvain_integr_total
+
   ! for loop on all the slices
   integer :: iregion_code
   integer :: iproc_xi,iproc_eta,ichunk

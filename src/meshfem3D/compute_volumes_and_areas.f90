@@ -255,3 +255,167 @@
 
   end subroutine compute_Earth_mass
 
+!=====================================================================
+
+  ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
+
+  subroutine compute_Roland_Sylvain_integr(myrank,Roland_Sylvain_integr_total, &
+                            nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+
+  use constants
+
+  implicit none
+
+  double precision, dimension(9) :: Roland_Sylvain_integr_total
+
+  integer :: myrank
+  integer :: nspec
+  double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+
+  integer,dimension(nspec) :: idoubling
+
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore
+
+  ! local parameters
+  double precision :: weight
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  double precision :: jacobianl
+  integer :: i,j,k,ispec
+  double precision :: xval,yval,zval
+  double precision :: distance,distance_squared,distance_cubed,distance_fifth_power, &
+                      one_over_distance_squared,one_over_distance_cubed,one_over_distance_fifth_power
+
+  double precision, dimension(9) :: Roland_Sylvain_int_local,Roland_Sylvain_int_total_region,elemental_contribution
+
+  ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  double precision, parameter :: non_dimensionalizing_factor = RHOAV*R_EARTH**3
+
+!! DK DK position of the observation point in non-dimensional value
+  double precision, parameter :: altitude_of_observation_point = 255.d0 ! in km
+
+  double precision, parameter :: SQUARE_ROOT_OF_THREE = 1.732050808d0
+
+!! DK DK along X only
+! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
+! double precision, parameter :: yobs = 0.d0
+! double precision, parameter :: zobs = 0.d0
+
+!! DK DK along diagonal
+  double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+  double precision, parameter :: yobs = xobs
+  double precision, parameter :: zobs = xobs
+
+!! DK DK point randomly chosen in space, not at the right elevation we want
+! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+! double precision, parameter :: yobs = xobs * 1.12d0
+! double precision, parameter :: zobs = xobs * 1.38d0
+
+  ! initializes
+  Roland_Sylvain_int_local(:) = ZERO
+
+  ! calculates volume of all elements in mesh
+  do ispec = 1,nspec
+
+    ! suppress fictitious elements in central cube
+    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+
+          weight = wxgll(i)*wygll(j)*wzgll(k)
+
+          ! compute the jacobian
+          xixl = xixstore(i,j,k,ispec)
+          xiyl = xiystore(i,j,k,ispec)
+          xizl = xizstore(i,j,k,ispec)
+          etaxl = etaxstore(i,j,k,ispec)
+          etayl = etaystore(i,j,k,ispec)
+          etazl = etazstore(i,j,k,ispec)
+          gammaxl = gammaxstore(i,j,k,ispec)
+          gammayl = gammaystore(i,j,k,ispec)
+          gammazl = gammazstore(i,j,k,ispec)
+
+!! DK DK do this in double precision for accuracy
+          jacobianl = 1.d0 / dble(xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+    xval = xstore(i,j,k,ispec) - xobs
+    yval = ystore(i,j,k,ispec) - yobs
+    zval = zstore(i,j,k,ispec) - zobs
+
+!! DK DK see later if the non-dimensional values are correctly handled here (I will check more carefully)
+    distance_squared = xval**2 + yval**2 + zval**2
+    distance = sqrt(distance_squared)
+    distance_cubed = distance_squared*distance
+    distance_fifth_power = distance_squared*distance_cubed
+
+    one_over_distance_squared = 1.d0 / distance_squared
+    one_over_distance_cubed = 1.d0 / distance_cubed
+!!!!!!!!!!!!!    one_over_distance_fifth_power = 1.d0 / distance_fifth_power
+!! DK DK this will be faster
+    one_over_distance_fifth_power = one_over_distance_squared * one_over_distance_cubed
+
+! g_x
+    elemental_contribution(1) = xval * one_over_distance_cubed
+
+! g_y
+    elemental_contribution(2) = yval * one_over_distance_cubed
+
+! g_z
+    elemental_contribution(3) = zval * one_over_distance_cubed
+
+! G_xx
+    elemental_contribution(4) = (3.d0 * xval**2 * one_over_distance_squared - 1.d0) * one_over_distance_cubed
+
+! G_yy
+    elemental_contribution(5) = (3.d0 * yval**2 * one_over_distance_squared - 1.d0) * one_over_distance_cubed
+
+! G_zz
+    elemental_contribution(6) = (3.d0 * zval**2 * one_over_distance_squared - 1.d0) * one_over_distance_cubed
+
+! G_xy
+    elemental_contribution(7) = 3.d0 * xval*yval * one_over_distance_fifth_power
+
+! G_xz
+    elemental_contribution(8) = 3.d0 * xval*zval * one_over_distance_fifth_power
+
+! G_yz
+    elemental_contribution(9) = 3.d0 * yval*zval * one_over_distance_fifth_power
+
+    Roland_Sylvain_int_local(:) = Roland_Sylvain_int_local(:) + jacobianl*weight*rhostore(i,j,k,ispec)*elemental_contribution(:)
+
+        enddo
+      enddo
+    enddo
+  enddo
+
+  ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
+  ! and also take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  Roland_Sylvain_int_local(:) = Roland_Sylvain_int_local(:) * GRAV * non_dimensionalizing_factor
+
+  ! use an MPI reduction to compute the total value of the integral
+  Roland_Sylvain_int_total_region(:) = ZERO
+!! DK DK could use a single MPI call for the nine values
+  call sum_all_dp(Roland_Sylvain_int_local(1),Roland_Sylvain_int_total_region(1))
+  call sum_all_dp(Roland_Sylvain_int_local(2),Roland_Sylvain_int_total_region(2))
+  call sum_all_dp(Roland_Sylvain_int_local(3),Roland_Sylvain_int_total_region(3))
+  call sum_all_dp(Roland_Sylvain_int_local(4),Roland_Sylvain_int_total_region(4))
+  call sum_all_dp(Roland_Sylvain_int_local(5),Roland_Sylvain_int_total_region(5))
+  call sum_all_dp(Roland_Sylvain_int_local(6),Roland_Sylvain_int_total_region(6))
+  call sum_all_dp(Roland_Sylvain_int_local(7),Roland_Sylvain_int_total_region(7))
+  call sum_all_dp(Roland_Sylvain_int_local(8),Roland_Sylvain_int_total_region(8))
+  call sum_all_dp(Roland_Sylvain_int_local(9),Roland_Sylvain_int_total_region(9))
+
+  !   sum volume over all the regions
+  if(myrank == 0) Roland_Sylvain_integr_total(:) = Roland_Sylvain_integr_total(:) + Roland_Sylvain_int_total_region(:)
+
+  end subroutine compute_Roland_Sylvain_integr
+
