@@ -43,7 +43,7 @@
 ! and below 670km.
 !
 ! attenuation structure is taken from model QL6:
-! Durek, J. J. and G. Ekström, 1996.
+! Durek, J. J. and G. Ekstr"om, 1996.
 ! A radial model of anelasticity consistent with long period surface wave attenuation,
 ! Bull. Seism. Soc. Am., 86, 144-158
 !--------------------------------------------------------------------------------------------------
