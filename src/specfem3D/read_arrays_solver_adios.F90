@@ -116,7 +116,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   sel_num = 0
 
-  ! Postpend the actual file name.
+  ! Append the actual file name.
   file_name= trim(LOCAL_PATH) // "/solver_data.bp"
 
   call world_duplicate(comm)

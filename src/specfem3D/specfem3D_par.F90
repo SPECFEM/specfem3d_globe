@@ -168,7 +168,7 @@ module specfem_par
 
   ! ADJOINT sources
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
-  ! asynchronuous read buffer when IO_ASYNC_COPY is set
+  ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: buffer_sourcearrays
 
   integer :: nrec_simulation, nadj_rec_local
@@ -177,7 +177,7 @@ module specfem_par
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
   integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
 
-  ! source frechet derivatives
+  ! source Frechet derivatives
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: moment_der
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: stshift_der, shdur_der
@@ -753,16 +753,16 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: &
     div_displ_outer_core
 
-  ! vtk run-time visualization
+  ! VTK run-time visualization
 #ifdef HAVE_VTK
-  ! vtk window
+  ! VTK window
   logical, parameter :: VTK_MODE = .true.
 #else
   logical, parameter :: VTK_MODE = .false.
 #endif
   real,dimension(:),allocatable :: vtkdata
   logical,dimension(:),allocatable :: vtkmask
-  ! multi-mpi processes, gather data arrays on master
+  ! multi-MPI processes, gather data arrays on master
   real,dimension(:),allocatable :: vtkdata_all
   integer,dimension(:),allocatable :: vtkdata_points_all
   integer,dimension(:),allocatable :: vtkdata_offset_all

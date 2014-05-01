@@ -35,7 +35,7 @@
 !! \param nglob Number of mesh points
 !! \param idoubling Array of information on every mesh point
 !! \param ibool Array of information on every mesh point
-!! \param iregion_code The region the absorbing conditon is written for. Check
+!! \param iregion_code The region the absorbing condition is written for. Check
 !!                     constant.h files to see what these regions are.
 !! \param xstore Array with the x coordinates of the mesh points
 !! \param ystore Array with the y coordinates of the mesh points
@@ -129,7 +129,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
@@ -783,7 +783,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                    local_dim, region_name,      &
                                    STRINGIFY_VAR(normal_top))
 
-  ! jacobians
+  ! Jacobians
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
   call define_adios_global_array1D(adios_group, group_size_inc, &
                                    local_dim, region_name,      &
@@ -876,7 +876,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(normal_top))
 
-  ! jacobians
+  ! Jacobians
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(jacobian2D_xmin))
@@ -988,7 +988,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   endif
 
   !---------------------------------------------------------
-  !--- mehsfiles arrays ------------------------------------
+  !--- meshfiles arrays ------------------------------------
   !---------------------------------------------------------
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
@@ -1058,7 +1058,7 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! scaling factors to re-dimensionalize units
@@ -1238,7 +1238,7 @@ end subroutine save_arrays_solver_meshfiles_adios
 !! \param nibool_interfaces
 !! \param ibool_interfaces
 !! \param nspec_inner Number of spectral elements in the inner core
-!! \param nspec_outer Number of spectral elemetns in the outer core
+!! \param nspec_outer Number of spectral elements in the outer core
 !! \param num_phase_ispec
 !! \param phase_ispec_inner
 !! \param num_colors_inner Number of colors for GPU computing in the inner core.
@@ -1293,7 +1293,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ints_to_reduce(1) = num_interfaces
@@ -1524,7 +1524,7 @@ subroutine save_arrays_solver_boundary_adios()
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! first check the number of surface elements are the same for Moho, 400, 670

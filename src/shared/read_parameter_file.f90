@@ -129,7 +129,7 @@
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'solver.EXACT_MASS_MATRIX_FOR_ROTATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
 
-  ! low-memory runge-kutta time scheme
+  ! low-memory Runge-Kutta time scheme
   call read_value_logical(USE_LDDRK, 'solver.USE_LDDRK', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: USE_LDDRK'
   call read_value_logical(INCREASE_CFL_FOR_LDDRK, 'solver.INCREASE_CFL_FOR_LDDRK', ierr)

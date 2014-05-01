@@ -37,7 +37,7 @@
 !> \brief Write Stacey boundary conditions to a single file using ADIOS
 !!
 !! \param myrank The MPI rank of the current process
-!! \param iregion The region the absorbing conditon is written for. Check
+!! \param iregion The region the absorbing condition is written for. Check
 !!                constant.h files to see what these regions are.
 !! \param nimin An array to be written
 !! \param nimax An array to be written
@@ -88,7 +88,7 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
@@ -96,7 +96,7 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   write(region_name,"('reg',i1, '/')") iregion
 
-  ! Postpend the actual file name.
+  ! Append the actual file name.
   !outputname = trim(reg_name) // "stacey.bp"
   outputname = trim(LOCAL_PATH) // "/stacey.bp"
 

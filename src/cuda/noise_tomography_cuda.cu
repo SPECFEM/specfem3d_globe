@@ -273,7 +273,7 @@ __global__ void noise_add_surface_movie_cuda_kernel(realw* accel,
                  noise_surface_movie[INDEX3(NDIM,NGLL2,1,igll,iface)]*normal_y +
                  noise_surface_movie[INDEX3(NDIM,NGLL2,2,igll,iface)]*normal_z);
 
-    // weighted jacobian
+    // weighted Jacobian
     realw jacobianw = wgllwgll[k*NGLLX+i]*jacobian2D[igll+NGLL2*iface];
 
     // note: check error from cuda-memcheck and ddt seems "incorrect", because we
@@ -281,7 +281,7 @@ __global__ void noise_add_surface_movie_cuda_kernel(realw* accel,
     //          made using cudaMalloc, which *may* be "incorrect", but produces
     //          correct results.
 
-    // note: global version uses jacobian2D arrays which do not include gll weights wgllwgll,
+    // note: global version uses jacobian2D arrays which do not include GLL weights wgllwgll,
     //          thus we have to explicitly add: wgllwgll(..) * jacobian2D(..)
 
     atomicAdd(&accel[iglob*3]  ,eta*mask_noise[ipoin]*normal_x*jacobianw);

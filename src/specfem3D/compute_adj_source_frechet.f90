@@ -43,7 +43,7 @@
   ! output
   real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s, eps_m_l_s(NDIM)
 
-  ! auxilliary
+  ! auxiliary
   double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
                       hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
 

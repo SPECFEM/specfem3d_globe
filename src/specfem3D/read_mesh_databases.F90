@@ -111,7 +111,7 @@
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
   if( SYNC_READING ) call synchronize_all()
   if( myrank == 0 ) then
-    write(IMAIN,*) '  reading in mpi databases...'
+    write(IMAIN,*) '  reading in MPI databases...'
     call flush_IMAIN()
   endif
   call read_mesh_databases_MPI()

@@ -199,7 +199,7 @@
   ! takes first event id as event_name
   event_name = e_n(1)
 
-  ! sets cmt infos
+  ! sets cmt info
   if (NSOURCES == 1) then
     cmt_lat = lat(1)
     cmt_lon = lon(1)

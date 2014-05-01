@@ -170,7 +170,7 @@
 ! gamma = 0.881 % = (A-2N-F)/A0    = (c12-c13)/A0
 ! where A0 is A at the Earth's center
 !
-! assume c11 = lamda+2mu
+! assume c11 = lambda+2mu
 !        c66 = (c11-c12)/2 = mu
 !
 ! then   c33 = c11 + alpha*A0

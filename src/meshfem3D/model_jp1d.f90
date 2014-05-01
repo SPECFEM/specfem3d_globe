@@ -56,7 +56,7 @@
   r = x * R_EARTH
 
   ! check flags to make sure we correctly honor the discontinuities
-  ! we use strict inequalities since r has been slighly changed in mesher
+  ! we use strict inequalities since r has been slightly changed in mesher
 
   if(check_doubling_flag) then
     !--- inner core

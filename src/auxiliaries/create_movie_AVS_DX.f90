@@ -494,7 +494,7 @@
                   field_display(ieoff+ilocnum) = dble(displn(1,NGLLY))
                 endif
               else
-                ! movie saved on fine grid (all gll points)
+                ! movie saved on fine grid (all GLL points)
                 if(ilocnum == 1) then
                   xp(ieoff+ilocnum) = dble(x(i,j))
                   yp(ieoff+ilocnum) = dble(y(i,j))
@@ -678,7 +678,7 @@
         do ilocnum = 1,NGNOD2D_AVS_DX
           ibool_number = iglob(ilocnum+ieoff)
           if(.not. mask_point(ibool_number)) then
-            ! gets cartesian coordinates
+            ! gets Cartesian coordinates
             xcoord = sngl(xp_save(ilocnum+ieoff))
             ycoord = sngl(yp_save(ilocnum+ieoff))
             zcoord = sngl(zp_save(ilocnum+ieoff))
@@ -795,7 +795,7 @@
               if(USE_OPENDX) then
                 write(11,"(e11.4)") field_display(ilocnum+ieoff)
               else
-                ! format spezifier has problems w/ very small values
+                ! format specifier has problems w/ very small values
                 !write(11,"(i10,1x,e7.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
                 write(11,*) ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif

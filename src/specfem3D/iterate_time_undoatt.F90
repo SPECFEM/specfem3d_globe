@@ -142,7 +142,7 @@
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if(USE_LDDRK)then
-            ! update displacement using runge-kutta time scheme
+            ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk()
           else
             ! update displacement using Newmark time scheme
@@ -172,7 +172,7 @@
           call noise_save_surface_movie()
         endif
 
-        ! updates vtk window
+        ! updates VTK window
         if( VTK_MODE ) then
           call it_update_vtkwindow()
         endif
@@ -200,7 +200,7 @@
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if(USE_LDDRK)then
-            ! update displacement using runge-kutta time scheme
+            ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk_backward()
           else
             ! update displacement using Newmark time scheme
@@ -263,7 +263,7 @@
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if(USE_LDDRK)then
-            ! update displacement using runge-kutta time scheme
+            ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk()
           else
             ! update displacement using Newmark time scheme

@@ -26,7 +26,7 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! S20rts
+! S20RTS
 !
 ! 3D mantle model S20RTS [Ritsema et al., 1999]
 !
@@ -280,7 +280,7 @@
 !----------------------------------
 !
 
-! changed the obsolecent f77 features in the two routines below
+! changed the obsolescent f77 features in the two routines below
 ! now still awful Fortran, but at least conforms to f90 standard
 
   double precision function s20rts_rsple(I1,I2,X,Y,Q,S)
@@ -426,7 +426,7 @@
       Y0=H*H2*(H2-H)
       H=H*H
       H2=H2*H2
-!   CALCULATE DERIVITIVE AT NEAR END.
+!   CALCULATE DERIVATIVE AT NEAR END.
       B0=(Y(J1)*(H-H2)+Y(J1+1)*H2-Y(J1+2)*H)/Y0
       B1=B0
 

@@ -147,7 +147,7 @@
           print*,'error face rank: ',myrank,'ispec=',ispec
           print*,'  neighbor rank = ',rank,'exceeds total nproc:',NPROCTOT
           print*,'  face ',iface
-          call exit_mpi(myrank,'error face neighbor mpi rank')
+          call exit_mpi(myrank,'error face neighbor MPI rank')
         endif
 
         ! checks if already stored
@@ -283,7 +283,7 @@
           print*,'error egde rank: ',myrank
           print*,'  neighbor rank = ',rank,'exceeds total nproc:',NPROCTOT
           print*,'  edge ',iedge
-          call exit_mpi(myrank,'error edge neighbor mpi rank')
+          call exit_mpi(myrank,'error edge neighbor MPI rank')
         endif
 
         ! checks if already stored
@@ -413,10 +413,10 @@
         iglob = ibool(NGLLX,NGLLY,NGLLZ,ispec)
       end select
 
-      ! makes sure that all elements on mpi interfaces are included
+      ! makes sure that all elements on MPI interfaces are included
       ! uses original test_flag array, since the working copy reduces values
       ! note: there can be elements which have an edge or corner shared with
-      !          other mpi partitions, but have the work_test_flag value already set to zero
+      !          other MPI partitions, but have the work_test_flag value already set to zero
       !          since the iglob point was found before.
       !          also, this check here would suffice to determine the outer flag, but we also include the
       !          check everywhere we encounter it too
@@ -436,7 +436,7 @@
           print*,'error corner: ',myrank
           print*,'  neighbor rank = ',rank,'exceeds total nproc:',NPROCTOT
           print*,'  corner ',icorner
-          call exit_mpi(myrank,'error corner neighbor mpi rank')
+          call exit_mpi(myrank,'error corner neighbor MPI rank')
         endif
 
         ! checks if already stored
@@ -480,7 +480,7 @@
     enddo ! icorner
 
     ! stores flags for outer elements when recognized as such
-    ! (inner/outer elements separated for non-blocking mpi communications)
+    ! (inner/outer elements separated for non-blocking MPI communications)
     if( ispec_is_outer ) then
       work_ispec_is_outer(ispec) = .true.
     endif
@@ -503,12 +503,12 @@
 
   ! checks if all points were recognized
   if( minval(work_test_flag) < 0 .or. maxval(work_test_flag) > 0 ) then
-    print*,'error mpi interface rank: ',myrank
+    print*,'error MPI interface rank: ',myrank
     print*,'  work_test_flag min/max :',minval(work_test_flag),maxval(work_test_flag)
-    call exit_mpi(myrank,'error: mpi points remain unrecognized, please check mesh interfaces')
+    call exit_mpi(myrank,'error: MPI points remain unrecognized, please check mesh interfaces')
   endif
 
-  ! sets interfaces infos
+  ! sets interfaces info
   num_interfaces = iinterface
   max_nibool_interfaces = maxval( nibool_neighbours(1:num_interfaces) )
 
@@ -536,13 +536,13 @@
         if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
           ! missing points might have been counted more than once
           if( ibool_neighbours(j,iinterface) > 0 ) then
-            print*,'warning mpi interface rank:',myrank
+            print*,'warning MPI interface rank:',myrank
             print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin,'iglob=',ibool_neighbours(j,iinterface)
             ! decrease number of points
             nibool_neighbours(iinterface) = nibool_neighbours(iinterface) - 1
             if( nibool_neighbours(iinterface) <= 0 ) then
-              print*,'error zero mpi interface rank:',myrank,'interface=',my_neighbours(iinterface)
-              call exit_mpi(myrank,'error: zero mpi points on interface')
+              print*,'error zero MPI interface rank:',myrank,'interface=',my_neighbours(iinterface)
+              call exit_mpi(myrank,'error: zero MPI points on interface')
             endif
             ! shift values
             do k = j+1,npoin-1
@@ -555,9 +555,9 @@
             max_nibool_interfaces = maxval( nibool_neighbours(1:num_interfaces) )
           endif
         else
-          print*,'error mpi interface rank:',myrank
+          print*,'error MPI interface rank:',myrank
           print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin,'iglob=',ibool_neighbours(j,iinterface)
-          call exit_mpi(myrank,'error: mpi points not unique on interface')
+          call exit_mpi(myrank,'error: MPI points not unique on interface')
         endif
       endif
     enddo

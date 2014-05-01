@@ -61,14 +61,14 @@
   ! debug
   !print*,'read adjoint sources: it_sub_adj = ',it_sub_adj
 
-  ! asynchronuously reads in adjoint source files
+  ! asynchronously reads in adjoint source files
   if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
     ! handles file input/output thread
     if( it == it_begin ) then
       ! creates new io thread for reading in sources
       call read_adj_io_thread(it_sub_adj)
 
-      ! first chunk of adjoint sources must ready at begining, so we wait.
+      ! first chunk of adjoint sources must ready at beginning, so we wait.
       ! waits for previous read to finish and
       ! copy over buffered data into tmp_sourcearray
       call sync_adj_io_thread(adj_sourcearrays)
@@ -89,7 +89,7 @@
     endif
 
   else
-    ! synchronuous read routine
+    ! synchronous read routine
 
     ! reads in local adjoint sources
     call read_adjoint_sources_local(adj_sourcearrays,nadj_rec_local,it_sub_adj)

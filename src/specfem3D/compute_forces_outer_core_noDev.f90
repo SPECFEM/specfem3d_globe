@@ -147,7 +147,7 @@
           gammayl = gammay(i,j,k,ispec)
           gammazl = gammaz(i,j,k,ispec)
 
-          ! compute the jacobian
+          ! compute the Jacobian
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
@@ -249,7 +249,7 @@
          else
             ! if gravity is turned on
 
-            ! compute divergence of displacment
+            ! compute divergence of displacement
             ! precompute and store gravity term
 
             ! use mesh coordinates to get theta and phi

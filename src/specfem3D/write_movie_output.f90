@@ -41,7 +41,7 @@
 
   !-----------------------------------------------------------------------------
   ! user parameters
-  ! outputs volume snapshot vtk-files of displacement in crust/mantle region for debugging
+  ! outputs volume snapshot VTK files of displacement in crust/mantle region for debugging
   logical, parameter :: DEBUG_SNAPSHOT = .false.
   !-----------------------------------------------------------------------------
 

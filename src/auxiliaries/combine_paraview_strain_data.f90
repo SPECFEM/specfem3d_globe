@@ -103,7 +103,7 @@ program combine_paraview_movie_data
   do it = itstart, itstop, dit_movie
     print *, '----------- Timeframe ', it, '----------------'
 
-  ! open paraview output mesh file
+  ! open Paraview output mesh file
     write(mesh_file,'(a,a,a,i6.6,a)')  'movie3D_',trim(comp),'_it',it,'.mesh'
     call open_file_fd(trim(mesh_file)//char(0),fid)
 

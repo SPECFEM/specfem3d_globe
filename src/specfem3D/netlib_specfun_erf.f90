@@ -307,7 +307,7 @@
 ! Subject: Re: Can one freely use and redistribute Fortran routines "specfun"
 ! from Netlib?
 !
-! Netlib is managed at the University of Tennesee, not Argonne at this
+! Netlib is managed at the University of Tennessee, not Argonne at this
 ! point. I have copied Jack Dongarra on this reply; he should be able
 ! to answer questions about licensing issues for code from Netlib.
 !

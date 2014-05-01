@@ -198,7 +198,7 @@
 !
 
 !> Hejun
-! write material information for gll points
+! write material information for GLL points
   subroutine write_AVS_DX_global_data_gll(prname,nspec, &
                  xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore,&
                  ATTENUATION)
@@ -289,7 +289,7 @@
 
   close(10)
 
-! writing elements properity
+! writing elements property
   open(unit=1001,file=prname(1:len_trim(prname))//'AVS_DXmaterials_gll.txt',status='unknown')
 
 ! number of elements in AVS or DX file

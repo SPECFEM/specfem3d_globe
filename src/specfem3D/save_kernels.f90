@@ -166,7 +166,7 @@
             ! For anisotropic kernels
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            ! The cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+            ! The Cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
             ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
             call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
                  ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))

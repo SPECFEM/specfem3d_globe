@@ -7,9 +7,9 @@
 
 #include "config.fh"
 
-!> Initializes the data structure for asdf
-!! \param asdf_container The asdf data structure
-!! \param total_seismos_local The number of records on the local processer
+!> Initializes the data structure for ASDF
+!! \param asdf_container The ASDF data structure
+!! \param total_seismos_local The number of records on the local processor
 subroutine init_asdf_data(asdf_container,total_seismos_local)
 
   use asdf_data
@@ -92,8 +92,8 @@ subroutine init_asdf_data(asdf_container,total_seismos_local)
 end subroutine init_asdf_data
 
 
-!> Stores the records into the asdf structure
-!! \param asdf_container The asdf data structure
+!> Stores the records into the ASDF structure
+!! \param asdf_container The ASDF data structure
 !! \param seismogram_tmp The current seismogram to store
 !! \param irec_local The local index of the receivers on the local processor
 !! \param irec The global index of the receiver
@@ -189,8 +189,8 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
 end subroutine store_asdf_data
 
 
-!> Closes the asdf data structure by deallocating all arrays
-!! \param asdf_container The asdf data structure
+!> Closes the ASDF data structure by deallocating all arrays
+!! \param asdf_container The ASDF data structure
 !! \param total_seismos_local The number of seismograms on the local processor
 subroutine close_asdf_data(asdf_container, total_seismos_local)
 
@@ -269,8 +269,8 @@ subroutine close_asdf_data(asdf_container, total_seismos_local)
 end subroutine close_asdf_data
 
 
-!> Writes the asdf data structure to the file
-!! \param asdf_container The asdf data structure
+!> Writes the ASDF data structure to the file
+!! \param asdf_container The ASDF data structure
 subroutine write_asdf(asdf_container)
 
   use asdf_data
@@ -298,9 +298,9 @@ subroutine write_asdf(asdf_container)
 end subroutine write_asdf
 
 
-!> Writes the asdf data structure to asdf_fn using parallel write
-!! \param asdf_fn The file name for asdf
-!! \param asdf_container The asdf data structure
+!> Writes the ASDF data structure to asdf_fn using parallel write
+!! \param asdf_fn The file name for ASDF
+!! \param asdf_container The ASDF data structure
 !! \param adios_group The adios group for the file
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
@@ -340,10 +340,10 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, &
 end subroutine write_asdf_data
 
 
-!> Defines the asdf structure using adios
+!> Defines the ASDF structure using adios
 !! \param adios_group The adios group
 !! \param my_group_size The adios group size
-!! \param asdf_container The asdf data structure
+!! \param asdf_container The ASDF data structure
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
 !! \param comm The communication group of processors
@@ -584,9 +584,9 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
 end subroutine define_asdf_data
 
 
-!> Writes the asdf data structure to the adios arrays
-!! \param asdf_container The asdf data structure
-!! \param adios_handle The asdf file name
+!> Writes the ASDF data structure to the adios arrays
+!! \param asdf_container The ASDF data structure
+!! \param adios_handle The ASDF file name
 !! \param adios_group The adios group
 !! \param adios_groupsize The adios group size
 !! \param rank The rank of the processor
@@ -623,7 +623,7 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   call gather_offset_info(asdf_container%nrecords,nrecords_total,offset,&
                                         rank, nproc, comm, ierr)
 
-  !ensemble the string for receiver_name, network, componen and receiver_id
+  !ensemble the string for receiver_name, network, component and receiver_id
   allocate(character(len=6*asdf_container%nrecords) :: receiver_name, STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: network, STAT=ierr)

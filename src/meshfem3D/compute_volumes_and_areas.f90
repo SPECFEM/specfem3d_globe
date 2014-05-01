@@ -77,7 +77,7 @@
 
           weight = wxgll(i)*wygll(j)*wzgll(k)
 
-          ! compute the jacobian
+          ! compute the Jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
           xizl = xizstore(i,j,k,ispec)
@@ -221,7 +221,7 @@
 
           weight = wxgll(i)*wygll(j)*wzgll(k)
 
-          ! compute the jacobian
+          ! compute the Jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
           xizl = xizstore(i,j,k,ispec)

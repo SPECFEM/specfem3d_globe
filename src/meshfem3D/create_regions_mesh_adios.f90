@@ -73,7 +73,7 @@
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_

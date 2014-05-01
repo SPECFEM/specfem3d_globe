@@ -747,7 +747,7 @@
               write(IOUT_BUFFERS,*) npoin2D
             endif
 
-            ! stores face infos
+            ! stores face info
             do ipoin2D = 1,npoin2D
               ! fills iboolfaces array
               iboolfaces(ipoin2D,icount_faces) = ibool_selected(ipoin2D)

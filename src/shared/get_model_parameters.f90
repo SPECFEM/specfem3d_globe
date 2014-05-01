@@ -376,7 +376,7 @@
     TRANSVERSE_ISOTROPY = .true.
 
   else if(MODEL_ROOT == 'PPM') then
-    ! overimposed based on isotropic-prem
+    ! superimposed based on isotropic-prem
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -387,7 +387,7 @@
   else if(MODEL_ROOT == 'GLL') then
     ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
-    ! based on model s29ea
+    ! based on model S29EA
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -399,7 +399,7 @@
     ! mgll_v%model_gll flag and reset
     ! THREE_D_MODEL = THREE_D_MODEL_S29EA
     ! (not done here because we will use mgll_v%model_gll flag to identify this
-    !  model, based upon the s29ea model, but putting mgll_v as parameter to this
+    !  model, based upon the S29EA model, but putting mgll_v as parameter to this
     !  routine involves too many changes. )
 
   else if(MODEL == 'gapp2') then

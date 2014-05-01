@@ -597,7 +597,7 @@
 !
 !  do i_SLS = 1,N_SLS
 !
-!    ! runge-kutta scheme to update memory variables R(t)
+!    ! Runge-Kutta scheme to update memory variables R(t)
 !    if( .false. ) then
 !! classical RK 4:       R'(t) =  - 1/tau * R(t)
 !!

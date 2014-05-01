@@ -623,16 +623,16 @@
   npoin2D_xi_s(:) = npoin2D_xi_all(:)
   npoin2D_eta_s(:) = npoin2D_eta_all(:)
 
-  ! gets mpi buffers on sides
+  ! gets MPI buffers on sides
   iboolleft_xi_s(:) = iboolleft_xi(:)
   iboolright_xi_s(:) = iboolright_xi(:)
   iboolleft_eta_s(:) = iboolleft_eta(:)
   iboolright_eta_s(:) = iboolright_eta(:)
 
-  ! gets corner infos
+  ! gets corner info
   iboolcorner_s(:,:) = iboolcorner(:,:)
 
-  ! gets face infos
+  ! gets face info
   npoin2D_faces_s(:) = npoin2D_faces(:)
   iboolfaces_s(:,:) = iboolfaces(:,:)
 

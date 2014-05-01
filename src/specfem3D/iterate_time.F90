@@ -80,7 +80,7 @@
     do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
       if(USE_LDDRK)then
-        ! update displacement using runge-kutta time scheme
+        ! update displacement using Runge-Kutta time scheme
         call update_displacement_lddrk()
       else
         ! update displacement using Newmark time scheme
@@ -105,7 +105,7 @@
       do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
         if(USE_LDDRK)then
-          ! update displacement using runge-kutta time scheme
+          ! update displacement using Runge-Kutta time scheme
           call update_displacement_lddrk_backward()
         else
           ! update displacement using Newmark time scheme
@@ -137,7 +137,7 @@
     ! write the seismograms with time shift
     if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )) then
       call write_seismograms()
-    ! asdf uses adios that defines the MPI communicator group that the solver is
+    ! ASDF uses adios that defines the MPI communicator group that the solver is
     ! run with. this means every processor in the group is needed for write_seismograms
     else if (OUTPUT_SEISMOS_ASDF) then
       call write_seismograms()
@@ -152,7 +152,7 @@
       call noise_save_surface_movie()
     endif
 
-    ! updates vtk window
+    ! updates VTK window
     if( VTK_MODE ) then
       call it_update_vtkwindow()
     endif
@@ -269,23 +269,23 @@
   integer :: iglob,inum,data_size
   real, dimension(1) :: dummy
 
-  ! vtk rendering at frame interval
+  ! VTK rendering at frame interval
   if( mod(it,NTSTEP_BETWEEN_FRAMES) == 0 ) then
 
     ! user output
-    !if( myrank == 0 ) print*,"  vtk rendering..."
+    !if( myrank == 0 ) print*,"  VTK rendering..."
 
     ! updates time
     currenttime = sngl((it-1)*DT-t0)
 
     ! transfers fields from GPU to host
     if( GPU_MODE ) then
-      !if( myrank == 0 ) print*,"  vtk: transfering velocity from gpu"
+      !if( myrank == 0 ) print*,"  VTK: transferring velocity from GPU"
       call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
     endif
 
     ! updates wavefield
-    !if( myrank == 0 ) print*,"  vtk: it = ",it," out of ",it_end," - norm of velocity field"
+    !if( myrank == 0 ) print*,"  VTK: it = ",it," out of ",it_end," - norm of velocity field"
     inum = 0
     vtkdata(:) = 0.0
     do iglob = 1,NGLOB_CRUST_MANTLE
@@ -298,7 +298,7 @@
       endif
     enddo
 
-    ! updates for multiple mpi process
+    ! updates for multiple MPI process
     if( NPROCTOT_VAL > 1 ) then
       data_size = size(vtkdata)
       if( myrank == 0 ) then
@@ -306,7 +306,7 @@
         call gatherv_all_cr_single_prec(vtkdata,data_size,&
                             vtkdata_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROCTOT_VAL)
-        ! updates vtk window
+        ! updates VTK window
         call visualize_vtkdata(it,currenttime,vtkdata_all)
       else
         ! all other process just send data
@@ -316,7 +316,7 @@
       endif
     else
       ! serial run
-      ! updates vtk window
+      ! updates VTK window
       call visualize_vtkdata(it,currenttime,vtkdata)
     endif
 

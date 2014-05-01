@@ -131,7 +131,7 @@
 
   scaleval = ONE / R_EARTH_KM
 
-  ! non-dimensializes thickness (given in km)
+  ! non-dimensionalizes thickness (given in km)
   x3 = ONE - thicks(3) * scaleval
   h_sed = thicks(3) + thicks(4)
   x4 = ONE - h_sed * scaleval
@@ -293,11 +293,11 @@
   character(len=2) :: abbreviation(NCAP_CRUST/2,NCAP_CRUST)
 
   !-------------------------------
-  ! work-around to avoid jacobian problems when stretching mesh elements;
-  ! one could also try to slightly change the shape of the doulbing element bricks (which cause the problem)...
+  ! work-around to avoid Jacobian problems when stretching mesh elements;
+  ! one could also try to slightly change the shape of the doubling element bricks (which cause the problem)...
   !
   ! defines a "critical" region around the andes to have at least a 2-degree smoothing;
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
+  ! critical region can lead to negative Jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_ANDES = -20.0d0
   double precision,parameter :: LON_CRITICAL_ANDES = -70.0d0
   double precision,parameter :: CRITICAL_RANGE = 70.0d0

@@ -138,7 +138,7 @@ void FC_FUNC_(initialize_cuda_device,
        exit_on_error("CUDA set/get device error: device id conflict \n");
     }
 #else
-    // device changes for different mpi processes according to number of device per node
+    // device changes for different MPI processes according to number of device per node
     // (assumes that number of devices per node is the same for different compute nodes)
     device = myrank % device_count;
 
@@ -168,12 +168,12 @@ void FC_FUNC_(initialize_cuda_device,
     exit_on_error("CUDA runtime error: there is no CUDA-enabled device found\n");
   }
 
-  // outputs device infos to file
+  // outputs device info to file
   char filename[BUFSIZ];
   FILE* fp;
   int do_output_info;
 
-  // by default, only master process outputs device infos to avoid file cluttering
+  // by default, only master process outputs device info to avoid file cluttering
   do_output_info = 0;
   if( myrank == 0 ){
     do_output_info = 1;
@@ -222,7 +222,7 @@ void FC_FUNC_(initialize_cuda_device,
       }else{
         fprintf(fp,"  concurrentKernels: FALSE\n");
       }
-      // outputs initial memory infos via cudaMemGetInfo()
+      // outputs initial memory info via cudaMemGetInfo()
       double free_db,used_db,total_db;
       get_free_memory(&free_db,&used_db,&total_db);
       fprintf(fp,"memory usage:\n");

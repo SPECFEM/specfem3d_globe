@@ -367,7 +367,7 @@
   ! creates meshes for regions crust/mantle, outer core and inner core
   call create_meshes()
 
-  ! outputs mesh infos and saves new header file
+  ! outputs mesh info and saves new header file
   call finalize_mesher()
 
   ! stop all the MPI processes, and exit

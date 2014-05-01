@@ -263,8 +263,8 @@
   subroutine eu_cap_smoothing(lat,lon,radius,value,found)
 
 ! smooths with a cap of size CAP (in degrees)
-! using NTHETA points in the theta direction (latitudal)
-! and NPHI in the phi direction (longitudal).
+! using NTHETA points in the theta direction (latitudinal)
+! and NPHI in the phi direction (longitudinal).
 ! The cap is rotated to the North Pole.
 
   use constants

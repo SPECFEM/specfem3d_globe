@@ -154,7 +154,7 @@
 
   ! sets up MPI interfaces
   ! crust mantle region
-  if( myrank == 0 ) write(IMAIN,*) 'crust mantle mpi:'
+  if( myrank == 0 ) write(IMAIN,*) 'crust mantle MPI:'
   allocate(test_flag(NGLOB_CRUST_MANTLE), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag')
@@ -196,7 +196,7 @@
   deallocate(test_flag)
   deallocate(dummy_i)
 
-  ! stores MPI interfaces informations
+  ! stores MPI interfaces information
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
           stat=ier)
@@ -283,7 +283,7 @@
 
   ! sets up MPI interfaces
   ! outer core region
-  if( myrank == 0 ) write(IMAIN,*) 'outer core mpi:'
+  if( myrank == 0 ) write(IMAIN,*) 'outer core MPI:'
 
   allocate(test_flag(NGLOB_OUTER_CORE), &
           stat=ier)
@@ -327,7 +327,7 @@
   deallocate(test_flag)
   deallocate(dummy_i)
 
-  ! stores MPI interfaces informations
+  ! stores MPI interfaces information
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
@@ -415,7 +415,7 @@
 
   ! sets up MPI interfaces
   ! inner core
-  if( myrank == 0 ) write(IMAIN,*) 'inner core mpi:'
+  if( myrank == 0 ) write(IMAIN,*) 'inner core MPI:'
 
   allocate(test_flag(NGLOB_INNER_CORE), &
           stat=ier)
@@ -466,7 +466,7 @@
   ! including central cube
   if(INCLUDE_CENTRAL_CUBE) then
     ! user output
-    if( myrank == 0 ) write(IMAIN,*) 'inner core with central cube mpi:'
+    if( myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
 
     ! test_flag is a scalar, not a vector
     ndim_assemble = 1
@@ -519,7 +519,7 @@
 
   deallocate(test_flag)
 
-  ! stores MPI interfaces informations
+  ! stores MPI interfaces information
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)

@@ -267,7 +267,7 @@ void FC_FUNC_(transfer_adj_to_device,
                                       realw* h_adj_sourcearrays,
                                       int* h_islice_selected_rec) {
 
-// transfers adjoint source arrays synchronuously to GPU
+// transfers adjoint source arrays synchronously to GPU
 
   TRACE("transfer_adj_to_device");
 

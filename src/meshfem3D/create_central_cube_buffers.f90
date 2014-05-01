@@ -129,7 +129,7 @@
     else
       receiver_cube_from_slices = addressing(CHUNK_AB,NPROC_XI-1-iproc_eta,0)
     endif
-! bottom of cube, direct correspondance but with inverted xi axis
+! bottom of cube, direct correspondence but with inverted xi axis
   else if(ichunk == CHUNK_AB_ANTIPODE) then
     receiver_cube_from_slices = addressing(CHUNK_AB,NPROC_XI-1-iproc_xi,iproc_eta)
   else if(ichunk == CHUNK_AB) then

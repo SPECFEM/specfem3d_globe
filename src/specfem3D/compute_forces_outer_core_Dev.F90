@@ -206,7 +206,7 @@
       gammayl = gammay(INDEX_IJK,ispec)
       gammazl = gammaz(INDEX_IJK,ispec)
 
-      ! compute the jacobian
+      ! compute the Jacobian
       jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                     + xizl*(etaxl*gammayl-etayl*gammaxl))
@@ -289,7 +289,7 @@
      else
         ! if gravity is turned on
 
-        ! compute divergence of displacment
+        ! compute divergence of displacement
         gxl = temp_gxl(INDEX_IJK)
         gyl = temp_gyl(INDEX_IJK)
         gzl = temp_gzl(INDEX_IJK)

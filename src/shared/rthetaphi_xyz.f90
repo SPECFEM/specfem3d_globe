@@ -255,7 +255,7 @@
   ! local parameters
   double precision :: dtheta,dtheta_prime
 
-  ! gets doulbe precision value
+  ! gets double precision value
   if( CUSTOM_REAL == SIZE_REAL ) then
     dtheta = dble(theta)
   else

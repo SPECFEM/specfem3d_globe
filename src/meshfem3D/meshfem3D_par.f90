@@ -61,7 +61,7 @@
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinuities Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
@@ -299,7 +299,7 @@
   integer, dimension(:), allocatable :: ibelm_xmin,ibelm_xmax, &
     ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top
 
-  ! 2-D jacobians and normals
+  ! 2-D Jacobians and normals
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     jacobian2D_xmin,jacobian2D_xmax, &
     jacobian2D_ymin,jacobian2D_ymax,jacobian2D_bottom,jacobian2D_top

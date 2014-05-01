@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-!> Module defining the data structure for asdf
+!> Module defining the data structure for ASDF
 !!     * Waveforms defined per event
 !!     * Waveform attributes defined per seismogram per event
 !! \author JAS and Wenjie

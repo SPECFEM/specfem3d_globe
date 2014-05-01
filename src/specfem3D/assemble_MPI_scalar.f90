@@ -275,7 +275,7 @@
   integer iinterface
 
   ! note: preparation of the contribution between partitions using MPI
-  !       transfers mpi buffers to CPU in already done in transfer_boun_pot_from_device() call
+  !       transfers MPI buffers to CPU in already done in transfer_boun_pot_from_device() call
 
   ! sends only if more than one partition
   if(NPROC > 1) then

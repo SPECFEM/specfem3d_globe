@@ -1191,7 +1191,7 @@ Kernel_2_crust_mantle_impl( int nb_blocks_to_compute,
     sigma_zx = sigma_xz;
     sigma_zy = sigma_yz;
 
-    // jacobian
+    // Jacobian
     jacobianl = 1.0f / (xixl*(etayl*gammazl-etazl*gammayl)
                       - xiyl*(etaxl*gammazl-etazl*gammaxl)
                       + xizl*(etaxl*gammayl-etayl*gammaxl));

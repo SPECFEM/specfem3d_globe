@@ -85,7 +85,7 @@
   logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY,ATTENUATION_1D_WITH_3D_STORAGE
   integer :: NT_DUMP_ATTENUATION
 
-  ! ldd runge-kutta time scheme
+  ! ldd Runge-Kutta time scheme
   logical :: USE_LDDRK,INCREASE_CFL_FOR_LDDRK
   double precision :: RATIO_BY_WHICH_TO_INCREASE_IT
 
@@ -95,7 +95,7 @@
   logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY, &
              APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
-  ! gpu simulations
+  ! GPU simulations
   logical :: GPU_MODE
 
   ! adios file output

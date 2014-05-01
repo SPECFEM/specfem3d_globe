@@ -26,7 +26,7 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! S40rts
+! S40RTS
 !
 ! 3D mantle model S40RTS [Ritsema et al., 2010]
 !
@@ -288,7 +288,7 @@
 
 !----------------------------------
 
-! changed the obsolecent f77 features in the two routines below
+! changed the obsolescent f77 features in the two routines below
 ! now still awful Fortran, but at least conforms to f90 standard
 
   double precision function s40rts_rsple(I1,I2,X,Y,Q,S)
@@ -432,7 +432,7 @@
       Y0=H*H2*(H2-H)
       H=H*H
       H2=H2*H2
-!   CALCULATE DERIVITIVE AT NEAR END.
+!   CALCULATE DERIVATIVE AT NEAR END.
       B0=(Y(J1)*(H-H2)+Y(J1+1)*H2-Y(J1+2)*H)/Y0
       B1=B0
 

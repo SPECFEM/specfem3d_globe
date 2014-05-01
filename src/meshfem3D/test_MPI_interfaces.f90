@@ -55,7 +55,7 @@
   ! debug output
   !do iproc=0,NPROCTOT-1
   !  if( myrank == iproc ) then
-  !    print*, 'mpi rank',myrank,'interfaces : ',num_interfaces,'region',iregion_code
+  !    print*, 'MPI rank',myrank,'interfaces : ',num_interfaces,'region',iregion_code
   !    do j=1,num_interfaces
   !      print*, '  my_neighbours: ',my_neighbours(j),nibool_interfaces(j)
   !    enddo
@@ -126,12 +126,12 @@
   ! gets maximum interfaces from all processes
   call max_all_i(num_interfaces,max_num)
 
-  ! master gathers infos
+  ! master gathers info
   if( myrank == 0 ) then
     ! user output
     write(IMAIN,*) '  maximum interfaces:',max_num
 
-    ! array for gathering infos
+    ! array for gathering info
     allocate(test_interfaces(max_num,0:NPROCTOT),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_interfaces')
     test_interfaces(:,:) = -1
@@ -145,7 +145,7 @@
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i for test interfaces')
     dummy_i(:) = 0
 
-    ! sets infos for master process
+    ! sets info for master process
     test_interfaces(1:num_interfaces,0) = my_neighbours(1:num_interfaces)
     test_interfaces_nibool(1:num_interfaces,0) = nibool_interfaces(1:num_interfaces)
     dummy_i(0) = num_interfaces
@@ -161,7 +161,7 @@
       endif
     enddo
   else
-    ! sends infos to master process
+    ! sends info to master process
     call send_singlei(num_interfaces,0,itag)
     if( num_interfaces > 0 ) then
       call send_i(my_neighbours(1:num_interfaces),num_interfaces,0,itag)
@@ -219,8 +219,8 @@
     enddo
 
     ! user output
-    write(IMAIN,*) '  mpi addressing maximum interfaces:',maxval(dummy_i)
-    write(IMAIN,*) '  mpi addressing : all interfaces okay'
+    write(IMAIN,*) '  MPI addressing maximum interfaces:',maxval(dummy_i)
+    write(IMAIN,*) '  MPI addressing : all interfaces okay'
     write(IMAIN,*)
     call flush_IMAIN()
 
@@ -321,7 +321,7 @@
 
   ! checks within slice
   if( i /= num_unique ) then
-    print*,'error test crust mantle : rank',myrank,'unique mpi points:',i,num_unique
+    print*,'error test crust mantle : rank',myrank,'unique MPI points:',i,num_unique
     call exit_mpi(myrank,'error MPI assembly crust mantle')
   endif
 
@@ -332,7 +332,7 @@
   if( myrank == 0 ) then
     ! checks
     if( inum /= icount ) then
-      print*,'error crust mantle : total mpi points:',myrank,'total: ',inum,icount
+      print*,'error crust mantle : total MPI points:',myrank,'total: ',inum,icount
       call exit_mpi(myrank,'error MPI assembly crust mantle')
     endif
 
@@ -432,7 +432,7 @@
 
   ! checks within slice
   if( i /= num_unique ) then
-    print*,'error test outer core : rank',myrank,'unique mpi points:',i,num_unique
+    print*,'error test outer core : rank',myrank,'unique MPI points:',i,num_unique
     call exit_mpi(myrank,'error MPI assembly outer core')
   endif
   call sum_all_i(i,inum)
@@ -441,7 +441,7 @@
   if( myrank == 0 ) then
     ! checks
     if( inum /= icount ) then
-      print*,'error outer core : total mpi points:',myrank,'total: ',inum,icount
+      print*,'error outer core : total MPI points:',myrank,'total: ',inum,icount
       call exit_mpi(myrank,'error MPI assembly outer_core')
     endif
 
@@ -545,7 +545,7 @@
 
   ! checks within slice
   if( i /= num_unique ) then
-    print*,'error test inner core : rank',myrank,'unique mpi points:',i,num_unique
+    print*,'error test inner core : rank',myrank,'unique MPI points:',i,num_unique
     call exit_mpi(myrank,'error MPI assembly inner core')
   endif
   call sum_all_i(i,inum)
@@ -553,7 +553,7 @@
   if( myrank == 0 ) then
     ! checks
     if( inum /= icount ) then
-      print*,'error inner core : total mpi points:',myrank,'total: ',inum,icount
+      print*,'error inner core : total MPI points:',myrank,'total: ',inum,icount
       call exit_mpi(myrank,'error MPI assembly inner core')
     endif
 

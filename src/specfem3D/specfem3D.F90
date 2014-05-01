@@ -413,7 +413,7 @@
 !             it seems that this stack/heap criterion is more complicated,
 !             and inlining functions is a performance criteria as well.
 !
-!             for vectorization, we asssume that arrays have contiguous memory allocated. this holds true for most compilers and
+!             for vectorization, we assume that arrays have contiguous memory allocated. this holds true for most compilers and
 !             static memory allocation. however, note that dynamically allocated memory could in principle be non-contiguous.
 !
 !             another reason why the use of modules is restricted is to make the code thread safe.

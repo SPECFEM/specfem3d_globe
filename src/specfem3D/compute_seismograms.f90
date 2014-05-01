@@ -249,7 +249,7 @@
     eps_loc(3,2) = dyz
 
     eps_loc_new(:,:) = eps_loc(:,:)
-    ! rotate to the local cartesian coordinates (n-e-z):  eps_new=P*eps*P'
+    ! rotate to the local Cartesian coordinates (n-e-z):  eps_new=P*eps*P'
     eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
     ! distinguish between single and double precision for reals
@@ -283,7 +283,7 @@
     hpetar(:) = hpetar_store(irec_local,:)
     hpgammar(:) = hpgammar_store(irec_local,:)
 
-    ! frechet derviatives of the source
+    ! Frechet derivatives of the source
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &
                 Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s,eps_m_l_s, &
                 hxir,hetar,hgammar, &

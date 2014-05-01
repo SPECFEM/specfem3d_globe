@@ -125,7 +125,7 @@
   enddo
   close(13)
 
-  ! note: we check the limits after reading in the data. this seems to perform sligthly faster
+  ! note: we check the limits after reading in the data. this seems to perform slightly faster
   !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
 
   ! imposes limits

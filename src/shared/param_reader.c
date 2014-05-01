@@ -159,7 +159,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
   }
   // Position the open file to the beginning.
   if (fseek(fid, 0, SEEK_SET) != 0) {
-    printf("Can't seek to begining of parameter file\n");
+    printf("Can't seek to beginning of parameter file\n");
     *ierr = 1;
     regfree(&compiled_pattern);
     return;
