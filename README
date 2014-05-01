@@ -12,3 +12,8 @@ available in the PDF manual located in directory doc/USER_MANUAL.
 Main "historical" authors: Dimitri Komatitsch and Jeroen Tromp
   (there are currently many more!)
 
+Git submodules for data files and examples are hosted on the CIG servers
+at:
+  * [DATA](http://vcs.geodynamics.org/gitweb/?p=specfem3d_globe_data.git)
+  * [Examples](http://vcs.geodynamics.org/gitweb/?p=specfem3d_globe_examples.git)
+
