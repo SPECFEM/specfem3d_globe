@@ -294,27 +294,13 @@
   double precision, dimension(9) :: Roland_Sylvain_int_local,Roland_Sylvain_int_total_region,elemental_contribution
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  double precision, parameter :: non_dimensionalizing_factor = RHOAV*R_EARTH**3
+  ! for the gravity vector force, a distance is involved in the dimensions
+  double precision, parameter :: nondimensionalizing_factor_gi  = RHOAV * R_EARTH
+  ! for the second-order gravity tensor, no distance is involved in the dimensions
+  double precision, parameter :: nondimensionalizing_factor_Gij = RHOAV
 
-!! DK DK position of the observation point in non-dimensional value
-  double precision, parameter :: altitude_of_observation_point = 255.d0 ! in km
-
-  double precision, parameter :: SQUARE_ROOT_OF_THREE = 1.732050808d0
-
-!! DK DK along X only
-! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
-! double precision, parameter :: yobs = 0.d0
-! double precision, parameter :: zobs = 0.d0
-
-!! DK DK along diagonal
-  double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-  double precision, parameter :: yobs = xobs
-  double precision, parameter :: zobs = xobs
-
-!! DK DK point randomly chosen in space, not at the right elevation we want
-! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-! double precision, parameter :: yobs = xobs * 1.12d0
-! double precision, parameter :: zobs = xobs * 1.38d0
+  double precision, parameter :: scaling_factor_gi  = GRAV * nondimensionalizing_factor_gi
+  double precision, parameter :: scaling_factor_Gij = GRAV * nondimensionalizing_factor_Gij
 
   ! initializes
   Roland_Sylvain_int_local(:) = ZERO
@@ -399,7 +385,8 @@
 
   ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
   ! and also take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  Roland_Sylvain_int_local(:) = Roland_Sylvain_int_local(:) * GRAV * non_dimensionalizing_factor
+  Roland_Sylvain_int_local(1:3) = Roland_Sylvain_int_local(1:3) * scaling_factor_gi
+  Roland_Sylvain_int_local(4:9) = Roland_Sylvain_int_local(4:9) * scaling_factor_Gij
 
   ! use an MPI reduction to compute the total value of the integral
   Roland_Sylvain_int_total_region(:) = ZERO

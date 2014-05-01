@@ -48,9 +48,6 @@
 
 !*********************************************************************************************************
 
-!! DK DK for Roland_Sylvain
-  logical, parameter :: ROLAND_SYLVAIN = .false.
-
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
 ! set to .false. typically on a cluster of nodes with local disks used to store the mesh (not very common these days)
@@ -87,6 +84,9 @@
   double precision, parameter :: R_EARTH = 6371000.d0
 ! uncomment line below for PREM with oceans
 ! double precision, parameter :: R_EARTH = 6368000.d0
+
+! radius of the Earth in km
+  double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
 
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
@@ -393,6 +393,41 @@
   integer, parameter :: NSTEP_FOR_BENCHMARK = 300
   logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
 
+!!-----------------------------------------------------------
+!!
+!! for Roland_Sylvain integrals
+!!
+!!-----------------------------------------------------------
+
+!! DK DK for Roland_Sylvain
+  logical, parameter :: ROLAND_SYLVAIN = .false.
+
+! altitude of the observation point
+  double precision, parameter :: altitude_of_observation_point = 255.d0 ! in km
+
+! standard gravity at the surface of the Earth
+  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
+
+  double precision, parameter :: SQUARE_ROOT_OF_THREE = 1.73205080756887729352d0
+
+! position of the observation point in non-dimensionalized value
+
+!! DK DK along X only
+! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
+! double precision, parameter :: yobs = 0.d0
+! double precision, parameter :: zobs = 0.d0
+
+!! DK DK along diagonal
+! double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+! double precision, parameter :: yobs = xobs
+! double precision, parameter :: zobs = xobs
+
+!! DK DK point randomly chosen in space, not at the right elevation we want
+  double precision, parameter :: xobs = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+  double precision, parameter :: yobs = xobs * 1.12d0
+  double precision, parameter :: zobs = xobs * 1.38d0
+
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
@@ -430,8 +465,12 @@
   integer, parameter :: MIDY = (NGLLY+1)/2
   integer, parameter :: MIDZ = (NGLLZ+1)/2
 
-! gravitational constant in S.I. units i.e. in m3 kg-1 s-2
-  double precision, parameter :: GRAV = 6.6723d-11
+! gravitational constant in S.I. units i.e. in m3 kg-1 s-2, or equivalently in N.(m/kg)^2
+!! DK DK April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
+!! DK DK see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
+!! DK DK and http://en.wikipedia.org/wiki/Gravitational_constant
+! double precision, parameter :: GRAV = 6.6723d-11
+  double precision, parameter :: GRAV = 6.67384d-11
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
@@ -453,9 +492,6 @@
 
 ! normalized radius of free surface
   double precision, parameter :: R_UNIT_SPHERE = ONE
-
-! radius of the Earth in km
-  double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
 
 ! fixed thickness of 3 km for PREM oceans
   double precision, parameter :: THICKNESS_OCEANS_PREM = 3000.d0 / R_EARTH
