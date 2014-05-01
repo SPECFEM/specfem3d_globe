@@ -249,7 +249,7 @@ TRACE("compute_stacey_elastic_cuda");
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
   //int blocksize = 32;
 
-  // way 2: seems sligthly faster
+  // way 2: seems slightly faster
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
 
@@ -454,7 +454,7 @@ void FC_FUNC_(compute_stacey_elastic_backward_cuda,
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
   //int blocksize = 32;
 
-  // way 2: seems sligthly faster
+  // way 2: seems slightly faster
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
 
@@ -489,7 +489,7 @@ void FC_FUNC_(compute_stacey_elastic_backward_cuda,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// undo_attenuation simulation: stacey for backward/reconstructed wavefield
+// undo_attenuation simulation: Stacey for backward/reconstructed wavefield
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -564,7 +564,7 @@ void FC_FUNC_(compute_stacey_elastic_undoatt_cuda,
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
   //int blocksize = 32;
 
-  // way 2: seems sligthly faster
+  // way 2: seems slightly faster
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
 

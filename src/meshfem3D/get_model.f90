@@ -82,7 +82,7 @@
   double precision :: r,r_prem,moho
   integer :: i,j,k,i_sls
 
-  ! loops over all gll points for this spectral element
+  ! loops over all GLL points for this spectral element
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -382,7 +382,7 @@
 
 
   ! check flags to make sure we correctly honor the discontinuities
-  ! we use strict inequalities since r has been slighly changed in mesher
+  ! we use strict inequalities since r has been slightly changed in mesher
 
   !
   !--- inner core

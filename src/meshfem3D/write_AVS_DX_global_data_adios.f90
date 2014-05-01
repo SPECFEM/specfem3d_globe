@@ -349,7 +349,7 @@ end subroutine prepare_AVS_DX_global_data_adios
 !> Schedule write to ADIOS file for global AVS/DX data
 !! \param adios_handle The handle to the ADIOS file we want to write into
 !! \param nspec Number of spectral elements
-!! \avs_dx_adios Structure with the data that have to be wrtten
+!! \avs_dx_adios Structure with the data that have to be written
 subroutine write_AVS_DX_global_data_adios(adios_handle, myrank, &
     sizeprocs, avs_dx_adios)
 

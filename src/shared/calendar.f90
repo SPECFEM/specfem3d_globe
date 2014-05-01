@@ -342,7 +342,7 @@
 !
 ! DAY NUMBER DURING THE YEAR
 ! The day number during the year is simply a counter equal to 1 on
-! 1 January, 32 on 1 February, etc., thorugh 365 or 366 on 31 December,
+! 1 January, 32 on 1 February, etc., through 365 or 366 on 31 December,
 ! depending on whether the year is a leap year.  Sometimes this is
 ! called the Julian Day, but that term is better reserved for the
 ! day counter explained below.
@@ -354,7 +354,7 @@
 ! Julius Caesar Scaliger (1484-1558), an Italian scholar and physician
 ! who lived in France.  Because Julian Day numbering was especially
 ! designed for astronomers, Julian Days begin at noon so that the day
-! counter does not change in the middle of an astronmer's observing
+! counter does not change in the middle of an astronomer's observing
 ! period.  Julian Day 0 began at noon on 1 January 4713 BC under the
 ! Julian calendar.  A modern reference point is that 23 May 1968
 ! (Gregorian calendar) was Julian Day 2,440,000.
@@ -532,7 +532,7 @@
 ! given that, on 15 October 1582 under the Gregorian calendar,
 ! the Julian Day was 2299161.  Similarly, we need to do the same
 ! calculation for the Julian calendar.  We can compute this Julian
-! Day knwoing that on 4 October 1582 under the Julian calendar,
+! Day knowing that on 4 October 1582 under the Julian calendar,
 ! the Julian Day number was 2299160.  The details of these calculations
 ! is next.
 !    From 15 October until 1 March, the number of days is the remainder

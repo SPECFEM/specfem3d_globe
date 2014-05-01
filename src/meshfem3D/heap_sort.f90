@@ -83,7 +83,7 @@
       if( array(j) <= array(j+1) ) j = j + 1
     endif
 
-    ! checks if section already smaller than inital value
+    ! checks if section already smaller than initial value
     if( array(j) < tmp ) exit
 
     array(i) = array(j)

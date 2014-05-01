@@ -186,7 +186,7 @@ contains
       endif
     endif
 
-   ! initializes the asdf data structure by allocating arrays
+   ! initializes the ASDF data structure by allocating arrays
    if (OUTPUT_SEISMOS_ASDF) then
       total_seismos_local = 0
       do irec_local = 1, nrec_local
@@ -209,15 +209,15 @@ contains
       one_seismogram = seismograms(:,irec_local,:)
 
       ! write this seismogram
-      ! asdf data structure is passed as an argument
+      ! ASDF data structure is passed as an argument
       call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
     enddo
 
-    ! write asdf container to the file
+    ! write ASDF container to the file
     if (OUTPUT_SEISMOS_ASDF) then
       call synchronize_all()
       call write_asdf(asdf_container)
-      ! deallocate the contanier
+      ! deallocate the container
       call close_asdf_data(asdf_container, total_seismos_local)
     endif
 
@@ -287,7 +287,7 @@ contains
       ! loop on all the slices
       do iproc = 0,NPROCTOT_VAL-1
 
-       ! communicates only with processes which contain local receivers (to minimize mpi chatter)
+       ! communicates only with processes which contain local receivers (to minimize MPI chatter)
        if( islice_num_rec_local(iproc) == 0 ) cycle
 
        ! receive except from proc 0, which is me and therefore I already have this value

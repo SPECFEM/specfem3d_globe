@@ -363,7 +363,7 @@ subroutine read_mesh_databases_coupling_adios()
   call adios_perform_reads(adios_handle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  ! jacobians
+  ! Jacobians
 
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
   start(1) = local_dim * myrank; count(1) = local_dim

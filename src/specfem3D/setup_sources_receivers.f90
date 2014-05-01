@@ -134,7 +134,7 @@
     write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
     !  LQY -- won't be able to know NSOURCES+nrec at this point...
     write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
-    ! closing file, rest of informations will be appended later on
+    ! closing file, rest of information will be appended later on
     close(IOUT_VTK)
   endif
 
@@ -154,7 +154,7 @@
     enddo
   endif
 
-  ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
+  ! filter source time function by Gaussian with hdur = HDUR_MOVIE when writing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
     ! smaller hdur_movie will do
     if( USE_SMALLER_HDUR_MOVIE ) then
@@ -283,7 +283,7 @@
     is_initial_guess = .false.
   endif
 
-  ! from intial guess in read_compute_parameters:
+  ! from initial guess in read_compute_parameters:
   !    compute total number of time steps, rounded to next multiple of 100
   !    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
   !
@@ -463,7 +463,7 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
   endif
 
-  ! user output infos
+  ! user output info
   ! sources
   if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
     ! user output
@@ -540,7 +540,7 @@
       write(IMAIN,*) 'adjoint source arrays:'
       write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
       if( IO_ASYNC_COPY ) then
-        write(IMAIN,*) '  using asynchronuous buffer for file i/o of adjoint sources'
+        write(IMAIN,*) '  using asynchronous buffer for file I/O of adjoint sources'
       endif
       write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
       write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(sizeval),'MB'
@@ -569,7 +569,7 @@
   ! user output
   if(myrank == 0) then
 
-    ! finishes vtk file
+    ! finishes VTK file
     !  we should know NSOURCES+nrec at this point...
     ! creates source/receiver location file
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
@@ -643,7 +643,7 @@
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
-      ! additional buffer for asynchronuous file i/o
+      ! additional buffer for asynchronous file i/o
       if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
         ! allocates read buffer
         allocate(buffer_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
@@ -904,7 +904,7 @@
       ! allocates Frechet derivatives array
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating Frechet derivatives arrays')
 
       moment_der(:,:,:) = 0._CUSTOM_REAL
       sloc_der(:,:) = 0._CUSTOM_REAL

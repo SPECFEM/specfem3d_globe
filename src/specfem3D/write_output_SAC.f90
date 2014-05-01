@@ -195,7 +195,7 @@
   USER1  = shortest_period
   USER2  = 500.0d0
   ! we remove any PDE information, since the simulation could also start
-  ! with a "pure" CMT solution, without having any PDE infos
+  ! with a "pure" CMT solution, without having any PDE info
   !
   !USER1  = t_shift !time shift between PDE and CMT solutions
   !PDE location values (different from CMT location, usually):
@@ -457,7 +457,7 @@
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM
 
-  ! For explaination on values set, see above (SAC ASCII)
+  ! For explanation on values set, see above (SAC ASCII)
   if (OUTPUT_SEISMOS_SAC_BINARY) then
 
     ! add .sac (sac binary) extension to seismogram file name for SAC seismograms

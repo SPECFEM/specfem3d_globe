@@ -129,7 +129,7 @@
     if( TOPOGRAPHY ) then
       ! globe surface honors topography, elements stretched for moho
       !
-      ! note:  if no topography is honored, stretching may lead to distorted elements and invalid jacobian
+      ! note:  if no topography is honored, stretching may lead to distorted elements and invalid Jacobian
 
       if (moho < R_moho ) then
         ! actual moho below fictitious moho
@@ -146,7 +146,7 @@
           ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
           gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
 
-          ! since not all GLL points are exactlly at R220, use a small
+          ! since not all GLL points are exactly at R220, use a small
           ! tolerance for R220 detection, fix R220
           if (abs(gamma) < SMALLVAL) then
             gamma = 0.0d0
@@ -173,7 +173,7 @@
           ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
           gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
 
-          ! since not all GLL points are exactlly at R220, use a small
+          ! since not all GLL points are exactly at R220, use a small
           ! tolerance for R220 detection, fix R220
           if (abs(gamma) < SMALLVAL) then
             gamma = 0.0d0
@@ -640,7 +640,7 @@
 
   !  stretch factor
   ! offset will be gamma * elevation
-  ! scaling cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
+  ! scaling Cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
   stretch_factor = ONE + gamma * elevation/r
 
   ! new point location

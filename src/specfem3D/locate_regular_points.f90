@@ -312,7 +312,7 @@
     ! iterate to solve the nonlinear system
     do iter_loop = 1,NUM_ITER
 
-      ! recompute jacobian for the new point
+      ! recompute Jacobian for the new point
       call recompute_jacobian(xelm,yelm,zelm, xi,eta,gamma, x,y,z, &
                               xix,xiy,xiz, etax,etay,etaz, gammax,gammay,gammaz)
 
@@ -349,7 +349,7 @@
 
     enddo
 
-    ! DEBUG: recompute jacobian for the new point (can be commented after debug)
+    ! DEBUG: recompute Jacobian for the new point (can be commented after debug)
     !call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
     !dist_final(ipoint)=dsqrt((x_target-x)**2+(y_target-y)**2+(z_target-z)**2)
 

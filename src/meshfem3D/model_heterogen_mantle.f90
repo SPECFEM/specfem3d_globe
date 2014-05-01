@@ -137,11 +137,11 @@
   double precision :: drho,dvp,dvs                ! output anomaly values
 
   ! local parameters
-  double precision :: x,y,z                       ! input converted to cartesian
+  double precision :: x,y,z                       ! input converted to Cartesian
   double precision :: x_low,x_high                ! x values used to interpolate
   double precision :: y_low,y_high                ! y values used to interpolate
   double precision :: z_low,z_high                ! z values used to interpolate
-  double precision :: delta,delta2                ! weigts in record# and in interpolation
+  double precision :: delta,delta2                ! weights in record# and in interpolation
   double precision :: rho1,rho2,rho3,rho4,rho5,rho6,rho7,rho8 ! rho values at the interpolation points
   double precision :: r_inner,r_outer             ! lower and upper domain bounds for r
   integer :: rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
@@ -157,7 +157,7 @@
   !delta2 = 2.*R_EARTH/(real(N_R))
 
   if ((radius >= r_inner) .and. (radius <= r_outer)) then
-    ! convert spherical point to cartesian point, move origin to corner
+    ! convert spherical point to Cartesian point, move origin to corner
     x = R_EARTH + radius*sin(theta)*cos(phi)
     y = R_EARTH + radius*sin(theta)*sin(phi)
     z = R_EARTH + radius*cos(theta)

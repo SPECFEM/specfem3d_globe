@@ -201,7 +201,7 @@
   !
   ! otherwise,
   ! we would have to shift this indices by minus 1, to read in the adjoint source trace between 0 to 2999.
-  ! since 0 index is out of bounds, we would have to put that adjoint source displacement artifically to zero
+  ! since 0 index is out of bounds, we would have to put that adjoint source displacement artificially to zero
   !
   ! here now, it_start is now 2001 and it_end = 3000, then 1001 to 2000, then 1 to 1000.
   it_start = it_start
@@ -238,7 +238,7 @@
       ! index will run from 1 to NSTEP_BLOCK
       index_i = itime - it_start + 1
 
-      ! would skip read and set source artifically to zero if out of bounds, see comments above
+      ! would skip read and set source artificially to zero if out of bounds, see comments above
       if( it_start == 0 .and. itime == 0 ) then
         adj_src(icomp,1) = 0._CUSTOM_REAL
         cycle
@@ -260,7 +260,7 @@
   ! non-dimensionalize
   adj_src = adj_src*scale_displ_inv
 
-  ! rotates to cartesian
+  ! rotates to Cartesian
   do itime = 1, NSTEP_BLOCK
     adj_src_u(:,itime) = nu(1,:) * adj_src(1,itime) &
                        + nu(2,:) * adj_src(2,itime) &

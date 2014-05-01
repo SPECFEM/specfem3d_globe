@@ -28,7 +28,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 !   This file contains subroutines to read in and get values for
-!   3-D attenuation model QRFSI12 (Dalton, Ekstrom, & Dziewonski, 2008)
+!   3-D attenuation model QRFSI12 (Dalton, Ekström, & Dziewonski, 2008)
 !
 ! C.A. Dalton, G. Ekstr\"om and A.M. Dziewonski, 2008.
 ! The global attenuation structure of the upper mantle,
@@ -218,7 +218,7 @@
   ylat=90.0d0-theta
   xlon=phi
 
-  ! only checks radius for crust, idoubling is missleading for oceanic crust
+  ! only checks radius for crust, idoubling is misleading for oceanic crust
   ! when we want to expand mantle up to surface...
 
 !  !if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then

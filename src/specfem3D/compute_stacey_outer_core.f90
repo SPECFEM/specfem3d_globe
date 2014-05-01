@@ -65,7 +65,7 @@
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
-  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           tests with intermediate storage (every 8 step) and/or asynchronous
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
@@ -324,7 +324,7 @@
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
-  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           tests with intermediate storage (every 8 step) and/or asynchronous
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 

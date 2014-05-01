@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! subroutine for NOISE TOMOGRAPHY
-! chracterize noise statistics
+! characterize noise statistics
 ! for a given point (xcoord,ycoord,zcoord), specify the noise direction "normal_x/y/z_noise"
 !     and noise distribution "mask_noise"
 ! USERS need to modify this subroutine for their own noise characteristics
@@ -177,7 +177,7 @@
   call gather_all_cr(val_uy,ispec,val_uy_all,ispec,NPROCTOT_VAL)
   call gather_all_cr(val_uz,ispec,val_uz_all,ispec,NPROCTOT_VAL)
 
-  ! save maks_noise data to disk in home directory
+  ! save mask_noise data to disk in home directory
   ! this file can be viewed the same way as surface movie data (xcreate_movie_AVS_DX)
   ! create_movie_AVS_DX.f90 needs to be modified in order to do that,
   ! i.e., instead of showing the normal component, change it to either x, y or z component, or the norm.
@@ -319,7 +319,7 @@
   real(kind=CUSTOM_REAL) :: noise_src(NSTEP),noise_src_u(NDIM,NSTEP)
   double precision, dimension(NDIM) :: nu_master       ! component direction chosen at the master receiver
   double precision :: xi_noise, eta_noise, gamma_noise ! master receiver location
-  double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH ! non-dimesional scaling
+  double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH ! non-dimensional scaling
   double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
         hgammar(NGLLZ), hpgammar(NGLLZ)
   character(len=150) :: filename
@@ -358,7 +358,7 @@
      close(IOUT_NOISE)
   endif
 
-  ! rotates to cartesian
+  ! rotates to Cartesian
   do itime = 1, NSTEP
     noise_src_u(:,itime) = nu_single(1,:) * noise_src(itime) * nu_master(1) &
                          + nu_single(2,:) * noise_src(itime) * nu_master(2) &
@@ -483,7 +483,7 @@
 !
 
 ! subroutine for NOISE TOMOGRAPHY
-! step 2/3: calculate/reconstructe the "ensemble forward wavefield"
+! step 2/3: calculate/reconstruct the "ensemble forward wavefield"
 ! read surface movie (displacement) at every time steps, injected as the source of "ensemble forward wavefield"
 ! in step 2, call noise_read_add_surface_movie(..., NSTEP-it+1 ,...)
 ! in step 3, call noise_read_add_surface_movie(..., it ,...)

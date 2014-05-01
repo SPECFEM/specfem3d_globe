@@ -95,7 +95,7 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
     // (normal points outwards of acoustic element)
     displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // get global point number
@@ -213,7 +213,7 @@ __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
     // (normal points outwards of acoustic element)
     displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // get global point number
@@ -342,7 +342,7 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
       pressure = - RHO_TOP_OC * accel_outer_core[iglob_oc];
     }
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // update fluid acceleration/pressure
@@ -473,7 +473,7 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
       pressure = - RHO_BOTTOM_OC * accel_outer_core[iglob_oc];
     }
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // update fluid acceleration/pressure

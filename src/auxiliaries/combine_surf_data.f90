@@ -98,7 +98,7 @@ program combine_surf_data
 
   filename = arg(2)
 
-  ! discontinutity surfaces
+  ! discontinuity surfaces
   surfname = arg(3)
   if (trim(surfname) == 'Moho' .or. trim(surfname) == '400' .or. trim(surfname) == '670') then
     reg_name = 'reg1_'
@@ -186,7 +186,7 @@ program combine_surf_data
     allocate(data_3D(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
   endif
 
-  ! open paraview output mesh file
+  ! open Paraview output mesh file
   write(mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'.surf'
   write(pt_mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'_point.surf'
   write(em_mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'_element.surf'

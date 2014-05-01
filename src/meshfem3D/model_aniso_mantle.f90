@@ -682,7 +682,7 @@
   sintwothetasq = sintwotheta * sintwotheta
   sintwophisq = sintwophi * sintwophi
 
-! recompute 21 anisotropic coefficients for full anisotropoc model using Mathematica
+! recompute 21 anisotropic coefficients for full anisotropic model using Mathematica
 
 c11 = d22*sinphifour - 2.*sintwophi*sinphisq*(d26*costheta + d24*sintheta) - &
       2.*cosphisq*sintwophi*(d16*costhetasq*costheta + &

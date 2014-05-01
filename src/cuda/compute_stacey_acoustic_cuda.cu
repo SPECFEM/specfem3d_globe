@@ -149,7 +149,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
     // velocity
     sn = potential_dot_acoustic[iglob] / vpstore[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] ;
 
-    // gets associated, weighted jacobian
+    // gets associated, weighted Jacobian
     jacobianw = abs_boundary_jacobian2D[INDEX2(NGLL2,igll,iface)]*fac1;
 
     // Sommerfeld condition
@@ -490,7 +490,7 @@ TRACE("compute_stacey_acoustic_backward_cuda");
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// undo_attenuation simulation: stacey for backward/reconstructed wavefield
+// undo_attenuation simulation: Stacey for backward/reconstructed wavefield
 
 /* ----------------------------------------------------------------------------------------------- */
 

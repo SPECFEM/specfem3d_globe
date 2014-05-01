@@ -109,9 +109,9 @@
   ! dump kernel arrays
   call save_kernels()
 
-  ! vtk visualization
+  ! VTK visualization
   if( VTK_MODE ) then
-    ! closes vtk window
+    ! closes VTK window
     if(myrank == 0 ) call finish_vtkwindow()
   endif
 
@@ -185,7 +185,7 @@
     nullify(b_rmassz_inner_core)
   endif
 
-  ! mpi buffers
+  ! MPI buffers
   deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
             request_send_vector_cm,request_recv_vector_cm)
   deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
@@ -277,7 +277,7 @@
               mask_noise,noise_surface_movie)
   endif
 
-  ! vtk visualization
+  ! VTK visualization
   if( VTK_MODE ) then
     ! frees memory
     deallocate(vtkdata,vtkmask)

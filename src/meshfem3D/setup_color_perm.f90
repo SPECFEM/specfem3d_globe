@@ -188,7 +188,7 @@
                       SAVE_MESH_FILES)
 
       ! checks
-      ! inner core contains ficticious elements not counted for
+      ! inner core contains fictitious elements not counted for
       if(minval(perm) < 0) &
         call exit_MPI(myrank, 'minval(perm) should be at least 0')
       if(maxval(perm) > num_phase_ispec_inner_core) then
@@ -305,7 +305,7 @@
   if( ier /= 0 ) stop 'error allocating first_elem_number_in_this_color array'
 
   ! flags for elements in this domain
-  ! for compatiblity with SPECFEM3D mesh coloring routine
+  ! for compatibility with SPECFEM3D mesh coloring routine
   allocate(ispec_is_d(nspec),stat=ier)
   if( ier /= 0 ) stop 'error allocating ispec_is_d array'
 
@@ -317,7 +317,7 @@
   case( IREGION_INNER_CORE )
     ! initializes
     ispec_is_d(:) = .true.
-    ! excludes ficticious elements from coloring
+    ! excludes fictitious elements from coloring
     where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) ispec_is_d = .false.
     ! checks
     if( count(ispec_is_d) == 0 ) then
@@ -573,7 +573,7 @@
     call flush_IMAIN()
   endif
 
-  ! debug: outputs permutation array as vtk file
+  ! debug: outputs permutation array as VTK file
   if( DEBUG .and. idomain == IREGION_CRUST_MANTLE ) then
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_'//str_domain(idomain)
@@ -708,9 +708,9 @@
   enddo
 
   ! handles fictitious cube elements for inner core
-  ! which contains ficticious elements not counted for
+  ! which contains fictitious elements not counted for
   if( idomain == IREGION_INNER_CORE ) then
-    ! fills up permutation with ficticious numbering
+    ! fills up permutation with fictitious numbering
     do ispec = 1,nspec
       if( temp_perm_global(ispec) == 0 ) then
         icounter = icounter + 1
@@ -762,7 +762,7 @@
     call flush_IMAIN()
   endif
 
-  ! outputs permutation array as vtk file
+  ! outputs permutation array as VTK file
   if( SAVE_MESH_FILES .and. DEBUG .and. idomain == IREGION_CRUST_MANTLE ) then
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_global'
@@ -817,7 +817,7 @@
   deallocate(temp_array_real)
 
   ! boundary surfaces
-  ! note: only arrays pointing to ispec will have to be permutated since value of ispec will be different
+  ! note: only arrays pointing to ispec will have to be permuted since value of ispec will be different
   !
   ! xmin
   do iface = 1,nspec2D_xmin

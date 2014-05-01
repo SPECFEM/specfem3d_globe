@@ -152,21 +152,21 @@
         endif
       else if( REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF ) then
         ! transverse isotropic mantle between fictitious moho to 670km depth
-        ! preferred for harvard (kustowski's) models using STW 1D reference, i.e.
+        ! preferred for Harvard (Kustowski's) models using STW 1D reference, i.e.
         ! THREE_D_MODEL_S362ANI
         ! THREE_D_MODEL_S362WMANI
         ! THREE_D_MODEL_S29EA
         ! THREE_D_MODEL_GLL
         ! which show significant transverse isotropy also below 220km depth
         if( USE_OLD_VERSION_5_1_5_FORMAT) then
-          ! assignes TI only to elements below (2-layer) ficticious moho down to 670
+          ! assigns TI only to elements below (2-layer) fictitious moho down to 670
           if( idoubling(ispec)==IFLAG_220_80 &
             .or. idoubling(ispec)==IFLAG_80_MOHO &
             .or. idoubling(ispec)==IFLAG_670_220 ) then
             elem_is_tiso = .true.
           endif
         else
-          ! assignes TI to elements in mantle elements just below actual moho down to 670
+          ! assigns TI to elements in mantle elements just below actual moho down to 670
           if( idoubling(ispec)==IFLAG_220_80 &
             .or. idoubling(ispec)==IFLAG_80_MOHO &
             .or. idoubling(ispec)==IFLAG_670_220 &
@@ -210,9 +210,9 @@
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   !
-  ! note:  using gll points to capture them results in a slightly more accurate mesh.
+  ! note:  using GLL points to capture them results in a slightly more accurate mesh.
   !           however, it introduces more deformations to the elements which might lead to
-  !           problems with the jacobian. using the anchors is therefore more robust.
+  !           problems with the Jacobian. using the anchors is therefore more robust.
 
   ! adds surface topography
   if( TOPOGRAPHY ) then
@@ -221,10 +221,10 @@
        idoubling(ispec) == IFLAG_80_MOHO) then
       ! stretches mesh between surface and R220 accordingly
       if( USE_GLL ) then
-        ! stretches every gll point accordingly
+        ! stretches every GLL point accordingly
         call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo)
       else
-        ! stretches anchor points only, interpolates gll points later on
+        ! stretches anchor points only, interpolates GLL points later on
         call add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
       endif
     endif
@@ -237,10 +237,10 @@
     if(idoubling(ispec) == IFLAG_670_220 .or. &
        idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
       if( USE_GLL ) then
-        ! stretches every gll point accordingly
+        ! stretches every GLL point accordingly
         call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
       else
-        ! stretches anchor points only, interpolates gll points later on
+        ! stretches anchor points only, interpolates GLL points later on
         call add_topography_410_650(myrank,xelm,yelm,zelm)
       endif
     endif
@@ -283,7 +283,7 @@
                                       xstore,ystore,zstore,shape3D)
   endif
 
-  ! updates jacobian
+  ! updates Jacobian
   ! (only needed for second meshing phase)
   if( ipass == 2 ) then
     call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&

@@ -51,7 +51,7 @@
 !
 !---
 
-  ! GLL model uses s29ea as reference 3D model
+  ! GLL model uses S29EA as reference 3D model
   if( THREE_D_MODEL == THREE_D_MODEL_GLL ) then
     ! sets to initial reference model from which iterations started
     THREE_D_MODEL = GLL_REFERENCE_MODEL
@@ -397,7 +397,7 @@
 
   ! gets parameters for isotropic 3D mantle model
   !
-  ! note: there can be tranverse isotropy in the mantle, but only lamé parameters
+  ! note: there can be transverse isotropy in the mantle, but only Lamé parameters
   !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
   !
   ! note: in general, models here make use of perturbation values with respect to their
@@ -605,7 +605,7 @@
 !         theta_degrees = theta / DEGREES_TO_RADIANS
 !         phi_degrees = phi / DEGREES_TO_RADIANS
 !         tau_e(:)   = 0.0d0
-!         ! Get the value of Qmu (Attenuation) dependedent on
+!         ! Get the value of Qmu (Attenuation) dependent on
 !         ! the radius (r_prem) and idoubling flag
 !         !call model_attenuation_1D_PREM(r_prem, Qmu, idoubling)
 !          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,idoubling)
@@ -990,10 +990,10 @@
 
       !check
       if( ispec > size(MGLL_V%vp_new(1,1,1,:)) ) then
-        call exit_MPI(myrank,'model gll: ispec too big')
+        call exit_MPI(myrank,'model GLL: ispec too big')
       endif
 
-      ! takes stored gll values from file
+      ! takes stored GLL values from file
       ! ( note that these values are non-dimensionalized)
       if(CUSTOM_REAL == SIZE_REAL) then
         vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
@@ -1017,10 +1017,10 @@
 
       !check
       if( ispec > size(MGLL_V%vpv_new(1,1,1,:)) ) then
-        call exit_MPI(myrank,'model gll: ispec too big')
+        call exit_MPI(myrank,'model GLL: ispec too big')
       endif
 
-      ! takes stored gll values from file
+      ! takes stored GLL values from file
       if(CUSTOM_REAL == SIZE_REAL) then
         vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
         vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )

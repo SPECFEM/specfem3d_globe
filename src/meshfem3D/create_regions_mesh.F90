@@ -184,11 +184,11 @@
 
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
-    ! precomputes jacobian for 2d absorbing boundary surfaces
+    ! precomputes Jacobian for 2D absorbing boundary surfaces
     call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) '  ...precomputing jacobian'
+      write(IMAIN,*) '  ...precomputing Jacobian'
       call flush_IMAIN()
     endif
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
@@ -223,7 +223,7 @@
                xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
                xyz1D_leftxi_righteta,xyz1D_rightxi_righteta)
 
-    ! setup mpi communication interfaces
+    ! setup MPI communication interfaces
     call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
@@ -381,7 +381,7 @@
     deallocate(b_rmassx,b_rmassy)
     deallocate(rmass_ocean_load)
 
-    ! saves MPI interface infos
+    ! saves MPI interface info
     call save_arrays_solver_MPI(iregion_code)
 
     ! frees MPI arrays memory
@@ -620,7 +620,7 @@
   ibelm_ymin(:) = 0; ibelm_ymax(:) = 0
   ibelm_bottom(:) = 0; ibelm_top(:) = 0
 
-  ! 2-D jacobians and normals
+  ! 2-D Jacobians and normals
   allocate(jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
            jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
            jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &

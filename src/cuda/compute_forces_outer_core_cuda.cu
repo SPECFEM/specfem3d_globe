@@ -272,7 +272,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void Kernel_2_outer_core_impl(int nb
     gammayl = d_gammay[offset];
     gammazl = d_gammaz[offset];
 
-    //  compute the jacobian
+    //  compute the Jacobian
     jacobianl = 1.f / (xixl*(etayl*gammazl-etazl*gammayl)
                     - xiyl*(etaxl*gammazl-etazl*gammaxl)
                     + xizl*(etaxl*gammayl-etayl*gammaxl));

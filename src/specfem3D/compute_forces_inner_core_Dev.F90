@@ -279,7 +279,7 @@
         gammayl = gammay(INDEX_IJK,ispec)
         gammazl = gammaz(INDEX_IJK,ispec)
 
-        ! compute the jacobian
+        ! compute the Jacobian
         jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                       - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                       + xizl*(etaxl*gammayl-etayl*gammaxl))

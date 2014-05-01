@@ -112,7 +112,7 @@
           weight = wxgll(i)*wygll(j)*wzgll(k)
           iglob = ibool(i,j,k,ispec)
 
-          ! compute the jacobian
+          ! compute the Jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
           xizl = xizstore(i,j,k,ispec)
@@ -195,7 +195,7 @@
       if(minval(b_rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
     endif
   else
-    ! no ficticious elements, mass matrix must be strictly positive
+    ! no fictitious elements, mass matrix must be strictly positive
     if(minval(rmassz(:)) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
     ! check that the additional mass matrices are strictly positive, if they exist
     if(nglob_xy == nglob) then
@@ -297,7 +297,7 @@
             weight = wxgll(i)*wygll(j)*wzgll(k)
             iglob = ibool(i,j,k,ispec)
 
-            ! compute the jacobian
+            ! compute the Jacobian
             xixl = xixstore(i,j,k,ispec)
             xiyl = xiystore(i,j,k,ispec)
             xizl = xizstore(i,j,k,ispec)
@@ -886,7 +886,7 @@
 
           ! converts the geocentric colatitude to a geographic colatitude
           ! note: bathymetry is given in geographic lat/lon
-          !       (i.e., latitutde with respect to reference ellipsoid)
+          !       (i.e., latitude with respect to reference ellipsoid)
           !       we will need convert the geocentric positions here to geographic ones
           if( USE_OLD_VERSION_5_1_5_FORMAT ) then
             ! always converts

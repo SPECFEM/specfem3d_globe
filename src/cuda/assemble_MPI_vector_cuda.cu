@@ -120,7 +120,7 @@ void FC_FUNC_(transfer_boun_from_device,
           cudaMemcpyAsync(mp->h_send_accel_buffer_cm,mp->d_send_accel_buffer_crust_mantle,size_mpi_buffer*sizeof(realw),
                           cudaMemcpyDeviceToHost,mp->copy_stream);
         }else{
-          // synchronuous copy
+          // synchronous copy
           print_CUDA_error_if_any(cudaMemcpy(send_accel_buffer,mp->d_send_accel_buffer_crust_mantle,size_mpi_buffer*sizeof(realw),
                                              cudaMemcpyDeviceToHost),41000);
         }
@@ -144,7 +144,7 @@ void FC_FUNC_(transfer_boun_from_device,
           cudaMemcpyAsync(mp->h_b_send_accel_buffer_cm,mp->d_b_send_accel_buffer_crust_mantle,size_mpi_buffer*sizeof(realw),
                           cudaMemcpyDeviceToHost,mp->copy_stream);
         }else{
-          // synchronuous copy
+          // synchronous copy
           print_CUDA_error_if_any(cudaMemcpy(send_accel_buffer,mp->d_b_send_accel_buffer_crust_mantle,size_mpi_buffer*sizeof(realw),
                                              cudaMemcpyDeviceToHost),41001);
         }
@@ -183,7 +183,7 @@ void FC_FUNC_(transfer_boun_from_device,
           cudaMemcpyAsync(mp->h_send_accel_buffer_ic,mp->d_send_accel_buffer_inner_core,size_mpi_buffer*sizeof(realw),
                           cudaMemcpyDeviceToHost,mp->copy_stream);
         }else{
-          // synchronuous copy
+          // synchronous copy
           print_CUDA_error_if_any(cudaMemcpy(send_accel_buffer,mp->d_send_accel_buffer_inner_core,size_mpi_buffer*sizeof(realw),
                                            cudaMemcpyDeviceToHost),41000);
         }
@@ -206,7 +206,7 @@ void FC_FUNC_(transfer_boun_from_device,
           cudaMemcpyAsync(mp->h_b_send_accel_buffer_ic,mp->d_b_send_accel_buffer_inner_core,size_mpi_buffer*sizeof(realw),
                         cudaMemcpyDeviceToHost,mp->copy_stream);
         }else{
-          // synchronuous copy
+          // synchronous copy
           print_CUDA_error_if_any(cudaMemcpy(send_accel_buffer,mp->d_b_send_accel_buffer_inner_core,size_mpi_buffer*sizeof(realw),
                                            cudaMemcpyDeviceToHost),41001);
         }
@@ -285,7 +285,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
 
       if(*FORWARD_OR_ADJOINT == 1) {
 
-        // asynchronuous copy
+        // asynchronous copy
         if( GPU_ASYNC_COPY ){
           // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
           cudaStreamSynchronize(mp->copy_stream);
@@ -307,7 +307,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
         // debug
         DEBUG_BACKWARD_ASSEMBLY();
 
-        // asynchronuous copy
+        // asynchronous copy
         if( GPU_ASYNC_COPY ){
           // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
           cudaStreamSynchronize(mp->copy_stream);
@@ -401,7 +401,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// Asynchronuous memory copy for mpi buffers
+// Asynchronous memory copy for MPI buffers
 
 /* ----------------------------------------------------------------------------------------------- */
 

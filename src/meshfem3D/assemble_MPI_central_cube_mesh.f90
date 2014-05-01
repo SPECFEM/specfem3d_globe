@@ -179,7 +179,7 @@
           endif
         enddo
       enddo
-  ! add the constribution of AB or AB_ANTIPODE to sum with the external slices on the edges
+  ! add the contribution of AB or AB_ANTIPODE to sum with the external slices on the edges
   ! use a mask to avoid taking the same point into account several times.
       mask(:) = .false.
       do ipoin = 1,npoin2D_cube_from_slices

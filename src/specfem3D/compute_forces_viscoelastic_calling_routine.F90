@@ -153,12 +153,12 @@
       ! for crust/mantle
       call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase,1)
 
-      ! initiates asynchronuous mpi transfer
+      ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_crust_mantle,IREGION_CRUST_MANTLE,1)
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -170,12 +170,12 @@
       ! for inner core
       call compute_forces_inner_core_cuda(Mesh_pointer,iphase,1)
 
-      ! initiates asynchronuous mpi transfer
+      ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! inner core region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_inner_core,IREGION_INNER_CORE,1)
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
@@ -307,8 +307,8 @@
         ! sends accel values to corresponding MPI interface neighbors
 
         ! preparation of the contribution between partitions using MPI
-        ! transfers mpi buffers to CPU
-        ! note: in case of asynchronuous copy, this transfers boundary region to host asynchronously. The
+        ! transfers MPI buffers to CPU
+        ! note: in case of asynchronous copy, this transfers boundary region to host asynchronously. The
         !       MPI-send is done after compute_forces_viscoelastic_cuda,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_from_device(Mesh_pointer, &
@@ -319,7 +319,7 @@
                                        IREGION_INNER_CORE,1)
 
         if( .not. GPU_ASYNC_COPY ) then
-          ! for synchronuous transfers, sending over mpi can directly proceed
+          ! for synchronous transfers, sending over MPI can directly proceed
           ! crust mantle
           call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                         buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
@@ -360,7 +360,7 @@
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           !
-          ! transfers mpi buffers onto GPU
+          ! transfers MPI buffers onto GPU
           ! crust/mantle region
           call transfer_boundary_to_device(Mesh_pointer,NPROCTOT_VAL,buffer_recv_vector_crust_mantle, &
                                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -373,7 +373,7 @@
                                            IREGION_INNER_CORE,1)
         endif
 
-        ! waits for mpi send/receive requests to be completed and assembles values
+        ! waits for MPI send/receive requests to be completed and assembles values
         ! crust mantle
         call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                             buffer_recv_vector_crust_mantle, &
@@ -427,7 +427,7 @@
 
   ! time scheme update
   if( USE_LDDRK ) then
-    ! runge-kutta scheme
+    ! Runge-Kutta scheme
     call update_veloc_elastic_lddrk()
   else
     ! Newmark time scheme
@@ -603,12 +603,12 @@
       ! for crust/mantle
       call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase,3)
 
-      ! initiates asynchronuous mpi transfer
+      ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_cm,IREGION_CRUST_MANTLE,3)
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -620,13 +620,13 @@
       ! for inner core
       call compute_forces_inner_core_cuda(Mesh_pointer,iphase,3)
 
-      ! initiates asynchronuous mpi transfer
+      ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! inner core region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_inner_core,IREGION_INNER_CORE,3)
 
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
@@ -743,8 +743,8 @@
         ! sends accel values to corresponding MPI interface neighbors
 
         ! preparation of the contribution between partitions using MPI
-        ! transfers mpi buffers to CPU
-        ! note: in case of asynchronuous copy, this transfers boundary region to host asynchronously. The
+        ! transfers MPI buffers to CPU
+        ! note: in case of asynchronous copy, this transfers boundary region to host asynchronously. The
         !       MPI-send is done after compute_forces_viscoelastic_cuda,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_from_device(Mesh_pointer, &
@@ -755,7 +755,7 @@
                                        IREGION_INNER_CORE,3)
 
         if( .not. GPU_ASYNC_COPY ) then
-          ! for synchronuous transfers, sending over mpi can directly proceed
+          ! for synchronous transfers, sending over MPI can directly proceed
           ! crust mantle
           call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
@@ -799,7 +799,7 @@
           ! finish and transfer the boundary terms to the device asynchronously
           ! wait for asynchronous copy to finish
           !
-          ! transfers mpi buffers onto GPU
+          ! transfers MPI buffers onto GPU
           ! crust/mantle region
           call transfer_boundary_to_device(Mesh_pointer,NPROCTOT_VAL,b_buffer_recv_vector_cm, &
                                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -812,7 +812,7 @@
                                            IREGION_INNER_CORE,3)
         endif
 
-        ! waits for mpi send/receive requests to be completed and assembles values
+        ! waits for MPI send/receive requests to be completed and assembles values
         ! crust mantle
         call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                           b_buffer_recv_vector_cm, &
@@ -867,7 +867,7 @@
 
   ! time scheme update
   if( USE_LDDRK ) then
-    ! runge-kutta scheme
+    ! Runge-Kutta scheme
     call update_veloc_elastic_lddrk_backward()
   else
     ! Newmark time scheme

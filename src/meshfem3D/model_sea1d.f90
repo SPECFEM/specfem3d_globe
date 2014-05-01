@@ -58,7 +58,7 @@
   integer :: myrank
   logical :: CRUSTAL
 
-  ! local parametes
+  ! local parameters
   integer :: ier
 
   ! allocates arrays

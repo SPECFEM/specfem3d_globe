@@ -35,7 +35,7 @@
 ! model for the 3D models s362ani, s362wmani, s362ani_prem, and s29ea.
 !
 ! see chapter 3, in:
-! Kustowski, B, Ekstrom, G., and A. M. Dziewonski, 2008,
+! Kustowski, B, Ekström, G., and A. M. Dziewonski, 2008,
 ! Anisotropic shear-wave velocity structure of the Earth's mantle: A global model,
 ! J. Geophys. Res., 113, B06306, doi:10.1029/2007JB005169.
 !

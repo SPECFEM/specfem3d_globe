@@ -202,7 +202,7 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
     //errorstr = (char*) strerror(errno);
     //printf("CPU FILE ERROR:%s\n",errorstr);
     printf("CPU FILE ERROR:%s\n",(char*) strerror(errno));
-    perror("cpu file error\n");
+    perror("CPU file error\n");
   }
 
   FILE* fp_gpu;
@@ -211,7 +211,7 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
     //errorstr = (char*) strerror(errno);
     //printf("GPU FILE ERROR:%s\n",errorstr);
     printf("GPU FILE ERROR:%s\n",(char*) strerror(errno));
-    perror("gpu file error\n");
+    perror("GPU file error\n");
   }
 
   /* pause_for_debug(); */
@@ -265,7 +265,7 @@ void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
   size_t res;
 
   float* compare_vector = (float*)malloc(*size*sizeof(float));
-  if(*cpu_or_gpu == 0) { //swap gpu/cpu for compare
+  if(*cpu_or_gpu == 0) { //swap GPU/CPU for compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
   }
   else {
@@ -313,7 +313,7 @@ void compare_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
   size_t res;
 
   int* compare_vector = (int*)malloc(*size*sizeof(int));
-  if(*cpu_or_gpu == 0) { //swap gpu/cpu for compare
+  if(*cpu_or_gpu == 0) { //swap GPU/CPU for compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
   }
   else {

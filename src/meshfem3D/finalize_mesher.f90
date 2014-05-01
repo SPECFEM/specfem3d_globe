@@ -57,7 +57,7 @@
       write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
     endif
 
-    ! infos output
+    ! info output
     numelem_crust_mantle = NSPEC(IREGION_CRUST_MANTLE)
     numelem_outer_core = NSPEC(IREGION_OUTER_CORE)
     numelem_inner_core = NSPEC(IREGION_INNER_CORE)

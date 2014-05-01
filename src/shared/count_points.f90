@@ -230,7 +230,7 @@
 !!! NGLOB = NGLL (Edge)
 !!!
 !!! those results were obtained by using the script UTILS/doubling_brick/count_nglob_analytical.pl
-!!! with an opendx file of the superbrick's geometry
+!!! with an OpenDX file of the superbrick's geometry
 
 !!! for the basic doubling bricks (two layers)
 !!! NGLOB = 8.NGLL^3 - 12.NGLL^2 + 6.NGLL - 1 (VOLUME)

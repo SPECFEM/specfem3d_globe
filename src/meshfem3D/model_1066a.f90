@@ -30,7 +30,7 @@
 !
 ! Spherically symmetric earth model 1066A [Gilbert and Dziewonski, 1975].
 !
-! When ATTENTUATION is on, it uses an unpublished 1D attenuation model from Scripps.
+! When ATTENUATION is on, it uses an unpublished 1D attenuation model from Scripps.
 !--------------------------------------------------------------------------------------------------
 
   module model_1066a_par

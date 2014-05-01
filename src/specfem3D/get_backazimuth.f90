@@ -101,7 +101,7 @@
   eps = 1. + ec2/onemec2
 
   ! - Convert event location to radians.
-  !   (Equations are unstable for latidudes of exactly 0 degrees.)
+  !   (Equations are unstable for latitudes of exactly 0 degrees.)
 
   temp = the
   if( temp == 0. ) temp = 1.0d-08

@@ -216,7 +216,7 @@
             gammayl = gammay(i,j,k,ispec)
             gammazl = gammaz(i,j,k,ispec)
 
-            ! compute the jacobian
+            ! compute the Jacobian
             jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                           - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                           + xizl*(etaxl*gammayl-etayl*gammaxl))

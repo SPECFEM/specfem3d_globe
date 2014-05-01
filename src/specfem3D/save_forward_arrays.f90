@@ -29,7 +29,7 @@
 !!
 !! Two different options allow to save arrays used for forward simulations.
 !!   - setting SAVE_FORWARD to true. That save the last frame.
-!!   - setting NUMBERS_OF_RUNS to 2 or 3. This save intermadiate frame to
+!!   - setting NUMBERS_OF_RUNS to 2 or 3. This save intermediate frame to
 !!     restart the remaining of the simulation later.
 !! Moreover, one can choose to save these arrays with the help of the ADIOS
 !! library. Set ADIOS_FOR_FORWARD_ARRAYS to true in the Par_file for this

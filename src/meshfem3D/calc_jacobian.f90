@@ -26,18 +26,18 @@
 !=====================================================================
 !
 !> Hejun
-! This subroutine recomputes the 3D jacobian for one element
+! This subroutine recomputes the 3D Jacobian for one element
 ! based upon 125 GLL points
 ! Hejun Zhu OCT16,2009
 
 ! input: myrank,
 !        xstore,ystore,zstore ----- input GLL point coordinate
-!        xigll,yigll,zigll ----- gll points position
+!        xigll,yigll,zigll ----- GLL points position
 !        ispec,nspec       ----- element number
 
 ! output: xixstore,xiystore,xizstore,
 !         etaxstore,etaystore,etazstore,
-!         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate jacobian
+!         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate Jacobian
 
 
   subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
@@ -104,7 +104,7 @@
         eta = yigll(j)
         gamma = zigll(k)
 
-        ! calculate lagrange polynomial and its derivative
+        ! calculate Lagrange polynomial and its derivative
         call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
         call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
         call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
@@ -144,7 +144,7 @@
               zeta = zeta + z * hlagrange_eta
               zgamma = zgamma + z * hlagrange_gamma
 
-              ! test the lagrange polynomial and its derivate
+              ! test the Lagrange polynomial and its derivative
               xmesh = xmesh + x * hlagrange
               ymesh = ymesh + y * hlagrange
               zmesh = zmesh + z * hlagrange
@@ -158,7 +158,7 @@
           enddo
         enddo
 
-        ! Check the lagrange polynomial and its derivative
+        ! Check the Lagrange polynomial and its derivative
         if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
           .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
           .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
@@ -177,23 +177,23 @@
           call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
         endif
 
-        ! jacobian calculation
+        ! Jacobian calculation
         jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
                    xeta*(yxi*zgamma-ygamma*zxi) + &
                    xgamma*(yxi*zeta-yeta*zxi)
 
-        ! Check the jacobian
+        ! Check the Jacobian
         ! note: when honoring the moho, we squeeze and stretch elements
-        !          thus, it can happen that with a coarse mesh resolution, the jacobian encounters problems
+        !          thus, it can happen that with a coarse mesh resolution, the Jacobian encounters problems
         if(jacobian <= VERYSMALLVAL) then
           ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
           !
           ! converts position to geocentric coordinates
           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-          print*,'error jacobian rank:',myrank
+          print*,'error Jacobian rank:',myrank
           print*,'  location r/lat/lon: ',r*R_EARTH_KM, &
             90.0-(theta*RADIANS_TO_DEGREES),phi*RADIANS_TO_DEGREES
-          print*,'  jacobian: ',jacobian
+          print*,'  Jacobian: ',jacobian
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 
@@ -210,7 +210,7 @@
         gammay = (xeta*zxi-xxi*zeta) * jacobian_inv
         gammaz = (xxi*yeta-xeta*yxi) * jacobian_inv
 
-        ! resave the derivatives and the jacobian
+        ! resave the derivatives and the Jacobian
         ! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
           xixstore(i,j,k,ispec) = sngl(xix)
@@ -245,7 +245,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  ! Hejun Zhu used to recalculate 2D jacobian according to gll points rather
+  ! Hejun Zhu used to recalculate 2D Jacobian according to GLL points rather
   ! than control nodes
   ! Hejun Zhu JAN08, 2010
 
@@ -329,7 +329,7 @@
         enddo
 
 
-        ! Check the lagrange polynomial
+        ! Check the Lagrange polynomial
         if ( abs(xmesh - xelm2D(i,j)) > TINYVAL &
             .or. abs(ymesh - yelm2D(i,j)) > TINYVAL &
             .or. abs(zmesh - zelm2D(i,j)) > TINYVAL ) then
@@ -356,7 +356,7 @@
         if (abs(jacobian) < TINYVAL ) &
           call exit_MPI(myrank,'2D Jacobian undefined in recalc_jacobian_gll2D')
 
-        ! inverts jacobian
+        ! inverts Jacobian
         jacobian_inv = ONE / jacobian
 
         if (CUSTOM_REAL == SIZE_REAL) then
