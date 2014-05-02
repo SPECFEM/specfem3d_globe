@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -344,7 +344,7 @@ subroutine write_kernels_crust_mantle_adios(adios_handle, &
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! For anisotropic kernels
@@ -470,7 +470,7 @@ subroutine write_kernels_outer_core_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   local_dim = NSPEC_OUTER_CORE * NGLLX* NGLLY * NGLLZ
@@ -513,7 +513,7 @@ subroutine write_kernels_inner_core_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
@@ -553,7 +553,7 @@ subroutine write_kernels_boundary_kl_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
@@ -620,7 +620,7 @@ subroutine write_kernels_source_derivatives_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   !moment_der_tmp(:, :, :) = moment_der(:, :, :) * 1e-7
@@ -676,7 +676,7 @@ subroutine write_kernels_hessian_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ

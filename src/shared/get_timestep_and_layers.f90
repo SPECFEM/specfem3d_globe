@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@
 
   else if(NEX_MAX*multiplication_factor <= 96) then
     ! time step
-!! DK DK to hande a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
+!! DK DK to handle a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
     DT                       = 0.252d0 * 0.90d0
 
     ! attenuation period range
@@ -468,8 +468,8 @@
     ! increased stability, empirical
     DT = DT*(1.d0 + 0.5d0)
 
-    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! europe
-    if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! asia & middle east
+    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! Europe
+    if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! Asia & Middle East
 
   endif
 

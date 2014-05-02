@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -189,9 +189,18 @@
   enddo
 
   g_a=4.0D0*i_rho
-  bom=TWO_PI/(24.0d0*3600.0d0)
+
+  bom=TWO_PI/(HOURS_PER_DAY*SECONDS_PER_HOUR)
+
+! non-dimensionalized version
   bom=bom/sqrt(PI*GRAV*RHOAV)
-  epsilonval(NR)=15.0d0*(bom**2.0d0)/(24.0d0*i_rho*(eta(NR)+2.0d0))
+
+!! DK DK I think 24.d0 below stands for HOURS_PER_DAY and thus I replace it here
+!! DK DK in order to be consistent if someone uses the code one day for other planets
+!! DK DK with a different rotation rate, or for the Earth in the past of in the future i.e. with a different rate as well.
+!! DK DK Please do not hesitate to fix it back if my assumption below was wrong.
+!! DK DK  epsilonval(NR)=15.0d0*(bom**2.0d0)/(24.0d0*i_rho*(eta(NR)+2.0d0))
+  epsilonval(NR)=15.0d0*(bom**2.0d0)/(HOURS_PER_DAY*i_rho*(eta(NR)+2.0d0))
 
   do i=1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)
@@ -286,7 +295,7 @@
 ! copy from intgrl.f90 to avoid compiling issues
 
 
- subroutine intgrl(sum,r,nir,ner,f,s1,s2,s3)
+ subroutine intgrl(sumval,r,nir,ner,f,s1,s2,s3)
 
 ! Computes the integral of f[i]*r[i]*r[i] from i=nir to i=ner for
 ! radii values as in model PREM_an640
@@ -296,7 +305,7 @@
 ! Argument variables
   integer ner,nir
   double precision f(640),r(640),s1(640),s2(640)
-  double precision s3(640),sum
+  double precision s3(640),sumval
 
 ! Local variables
   double precision, parameter :: third = 1.0d0/3.0d0
@@ -316,14 +325,14 @@
 
   call deriv(f,yprime,n,r,ndis,kdis,s1,s2,s3)
   nir1 = nir + 1
-  sum = 0.0d0
+  sumval = 0.0d0
   do i=nir1,ner
     j = i-1
     rji = r(i) - r(j)
     s1l = s1(j)
     s2l = s2(j)
     s3l = s3(j)
-    sum = sum + r(j)*r(j)*rji*(f(j) &
+    sumval = sumval + r(j)*r(j)*rji*(f(j) &
               + rji*(0.5d0*s1l + rji*(third*s2l + rji*0.25d0*s3l))) &
               + 2.0d0*r(j)*rji*rji*(0.5d0*f(j) + rji*(third*s1l + rji*(0.25d0*s2l + rji*fifth*s3l))) &
               + rji*rji*rji*(third*f(j) + rji*(0.25d0*s1l + rji*(fifth*s2l + rji*sixth*s3l)))

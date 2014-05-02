@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 
   !-----------------------------------------------------------------------------
   ! user parameters
-  ! outputs volume snapshot vtk-files of displacement in crust/mantle region for debugging
+  ! outputs volume snapshot VTK files of displacement in crust/mantle region for debugging
   logical, parameter :: DEBUG_SNAPSHOT = .false.
   !-----------------------------------------------------------------------------
 

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ program combine_surf_data
 
   integer,parameter :: MAX_NUM_NODES = 400
 
-  integer i,j,k,ispec_surf,ios,it,num_node,njunk,ires,idim,iproc,njunk1,njunk2,njunk3,inx,iny
+  integer i,j,k,ispec_surf,ios,it,num_node,njunk,ires,idimval,iproc,njunk1,njunk2,njunk3,inx,iny
   character(len=150) :: arg(20),sline,filename,surfname,reg_name,belm_name, indir, outdir
   character(len=150) :: mesh_file, pt_mesh_file, em_mesh_file, command_name
   logical :: HIGH_RESOLUTION_MESH,FILE_ARRAY_IS_3D
@@ -98,7 +98,7 @@ program combine_surf_data
 
   filename = arg(2)
 
-  ! discontinutity surfaces
+  ! discontinuity surfaces
   surfname = arg(3)
   if (trim(surfname) == 'Moho' .or. trim(surfname) == '400' .or. trim(surfname) == '670') then
     reg_name = 'reg1_'
@@ -128,8 +128,8 @@ program combine_surf_data
   endif
 
   ! file dimension
-  read(arg(7),*) idim
-  if (idim == 0) then
+  read(arg(7),*) idimval
+  if (idimval == 0) then
     FILE_ARRAY_IS_3D = .false.
   else
     FILE_ARRAY_IS_3D = .true.
@@ -186,7 +186,7 @@ program combine_surf_data
     allocate(data_3D(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
   endif
 
-  ! open paraview output mesh file
+  ! open Paraview output mesh file
   write(mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'.surf'
   write(pt_mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'_point.surf'
   write(em_mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'_element.surf'

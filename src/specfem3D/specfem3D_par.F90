@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ module specfem_par
 
   ! ADJOINT sources
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
-  ! asynchronuous read buffer when IO_ASYNC_COPY is set
+  ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: buffer_sourcearrays
 
   integer :: nrec_simulation, nadj_rec_local
@@ -177,7 +177,7 @@ module specfem_par
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
   integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
 
-  ! source frechet derivatives
+  ! source Frechet derivatives
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: moment_der
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: stshift_der, shdur_der
@@ -216,6 +216,7 @@ module specfem_par
   ! proc numbers for MPI
   integer :: myrank
   integer :: ichunk ! needed for Stacey boundaries
+  integer, dimension(:,:,:), allocatable :: addressing
 
   ! time loop timing
   double precision :: time_start
@@ -460,9 +461,9 @@ module specfem_par_crustmantle
   integer :: npoints_slice
   integer, dimension(NM_KL_REG_PTS_VAL) :: points_slice
   integer, dimension(NM_KL_REG_PTS_VAL) :: ispec_reg
-  real, dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
-  real, dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
-  real, dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
 
   ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
@@ -627,8 +628,7 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-    rhostore_outer_core,kappavstore_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE), target :: rmass_outer_core
@@ -686,13 +686,12 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
 
   ! adjoint kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
-    rho_kl_outer_core,alpha_kl_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core,alpha_kl_outer_core
 
   ! check for deviatoric kernel for outer core region
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
-  logical,parameter:: deviatoric_outercore = .false.
+  logical, parameter :: deviatoric_outercore = .false.
 
   ! inner / outer elements outer core region
   integer :: num_phase_ispec_outer_core
@@ -754,16 +753,16 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: &
     div_displ_outer_core
 
-  ! vtk run-time visualization
+  ! VTK run-time visualization
 #ifdef HAVE_VTK
-  ! vtk window
+  ! VTK window
   logical, parameter :: VTK_MODE = .true.
 #else
   logical, parameter :: VTK_MODE = .false.
 #endif
   real,dimension(:),allocatable :: vtkdata
   logical,dimension(:),allocatable :: vtkmask
-  ! multi-mpi processes, gather data arrays on master
+  ! multi-MPI processes, gather data arrays on master
   real,dimension(:),allocatable :: vtkdata_all
   integer,dimension(:),allocatable :: vtkdata_points_all
   integer,dimension(:),allocatable :: vtkdata_offset_all

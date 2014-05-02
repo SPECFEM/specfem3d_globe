@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -152,12 +152,12 @@ end subroutine write_1D_global_array_adios_dims
 
 
 !===============================================================================
-!> Schedule an ADIOS single precision global 1d array for write
+!> Schedule an ADIOS single precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -182,12 +182,12 @@ end subroutine write_adios_global_1d_real_1d
 
 
 !===============================================================================
-!> Schedule an ADIOS single precision global 1d array for write
+!> Schedule an ADIOS single precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -212,12 +212,12 @@ end subroutine write_adios_global_1d_real_2d
 
 
 !===============================================================================
-!> Schedule an ADIOS single precision global 1d array for write
+!> Schedule an ADIOS single precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -249,12 +249,12 @@ end subroutine write_adios_global_1d_real_3d
 
 
 !===============================================================================
-!> Schedule an ADIOS single precision global 1d array for write
+!> Schedule an ADIOS single precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -279,12 +279,12 @@ end subroutine write_adios_global_1d_real_4d
 
 
 !===============================================================================
-!> Schedule an ADIOS single precision global 1d array for write
+!> Schedule an ADIOS single precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -309,12 +309,12 @@ end subroutine write_adios_global_1d_real_5d
 
 
 !===============================================================================
-!> Schedule an ADIOS double precision global 1d array for write
+!> Schedule an ADIOS double precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -339,12 +339,12 @@ end subroutine write_adios_global_1d_double_1d
 
 
 !===============================================================================
-!> Schedule an ADIOS double precision global 1d array for write
+!> Schedule an ADIOS double precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -369,12 +369,12 @@ end subroutine write_adios_global_1d_double_2d
 
 
 !===============================================================================
-!> Schedule an ADIOS double precision global 1d array for write
+!> Schedule an ADIOS double precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -399,12 +399,12 @@ end subroutine write_adios_global_1d_double_3d
 
 
 !===============================================================================
-!> Schedule an ADIOS double precision global 1d array for write
+!> Schedule an ADIOS double precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -429,12 +429,12 @@ end subroutine write_adios_global_1d_double_4d
 
 
 !===============================================================================
-!> Schedule an ADIOS double precision global 1d array for write
+!> Schedule an ADIOS double precision global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -459,12 +459,12 @@ end subroutine write_adios_global_1d_double_5d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -489,12 +489,12 @@ end subroutine write_adios_global_1d_integer_1d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -519,12 +519,12 @@ end subroutine write_adios_global_1d_integer_2d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -549,12 +549,12 @@ end subroutine write_adios_global_1d_integer_3d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -579,12 +579,12 @@ end subroutine write_adios_global_1d_integer_4d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -609,12 +609,12 @@ end subroutine write_adios_global_1d_integer_5d
 
 
 !===============================================================================
-!> Schedule an ADIOS long global 1d array for write
+!> Schedule an ADIOS long global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -639,12 +639,12 @@ end subroutine write_adios_global_1d_long_1d
 
 
 !===============================================================================
-!> Schedule an ADIOS long global 1d array for write
+!> Schedule an ADIOS long global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -669,12 +669,12 @@ end subroutine write_adios_global_1d_long_2d
 
 
 !===============================================================================
-!> Schedule an ADIOS long global 1d array for write
+!> Schedule an ADIOS long global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -699,12 +699,12 @@ end subroutine write_adios_global_1d_long_3d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -729,12 +729,12 @@ end subroutine write_adios_global_1d_long_4d
 
 
 !===============================================================================
-!> Schedule an ADIOS long global 1d array for write
+!> Schedule an ADIOS long global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -759,12 +759,12 @@ end subroutine write_adios_global_1d_long_5d
 
 
 !===============================================================================
-!> Schedule an ADIOS logical global 1d array for write
+!> Schedule an ADIOS logical global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -789,12 +789,12 @@ end subroutine write_adios_global_1d_logical_1d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -819,12 +819,12 @@ end subroutine write_adios_global_1d_logical_2d
 
 
 !===============================================================================
-!> Schedule an ADIOS integer global 1d array for write
+!> Schedule an ADIOS integer global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -849,12 +849,12 @@ end subroutine write_adios_global_1d_logical_3d
 
 
 !===============================================================================
-!> Schedule an ADIOS logical global 1d array for write
+!> Schedule an ADIOS logical global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable
@@ -879,12 +879,12 @@ end subroutine write_adios_global_1d_logical_4d
 
 
 !===============================================================================
-!> Schedule an ADIOS logical global 1d array for write
+!> Schedule an ADIOS logical global 1D array for write
 !! \param adios_handle The adios handle to the file to be written
 !! \param myrank The rank of the MPI process involved
 !! \param sizeprocs The number of MPI process in the communicator writing the
 !!                  variable
-!! \param local_dim The number of elements to be writen by each process. Might
+!! \param local_dim The number of elements to be written by each process. Might
 !!                  eventually be padded.
 !! \param path The logical path structuring the data and containing
 !!             the variable

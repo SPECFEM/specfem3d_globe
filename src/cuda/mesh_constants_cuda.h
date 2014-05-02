@@ -72,7 +72,7 @@
 #define PRINT5(var,offset) // for(i=0;i<10;i++) printf("var(%d)=%f\n",i,var[offset+i]);
 #endif
 
-// daniel debug: run backward simulations with/without gpu routines and empty arrays for debugging
+// daniel debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
 #define DEBUG_BACKWARD_ASSEMBLY() return;
@@ -93,7 +93,7 @@
 #endif
 
 // error checking after cuda function calls
-// (note: this synchronizes many calls, thus e.g. no asynchronuous memcpy possible)
+// (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
 //#define ENABLE_VERY_SLOW_ERROR_CHECKING
 
 // maximum function
@@ -136,7 +136,7 @@
 // uncomment line below for PREM with oceans
 //#define R_EARTH_KM 6368.0f
 
-// Asynchronuous memory copies between GPU and CPU
+// Asynchronous memory copies between GPU and CPU
 #define GPU_ASYNC_COPY 1
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -179,7 +179,7 @@
 #undef USE_TEXTURES_CONSTANTS
 #endif
 
-// compiling infos
+// compiling info
 #ifdef USE_TEXTURES_FIELDS
 #pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
 #endif
@@ -442,7 +442,7 @@ typedef struct mesh_ {
   realw* d_normal_top_outer_core;
   realw* d_normal_bottom_outer_core;
 
-  // jacobian definitions
+  // Jacobian definitions
   realw* d_jacobian2D_top_outer_core;
   realw* d_jacobian2D_bottom_outer_core;
 
@@ -765,8 +765,8 @@ typedef struct mesh_ {
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
 
-  // A buffer for mpi-send/recv, which is duplicated in fortran but is
-  // allocated with pinned memory to facilitate asynchronus device <->
+  // A buffer for MPI send/recv, which is duplicated in Fortran but is
+  // allocated with pinned memory to facilitate asynchronous device <->
   // host memory transfers
   // crust/mantle
   float* h_send_accel_buffer_cm;

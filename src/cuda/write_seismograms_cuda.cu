@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 0
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and University of Pau / CNRS / INRIA
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -137,13 +138,13 @@ TRACE("write_seismograms_transfer_from_device");
     // waits for previous compute call to be finished
     cudaStreamSynchronize(mp->compute_stream);
 
-    // asynchronuous copy
+    // asynchronous copy
     // note: we need to update the host array in a subsequent call to transfer_seismo_from_device_async() routine
     cudaMemcpyAsync(mp->h_station_seismo_field,mp->d_station_seismo_field,
                     3*NGLL3*(mp->nrec_local)*sizeof(realw),
                     cudaMemcpyDeviceToHost,mp->copy_stream);
   }else{
-    // synchronuous copy
+    // synchronous copy
     print_CUDA_error_if_any(cudaMemcpy(mp->h_station_seismo_field,mp->d_station_seismo_field,
                                        3*NGLL3*(mp->nrec_local)*sizeof(realw),cudaMemcpyDeviceToHost),77000);
 
@@ -201,7 +202,7 @@ void write_seismograms_transfer_strain_from_device(Mesh* mp,
                                                                          mp->nrec_local);
 
   // copies array to CPU
-  // synchronuous copy
+  // synchronous copy
   print_CUDA_error_if_any(cudaMemcpy(mp->h_station_strain_field,mp->d_station_strain_field,
                                      NGLL3*(mp->nrec_local)*sizeof(realw),cudaMemcpyDeviceToHost),77001);
 

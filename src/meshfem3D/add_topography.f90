@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -133,10 +133,10 @@
         ! add elevation to all the points of that element
         ! also make sure factor makes sense
         if(gamma < -0.02 .or. gamma > 1.02) then
-          call exit_MPI(myrank,'incorrect value of factor for topography gll points')
+          call exit_MPI(myrank,'incorrect value of factor for topography GLL points')
         endif
 
-        ! since not all GLL points are exactlly at R220, use a small
+        ! since not all GLL points are exactly at R220, use a small
         ! tolerance for R220 detection
         if (abs(gamma) < SMALLVAL) then
           gamma = 0.d0

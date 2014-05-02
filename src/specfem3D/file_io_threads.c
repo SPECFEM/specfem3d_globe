@@ -4,11 +4,11 @@
  !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
  !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
  !                        Princeton University, USA
- !             and CNRS / INRIA / University of Pau, France
- ! (c) Princeton University and CNRS / INRIA / University of Pau
- !                            August 2013
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 
 /* ---------------------------------------
 
-// asynchronuous file i/o
+// asynchronous file i/o
 
  --------------------------------------- */
 
@@ -115,6 +115,7 @@ void *fread_adj_thread(void* dummy){
 
   // exit thread
   pthread_exit(NULL);
+  return NULL;  // Never used, but remove warnings.
 }
 
 // Waits until thread is finished with I/O
@@ -133,7 +134,7 @@ void wait_adj_io_thread() {
     }
     // checks finished flag
     assert(ptDataAdj.finished == true); // Adjoint thread has completed, but somehow it isn't finished?
-    
+
     // reset
     ptDataAdj.started = false;
   }
@@ -151,7 +152,7 @@ FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,
   // checks if buffer valid
   assert(buffer != NULL); // "Adjoint thread: associated buffer is invalid"
   if( bytes_to_read <= 0 ) exit_error("Adjoint thread: associated buffer length is invalid");
-  
+
   // initializes thread info
   ptDataAdj.started = false;
   ptDataAdj.finished = false;
@@ -185,12 +186,12 @@ FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj){
 
   rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   if( rc != 0 ) exit_error("Adjoint thread: setting thread state failed");
-  
+
   // sets new thread info
   ptDataAdj.started = true;
   ptDataAdj.finished = false;
   ptDataAdj.it_sub = *it_sub_adj;
-  
+
   // create and launch the thread.
   // note: using it_sub_adj as argument (void*) it_sub_adj did not work...
   rc = pthread_create(&adj_io_thread,&attr,fread_adj_thread,NULL);
@@ -236,9 +237,9 @@ void *fwrite_thread(void *fileID)
 {
   int fid;
   fid = (int)fileID;
-  
+
   fwrite(ptData[fid].buffer, 1, ptData[fid].bytes_to_rw,fp_abs[fid]);
-  
+
   ptData[fid].finished = true;
   pthread_exit(NULL);
 }
@@ -248,9 +249,9 @@ void *fread_thread(void *fileID)
 {
   int fid;
   fid = (int)fileID;
-  
+
   fread(ptData[fid].buffer, 1, ptData[fid].bytes_to_rw,fp_abs[fid]);
-  
+
   ptData[fid].finished = true;
   pthread_exit(NULL);
 }
@@ -280,7 +281,7 @@ void write_abs_ptio(int *fid, char *buffer, int *length, int *index) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  
+
   ptData[*fid].started = true;
   ptData[*fid].finished = false;
   ptData[*fid].bytes_to_rw = bytes_to_write;
@@ -312,7 +313,7 @@ void read_abs_ptio(int *fid, char *buffer, int *length, int *index) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  
+
   ptData[*fid].started = true;
   ptData[*fid].finished = false;
   ptData[*fid].bytes_to_rw = bytes_to_read;
@@ -336,7 +337,7 @@ void wait_io_thread(int *fid) {
     }
     // checks finished flag
     assert(ptData[*fid].finished == true && "Thread has completed, but somehow it isn't finished?");
-    
+
     // reset
     ptData[*fid].started = false;
   }

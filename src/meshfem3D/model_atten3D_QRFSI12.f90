@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 !   This file contains subroutines to read in and get values for
-!   3-D attenuation model QRFSI12 (Dalton, Ekstrom, & Dziewonski, 2008)
+!   3-D attenuation model QRFSI12 (Dalton, Ekstr"om, & Dziewonski, 2008)
 !
 ! C.A. Dalton, G. Ekstr\"om and A.M. Dziewonski, 2008.
 ! The global attenuation structure of the upper mantle,
@@ -119,7 +119,7 @@
 
   ! local parameters
   integer :: j,k,l,m,ier
-  integer :: index,ll,mm
+  integer :: indexval,ll,mm
   double precision :: v1,v2
 
   character(len=150) :: QRFSI12,QRFSI12_ref
@@ -137,7 +137,7 @@
   endif
 
   do k=1,NKQ
-    read(10,*)index
+    read(10,*) indexval
     j=0
     do l=0,MAXL_Q
       do m=0,l
@@ -148,7 +148,7 @@
         else
           j=j+2
           read(10,*)ll,mm,v1,v2
-  !        write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
+  !       write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
           QRFSI12_Q_dqmu(k,j-1)=2.*v1
           QRFSI12_Q_dqmu(k,j)=-2.*v2
         endif
@@ -205,8 +205,9 @@
   real(kind=4) :: shdep(NSQ)
   real(kind=4) :: wk1(NSQ),wk2(NSQ),wk3(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
-  double precision, parameter :: rmoho_prem = 6371.0-24.4
-  double precision, parameter :: rcmb = 3480.0
+
+  double precision, parameter :: rmoho_prem = 6371.0d0 - 24.4d0
+  double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem
@@ -217,7 +218,7 @@
   ylat=90.0d0-theta
   xlon=phi
 
-  ! only checks radius for crust, idoubling is missleading for oceanic crust
+  ! only checks radius for crust, idoubling is misleading for oceanic crust
   ! when we want to expand mantle up to surface...
 
 !  !if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
@@ -265,7 +266,8 @@
     smallq_ref=QRFSI12_Q_refqmu(ifnd)
     smallq = smallq_ref
 
-    if(depth < 650.d0) then !Colleen's model is only defined between depths of 24.4 and 650km
+! Colleen's model is only defined between depths of 24.4 and 650km
+    if(depth < 650.d0) then
       do j=1,NSQ
         shdep(j)=0.
       enddo

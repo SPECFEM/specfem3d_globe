@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -96,9 +96,9 @@ end subroutine save_intermediate_forward_arrays_adios
 !-------------------------------------------------------------------------------
 !> \brief Write selected forward arrays in an ADIOS file.
 !!
-!! This subroutine is only used for forward simualtions when
+!! This subroutine is only used for forward simulations when
 !! SAVE_FORWARD is set to .true. It dumps the same arrays than
-!! save_intermediate_forward_arrays_adios() execpt than some arrays
+!! save_intermediate_forward_arrays_adios() except than some arrays
 !! are only dumped if ROTATION and ATTENUATION are set to .true.
 subroutine save_forward_arrays_adios()
 
@@ -137,7 +137,7 @@ subroutine save_forward_arrays_adios()
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
   ! TODO check following:
   ! conditional definition of vars seem to mess with the group size,
-  ! even if the variables are conditionnaly written.
+  ! even if the variables are conditionally written.
 !  if (ROTATION_VAL) then
     call define_rotation_forward_arrays_adios(adios_group, group_size_inc)
 !  endif
@@ -315,7 +315,7 @@ end subroutine define_attenuation_forward_arrays_adios
 !-------------------------------------------------------------------------------
 !>  Schedule writes of ADIOS forward arrays that are always dumped.
 !! \param adios_handle The handle to the adios bp file
-!! \param group_size_inc The number of MPI processes involved in the writting
+!! \param group_size_inc The number of MPI processes involved in the writing
 subroutine write_common_forward_arrays_adios(adios_handle)
 
   use adios_write_mod
@@ -334,7 +334,7 @@ subroutine write_common_forward_arrays_adios(adios_handle)
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   local_dim = NDIM * NGLOB_CRUST_MANTLE
@@ -406,7 +406,7 @@ subroutine write_rotation_forward_arrays_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
@@ -420,7 +420,7 @@ end subroutine write_rotation_forward_arrays_adios
 !>  Schedule writes of ADIOS forward arrays that are dumped if ATTENUATION
 !!  is true.
 !! \param adios_handle The handle to the adios bp file
-!! \param group_size_inc The number of MPI processes involved in the writting
+!! \param group_size_inc The number of MPI processes involved in the writing
 subroutine write_attenuation_forward_arrays_adios(adios_handle)
 
   use adios_write_mod
@@ -438,7 +438,7 @@ subroutine write_attenuation_forward_arrays_adios(adios_handle)
   integer :: local_dim !, adios_err
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@
 
   ENDDO_LOOP_IJK
 
-  ! deville optimizations
+  ! Deville optimizations
   ! computes 1. matrix multiplication for tempx1,..
   call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
   ! computes 2. matrix multiplication for tempx2,..
@@ -392,7 +392,7 @@
         gammayl = gammay(i,j,k,ispec)
         gammazl = gammaz(i,j,k,ispec)
 
-        ! compute the jacobian
+        ! compute the Jacobian
         !jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
         !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
         !              + xizl*(etaxl*gammayl-etayl*gammaxl))
@@ -503,7 +503,7 @@
 
   ENDDO_LOOP_IJK
 
-  ! deville optimizations
+  ! Deville optimizations
   ! computes 1. matrix multiplication for tempx1,..
   call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
   ! computes 2. matrix multiplication for tempx2,..
@@ -524,7 +524,7 @@
     gammayl = gammay(INDEX_IJK,ispec)
     gammazl = gammaz(INDEX_IJK,ispec)
 
-    ! compute the jacobian
+    ! compute the Jacobian
     !jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
     !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
     !              + xizl*(etaxl*gammayl-etayl*gammaxl))

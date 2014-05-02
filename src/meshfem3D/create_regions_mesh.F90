@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@
 
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
-    IMAIN,volume_total,myrank,LOCAL_PATH, &
+    IMAIN,volume_total,Earth_mass_total,Roland_Sylvain_integr_total,myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
@@ -56,7 +56,7 @@
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ROLAND_SYLVAIN
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -101,9 +101,6 @@
   ! local parameters
   integer :: ier
   integer :: nglob
-  ! check area and volume of the final mesh
-  double precision :: area_local_bottom,area_local_top
-  double precision :: volume_local
 
   ! user output
   if(myrank == 0 ) then
@@ -187,11 +184,11 @@
 
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
-    ! precomputes jacobian for 2d absorbing boundary surfaces
+    ! precomputes Jacobian for 2D absorbing boundary surfaces
     call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) '  ...precomputing jacobian'
+      write(IMAIN,*) '  ...precomputing Jacobian'
       call flush_IMAIN()
     endif
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
@@ -226,7 +223,7 @@
                xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
                xyz1D_leftxi_righteta,xyz1D_rightxi_righteta)
 
-    ! setup mpi communication interfaces
+    ! setup MPI communication interfaces
     call synchronize_all()
     if( myrank == 0) then
       write(IMAIN,*)
@@ -348,7 +345,7 @@
     if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
-    ! note: for stacey boundaries, needs indexing nimin,.. filled in in first pass
+    ! note: for Stacey boundaries, needs indexing nimin,.. filled in in first pass
     call create_mass_matrices(nspec,nglob,idoubling,ibool, &
                               iregion_code,xstore,ystore,zstore, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM)
@@ -358,22 +355,25 @@
 
     ! save the binary files
     call synchronize_all()
-    if( myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) '  ...saving binary files'
-      call flush_IMAIN()
-    endif
-    ! saves mesh and model parameters
-    if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
-      if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
-      call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
-                                    iregion_code,xstore,ystore,zstore,  &
-                                    NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
-                                    NSPEC2D_TOP,NSPEC2D_BOTTOM)
-    else
-      call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
-                              iregion_code,xstore,ystore,zstore, &
-                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
+!! DK DK for Roland_Sylvain
+    if(.not. ROLAND_SYLVAIN) then
+      if( myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...saving binary files'
+        call flush_IMAIN()
+      endif
+      ! saves mesh and model parameters
+      if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+        if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
+        call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
+                                      iregion_code,xstore,ystore,zstore,  &
+                                      NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+                                      NSPEC2D_TOP,NSPEC2D_BOTTOM)
+      else
+        call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+                                iregion_code,xstore,ystore,zstore, &
+                                NSPEC2D_TOP,NSPEC2D_BOTTOM)
+      endif
     endif
 
     ! frees memory
@@ -381,14 +381,16 @@
     deallocate(b_rmassx,b_rmassy)
     deallocate(rmass_ocean_load)
 
-    ! saves MPI interface infos
-    call save_arrays_solver_MPI(iregion_code)
+    ! saves MPI interface info
+!! DK DK for Roland_Sylvain
+    if(.not. ROLAND_SYLVAIN) call save_arrays_solver_MPI(iregion_code)
 
     ! frees MPI arrays memory
     call crm_free_MPI_arrays(iregion_code)
 
     ! boundary mesh for MOHO, 400 and 670 discontinuities
-    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+!! DK DK for Roland_Sylvain
+    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. ROLAND_SYLVAIN) then
       ! user output
       call synchronize_all()
       if( myrank == 0) then
@@ -405,23 +407,41 @@
 
     endif
 
-    ! compute volume, bottom and top area of that part of the slice
-    call compute_volumes(volume_local,area_local_bottom,area_local_top, &
-        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
+    ! compute volume, bottom and top area of that part of the slice, and then the total
+    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
+                            volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
-    ! computes total area and volume
-    call compute_area(myrank,NCHUNKS,iregion_code, area_local_bottom, &
-        area_local_top, volume_local,volume_total, RCMB,RICB,R_CENTRAL_CUBE)
+    ! compute Earth mass of that part of the slice, and then total Earth mass
+    call compute_Earth_mass(myrank,Earth_mass_total, &
+        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+
+!! DK DK for Roland_Sylvain
+    if(ROLAND_SYLVAIN) then
+      call synchronize_all()
+      if( myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...computing Roland_Sylvain integrals'
+        call flush_IMAIN()
+      endif
+
+      ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
+      call compute_Roland_Sylvain_integr(myrank,Roland_Sylvain_integr_total, &
+          nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
+          etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+
+    endif
 
     ! create AVS or DX mesh data for the slices
-    if(SAVE_MESH_FILES) then
+!! DK DK for Roland_Sylvain
+    if(SAVE_MESH_FILES .and. .not. ROLAND_SYLVAIN) then
       ! user output
       call synchronize_all()
       if( myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) '  ...saving AVS mesh files'
+        write(IMAIN,*) '  ...saving AVS or DX mesh files'
         call flush_IMAIN()
       endif
       call crm_save_mesh_files(nspec,npointot,iregion_code)
@@ -607,7 +627,7 @@
   ibelm_ymin(:) = 0; ibelm_ymax(:) = 0
   ibelm_bottom(:) = 0; ibelm_top(:) = 0
 
-  ! 2-D jacobians and normals
+  ! 2-D Jacobians and normals
   allocate(jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
            jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
            jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
@@ -653,7 +673,7 @@
     endif
 
     ! initializes boundary indices only during first pass, we need then the stored index values
-    ! for creating mass matrices for stacey in second pass
+    ! for creating mass matrices for Stacey in second pass
     nimin(:,:) = 0; nimax(:,:) = 0
     njmin(:,:) = 0; njmax(:,:) = 0
     nkmin_xi(:,:) = 0; nkmin_eta(:,:) = 0
@@ -1023,7 +1043,7 @@
       ! user output
       write(IMAIN,'(a,f5.1,a,a,i2.2,a,i2.2,a,i2.2,a)') &
         "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
-        "    current clock time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
+        "    current clock (NOT elapsed) time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
 
       ! flushes I/O buffer
       call flush_IMAIN()

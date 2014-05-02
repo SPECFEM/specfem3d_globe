@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -503,7 +503,7 @@
         ! iterate to solve the non linear system
         do iter_loop = 1,NUM_ITER
 
-          ! recompute jacobian for the new point
+          ! recompute Jacobian for the new point
           call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
@@ -607,7 +607,7 @@
         distmin = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
           if(final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
-            ! stores this slice infos
+            ! stores this slice's info
             distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
             islice_selected_source(isource) = iprocloop
             ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
@@ -668,7 +668,7 @@
         endif
         write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
 
-        ! writes out actual source position to vtk file
+        ! writes out actual source position to VTK file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
                                    sngl(y_found_source(isource_in_this_subset)), &
                                    sngl(z_found_source(isource_in_this_subset))
@@ -717,7 +717,7 @@
         endif
         call flush_IMAIN()
 
-        ! stores location for vtk visualization
+        ! stores location for VTK visualization
         if(isource == 1) then
           vtkdata_source_x = sngl(x_found_source(isource_in_this_subset))
           vtkdata_source_y = sngl(y_found_source(isource_in_this_subset))

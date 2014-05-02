@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -747,7 +747,7 @@
               write(IOUT_BUFFERS,*) npoin2D
             endif
 
-            ! stores face infos
+            ! stores face info
             do ipoin2D = 1,npoin2D
               ! fills iboolfaces array
               iboolfaces(ipoin2D,icount_faces) = ibool_selected(ipoin2D)
@@ -854,10 +854,10 @@
   itypecorner(2,ichunk) = IUPPERUPPER
   itypecorner(3,ichunk) = IUPPERLOWER
 
-!! DK DK UGLY in the future, should also assemble second corner when NCHUNKS = 2
-!! DK DK UGLY for now we only assemble one corner for simplicity
-!! DK DK UGLY formally this is incorrect and should be changed in the future
-!! DK DK UGLY in practice this trick works fine
+!! DK DK in the future, should also assemble second corner when NCHUNKS = 2
+!! DK DK for now we only assemble one corner for simplicity
+!! DK DK formally this is incorrect and should be changed in the future
+!! DK DK in practice this trick works fine
 
   ! this only if more than 3 chunks
   if(NCHUNKS > 3) then

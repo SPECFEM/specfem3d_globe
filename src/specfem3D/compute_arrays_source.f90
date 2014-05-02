@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -133,6 +133,7 @@
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH
+  use write_seismograms_mod, only: band_instrument_code
 
   implicit none
 
@@ -200,7 +201,7 @@
   !
   ! otherwise,
   ! we would have to shift this indices by minus 1, to read in the adjoint source trace between 0 to 2999.
-  ! since 0 index is out of bounds, we would have to put that adjoint source displacement artifically to zero
+  ! since 0 index is out of bounds, we would have to put that adjoint source displacement artificially to zero
   !
   ! here now, it_start is now 2001 and it_end = 3000, then 1001 to 2000, then 1 to 1000.
   it_start = it_start
@@ -237,7 +238,7 @@
       ! index will run from 1 to NSTEP_BLOCK
       index_i = itime - it_start + 1
 
-      ! would skip read and set source artifically to zero if out of bounds, see comments above
+      ! would skip read and set source artificially to zero if out of bounds, see comments above
       if( it_start == 0 .and. itime == 0 ) then
         adj_src(icomp,1) = 0._CUSTOM_REAL
         cycle
@@ -259,7 +260,7 @@
   ! non-dimensionalize
   adj_src = adj_src*scale_displ_inv
 
-  ! rotates to cartesian
+  ! rotates to Cartesian
   do itime = 1, NSTEP_BLOCK
     adj_src_u(:,itime) = nu(1,:) * adj_src(1,itime) &
                        + nu(2,:) * adj_src(2,itime) &

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -211,7 +211,7 @@
               !           (see how we add the sources to the simulation in compute_add_sources() and
               !             how we write/save the seismograms and wavefields at the end of the time loop).
               !
-              !           then you use that seismogram and take e.g. the velocity of it for a travetime adjoint source
+              !           then you use that seismogram and take e.g. the velocity of it for a traveltime adjoint source
               !
               !           now we read it in again, and remember the last time step in
               !           the file at NSTEP corresponds to -t0 + (NSTEP-1)*DT
@@ -262,7 +262,7 @@
     ivec_index = iadj_vec(it)
 
     if( GPU_ASYNC_COPY ) then
-      ! only synchronuously transfers array at beginning or whenever new arrays were read in
+      ! only synchronously transfers array at beginning or whenever new arrays were read in
       if( ibool_read_adj_arrays ) then
         ! transfers adjoint arrays to GPU device memory
         ! note: function call passes pointer to array adj_sourcearrays at corresponding time slice
@@ -270,7 +270,7 @@
                                     islice_selected_rec)
       endif
     else
-      ! synchronuously transfers adjoint arrays to GPU device memory before adding adjoint sources on GPU
+      ! synchronously transfers adjoint arrays to GPU device memory before adding adjoint sources on GPU
       call transfer_adj_to_device(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
                                   islice_selected_rec)
     endif
@@ -279,7 +279,7 @@
     call compute_add_sources_adjoint_cuda(Mesh_pointer,nrec)
 
     if( GPU_ASYNC_COPY ) then
-      ! starts asynchronuously transfer of next adjoint arrays to GPU device memory
+      ! starts asynchronously transfer of next adjoint arrays to GPU device memory
       ! (making sure the next adj_sourcearrays values were already read in)
       if( (.not. ibool_read_adj_arrays) .and. &
           (.not. mod(it,NTSTEP_BETWEEN_READ_ADJSRC) == 0) .and. &
@@ -294,7 +294,7 @@
           call exit_MPI(myrank,'error iadj_vec index bounds')
         endif
 
-        ! asynchronuously transfers next time slice
+        ! asynchronously transfers next time slice
         call transfer_adj_to_device_async(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
                                           islice_selected_rec)
       endif

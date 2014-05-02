@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 ! 5) upper crust
 ! 6) middle crust
 ! 7) lower crust
-! + Parameters VP, VS and rho are given explicitly for these 7 layers as well as the mantle below the Moho. 
+! + Parameters VP, VS and rho are given explicitly for these 7 layers as well as the mantle below the Moho.
 !
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@
 
   scaleval = ONE / R_EARTH_KM
 
-  ! non-dimensializes thickness (given in km)
+  ! non-dimensionalizes thickness (given in km)
   x3 = ONE - thicks(3) * scaleval
   h_sed = thicks(3) + thicks(4)
   x4 = ONE - h_sed * scaleval
@@ -293,11 +293,11 @@
   character(len=2) :: abbreviation(NCAP_CRUST/2,NCAP_CRUST)
 
   !-------------------------------
-  ! work-around to avoid jacobian problems when stretching mesh elements;
-  ! one could also try to slightly change the shape of the doulbing element bricks (which cause the problem)...
+  ! work-around to avoid Jacobian problems when stretching mesh elements;
+  ! one could also try to slightly change the shape of the doubling element bricks (which cause the problem)...
   !
   ! defines a "critical" region around the andes to have at least a 2-degree smoothing;
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
+  ! critical region can lead to negative Jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_ANDES = -20.0d0
   double precision,parameter :: LON_CRITICAL_ANDES = -70.0d0
   double precision,parameter :: CRITICAL_RANGE = 70.0d0
@@ -312,6 +312,17 @@
   integer :: i,icolat,ilon
   character(len=2) :: crustaltype
 
+  ! small hash table to convert crustal types to key
+  integer, dimension(128*128) :: crustalhash_to_key
+  integer :: ihash, crustalkey
+
+  ! fill in the hash table
+  crustalhash_to_key = -1
+  do i=1,NKEYS_CRUST
+    call hash_crustal_type(code(i), ihash)
+    if (crustalhash_to_key(ihash) /= -1) stop 'error in crust_CAPsmoothed: hash table collision'
+    crustalhash_to_key(ihash) = i
+  enddo
 
   ! checks latitude/longitude
   if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
@@ -357,8 +368,12 @@
 
     crustaltype = abbreviation(icolat,ilon)
 
-    call get_crust_structure(crustaltype,velpl,velsl,rhol,thickl, &
-                             code,thlr,velocp,velocs,dens)
+    call hash_crustal_type(crustaltype, ihash)
+    crustalkey = crustalhash_to_key(ihash)
+    if(crustalkey == -1) stop 'error in retrieving crust type key'
+
+    call get_crust_structure(crustalkey,velpl,velsl,rhol,thickl, &
+                            thlr,velocp,velocs,dens)
 
     ! sediment thickness
     h_sed = thickl(3) + thickl(4)
@@ -385,6 +400,22 @@
 
   end subroutine crust_CAPsmoothed
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! hash table to define the crustal type using an integer instead of characters
+! because working with integers in the rest of the routines results in much faster code
+  subroutine hash_crustal_type(crustaltype, ihash)
+
+    implicit none
+
+    character(len=2), intent(in) :: crustaltype
+    integer, intent(out) :: ihash
+
+    ihash = iachar(crustaltype(1:1)) + 128*iachar(crustaltype(2:2)) + 1
+
+  end subroutine hash_crustal_type
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -393,7 +424,6 @@
   subroutine icolat_ilon(xlat,xlon,icolat,ilon)
 
   implicit none
-
 
 ! argument variables
   double precision :: xlat,xlon
@@ -417,42 +447,34 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_crust_structure(crustaltype,vptyp,vstyp,rhtyp,thtp, &
-               code,thlr,velocp,velocs,dens)
+  subroutine get_crust_structure(ikey,vptyp,vstyp,rhtyp,thtp,thlr,velocp,velocs,dens)
 
   use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST
 
   implicit none
 
   ! argument variables
-  character(len=2) :: crustaltype
   double precision :: rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)
   double precision :: vptyp(NLAYERS_CRUST),vstyp(NLAYERS_CRUST)
-  character(len=2) :: code(NKEYS_CRUST)
   double precision :: thlr(NLAYERS_CRUST,NKEYS_CRUST),velocp(NLAYERS_CRUST,NKEYS_CRUST)
   double precision :: velocs(NLAYERS_CRUST,NKEYS_CRUST),dens(NLAYERS_CRUST,NKEYS_CRUST)
+  integer :: ikey
 
   ! local variables
-  integer :: ikey,ikey_selected
+  integer :: i
 
-  ! determines layer index
-  ikey_selected = 0
-  do ikey=1,NKEYS_CRUST
-    if (code(ikey) == crustaltype) then
-      ikey_selected = ikey
-      exit
-    endif
+  do i=1,NLAYERS_CRUST
+    vptyp(i)=velocp(i,ikey)
+    vstyp(i)=velocs(i,ikey)
+    rhtyp(i)=dens(i,ikey)
   enddo
-  if( ikey_selected == 0 ) stop 'error in get_crust_structure: could not find ikey for selected crustal type'
 
-  ! sets vp,vs and rho for all layers
-  vptyp(:) = velocp(:,ikey_selected)
-  vstyp(:) = velocs(:,ikey_selected)
-  rhtyp(:) = dens(:,ikey_selected)
-  thtp(:) = thlr(:,ikey_selected)
+  do i=1,NLAYERS_CRUST-1
+    thtp(i)=thlr(i,ikey)
+  enddo
 
   !   get distance to Moho from the bottom of the ocean or the ice
-  thtp(NLAYERS_CRUST) = thtp(NLAYERS_CRUST) - thtp(1) - thtp(2)
+  thtp(NLAYERS_CRUST) = thlr(NLAYERS_CRUST,ikey) - thtp(1) - thtp(2)
 
   end subroutine get_crust_structure
 
@@ -587,3 +609,4 @@
   endif
 
   end subroutine CAP_vardegree
+

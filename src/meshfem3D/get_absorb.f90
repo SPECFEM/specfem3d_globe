@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@
       njmin(1,ispecb1)=1
       njmax(1,ispecb1)=NGLLY
 
-      !   check for ovelap with other boundaries
+      !   check for overlap with other boundaries
       nkmin_xi(1,ispecb1)=1
       if(iboun(5,ispec)) nkmin_xi(1,ispecb1)=2
     endif
@@ -92,7 +92,7 @@
       njmin(2,ispecb2)=1
       njmax(2,ispecb2)=NGLLY
 
-      !   check for ovelap with other boundaries
+      !   check for overlap with other boundaries
       nkmin_xi(2,ispecb2)=1
       if(iboun(5,ispec)) nkmin_xi(2,ispecb2)=2
     endif
@@ -102,7 +102,7 @@
       !   on boundary 3: ymin
       ispecb3=ispecb3+1
 
-      !   check for ovelap with other boundaries
+      !   check for overlap with other boundaries
       nimin(1,ispecb3)=1
       if(iboun(1,ispec)) nimin(1,ispecb3)=2
       nimax(1,ispecb3)=NGLLX
@@ -116,7 +116,7 @@
       !   on boundary 4: ymax
       ispecb4=ispecb4+1
 
-      !   check for ovelap with other boundaries
+      !   check for overlap with other boundaries
       nimin(2,ispecb4)=1
       if(iboun(1,ispec)) nimin(2,ispecb4)=2
       nimax(2,ispecb4)=NGLLX

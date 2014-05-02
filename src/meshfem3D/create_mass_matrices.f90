@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@
           weight = wxgll(i)*wygll(j)*wzgll(k)
           iglob = ibool(i,j,k,ispec)
 
-          ! compute the jacobian
+          ! compute the Jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
           xizl = xizstore(i,j,k,ispec)
@@ -195,7 +195,7 @@
       if(minval(b_rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
     endif
   else
-    ! no ficticious elements, mass matrix must be strictly positive
+    ! no fictitious elements, mass matrix must be strictly positive
     if(minval(rmassz(:)) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
     ! check that the additional mass matrices are strictly positive, if they exist
     if(nglob_xy == nglob) then
@@ -269,15 +269,15 @@
 
   ! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
-    two_omega_earth_dt = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+    two_omega_earth_dt = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat)
   else
-    two_omega_earth_dt = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
+    two_omega_earth_dt = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat
   endif
 
   if(CUSTOM_REAL == SIZE_REAL) then
-    b_two_omega_earth_dt = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat)
+    b_two_omega_earth_dt = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat)
   else
-    b_two_omega_earth_dt = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv) * deltat
+    b_two_omega_earth_dt = - 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat
   endif
 
   ! definition depends if region is fluid or solid
@@ -297,7 +297,7 @@
             weight = wxgll(i)*wygll(j)*wzgll(k)
             iglob = ibool(i,j,k,ispec)
 
-            ! compute the jacobian
+            ! compute the Jacobian
             xixl = xixstore(i,j,k,ispec)
             xiyl = xiystore(i,j,k,ispec)
             xizl = xizstore(i,j,k,ispec)
@@ -832,7 +832,7 @@
 
   ! note: old version (5.1.5)
   ! only for models where 3D crustal stretching was used (even without topography?)
-  if( USE_VERSION_5_1_5 ) then
+  if( USE_OLD_VERSION_5_1_5_FORMAT ) then
     if( CASE_3D ) then
       do_ocean_load = .true.
     endif
@@ -873,9 +873,9 @@
           ! slightly move points to avoid roundoff problem when exactly on the polar axis
           call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
-          if( .not. USE_VERSION_5_1_5 ) then
+          if( .not. USE_OLD_VERSION_5_1_5_FORMAT ) then
             ! adds small margins
-  !! DK DK Jul 2013: added a test to only do this if we are on the axis
+  !! DK DK: added a test to only do this if we are on the axis
             if(abs(theta) > 89.99d0) then
               theta = theta + 0.0000001d0
               phi = phi + 0.0000001d0
@@ -886,9 +886,9 @@
 
           ! converts the geocentric colatitude to a geographic colatitude
           ! note: bathymetry is given in geographic lat/lon
-          !       (i.e., latitutde with respect to reference ellipsoid)
+          !       (i.e., latitude with respect to reference ellipsoid)
           !       we will need convert the geocentric positions here to geographic ones
-          if( USE_VERSION_5_1_5 ) then
+          if( USE_OLD_VERSION_5_1_5_FORMAT ) then
             ! always converts
             theta = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
           else

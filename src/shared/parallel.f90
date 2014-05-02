@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -164,8 +164,8 @@
 
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -207,8 +207,8 @@
 
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -301,8 +301,8 @@
 
   subroutine min_all_cr(sendbuf, recvbuf)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -336,25 +336,25 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine max_allreduce_i(buffer,count)
+  subroutine max_allreduce_i(buffer,countval)
 
   use mpi
 
   implicit none
 
-  integer :: count
-  integer,dimension(count),intent(inout) :: buffer
+  integer :: countval
+  integer,dimension(countval),intent(inout) :: buffer
 
   ! local parameters
   integer :: ier
-  integer,dimension(count) :: send
+  integer,dimension(countval) :: send
 
   ! seems not to be supported on all kind of MPI implementations...
-  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, count, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
 
   send(:) = buffer(:)
 
-  call MPI_ALLREDUCE(send, buffer, count, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
   if( ier /= 0 ) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
@@ -366,8 +366,8 @@
 
   subroutine max_all_cr(sendbuf, recvbuf)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -456,18 +456,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_i(buffer, count)
+  subroutine bcast_all_i(buffer, countval)
 
   use mpi
 
   implicit none
 
-  integer :: count
-  integer, dimension(count) :: buffer
+  integer :: countval
+  integer, dimension(countval) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,count,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_i
 
@@ -475,21 +475,21 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_cr(buffer, count)
+  subroutine bcast_all_cr(buffer, countval)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
   include "precision.h"
 
-  integer :: count
-  real(kind=CUSTOM_REAL), dimension(count) :: buffer
+  integer :: countval
+  real(kind=CUSTOM_REAL), dimension(countval) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,count,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_cr
 
@@ -497,18 +497,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_r(buffer, count)
+  subroutine bcast_all_r(buffer, countval)
 
   use mpi
 
   implicit none
 
-  integer :: count
-  real, dimension(count) :: buffer
+  integer :: countval
+  real, dimension(countval) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,count,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_REAL,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_r
 
@@ -535,18 +535,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_dp(buffer, count)
+  subroutine bcast_all_dp(buffer, countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
-  integer :: count
-  double precision, dimension(count) :: buffer
+  integer :: countval
+  double precision, dimension(countval) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,count,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_dp
 
@@ -556,7 +556,7 @@
 
   subroutine bcast_all_singledp(buffer)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -573,18 +573,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_ch(buffer, count)
+  subroutine bcast_all_ch(buffer, countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
-  integer :: count
-  character(len=count) :: buffer
+  integer :: countval
+  character(len=countval) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,count,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_ch
 
@@ -592,18 +592,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_ch_array(buffer,ndim,count)
+  subroutine bcast_all_ch_array(buffer,ndim,countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
-  integer :: count,ndim
-  character(len=count),dimension(ndim) :: buffer
+  integer :: countval,ndim
+  character(len=countval),dimension(ndim) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,ndim*count,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,ndim*countval,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_ch_array
 
@@ -611,18 +611,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_ch_array2(buffer,ndim1,ndim2,count)
+  subroutine bcast_all_ch_array2(buffer,ndim1,ndim2,countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
-  integer :: count,ndim1,ndim2
-  character(len=count),dimension(ndim1,ndim2) :: buffer
+  integer :: countval,ndim1,ndim2
+  character(len=countval),dimension(ndim1,ndim2) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,ndim1*ndim2*count,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,ndim1*ndim2*countval,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_ch_array2
 
@@ -630,18 +630,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_l(buffer, count)
+  subroutine bcast_all_l(buffer, countval)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
-  integer :: count
-  logical,dimension(count) :: buffer
+  integer :: countval
+  logical,dimension(countval) :: buffer
 
   integer :: ier
 
-  call MPI_BCAST(buffer,count,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_l
 
@@ -720,8 +720,8 @@
 
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -827,8 +827,8 @@
 
   subroutine send_cr(sendbuf, sendcount, dest, sendtag)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -870,8 +870,8 @@
   subroutine sendrecv_cr(sendbuf, sendcount, dest, sendtag, &
                          recvbuf, recvcount, source, recvtag)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -968,8 +968,8 @@
 
   subroutine gather_all_cr(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -1016,8 +1016,8 @@
 
   subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -1042,8 +1042,8 @@
 
   subroutine gatherv_all_cr(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use mpi
   use constants
+  use mpi
 
   implicit none
 
@@ -1066,20 +1066,44 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gatherv_all_r(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
+
+  use constants
+  use mpi
+
+  implicit none
+
+  integer :: sendcnt,recvcounttot,NPROC
+  integer, dimension(NPROC) :: recvcount,recvoffset
+  real, dimension(sendcnt) :: sendbuf
+  real, dimension(recvcounttot) :: recvbuf
+
+  integer :: ier
+
+  call MPI_GATHERV(sendbuf,sendcnt,MPI_REAL, &
+                  recvbuf,recvcount,recvoffset,MPI_REAL, &
+                  0,MPI_COMM_WORLD,ier)
+
+  end subroutine gatherv_all_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 
-  subroutine world_size(size)
+
+  subroutine world_size(sizeval)
 
   use mpi
 
   implicit none
 
-  integer,intent(out) :: size
+  integer,intent(out) :: sizeval
 
   ! local parameters
   integer :: ier
 
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,size,ier)
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
   if( ier /= 0 ) stop 'error getting MPI world size'
 
   end subroutine world_size

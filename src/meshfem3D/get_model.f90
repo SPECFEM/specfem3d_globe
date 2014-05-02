@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@
   double precision :: r,r_prem,moho
   integer :: i,j,k,i_sls
 
-  ! loops over all gll points for this spectral element
+  ! loops over all GLL points for this spectral element
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -174,10 +174,9 @@
           call exit_mpi(myrank,'error get_model values')
         endif
 
-        !> Hejun
-        ! New Attenuation assignment
-        ! Define 3D and 1D Attenuation after moho stretch
-        ! and before TOPOGRAPHY/ELLIPCITY
+        !> Hejun, New attenuation assignment
+        ! Define 3D and 1D attenuation after Moho stretch
+        ! and before TOPOGRAPHY / ELLIPTICITY
         !
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
         if( ATTENUATION ) &
@@ -305,18 +304,41 @@
 
         if(ATTENUATION) then
           if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-            do i_sls = 1,N_SLS
-              tau_e_store(i,j,k,i_sls,ispec) = tau_e(i_sls)
-            enddo
-            Qmu_store(i,j,k,ispec)     = Qmu
-          else
-            ! store values from mid-point for whole element
-            if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+
+            ! distinguish between single and double precision for reals
+            if(CUSTOM_REAL == SIZE_REAL) then
               do i_sls = 1,N_SLS
-                tau_e_store(1,1,1,i_sls,ispec) = tau_e(i_sls)
+                tau_e_store(i,j,k,i_sls,ispec) = sngl(tau_e(i_sls))
               enddo
-              Qmu_store(1,1,1,ispec)     = Qmu
+              Qmu_store(i,j,k,ispec)     = sngl(Qmu)
+            else
+              do i_sls = 1,N_SLS
+                tau_e_store(i,j,k,i_sls,ispec) = tau_e(i_sls)
+              enddo
+              Qmu_store(i,j,k,ispec)     = Qmu
             endif
+
+          else
+
+            ! distinguish between single and double precision for reals
+            if(CUSTOM_REAL == SIZE_REAL) then
+              ! store values from mid-point for whole element
+              if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+                do i_sls = 1,N_SLS
+                  tau_e_store(1,1,1,i_sls,ispec) = sngl(tau_e(i_sls))
+                enddo
+                Qmu_store(1,1,1,ispec)     = sngl(Qmu)
+              endif
+            else
+              ! store values from mid-point for whole element
+              if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+                do i_sls = 1,N_SLS
+                  tau_e_store(1,1,1,i_sls,ispec) = tau_e(i_sls)
+                enddo
+                Qmu_store(1,1,1,ispec)     = Qmu
+              endif
+            endif
+
           endif
         endif
 
@@ -360,7 +382,7 @@
 
 
   ! check flags to make sure we correctly honor the discontinuities
-  ! we use strict inequalities since r has been slighly changed in mesher
+  ! we use strict inequalities since r has been slightly changed in mesher
 
   !
   !--- inner core

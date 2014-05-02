@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -413,7 +413,7 @@
 !             it seems that this stack/heap criterion is more complicated,
 !             and inlining functions is a performance criteria as well.
 !
-!             for vectorization, we asssume that arrays have contiguous memory allocated. this holds true for most compilers and
+!             for vectorization, we assume that arrays have contiguous memory allocated. this holds true for most compilers and
 !             static memory allocation. however, note that dynamically allocated memory could in principle be non-contiguous.
 !
 !             another reason why the use of modules is restricted is to make the code thread safe.

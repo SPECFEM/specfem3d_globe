@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@
   ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
     open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ios)
-    if( ios /= 0 ) call exit_MPI(myrank,'error opening file output_solver.txt for writing output infos')
+    if( ios /= 0 ) call exit_MPI(myrank,'error opening file output_solver.txt for writing output info')
   endif
 
   if(myrank == 0) then
@@ -338,7 +338,7 @@
       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 16')
   endif
 
-  ! check simulation pararmeters
+  ! check simulation parameters
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
@@ -455,8 +455,8 @@
   !----------------------------------------------------------------
   ! user test parameters
   !
-  ! for hybrid computing: distributes mpi processes to use CPU and GPU
-  ! note that a single mpi process on GPU is about >30x faster than on single CPU-core
+  ! for hybrid computing: distributes MPI processes to use CPU and GPU
+  ! note that a single MPI process on GPU is about >30x faster than on single CPU-core
   !
   ! cray xk7 node: 16-core CPU, 1 K20x GPU card
   !                using 15 processes on single GPU and 1 processes on CPU still slows down the computation
@@ -464,9 +464,9 @@
   !
   ! turns on/off hybrid CPU-GPU computing
   logical,parameter :: USE_HYBRID_CPU_GPU = .false.
-  ! total number of mpi processes run on a single node
+  ! total number of MPI processes run on a single node
   integer, parameter :: TOTAL_PROCESSES_PER_NODE = 16
-  ! number of mpi processes run on CPU-cores
+  ! number of MPI processes run on CPU-cores
   integer, parameter :: PROCESSES_PER_CPU = 1
 
   !----------------------------------------------------------------

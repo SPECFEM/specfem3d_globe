@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_global(nspec,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
+  subroutine get_global(nspec,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
 
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
@@ -43,7 +43,7 @@
 
   double precision, dimension(npointot), intent(in) :: xp,yp,zp
 
-  integer, dimension(npointot), intent(out) :: iglob,loc
+  integer, dimension(npointot), intent(out) :: iglob,locval
   logical, dimension(npointot), intent(out) :: ifseg
   integer, intent(out) :: nglob
 
@@ -65,7 +65,7 @@
   do ispec=1,nspec
     ieoff=NGLLX * NGLLY * NGLLZ * (ispec-1)
     do ilocnum=1,NGLLX * NGLLY * NGLLZ
-      loc(ilocnum+ieoff)=ilocnum+ieoff
+      locval(ilocnum+ieoff)=ilocnum+ieoff
     enddo
   enddo
 
@@ -87,7 +87,7 @@
         call rank(zp(ioff),ind,ninseg(iseg))
       endif
 
-      call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
+      call swap_all(locval(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
 
       ioff=ioff+ninseg(iseg)
     enddo
@@ -124,7 +124,7 @@
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
-    iglob(loc(i))=ig
+    iglob(locval(i))=ig
   enddo
 
   nglob=ig
@@ -241,7 +241,7 @@
          ind(1) = indx
          return
       endif
-    ENDIF
+    endif
 
     i = l
     j = l+l
@@ -249,14 +249,14 @@
     do while( J <= IR )
       IF ( J < IR ) THEN
         IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
-      ENDIF
+      endif
       IF ( q < A(IND(j)) ) THEN
         IND(I) = IND(J)
         I = J
         J = J+J
       ELSE
         J = IR+1
-      ENDIF
+      endif
     enddo
 
     IND(I)=INDX

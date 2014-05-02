@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -74,6 +74,11 @@
 
   ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+
+!! DK DK for Roland_Sylvain
+  ! in the case of ROLAND_SYLVAIN we should always use double precision
+  if(ROLAND_SYLVAIN .and. CUSTOM_REAL /= SIZE_DOUBLE) &
+    call exit_MPI(myrank,'for ROLAND_SYLVAIN use double precision i.e. configure the code with --enable-double-precision')
 
   ! synchronizes processes
   call synchronize_all()

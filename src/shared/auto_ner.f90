@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 !  Brian Savage while at
 !     California Institute of Technology
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
-!     Univeristy of Rhode Island
+!     University of Rhode Island
 !
 !  <savage@uri.edu>.
 !  <savage13@gps.caltech.edu>
@@ -111,9 +111,9 @@
   S_VELOCITY_MIN     =   2.25d0
   DEG2KM             = 111.00d0
 
-  ! THETA defines the width of the Attenation Range in Decades
+  ! THETA defines the width of the Attenuation Range in Decades
   !   The number defined here were determined by minimizing
-  !   the "flatness" of the absoption spectrum.  Each THETA
+  !   the "flatness" of the absorption spectrum.  Each THETA
   !   is defined for a particular N_SLS (constants.h)
   !   THETA(2) is for N_SLS = 2
   THETA(1)           =   0.00d0
@@ -286,7 +286,7 @@
 
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
-     dr = r(i) - r(i+1)              ! Radial Length of Ragion
+     dr = r(i) - r(i+1)              ! Radial Length of Region
      wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
      wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
      w  = (wt + wb) * 0.5d0          ! Average Width of Region

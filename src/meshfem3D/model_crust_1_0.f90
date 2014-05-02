@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@
   crust1_rho(:,:,:) = ZERO
   crust1_thk(:,:,:) = ZERO
 
-  ! the variables read are declared and stored in structure model_crust_par
+  ! the variables read are declared and stored in structure model_crust_1_0_par
   if(myrank == 0) call read_crust_1_0_model()
 
   ! broadcast the information read on the master to the nodes
@@ -145,7 +145,7 @@
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
 
-  ! note: we ignore water & ice sheets 
+  ! note: we ignore water & ice sheets
   ! (only elastic layers are considered)
 
   ! whole sediment thickness
@@ -157,7 +157,7 @@
   ! non-dimensionalization factor
   scaleval = ONE / R_EARTH_KM
 
-  ! non-dimensializes thickness (given in km)
+  ! non-dimensionalizes thickness (given in km)
   ! upper sediment
   x3 = ONE - thicks(3) * scaleval
   ! middle sediment
@@ -325,7 +325,7 @@
   ! frees memory
   deallocate(bnd)
 
-  ! additional infos:
+  ! additional info
   if( DEBUG_FILE_OUTPUT ) then
     ! allocates temporary arrays
     allocate(thc(CRUST1_NLA,CRUST1_NLO), &
@@ -438,17 +438,17 @@
 
   !-------------------------------
   ! CAP smoothing - extension range in degree
-  ! note: using a smaller range, e.g. 0.5 degrees, leads to undefined jacobian error at different places.
+  ! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
   !       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
   !       so far, the only thing that works is to smooth out values and take special care of the Andes...
-  ! todo: one could try to adapt this degree range to the simulation resolution in future
+  ! TODO: one could try to adapt this degree range to the simulation resolution in future
   double precision,parameter :: CAP_DEFAULT_DEGREE = 1.0d0
 
-  ! work-around to avoid jacobian problems when stretching mesh elements;
+  ! work-around to avoid Jacobian problems when stretching mesh elements;
   ! one could also try to slightly change the shape of the doubling element bricks (which cause the problem)...
   !
   ! defines a "critical" region around the andes to have at least a 2-degree smoothing;
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
+  ! critical region can lead to negative Jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_ANDES = -20.0d0
   double precision,parameter :: LON_CRITICAL_ANDES = -70.0d0
   double precision,parameter :: CRITICAL_RANGE = 70.0d0

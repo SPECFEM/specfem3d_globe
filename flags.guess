@@ -5,6 +5,11 @@
 # can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
 # to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
 
+# can also add -DFORCE_VECTORIZATION to force vectorization and unrolling of some critical loops, however this breaks
+# range checking options at run time (for instance -check all for Intel ifort) and, more importantly, modern compilers
+# vectorize the SPECFEM3D_GLOBE code very well and in practice this option only makes the code 3% to 5% faster in the best case,
+# therefore we suggest not activating it.
+
 ###########################################################################################################################
 ###########################################################################################################################
 ###########################################################################################################################
@@ -17,16 +22,6 @@
 # or -mcmodel=medium -shared-intel (if you use the Intel ifort / icc compiler)
 # to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 # message (for instance 'relocation truncated to fit: R\_X86\_64\_PC32 against .bss' or something similar);
-# BEWARE that using -mcmodel=medium -shared-intel is known for currently leading to incorrect seismograms,
-# at least when flag ATTENUATION is on (and maybe even without), at least in the case of the Intel ifort / icc compiler.
-# This likely comes from intrinsic functions such as size() that return and integer8 instead of an integer4, thus leading
-# to incorrect results when used in function calls is the -i8 flag is not added to the compiler options;
-# however, when adding -i8 the code does not compile because the MPI calls then refuse to compile (they need integer4 as arguments).
-# It seems that this problem is triggered when 3D models are used and mostly (only?) when attenuation is on, but not triggered for 1D Earth model benchmarks
-# even with attenuation (at least not triggered for EXAMPLES/benchmarks/attenuation_benchmark_GJI_2002_versus_normal_modes
-#  nor for Anne Sieminski's three 1D benchmarks), which makes it uneasy to locate.
-# Since most current users run the code with less than 2 GB of static memory per core, we have not investigated that problem carefully for now,
-# and thus recommend that you do NOT use these compiler flags until this problem is located and fixed.
 #
 ###########################################################################################################################
 ###########################################################################################################################
@@ -69,14 +64,14 @@ case $my_FC in
         #
         # Cray Fortran
         #
-        DEF_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2 -M 1438" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
-        # -eC -eD -ec -en -eI -ea -g -G0 -M 1438  # turn on full debugging and range checking
+        DEF_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2 -M 1193 -M 1438" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
+        # -eC -eD -ec -en -eI -ea -g -G0 -M 1193 -M 1438  # turn on full debugging and range checking
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90)
         #
         # Portland PGI
         #
-        DEF_FFLAGS="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz -Mvect -mcmodel=medium"
+        DEF_FFLAGS="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=inform -Mdaz -Mflushz -Mvect -mcmodel=medium"
         # -Mbounds
         # -fastsse -tp amd64e -Msmart
         ;;
@@ -90,13 +85,6 @@ case $my_FC in
 # I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
 # However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
         DEF_FFLAGS="-O3 -check nobounds -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -gen-interfaces -warn all" # -mcmodel=medium -shared-intel
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-#  adding  -mcmodel=medium -shared-intel  can/will lead to problems, see the detailed comment at the beginning of this file
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
         # useful for debugging...
         # for debugging: change -O3 -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
         #

@@ -4,11 +4,11 @@
  !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
  !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
  !                        Princeton University, USA
- !             and CNRS / INRIA / University of Pau, France
- ! (c) Princeton University and CNRS / INRIA / University of Pau
- !                            August 2013
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -46,6 +46,10 @@
 
 /*   * The FTZ bit (bit 15) in the MXCSR register must be masked (value = 1). */
 /*   * The underflow exception (bit 11) needs to be masked (value = 1). */
+
+/* This routine is not strictly necessary for SPECFEM, thus if it does not compile on your system
+   (since it calls some low-level system routines) just suppress all the lines below (i.e. make it an empty file)
+   and comment out the call to force_ftz() in the main SPECFEM program */
 
 #include "config.h"
 

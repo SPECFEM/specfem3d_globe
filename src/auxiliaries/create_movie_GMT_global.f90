@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 
 ! reads in files: OUTPUT_FILES/moviedata******
 !
-! and creates new files: ascii_movie_*** (ascii option) /or/ bin_movie_*** (binary option)
+! and creates new files: ascii_movie_*** (ASCII option) /or/ bin_movie_*** (binary option)
 !
 ! these files can then be visualized using GMT, the Generic Mapping Tools
 ! ( http://www.soest.hawaii.edu/GMT/ )
@@ -141,7 +141,7 @@
   read(5,*) USE_COMPONENT
   if( USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
 
-  print *,'enter output ascii (F) or binary (T)'
+  print *,'enter output ASCII (F) or binary (T)'
   read(5,*) OUTPUT_BINARY
 
   print *
@@ -651,7 +651,7 @@
                   field_display(ieoff) = dble(displn(i,j))
                 endif ! MOVIE_COARSE
 
-                ! determines noth / sourth pole index for stamping maximum values
+                ! determines North / South pole index for stamping maximum values
                 if( USE_AVERAGED_MAXIMUM .and. NORMALIZE_VALUES ) then
                   xmesh = xp(ieoff)
                   ymesh = yp(ieoff)
@@ -860,7 +860,7 @@
 
             ! point position
             if(iframe == 1) then
-              ! gets cartesian coordinates
+              ! gets Cartesian coordinates
               xcoord = sngl(xp(ieoff))
               ycoord = sngl(yp(ieoff))
               zcoord = sngl(zp(ieoff))
@@ -900,7 +900,7 @@
   enddo
 
   print *,'done creating movie'
-  print *,'GMT ascii files are stored in ascii_movie_*.{xy,d,E,N}'
+  print *,'GMT ASCII files are stored in ascii_movie_*.{xy,d,E,N}'
   print *,'binary files are stored in bin_movie_*.{xy,d,E,N}'
 
   end program create_movie_GMT_global

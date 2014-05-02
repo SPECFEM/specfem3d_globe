@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -170,7 +170,7 @@
 ! gamma = 0.881 % = (A-2N-F)/A0    = (c12-c13)/A0
 ! where A0 is A at the Earth's center
 !
-! assume c11 = lamda+2mu
+! assume c11 = lambda+2mu
 !        c66 = (c11-c12)/2 = mu
 !
 ! then   c33 = c11 + alpha*A0

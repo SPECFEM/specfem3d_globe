@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 ! model for the 3D models s362ani, s362wmani, s362ani_prem, and s29ea.
 !
 ! see chapter 3, in:
-! Kustowski, B, Ekstrom, G., and A. M. Dziewonski, 2008,
+! Kustowski, B, Ekstr"om, G., and A. M. Dziewonski, 2008,
 ! Anisotropic shear-wave velocity structure of the Earth's mantle: A global model,
 ! J. Geophys. Res., 113, B06306, doi:10.1029/2007JB005169.
 !
@@ -43,7 +43,7 @@
 ! and below 670km.
 !
 ! attenuation structure is taken from model QL6:
-! Durek, J. J. and G. Ekström, 1996.
+! Durek, J. J. and G. Ekstr"om, 1996.
 ! A radial model of anelasticity consistent with long period surface wave attenuation,
 ! Bull. Seism. Soc. Am., 86, 144-158
 !--------------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@
   integer, parameter :: NR_REF = 750
 
   ! model_1dref_variables
-  double precision, dimension(:), allocatable :: &
+  double precision, dimension(NR_REF) :: &
     Mref_V_radius_ref,Mref_V_density_ref, &
     Mref_V_vpv_ref,Mref_V_vph_ref, &
     Mref_V_vsv_ref,Mref_V_vsh_ref, &
@@ -66,7 +66,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_1dref_broadcast(myrank,CRUSTAL)
+  subroutine model_1dref_broadcast(CRUSTAL)
 
 ! standard routine to setup model
 
@@ -74,24 +74,7 @@
 
   implicit none
 
-  integer :: myrank
   logical :: CRUSTAL
-
-  ! local parameters
-  integer :: ier
-
-  ! allocates model arrays
-  allocate(Mref_V_radius_ref(NR_REF), &
-           Mref_V_density_ref(NR_REF), &
-           Mref_V_vpv_ref(NR_REF), &
-           Mref_V_vph_ref(NR_REF), &
-           Mref_V_vsv_ref(NR_REF), &
-           Mref_V_vsh_ref(NR_REF), &
-           Mref_V_eta_ref(NR_REF), &
-           Mref_V_Qkappa_ref(NR_REF), &
-           Mref_V_Qmu_ref(NR_REF), &
-           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating Mref_V arrays')
 
   ! all processes will define same parameters
   call define_model_1dref(CRUSTAL)
@@ -4404,194 +4387,194 @@
   104.d0 /)
 
   Mref_V_Qmu_ref( 181 : 210 ) = (/ &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 /)
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 /)
 
   Mref_V_Qmu_ref( 211 : 240 ) = (/ &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 /)
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 /)
 
   Mref_V_Qmu_ref( 241 : 270 ) = (/ &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 /)
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 /)
 
   Mref_V_Qmu_ref( 271 : 300 ) = (/ &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 /)
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 /)
 
   Mref_V_Qmu_ref( 301 : 330 ) = (/ &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 /)
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 /)
 
   Mref_V_Qmu_ref( 331 : 360 ) = (/ &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
-  0.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
+ 4999.d0 , &
   355.d0 , &
   355.d0 /)
 

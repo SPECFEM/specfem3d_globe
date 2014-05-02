@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
                                   points_globalindices,num_points_globalindices, &
                                   prname_file)
 
-! external mesh routine for saving vtk files for points locations
+! external mesh routine for saving VTK files for points locations
 
   use constants
 
@@ -42,7 +42,7 @@
   ! global coordinates
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
 
-  ! gll data values array
+  ! GLL data values array
   integer :: num_points_globalindices
   integer, dimension(num_points_globalindices) :: points_globalindices
 
@@ -53,7 +53,7 @@
 
   ! write source and receiver VTK files for Paraview
   !debug
-  !write(IMAIN,*) '  vtk file: '
+  !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
   open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
@@ -68,7 +68,7 @@
       print*,'error: '//prname_file(1:len_trim(prname_file))//'.vtk'
       print*,'error global index: ',iglob,i
       close(IOUT_VTK)
-      stop 'error vtk points file'
+      stop 'error VTK points file'
     endif
 
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
@@ -89,7 +89,7 @@
                                   glob_values, &
                                   prname_file)
 
-! external mesh routine for saving vtk files for points locations
+! external mesh routine for saving VTK files for points locations
 
   use constants
 
@@ -100,7 +100,7 @@
   ! global coordinates
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
 
-  ! gll data values array
+  ! GLL data values array
   real(kind=CUSTOM_REAL), dimension(nglob) :: glob_values
 
   ! file name
@@ -110,7 +110,7 @@
 
   ! write source and receiver VTK files for Paraview
   !debug
-  !write(IMAIN,*) '  vtk file: '
+  !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
   open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
@@ -124,7 +124,7 @@
   enddo
   write(IOUT_VTK,*) ""
 
-  ! writes out gll-data (velocity) for each element point
+  ! writes out GLL data (velocity) for each element point
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
   write(IOUT_VTK,'(a)') "SCALARS glob_data float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
@@ -148,7 +148,7 @@
                         xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
                         elem_flag,prname_file)
 
-! routine for saving vtk file holding logical flag on each spectral element
+! routine for saving VTK file holding logical flag on each spectral element
 
   use constants
 
@@ -169,7 +169,7 @@
 
   ! write source and receiver VTK files for Paraview
   !debug
-  !write(IMAIN,*) '  vtk file: '
+  !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
   open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
@@ -183,7 +183,7 @@
   enddo
   write(IOUT_VTK,*) ""
 
-  ! note: indices for vtk start at 0
+  ! note: indices for VTK start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
     write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
@@ -223,7 +223,7 @@
                         elem_flag,prname_file)
 
 
-! routine for saving vtk file holding integer value on each spectral element
+! routine for saving VTK file holding integer value on each spectral element
 
   use constants
 
@@ -244,7 +244,7 @@
 
   ! write source and receiver VTK files for Paraview
   !debug
-  !write(IMAIN,*) '  vtk file: '
+  !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
   open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
@@ -258,7 +258,7 @@
   enddo
   write(IOUT_VTK,*) ""
 
-  ! note: indices for vtk start at 0
+  ! note: indices for VTK start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
     write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
@@ -286,7 +286,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! external mesh routine for saving vtk files for custom_real values on global points
+! external mesh routine for saving VTK files for custom_real values on global points
 
   subroutine write_VTK_data_cr(idoubling,nspec,nglob, &
                               xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
@@ -337,7 +337,7 @@
   write(IOUT_VTK,*) ""
 
   ! defines cell on coarse corner points
-  ! note: indices for vtk start at 0
+  ! note: indices for VTK start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
 
@@ -412,7 +412,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! external mesh routine for saving vtk files for custom_real values on global points
+! external mesh routine for saving VTK files for custom_real values on global points
 
   subroutine write_VTK_data_cr_all(myrank,NPROCTOT,idoubling, &
                               nspec,nglob, &
@@ -521,7 +521,7 @@
     write(IOUT_VTK,*) ""
 
     ! defines cell on coarse corner points
-    ! note: indices for vtk start at 0
+    ! note: indices for VTK start at 0
     write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec*NPROCTOT,nspec*NPROCTOT*9
     do iproc=0, NPROCTOT-1
       do ispec=1,nspec

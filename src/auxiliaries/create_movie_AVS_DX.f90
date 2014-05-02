@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@
 ! for sorting routine
   integer :: npointot,ilocnum,nglob,ielm,ieoff,ispecloc
   integer :: NIT
-  integer, dimension(:), allocatable :: iglob,loc,ireorder
+  integer, dimension(:), allocatable :: iglob,locval,ireorder
   logical, dimension(:), allocatable :: ifseg,mask_point
   double precision, dimension(:), allocatable :: xp,yp,zp,xp_save,yp_save,zp_save,field_display
 
@@ -266,7 +266,7 @@
   allocate(iglob(npointot),stat=ierror)
   if(ierror /= 0) stop 'error while allocating iglob'
 
-  allocate(loc(npointot),stat=ierror)
+  allocate(locval(npointot),stat=ierror)
   if(ierror /= 0) stop 'error while allocating loc'
 
   allocate(ifseg(npointot),stat=ierror)
@@ -494,7 +494,7 @@
                   field_display(ieoff+ilocnum) = dble(displn(1,NGLLY))
                 endif
               else
-                ! movie saved on fine grid (all gll points)
+                ! movie saved on fine grid (all GLL points)
                 if(ilocnum == 1) then
                   xp(ieoff+ilocnum) = dble(x(i,j))
                   yp(ieoff+ilocnum) = dble(y(i,j))
@@ -610,7 +610,7 @@
 
     !--- sort the list based upon coordinates to get rid of multiples
     print *,'sorting list of points'
-    call get_global_AVS(nspectot_AVS_max,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
+    call get_global_AVS(nspectot_AVS_max,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
 
     !--- print total number of points found
     print *
@@ -678,7 +678,7 @@
         do ilocnum = 1,NGNOD2D_AVS_DX
           ibool_number = iglob(ilocnum+ieoff)
           if(.not. mask_point(ibool_number)) then
-            ! gets cartesian coordinates
+            ! gets Cartesian coordinates
             xcoord = sngl(xp_save(ilocnum+ieoff))
             ycoord = sngl(yp_save(ilocnum+ieoff))
             zcoord = sngl(zp_save(ilocnum+ieoff))
@@ -795,7 +795,7 @@
               if(USE_OPENDX) then
                 write(11,"(e11.4)") field_display(ilocnum+ieoff)
               else
-                ! format spezifier has problems w/ very small values
+                ! format specifier has problems w/ very small values
                 !write(11,"(i10,1x,e7.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
                 write(11,*) ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif
@@ -866,7 +866,7 @@
 !
 
 
-  subroutine get_global_AVS(nspec,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
+  subroutine get_global_AVS(nspec,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
 
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
@@ -878,7 +878,7 @@
   implicit none
 
   integer npointot
-  integer iglob(npointot),loc(npointot)
+  integer iglob(npointot),locval(npointot)
   logical ifseg(npointot)
   double precision xp(npointot),yp(npointot),zp(npointot)
   integer nspec,nglob
@@ -913,7 +913,7 @@
   do ispec=1,nspec
     ieoff=NGNOD2D_AVS_DX*(ispec-1)
     do ilocnum=1,NGNOD2D_AVS_DX
-      loc(ieoff+ilocnum)=ieoff+ilocnum
+      locval(ieoff+ilocnum)=ieoff+ilocnum
     enddo
   enddo
 
@@ -935,7 +935,7 @@
     else
       call rank(zp(ioff),ind,ninseg(iseg))
     endif
-    call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
+    call swap_all(locval(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
     ioff=ioff+ninseg(iseg)
   enddo
 
@@ -971,7 +971,7 @@
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
-    iglob(loc(i))=ig
+    iglob(locval(i))=ig
   enddo
 
   nglob=ig
@@ -1027,23 +1027,23 @@
          ind(1)=indx
          return
       endif
-   ENDIF
+   endif
    i=l
    j=l+l
   200    CONTINUE
    IF (J <= IR) THEN
       IF (J<IR) THEN
          IF ( A(IND(j))<A(IND(j+1)) ) j=j+1
-      ENDIF
+      endif
       IF (q<A(IND(j))) THEN
          IND(I)=IND(J)
          I=J
          J=J+J
       ELSE
          J=IR+1
-      ENDIF
+      endif
    goto 200
-   ENDIF
+   endif
    IND(I)=INDX
   goto 100
   end subroutine rank

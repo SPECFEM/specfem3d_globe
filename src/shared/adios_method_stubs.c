@@ -1,14 +1,14 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
-!          --------------------------------------------------
-!
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            August 2013
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
+ !
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -117,10 +117,10 @@ void FC_FUNC_(init_asdf_data, INIT_ASDF_DATA)(void* asdf_event,
                                              int* total_seismos_local){}
 
 void FC_FUNC_(store_asdf_data, STORE_ASDF_DATA)
-    (void* my_asdf, realw* seismogram_tmp, int* irec_local, int *irec, 
+    (void* my_asdf, realw* seismogram_tmp, int* irec_local, int *irec,
      char* chn, int* iorientation){}
 
-void FC_FUNC_(close_asdf_data, CLOSE_ASDF_DATA)(void *my_asdf, 
+void FC_FUNC_(close_asdf_data, CLOSE_ASDF_DATA)(void *my_asdf,
                                                 int *total_seismos_local){}
 
 void FC_FUNC_(write_asdf, WRITE_ASDF)(void* my_asdf){}

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -24,8 +24,6 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-
-
 
   subroutine create_MPI_interfaces(iregion_code)
 
@@ -623,16 +621,16 @@
   npoin2D_xi_s(:) = npoin2D_xi_all(:)
   npoin2D_eta_s(:) = npoin2D_eta_all(:)
 
-  ! gets mpi buffers on sides
+  ! gets MPI buffers on sides
   iboolleft_xi_s(:) = iboolleft_xi(:)
   iboolright_xi_s(:) = iboolright_xi(:)
   iboolleft_eta_s(:) = iboolleft_eta(:)
   iboolright_eta_s(:) = iboolright_eta(:)
 
-  ! gets corner infos
+  ! gets corner info
   iboolcorner_s(:,:) = iboolcorner(:,:)
 
-  ! gets face infos
+  ! gets face info
   npoin2D_faces_s(:) = npoin2D_faces(:)
   iboolfaces_s(:,:) = iboolfaces(:,:)
 

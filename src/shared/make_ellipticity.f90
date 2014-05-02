@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
 
-  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV
+  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV,HOURS_PER_DAY,SECONDS_PER_HOUR
 
   implicit none
 
@@ -143,6 +143,9 @@
 
   do i=2,NR
     call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
+!! DK DK Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
+!! DK DK The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
+!! DK DK The Radau approximation is mentioned on page 97.
     call intgrl(i_radau,r,1,i,radau,s1,s2,s3)
     z=(2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
     eta(i)=(25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
@@ -150,9 +153,18 @@
   enddo
 
   g_a=4.0D0*i_rho
-  bom=TWO_PI/(24.0d0*3600.0d0)
+
+  bom=TWO_PI/(HOURS_PER_DAY*SECONDS_PER_HOUR)
+
+! non-dimensionalized value
   bom=bom/sqrt(PI*GRAV*RHOAV)
-  epsilonval(NR)=15.0d0*(bom**2.0d0)/(24.0d0*i_rho*(eta(NR)+2.0d0))
+
+!! DK DK I think 24.d0 below stands for HOURS_PER_DAY and thus I replace it here
+!! DK DK in order to be consistent if someone uses the code one day for other planets
+!! DK DK with a different rotation rate, or for the Earth in the past of in the future i.e. with a different rate as well.
+!! DK DK Please do not hesitate to fix it back if my assumption below was wrong.
+!! DK DK  epsilonval(NR)=15.0d0*(bom**2.0d0)/(24.0d0*i_rho*(eta(NR)+2.0d0))
+  epsilonval(NR)=15.0d0*(bom**2.0d0)/(HOURS_PER_DAY*i_rho*(eta(NR)+2.0d0))
 
   do i=1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)

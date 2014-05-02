@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 
 !> \file write_par_header_ADIOS.F90
 !! \brief Write in the adios file a group with all the parameters that insure
-!!        reproductibility
+!!        reproducibility
 
 #include "config.fh"
 
@@ -40,7 +40,7 @@
 
 !> @brief Write simulation parameters into ADIOS result file header.
 !!
-!! Write the ADIOS header containing values to ensure reproductibility of
+!! Write the ADIOS header containing values to ensure reproducibility of
 !! the simulation. These values come form the following files :
 !! DATA/Par_file, DATA/CMTSOLUTION, DATA/STATIONS
 subroutine write_specfem_header_adios()
@@ -174,7 +174,7 @@ subroutine write_specfem_header_adios()
     deallocate(stbur)
   endif
 
-! Imbricated/contained subroutines. The initial thougth was to do a module with
+! Imbricated/contained subroutines. The initial thought was to do a module with
 ! public access to the write_specfem_header_adios routine and private access to
 ! the other routines. The problem then is the files compilation order that
 ! should be done very carefully. This require modifications of the Makefile
@@ -182,8 +182,8 @@ subroutine write_specfem_header_adios()
 contains
 
 !> \brief Define ADIOS variable to store values from 'setup/config.h'. Store
-!!        configuration parameters to insure reproductibility
-!! \param adios_group The ADIOS entity grouping variables for data transferts
+!!        configuration parameters to insure reproducibility
+!! \param adios_group The ADIOS entity grouping variables for data transfers
 !! \param group_size_inc The group size to increment wrt. the variable size
 subroutine define_solver_info_variables (adios_group, group_size_inc)
   implicit none
@@ -209,10 +209,10 @@ subroutine define_solver_info_variables (adios_group, group_size_inc)
 end subroutine define_solver_info_variables
 
 !> \brief Define ADIOS variable to store values from the Par_file
-!! \param adios_group The ADIOS entity grouping variables for data transferts
+!! \param adios_group The ADIOS entity grouping variables for data transfers
 !! \param group_size_inc The group size to increment wrt. the variable size
 !! \param model_length The number of character of the MODEL string.
-!!                     Usefull for reading back the MODEL
+!!                     Useful for reading back the MODEL
 subroutine define_par_file_variables (adios_group, group_size_inc, model_length)
 
   implicit none
@@ -297,11 +297,11 @@ end subroutine define_par_file_variables
 
 
 !> \brief Define ADIOS variable to store values from the CMTSOLUTION file
-!! \param adios_group The ADIOS entity grouping variables for data transferts
+!! \param adios_group The ADIOS entity grouping variables for data transfers
 !! \param group_size_inc The group size to increment wrt. the variable size
 !! \param NSOURCES The number of sources. Needed to define array sizes.
 !! \param datasource_length The number of character of the datasource string.
-!!                          Usefull for reading back the datasources.
+!!                          Useful for reading back the datasources.
 subroutine define_cmtsolution_variables (adios_group, group_size_inc, NSOURCES,&
     event_name_length, datasource_length)
   implicit none
@@ -339,13 +339,13 @@ subroutine define_cmtsolution_variables (adios_group, group_size_inc, NSOURCES,&
 end subroutine define_cmtsolution_variables
 
 !> \brief Define ADIOS variable to store values from the STATIONS file
-!! \param adios_group The ADIOS entity grouping variables for data transferts
+!! \param adios_group The ADIOS entity grouping variables for data transfers
 !! \param group_size_inc The group size to increment wrt. the variable size
 !! \param NSTATIONS The number of stations. Needed to define array sizes.
 !! \param station_name_length The number of character of the station_name
-!!                            string.  Usefull for reading back the stations.
+!!                            string.  Useful for reading back the stations.
 !! \param network_name_length The number of character of the station_name
-!!                            string.  Usefull for reading back the networks.
+!!                            string.  Useful for reading back the networks.
 subroutine define_stations_variables (adios_group, group_size_inc, NSTATIONS,&
     station_name_length, network_name_length)
   implicit none
@@ -481,7 +481,7 @@ end subroutine read_raw_cmtsolution
 !! \param stlat Array to store the latitude of the stations
 !! \param stlon Array to store the longitude of the stations
 !! \param stele Array to store the elevation of the stations
-!! \param stbur Array to store the burial of the statisons
+!! \param stbur Array to store the burial of the stations
 !! \param station_name_length Variable to keep the length of the station_name
 !!                            string
 !! \param station_name  String in which the different station names are

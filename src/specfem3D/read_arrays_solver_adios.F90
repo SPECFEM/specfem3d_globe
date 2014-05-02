@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   sel_num = 0
 
-  ! Postpend the actual file name.
+  ! Append the actual file name.
   file_name= trim(LOCAL_PATH) // "/solver_data.bp"
 
   call world_duplicate(comm)
@@ -357,7 +357,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   ! mass matrices
   !
-  ! in the case of stacey boundary conditions, add C*deltat/2 contribution to
+  ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to
   ! the mass matrix on Stacey edges for the crust_mantle and outer_core regions
   ! but not for the inner_core region thus the mass matrix must be replaced by
   ! three mass matrices including the "C" damping matrix

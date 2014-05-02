@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -146,7 +146,7 @@
     call read_general_crustmap_layer(velocs(:,:,l),    's', i)
   enddo
 
-  ! north pole / south pole
+  ! North pole / South pole
   thicknessnp(:) = ZERO
   thicknesssp(:) = ZERO
   densitynp(:) = ZERO
@@ -156,7 +156,7 @@
   velocsnp(:) = ZERO
   velocssp(:) = ZERO
 
-  !compute average values for north and southpole
+  ! compute average values for North and South pole
   do l=1,NLAYERS_CRUSTMAP
     do i=1,360*CRUSTMAP_RESOLUTION
       thicknessnp(l) =  thicknessnp(l)+thickness(1,i,l)
@@ -326,17 +326,17 @@
   double precision rhos(5),thicks(5),velp(5),vels(5)
 
   !-------------------------------
-  ! work-around to avoid jacobian problems when stretching mesh elements;
-  ! one could also try to slightly change the shape of the doulbing element bricks (which cause the problem)...
+  ! work-around to avoid Jacobian problems when stretching mesh elements;
+  ! one could also try to slightly change the shape of the doubling element bricks (which cause the problem)...
   !
   ! defines a "critical" region to have at least a 1-degree smoothing;
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
+  ! critical region can lead to negative Jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_EUROPE = 50.0d0
   double precision,parameter :: LON_CRITICAL_EUROPE = 22.0d0
   double precision,parameter :: CRITICAL_RANGE_EUROPE = 50.0d0
 
   ! defines a "critical" region around the andes to have at least a 1-degree smoothing;
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
+  ! critical region can lead to negative Jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_ANDES = -20.0d0
   double precision,parameter :: LON_CRITICAL_ANDES = -70.0d0
   double precision,parameter :: CRITICAL_RANGE_ANDES = 70.0d0

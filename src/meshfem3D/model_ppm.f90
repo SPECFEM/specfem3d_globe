@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -150,7 +150,7 @@
 
   call get_value_string(filename, 'model.PPM', trim(PPM_file_path))
 
-  !e.g. mediterranean model
+  !e.g. Mediterranean model
   ! counts entries
   counter=0
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
@@ -433,7 +433,7 @@
   !integer i,j,k
   !double precision r_top,r_bottom
 
-  integer index,num_latperlon,num_lonperdepth
+  integer indexval,num_latperlon,num_lonperdepth
 
   dvs = 0.0
 
@@ -448,10 +448,10 @@
   num_latperlon = PPM_num_latperlon ! int( (PPM_maxlat - PPM_minlat) / PPM_dlat) + 1
   num_lonperdepth = PPM_num_lonperdepth ! int( (PPM_maxlon - PPM_minlon) / PPM_dlon ) + 1
 
-  index = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon  &
-          + int( (lon-PPM_minlon)/PPM_dlon )*num_latperlon &
-          + int( (lat-PPM_minlat)/PPM_dlat ) + 1
-  dvs = PPM_dvs(index)
+  indexval = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon  &
+           + int( (lon-PPM_minlon)/PPM_dlon )*num_latperlon &
+           + int( (lat-PPM_minlat)/PPM_dlat ) + 1
+  dvs = PPM_dvs(indexval)
 
   !  ! loop-wise: slower performance
   !  do i=1,PPM_num_v
@@ -529,7 +529,7 @@
   logical ABSORBING_CONDITIONS
   logical HETEROGEN_3D_MANTLE
 
-! arrays with jacobian matrix
+! arrays with Jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
@@ -702,7 +702,7 @@
   yl(:,:,:,:) = ystore(:,:,:,:)
   zl(:,:,:,:) = zstore(:,:,:,:)
 
-  ! build jacobian
+  ! build Jacobian
   allocate(xix(NGLLX,NGLLY,NGLLZ,nspec),xiy(NGLLX,NGLLY,NGLLZ,nspec),xiz(NGLLX,NGLLY,NGLLZ,nspec))
   xix(:,:,:,:) = xixstore(:,:,:,:)
   xiy(:,:,:,:) = xiystore(:,:,:,:)
@@ -724,7 +724,7 @@
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
-          ! build jacobian
+          ! build Jacobian
           !         get derivatives of ux, uy and uz with respect to x, y and z
           xixl = xix(i,j,k,ispec)
           xiyl = xiy(i,j,k,ispec)
@@ -735,7 +735,7 @@
           gammaxl = gammax(i,j,k,ispec)
           gammayl = gammay(i,j,k,ispec)
           gammazl = gammaz(i,j,k,ispec)
-          ! compute the jacobian
+          ! compute the Jacobian
           jacobianl = xixl*(etayl*gammazl-etazl*gammayl) - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl)
 
@@ -757,10 +757,10 @@
 
   deallocate(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-  if (myrank == 0) write(IMAIN, *) 'distributing locations, jacobians and model values ...'
+  if (myrank == 0) write(IMAIN, *) 'distributing locations, Jacobians and model values ...'
   call synchronize_all()
 
-  ! get location/jacobian info from slices
+  ! get location/Jacobian info from slices
   allocate( slice_x(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
   allocate( slice_y(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
   allocate( slice_z(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
@@ -865,7 +865,7 @@
     if (myrank == 0) starttime = wtime()
     if (myrank == 0) write(IMAIN, *) '  slice number = ', ii
 
-    ! read in the topology, jacobian, calculate center of elements
+    ! read in the topology, Jacobian, calculate center of elements
     xx(:,:,:,:) = slice_x(:,:,:,:,ii)
     yy(:,:,:,:) = slice_y(:,:,:,:,ii)
     zz(:,:,:,:) = slice_z(:,:,:,:,ii)
@@ -921,7 +921,7 @@
           do j = 1, NGLLY
             do i = 1, NGLLX
 
-              ! current point (i,j,k,ispec) location, cartesian coordinates
+              ! current point (i,j,k,ispec) location, Cartesian coordinates
               x0 = xl(i,j,k,ispec)
               y0 = yl(i,j,k,ispec)
               z0 = zl(i,j,k,ispec)

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 !  Brian Savage while at
 !     California Institute of Technology
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
-!     Univeristy of Rhode Island
+!     University of Rhode Island
 !
 !  <savage@uri.edu>.
 !
@@ -74,7 +74,7 @@
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinuities Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
@@ -125,7 +125,7 @@
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinuities Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
@@ -158,7 +158,7 @@
 !
 
 ! This Subroutine is Hackish.  It could probably all be moved to an input attenuation file.
-! Actually all the velocities, densities and attenuations could be moved to seperate input
+! Actually all the velocities, densities and attenuations could be moved to separate input
 ! files rather than be defined within the CODE
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
@@ -188,7 +188,7 @@
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinuities Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
@@ -349,7 +349,7 @@
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinuities Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
@@ -473,9 +473,6 @@
   endif
   ! Generate index for Storage Array
   ! and Recast Qmu using this index
-  ! Accroding to Brian, use float
-  !Qtmp = Qmu * Q_resolution
-  !Qmu = Qtmp / Q_resolution;
 
   ! by default: resolution is Q_resolution = 10
   ! converts Qmu to an array integer index:
@@ -544,7 +541,7 @@
   double precision min_period, max_period
   double precision f1, f2
   double precision exp1, exp2
-  double precision dexp
+  double precision dexpval
   integer i
 
   f1 = 1.0d0 / max_period
@@ -553,9 +550,9 @@
   exp1 = log10(f1)
   exp2 = log10(f2)
 
-  dexp = (exp2-exp1) / ((n*1.0d0) - 1)
+  dexpval = (exp2-exp1) / ((n*1.0d0) - 1)
   do i = 1,n
-     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexp))
+     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
   enddo
 
   end subroutine attenuation_tau_sigma
@@ -597,7 +594,7 @@
 
   ! Internal
   integer i, iterations, err,prnt
-  double precision f1, f2, exp1,exp2,dexp, min_value
+  double precision f1, f2, exp1,exp2,dexpval, min_value
   double precision, allocatable, dimension(:) :: f
   integer, parameter :: nf = 100
   double precision, external :: attenuation_eval
@@ -632,12 +629,12 @@
   enddo
 
   ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
-  dexp = (exp2-exp1) / ((n*1.0d0) - 1)
+  dexpval = (exp2-exp1) / ((n*1.0d0) - 1)
   do i = 1,n
-     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexp))
+     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
   enddo
 
-  ! Shove the paramters into the module
+  ! Shove the parameters into the module
   call attenuation_simplex_setup(nf,n,f,Q_real,tau_s,AS_V)
 
   ! Set the Tau_epsilon (tau_e) to an initial value at omega*tau = 1
@@ -695,7 +692,7 @@
 end subroutine attenuation_simplex_finish
 
 !   - Inserts necessary parameters into the module attenuation_simplex_variables
-!   - See module for explaination
+!   - See module for explanation
 subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   implicit none
@@ -799,7 +796,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !-------------------------------------------------------------------------------------------------
 !
 
-!    - Computes the misfit from a set of relaxation paramters
+!    - Computes the misfit from a set of relaxation parameters
 !          given a set of frequencies and target attenuation
 !    - Evaluates only at the given frequencies
 !    - Evaluation is done with an L2 norm
@@ -813,7 +810,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !    Xi = Sum_i^N sqrt [ (1/Qc_i - 1/Qt_i)^2 / 1/Qt_i^2 ]
 !
 !     where Qc_i is the computed attenuation at a specific frequency
-!           Qt_i is the desired attenuaiton at that frequency
+!           Qt_i is the desired attenuation at that frequency
 !
 !    Uses attenuation_simplex_variables to store constant values
 !
@@ -879,20 +876,20 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !               variables to be minimized
 !               dimension(n)
 !            Input:  Initial Value
-!            Output: Mimimized Value
+!            Output: Minimized Value
 !     n    = number of variables
 !     itercount = Input/Output
 !                 Input:  maximum number of iterations
 !                         if < 0 default is used (200 * n)
 !                 Output: total number of iterations on output
 !     tolf      = Input/Output
-!                 Input:  minimium tolerance of the function funk(x)
-!                 Output: minimium value of funk(x)(i.e. "a" solution)
+!                 Input:  minimum tolerance of the function funk(x)
+!                 Output: minimum value of funk(x)(i.e. "a" solution)
 !     prnt      = Input
 !                 3 => report every iteration
 !                 4 => report every iteration, total simplex
 !     err       = Output
-!                 0 => Normal exeecution, converged within desired range
+!                 0 => Normal execution, converged within desired range
 !                 1 => Function Evaluation exceeded limit
 !                 2 => Iterations exceeded limit
 !
@@ -1139,7 +1136,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !-------------------------------------------------------------------------------------------------
 !
 
-!    - Finds the maximim value of the difference of between the first
+!    - Finds the maximum value of the difference of between the first
 !          value and the remaining values of a vector
 !    Input
 !      fv = Input
@@ -1178,7 +1175,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !   - Determines the maximum distance between two point in a simplex
 !   Input
 !     v  = Input
-!            Simplex Verticies
+!            Simplex Vertices
 !            dimension(n, n+1)
 !     n  = Pseudo Length of n
 !
@@ -1219,7 +1216,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !      n = Input
 !         Length of X
 !      I = Output
-!         Sorted Indicies of vecotr X
+!         Sorted Indices of vector X
 !
 !      Example:
 !         X = [ 4 3 1 2 ] on Input

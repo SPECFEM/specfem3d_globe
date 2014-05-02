@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -72,65 +72,59 @@
   scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
 
   ! allocates temporary arrays
-  allocate(cijkl_kl_crust_mantle_reg(21,npoints_slice), &
-           rho_kl_crust_mantle_reg(npoints_slice), &
+  allocate(rho_kl_crust_mantle_reg(npoints_slice), &
            beta_kl_crust_mantle_reg(npoints_slice), &
            alpha_kl_crust_mantle_reg(npoints_slice))
 
-  if( SAVE_TRANSVERSE_KL_ONLY ) then
-    ! transverse isotropic kernel arrays for file output
-    allocate(alphav_kl_crust_mantle(npoints_slice), &
-             alphah_kl_crust_mantle(npoints_slice), &
-             betav_kl_crust_mantle(npoints_slice), &
-             betah_kl_crust_mantle(npoints_slice), &
-             eta_kl_crust_mantle(npoints_slice))
+  if (ANISOTROPIC_KL) then
+    allocate(cijkl_kl_crust_mantle_reg(21, npoints_slice))
+    if (SAVE_TRANSVERSE_KL_ONLY) then
+      ! transverse isotropic kernel arrays for file output
+      allocate(alphav_kl_crust_mantle(npoints_slice), &
+               alphah_kl_crust_mantle(npoints_slice), &
+               betav_kl_crust_mantle(npoints_slice), &
+               betah_kl_crust_mantle(npoints_slice), &
+               eta_kl_crust_mantle(npoints_slice))
 
-    ! isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(npoints_slice), &
-             bulk_betav_kl_crust_mantle(npoints_slice), &
-             bulk_betah_kl_crust_mantle(npoints_slice), &
-             bulk_beta_kl_crust_mantle(npoints_slice))
-  endif
-
-  if( .not. ANISOTROPIC_KL ) then
+      ! isotropic kernel arrays for file output
+      allocate(bulk_c_kl_crust_mantle(npoints_slice), &
+               bulk_betav_kl_crust_mantle(npoints_slice), &
+               bulk_betah_kl_crust_mantle(npoints_slice), &
+               bulk_beta_kl_crust_mantle(npoints_slice))
+    endif
+  else
     ! allocates temporary isotropic kernel arrays for file output
     allocate(bulk_c_kl_crust_mantle(npoints_slice), &
              bulk_beta_kl_crust_mantle(npoints_slice))
-
-    allocate(kappa_kl_crust_mantle(npoints_slice), &
-             mu_kl_crust_mantle(npoints_slice), &
+    allocate(mu_kl_crust_mantle(npoints_slice), &
+             kappa_kl_crust_mantle(npoints_slice), &
              rhonotprime_kl_crust_mantle(npoints_slice))
   endif
 
   ! crust_mantle
   do ipoint = 1, npoints_slice
     ispec = ispec_reg(ipoint)
+    rho_kl_crust_mantle_reg(ipoint) = 0.0
+    alpha_kl_crust_mantle_reg(ipoint) = 0.0
+    beta_kl_crust_mantle_reg(ipoint) = 0.0
     if (ANISOTROPIC_KL) then
-      if ( SAVE_TRANSVERSE_KL_ONLY ) then
+      cijkl_kl_crust_mantle_reg(:,ipoint) = 0.0
+      if (SAVE_TRANSVERSE_KL_ONLY) then
         alphav_kl_crust_mantle(ipoint) = 0.0
         alphah_kl_crust_mantle(ipoint) = 0.0
         betav_kl_crust_mantle(ipoint) = 0.0
         betah_kl_crust_mantle(ipoint) = 0.0
         eta_kl_crust_mantle(ipoint) = 0.0
-        rho_kl_crust_mantle_reg(ipoint) = 0.0
         bulk_c_kl_crust_mantle(ipoint) = 0.0
         bulk_betav_kl_crust_mantle(ipoint) = 0.0
         bulk_betah_kl_crust_mantle(ipoint) = 0.0
-        alpha_kl_crust_mantle_reg(ipoint) = 0.0
-        beta_kl_crust_mantle_reg(ipoint) = 0.0
         bulk_beta_kl_crust_mantle(ipoint) = 0.0
-      else
-        rho_kl_crust_mantle_reg(ipoint) = 0.0
-        cijkl_kl_crust_mantle_reg(:,ipoint) = 0.0
       endif
     else
       rhonotprime_kl_crust_mantle(ipoint) = 0.0
       kappa_kl_crust_mantle(ipoint) = 0.0
       mu_kl_crust_mantle(ipoint) = 0.0
 
-      rho_kl_crust_mantle_reg(ipoint) = 0.0
-      alpha_kl_crust_mantle_reg(ipoint) = 0.0
-      beta_kl_crust_mantle_reg(ipoint) = 0.0
       bulk_c_kl_crust_mantle(ipoint) = 0.0
       bulk_beta_kl_crust_mantle(ipoint) = 0.0
     endif
@@ -146,7 +140,7 @@
             ! For anisotropic kernels
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            ! The cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+            ! The Cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
             ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
             call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
                                      ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
@@ -497,24 +491,23 @@
   endif ! ADIOS_FOR_KERNELS
 
   ! cleans up temporary kernel arrays
-  if (SAVE_TRANSVERSE_KL_ONLY) then
-    deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-               betav_kl_crust_mantle,betah_kl_crust_mantle, &
-               eta_kl_crust_mantle)
-    deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
-               bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+  if (ANISOTROPIC_KL) then
+    deallocate(cijkl_kl_crust_mantle_reg)
+    if (SAVE_TRANSVERSE_KL_ONLY) then
+      deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                 betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                 eta_kl_crust_mantle)
+      deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+                 bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+    endif
+  else
+    deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+               mu_kl_crust_mantle,kappa_kl_crust_mantle, &
+               rhonotprime_kl_crust_mantle)
   endif
-
-  if (.not. ANISOTROPIC_KL) then
-    deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-    deallocate(kappa_kl_crust_mantle,mu_kl_crust_mantle,rhonotprime_kl_crust_mantle)
-  endif
-
-  deallocate(cijkl_kl_crust_mantle_reg, &
-             rho_kl_crust_mantle_reg, &
+  deallocate(rho_kl_crust_mantle_reg, &
              beta_kl_crust_mantle_reg, &
              alpha_kl_crust_mantle_reg)
 
   end subroutine save_regular_kernels_crust_mantle
-
 

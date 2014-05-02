@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine finalize_mesher()
 
   use meshfem3D_par
@@ -38,25 +37,75 @@
   double precision :: tCPU
   double precision, external :: wtime
 
+  ! for Roland_Sylvain integrals
+  double precision :: g_x, g_y, g_z, G_xx, G_yy, G_zz, G_xy, G_xz, G_yz, real_altitude_of_observ_point
+
   !--- print number of points and elements in the mesh for each region
   if(myrank == 0) then
 
     ! check volume of chunk
     write(IMAIN,*)
     write(IMAIN,*) 'calculated volume: ',volume_total
-    if(.not. TOPOGRAPHY) then
-      ! take the central cube into account
-      ! it is counted 6 times because of the fictitious elements
-      if(INCLUDE_CENTRAL_CUBE) then
-        write(IMAIN,*) '     exact volume: ', &
-          dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)+5.*(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
-      else
-        write(IMAIN,*) '     exact volume: ', &
-          dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)-(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
-      endif
+    if(NCHUNKS == 6 .and. .not. ELLIPTICITY .and. .not. TOPOGRAPHY) &
+        write(IMAIN,*) '     exact volume: ',(4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)
+
+    ! check total Earth mass
+    if(NCHUNKS == 6) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Earth mass for this density model and mesh: ',Earth_mass_total,' kg'
+      write(IMAIN,*) '   (should be not too far from 5.97E+24 kg)'
+      write(IMAIN,*)
+      ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
+      write(IMAIN,*) 'average density for this density model and mesh: ',Earth_mass_total / (volume_total * R_EARTH**3),' kg/m3'
+      write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
     endif
 
-    ! infos output
+!! DK DK for Roland_Sylvain
+    ! Roland_Sylvain integrals
+    if(ROLAND_SYLVAIN) then
+
+! in m.s-2
+      g_x  = Roland_Sylvain_integr_total(1)
+      g_y  = Roland_Sylvain_integr_total(2)
+      g_z  = Roland_Sylvain_integr_total(3)
+
+! in Eotvos = 1.e+9 s-2
+      G_xx = Roland_Sylvain_integr_total(4) * SI_UNITS_TO_EOTVOS
+      G_yy = Roland_Sylvain_integr_total(5) * SI_UNITS_TO_EOTVOS
+      G_zz = Roland_Sylvain_integr_total(6) * SI_UNITS_TO_EOTVOS
+      G_xy = Roland_Sylvain_integr_total(7) * SI_UNITS_TO_EOTVOS
+      G_xz = Roland_Sylvain_integr_total(8) * SI_UNITS_TO_EOTVOS
+      G_yz = Roland_Sylvain_integr_total(9) * SI_UNITS_TO_EOTVOS
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral g_x  = ',g_x,' m.s-2'
+      write(IMAIN,*) 'computed total Roland_Sylvain integral g_y  = ',g_y,' m.s-2'
+      write(IMAIN,*) 'computed total Roland_Sylvain integral g_z  = ',g_z,' m.s-2'
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed norm of g vector = ',sqrt(g_x**2 + g_y**2 + g_z**2),' m.s-2'
+
+      real_altitude_of_observ_point = sqrt(x_observation**2 + y_observation**2 + z_observation**2)
+! gravity force vector norm decays approximately as (r / r_prime)^2 above the surface of the Earth
+      write(IMAIN,*) '  (should be not too far from ', &
+                             sngl(STANDARD_GRAVITY_EARTH * (R_UNIT_SPHERE / real_altitude_of_observ_point)**2),' m.s-2)'
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral G_xx = ',G_xx,' Eotvos'
+      write(IMAIN,*) 'computed total Roland_Sylvain integral G_yy = ',G_yy,' Eotvos'
+      write(IMAIN,*) 'computed total Roland_Sylvain integral G_zz = ',G_zz,' Eotvos'
+      write(IMAIN,*)
+      write(IMAIN,*) 'G tensor should be traceless, G_xx + G_yy + G_zz = 0.'
+      write(IMAIN,*) 'Actual sum obtained = ',G_xx + G_yy + G_zz
+      if(max(abs(G_xx),abs(G_yy),abs(G_zz)) > TINYVAL) write(IMAIN,*) ' i.e., ', &
+             sngl(100.d0*abs(G_xx + G_yy + G_zz) / max(abs(G_xx),abs(G_yy),abs(G_zz))),'% of max(abs(Gxx),abs(Gyy),abs(Gzz))'
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed total Roland_Sylvain integral G_xy = ',G_xy,' Eotvos'
+      write(IMAIN,*) 'computed total Roland_Sylvain integral G_xz = ',G_xz,' Eotvos'
+      write(IMAIN,*) 'computed total Roland_Sylvain integral G_yz = ',G_yz,' Eotvos'
+
+    endif
+
+    ! info output
     numelem_crust_mantle = NSPEC(IREGION_CRUST_MANTLE)
     numelem_outer_core = NSPEC(IREGION_OUTER_CORE)
     numelem_inner_core = NSPEC(IREGION_INNER_CORE)

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@
 
   ! local parameters
   double precision :: scaleval
-  real(kind=CUSTOM_REAL) :: min,max,min_all,max_all
+  real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
   integer :: ier
 
   ! allocates arrays
@@ -103,26 +103,26 @@
     endif
 
     ! Vs
-    max = maxval( MGLL_V%vs_new )
-    min = minval( MGLL_V%vs_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vs_new )
+    minvalue = minval( MGLL_V%vs_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vs new min/max: ',min_all,max_all
     endif
     ! Vp
-    max = maxval( MGLL_V%vp_new )
-    min = minval( MGLL_V%vp_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vp_new )
+    minvalue = minval( MGLL_V%vp_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vp new min/max: ',min_all,max_all
     endif
     ! density
-    max = maxval( MGLL_V%rho_new )
-    min = minval( MGLL_V%rho_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%rho_new )
+    minvalue = minval( MGLL_V%rho_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
       write(IMAIN,*)
@@ -137,50 +137,50 @@
     endif
 
     ! Vsv
-    max = maxval( MGLL_V%vsv_new )
-    min = minval( MGLL_V%vsv_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vsv_new )
+    minvalue = minval( MGLL_V%vsv_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vsv new min/max: ',min_all,max_all
     endif
     ! Vsh
-    max = maxval( MGLL_V%vsh_new )
-    min = minval( MGLL_V%vsh_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vsh_new )
+    minvalue = minval( MGLL_V%vsh_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vsh new min/max: ',min_all,max_all
     endif
     ! Vpv
-    max = maxval( MGLL_V%vpv_new )
-    min = minval( MGLL_V%vpv_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vpv_new )
+    minvalue = minval( MGLL_V%vpv_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vpv new min/max: ',min_all,max_all
     endif
     ! Vph
-    max = maxval( MGLL_V%vph_new )
-    min = minval( MGLL_V%vph_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%vph_new )
+    minvalue = minval( MGLL_V%vph_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  vph new min/max: ',min_all,max_all
     endif
     ! density
-    max = maxval( MGLL_V%rho_new )
-    min = minval( MGLL_V%rho_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%rho_new )
+    minvalue = minval( MGLL_V%rho_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
     endif
     ! eta
-    max = maxval( MGLL_V%eta_new )
-    min = minval( MGLL_V%eta_new )
-    call max_all_cr(max, max_all)
-    call min_all_cr(min, min_all)
+    maxvalue = maxval( MGLL_V%eta_new )
+    minvalue = minval( MGLL_V%eta_new )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
     if( myrank == 0 ) then
       write(IMAIN,*) '  eta new min/max: ',min_all,max_all
       write(IMAIN,*)
@@ -265,7 +265,7 @@
           status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       write(IMAIN,*) 'error opening: ',prname(1:len_trim(prname))//'vp_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -275,7 +275,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       print*,'error opening: ',prname(1:len_trim(prname))//'vs_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -288,7 +288,7 @@
           status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       write(IMAIN,*) 'error opening: ',prname(1:len_trim(prname))//'vpv_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -297,7 +297,7 @@
           status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       write(IMAIN,*) 'error opening: ',prname(1:len_trim(prname))//'vph_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -307,7 +307,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       print*,'error opening: ',prname(1:len_trim(prname))//'vsv_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -316,7 +316,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       print*,'error opening: ',prname(1:len_trim(prname))//'vsh_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -326,7 +326,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if( ier /= 0 ) then
       print*,'error opening: ',prname(1:len_trim(prname))//'eta_new.bin'
-      call exit_MPI(myrank,'error model gll')
+      call exit_MPI(myrank,'error model GLL')
     endif
     read(27) MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -338,7 +338,7 @@
        status='old',action='read',form='unformatted',iostat=ier)
   if( ier /= 0 ) then
     print*,'error opening: ',prname(1:len_trim(prname))//'rho_new.bin'
-    call exit_MPI(myrank,'error model gll')
+    call exit_MPI(myrank,'error model GLL')
   endif
   read(27) MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
   close(27)

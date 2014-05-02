@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -52,11 +52,11 @@
 
   double precision t,f0
 
-  ! ricker
+  ! Ricker
   comp_source_time_function_rickr = (1.d0 - 2.d0*PI*PI*f0*f0*t*t ) &
                                     * exp( -PI*PI*f0*f0*t*t )
 
-  !!! another source time function they have called 'ricker' in some old papers,
+  !!! another source time function they have called 'Ricker' in some old papers,
   !!! e.g., 'Finite-Frequency Kernels Based on Adjoint Methods' by Liu & Tromp, BSSA (2006)
   !!! in order to benchmark those simulations, the following formula is needed.
   ! comp_source_time_function_rickr = -2.d0*PI*PI*f0*f0*f0*t * exp(-PI*PI*f0*f0*t*t)

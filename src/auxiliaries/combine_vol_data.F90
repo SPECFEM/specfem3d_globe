@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -24,19 +24,22 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
+
 program combine_vol_data_vtk
 
-  ! outputs vtk-files (ascii format)
+  ! outputs VTK files (ASCII format)
+
+  use constants
 
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 #ifdef ADIOS_INPUT
-  use mpi
   use adios_read_mod
   use combine_vol_data_adios_mod
+!!!!!!!! DK DK removed because this breaks the build system
+!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
+!!!!!!!! DK DK   use mpi
 #endif
-
-  use constants
 
   implicit none
 
@@ -58,11 +61,12 @@ program combine_vol_data_vtk
   integer num_ibool(NGLOB_CRUST_MANTLE)
   logical mask_ibool(NGLOB_CRUST_MANTLE), HIGH_RESOLUTION_MESH
 
-  real x, y, z, dat
+  real(kind=CUSTOM_REAL) x, y, z
+  real dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
   ! instead of taking the first value which appears for a global point, average the values
-  ! if there are more than one gll points for a global point (points on element corners, edges, faces)
+  ! if there are more than one GLL points for a global point (points on element corners, edges, faces)
   logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
   integer:: ibool_count(NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL):: ibool_dat(NGLOB_CRUST_MANTLE)
@@ -72,7 +76,7 @@ program combine_vol_data_vtk
   !  but turning the flags: TOPOGRAPHY and ELLIPTICITY to .false.
   !  then, use those as topo files: proc***_solver_data.bin
   !  of course, this would also work by just turning ELLIPTICITY to .false. so that the CORRECT_ELLIPTICITY below
-  !  becomes unneccessary
+  !  becomes unnecessary
   !
   ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor;
   ! useful for plotting spherical cuts at certain depths
@@ -109,12 +113,16 @@ program combine_vol_data_vtk
 
   ! starts here---------------------------------------------------------------
 #ifdef ADIOS_INPUT
-  call MPI_Init(ierr)
-  call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
+!!!!!!!! DK DK removed because this breaks the build system
+!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
+!!!!!!!! DK DK added this
+  stop 'DK DK added this because this part of the code breaks the build system'
+!!!!!!!! DK DK removed because this breaks the build system  call MPI_Init(ierr)
+!!!!!!!! DK DK removed because this breaks the build system  call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
   print  *, sizeprocs, "procs"
-  if (sizeprocs .ne. 1) then
+  if (sizeprocs /= 1) then
     print *, "sequential program. Only mpirun -np 1 ..."
-    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
+!!!!!!!! DK DK removed because this breaks the build system    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
   endif
 #endif
 
@@ -233,7 +241,7 @@ print *, irs, ire
 
 !!! .mesh specific !!!!!!!!!!!
 #ifndef USE_VTK_INSTEAD_OF_MESH
-    ! open paraview output mesh file
+    ! open Paraview output mesh file
     write(pt_mesh_file1,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_point1.mesh'
     write(pt_mesh_file2,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_point2.mesh'
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.mesh'
@@ -301,8 +309,8 @@ print *, irs, ire
 #else
     ! VTK
     print *
-    print *,'vtk inital total points: ',sum(npoint(1:num_node))
-    print *,'vkt inital total elements: ',sum(nelement(1:num_node))
+    print *,'VTK initial total points: ',sum(npoint(1:num_node))
+    print *,'VTK initial total elements: ',sum(nelement(1:num_node))
     print *
 
     ! creates array to hold point data
@@ -578,7 +586,7 @@ print *, irs, ire
               call write_integer_fd(efd,n8)
 #else
               ! VTK
-              ! note: indices for vtk start at 0
+              ! note: indices for VTK start at 0
               total_dat_con(1,numpoin + ne) = n1
               total_dat_con(2,numpoin + ne) = n2
               total_dat_con(3,numpoin + ne) = n3
@@ -611,7 +619,7 @@ print *, irs, ire
     ! opens unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
     open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ios)
-    if( ios /= 0 ) stop 'error opening vtk output file'
+    if( ios /= 0 ) stop 'error opening VTK output file'
     write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
     write(IOUT_VTK,'(a)') 'material model VTK file'
     write(IOUT_VTK,'(a)') 'ASCII'
@@ -625,7 +633,7 @@ print *, irs, ire
     write(IOUT_VTK,*) ""
 
     ! cells
-    ! note: indices for vtk start at 0
+    ! note: indices for VTK start at 0
     write(IOUT_VTK,'(a,i12,i12)') "CELLS ",ne,ne*9
     do i = 1,ne
       write(IOUT_VTK,'(9i12)') 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
@@ -672,7 +680,11 @@ print *, irs, ire
 
 #ifdef ADIOS_INPUT
   call clean_adios(value_handle, mesh_handle)
-  call MPI_Finalize(ierr)
+!!!!!!!! DK DK removed because this breaks the build system
+!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
+!!!!!!!! DK DK added this
+  stop 'DK DK added this because this part of the code breaks the build system'
+!!!!!!!! DK DK removed because this breaks the build system  call MPI_Finalize(ierr)
 #endif
 
 

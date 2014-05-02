@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -61,20 +61,20 @@
   ! debug
   !print*,'read adjoint sources: it_sub_adj = ',it_sub_adj
 
-  ! asynchronuously reads in adjoint source files
+  ! asynchronously reads in adjoint source files
   if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
     ! handles file input/output thread
     if( it == it_begin ) then
       ! creates new io thread for reading in sources
       call read_adj_io_thread(it_sub_adj)
 
-      ! first chunk of adjoint sources must ready at begining, so we wait.
-      ! waits for previous read to finish and 
+      ! first chunk of adjoint sources must ready at beginning, so we wait.
+      ! waits for previous read to finish and
       ! copy over buffered data into tmp_sourcearray
       call sync_adj_io_thread(adj_sourcearrays)
 
     else
-      ! waits for previous read to finish and 
+      ! waits for previous read to finish and
       ! copy over buffered data into tmp_sourcearray
       call sync_adj_io_thread(adj_sourcearrays)
     endif
@@ -89,7 +89,7 @@
     endif
 
   else
-    ! synchronuous read routine
+    ! synchronous read routine
 
     ! reads in local adjoint sources
     call read_adjoint_sources_local(adj_sourcearrays,nadj_rec_local,it_sub_adj)
@@ -199,6 +199,7 @@
   subroutine check_adjoint_sources(irec,nadj_files_found)
 
   use specfem_par
+  use write_seismograms_mod, only: band_instrument_code
 
   implicit none
 

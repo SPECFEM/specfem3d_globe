@@ -3,11 +3,11 @@
 #          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 #          --------------------------------------------------
 #
-#          Main authors: Dimitri Komatitsch and Jeroen Tromp
+#     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 #                        Princeton University, USA
-#             and University of Pau / CNRS / INRIA, France
-# (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            August 2013
+#                and CNRS / University of Marseille, France
+#                 (there are currently many more authors!)
+# (c) Princeton University and CNRS / University of Marseille, April 2014
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ specfem3D_OBJECTS = \
 	$O/comp_source_spectrum.solver.o \
 	$O/comp_source_time_function.solver.o \
 	$O/compute_adj_source_frechet.solver.o \
-	$O/compute_arrays_source.solver.o \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
 	$O/file_io_threads.cc.o \
@@ -53,8 +52,10 @@ specfem3D_OBJECTS = \
 specfem3D_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/write_seismograms.solverstatic.o \
 	$O/check_stability.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
+	$O/compute_arrays_source.solverstatic.o \
 	$O/compute_boundary_kernel.solverstatic.o \
 	$O/compute_coupling.solverstatic.o \
 	$O/compute_element.solverstatic.o \
@@ -101,7 +102,6 @@ specfem3D_OBJECTS += \
 	$O/write_movie_surface.solverstatic.o \
 	$O/write_output_ASCII.solverstatic.o \
 	$O/write_output_SAC.solverstatic.o \
-	$O/write_seismograms.solverstatic.o \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
@@ -112,6 +112,7 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
+	$(FC_MODDIR)/write_seismograms_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
@@ -270,7 +271,7 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 5 support"
 	@echo ""
-	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
+	${FCLINK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
 else
@@ -280,7 +281,7 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D with CUDA 4 support"
 	@echo ""
-	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
+	${FCLINK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 	@echo ""
 
 endif
@@ -294,8 +295,8 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
-#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
-	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
 	@echo ""
 
 endif
@@ -309,6 +310,20 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ####
 #### rule for each .o file below
 ####
+
+###
+### additional dependencies
+###
+
+$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_helpers.shared_adios.o $O/asdf_helpers_writers.shared_adios.o $O/asdf_data.solverstatic_module.o
+
+$O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
+
+$O/compute_arrays_source.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
 
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here
@@ -330,7 +345,7 @@ $O/%.solverstatic_openmp.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_pa
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 
 
-$O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o $O/asdf_helpers.shared_adios.o
+$O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solverstatic_adios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o

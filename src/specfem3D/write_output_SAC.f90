@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -195,7 +195,7 @@
   USER1  = shortest_period
   USER2  = 500.0d0
   ! we remove any PDE information, since the simulation could also start
-  ! with a "pure" CMT solution, without having any PDE infos
+  ! with a "pure" CMT solution, without having any PDE info
   !
   !USER1  = t_shift !time shift between PDE and CMT solutions
   !PDE location values (different from CMT location, usually):
@@ -457,7 +457,7 @@
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM
 
-  ! For explaination on values set, see above (SAC ASCII)
+  ! For explanation on values set, see above (SAC ASCII)
   if (OUTPUT_SEISMOS_SAC_BINARY) then
 
     ! add .sac (sac binary) extension to seismogram file name for SAC seismograms

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@
   integer :: it
   integer :: ier,isample
   double precision :: value
-  double precision :: time
+  double precision :: timeval
   character(len=256) :: sisname_2
 
   ! add .ascii extension to seismogram file name for ASCII seismograms
@@ -91,25 +91,25 @@
 
     ! current time
     if( SIMULATION_TYPE == 3 ) then
-      time = dble(NSTEP-it)*DT - t0
+      timeval = dble(NSTEP-it)*DT - t0
     else
-      time = dble(it-1)*DT - t0
+      timeval = dble(it-1)*DT - t0
     endif
 
     ! writes out to file
     if(SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
       ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT) sngl(time),sngl(value)
+        write(IOUT) sngl(timeval),sngl(value)
       else
-        write(IOUT) time,value
+        write(IOUT) timeval,value
       endif
     else
       ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT,*) sngl(time),' ',sngl(value)
+        write(IOUT,*) sngl(timeval),' ',sngl(value)
       else
-        write(IOUT,*) time,' ',value
+        write(IOUT,*) timeval,' ',value
       endif
     endif
   enddo

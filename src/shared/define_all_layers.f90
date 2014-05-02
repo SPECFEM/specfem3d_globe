@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-
 
   subroutine define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -312,12 +311,12 @@
   ! the first region is the crust at the surface of the Earth
   ! the last region is in the inner core near the center of the Earth
 
-  !!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-  !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
-  !!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
-  !!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
-  !!!!!!!!!!! DK DK UGLY: The Moho stretching and squishing that Jeroen added to V4.0
-  !!!!!!!!!!! DK DK UGLY: should partly deal with this problem.
+  !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+  !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
+  !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
+  !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
+  !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
+  !!!!!!!!!!! DK DK: should partly deal with this problem.
 
       r_top(1) = R_EARTH
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
@@ -719,12 +718,12 @@
   ! the first region is the crust at the surface of the Earth
   ! the last region is in the inner core near the center of the Earth
 
-  !!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-  !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
-  !!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
-  !!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
-  !!!!!!!!!!! DK DK UGLY: The Moho stretching and squishing that Jeroen added to V4.0
-  !!!!!!!!!!! DK DK UGLY: should partly deal with this problem.
+  !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+  !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
+  !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
+  !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
+  !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
+  !!!!!!!!!!! DK DK: should partly deal with this problem.
 
       r_top(1) = R_EARTH
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER

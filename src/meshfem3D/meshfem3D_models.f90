@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@
 !
 !---
 
-  ! GLL model uses s29ea as reference 3D model
+  ! GLL model uses S29EA as reference 3D model
   if( THREE_D_MODEL == THREE_D_MODEL_GLL ) then
     ! sets to initial reference model from which iterations started
     THREE_D_MODEL = GLL_REFERENCE_MODEL
@@ -81,7 +81,7 @@
       call model_ak135_broadcast(myrank,CRUSTAL)
 
     case(REFERENCE_MODEL_1DREF)
-      call model_1dref_broadcast(myrank,CRUSTAL)
+      call model_1dref_broadcast(CRUSTAL)
 
     case(REFERENCE_MODEL_SEA1D)
       call model_sea1d_broadcast(myrank,CRUSTAL)
@@ -397,7 +397,7 @@
 
   ! gets parameters for isotropic 3D mantle model
   !
-  ! note: there can be tranverse isotropy in the mantle, but only lamé parameters
+  ! note: there can be transverse isotropy in the mantle, but only Lam'e parameters
   !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
   !
   ! note: in general, models here make use of perturbation values with respect to their
@@ -605,7 +605,7 @@
 !         theta_degrees = theta / DEGREES_TO_RADIANS
 !         phi_degrees = phi / DEGREES_TO_RADIANS
 !         tau_e(:)   = 0.0d0
-!         ! Get the value of Qmu (Attenuation) dependedent on
+!         ! Get the value of Qmu (Attenuation) dependent on
 !         ! the radius (r_prem) and idoubling flag
 !         !call model_attenuation_1D_PREM(r_prem, Qmu, idoubling)
 !          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,idoubling)
@@ -814,6 +814,15 @@
                                            tau_e,tau_s,T_c_source, &
                                            moho,Qmu,Qkappa,elem_in_crust)
 
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
+!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 ).
+!! DK DK BUG   I thus temporarily patched it to avoid the problematic lines;
+!! DK DK BUG   of course this should be changed / fixed in the future.
+!! DK DK BUG
+!! DK DK BUG
+
 ! sets attenuation values tau_e and Qmu for a given point
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
@@ -880,6 +889,30 @@
 
   else
 
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG since using the routines below is unsafe (see the above comment), I remove them for now
+!! DK DK BUG
+!! DK DK BUG
+    goto 777
+
+!! DK DK BUG
+!! DK DK BUG
+! the attenuation values for s362ani + ATTENUATION = .true. currently depend on the compiler used and on the compiler options used,
+! i.e. the lines below are unreliable. I am not sure why, it is probably either that elem_in_crust is not correctly set,
+! and / or that r_prem >(ONE-moho) is sensitive to roundoff noise and thus compiler-dependent,
+! in which case it should be changed to:
+!
+! if (r_prem - (ONE-moho) < some_epsilon_to_define) then...
+!      or something like that
+!
+! To be safe I have commented out the current code and checked that the bug (i.e. getting compiler-dependent results) is now gone.
+! If you fix that routine and check with Matthieu and Elliott that it then works fine on different machines
+! with different compilers please let us know and we will update the Git version
+! (including the master branch) and make an announcement to users.
+!! DK DK BUG
+!! DK DK BUG
+
     select case (REFERENCE_1D_MODEL)
 
       ! case(REFERENCE_MODEL_PREM)
@@ -913,6 +946,13 @@
         endif
 
     end select
+
+!! DK DK BUG
+!! DK DK BUG
+!! DK DK BUG since using the routines above is unsafe (see the above comment), I remove them for now
+!! DK DK BUG
+!! DK DK BUG
+  777 continue
 
   endif
 
@@ -950,10 +990,10 @@
 
       !check
       if( ispec > size(MGLL_V%vp_new(1,1,1,:)) ) then
-        call exit_MPI(myrank,'model gll: ispec too big')
+        call exit_MPI(myrank,'model GLL: ispec too big')
       endif
 
-      ! takes stored gll values from file
+      ! takes stored GLL values from file
       ! ( note that these values are non-dimensionalized)
       if(CUSTOM_REAL == SIZE_REAL) then
         vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
@@ -977,10 +1017,10 @@
 
       !check
       if( ispec > size(MGLL_V%vpv_new(1,1,1,:)) ) then
-        call exit_MPI(myrank,'model gll: ispec too big')
+        call exit_MPI(myrank,'model GLL: ispec too big')
       endif
 
-      ! takes stored gll values from file
+      ! takes stored GLL values from file
       if(CUSTOM_REAL == SIZE_REAL) then
         vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
         vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )

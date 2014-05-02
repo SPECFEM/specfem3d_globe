@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 0
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and University of Pau / CNRS / INRIA
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -201,7 +202,7 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
     //errorstr = (char*) strerror(errno);
     //printf("CPU FILE ERROR:%s\n",errorstr);
     printf("CPU FILE ERROR:%s\n",(char*) strerror(errno));
-    perror("cpu file error\n");
+    perror("CPU file error\n");
   }
 
   FILE* fp_gpu;
@@ -210,7 +211,7 @@ void compare_surface_files_(int* bytes_per_iteration, int* number_of_iterations)
     //errorstr = (char*) strerror(errno);
     //printf("GPU FILE ERROR:%s\n",errorstr);
     printf("GPU FILE ERROR:%s\n",(char*) strerror(errno));
-    perror("gpu file error\n");
+    perror("GPU file error\n");
   }
 
   /* pause_for_debug(); */
@@ -264,7 +265,7 @@ void compare_fvector_(float* vector, int* size, int* id, int* cpu_or_gpu) {
   size_t res;
 
   float* compare_vector = (float*)malloc(*size*sizeof(float));
-  if(*cpu_or_gpu == 0) { //swap gpu/cpu for compare
+  if(*cpu_or_gpu == 0) { //swap GPU/CPU to compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
   }
   else {
@@ -312,7 +313,7 @@ void compare_ivector_(int* vector, int* size, int* id, int* cpu_or_gpu) {
   size_t res;
 
   int* compare_vector = (int*)malloc(*size*sizeof(int));
-  if(*cpu_or_gpu == 0) { //swap gpu/cpu for compare
+  if(*cpu_or_gpu == 0) { //swap GPU/CPU to compare
     sprintf(cmp_filename, "debug_output_gpu_%d.dat",*id);
   }
   else {

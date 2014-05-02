@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 0
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and University of Pau / CNRS / INRIA
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -148,7 +149,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
     // velocity
     sn = potential_dot_acoustic[iglob] / vpstore[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] ;
 
-    // gets associated, weighted jacobian
+    // gets associated, weighted Jacobian
     jacobianw = abs_boundary_jacobian2D[INDEX2(NGLL2,igll,iface)]*fac1;
 
     // Sommerfeld condition
@@ -489,7 +490,7 @@ TRACE("compute_stacey_acoustic_backward_cuda");
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// undo_attenuation simulation: stacey for backward/reconstructed wavefield
+// undo_attenuation simulation: Stacey for backward/reconstructed wavefield
 
 /* ----------------------------------------------------------------------------------------------- */
 

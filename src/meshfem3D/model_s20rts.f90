@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! S20rts
+! S20RTS
 !
 ! 3D mantle model S20RTS [Ritsema et al., 1999]
 !
@@ -280,7 +280,7 @@
 !----------------------------------
 !
 
-! changed the obsolecent f77 features in the two routines below
+! changed the obsolescent f77 features in the two routines below
 ! now still awful Fortran, but at least conforms to f90 standard
 
   double precision function s20rts_rsple(I1,I2,X,Y,Q,S)
@@ -426,7 +426,7 @@
       Y0=H*H2*(H2-H)
       H=H*H
       H2=H2*H2
-!   CALCULATE DERIVITIVE AT NEAR END.
+!   CALCULATE DERIVATIVE AT NEAR END.
       B0=(Y(J1)*(H-H2)+Y(J1+1)*H2-Y(J1+2)*H)/Y0
       B1=B0
 

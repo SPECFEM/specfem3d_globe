@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,9 +25,10 @@
 !
 !=====================================================================
 
-  subroutine read_kl_regular_grid(myrank, GRID)
+  subroutine read_kl_regular_grid(GRID)
 
   use constants
+  use specfem_par, only: myrank
 
   implicit none
 
@@ -46,24 +47,28 @@
 
   type (kl_reg_grid_variables), intent(inout) :: GRID
 
-  integer :: myrank,ios,nlayer,i,nlat,nlon,npts_this_layer
+  integer :: ios,nlayer,i,nlat,nlon,npts_this_layer
+  real :: r
 
   ! improvements to make: read-in by master and broadcast to all slaves
   open(10,file=PATHNAME_KL_REG,iostat=ios,status='old',action='read')
 
   read(10,*) GRID%dlat, GRID%dlon
 
-  nlayer = 1
-  do while (nlayer <= NM_KL_REG_LAYER)
-    read(10,*,iostat=ios) GRID%rlayer(nlayer), GRID%ndoubling(nlayer)
+  nlayer = 0
+  do
+    read(10,*,iostat=ios) r, i
     if (ios/=0) exit
+
+    if (nlayer >= NM_KL_REG_LAYER) then
+      call exit_MPI(myrank, 'Increase NM_KL_REG_LAYER limit')
+    endif
+
     nlayer = nlayer + 1
+    GRID%rlayer(nlayer) = r
+    GRID%ndoubling(nlayer) = i
   enddo
   close(10)
-
-  if (nlayer > NM_KL_REG_LAYER) then
-    call exit_MPI(myrank, 'Increase NM_KL_REG_LAYER limit')
-  endif
 
   GRID%nlayer = nlayer
 
@@ -86,10 +91,11 @@
 
 !==============================================================
 
-  subroutine find_regular_grid_slice_number(slice_number, GRID, &
-                                          NCHUNKS, NPROC_XI, NPROC_ETA)
+  subroutine find_regular_grid_slice_number(slice_number, GRID)
 
   use constants
+  use specfem_par, only: myrank, addressing, &
+                         NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
 
   implicit none
 
@@ -109,36 +115,34 @@
   end type kl_reg_grid_variables
   type (kl_reg_grid_variables), intent(in) :: GRID
 
-  integer, intent(in) :: NCHUNKS,NPROC_XI,NPROC_ETA
-
   real(kind=CUSTOM_REAL) :: xi_width, eta_width
   integer :: nproc, ilayer, isp, ilat, ilon, k, chunk_isp
   integer :: iproc_xi, iproc_eta
   real :: lat,lon,th,ph,x,y,z,xik,etak,xi_isp,eta_isp,xi1,eta1
 
   ! assuming 6 chunks full global simulations right now
-  if (NCHUNKS /= 6 .or. NPROC_XI /= NPROC_ETA) then
-    call exit_MPI(0, 'Only deal with 6 chunks at this moment')
+  if (NCHUNKS_VAL /= 6 .or. NPROC_XI_VAL /= NPROC_ETA_VAL) then
+    call exit_MPI(myrank, 'Only deal with 6 chunks at this moment')
   endif
 
-  xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI
+  xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI_VAL
   ilayer=0
 
   do isp = 1,GRID%npts_total
     if (isp == GRID%npts_before_layer(ilayer+1)+1) ilayer=ilayer+1
-    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlat(ilayer)
-    ilon = (isp - GRID%npts_before_layer(ilayer) - 1) - ilat * GRID%nlat(ilayer)
+    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlon(ilayer)
+    ilon = (isp - GRID%npts_before_layer(ilayer)) - ilat * GRID%nlon(ilayer)
 
     ! (lat,lon,radius) for isp point
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
     th = (90 - lat) * DEGREES_TO_RADIANS
-    lon = KL_REG_MIN_LON + ilon * GRID%dlon * GRID%ndoubling(ilayer)
+    lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
     ph = lon * DEGREES_TO_RADIANS
     x = sin(th) * cos(ph); y = sin(th) * sin(ph); z = cos(th)
 
     ! figure out slice number
     chunk_isp = 1; xi_isp = 0; eta_isp = 0
-    do k = 1, NCHUNKS
+    do k = 1, NCHUNKS_VAL
       call chunk_map(k, x, y, z, xik, etak)
       if (abs(xik) <= PI/4 .and. abs(etak) <= PI/4) then
         chunk_isp = k;  xi_isp = xik; eta_isp = etak; exit
@@ -147,7 +151,7 @@
     xi1 = xi_isp / xi_width * 2; eta1 = eta_isp / eta_width * 2
     iproc_xi = floor((xi1+1)/2 * nproc)
     iproc_eta = floor((eta1+1)/2 * nproc)
-    slice_number(isp) = nproc * nproc * (chunk_isp-1) + nproc * iproc_eta + iproc_xi
+    slice_number(isp) = addressing(chunk_isp, iproc_xi, iproc_eta)
   enddo
 
   end subroutine find_regular_grid_slice_number
@@ -156,11 +160,12 @@
 
 ! how about using single precision for the iterations?
   subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
-                                   NEX_XI,nspec,xstore,ystore,zstore,ibool, &
+                                   nspec,xstore,ystore,zstore,ibool, &
                                    xigll,yigll,zigll,ispec_reg, &
                                    hxir_reg,hetar_reg,hgammar_reg)
 
   use constants_solver
+  use specfem_par, only: myrank, NEX_XI
 
   implicit none
 
@@ -183,7 +188,7 @@
   type (kl_reg_grid_variables), intent(in) :: GRID
 
   ! simulation geometry
-  integer, intent(in) :: NEX_XI, nspec
+  integer, intent(in) :: nspec
   real(kind=CUSTOM_REAL), dimension(*), intent(in) :: xstore,ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,*), intent(in) :: ibool
 
@@ -240,12 +245,12 @@
       if (isp <= GRID%npts_before_layer(ilayer+1)) exit
     enddo
 
-    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlat(ilayer)
-    ilon = (isp - GRID%npts_before_layer(ilayer) - 1) - ilat * GRID%nlat(ilayer)
+    ilat = (isp - GRID%npts_before_layer(ilayer) - 1) / GRID%nlon(ilayer)
+    ilon = (isp - GRID%npts_before_layer(ilayer)) - ilat * GRID%nlon(ilayer)
 
     ! (lat,lon,radius) for isp point
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
-    lon = KL_REG_MIN_LON + ilon * GRID%dlon * GRID%ndoubling(ilayer)
+    lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
     ! convert radius to meters and then scale
     radius = GRID%rlayer(ilayer) * 1000.0 / R_EARTH
     ! (x,y,z) for isp point
@@ -283,9 +288,13 @@
           enddo
         enddo
       enddo
-
     enddo
-    if (.not. locate_target) stop 'error in point_source() array'
+
+    if (.not. locate_target) then
+      print *, 'Looking for point', isp, ilayer, ilat, ilon, lat, lon, &
+               x_target, y_target, z_target, myrank
+      call exit_MPI(myrank, 'error in point_source() array')
+    endif
 
     xi = xigll(ix_in)
     eta = yigll(iy_in)
@@ -303,7 +312,7 @@
     ! iterate to solve the nonlinear system
     do iter_loop = 1,NUM_ITER
 
-      ! recompute jacobian for the new point
+      ! recompute Jacobian for the new point
       call recompute_jacobian(xelm,yelm,zelm, xi,eta,gamma, x,y,z, &
                               xix,xiy,xiz, etax,etay,etaz, gammax,gammay,gammaz)
 
@@ -340,7 +349,7 @@
 
     enddo
 
-    ! DEBUG: recompute jacobian for the new point (can be commented after debug)
+    ! DEBUG: recompute Jacobian for the new point (can be commented after debug)
     !call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
     !dist_final(ipoint)=dsqrt((x_target-x)**2+(y_target-y)**2+(z_target-z)**2)
 
@@ -492,5 +501,7 @@
      stop 'chunk number k < 6'
   endif
 
+  xi = EPS * nint(xi / EPS)
+  eta = EPS * nint(eta / EPS)
   end subroutine chunk_map
 

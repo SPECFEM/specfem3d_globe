@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -24,6 +24,10 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
+
+module write_seismograms_mod
+
+contains
 
   subroutine write_seismograms()
 
@@ -146,7 +150,6 @@
   character(len=256) :: sisname
   ! timing
   double precision, external :: wtime
-  ! todo: only needed for asdf output but I am passing this around
   type(asdf_event) :: asdf_container
 
   ! allocates single station seismogram
@@ -183,7 +186,7 @@
       endif
     endif
 
-   ! initializes the asdf data structure by allocating arrays
+   ! initializes the ASDF data structure by allocating arrays
    if (OUTPUT_SEISMOS_ASDF) then
       total_seismos_local = 0
       do irec_local = 1, nrec_local
@@ -206,15 +209,15 @@
       one_seismogram = seismograms(:,irec_local,:)
 
       ! write this seismogram
-      ! asdf data structure is passed as an argument
+      ! ASDF data structure is passed as an argument
       call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
     enddo
 
-    ! write asdf container to the file
+    ! write ASDF container to the file
     if (OUTPUT_SEISMOS_ASDF) then
       call synchronize_all()
       call write_asdf(asdf_container)
-      ! deallocate the contanier
+      ! deallocate the container
       call close_asdf_data(asdf_container, total_seismos_local)
     endif
 
@@ -284,7 +287,7 @@
       ! loop on all the slices
       do iproc = 0,NPROCTOT_VAL-1
 
-       ! communicates only with processes which contain local receivers (to minimize mpi chatter)
+       ! communicates only with processes which contain local receivers (to minimize MPI chatter)
        if( islice_num_rec_local(iproc) == 0 ) cycle
 
        ! receive except from proc 0, which is me and therefore I already have this value
@@ -313,9 +316,7 @@
 
            total_seismos = total_seismos + 1
            ! write this seismogram
-!! DK DK added this temporarily to suppress a warning
-!! DK DK and contacte Matthieu about this           call write_one_seismogram(one_seismogram,irec,irec_local)
-           call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container) !! DK DK last argument is fictitious
+           call write_one_seismogram(one_seismogram,irec,irec_local)
 
          enddo
        endif
@@ -401,7 +402,7 @@
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
-  type(asdf_event) :: asdf_container
+  type(asdf_event), optional :: asdf_container
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
@@ -509,7 +510,7 @@
 
     ! ASDF output format
     if(OUTPUT_SEISMOS_ASDF) &
-      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation)
+      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation,phi)
 
   enddo ! do iorientation
 
@@ -639,3 +640,5 @@
   if (DT <= 0.001d0) bic = 'FX'
 
  end subroutine band_instrument_code
+
+end module write_seismograms_mod

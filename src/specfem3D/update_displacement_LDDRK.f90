@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: alpha,beta
 
-  ! current runge-kutta coefficients
+  ! current Runge-Kutta coefficients
   alpha = ALPHA_LDDRK(istage)
   beta = BETA_LDDRK(istage)
 
@@ -118,7 +118,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: alpha,beta
 
-  ! current runge-kutta coefficients
+  ! current Runge-Kutta coefficients
   alpha = ALPHA_LDDRK(istage)
   beta = BETA_LDDRK(istage)
 
@@ -148,17 +148,17 @@
 
   real(kind=CUSTOM_REAL),intent(in) :: deltat
 
-  ! runge-kutta coefficients
+  ! Runge-Kutta coefficients
   real(kind=CUSTOM_REAL),intent(in) :: alpha,beta
 
   ! local parameters
   integer :: i
 
-  ! runge-kutta scheme update
+  ! Runge-Kutta scheme update
 
   ! note: splitting the do-loops seems to be slightly more effective
 
-  ! low-memory runge-kutta: intermediate storage wavefields
+  ! low-memory Runge-Kutta: intermediate storage wavefields
   do i=1,NGLOB
     veloc_lddrk(i) =  alpha * veloc_lddrk(i) + deltat * accel(i)
     displ_lddrk(i) =  alpha * displ_lddrk(i) + deltat * veloc(i)
@@ -192,7 +192,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: alpha,beta
 
-  ! current runge-kutta coefficients
+  ! current Runge-Kutta coefficients
   alpha = ALPHA_LDDRK(istage)
   beta = BETA_LDDRK(istage)
 
@@ -226,7 +226,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: alpha,beta
 
-  ! current runge-kutta coefficients
+  ! current Runge-Kutta coefficients
   alpha = ALPHA_LDDRK(istage)
   beta = BETA_LDDRK(istage)
 
@@ -263,19 +263,19 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: displ_lddrk,veloc_lddrk
 
   real(kind=CUSTOM_REAL),intent(in) :: deltat
-  ! runge-kutta coefficients
+  ! Runge-Kutta coefficients
   real(kind=CUSTOM_REAL),intent(in) :: alpha,beta
 
   ! local parameters
   integer :: i
 
-  ! low-memory runge-kutta scheme
+  ! low-memory Runge-Kutta scheme
 
   if(FORCE_VECTORIZATION_VAL) then
 
     ! note: splitting the do-loops seems to be slightly more effective
 
-    ! low-memory runge-kutta: intermediate storage wavefields
+    ! low-memory Runge-Kutta: intermediate storage wavefields
     do i=1,NGLOB * NDIM
       veloc_lddrk(i,1) = alpha * veloc_lddrk(i,1) + deltat * accel(i,1)
       displ_lddrk(i,1) = alpha * displ_lddrk(i,1) + deltat * veloc(i,1)
@@ -291,7 +291,7 @@
     ! non-vectorized loops
 
     do i=1,NGLOB
-      ! low-memory runge-kutta: intermediate storage wavefields
+      ! low-memory Runge-Kutta: intermediate storage wavefields
       veloc_lddrk(:,i) = alpha * veloc_lddrk(:,i) + deltat * accel(:,i)
       displ_lddrk(:,i) = alpha * displ_lddrk(:,i) + deltat * veloc(:,i)
       ! updates wavefields

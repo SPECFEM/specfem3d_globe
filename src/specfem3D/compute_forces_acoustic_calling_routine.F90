@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: time
+  real(kind=CUSTOM_REAL) :: timeval
   ! non blocking MPI
   ! iphase: iphase = 1 is for computing outer elements in the outer_core,
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
@@ -51,15 +51,15 @@
   ! current simulated time
   if(USE_LDDRK)then
     if(CUSTOM_REAL == SIZE_REAL) then
-      time = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
+      timeval = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
     else
-      time = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
+      timeval = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
     endif
   else
     if(CUSTOM_REAL == SIZE_REAL) then
-      time = sngl((dble(it-1)*DT-t0)*scale_t_inv)
+      timeval = sngl((dble(it-1)*DT-t0)*scale_t_inv)
     else
-      time = (dble(it-1)*DT-t0)*scale_t_inv
+      timeval = (dble(it-1)*DT-t0)*scale_t_inv
     endif
   endif
 
@@ -85,7 +85,7 @@
       ! on CPU
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
-        call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+        call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
                                            NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
                                            A_array_rotation,B_array_rotation, &
                                            A_array_rotation_lddrk,B_array_rotation_lddrk, &
@@ -93,7 +93,7 @@
                                            div_displ_outer_core,phase_is_inner)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
-        call compute_forces_outer_core(time,deltat,two_omega_earth, &
+        call compute_forces_outer_core(timeval,deltat,two_omega_earth, &
                                        NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
@@ -103,14 +103,14 @@
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
-      call compute_forces_outer_core_cuda(Mesh_pointer,iphase,time,1)
+      call compute_forces_outer_core_cuda(Mesh_pointer,iphase,timeval,1)
 
-      ! initiates asynchronuous mpi transfer
+      ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_scalar_outer_core,IREGION_OUTER_CORE,1)
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                            buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
@@ -189,14 +189,14 @@
         ! sends accel values to corresponding MPI interface neighbors
 
         ! preparation of the contribution between partitions using MPI
-        ! transfers mpi buffers to CPU
-        ! note: for asynchronuous transfers, this transfers boundary region to host asynchronously. The
+        ! transfers MPI buffers to CPU
+        ! note: for asynchronous transfers, this transfers boundary region to host asynchronously. The
         !       MPI-send is done after compute_forces_outer_core_cuda,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_pot_from_device(Mesh_pointer,buffer_send_scalar_outer_core,1)
 
         if( .not. GPU_ASYNC_COPY ) then
-          ! for synchronuous transfers, sending over mpi can directly proceed
+          ! for synchronous transfers, sending over MPI can directly proceed
           ! outer core
           call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                              buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
@@ -223,14 +223,14 @@
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           !
-          ! transfers mpi buffers onto GPU
+          ! transfers MPI buffers onto GPU
           call transfer_boundarypot_to_device(Mesh_pointer,NPROCTOT_VAL,buffer_recv_scalar_outer_core, &
                                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                               request_recv_scalar_oc, &
                                               IREGION_OUTER_CORE,1)
         endif
 
-        ! waits for mpi send/receive requests to be completed and assembles values
+        ! waits for MPI send/receive requests to be completed and assembles values
         call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                                             buffer_recv_scalar_outer_core, &
                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
@@ -255,7 +255,7 @@
 
   ! time schemes
   if( USE_LDDRK ) then
-    ! runge-kutta scheme
+    ! Runge-Kutta scheme
     call update_veloc_acoustic_lddrk()
   else
     ! Newmark time scheme
@@ -366,12 +366,12 @@
       ! includes FORWARD_OR_ADJOINT == 3
       call compute_forces_outer_core_cuda(Mesh_pointer,iphase,b_time,3)
 
-      ! initiates asynchronuous mpi transfer
+      ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_scalar_outer_core,IREGION_OUTER_CORE,3)
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
@@ -457,14 +457,14 @@
         ! sends accel values to corresponding MPI interface neighbors
 
         ! preparation of the contribution between partitions using MPI
-        ! transfers mpi buffers to CPU
-        ! note: for asynchronuous transfers, this transfers boundary region to host asynchronously. The
+        ! transfers MPI buffers to CPU
+        ! note: for asynchronous transfers, this transfers boundary region to host asynchronously. The
         !       MPI-send is done after compute_forces_outer_core_cuda,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_pot_from_device(Mesh_pointer,b_buffer_send_scalar_outer_core,3)
 
         if( .not. GPU_ASYNC_COPY ) then
-          ! for synchronuous transfers, sending over mpi can directly proceed
+          ! for synchronous transfers, sending over MPI can directly proceed
           ! outer core
           call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
@@ -492,14 +492,14 @@
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           !
-          ! transfers mpi buffers onto GPU
+          ! transfers MPI buffers onto GPU
           call transfer_boundarypot_to_device(Mesh_pointer,NPROCTOT_VAL,b_buffer_recv_scalar_outer_core, &
                                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                               b_request_recv_scalar_oc, &
                                               IREGION_OUTER_CORE,3)
         endif
 
-        ! waits for mpi send/receive requests to be completed and assembles values
+        ! waits for MPI send/receive requests to be completed and assembles values
         call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
                                             b_buffer_recv_scalar_outer_core, &
                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
@@ -522,7 +522,7 @@
 
   ! time schemes
   if( USE_LDDRK ) then
-    ! runge-kutta scheme
+    ! Runge-Kutta scheme
     call update_veloc_acoustic_lddrk_backward()
   else
     ! Newmark time scheme

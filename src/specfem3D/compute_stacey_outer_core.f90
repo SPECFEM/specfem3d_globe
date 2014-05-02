@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
-  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           tests with intermediate storage (every 8 step) and/or asynchronous
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
@@ -324,7 +324,7 @@
   !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
-  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           tests with intermediate storage (every 8 step) and/or asynchronous
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@
     rspl,espl,espl2,nspl,ibathy_topo, &
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
+  use write_seismograms_mod, only: band_instrument_code
   implicit none
 
   integer,intent(in) :: nspec,nglob
@@ -240,7 +241,7 @@
 ! In case that the same station and network name appear twice (or more times) in the STATIONS
 ! file, problems occur, as two (or more) seismograms are written (with mode
 ! "append") to a file with same name. The philosophy here is to accept multiple
-! appearences and to just add a count to the station name in this case.
+! appearances and to just add a count to the station name in this case.
     allocate(station_duplet(nrec),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating station_duplet array')
 
@@ -496,7 +497,7 @@
 
   if( USE_DISTANCE_CRITERION ) deallocate(xyz_midpoints)
 
-  ! create RECORDHEADER file with usual format for normal-mode codes
+  ! create RECORDHEADERS file with usual format for normal-mode codes
   if(myrank == 0) then
 
     ! get the base pathname for output files
@@ -670,7 +671,7 @@
         ! impose receiver exactly at the surface
         if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
-        ! recompute jacobian for the new point
+        ! recompute Jacobian for the new point
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
@@ -859,7 +860,7 @@
         nu_found(:,:,nrec_found) = nu(:,:,irec)
         epidist_found(nrec_found) = epidist(irec)
 
-        ! writes out actual receiver location to vtk file
+        ! writes out actual receiver location to VTK file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
     enddo

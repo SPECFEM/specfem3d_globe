@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@
   logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY,ATTENUATION_1D_WITH_3D_STORAGE
   integer :: NT_DUMP_ATTENUATION
 
-  ! ldd runge-kutta time scheme
+  ! LDD Runge-Kutta time scheme
   logical :: USE_LDDRK,INCREASE_CFL_FOR_LDDRK
   double precision :: RATIO_BY_WHICH_TO_INCREASE_IT
 
@@ -95,7 +95,7 @@
   logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY, &
              APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
-  ! gpu simulations
+  ! GPU simulations
   logical :: GPU_MODE
 
   ! adios file output

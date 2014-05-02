@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@
   ! ======================
 
 
-  ! find the coordinates of 9 nodes for the bottom surface element to compute the jacobian if needed
+  ! find the coordinates of 9 nodes for the bottom surface element to compute the Jacobian if needed
   xelm2(1)=xstore(1,1,1)
   yelm2(1)=ystore(1,1,1)
   zelm2(1)=zstore(1,1,1)
@@ -146,7 +146,7 @@
     enddo
   endif
 
-! determine if the elements are on the discontinuity, and calculate the boundary jaocobian if needed
+! determine if the elements are on the discontinuity, and calculate the boundary Jacobian if needed
   if (.not. is_superbrick) then
 
 ! Moho top

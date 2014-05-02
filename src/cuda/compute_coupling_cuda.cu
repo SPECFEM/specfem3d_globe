@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 0
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and University of Pau / CNRS / INRIA
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -94,7 +95,7 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
     // (normal points outwards of acoustic element)
     displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // get global point number
@@ -212,7 +213,7 @@ __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
     // (normal points outwards of acoustic element)
     displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // get global point number
@@ -341,7 +342,7 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
       pressure = - RHO_TOP_OC * accel_outer_core[iglob_oc];
     }
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // update fluid acceleration/pressure
@@ -472,7 +473,7 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
       pressure = - RHO_BOTTOM_OC * accel_outer_core[iglob_oc];
     }
 
-    // formulation with generalized potential: gets associated, weighted jacobian
+    // formulation with generalized potential: gets associated, weighted Jacobian
     weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
     // update fluid acceleration/pressure

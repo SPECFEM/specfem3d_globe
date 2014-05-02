@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 !! \param nglob Number of mesh points
 !! \param idoubling Array of information on every mesh point
 !! \param ibool Array of information on every mesh point
-!! \param iregion_code The region the absorbing conditon is written for. Check
+!! \param iregion_code The region the absorbing condition is written for. Check
 !!                     constant.h files to see what these regions are.
 !! \param xstore Array with the x coordinates of the mesh points
 !! \param ystore Array with the y coordinates of the mesh points
@@ -129,7 +129,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
@@ -783,7 +783,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                    local_dim, region_name,      &
                                    STRINGIFY_VAR(normal_top))
 
-  ! jacobians
+  ! Jacobians
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
   call define_adios_global_array1D(adios_group, group_size_inc, &
                                    local_dim, region_name,      &
@@ -876,7 +876,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(normal_top))
 
-  ! jacobians
+  ! Jacobians
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(jacobian2D_xmin))
@@ -988,7 +988,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   endif
 
   !---------------------------------------------------------
-  !--- mehsfiles arrays ------------------------------------
+  !--- meshfiles arrays ------------------------------------
   !---------------------------------------------------------
   ! uncomment for vp & vs model storage
   if( SAVE_MESH_FILES ) then
@@ -1058,7 +1058,7 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! scaling factors to re-dimensionalize units
@@ -1238,7 +1238,7 @@ end subroutine save_arrays_solver_meshfiles_adios
 !! \param nibool_interfaces
 !! \param ibool_interfaces
 !! \param nspec_inner Number of spectral elements in the inner core
-!! \param nspec_outer Number of spectral elemetns in the outer core
+!! \param nspec_outer Number of spectral elements in the outer core
 !! \param num_phase_ispec
 !! \param phase_ispec_inner
 !! \param num_colors_inner Number of colors for GPU computing in the inner core.
@@ -1293,7 +1293,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ints_to_reduce(1) = num_interfaces
@@ -1389,18 +1389,45 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   if( num_interfaces > 0 ) then
     call adios_write(handle, trim(region_name) // "max_nibool_interfaces", &
         max_nibool_interfaces, adios_err)
-    local_dim = num_interfaces_wmax
-    call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
-                                     local_dim, trim(region_name) // &
-                                     STRINGIFY_VAR(my_neighbours))
-    call write_adios_global_1d_array(handle, myrank, sizeprocs,       &
-                                     local_dim,  trim(region_name) // &
-                                     STRINGIFY_VAR(nibool_interfaces))
+    !local_dim = num_interfaces_wmax
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
+                                     !local_dim, trim(region_name) // &
+                                     !STRINGIFY_VAR(my_neighbours))
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs,       &
+                                     !local_dim,  trim(region_name) // &
+                                     !STRINGIFY_VAR(nibool_interfaces))
 
-    local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
-    call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
-                                     local_dim, trim(region_name) // &
-                                     STRINGIFY_VAR(ibool_interfaces))
+    !local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs,      &
+                                     !local_dim, trim(region_name) // &
+                                     !STRINGIFY_VAR(ibool_interfaces))
+
+    call adios_write(handle, trim(region_name) // "my_neighbours/local_dim", &
+                     num_interfaces, adios_err)
+    call adios_write(handle, trim(region_name) // "my_neighbours/global_dim", &
+                     num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "my_neighbours/offset", &
+                     num_interfaces_wmax*myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "my_neighbours/array", &
+                     my_neighbours, adios_err)
+
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/local_dim", &
+                     num_interfaces, adios_err)
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/global_dim", &
+                     num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/offset", &
+                     num_interfaces_wmax*myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "nibool_interfaces/array", &
+                     nibool_interfaces, adios_err)
+
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/local_dim", &
+                     max_nibool_interfaces * num_interfaces, adios_err)
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/global_dim", &
+                     max_nibool_interfaces_wmax * num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/offset", &
+                     max_nibool_interfaces_wmax * num_interfaces_wmax*myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "ibool_interfaces/array", &
+                     ibool_interfaces, adios_err)
   endif
 
   ! inner/outer elements
@@ -1412,9 +1439,17 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
                    num_phase_ispec, adios_err)
 
   if(num_phase_ispec > 0 ) then
-    local_dim = num_phase_ispec_wmax * 2
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                          trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
+    !local_dim = num_phase_ispec_wmax * 2
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+                          !trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/local_dim", &
+                     2 * num_phase_ispec, adios_err)
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/global_dim", &
+                     2 * num_phase_ispec_wmax * sizeprocs, adios_err)
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/offset", &
+                     2 * num_phase_ispec_wmax * myrank, adios_err)
+    call adios_write(handle, trim(region_name) // "phase_ispec_inner/array", &
+                     phase_ispec_inner, adios_err)
   endif
 
   ! mesh coloring
@@ -1424,9 +1459,18 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
     call adios_write(handle, trim(region_name) // "num_colors_inner", &
                      nspec_inner, adios_err)
 
-    local_dim = num_colors_outer_wmax + num_colors_inner_wmax
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                            trim(region_name) // STRINGIFY_VAR(num_elem_colors))
+    !local_dim = num_colors_outer_wmax + num_colors_inner_wmax
+    !call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+                            !trim(region_name) // STRINGIFY_VAR(num_elem_colors))
+
+    call adios_write(handle, trim(region_name) // "num_elem_colors/local_dim", &
+                     (num_colors_inner + num_colors_outer), adios_err)
+     call adios_write(handle, trim(region_name) // "num_elem_colors/global_dim", &
+                      (num_colors_inner_wmax + num_colors_outer_wmax)* sizeprocs, adios_err)
+     call adios_write(handle, trim(region_name) // "num_elem_colors/offset", &
+                      (num_colors_inner_wmax + num_colors_outer_wmax)* myrank, adios_err)
+     call adios_write(handle, trim(region_name) // "num_elem_colors/array", &
+                      num_elem_colors, adios_err)
   endif
 
   !--- Reset the path to zero and perform the actual write to disk
@@ -1480,7 +1524,7 @@ subroutine save_arrays_solver_boundary_adios()
 
   integer :: sizeprocs
 
-  ! number of mpi processes
+  ! number of MPI processes
   call world_size(sizeprocs)
 
   ! first check the number of surface elements are the same for Moho, 400, 670

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -554,7 +554,7 @@
   double precision epa(14,47),ra(47),dcori(47),ri(47)
   double precision corpar(21,47)
   double precision aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
-  character(len=80) null
+  character(len=80) nullval
   character(len=150) Adrem119
 
      ifanis = 1
@@ -562,7 +562,7 @@
 
      call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
      open(unit=13,file=Adrem119,status='old',action='read')
-     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
+     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
 
      if(kiti == 0) read(13,"(20a4)",end = 77) idum1
      read(13,"(20a4)",end = 77) idum2
@@ -682,7 +682,7 @@
   sintwothetasq = sintwotheta * sintwotheta
   sintwophisq = sintwophi * sintwophi
 
-! recompute 21 anisotropic coefficients for full anisotropoc model using Mathematica
+! recompute 21 anisotropic coefficients for full anisotropic model using Mathematica
 
 c11 = d22*sinphifour - 2.*sintwophi*sinphisq*(d26*costheta + d24*sintheta) - &
       2.*cosphisq*sintwophi*(d16*costhetasq*costheta + &

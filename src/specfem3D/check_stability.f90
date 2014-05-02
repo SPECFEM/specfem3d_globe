@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@
   ! timer MPI
   double precision :: tCPU
   double precision, external :: wtime
-  double precision :: time
+  double precision :: timeval
   double precision :: t_remain,t_total
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
@@ -196,11 +196,11 @@
     iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
 
     ! current time (in seconds)
-    time = dble(it-1)*DT - t0
+    timeval = dble(it-1)*DT - t0
 
     ! user output
     write(IMAIN,*) 'Time step # ',it
-    write(IMAIN,*) 'Time: ',sngl((time)/60.d0),' minutes'
+    write(IMAIN,*) 'Time: ',sngl((timeval)/60.d0),' minutes'
 
     ! rescale maximum displacement to correct dimensions
     Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
@@ -401,7 +401,7 @@
   ! timer MPI
   double precision :: tCPU
   double precision, external :: wtime
-  double precision :: time
+  double precision :: timeval
   integer :: ihours,iminutes,iseconds,int_tCPU
 
   integer :: it_run,nstep_run
@@ -457,11 +457,11 @@
     ! no further time estimation since only partially computed solution yet...
 
     ! current time (in seconds)
-    time = dble(it-1)*DT - t0
+    timeval = dble(it-1)*DT - t0
 
     ! user output
     write(IMAIN,*) 'Time step for back propagation # ',it
-    write(IMAIN,*) 'Time: ',sngl((time)/60.d0),' minutes'
+    write(IMAIN,*) 'Time: ',sngl((timeval)/60.d0),' minutes'
 
     ! rescale maximum displacement to correct dimensions
     b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)

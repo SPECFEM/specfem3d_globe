@@ -3,12 +3,12 @@
  !
  !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
  !          --------------------------------------------------
- !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
+ ! 
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
  !                        Princeton University, USA
- !             and University of Pau / CNRS / INRIA, France
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 #include <unistd.h>
 using namespace std;
 
-// vtk includes
+// VTK includes
 #include <vtkCellArray.h>
 #include <vtkProperty.h>
 #include <vtkDataSetMapper.h>
@@ -187,7 +187,7 @@ class VTKmesh{
 
 class VTKState {
   public:
-    // vtk rendering
+    // VTK rendering
     Visualization vtk;
     
     // meshes
@@ -198,7 +198,7 @@ class VTKState {
     vtkTimerLog* timer;  
 };
 
-// global vtk state variable
+// global VTK state variable
 static VTKState fs;
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -481,7 +481,7 @@ extern "C"
 void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
 
   // user output
-  printf(" vtk window initialization\n");
+  printf(" VTK window initialization\n");
 
   // initializes window
   //
@@ -572,7 +572,7 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
   // timer
   fs.timer = vtkTimerLog::New();
   
-  //printf("      initialized vtk window successfully\n");
+  //printf("      initialized VTK window successfully\n");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -620,7 +620,7 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   int id1,id2,id3,id4;
   
   // user output
-  //printf("    prepare vtk freesurface...\n");
+  //printf("    prepare VTK freesurface...\n");
 
   // initializes
   SHOW_FREESURFACE = 1;
@@ -762,7 +762,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   static int debug_file = 0;
   
   // user output
-  //printf("    prepare vtk wavefield ...\n");
+  //printf("    prepare VTK wavefield ...\n");
 
   // initializes
   SHOW_VOLUMEDATA = 1;

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
   ! get MPI starting time
   time_start = wtime()
 
-  ! user output infos
+  ! user output info
   call prepare_timerun_user_output()
 
   ! sets up mass matrices
@@ -76,7 +76,7 @@
   !          this makes indexing and timing easier to match with adjoint wavefields indexing.
   call read_forward_arrays_startrun()
 
-  ! prepares stacey boundary arrays for re-construction of wavefields
+  ! prepares Stacey boundary arrays for re-construction of wavefields
   if( ABSORBING_CONDITIONS ) call prepare_timerun_stacey()
 
   ! prepares noise simulations
@@ -85,7 +85,7 @@
   ! prepares GPU arrays
   if( GPU_MODE ) call prepare_timerun_GPU()
 
-  ! prepares vtk window visualization
+  ! prepares VTK window visualization
   if( VTK_MODE ) call prepare_vtk_window()
 
   ! synchronize all the processes
@@ -118,11 +118,11 @@
     !     global simulations:
     !       isotropic models              ~ dt = 3.1857107305545455e-05
     !       transverse isotropic models   ~ dt = 3.7492335549202518e-05
-    !                                            4.2252082718299598e-05 w/ attenuation (intel xeon @ 2.67GHz)
-    !                                            1.0069202789238270e-04 w/ simulation_type==3 (intel xeon @ 2.67GHz)
+    !                                            4.2252082718299598e-05 w/ attenuation (Intel Xeon @ 2.67GHz)
+    !                                            1.0069202789238270e-04 w/ simulation_type==3 (Intel Xeon @ 2.67GHz)
     !     regional simulations:
-    !       transverse isotropic models   ~ dt = 4.3039939919998860e-05 w/ attenuation (intel xeon @ 2.67GHz)
-    !                                            7.6099242919530619e-05 (intel xeon @ 2.27GHz)
+    !       transverse isotropic models   ~ dt = 4.3039939919998860e-05 w/ attenuation (Intel Xeon @ 2.67GHz)
+    !                                            7.6099242919530619e-05 (Intel Xeon @ 2.27GHz)
     !
     !  total time per time step:
     !     T_total = dt * total_number_of_elements
@@ -512,7 +512,7 @@
   endif
 
   ! only output corners
-  ! note: for noise tomography, must NOT be coarse (have to be saved on all gll points)
+  ! note: for noise tomography, must NOT be coarse (have to be saved on all GLL points)
   if( MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0 ) then
     ! checks setup
     if(NGLLX /= NGLLY) &
@@ -529,7 +529,7 @@
   ! checks exact number of points nmovie_points
   call movie_surface_count_points()
 
-  ! those arrays are not neccessary for noise tomography, so only allocate them in MOVIE_SURFACE case
+  ! those arrays are not necessary for noise tomography, so only allocate them in MOVIE_SURFACE case
   if( MOVIE_SURFACE ) then
     ! writes out movie point locations to file
     call write_movie_surface_mesh()
@@ -605,9 +605,10 @@
   call movie_volume_count_points()
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3D movie')
 
-  call write_movie_volume_mesh()
+  call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
+                                          muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -699,23 +700,23 @@
     ! distinguish between single and double precision for reals
     if (SIMULATION_TYPE == 1) then
       if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
+        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
       else
-        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
+        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
       endif
     else
       if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
+        two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
       else
-        two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
+        two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
       endif
     endif
 
     if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
-        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
+        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
       else
-        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
+        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
       endif
     endif
   else
@@ -1270,7 +1271,7 @@
     endif
   endif
 
-  ! runge-kutta time scheme
+  ! Runge-Kutta time scheme
   if( USE_LDDRK )then
 
     ! checks
@@ -1998,7 +1999,7 @@
   endif
 
   ! prepares MPI interfaces
-  if(myrank == 0 ) write(IMAIN,*) "  loading mpi interfaces"
+  if(myrank == 0 ) write(IMAIN,*) "  loading MPI interfaces"
 
   call prepare_mpi_buffers_device(Mesh_pointer, &
                                 num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -2025,9 +2026,9 @@
   if ( OCEANS_VAL ) then
     if(myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
 
-    ! prepares gpu arrays for coupling with oceans
+    ! prepares GPU arrays for coupling with oceans
     !
-    ! note: handling of coupling on gpu is slightly different than in CPU routine to avoid using a mutex
+    ! note: handling of coupling on GPU is slightly different than in CPU routine to avoid using a mutex
     !          to update acceleration; tests so far have shown, that with a simple mutex implementation
     !          the results differ between successive runs (probably still due to some race conditions?)
     !          here we now totally avoid mutex usage and still update each global point only once
@@ -2172,7 +2173,7 @@
                                  num_elem_colors_inner_core)
 
   ! transfer forward and backward fields to device with initial values
-  if(myrank == 0 ) write(IMAIN,*) "  transfering initial wavefield"
+  if(myrank == 0 ) write(IMAIN,*) "  transferring initial wavefield"
 
   call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                                    Mesh_pointer)
@@ -2239,7 +2240,7 @@
   real, dimension(:),allocatable :: free_x,free_y,free_z
   integer, dimension(:,:),allocatable :: free_conn
   integer, dimension(:),allocatable :: free_perm
-  ! gather arrays for multi-mpi simulations
+  ! gather arrays for multi-MPI simulations
   real, dimension(:),allocatable :: free_x_all,free_y_all,free_z_all
   integer, dimension(:,:),allocatable :: free_conn_all
   integer, dimension(:),allocatable :: free_conn_offset_all,free_conn_nspec_all
@@ -2251,13 +2252,13 @@
   real, dimension(:),allocatable :: vol_x,vol_y,vol_z
   integer, dimension(:,:),allocatable :: vol_conn
   integer, dimension(:),allocatable :: vol_perm
-  ! gather arrays for multi-mpi simulations
+  ! gather arrays for multi-MPI simulations
   real, dimension(:),allocatable :: vol_x_all,vol_y_all,vol_z_all
   integer, dimension(:,:),allocatable :: vol_conn_all
   integer, dimension(:),allocatable :: vol_conn_offset_all,vol_conn_nspec_all
   integer :: vol_nspec_all,ispec_start,ispec_end
-  real(kind=CUSTOM_REAL),dimension(1):: dummy
-  integer,dimension(1):: dummy_i
+  real,dimension(1) :: dummy
+  integer,dimension(1) :: dummy_i
 
   real(kind=CUSTOM_REAL) :: x,y,z
 
@@ -2271,7 +2272,7 @@
   ! user output
   if( myrank == 0 ) then
     print*
-    print*,"vtk:"
+    print*,"VTK:"
   endif
   call synchronize_all()
 
@@ -2281,7 +2282,7 @@
   ! adds source
   if( myrank == 0 ) then
     ! user output
-    print*,"  vtk source sphere:"
+    print*,"  VTK source sphere:"
     call prepare_vtksource(vtkdata_source_x,vtkdata_source_y,vtkdata_source_z)
   endif
   call synchronize_all()
@@ -2300,7 +2301,7 @@
   if( VTK_SHOW_FREESURFACE ) then
     ! user output
     if( myrank == 0 ) then
-      print*,"  vtk free surface:"
+      print*,"  VTK free surface:"
       print*,"    free surface elements    : ",NSPEC_TOP
     endif
 
@@ -2376,7 +2377,7 @@
             id2 = free_perm(ibool_crust_mantle(i+1,j,k,ispec))
             id3 = free_perm(ibool_crust_mantle(i+1,j+1,k,ispec))
             id4 = free_perm(ibool_crust_mantle(i,j+1,k,ispec))
-            ! note: indices for vtk start at 0
+            ! note: indices for VTK start at 0
             inum = inum+1
             free_conn(1,inum) = id1 - 1
             free_conn(2,inum) = id2 - 1
@@ -2401,7 +2402,7 @@
         id2 = free_perm(ibool_crust_mantle(NGLLX,1,NGLLZ,ispec))
         id3 = free_perm(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec))
         id4 = free_perm(ibool_crust_mantle(1,NGLLY,NGLLZ,ispec))
-        ! note: indices for vtk start at 0
+        ! note: indices for VTK start at 0
         inum = inum + 1
         free_conn(1,inum) = id1 - 1
         free_conn(2,inum) = id2 - 1
@@ -2409,20 +2410,20 @@
         free_conn(4,inum) = id4 - 1
       enddo
     endif
-    if( minval(free_conn(:,:)) < 0) stop 'error vtk free surface point connectivity'
+    if( minval(free_conn(:,:)) < 0) stop 'error VTK free surface point connectivity'
 
-    ! gathers data from all mpi processes
+    ! gathers data from all MPI processes
     if( NPROC > 1 ) then
-      ! multiple mpi processes
+      ! multiple MPI processes
 
       ! user output
-      !if( myrank == 0 ) print*,"    gathering all mpi infos... "
+      !if( myrank == 0 ) print*,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(free_np,free_np_all)
       if( myrank == 0 ) print*,"    all freesurface points: ",free_np_all
 
-      ! gathers point infos
+      ! gathers point info
       allocate(free_points_all(NPROC),stat=ier)
       if( ier /= 0 ) stop 'error allocating arrays'
 
@@ -2479,13 +2480,13 @@
       if( myrank == 0 ) then
         ! locations
         !if( myrank == 0 ) print*,"    locations..."
-        call gatherv_all_cr(free_x,free_np, &
+        call gatherv_all_r(free_x,free_np, &
                             free_x_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
-        call gatherv_all_cr(free_y,free_np, &
+        call gatherv_all_r(free_y,free_np, &
                             free_y_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
-        call gatherv_all_cr(free_z,free_np, &
+        call gatherv_all_r(free_z,free_np, &
                             free_z_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
 
@@ -2505,22 +2506,21 @@
           enddo
         enddo
 
-        !if( myrank == 0 ) print*,"    preparing vtk field..."
+        !if( myrank == 0 ) print*,"    preparing VTK field..."
 
-        ! adds free surface to vtk window
+        ! adds free surface to VTK window
         call prepare_vtkfreesurface(free_np_all,free_x_all,free_y_all,free_z_all, &
                                     free_nspec_all,free_conn_all)
 
       else
-        ! all other process just send data
-        ! locations
-        call gatherv_all_cr(free_x,free_np, &
+        ! all other process just send data locations
+        call gatherv_all_r(free_x,free_np, &
                             dummy,free_points_all,free_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(free_y,free_np, &
+        call gatherv_all_r(free_y,free_np, &
                             dummy,free_points_all,free_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(free_z,free_np, &
+        call gatherv_all_r(free_z,free_np, &
                             dummy,free_points_all,free_offset_all, &
                             1,NPROC)
         ! connectivity
@@ -2531,7 +2531,7 @@
       endif
     else
       ! serial run
-      ! creates vtk freesurface actor
+      ! creates VTK freesurface actor
       call prepare_vtkfreesurface(free_np,free_x,free_y,free_z, &
                                   free_nspec,free_conn)
 
@@ -2552,7 +2552,7 @@
   if( VTK_SHOW_VOLUME ) then
     ! user output
     if( myrank == 0 ) then
-      print*,"  vtk volume:"
+      print*,"  VTK volume:"
       print*,"    spectral elements    : ",NSPEC_CRUST_MANTLE
     endif
 
@@ -2626,7 +2626,7 @@
               id7 = vol_perm(ibool_crust_mantle(i+1,j+1,k+1,ispec))
               id8 = vol_perm(ibool_crust_mantle(i,j+1,k+1,ispec))
 
-              ! note: indices for vtk start at 0
+              ! note: indices for VTK start at 0
               inum = inum+1
               vol_conn(1,inum) = id1 - 1
               vol_conn(2,inum) = id2 - 1
@@ -2660,7 +2660,7 @@
         id7 = vol_perm(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec))
         id8 = vol_perm(ibool_crust_mantle(1,NGLLY,NGLLZ,ispec))
 
-        ! note: indices for vtk start at 0
+        ! note: indices for VTK start at 0
         vol_conn(1,ispec) = id1 - 1
         vol_conn(2,ispec) = id2 - 1
         vol_conn(3,ispec) = id3 - 1
@@ -2671,7 +2671,7 @@
         vol_conn(8,ispec) = id8 - 1
       enddo
     endif
-    if( minval(vol_conn(:,:)) < 0) stop 'error vtk volume point connectivity'
+    if( minval(vol_conn(:,:)) < 0) stop 'error VTK volume point connectivity'
 
     ! allocates local data array
     allocate(vtkdata(vol_np),stat=ier)
@@ -2679,18 +2679,18 @@
 
     vtkdata(:) = 0.0
 
-    ! gathers data from all mpi processes
+    ! gathers data from all MPI processes
     if( NPROC > 1 ) then
-      ! multiple mpi processes
+      ! multiple MPI processes
 
       ! user output
-      !if( myrank == 0 ) print*,"    gathering all mpi infos... "
+      !if( myrank == 0 ) print*,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(vol_np,vtkdata_numpoints_all)
       if( myrank == 0 ) print*,"    all volume points: ",vtkdata_numpoints_all
 
-      ! gathers point infos
+      ! gathers point info
       allocate(vtkdata_points_all(NPROC),stat=ier)
       if( ier /= 0 ) stop 'error allocating arrays'
 
@@ -2755,13 +2755,13 @@
       if( myrank == 0 ) then
         ! locations
         !if( myrank == 0 ) print*,"    locations..."
-        call gatherv_all_cr(vol_x,vol_np, &
+        call gatherv_all_r(vol_x,vol_np, &
                             vol_x_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
-        call gatherv_all_cr(vol_y,vol_np, &
+        call gatherv_all_r(vol_y,vol_np, &
                             vol_y_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
-        call gatherv_all_cr(vol_z,vol_np, &
+        call gatherv_all_r(vol_z,vol_np, &
                             vol_z_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
 
@@ -2781,22 +2781,22 @@
           enddo
         enddo
 
-        !if( myrank == 0 ) print*,"    preparing vtk field..."
+        !if( myrank == 0 ) print*,"    preparing VTK field..."
 
-        ! adds total volume wavefield to vtk window
+        ! adds total volume wavefield to VTK window
         call prepare_vtkfield(vtkdata_numpoints_all,vol_x_all,vol_y_all,vol_z_all, &
                               vol_nspec_all,vol_conn_all)
 
       else
         ! all other process just send data
         ! locations
-        call gatherv_all_cr(vol_x,vol_np, &
+        call gatherv_all_r(vol_x,vol_np, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(vol_y,vol_np, &
+        call gatherv_all_r(vol_y,vol_np, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROC)
-        call gatherv_all_cr(vol_z,vol_np, &
+        call gatherv_all_r(vol_z,vol_np, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROC)
         ! connectivity
@@ -2807,9 +2807,9 @@
 
     else
       ! serial run
-      !if( myrank == 0 ) print*,"    preparing vtk field..."
+      !if( myrank == 0 ) print*,"    preparing VTK field..."
 
-      ! adds volume wavefield to vtk window
+      ! adds volume wavefield to VTK window
       call prepare_vtkfield(vol_np,vol_x,vol_y,vol_z,vol_nspec,vol_conn)
     endif
 
@@ -2826,7 +2826,7 @@
   ! user output
   !if( myrank == 0 ) then
   !  print*
-  !  print*,"  vtk visualization preparation done"
+  !  print*,"  VTK visualization preparation done"
   !  print*
   !endif
 

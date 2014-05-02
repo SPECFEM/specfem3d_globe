@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'solver.EXACT_MASS_MATRIX_FOR_ROTATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
 
-  ! low-memory runge-kutta time scheme
+  ! low-memory Runge-Kutta time scheme
   call read_value_logical(USE_LDDRK, 'solver.USE_LDDRK', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: USE_LDDRK'
   call read_value_logical(INCREASE_CFL_FOR_LDDRK, 'solver.INCREASE_CFL_FOR_LDDRK', ierr)
@@ -259,7 +259,7 @@
   if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
 
   ! produces simulations compatible with old globe version 5.1.5
-  if( USE_VERSION_5_1_5 ) then
+  if( USE_OLD_VERSION_5_1_5_FORMAT ) then
     print*
     print*,'**************'
     print*,'using globe version 5.1.5 compatible simulation parameters'

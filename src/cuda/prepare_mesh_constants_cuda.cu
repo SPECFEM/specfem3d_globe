@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 0
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and University of Pau / CNRS / INRIA
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -162,7 +163,7 @@ void FC_FUNC_(prepare_constants_device,
     exit_on_error("NGLLX must be 5 for CUDA devices");
   }
 
-  // mpi process rank
+  // MPI process rank
   mp->myrank = *myrank_f;
 
   // sets constant arrays
@@ -296,10 +297,10 @@ void FC_FUNC_(prepare_constants_device,
     // for seismograms
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_station_seismo_field),
                                        NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
-    // for transfering values from GPU to CPU
+    // for transferring values from GPU to CPU
     if( GPU_ASYNC_COPY ){
-      // todo
-      // only pinned memory can handle memcpy calls asynchronuously
+      // TODO
+      // only pinned memory can handle memcpy calls asynchronously
       print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_station_seismo_field),
                                              NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
     }else{
@@ -347,7 +348,7 @@ void FC_FUNC_(prepare_constants_device,
 
     // temporary array to prepare extracted source array values
     if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronuously.
+      // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
       print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_adj_sourcearrays_slice),
                                              (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw)),6011);
     }else{
@@ -369,10 +370,10 @@ void FC_FUNC_(prepare_constants_device,
   mp->b_two_omega_earth = 0.f;
 
   // setup two streams, one for compute and one for host<->device memory copies
-  // uses pinned memory for asynchronuous data transfers
+  // uses pinned memory for asynchronous data transfers
   // compute stream
   cudaStreamCreate(&mp->compute_stream);
-  // copy stream (needed to transfer mpi buffers)
+  // copy stream (needed to transfer MPI buffers)
   cudaStreamCreate(&mp->copy_stream);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -461,7 +462,7 @@ void FC_FUNC_(prepare_fields_gravity_device,
     mp->minus_g_icb = *minus_g_icb;
     mp->minus_g_cmb = *minus_g_cmb;
 
-    // sets up gll weights cubed
+    // sets up GLL weights cubed
     setConst_wgll_cube(h_wgll_cube,mp);
 
     // prepares gravity arrays
@@ -957,15 +958,15 @@ void FC_FUNC_(prepare_mpi_buffers_device,
 
     size_mpi_buffer = NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle);
 
-    // allocates mpi buffer for exchange with cpu
+    // allocates MPI buffer for exchange with CPU
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_crust_mantle),size_mpi_buffer*sizeof(realw)),4004);
     if( mp->simulation_type == 3){
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_crust_mantle),size_mpi_buffer*sizeof(realw)),4004);
     }
 
-    // asynchronuous MPI buffer
+    // asynchronous MPI buffer
     if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned mpi-buffers.
+      // note: Allocate pinned MPI buffers.
       //       MPI buffers use pinned memory allocated by cudaMallocHost, which
       //       enables the use of asynchronous memory copies from host <-> device
       // send buffer
@@ -992,15 +993,15 @@ void FC_FUNC_(prepare_mpi_buffers_device,
 
     size_mpi_buffer = NDIM*(mp->max_nibool_interfaces_ic)*(mp->num_interfaces_inner_core);
 
-    // allocates mpi buffer for exchange with cpu
+    // allocates MPI buffer for exchange with CPU
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_inner_core),size_mpi_buffer*sizeof(realw)),4004);
     if( mp->simulation_type == 3){
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_inner_core),size_mpi_buffer*sizeof(realw)),4004);
     }
 
-    // asynchronuous MPI buffer
+    // asynchronous MPI buffer
     if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned mpi-buffers.
+      // note: Allocate pinned MPI buffers.
       //       MPI buffers use pinned memory allocated by cudaMallocHost, which
       //       enables the use of asynchronous memory copies from host <-> device
       // send buffer
@@ -1029,15 +1030,15 @@ void FC_FUNC_(prepare_mpi_buffers_device,
 
     size_mpi_buffer = (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core);
 
-    // allocates mpi buffer for exchange with cpu
+    // allocates MPI buffer for exchange with CPU
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core),size_mpi_buffer*sizeof(realw)),4004);
     if( mp->simulation_type == 3){
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_outer_core),size_mpi_buffer*sizeof(realw)),4004);
     }
 
-    // asynchronuous MPI buffer
+    // asynchronous MPI buffer
     if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned mpi-buffers.
+      // note: Allocate pinned MPI buffers.
       //       MPI buffers use pinned memory allocated by cudaMallocHost, which
       //       enables the use of asynchronous memory copies from host <-> device
       // send buffer
@@ -2287,7 +2288,7 @@ TRACE("prepare_cleanup_device");
   }
 
   //------------------------------------------
-  // mpi buffers
+  // MPI buffers
   //------------------------------------------
   if( mp->num_interfaces_crust_mantle > 0 ){
     cudaFree(mp->d_nibool_interfaces_crust_mantle);
@@ -2570,7 +2571,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_normal_ocean_load);
   }
 
-  // cleans up asychronuous streams
+  // cleans up asynchronous streams
   cudaStreamDestroy(mp->compute_stream);
   cudaStreamDestroy(mp->copy_stream);
 

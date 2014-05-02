@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -323,7 +323,7 @@
 
   ! Droux optimization:
   ! added this to create more balanced colors according to JJ Droux (1993)
-  ! note: this might not find an optimial solution.
+  ! note: this might not find an optimal solution.
   !          we will probably have to try a few times with increasing colors
   if( try_Droux_coloring ) then
     ! initializes fail-safe mechanism
@@ -497,7 +497,7 @@
   enddo
   maxval_count_ibool_inner = maxval(count_ibool)
 
-  ! user outupt
+  ! user output
   if( myrank == 0 ) then
     write(IMAIN,*) '     maximum valence (i.e. minimum possible nb of colors) for outer = ',maxval_count_ibool_outer
     write(IMAIN,*) '     maximum valence (i.e. minimum possible nb of colors) for inner = ',maxval_count_ibool_inner
@@ -546,7 +546,7 @@
   integer :: nb_tries_of_Droux_1993,last_ispec_studied
   integer :: ier
 
-  ! user outupt
+  ! user output
   if( myrank == 0 ) then
     write(IMAIN,*) '     balancing colors: Droux algorithm'
     write(IMAIN,*) '       initial number of outer element colors = ',nb_colors_outer_elements
@@ -733,7 +733,7 @@
   integer :: target_nb_elems_per_color,icolor_target
   integer :: ier
 
-  ! user outupt
+  ! user output
   if( myrank == 0 ) then
     write(IMAIN,*) '     balancing colors: simple algorithm'
     write(IMAIN,*) '       number of outer element colors = ',nb_colors_outer_elements

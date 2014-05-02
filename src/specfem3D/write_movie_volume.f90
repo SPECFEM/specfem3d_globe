@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -149,17 +149,27 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_mesh()
+!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
+!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+  subroutine write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
+                                          muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
 ! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
 ! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
   use specfem_par
   use specfem_par_crustmantle
-  use specfem_par_movie
+
   implicit none
 
-  ! local parametes
+  integer :: npoints_3dmovie
+  integer, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: num_ibool_3dmovie
+  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
+  logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
+
+  ! local parameters
   integer :: ipoints_3dmovie,ispecele,ispec,i,j,k
   integer :: iglob,iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
   integer :: n1,n2,n3,n4,n5,n6,n7,n8,iNIT
@@ -176,8 +186,9 @@
     iNIT = 1
   endif
 
-  ! loops over all elements
   ipoints_3dmovie = 0
+
+  ! loops over all elements
   do ispec = 1,NSPEC_CRUST_MANTLE
 
     do k = 1,NGLLZ,iNIT
@@ -323,8 +334,7 @@
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
-    muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
 
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
 
@@ -362,6 +372,7 @@
   else if(MOVIE_VOLUME_TYPE == 3) then
     movie_prefix='P' ! potency, or integral of strain x \mu
   endif
+
   if(MOVIE_COARSE) then
    iNIT = NGLLX-1
   else
@@ -623,7 +634,7 @@
   ! outputs divergence
   if( MOVIE_OUTPUT_DIV ) then
     ! crust_mantle region
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
+    ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     ! old name format:     write(outputname,"('proc',i6.6,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg1_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
@@ -700,12 +711,12 @@
 
   ! outputs norm of epsilondev
   if( MOVIE_OUTPUT_CURLNORM ) then
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
+    ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     ! crust_mantle region
     write(outputname,"('proc',i6.6,'_reg1_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
-    ! frobenius norm
+    ! Frobenius norm
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -732,7 +743,7 @@
     write(outputname,"('proc',i6.6,'_reg3_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
-    ! frobenius norm
+    ! Frobenius norm
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     do ispec = 1, NSPEC_INNER_CORE
       do k = 1, NGLLZ
@@ -794,13 +805,13 @@
   logical,parameter :: OUTPUT_OUTER_CORE = .true.
   logical,parameter :: OUTPUT_INNER_CORE = .true.
 
-  ! dimensionalized scalings
+  ! dimensionalized scaling
   scale_displ = R_EARTH
 
   ! outputs norm of displacement
   if( OUTPUT_CRUST_MANTLE ) then
     ! crust mantle
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
+    ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -910,14 +921,14 @@
   logical,parameter :: OUTPUT_OUTER_CORE = .true.
   logical,parameter :: OUTPUT_INNER_CORE = .true.
 
-  ! dimensionalized scalings
+  ! dimensionalized scaling
   scale_displ = R_EARTH
   scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
 
   ! outputs norm of velocity
   if( OUTPUT_CRUST_MANTLE ) then
     ! crust mantle
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
+    ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -1026,7 +1037,7 @@
   logical,parameter :: OUTPUT_OUTER_CORE = .true.
   logical,parameter :: OUTPUT_INNER_CORE = .true.
 
-  ! dimensionalized scalings
+  ! dimensionalized scaling
   scale_displ = R_EARTH
   scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
   scale_accel = scale_veloc * dsqrt(PI*GRAV*RHOAV)
@@ -1034,7 +1045,7 @@
   ! outputs norm of acceleration
   if( OUTPUT_CRUST_MANTLE ) then
     ! acceleration
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
+    ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ

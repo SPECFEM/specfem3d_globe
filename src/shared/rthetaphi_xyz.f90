@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -213,7 +213,7 @@
 !               = PI/2 - atan( 1/(1 - e**2) * cos(theta)/sin(theta) )
 !               = PI/2 - atan( 1.00670466  * cos(theta)/sin(theta) )
 
-  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_VERSION_5_1_5
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
 
   implicit none
 
@@ -224,7 +224,7 @@
 
   if(.not. ASSUME_PERFECT_SPHERE) then
     ! mesh is elliptical
-    if( USE_VERSION_5_1_5 ) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
       theta_prime = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
     else
       ! converts geocentric colatitude theta to geographic colatitude theta_prime
@@ -255,7 +255,7 @@
   ! local parameters
   double precision :: dtheta,dtheta_prime
 
-  ! gets doulbe precision value
+  ! gets double precision value
   if( CUSTOM_REAL == SIZE_REAL ) then
     dtheta = dble(theta)
   else
@@ -280,7 +280,7 @@
 
 ! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
 
-  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,USE_VERSION_5_1_5
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,ONE_MINUS_F_SQUARED
 
   implicit none
 
@@ -289,16 +289,9 @@
   ! co-latitude (in radians)
   double precision,intent(out) :: theta
 
-
   if( .not. ASSUME_PERFECT_SPHERE ) then
     ! converts geographic (lat_prime) to geocentric latitude and converts to co-latitude (theta)
-    if( USE_VERSION_5_1_5) then
-      ! note: factor 0.99329534 = 1 - e**2 with eccentricity e**2 = 0.00670466
-      theta = PI_OVER_TWO - atan( 0.99329534d0*dtan(lat_prime * DEGREES_TO_RADIANS) )
-    else
-      ! note: factor 0.99333999308198295 = 1 - e**2 with eccentricity e**2 = 0.0066600069180170474
-      theta = PI_OVER_TWO - atan( 0.99333999308198295d0*dtan(lat_prime * DEGREES_TO_RADIANS) )
-    endif
+    theta = PI_OVER_TWO - atan( ONE_MINUS_F_SQUARED*dtan(lat_prime * DEGREES_TO_RADIANS) )
   else
     ! for perfect sphere, geocentric and geographic latitudes are the same
     ! converts latitude (in degrees to co-latitude (in radians)

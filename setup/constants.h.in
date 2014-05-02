@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -85,6 +85,9 @@
 ! uncomment line below for PREM with oceans
 ! double precision, parameter :: R_EARTH = 6368000.d0
 
+! radius of the Earth in km
+  double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
+
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
 
@@ -104,6 +107,7 @@
 !! pathname of the topography file
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
 
+!! DK DK for Roland_Sylvain this below could be changed if needed (i.e. using a non-smoothed version for instance)
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
   integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
@@ -128,7 +132,31 @@
 !! pathname of the topography file (un-smoothed)
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
 
-! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature)
+! For the reference ellipsoid to convert geographic latitudes to geocentric:
+!
+! From Dahlen and Tromp (1998): "Spherically-symmetric Earth models all have the same hydrostatic
+! surface ellipticity 1/299.8. This is 0.5 percent smaller than observed flattening of best-fitting ellipsoid 1/298.3.
+! The discrepancy is referred to as the "excess equatorial bulge of the Earth",
+! an early discovery of artificial satellite geodesy."
+!
+! From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture,
+! available at http://www.agu.org/books/sp/v035/SP035p0047/SP035p0047.pdf :
+! "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A)
+! by using the Clairaut differential equation to calculate the flattening in function of the radius vector imply hydrostaticity.
+! These have surface ellipticity 1/299.8 and a corresponding dynamical flattening of .0033 (PREM).
+! The actual ellipticty of the Earth for a best-fitting ellipsoid is 1/298.3 with a corresponding dynamical flattening of .0034."
+!
+! Thus, flattening f = 1/299.8 is what is used in SPECFEM3D_GLOBE, as it should.
+! And thus eccentricity squared e^2 = 1 - (1-f)^2 = 1 - (1 - 1/299.8)^2 = 0.00665998813529,
+! and the correction factor used in the code to convert geographic latitudes to geocentric
+! is 1 - e^2 = (1-f)^2 = (1 - 1/299.8)^2 = 0.9933400118647.
+!
+! As a comparison, the classical World Geodetic System reference ellipsoid WGS 84
+! (see e.g. http://en.wikipedia.org/wiki/World_Geodetic_System) has f = 1/298.2572236.
+  double precision, parameter :: FLATTENING_F = 1.d0 / 299.8d0
+  double precision, parameter :: ONE_MINUS_F_SQUARED = (1.d0 - FLATTENING_F)**2
+
+! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature, currently does not work, DO NOT USE)
   logical,parameter :: USE_GLL = .false.
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
@@ -306,13 +334,9 @@
 !! new version compatibility
 !!
 !!-----------------------------------------------------------
-!! (uncomment desired resolution)
-! old version
 ! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
-!  logical, parameter :: USE_VERSION_5_1_5 = .true.
-! new version
 ! new version uses optional full 3d attenuation
-  logical, parameter :: USE_VERSION_5_1_5 = .false.
+  logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
 
 
 !!-----------------------------------------------------------
@@ -369,6 +393,40 @@
   integer, parameter :: NSTEP_FOR_BENCHMARK = 300
   logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
 
+!!-----------------------------------------------------------
+!!
+!! for Roland_Sylvain integrals
+!!
+!!-----------------------------------------------------------
+
+!! DK DK for Roland_Sylvain
+  logical, parameter :: ROLAND_SYLVAIN = .false.
+
+! altitude of the observation point
+  double precision, parameter :: altitude_of_observation_point = 255.d0 ! in km
+
+! standard gravity at the surface of the Earth
+  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
+
+  double precision, parameter :: SQUARE_ROOT_OF_THREE = 1.73205080756887729352d0
+
+! position of the observation point in non-dimensionalized value
+
+!! DK DK along X only
+! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
+! double precision, parameter :: y_observation = 0.d0
+! double precision, parameter :: z_observation = 0.d0
+
+!! DK DK along diagonal
+! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+! double precision, parameter :: y_observation = x_observation
+! double precision, parameter :: z_observation = x_observation
+
+!! DK DK point randomly chosen in space, not at the right elevation we want
+  double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
+  double precision, parameter :: y_observation = x_observation * 1.12d0
+  double precision, parameter :: z_observation = x_observation * 1.38d0
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
@@ -406,8 +464,12 @@
   integer, parameter :: MIDY = (NGLLY+1)/2
   integer, parameter :: MIDZ = (NGLLZ+1)/2
 
-! gravitational constant
-  double precision, parameter :: GRAV = 6.6723d-11
+! gravitational constant in S.I. units i.e. in m3 kg-1 s-2, or equivalently in N.(m/kg)^2
+!! DK DK April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
+!! DK DK see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
+!! DK DK and http://en.wikipedia.org/wiki/Gravitational_constant
+! double precision, parameter :: GRAV = 6.6723d-11
+  double precision, parameter :: GRAV = 6.67384d-11
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
@@ -430,15 +492,18 @@
 ! normalized radius of free surface
   double precision, parameter :: R_UNIT_SPHERE = ONE
 
-! same radius in km
-  double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
-
 ! fixed thickness of 3 km for PREM oceans
   double precision, parameter :: THICKNESS_OCEANS_PREM = 3000.d0 / R_EARTH
 
 ! shortest radius at which crust is implemented (80 km depth)
 ! to be constistent with the D80 discontinuity, we impose the crust only above it
   double precision, parameter :: R_DEEPEST_CRUST = (R_EARTH - 80000.d0) / R_EARTH
+
+! definition of an Eotvos compared to S.I. units.
+! The unit of gravity gradient is the Eotvos, which is equivalent to 1e-9 s-2 (or 1e-4 mGal/m).
+! A person walking at a distance of 2 meters provides a gravity gradient signal of approximately one Eotvos.
+! Mountains can create signals of several hundred Eotvos.
+  double precision, parameter :: SI_UNITS_TO_EOTVOS = 1.d+9
 
 ! maximum number of chunks (full sphere)
   integer, parameter :: NCHUNKS_MAX = 6
@@ -598,6 +663,7 @@
 
 ! number of hours per day for rotation rate of the Earth
   double precision, parameter :: HOURS_PER_DAY = 24.d0
+  double precision, parameter :: SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000

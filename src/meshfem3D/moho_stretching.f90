@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_VERSION_5_1_5
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT
 
   use meshfem3D_par,only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
@@ -74,7 +74,7 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if( USE_VERSION_5_1_5 ) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
       ! note: at this point, the mesh is still perfectly spherical, thus no need to
       !         convert the geocentric colatitude to a geographic colatitude
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
@@ -105,7 +105,7 @@
     !          nevertheless its moho depth should be set and will be used in linear stretching
     if( moho < TINYVAL ) call exit_mpi(myrank,'error moho depth to honor')
 
-    if( .not. USE_VERSION_5_1_5 ) then
+    if( .not. USE_OLD_VERSION_5_1_5_FORMAT ) then
       ! limits moho depth to a threshold value to avoid stretching problems
       if( moho < MOHO_MINIMUM ) then
         print*,'moho value exceeds minimum (in km): ',moho*R_EARTH_KM,MOHO_MINIMUM*R_EARTH_KM,'lat/lon:',lat,lon
@@ -129,7 +129,7 @@
     if( TOPOGRAPHY ) then
       ! globe surface honors topography, elements stretched for moho
       !
-      ! note:  if no topography is honored, stretching may lead to distorted elements and invalid jacobian
+      ! note:  if no topography is honored, stretching may lead to distorted elements and invalid Jacobian
 
       if (moho < R_moho ) then
         ! actual moho below fictitious moho
@@ -146,7 +146,7 @@
           ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
           gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
 
-          ! since not all GLL points are exactlly at R220, use a small
+          ! since not all GLL points are exactly at R220, use a small
           ! tolerance for R220 detection, fix R220
           if (abs(gamma) < SMALLVAL) then
             gamma = 0.0d0
@@ -173,7 +173,7 @@
           ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
           gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
 
-          ! since not all GLL points are exactlly at R220, use a small
+          ! since not all GLL points are exactly at R220, use a small
           ! tolerance for R220 detection, fix R220
           if (abs(gamma) < SMALLVAL) then
             gamma = 0.0d0
@@ -236,7 +236,7 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_VERSION_5_1_5
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT
 
   use meshfem3D_par,only: &
     R220
@@ -267,7 +267,7 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if( USE_VERSION_5_1_5 ) then
+    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
       ! note: at this point, the mesh is still perfectly spherical, thus no need to
       !         convert the geocentric colatitude to a geographic colatitude
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
@@ -640,7 +640,7 @@
 
   !  stretch factor
   ! offset will be gamma * elevation
-  ! scaling cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
+  ! scaling Cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
   stretch_factor = ONE + gamma * elevation/r
 
   ! new point location

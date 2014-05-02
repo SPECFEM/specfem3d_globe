@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-! recompute 3D jacobian at a given point for 27-node elements
+! recompute 3D Jacobian at a given point for 27-node elements
 
   subroutine recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
@@ -57,7 +57,7 @@
 
   integer ia
 
-! recompute jacobian for any given (xi,eta,gamma) point
+! recompute Jacobian for any given (xi,eta,gamma) point
 ! not necessarily a GLL point
 
 ! check that the parameter file is correct
@@ -217,7 +217,7 @@
   dershape3D(2,27)=l2xi*l2peta*l2gamma
   dershape3D(3,27)=l2xi*l2eta*l2pgamma
 
-! compute coordinates and jacobian matrix
+! compute coordinates and Jacobian matrix
   x=ZERO
   y=ZERO
   z=ZERO

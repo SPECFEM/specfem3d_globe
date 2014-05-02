@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 ! extended by Dimitri Komatitsch, University of Toulouse, France, April 2011,
 ! to go beyond the year 2020; I extended that to the year 3000 and thus had to write a loop to fill array "year()".
 
-  subroutine convtime(timestamp,yr,mon,day,hr,min)
+  subroutine convtime(timestamp,yr,mon,day,hr,minvalue)
 
 ! Originally written by Shawn Smith (ssmith AT coaps.fsu.edu)
 ! Updated Spring 1999 for Y2K compliance by Anthony Arguez (anthony AT coaps.fsu.edu).
@@ -49,7 +49,7 @@
 
   integer, intent(out) :: timestamp
 
-  integer, intent(in) :: yr,mon,day,hr,min
+  integer, intent(in) :: yr,mon,day,hr,minvalue
 
   integer :: year(1980:MAX_YEAR),month(12),leap_mon(12)
 
@@ -95,13 +95,13 @@
 
   if (hr < 0 .or. hr > 23) stop 'Error in convtime: hour out of range (0-23)'
 
-  if (min < 0 .or. min > 60) stop 'Error in convtime: minute out of range (0-60)'
+  if (minvalue < 0 .or. minvalue > 60) stop 'Error in convtime: minute out of range (0-60)'
 
 ! convert time (test if leap year)
   if (is_leap_year(yr)) then
-   timestamp = year(yr)+leap_mon(mon)+((day-1)*min_day)+(hr*min_hr)+min
+   timestamp = year(yr)+leap_mon(mon)+((day-1)*min_day)+(hr*min_hr)+minvalue
   else
-   timestamp = year(yr)+month(mon)+((day-1)*min_day)+(hr*min_hr)+min
+   timestamp = year(yr)+month(mon)+((day-1)*min_day)+(hr*min_hr)+minvalue
   endif
 
   end subroutine convtime
@@ -110,7 +110,7 @@
 !----
 !
 
-  subroutine invtime(timestamp,yr,mon,day,hr,min)
+  subroutine invtime(timestamp,yr,mon,day,hr,minvalue)
 
 ! This subroutine will convert a minutes timestamp to a year/month
 ! date. Based on the function convtime by Shawn Smith (COAPS).
@@ -130,7 +130,7 @@
 
   integer, intent(in) :: timestamp
 
-  integer, intent(out) :: yr,mon,day,hr,min
+  integer, intent(out) :: yr,mon,day,hr,minvalue
 
   integer :: year(1980:MAX_YEAR),month(13),leap_mon(13)
 
@@ -202,7 +202,7 @@
       mon=imon
       day=1
       hr=0
-      min=0
+      minvalue=0
       return
    endif
 
@@ -225,7 +225,7 @@
       mon=imon
       day=1
       hr=0
-      min=0
+      minvalue=0
       return
    endif
   endif
@@ -263,7 +263,7 @@
   hr=ihour
 
 ! the remainder at this point is the minutes, so return them directly
-  min=itime
+  minvalue=itime
 
   end subroutine invtime
 

@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@
   ny_central_cube = NEX_PER_PROC_ETA / ratio_divide_central_cube
   nz_central_cube = NEX_XI / ratio_divide_central_cube
 
-  ! size of the cube along cartesian axes before rotation
+  ! size of the cube along Cartesian axes before rotation
   radius_cube = (R_CENTRAL_CUBE / R_EARTH) / sqrt(3.d0)
 
   ! define spectral elements in central cube
@@ -218,7 +218,7 @@
         ! only two active central cubes, the four others are fictitious
 
         ! determine where we cut the central cube to share it between CHUNK_AB & CHUNK_AB_ANTIPODE
-        ! in the case of mod(NPROC_XI,2)/=0, the cut is asymetric and the bigger part is for CHUNK_AB
+        ! in the case of mod(NPROC_XI,2)/=0, the cut is asymmetric and the bigger part is for CHUNK_AB
         nz_inf_limit = nz_central_cube
         if (mod(NPROC_XI,2)/=0 .and. NPROC_XI > 1) then
           if (ichunk == CHUNK_AB) then

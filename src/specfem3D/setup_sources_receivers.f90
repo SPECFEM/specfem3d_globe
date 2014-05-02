@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@
     write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
     !  LQY -- won't be able to know NSOURCES+nrec at this point...
     write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
-    ! closing file, rest of informations will be appended later on
+    ! closing file, rest of information will be appended later on
     close(IOUT_VTK)
   endif
 
@@ -154,7 +154,7 @@
     enddo
   endif
 
-  ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
+  ! filter source time function by Gaussian with hdur = HDUR_MOVIE when writing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
     ! smaller hdur_movie will do
     if( USE_SMALLER_HDUR_MOVIE ) then
@@ -283,7 +283,7 @@
     is_initial_guess = .false.
   endif
 
-  ! from intial guess in read_compute_parameters:
+  ! from initial guess in read_compute_parameters:
   !    compute total number of time steps, rounded to next multiple of 100
   !    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
   !
@@ -336,7 +336,7 @@
   integer :: ier
   integer,dimension(:),allocatable :: tmp_rec_local_all
   integer :: maxrec,maxproc(1)
-  double precision :: size
+  double precision :: sizeval
 
   ! user output
   if( myrank == 0 ) then
@@ -463,19 +463,19 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
   endif
 
-  ! user output infos
+  ! user output info
   ! sources
   if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
     ! user output
     if( myrank == 0 ) then
       ! note: all process allocate the full sourcearrays array
       ! sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
-      size = dble(NSOURCES) * dble(NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
+      sizeval = dble(NSOURCES) * dble(NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
       ! outputs info
       write(IMAIN,*) 'source arrays:'
       write(IMAIN,*) '  number of sources is ',NSOURCES
-      write(IMAIN,*) '  size of source array                 = ', sngl(size),'MB'
-      write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
+      write(IMAIN,*) '  size of source array                 = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                       = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -496,17 +496,17 @@
     ! seismograms array size in MB
     if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
       ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      size = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
     else
       ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      size = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      sizeval = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
     endif
     ! outputs info
     write(IMAIN,*) 'seismograms:'
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
-    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(size),'MB'
-    write(IMAIN,*) '                                         = ', sngl(size/1024.d0),'GB'
+    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
+    write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -532,19 +532,19 @@
       !enddo
       ! adj_sourcearrays size in MB
       ! adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
-      size = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
-      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ, 
-      !       this memory requirement might double. 
+      sizeval = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
+      !       this memory requirement might double.
       !       at this point, NSTEP_SUB_ADJ is not set yet...
       ! outputs info
       write(IMAIN,*) 'adjoint source arrays:'
       write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
       if( IO_ASYNC_COPY ) then
-        write(IMAIN,*) '  using asynchronuous buffer for file i/o of adjoint sources'
+        write(IMAIN,*) '  using asynchronous buffer for file I/O of adjoint sources'
       endif
       write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
-      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(size),'MB'
-      write(IMAIN,*) '                                       = ', sngl(size/1024.d0),'GB'
+      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                       = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -569,7 +569,7 @@
   ! user output
   if(myrank == 0) then
 
-    ! finishes vtk file
+    ! finishes VTK file
     !  we should know NSOURCES+nrec at this point...
     ! creates source/receiver location file
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
@@ -643,7 +643,7 @@
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
-      ! additional buffer for asynchronuous file i/o
+      ! additional buffer for asynchronous file i/o
       if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
         ! allocates read buffer
         allocate(buffer_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
@@ -904,7 +904,7 @@
       ! allocates Frechet derivatives array
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating Frechet derivatives arrays')
 
       moment_der(:,:,:) = 0._CUSTOM_REAL
       sloc_der(:,:) = 0._CUSTOM_REAL

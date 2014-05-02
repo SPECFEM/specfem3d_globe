@@ -9,7 +9,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 ############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D_Globe], [6.0.0], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D_Globe], [6.0.0], [see the wiki], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 
 AC_CONFIG_HEADER([setup/config.h])
@@ -164,9 +164,9 @@ AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.
 AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
 AC_LANG_POP(C)
 
-CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$FLAGS_CHECK], [:], [
-    AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
-])
+# CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$FLAGS_CHECK], [:], [
+#     AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
+# ])
 
 # Checks for libraries.
 

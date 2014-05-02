@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 1
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and CNRS / INRIA / University of Pau
- ! (c) Princeton University / California Institute of Technology and CNRS / INRIA / University of Pau
- !                             July 2012
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -99,7 +100,7 @@ void FC_FUNC_(initialize_cuda_device,
     fprintf(stderr,"Error after cudaGetDeviceCount: %s\n", cudaGetErrorString(err));
     exit_on_error("CUDA runtime error: cudaGetDeviceCount failed\n\nplease check if driver and runtime libraries work together\nor on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multiple MPI processes\n\nexiting...\n");
   }
-  
+
   // returns device count to fortran
   if (device_count == 0) exit_on_error("CUDA runtime error: there is no device supporting CUDA\n");
   *ncuda_devices = device_count;
@@ -137,7 +138,7 @@ void FC_FUNC_(initialize_cuda_device,
        exit_on_error("CUDA set/get device error: device id conflict \n");
     }
 #else
-    // device changes for different mpi processes according to number of device per node
+    // device changes for different MPI processes according to number of device per node
     // (assumes that number of devices per node is the same for different compute nodes)
     device = myrank % device_count;
 
@@ -167,12 +168,12 @@ void FC_FUNC_(initialize_cuda_device,
     exit_on_error("CUDA runtime error: there is no CUDA-enabled device found\n");
   }
 
-  // outputs device infos to file
+  // outputs device info to file
   char filename[BUFSIZ];
   FILE* fp;
   int do_output_info;
 
-  // by default, only master process outputs device infos to avoid file cluttering
+  // by default, only master process outputs device info to avoid file cluttering
   do_output_info = 0;
   if( myrank == 0 ){
     do_output_info = 1;
@@ -221,7 +222,7 @@ void FC_FUNC_(initialize_cuda_device,
       }else{
         fprintf(fp,"  concurrentKernels: FALSE\n");
       }
-      // outputs initial memory infos via cudaMemGetInfo()
+      // outputs initial memory info via cudaMemGetInfo()
       double free_db,used_db,total_db;
       get_free_memory(&free_db,&used_db,&total_db);
       fprintf(fp,"memory usage:\n");

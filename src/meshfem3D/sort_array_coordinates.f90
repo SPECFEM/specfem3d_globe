@@ -3,11 +3,11 @@
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and CNRS / INRIA / University of Pau, France
-! (c) Princeton University and CNRS / INRIA / University of Pau
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 ! subroutines to sort MPI buffers to assemble between chunks
 
   subroutine sort_array_coordinates(npointot,x,y,z, &
-                                    ibool,iglob,loc,ifseg,nglob, &
+                                    ibool,iglob,locval,ifseg,nglob, &
                                     ind,ninseg,iwork,work)
 
 ! this routine MUST be in double precision to avoid sensitivity
@@ -42,7 +42,7 @@
 
   double precision,dimension(npointot) :: x,y,z
 
-  integer,dimension(npointot) :: ibool,iglob,loc
+  integer,dimension(npointot) :: ibool,iglob,locval
   integer,dimension(npointot) :: ind,ninseg
   logical,dimension(npointot) :: ifseg
 
@@ -55,7 +55,7 @@
 
   ! establish initial pointers
   do ipoin=1,npointot
-    loc(ipoin)=ipoin
+    locval(ipoin)=ipoin
   enddo
 
   ifseg(:)=.false.
@@ -77,7 +77,7 @@
         call rank_buffers(z(ioff),ind,ninseg(iseg))
       endif
 
-      call swap_all_buffers(ibool(ioff),loc(ioff), &
+      call swap_all_buffers(ibool(ioff),locval(ioff), &
               x(ioff),y(ioff),z(ioff),iwork,work,ind,ninseg(iseg))
 
       ioff=ioff+ninseg(iseg)
@@ -116,7 +116,7 @@
   ig=0
   do i=1,npointot
     if(ifseg(i)) ig=ig+1
-    iglob(loc(i))=ig
+    iglob(locval(i))=ig
   enddo
 
   nglob=ig
@@ -168,7 +168,7 @@
          return
       endif
 
-    ENDIF
+    endif
 
     i = l
     j = l+l
@@ -176,14 +176,14 @@
     do while( J <= IR )
       IF ( J < IR ) THEN
         IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
-      ENDIF
+      endif
       IF ( q < A(IND(j)) ) THEN
         IND(I) = IND(J)
         I = J
         J = J+J
       ELSE
         J = IR+1
-      ENDIF
+      endif
 
     enddo
 

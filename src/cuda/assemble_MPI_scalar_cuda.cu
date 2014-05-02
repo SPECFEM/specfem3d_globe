@@ -1,13 +1,14 @@
 /*
  !=====================================================================
  !
- !               S p e c f e m 3 D  V e r s i o n  2 . 0
- !               ---------------------------------------
+ !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+ !          --------------------------------------------------
  !
- !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Princeton University, USA and University of Pau / CNRS / INRIA
- ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
- !                            August 2013
+ !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+ !                        Princeton University, USA
+ !                and CNRS / University of Marseille, France
+ !                 (there are currently many more authors!)
+ ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This program is free software; you can redistribute it and/or modify
  ! it under the terms of the GNU General Public License as published by
@@ -83,7 +84,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
-  // mpi buffer size
+  // MPI buffer size
   size_mpi_buffer = (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core);
 
   // checks if anything to do
@@ -114,7 +115,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
       cudaMemcpyAsync(mp->h_send_accel_buffer_oc,mp->d_send_accel_buffer_outer_core,size_mpi_buffer*sizeof(realw),
                       cudaMemcpyDeviceToHost,mp->copy_stream);
     }else{
-      // synchronuous copy
+      // synchronous copy
       print_CUDA_error_if_any(cudaMemcpy(send_buffer,mp->d_send_accel_buffer_outer_core,
                                        size_mpi_buffer*sizeof(realw),
                                        cudaMemcpyDeviceToHost),98000);
@@ -141,7 +142,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
       cudaMemcpyAsync(mp->h_b_send_accel_buffer_oc,mp->d_b_send_accel_buffer_outer_core,size_mpi_buffer*sizeof(realw),
                       cudaMemcpyDeviceToHost,mp->copy_stream);
     }else{
-      // synchronuous copy
+      // synchronous copy
       print_CUDA_error_if_any(cudaMemcpy(send_buffer,mp->d_b_send_accel_buffer_outer_core,
                                        size_mpi_buffer*sizeof(realw),
                                        cudaMemcpyDeviceToHost),98001);
@@ -216,7 +217,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
 
   if(*FORWARD_OR_ADJOINT == 1) {
 
-    // asynchronuous copy
+    // asynchronous copy
     if( GPU_ASYNC_COPY ){
       // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
       cudaStreamSynchronize(mp->copy_stream);
@@ -237,7 +238,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
     // debug
     DEBUG_BACKWARD_ASSEMBLY();
 
-    // asynchronuous copy
+    // asynchronous copy
     if( GPU_ASYNC_COPY ){
       // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
       cudaStreamSynchronize(mp->copy_stream);

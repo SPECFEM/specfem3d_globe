@@ -31,7 +31,7 @@
 !! * Scalar definition
 !! * Global arrays definition
 !!
-!! \author MPBL      
+!! \author MPBL
 !-------------------------------------------------------------------------------
 module asdf_helpers_definitions_mod
   implicit none
@@ -48,7 +48,7 @@ module asdf_helpers_definitions_mod
   public :: define_adios_local_string_1d_array
   public :: define_adios_global_array1D
 
-  ! Generic interface to define scalar variables in ADIOS 
+  ! Generic interface to define scalar variables in ADIOS
   interface define_adios_scalar
     module procedure define_adios_double_scalar
     module procedure define_adios_float_scalar
@@ -80,9 +80,9 @@ module asdf_helpers_definitions_mod
     module procedure define_adios_global_1d_string_1d
   end interface define_adios_global_string_1d_array
 
-	interface define_adios_local_string_1d_array
-		module procedure define_adios_local_1d_string_1d
-	end interface define_adios_local_string_1d_array
+  interface define_adios_local_string_1d_array
+    module procedure define_adios_local_1d_string_1d
+  end interface define_adios_local_string_1d_array
 
   ! Cannot include an interface in another interface
   interface define_adios_global_array1D
@@ -103,13 +103,13 @@ contains
 
 
 !===============================================================================
-!> Define an ADIOS scalar double precision variable and autoincrement 
+!> Define an ADIOS scalar double precision variable and autoincrement
 !! the adios group size by (8).
 !! \param adios_group The adios group where the variables belongs
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !!            ignored.
@@ -134,20 +134,20 @@ subroutine define_adios_double_scalar (adios_group, group_size_inc,  &
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 6 == real(kind=8) 
+  ! adios: 6 == real(kind=8)
   call adios_define_var (adios_group, trim(name), trim(path), 6,  "", "", "", varid)
   group_size_inc = group_size_inc + 8
 end subroutine define_adios_double_scalar
 
 
 !===============================================================================
-!> Define an ADIOS scalar single precision variable and autoincrement 
+!> Define an ADIOS scalar single precision variable and autoincrement
 !! the adios group size by (8).
 !! \param adios_group The adios group where the variables belongs
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !             ignored.
@@ -165,10 +165,10 @@ subroutine define_adios_float_scalar(adios_group, group_size_inc,  &
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 6 == real(kind=8) 
-	!print *, len_trim(name)
-	!print *, trim(path)
-	!print *, len_trim(path)
+  ! adios: 6 == real(kind=8)
+  !print *, len_trim(name)
+  !print *, trim(path)
+  !print *, len_trim(path)
   call adios_define_var (adios_group, trim(name), trim(path), 5,  "", "", "", varid)
   group_size_inc = group_size_inc + 4
 end subroutine define_adios_float_scalar
@@ -181,7 +181,7 @@ end subroutine define_adios_float_scalar
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !             ignored.
@@ -203,7 +203,7 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc,  &
 
   !full_name = trim(path) // trim(name)
 
-  ! adios: 2 ~ integer(kind=4) 
+  ! adios: 2 ~ integer(kind=4)
   !write (*,'("--- adios_define_var scalar path=",a20," name=",a20)') path, name
   call adios_define_var (adios_group, trim(name), trim(path), adios_integer,  &
       "", "", "", varid)
@@ -217,7 +217,7 @@ end subroutine define_adios_integer_scalar
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 !! \param path The logical path structuring the data and containing
-!!             the variable 
+!!             the variable
 !! \param name The variable name in the ADIOS file.
 !! \param var The variable to be defined. Used for type inference. Can be
 !             ignored.
@@ -235,7 +235,7 @@ subroutine define_adios_byte_scalar (adios_group, group_size_inc, &
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
-  ! adios: 0 == byte == any_data_type(kind=1) 
+  ! adios: 0 == byte == any_data_type(kind=1)
   call adios_define_var (adios_group, trim(name), trim(path), 0,  "", "", "", varid)
   group_size_inc = group_size_inc + 1
 end subroutine define_adios_byte_scalar
@@ -258,8 +258,8 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, &
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
 
-	!print *,"in define dims"
-	!print *,"array_name:", trim(array_name)
+  !print *,"in define dims"
+  !print *,"array_name:", trim(array_name)
 
   call define_adios_integer_scalar (adios_group, &
       group_size_inc, trim(array_name), "local_dim", local_dim)
@@ -289,7 +289,7 @@ subroutine define_adios_global_1d_real_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-  
+
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
@@ -312,7 +312,7 @@ end subroutine define_adios_global_1d_real_generic
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_real_1d(adios_group, group_size_inc, &
@@ -329,8 +329,8 @@ subroutine define_adios_global_1d_real_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-	!print *, "in define:", trim(full_name)
- 
+  !print *, "in define:", trim(full_name)
+
   call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_real_1d
@@ -346,7 +346,7 @@ end subroutine define_adios_global_1d_real_1d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_real_2d(adios_group, group_size_inc, &
@@ -379,7 +379,7 @@ end subroutine define_adios_global_1d_real_2d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_real_3d(adios_group, group_size_inc, &
@@ -412,7 +412,7 @@ end subroutine define_adios_global_1d_real_3d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_real_4d(adios_group, group_size_inc, &
@@ -445,7 +445,7 @@ end subroutine define_adios_global_1d_real_4d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_real_5d(adios_group, group_size_inc, &
@@ -487,7 +487,7 @@ subroutine define_adios_global_1d_double_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-  
+
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
@@ -509,7 +509,7 @@ end subroutine define_adios_global_1d_double_generic
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_double_1d(adios_group, group_size_inc, &
@@ -526,7 +526,7 @@ subroutine define_adios_global_1d_double_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
- 
+
   call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_double_1d
@@ -542,7 +542,7 @@ end subroutine define_adios_global_1d_double_1d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_double_2d(adios_group, group_size_inc, &
@@ -575,7 +575,7 @@ end subroutine define_adios_global_1d_double_2d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_double_3d(adios_group, group_size_inc, &
@@ -608,7 +608,7 @@ end subroutine define_adios_global_1d_double_3d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_double_4d(adios_group, group_size_inc, &
@@ -641,7 +641,7 @@ end subroutine define_adios_global_1d_double_4d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_double_5d(adios_group, group_size_inc, &
@@ -706,7 +706,7 @@ end subroutine define_adios_global_1d_int_generic
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_int_1d(adios_group, group_size_inc, &
@@ -723,7 +723,7 @@ subroutine define_adios_global_1d_int_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
- 
+
   call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_int_1d
@@ -739,7 +739,7 @@ end subroutine define_adios_global_1d_int_1d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_int_2d(adios_group, group_size_inc, &
@@ -772,7 +772,7 @@ end subroutine define_adios_global_1d_int_2d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_int_3d(adios_group, group_size_inc, &
@@ -805,7 +805,7 @@ end subroutine define_adios_global_1d_int_3d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_int_4d(adios_group, group_size_inc, &
@@ -838,7 +838,7 @@ end subroutine define_adios_global_1d_int_4d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_int_5d(adios_group, group_size_inc, &
@@ -880,7 +880,7 @@ subroutine define_adios_global_1d_long_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-  
+
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
@@ -902,7 +902,7 @@ end subroutine define_adios_global_1d_long_generic
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_long_1d(adios_group, group_size_inc, &
@@ -919,7 +919,7 @@ subroutine define_adios_global_1d_long_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
- 
+
   call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_long_1d
@@ -935,7 +935,7 @@ end subroutine define_adios_global_1d_long_1d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_long_2d(adios_group, group_size_inc, &
@@ -968,7 +968,7 @@ end subroutine define_adios_global_1d_long_2d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_long_3d(adios_group, group_size_inc, &
@@ -1001,7 +1001,7 @@ end subroutine define_adios_global_1d_long_3d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_long_4d(adios_group, group_size_inc, &
@@ -1034,7 +1034,7 @@ end subroutine define_adios_global_1d_long_4d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_long_5d(adios_group, group_size_inc, &
@@ -1075,15 +1075,15 @@ subroutine define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-  
+
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
       local_dim)
 
   ! The Fortran standard does not specify how variables of LOGICAL type are
-  ! represented, beyond requiring that LOGICAL variables of default kind 
-  ! have the same storage size as default INTEGER and REAL variables. 
+  ! represented, beyond requiring that LOGICAL variables of default kind
+  ! have the same storage size as default INTEGER and REAL variables.
   ! Hence the 'adios_integer' (2) data type to store logical values
   call adios_define_var(adios_group, "array", array_name, 2, &
       trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
@@ -1101,7 +1101,7 @@ end subroutine define_adios_global_1d_logical_generic
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_logical_1d(adios_group, group_size_inc, &
@@ -1118,7 +1118,7 @@ subroutine define_adios_global_1d_logical_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
- 
+
   call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_logical_1d
@@ -1134,7 +1134,7 @@ end subroutine define_adios_global_1d_logical_1d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_logical_2d(adios_group, group_size_inc, &
@@ -1167,7 +1167,7 @@ end subroutine define_adios_global_1d_logical_2d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_logical_3d(adios_group, group_size_inc, &
@@ -1200,7 +1200,7 @@ end subroutine define_adios_global_1d_logical_3d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_logical_4d(adios_group, group_size_inc, &
@@ -1233,7 +1233,7 @@ end subroutine define_adios_global_1d_logical_4d
 !! \param path The path where array name lie.
 !! \param array_name The variable to be defined. This is actually the path for
 !!                   ADIOS. The values are stored in array_name/array
-!! \param var The variabe to define. Used for type and shape inference.
+!! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
 subroutine define_adios_global_1d_logical_5d(adios_group, group_size_inc, &
@@ -1267,7 +1267,7 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, &
   integer(kind=8), intent(inout) :: group_size_inc
   ! Variables
   integer(kind=8) :: var_id
-  
+
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
   call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
@@ -1293,33 +1293,33 @@ subroutine define_adios_global_1d_string_1d(adios_group, group_size_inc, &
   character(len=256) :: full_name
 
   full_name = trim(path) // trim(array_name)
-	print *,"full name", trim(full_name),"local_dim:",local_dim
- 
+  print *,"full name", trim(full_name),"local_dim:",local_dim
+
   call define_adios_global_1d_string_generic(adios_group, group_size_inc, &
       full_name, local_dim)
 end subroutine define_adios_global_1d_string_1d
 
 subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
-		local_dim, path, array_name, var)
-		
-	implicit none
-	! Parameters
+    local_dim, path, array_name, var)
+
+  implicit none
+  ! Parameters
   integer(kind=8), intent(in) :: adios_group
   character(len=*), intent(in) :: path, array_name
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
   character(len=*), intent(in) :: var
-	! Local 
-	character(len=256) :: full_name
-	integer(kind=8) :: var_id
+  ! Local
+  character(len=256) :: full_name
+  integer(kind=8) :: var_id
 
-	full_name = trim(path)//trim(array_name)
+  full_name = trim(path)//trim(array_name)
 
-	!print *,"in define local:"
-	!print *,"full_name:", trim(full_name)
+  !print *,"in define local:"
+  !print *,"full_name:", trim(full_name)
 
-	call adios_define_var(adios_group, array_name, path, 9, "", "", "", var_id )
-	group_size_inc = group_size_inc + 1*local_dim
+  call adios_define_var(adios_group, array_name, path, 9, "", "", "", var_id )
+  group_size_inc = group_size_inc + 1*local_dim
 
 end subroutine define_adios_local_1d_string_1d
 
