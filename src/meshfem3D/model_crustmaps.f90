@@ -370,7 +370,7 @@
 
   ! checks if inside/outside of critical region for mesh stretching
   if( SMOOTH_CRUST ) then
-    dist = dsqrt( (lon-LAT_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
+    dist = dsqrt( (lon-LON_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
     if( dist < CRITICAL_RANGE_EUROPE ) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
