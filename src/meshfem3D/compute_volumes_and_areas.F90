@@ -259,18 +259,17 @@
 
   ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
 
-  subroutine compute_Roland_Sylvain_integr(myrank,Roland_Sylvain_integr_total, &
-                            nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+  subroutine compute_Roland_Sylvain_integr(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+                xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
   use constants
 
+  use meshfem3D_par,only: x_observation,y_observation,z_observation,g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz, &
+     x_observation1D,y_observation1D,z_observation1D,g_x1D,g_y1D,g_z1D,G_xx1D,G_yy1D,G_zz1D,G_xy1D,G_xz1D,G_yz1D,OUTPUT_FILES
+
   implicit none
 
-  double precision, dimension(9) :: Roland_Sylvain_integr_total
-
-  integer :: myrank
-  integer :: nspec
+  integer :: myrank,iregion_code,nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
   integer,dimension(nspec) :: idoubling
@@ -289,33 +288,39 @@
   integer :: i,j,k,ispec
   double precision :: xval,yval,zval
   double precision :: xval_squared,yval_squared,zval_squared
-  double precision :: x_meshpoint,y_meshpoint,z_meshpoint,rho_meshpoint
-  double precision :: distance,distance_squared,distance_cubed,distance_fifth_power, &
+  double precision :: x_meshpoint,y_meshpoint,z_meshpoint
+  double precision :: distance_squared,distance_cubed, &
                       three_over_distance_squared,one_over_distance_cubed,three_over_distance_fifth_power
-  double precision :: common_multiplying_factor
+  double precision :: common_multiplying_factor,common_mult_times_one_over,common_mult_times_three_over
 
-  double precision, dimension(9) :: Roland_Sylvain_int_local,Roland_Sylvain_int_total_region
-  double precision :: elemental_contribution_1,elemental_contribution_2,elemental_contribution_3, &
-                      elemental_contribution_4,elemental_contribution_5,elemental_contribution_6, &
-                      elemental_contribution_7,elemental_contribution_8,elemental_contribution_9
+  ! name of the timestamp files
+  character(len=150) :: outputname
 
-  ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  ! for the gravity vector force, a distance is involved in the dimensions
-  double precision, parameter :: nondimensionalizing_factor_gi  = RHOAV * R_EARTH
-  ! for the second-order gravity tensor, no distance is involved in the dimensions
-  double precision, parameter :: nondimensionalizing_factor_Gij = RHOAV
-
-  double precision, parameter :: scaling_factor_gi  = GRAV * nondimensionalizing_factor_gi
-  double precision, parameter :: scaling_factor_Gij = GRAV * nondimensionalizing_factor_Gij
-
-  ! initializes
-  Roland_Sylvain_int_local(:) = ZERO
+#ifdef FORCE_VECTORIZATION
+  integer :: ix_iy_ichunk
+#else
+  integer :: ix,iy,ichunk
+#endif
 
   ! calculates volume of all elements in mesh
   do ispec = 1,nspec
 
+    ! print information about number of elements done so far
+    if(myrank == 0 .and. mod(ispec,NSPEC_DISPLAY_INTERVAL) == 0) then
+       write(IMAIN,*) 'for Roland_Sylvain integrals ',ispec,' elements computed out of ',nspec
+       ! write time stamp file to give information about progression of simulation
+       write(outputname,"('/timestamp_reg',i1.1,'_ispec',i7.7,'_out_of_',i7.7)") iregion_code,ispec,nspec
+       ! timestamp file output
+       open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
+       write(IOUT,*) ispec,' elements done out of ',nspec,' in region ',iregion_code
+       close(unit=IOUT)
+    endif
+
     ! suppress fictitious elements in central cube
     if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
+    ! see if we compute the contribution of the crust only
+    if(COMPUTE_CRUST_CONTRIB_ONLY .and. idoubling(ispec) /= IFLAG_CRUST) cycle
 
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -334,76 +339,101 @@
           gammayl = gammaystore(i,j,k,ispec)
           gammazl = gammazstore(i,j,k,ispec)
 
-!! DK DK do this in double precision for accuracy
+          ! do this in double precision for accuracy
           jacobianl = 1.d0 / dble(xixl*(etayl*gammazl-etazl*gammayl) &
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+    if(CHECK_FOR_NEGATIVE_JACOBIANS .and. jacobianl <= ZERO) stop 'error: negative Jacobian found in integral calculation'
 
     x_meshpoint = xstore(i,j,k,ispec)
     y_meshpoint = ystore(i,j,k,ispec)
     z_meshpoint = zstore(i,j,k,ispec)
 
-    rho_meshpoint = rhostore(i,j,k,ispec)
+    common_multiplying_factor = jacobianl * weight * rhostore(i,j,k,ispec)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!! beginning of loop on all the data to create
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    xval = x_meshpoint - x_observation
-    yval = y_meshpoint - y_observation
-    zval = z_meshpoint - z_observation
+! loop on all the chunks and then on all the observation nodes in each chunk
+
+#ifdef FORCE_VECTORIZATION
+! this works only if the arrays are contiguous in memory (which is always the case for static arrays, as used in the code)
+! but the code produced is extremely fast because we get a single and fully-vectorized loop on the whole array
+  do ix_iy_ichunk = 1,NTOTAL_OBSERVATION
+
+    xval = x_meshpoint - x_observation1D(ix_iy_ichunk)
+    yval = y_meshpoint - y_observation1D(ix_iy_ichunk)
+    zval = z_meshpoint - z_observation1D(ix_iy_ichunk)
 
     xval_squared = xval**2
     yval_squared = yval**2
     zval_squared = zval**2
 
     distance_squared = xval_squared + yval_squared + zval_squared
-    distance = sqrt(distance_squared)
-    distance_cubed = distance_squared*distance
-    distance_fifth_power = distance_squared*distance_cubed
+    distance_cubed = distance_squared * sqrt(distance_squared)
 
     three_over_distance_squared = 3.d0 / distance_squared
     one_over_distance_cubed = 1.d0 / distance_cubed
     three_over_distance_fifth_power = three_over_distance_squared * one_over_distance_cubed
 
-! g_x
-    elemental_contribution_1 = xval * one_over_distance_cubed
+    common_mult_times_one_over = common_multiplying_factor * one_over_distance_cubed
+    common_mult_times_three_over = common_multiplying_factor * three_over_distance_fifth_power
 
-! g_y
-    elemental_contribution_2 = yval * one_over_distance_cubed
+    g_x1D(ix_iy_ichunk) = g_x1D(ix_iy_ichunk) + common_mult_times_one_over * xval
+    g_y1D(ix_iy_ichunk) = g_y1D(ix_iy_ichunk) + common_mult_times_one_over * yval
+    g_z1D(ix_iy_ichunk) = g_z1D(ix_iy_ichunk) + common_mult_times_one_over * zval
 
-! g_z
-    elemental_contribution_3 = zval * one_over_distance_cubed
+    G_xx1D(ix_iy_ichunk) = G_xx1D(ix_iy_ichunk) + common_mult_times_one_over * (xval_squared * three_over_distance_squared - 1.d0)
+    G_yy1D(ix_iy_ichunk) = G_yy1D(ix_iy_ichunk) + common_mult_times_one_over * (yval_squared * three_over_distance_squared - 1.d0)
+    G_zz1D(ix_iy_ichunk) = G_zz1D(ix_iy_ichunk) + common_mult_times_one_over * (zval_squared * three_over_distance_squared - 1.d0)
 
-! G_xx
-    elemental_contribution_4 = (xval_squared * three_over_distance_squared - 1.d0) * one_over_distance_cubed
+    G_xy1D(ix_iy_ichunk) = G_xy1D(ix_iy_ichunk) + common_mult_times_three_over * xval*yval
+    G_xz1D(ix_iy_ichunk) = G_xz1D(ix_iy_ichunk) + common_mult_times_three_over * xval*zval
+    G_yz1D(ix_iy_ichunk) = G_yz1D(ix_iy_ichunk) + common_mult_times_three_over * yval*zval
 
-! G_yy
-    elemental_contribution_5 = (yval_squared * three_over_distance_squared - 1.d0) * one_over_distance_cubed
+  enddo
 
-! G_zz
-    elemental_contribution_6 = (zval_squared * three_over_distance_squared - 1.d0) * one_over_distance_cubed
+#else
+  do ichunk = 1,NCHUNKS_MAX
+    do iy = 1,NY_OBSERVATION
+      do ix = 1,NX_OBSERVATION
 
-! G_xy
-    elemental_contribution_7 = xval*yval * three_over_distance_fifth_power
+    xval = x_meshpoint - x_observation(ix,iy,ichunk)
+    yval = y_meshpoint - y_observation(ix,iy,ichunk)
+    zval = z_meshpoint - z_observation(ix,iy,ichunk)
 
-! G_xz
-    elemental_contribution_8 = xval*zval * three_over_distance_fifth_power
+    xval_squared = xval**2
+    yval_squared = yval**2
+    zval_squared = zval**2
 
-! G_yz
-    elemental_contribution_9 = yval*zval * three_over_distance_fifth_power
+    distance_squared = xval_squared + yval_squared + zval_squared
+    distance_cubed = distance_squared * sqrt(distance_squared)
 
-    common_multiplying_factor = jacobianl * weight * rho_meshpoint
+    three_over_distance_squared = 3.d0 / distance_squared
+    one_over_distance_cubed = 1.d0 / distance_cubed
+    three_over_distance_fifth_power = three_over_distance_squared * one_over_distance_cubed
 
-    Roland_Sylvain_int_local(1) = Roland_Sylvain_int_local(1) + common_multiplying_factor*elemental_contribution_1
-    Roland_Sylvain_int_local(2) = Roland_Sylvain_int_local(2) + common_multiplying_factor*elemental_contribution_2
-    Roland_Sylvain_int_local(3) = Roland_Sylvain_int_local(3) + common_multiplying_factor*elemental_contribution_3
-    Roland_Sylvain_int_local(4) = Roland_Sylvain_int_local(4) + common_multiplying_factor*elemental_contribution_4
-    Roland_Sylvain_int_local(5) = Roland_Sylvain_int_local(5) + common_multiplying_factor*elemental_contribution_5
-    Roland_Sylvain_int_local(6) = Roland_Sylvain_int_local(6) + common_multiplying_factor*elemental_contribution_6
-    Roland_Sylvain_int_local(7) = Roland_Sylvain_int_local(7) + common_multiplying_factor*elemental_contribution_7
-    Roland_Sylvain_int_local(8) = Roland_Sylvain_int_local(8) + common_multiplying_factor*elemental_contribution_8
-    Roland_Sylvain_int_local(9) = Roland_Sylvain_int_local(9) + common_multiplying_factor*elemental_contribution_9
+    common_mult_times_one_over = common_multiplying_factor * one_over_distance_cubed
+    common_mult_times_three_over = common_multiplying_factor * three_over_distance_fifth_power
+
+    g_x(ix,iy,ichunk) = g_x(ix,iy,ichunk) + common_mult_times_one_over * xval
+    g_y(ix,iy,ichunk) = g_y(ix,iy,ichunk) + common_mult_times_one_over * yval
+    g_z(ix,iy,ichunk) = g_z(ix,iy,ichunk) + common_mult_times_one_over * zval
+
+    G_xx(ix,iy,ichunk) = G_xx(ix,iy,ichunk) + common_mult_times_one_over * (xval_squared * three_over_distance_squared - 1.d0)
+    G_yy(ix,iy,ichunk) = G_yy(ix,iy,ichunk) + common_mult_times_one_over * (yval_squared * three_over_distance_squared - 1.d0)
+    G_zz(ix,iy,ichunk) = G_zz(ix,iy,ichunk) + common_mult_times_one_over * (zval_squared * three_over_distance_squared - 1.d0)
+
+    G_xy(ix,iy,ichunk) = G_xy(ix,iy,ichunk) + common_mult_times_three_over * xval*yval
+    G_xz(ix,iy,ichunk) = G_xz(ix,iy,ichunk) + common_mult_times_three_over * xval*zval
+    G_yz(ix,iy,ichunk) = G_yz(ix,iy,ichunk) + common_mult_times_three_over * yval*zval
+
+      enddo
+    enddo
+  enddo
+#endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!! end of loop on all the data to create
@@ -413,27 +443,6 @@
       enddo
     enddo
   enddo
-
-  ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
-  ! and also take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  Roland_Sylvain_int_local(1:3) = Roland_Sylvain_int_local(1:3) * scaling_factor_gi
-  Roland_Sylvain_int_local(4:9) = Roland_Sylvain_int_local(4:9) * scaling_factor_Gij
-
-  ! use an MPI reduction to compute the total value of the integral
-  Roland_Sylvain_int_total_region(:) = ZERO
-!! DK DK could use a single MPI call for the nine values
-  call sum_all_dp(Roland_Sylvain_int_local(1),Roland_Sylvain_int_total_region(1))
-  call sum_all_dp(Roland_Sylvain_int_local(2),Roland_Sylvain_int_total_region(2))
-  call sum_all_dp(Roland_Sylvain_int_local(3),Roland_Sylvain_int_total_region(3))
-  call sum_all_dp(Roland_Sylvain_int_local(4),Roland_Sylvain_int_total_region(4))
-  call sum_all_dp(Roland_Sylvain_int_local(5),Roland_Sylvain_int_total_region(5))
-  call sum_all_dp(Roland_Sylvain_int_local(6),Roland_Sylvain_int_total_region(6))
-  call sum_all_dp(Roland_Sylvain_int_local(7),Roland_Sylvain_int_total_region(7))
-  call sum_all_dp(Roland_Sylvain_int_local(8),Roland_Sylvain_int_total_region(8))
-  call sum_all_dp(Roland_Sylvain_int_local(9),Roland_Sylvain_int_total_region(9))
-
-  !   sum volume over all the regions
-  if(myrank == 0) Roland_Sylvain_integr_total(:) = Roland_Sylvain_integr_total(:) + Roland_Sylvain_int_total_region(:)
 
   end subroutine compute_Roland_Sylvain_integr
 

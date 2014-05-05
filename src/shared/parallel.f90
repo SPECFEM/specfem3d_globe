@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
 !-------------------------------------------------------------------------------------------------
 !
 ! MPI wrapper functions
@@ -62,7 +61,6 @@
 
   end subroutine finalize_mpi
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -80,8 +78,6 @@
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
 
   end subroutine abort_mpi
-
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -122,7 +118,6 @@
 
   end subroutine synchronize_all_comm
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -158,6 +153,7 @@
   call MPI_TEST(request,flag_result_test,msg_status,ier)
 
   end subroutine test_request
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -350,6 +346,9 @@
   integer,dimension(countval) :: send
 
   ! seems not to be supported on all kind of MPI implementations...
+  !! DK DK: yes, I confirm, using MPI_IN_PLACE is tricky
+  !! DK DK (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
+  !! DK DK      for how to use it right)
   !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
 
   send(:) = buffer(:)
@@ -358,7 +357,6 @@
   if( ier /= 0 ) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -414,6 +412,24 @@
 
   end subroutine sum_all_dp
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_3Darray_dp(sendbuf, recvbuf, nx,ny,nz)
+
+  use mpi
+
+  implicit none
+
+  integer :: nx,ny,nz
+  double precision, dimension(nx,ny,nz) :: sendbuf, recvbuf
+  integer :: ier
+
+  ! this works only if the arrays are contiguous in memory (which is always the case for static arrays, as used in the code)
+  call MPI_REDUCE(sendbuf,recvbuf,nx*ny*nz,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
+
+  end subroutine sum_all_3Darray_dp
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -530,7 +546,6 @@
 
   end subroutine bcast_all_singler
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -567,7 +582,6 @@
   call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_singledp
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -645,11 +659,9 @@
 
   end subroutine bcast_all_l
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_singlei(recvbuf, dest, recvtag)
 
@@ -672,7 +684,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine recv_singlel(recvbuf, dest, recvtag)
 
   use mpi
@@ -693,7 +704,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
@@ -716,7 +726,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
@@ -743,7 +752,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine recv_dp(recvbuf, recvcount, dest, recvtag)
 
   use mpi
@@ -761,7 +769,6 @@
   call MPI_RECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
 
   end subroutine recv_dp
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -861,7 +868,6 @@
   call MPI_SEND(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag,MPI_COMM_WORLD,ier)
 
   end subroutine send_dp
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1009,7 +1015,6 @@
 
   end subroutine gather_all_dp
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1089,8 +1094,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-
 
   subroutine world_size(sizeval)
 

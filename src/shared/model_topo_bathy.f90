@@ -56,7 +56,7 @@
 
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
-    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    if(.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
 
   ! broadcast the information read on the master to the nodes
@@ -176,6 +176,7 @@
   ! saves topography and bathymetry file for solver
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
+
   if( ier /= 0 ) then
     ! inform about missing database topo file
     print*,'TOPOGRAPHY problem:'
@@ -214,6 +215,7 @@
   ! reads topography and bathymetry file from saved database file
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='read',iostat=ier)
+
   if( ier /= 0 ) then
     ! inform user
     print*,'TOPOGRAPHY problem:'
@@ -226,7 +228,8 @@
     call read_topo_bathy_file(ibathy_topo)
 
     ! saves database topo file for next time
-    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    if(.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
   else
     ! database topo file exists
     read(27) ibathy_topo
@@ -235,6 +238,7 @@
     ! user output
     write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
     call flush_IMAIN()
+
   endif
 
   end subroutine read_topo_bathy_database
@@ -310,19 +314,18 @@
             + dble(ibathy_topo(iel1+1,iadd1))*ratio_lon*(1.-ratio_lat) &
             + dble(ibathy_topo(iel1+1,iadd1+1))*ratio_lon*ratio_lat &
             + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+
   else if( iadd1 <= NY_BATHY-1 .and. iel1 == NX_BATHY ) then
     ! interpolates for points on longitude border
     value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &
             + dble(ibathy_topo(1,iadd1))*ratio_lon*(1.-ratio_lat) &
             + dble(ibathy_topo(1,iadd1+1))*ratio_lon*ratio_lat &
             + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+
   else
     ! for points on latitude boundaries
     value = dble(ibathy_topo(iel1,iadd1))
   endif
 
   end subroutine get_topo_bathy
-
-! -------------------------------------------
-
 

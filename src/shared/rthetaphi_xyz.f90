@@ -33,7 +33,9 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL) x,y,z,r,theta,phi
+  real(kind=CUSTOM_REAL), intent(in) :: x,y,z
+  real(kind=CUSTOM_REAL), intent(out) :: r,theta,phi
+
   double precision xmesh,ymesh,zmesh
 
 ! distinguish between single and double precision for reals
@@ -81,7 +83,9 @@
 
   implicit none
 
-  double precision x,y,z,r,theta,phi
+  double precision, intent(in) :: x,y,z
+  double precision, intent(out) :: r,theta,phi
+
   double precision xmesh,ymesh,zmesh
 
   xmesh = x

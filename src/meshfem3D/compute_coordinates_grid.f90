@@ -57,8 +57,7 @@
 
   double precision, dimension(NDIM) :: vector_ori,vector_rotated
 
-  double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, &
-                      fact_xi_,fact_eta_
+  double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, fact_xi_,fact_eta_
 
 ! this to avoid compilation warnings
   x_=0
@@ -82,8 +81,8 @@
 ! uncomment the corresponding lines in the else condition of this if statement too.
 ! note that the ratio bigger_edge_size/smaller_edge_size for the surface mesh is a bit higher (1.43 vs 1.41)
 
-!       fact_xi_= (3.d0*fact_xi+4.d0*fact_xi_)/7.d0
-!       fact_eta_= (3.d0*fact_eta+4.d0*fact_eta_)/7.d0
+!     fact_xi_= (3.d0*fact_xi+4.d0*fact_xi_)/7.d0
+!     fact_eta_= (3.d0*fact_eta+4.d0*fact_eta_)/7.d0
 
       xi = PI_OVER_TWO*fact_xi
       eta = PI_OVER_TWO*fact_eta
@@ -134,15 +133,15 @@
         case default
           stop 'incorrect chunk number in compute_coord_main_mesh'
       end select
-!       write(IMAIN,*) x,' ',y,' ',z
+
     else
 
 ! uncomment the following lines to have more regular surface mesh (better aspect ratio for each element)
 ! note that the ratio bigger_edge_size/smaller_edge_size for the surface mesh is a bit higher (1.43 vs 1.41)
-!       ratio_xi = ((iproc_xi + offset_x(ignod)/dble(NEX_PER_PROC_XI))/dble(NPROC_XI))*tan(ANGULAR_WIDTH_XI_RAD/2.d0)
-!       x_ = 2.d0*ratio_xi-tan(ANGULAR_WIDTH_XI_RAD/2.d0)
-!       ratio_eta = ((iproc_eta + offset_y(ignod)/dble(NEX_PER_PROC_ETA))/dble(NPROC_ETA))*tan(ANGULAR_WIDTH_ETA_RAD/2.d0)
-!       y_ = 2.d0*ratio_eta-tan(ANGULAR_WIDTH_ETA_RAD/2.d0)
+!     ratio_xi = ((iproc_xi + offset_x(ignod)/dble(NEX_PER_PROC_XI))/dble(NPROC_XI))*tan(ANGULAR_WIDTH_XI_RAD/2.d0)
+!     x_ = 2.d0*ratio_xi-tan(ANGULAR_WIDTH_XI_RAD/2.d0)
+!     ratio_eta = ((iproc_eta + offset_y(ignod)/dble(NEX_PER_PROC_ETA))/dble(NPROC_ETA))*tan(ANGULAR_WIDTH_ETA_RAD/2.d0)
+!     y_ = 2.d0*ratio_eta-tan(ANGULAR_WIDTH_ETA_RAD/2.d0)
 
       ratio_xi = ((iproc_xi + offset_x(ignod)/dble(NEX_PER_PROC_XI))/dble(NPROC_XI))
       x = 2.d0*ratio_xi-1
@@ -155,8 +154,8 @@
 
 ! uncomment the following lines to have more regular surface mesh (better aspect ratio for each element)
 ! note that the ratio bigger_edge_size/smaller_edge_size for the surface mesh is a bit higher (1.43 vs 1.41)
-!       x= (3.d0*x_+4.d0*x)/7.d0
-!       y= (3.d0*y_+4.d0*y)/7.d0
+!     x= (3.d0*x_+4.d0*x)/7.d0
+!     y= (3.d0*y_+4.d0*y)/7.d0
 
       gamma = ONE / sqrt(ONE + x*x + y*y)
 
@@ -272,12 +271,12 @@
 
     endif
   enddo
-!   if(ilayer == NUMBER_OF_MESH_LAYERS .and. INCLUDE_CENTRAL_CUBE) write(IMAIN,*)
+
   end subroutine compute_coord_main_mesh
 
 !---------------------------------------------------------------------------
 
-!! DK DK create value of arrays xgrid ygrid and zgrid in the central cube without storing them
+! create value of arrays xgrid ygrid and zgrid in the central cube without storing them
 
   subroutine compute_coord_central_cube(ix,iy,iz, &
                   xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
@@ -320,4 +319,140 @@
   zgrid_central_cube = radius_cube * fact_z * (1 + (cos(xi)+cos(eta))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
 
   end subroutine compute_coord_central_cube
+
+
+!---------------------------------------------------------------------------
+
+! create observation grid (surface) on which we compute the Roland_Sylvain integrals.
+! each processor has a copy of the whole grid and sums its contribution there,
+! and at the end of the process an MPI reduction is performed to compute the global sum
+
+  subroutine compute_observation_surface()
+
+  use constants
+
+  use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
+
+  use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
+
+  implicit none
+
+! local variables
+  integer :: ix,iy,ichunk
+
+  double precision :: gamma,x,y,rgt
+  double precision :: x_top,y_top,z_top
+  double precision :: ratio_xi, ratio_eta
+
+  double precision :: r,lat,lon,elevation
+
+! the observation surface is always above the whole Earth, thus each mesh chunk has a size of PI / 2 in each direction
+  double precision, parameter :: ANGULAR_WIDTH_XI_RAD = PI_OVER_TWO, ANGULAR_WIDTH_ETA_RAD = PI_OVER_TWO
+
+  ! for future GMT display
+  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/observation_grid_long_lat_topo_for_GMT.txt', &
+                                     status='unknown',action='write')
+
+! loop on all the chunks and then on all the observation nodes in each chunk
+  do ichunk = 1,NCHUNKS_MAX
+    do iy = 1,NY_OBSERVATION
+      do ix = 1,NX_OBSERVATION
+
+      ratio_xi = dble(ix - 1) / dble(NX_OBSERVATION - 1)
+      x = 2.d0*ratio_xi-1
+
+      ratio_eta = dble(iy - 1) / dble(NY_OBSERVATION - 1)
+      y = 2.d0*ratio_eta-1
+
+      x = tan((ANGULAR_WIDTH_XI_RAD/2.d0) * x)
+      y = tan((ANGULAR_WIDTH_ETA_RAD/2.d0) * y)
+
+      gamma = ONE / sqrt(ONE + x*x + y*y)
+
+! first compute the position of the points exactly at the free surface of the Earth (without the oceans)
+! keeping in mind that the code non-dimensionalizes the radius of the spherical Earth to one
+      rgt = R_UNIT_SPHERE*gamma
+
+    ! define the mesh points on the top and the bottom in the six regions of the cubed shpere
+      select case (ichunk)
+
+        case(CHUNK_AB)
+
+          x_top = -y*rgt
+          y_top = x*rgt
+          z_top = rgt
+
+        case(CHUNK_AB_ANTIPODE)
+
+          x_top = -y*rgt
+          y_top = -x*rgt
+          z_top = -rgt
+
+        case(CHUNK_AC)
+
+          x_top = -y*rgt
+          y_top = -rgt
+          z_top = x*rgt
+
+        case(CHUNK_AC_ANTIPODE)
+
+          x_top = -y*rgt
+          y_top = rgt
+          z_top = -x*rgt
+
+        case(CHUNK_BC)
+
+          x_top = -rgt
+          y_top = y*rgt
+          z_top = x*rgt
+
+        case(CHUNK_BC_ANTIPODE)
+
+          x_top = rgt
+          y_top = -y*rgt
+          z_top = x*rgt
+
+        case default
+          stop 'incorrect chunk number in compute_coord_main_mesh'
+
+      end select
+
+      ! add ellipticity
+      if(ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,espl,espl2)
+
+      ! add topography
+      if(TOPOGRAPHY) then
+        ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+        call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
+
+        ! compute elevation at current point
+        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+
+        ! store the values obtained for future display with GMT
+        if(myrank == 0) then
+          if( lon > 180.0d0 ) lon = lon - 360.0d0
+          write(IOUT,*) lon,lat,elevation
+        endif
+
+        ! non-dimensionalize the elevation, which is in meters
+        elevation = elevation / R_EARTH
+
+        x_top = x_top*(ONE + elevation)
+        y_top = y_top*(ONE + elevation)
+        z_top = z_top*(ONE + elevation)
+      endif
+
+      ! compute the position of the point
+      x_observation(ix,iy,ichunk) = x_top * observation_elevation_ratio
+      y_observation(ix,iy,ichunk) = y_top * observation_elevation_ratio
+      z_observation(ix,iy,ichunk) = z_top * observation_elevation_ratio
+
+      enddo
+    enddo
+  enddo
+
+  ! for future GMT display
+  if(myrank == 0) close(unit=IOUT)
+
+  end subroutine compute_observation_surface
 
