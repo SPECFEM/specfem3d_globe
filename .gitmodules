@@ -1,6 +1,6 @@
 [submodule "m4"]
 	path = m4
-	url = https://github.com/geodynamics/autoconf_cig.git
+	url = https://github.com/Nanosim-LIG/autoconf_cig.git
 [submodule "EXAMPLES"]
 	path = EXAMPLES
 	url = git://vcs.geodynamics.org/specfem3d_globe_examples
