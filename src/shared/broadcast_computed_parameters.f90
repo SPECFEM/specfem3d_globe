@@ -36,7 +36,7 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 44
+  integer, parameter :: nparam_i = 45
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 57
@@ -74,8 +74,8 @@
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
             NOISE_TOMOGRAPHY, &
-            NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5 &
-            /)
+            NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5, &
+            GPU_RUNTIME /)
 
     bcast_logical = (/ &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -121,6 +121,9 @@
   call bcast_all_ch(LOCAL_PATH,150)
   call bcast_all_ch(LOCAL_TMP_PATH,150)
   call bcast_all_ch(MODEL,150)
+
+  call bcast_all_ch(GPU_PLATFORM,11)
+  call bcast_all_ch(GPU_DEVICE,11)
 
   call bcast_all_i(ner,MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_i(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS)
@@ -202,6 +205,7 @@
     ATT3 = bcast_integer(42)
     ATT4 = bcast_integer(43)
     ATT5 = bcast_integer(44)
+    GPU_RUNTIME = bcast_integer(45)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
