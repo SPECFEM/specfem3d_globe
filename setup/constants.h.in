@@ -91,6 +91,8 @@
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
 
+! maximum number of chunks (full sphere)
+  integer, parameter :: NCHUNKS_MAX = 6
 
 !!-----------------------------------------------------------
 !!
@@ -402,30 +404,35 @@
 !! DK DK for Roland_Sylvain
   logical, parameter :: ROLAND_SYLVAIN = .false.
 
-! altitude of the observation point
-  double precision, parameter :: altitude_of_observation_point = 255.d0 ! in km
+! altitude of the observation points in km
+  double precision, parameter :: altitude_of_observation_points = 255.d0
 
-! standard gravity at the surface of the Earth
-  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
+! elevation ratio of the points at which we observe
+  double precision, parameter :: observation_elevation_ratio = (R_EARTH_KM + altitude_of_observation_points) / R_EARTH_KM
 
-  double precision, parameter :: SQUARE_ROOT_OF_THREE = 1.73205080756887729352d0
+! compute the contribution of the crust only (otherwise by default compute the contribution of the whole Earth)
+  logical, parameter :: COMPUTE_CRUST_CONTRIB_ONLY = .false.
 
-! position of the observation point in non-dimensionalized value
+! check for negative Jacobians in the calculation of integrals or not
+! (can safely be done once to check that the mesh is OK at a given resolution, and then permanently
+!  turned off in future runs because the mesh does not change)
+  logical, parameter :: CHECK_FOR_NEGATIVE_JACOBIANS = .true.
 
-!! DK DK along X only
-! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
-! double precision, parameter :: y_observation = 0.d0
-! double precision, parameter :: z_observation = 0.d0
+! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
+! at the altitude of the observation point
+  integer, parameter :: NX_OBSERVATION = 500
+  integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
-!! DK DK along diagonal
-! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-! double precision, parameter :: y_observation = x_observation
-! double precision, parameter :: z_observation = x_observation
+! the code will display sample output values at this particular point as a check
+  integer, parameter :: ixr = NX_OBSERVATION / 3
+  integer, parameter :: iyr = NY_OBSERVATION / 4
+  integer, parameter :: ichunkr = 3
 
-!! DK DK point randomly chosen in space, not at the right elevation we want
-  double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-  double precision, parameter :: y_observation = x_observation * 1.12d0
-  double precision, parameter :: z_observation = x_observation * 1.38d0
+! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
+  integer, parameter :: NSPEC_DISPLAY_INTERVAL = 100
+
+! for the FORCE_VECTORIZATION 1D version of some loops
+  integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
@@ -471,6 +478,9 @@
 ! double precision, parameter :: GRAV = 6.6723d-11
   double precision, parameter :: GRAV = 6.67384d-11
 
+! standard gravity at the surface of the Earth
+  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
+
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
   double precision, parameter :: ONE_HALF = HALF, ONE_FOURTH = 0.25d0, ONE_EIGHTH = 0.125d0, ONE_SIXTEENTH = 0.0625d0
@@ -504,9 +514,6 @@
 ! A person walking at a distance of 2 meters provides a gravity gradient signal of approximately one Eotvos.
 ! Mountains can create signals of several hundred Eotvos.
   double precision, parameter :: SI_UNITS_TO_EOTVOS = 1.d+9
-
-! maximum number of chunks (full sphere)
-  integer, parameter :: NCHUNKS_MAX = 6
 
 ! define block type based upon chunk number (between 1 and 6)
 ! do not change this numbering, chunk AB must be number 1 for central cube

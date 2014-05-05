@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine check_stability()
 
 ! computes the maximum of the norm of the displacement
@@ -553,7 +552,7 @@
     write(outputname,"('/timestamp_backward_and_adjoint',i6.6)") it
   endif
 
-  ! file output
+  ! timestamp file output
   open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
 
   write(IOUT,*) 'Time step # ',it

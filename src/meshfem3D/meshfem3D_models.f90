@@ -62,12 +62,10 @@
   endif
 
   ! sets up spline coefficients for ellipticity
-  if(ELLIPTICITY) &
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   ! read topography and bathymetry file
-  if(TOPOGRAPHY) &
-    call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
+  if(TOPOGRAPHY) call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
   ! reads 1D reference models
   ! re-defines/initializes models 1066a and ak135 and ref
