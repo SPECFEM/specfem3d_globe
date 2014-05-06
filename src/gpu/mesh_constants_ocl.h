@@ -26,6 +26,35 @@
  !
  !=====================================================================
 */
+
+#include <CL/cl.h>
+
+const char* clewErrorString (cl_int error);
+
+#define INITIALIZE_OFFSET_OCL()                     \
+  cl_uint buffer_create_type;                       \
+  size_t size;                                      \
+  cl_buffer_region region_type;
+
+#define INIT_OFFSET_OCL(_buffer_, _offset_)                             \
+  if (run_opencl) {                                                     \
+    clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_FLAGS,        \
+                                 sizeof(cl_uint),                       \
+                                 &buffer_create_type,                   \
+                                 NULL));                                \
+    clCheck (clGetMemObjectInfo (mp->_buffer_.ocl,                      \
+                                 CL_MEM_SIZE ,                          \
+                                 sizeof(size_t),                        \
+                                 &size,                                 \
+                                 NULL));                                \
+                                                                        \
+    region_type.origin = _offset_ * sizeof(CL_FLOAT);                   \
+    region_type.size = size;                                            \
+                                                                        \
+    _buffer_##_##_offset_.ocl = clCreateSubBuffer (mp->_buffer_.ocl,    \
+                                                   buffer_create_type,  \
+                                                   CL_BUFFER_CREATE_TYPE_REGION, \
+                                                   (void *) &region_type, \
                                                    clck_(&mocl_errcode)); \
   }
 

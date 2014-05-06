@@ -103,7 +103,7 @@
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
-      call compute_forces_outer_core_cuda(Mesh_pointer,iphase,timeval,1)
+      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,timeval,1)
 
       ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
@@ -111,7 +111,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_scalar_outer_core,IREGION_OUTER_CORE,1)
         ! sends MPI buffers
-        call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                                            buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                            nibool_interfaces_outer_core,&
@@ -161,12 +161,12 @@
           !--- couple with mantle at the top of the outer core
           !---
           if( ACTUALLY_COUPLE_FLUID_CMB ) &
-               call compute_coupling_fluid_cmb_cuda(Mesh_pointer,1)
+               call compute_coupling_fluid_cmb_gpu(Mesh_pointer,1)
           !---
           !--- couple with inner core at the bottom of the outer core
           !---
           if( ACTUALLY_COUPLE_FLUID_ICB ) &
-               call compute_coupling_fluid_icb_cuda(Mesh_pointer,1)
+               call compute_coupling_fluid_icb_gpu(Mesh_pointer,1)
 
        endif
     endif ! iphase == 1
@@ -191,14 +191,14 @@
         ! preparation of the contribution between partitions using MPI
         ! transfers MPI buffers to CPU
         ! note: for asynchronous transfers, this transfers boundary region to host asynchronously. The
-        !       MPI-send is done after compute_forces_outer_core_cuda,
+        !       MPI-send is done after compute_forces_outer_core_gpu,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_pot_from_device(Mesh_pointer,buffer_send_scalar_outer_core,1)
 
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronous transfers, sending over MPI can directly proceed
           ! outer core
-          call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                                              buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                              nibool_interfaces_outer_core,&
@@ -231,7 +231,7 @@
         endif
 
         ! waits for MPI send/receive requests to be completed and assembles values
-        call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_scalar_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
                                             buffer_recv_scalar_outer_core, &
                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                             request_send_scalar_oc,request_recv_scalar_oc, &
@@ -249,7 +249,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
-    call multiply_accel_acoustic_cuda(Mesh_pointer,1)
+    call multiply_accel_acoustic_gpu(Mesh_pointer,1)
   endif
 
 
@@ -364,7 +364,7 @@
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 3
-      call compute_forces_outer_core_cuda(Mesh_pointer,iphase,b_time,3)
+      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,b_time,3)
 
       ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
@@ -372,7 +372,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_scalar_outer_core,IREGION_OUTER_CORE,3)
         ! sends MPI buffers
-        call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
                               nibool_interfaces_outer_core,&
@@ -428,12 +428,12 @@
         !--- couple with mantle at the top of the outer core
         !---
         if( ACTUALLY_COUPLE_FLUID_CMB ) &
-          call compute_coupling_fluid_cmb_cuda(Mesh_pointer,3)
+          call compute_coupling_fluid_cmb_gpu(Mesh_pointer,3)
         !---
         !--- couple with inner core at the bottom of the outer core
         !---
         if( ACTUALLY_COUPLE_FLUID_ICB ) &
-          call compute_coupling_fluid_icb_cuda(Mesh_pointer,3)
+          call compute_coupling_fluid_icb_gpu(Mesh_pointer,3)
 
       endif
     endif ! iphase == 1
@@ -459,14 +459,14 @@
         ! preparation of the contribution between partitions using MPI
         ! transfers MPI buffers to CPU
         ! note: for asynchronous transfers, this transfers boundary region to host asynchronously. The
-        !       MPI-send is done after compute_forces_outer_core_cuda,
+        !       MPI-send is done after compute_forces_outer_core_gpu,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_pot_from_device(Mesh_pointer,b_buffer_send_scalar_outer_core,3)
 
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronous transfers, sending over MPI can directly proceed
           ! outer core
-          call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,&
@@ -500,7 +500,7 @@
         endif
 
         ! waits for MPI send/receive requests to be completed and assembles values
-        call assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_scalar_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
                                             b_buffer_recv_scalar_outer_core, &
                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                             b_request_send_scalar_oc,b_request_recv_scalar_oc, &
@@ -517,7 +517,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
-    call multiply_accel_acoustic_cuda(Mesh_pointer,3)
+    call multiply_accel_acoustic_gpu(Mesh_pointer,3)
   endif
 
   ! time schemes

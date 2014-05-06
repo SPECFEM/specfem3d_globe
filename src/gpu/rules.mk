@@ -29,14 +29,13 @@
 ## compilation directories
 
 S := ${S_TOP}/src/gpu
-$(gpu_OBJECTS): S = ${S_TOP}/src/gpu
 
 BOAST_DIR_NAME := kernels.gen
 BOAST_DIR := ${S}/${BOAST_DIR_NAME}
 
 #######################################
 
-gpu_OBJECTS = \
+gpu_specfem3D_OBJECTS = \
 	$O/assemble_MPI_scalar_gpu.o \
 	$O/assemble_MPI_vector_gpu.o \
 	$O/check_fields_gpu.o \
@@ -65,27 +64,25 @@ endif
 #######################################
 
 ifeq ($(GPU_CUDA_AND_OCL),yes)
-  gpu_OBJECTS:=$(subst .o,.cuda-ocl.o,${gpu_OBJECTS})
+  gpu_specfem3D_OBJECTS:=$(subst .o,.cuda-ocl.o,${gpu_specfem3D_OBJECTS})
 endif
 
 ifneq ($(GPU_CUDA_AND_OCL),yes)
   ifeq ($(OCL), yes)
-    gpu_OBJECTS:=$(subst .o,.ocl.o,${gpu_OBJECTS})
+    gpu_specfem3D_OBJECTS:=$(subst .o,.ocl.o,${gpu_specfem3D_OBJECTS})
   endif
   ifeq ($(CUDA),yes)
-    gpu_OBJECTS:=$(subst .o,.cuda.o,${gpu_OBJECTS})
+    gpu_specfem3D_OBJECTS:=$(subst .o,.cuda.o,${gpu_specfem3D_OBJECTS})
   endif
 endif
 
-gpu_OBJECTS += $(cuda_specfem3D_DEVICE_OBJ) $(cuda_kernels_OBJS)
+gpu_specfem3D_OBJECTS += $(cuda_specfem3D_DEVICE_OBJ) $(cuda_kernels_OBJS)
 
 ###
 ### variables
 ###
 
 NVCC_CFLAGS := ${NVCC_FLAGS} -x cu
-
-CUDA_LINK += -lstdc++
 
 BUILD_VERSION_TXT := with
 SELECTOR_CFLAG :=
@@ -97,6 +94,10 @@ ifeq ($(CUDA),yes)
   ifeq ($(CUDA5),yes)
     BUILD_VERSION_TXT += (v5)
   endif
+endif
+
+ifeq ($(GPU_CUDA_AND_OCL),yes)
+  BUILD_VERSION_TXT += and
 endif
 
 ifeq ($(OCL), yes)
@@ -133,7 +134,7 @@ ifeq ($(CUDA),yes)
 $O/%.cuda-kernel.o: $(BOAST_DIR)/%.cu $S/mesh_constants_gpu.h $S/mesh_constants_cuda.h
 	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} $(SELECTOR_CFLAG) -I$(BOAST_DIR) $(CUDA_DEBUG) -include $(word 2,$^)
 
-$(cuda_specfem3D_DEVICE_OBJ): $(subst $(cuda_specfem3D_DEVICE_OBJ), ,$(gpu_OBJECTS)) $(cuda_kernels_OBJS)
+$(cuda_specfem3D_DEVICE_OBJ): $(subst $(cuda_specfem3D_DEVICE_OBJ), ,$(gpu_specfem3D_OBJECTS)) $(cuda_kernels_OBJS)
 	${NVCCLINK} -o $@ $^
 endif
 

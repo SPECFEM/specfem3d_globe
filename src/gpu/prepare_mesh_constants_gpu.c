@@ -209,7 +209,7 @@ void initialize_dummy_buffers(Mesh *mp) {
   #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
   #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
   #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
-  #include "GPU_buffer_list.c"
+  #include "gpu_buffer_list.c"
   #undef INIT_DUMMY_BUFFER
 #endif
 #ifdef USE_CUDA
@@ -218,7 +218,7 @@ void initialize_dummy_buffers(Mesh *mp) {
   #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
   #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
   #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
-  #include "GPU_buffer_list.c"
+  #include "gpu_buffer_list.c"
   #undef INIT_DUMMY_BUFFER
 #endif
 }
@@ -513,10 +513,6 @@ void FC_FUNC_ (prepare_constants_device,
       }
     }
 #endif
-    mp->h_station_seismo_field = (realw *) malloc (NDIM * NGLL3 * (mp->nrec_local) * sizeof (realw));
-    if (mp->h_station_seismo_field == NULL) {
-      exit_on_error ("h_station_seismo_field not allocated \n");
-    }
   }
 
   copy_todevice_int (mp, &mp->d_ispec_selected_rec, h_ispec_selected_rec, *nrec);
@@ -2255,9 +2251,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_crust_mantle.cuda,0,sizeof(realw)*size),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_crust_mantle.cuda,0,sizeof(realw)*size),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_crust_mantle.cuda,0,sizeof(realw)*size),5111);
+      print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_crust_mantle.cuda, 0,sizeof(realw)*size),5111);
+      print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_crust_mantle.cuda, 0,sizeof(realw)*size),5111);
+      print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_crust_mantle.cuda, 0,sizeof(realw)*size),5111);
     }
 #endif
 #endif
@@ -2268,11 +2264,12 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_TEXTURES_FIELDS
     cl_image_format format = {CL_R, CL_UNSIGNED_INT32};
     
-    mp->d_displ_cm_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_crust_mantle.ocl clck_(&errcode));
-    mp->d_accel_cm_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_crust_mantle.ocl, clck_(&errcode));
-    if( mp->simulation_type == 3 ){
-      mp->d_b_displ_cm_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_crust_mantle.ocl clck_(&errcode));
-      mp->d_b_accel_cm_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_crust_mantle.ocl, clck_(&errcode));
+    mp->d_displ_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_crust_mantle.ocl, clck_(&errcode));
+    mp->d_accel_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_crust_mantle.ocl, clck_(&errcode));
+    
+    if (mp->simulation_type == 3) {
+      mp->d_b_displ_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_crust_mantle.ocl, clck_(&errcode));
+      mp->d_b_accel_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_crust_mantle.ocl, clck_(&errcode));
     }
 #else
     mp->d_displ_cm_tex = moclGetDummyImage2D(mp);
@@ -2730,9 +2727,9 @@ void FC_FUNC_ (prepare_outer_core_device,
     mp->d_accel_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format,
                                       size_glob, 1, 0, mp->d_accel_outer_core.ocl,
                                       clck_(&errcode));
-    if( mp->simulation_type == 3 ){
-      mp->d_b_displ_oc_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_outer_core.ocl clck_(&errcode));
-      mp->d_b_accel_oc_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_outer_core.ocl, clck_(&errcode));
+    if (mp->simulation_type == 3) {
+      mp->d_b_displ_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size_glob, 1, 0, mp->d_b_displ_outer_core.ocl, clck_(&errcode));
+      mp->d_b_accel_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size_glob, 1, 0, mp->d_b_accel_outer_core.ocl, clck_(&errcode));
     }
 #else
     mp->d_displ_oc_tex = moclGetDummyImage2D(mp);
@@ -2747,41 +2744,41 @@ void FC_FUNC_ (prepare_outer_core_device,
   if (run_cuda) {
 #ifdef USE_TEXTURES_FIELDS
 #ifdef USE_OLDER_CUDA4_GPU
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
-      const textureReference* d_displ_oc_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    const textureReference* d_displ_oc_tex_ref_ptr;
+    print_CUDA_error_if_any(cudaGetTextureReference(&d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
+    print_CUDA_error_if_any(cudaBindTexture(0, d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
+                                            &channelDesc, sizeof(realw)*size_glob), 5021);
+    
+    const textureReference* d_accel_oc_tex_ref_ptr;
+    print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
+    print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
+                                            &channelDesc, sizeof(realw)*size_glob), 5023);
+    // backward/reconstructed wavefields
+    if( mp->simulation_type == 3 ){
+      const textureReference* d_b_displ_oc_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_oc_tex_ref_ptr, "d_b_displ_oc_tex"), 5021);
+      print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_oc_tex_ref_ptr, mp->d_b_displ_outer_core,
                                               &channelDesc, sizeof(realw)*size_glob), 5021);
-
-      const textureReference* d_accel_oc_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
-                                              &channelDesc, sizeof(realw)*size_glob), 5023);
-      // backward/reconstructed wavefields
-      if( mp->simulation_type == 3 ){
-        const textureReference* d_b_displ_oc_tex_ref_ptr;
-        print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_oc_tex_ref_ptr, "d_b_displ_oc_tex"), 5021);
-        print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_oc_tex_ref_ptr, mp->d_b_displ_outer_core,
-                                                &channelDesc, sizeof(realw)*size_glob), 5021);
-
-        const textureReference* d_b_accel_oc_tex_ref_ptr;
-        print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_oc_tex_ref_ptr, "d_b_accel_oc_tex"), 5023);
+      
+      const textureReference* d_b_accel_oc_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_oc_tex_ref_ptr, "d_b_accel_oc_tex"), 5023);
         print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_oc_tex_ref_ptr, mp->d_b_accel_outer_core,
                                                 &channelDesc, sizeof(realw)*size_glob), 5023);
-      }
+    }
 #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_oc_tex, mp->d_displ_outer_core.cuda,
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
+    print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_oc_tex, mp->d_displ_outer_core.cuda,
+                                            &channelDesc, sizeof(realw)*size_glob), 5021);
+    print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_oc_tex, mp->d_accel_outer_core.cuda,
+                                            &channelDesc, sizeof(realw)*size_glob), 5023);
+    // backward/reconstructed wavefields
+    if( mp->simulation_type == 3 ){
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_oc_tex, mp->d_b_displ_outer_core.cuda,
                                               &channelDesc, sizeof(realw)*size_glob), 5021);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_oc_tex, mp->d_accel_outer_core.cuda,
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_oc_tex, mp->d_b_accel_outer_core.cuda,
                                               &channelDesc, sizeof(realw)*size_glob), 5023);
-      // backward/reconstructed wavefields
-      if( mp->simulation_type == 3 ){
-        print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_oc_tex, mp->d_b_displ_outer_core.cuda,
-                                                &channelDesc, sizeof(realw)*size_glob), 5021);
-        print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_oc_tex, mp->d_b_accel_outer_core.cuda,
-                                                &channelDesc, sizeof(realw)*size_glob), 5023);
-      }
+    }
 #endif
 #endif
   }
@@ -3213,11 +3210,12 @@ void FC_FUNC_ (prepare_inner_core_device,
   if (run_opencl) {
 #ifdef USE_TEXTURES_FIELDS
     cl_image_format format = {CL_R, CL_UNSIGNED_INT32};
-    mp->d_displ_ic_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_inner_core, clck_(&errcode));
-    mp->d_accel_ic_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_inner_core, clck_(&errcode));
+    mp->d_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_inner_core.ocl, clck_(&errcode));
+    mp->d_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_inner_core.ocl, clck_(&errcode));
+    
     if( mp->simulation_type == 3 ){
-      mp->d_b_displ_ic_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_inner_core.ocl clck_(&errcode));
-      mp->d_b_accel_ic_tex.ocl = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_inner_core.ocl, clck_(&errcode));
+      mp->d_b_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_inner_core.ocl, clck_(&errcode));
+      mp->d_b_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_inner_core.ocl, clck_(&errcode));
     }
 #else
     mp->d_displ_ic_tex = moclGetDummyImage2D(mp);
@@ -3402,7 +3400,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   }
 #endif
 
-  if( mp->nrec_local > 0 ) {
+  if (mp->nrec_local > 0) {
 #ifdef USE_OPENCL
     if (run_opencl && GPU_ASYNC_COPY) {
       RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
@@ -3421,7 +3419,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->nadj_rec_local > 0) {
 #ifdef USE_OPENCL
     if (run_cuda && GPU_ASYNC_COPY) {
-      RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
+      RELEASE_PINNED_BUFFER_OCL (adj_sourcearrays_slice);
     }
 #endif
 #ifdef USE_CUDA
@@ -3435,11 +3433,12 @@ void FC_FUNC_ (prepare_cleanup_device,
   }
 
 #ifdef USE_OPENCL
-  if (mp->num_interfaces_crust_mantle > 0 ){
-    if (GPU_ASYNC_COPY){
+  if (mp->num_interfaces_crust_mantle > 0) {
+    if (GPU_ASYNC_COPY) {
       RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_cm);
       RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_cm);
-      if( mp->simulation_type == 3 ){
+      
+      if (mp->simulation_type == 3) {
         RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_cm);
         RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_cm);
       }
@@ -3449,6 +3448,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     if (GPU_ASYNC_COPY) {
       RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_ic);
       RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_ic);
+      
       if (mp->simulation_type == 3) {
         RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_ic);
         RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_ic);
@@ -3459,6 +3459,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     if (GPU_ASYNC_COPY) {
       RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_oc);
       RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_oc);
+      
       if (mp->simulation_type == 3) {
         RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_oc);
         RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_oc);
@@ -3503,9 +3504,11 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
 #ifdef USE_OPENCL
   if (run_opencl) {
-    
-    clReleaseMemObject (mp->d_sourcearrays.ocl);
-    clReleaseMemObject (mp->d_stf_pre_compute.ocl);
+
+    if (mp->simulation_type == 1 || mp->simulation_type == 3) {
+      clReleaseMemObject (mp->d_sourcearrays.ocl);
+      clReleaseMemObject (mp->d_stf_pre_compute.ocl);
+    }
 
     clReleaseMemObject (mp->d_islice_selected_source.ocl);
     clReleaseMemObject (mp->d_ispec_selected_source.ocl);
@@ -3513,12 +3516,14 @@ void FC_FUNC_ (prepare_cleanup_device,
     //------------------------------------------
     // receivers
     //------------------------------------------
-    
     if (mp->nrec_local > 0) {
       clReleaseMemObject (mp->d_number_receiver_global.ocl);
       clReleaseMemObject (mp->d_station_seismo_field.ocl);
+
+      if (mp->simulation_type == 2) {
+        clReleaseMemObject (mp->d_station_strain_field.ocl);
+      }
     }
-    
     clReleaseMemObject (mp->d_ispec_selected_rec.ocl);
 
     if (mp->nadj_rec_local > 0) {
@@ -3529,226 +3534,259 @@ void FC_FUNC_ (prepare_cleanup_device,
     //------------------------------------------
     // rotation arrays
     //------------------------------------------
-
-    clReleaseMemObject (mp->d_A_array_rotation.ocl);
-    clReleaseMemObject (mp->d_B_array_rotation.ocl);
-
-    if (mp->simulation_type == 3) {
-      clReleaseMemObject (mp->d_b_A_array_rotation.ocl);
-      clReleaseMemObject (mp->d_b_B_array_rotation.ocl);
+    if (mp->rotation) {
+      clReleaseMemObject (mp->d_A_array_rotation.ocl);
+      clReleaseMemObject (mp->d_B_array_rotation.ocl);
+      
+      if (mp->simulation_type == 3) {
+        clReleaseMemObject (mp->d_b_A_array_rotation.ocl);
+        clReleaseMemObject (mp->d_b_B_array_rotation.ocl);
+      }
     }
 
     //------------------------------------------
     // gravity arrays
     //------------------------------------------
-
-    clReleaseMemObject (mp->d_d_ln_density_dr_table.ocl);
-
-    clReleaseMemObject (mp->d_minus_rho_g_over_kappa_fluid.ocl);
-    clReleaseMemObject (mp->d_minus_gravity_table.ocl);
-    clReleaseMemObject (mp->d_minus_deriv_gravity_table.ocl);
-    clReleaseMemObject (mp->d_density_table.ocl);
+    if (! mp->gravity) {
+      clReleaseMemObject (mp->d_d_ln_density_dr_table.ocl);
+      
+    } else {
+      clReleaseMemObject (mp->d_minus_rho_g_over_kappa_fluid.ocl);
+      clReleaseMemObject (mp->d_minus_gravity_table.ocl);
+      clReleaseMemObject (mp->d_minus_deriv_gravity_table.ocl);
+      clReleaseMemObject (mp->d_density_table.ocl);
+    }
 
     //------------------------------------------
     // attenuation arrays
     //------------------------------------------
-
-    clReleaseMemObject (mp->d_one_minus_sum_beta_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_one_minus_sum_beta_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_factor_common_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_R_xx_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_R_yy_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_R_xy_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_R_xz_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_R_yz_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_factor_common_inner_core.ocl);
-    clReleaseMemObject (mp->d_R_xx_inner_core.ocl);
-    clReleaseMemObject (mp->d_R_yy_inner_core.ocl);
-    clReleaseMemObject (mp->d_R_xy_inner_core.ocl);
-    clReleaseMemObject (mp->d_R_xz_inner_core.ocl);
-    clReleaseMemObject (mp->d_R_yz_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_alphaval.ocl);
-
-    clReleaseMemObject (mp->d_betaval.ocl);
-    clReleaseMemObject (mp->d_gammaval.ocl);
-
-    clReleaseMemObject (mp->d_b_alphaval.ocl);
-    clReleaseMemObject (mp->d_b_betaval.ocl);
-    clReleaseMemObject (mp->d_b_gammaval.ocl);
-
+    if (mp->attenuation) {
+      clReleaseMemObject (mp->d_one_minus_sum_beta_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_one_minus_sum_beta_inner_core.ocl);
+      
+      if (! mp->partial_phys_dispersion_only) {
+        clReleaseMemObject (mp->d_factor_common_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_R_xx_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_R_yy_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_R_xy_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_R_xz_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_R_yz_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_factor_common_inner_core.ocl);
+        clReleaseMemObject (mp->d_R_xx_inner_core.ocl);
+        clReleaseMemObject (mp->d_R_yy_inner_core.ocl);
+        clReleaseMemObject (mp->d_R_xy_inner_core.ocl);
+        clReleaseMemObject (mp->d_R_xz_inner_core.ocl);
+        clReleaseMemObject (mp->d_R_yz_inner_core.ocl);
+      }
+      
+      clReleaseMemObject (mp->d_alphaval.ocl);
+      clReleaseMemObject (mp->d_betaval.ocl);
+      clReleaseMemObject (mp->d_gammaval.ocl);
+      
+      if (mp->simulation_type == 3) {
+        clReleaseMemObject (mp->d_b_alphaval.ocl);
+        clReleaseMemObject (mp->d_b_betaval.ocl);
+        clReleaseMemObject (mp->d_b_gammaval.ocl);
+      }
+    }
 
     //------------------------------------------
     // strain
     //------------------------------------------
+    if (mp->compute_and_store_strain) {
+      clReleaseMemObject (mp->d_epsilondev_xx_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_epsilondev_yy_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_epsilondev_xy_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_epsilondev_xz_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_epsilondev_yz_crust_mantle.ocl);
 
-    clReleaseMemObject (mp->d_epsilondev_xx_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_epsilondev_yy_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_epsilondev_xy_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_epsilondev_xz_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_epsilondev_yz_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_epsilondev_xx_inner_core.ocl);
+      clReleaseMemObject (mp->d_epsilondev_yy_inner_core.ocl);
+      clReleaseMemObject (mp->d_epsilondev_xy_inner_core.ocl);
+      clReleaseMemObject (mp->d_epsilondev_xz_inner_core.ocl);
+      clReleaseMemObject (mp->d_epsilondev_yz_inner_core.ocl);
 
-    clReleaseMemObject (mp->d_epsilondev_xx_inner_core.ocl);
-    clReleaseMemObject (mp->d_epsilondev_yy_inner_core.ocl);
-    clReleaseMemObject (mp->d_epsilondev_xy_inner_core.ocl);
-    clReleaseMemObject (mp->d_epsilondev_xz_inner_core.ocl);
-    clReleaseMemObject (mp->d_epsilondev_yz_inner_core.ocl);
+      clReleaseMemObject (mp->d_eps_trace_over_3_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_eps_trace_over_3_inner_core.ocl);
+      
+      if (mp->simulation_type == 3 && ! mp->undo_attenuation){
+        clReleaseMemObject (mp->d_b_epsilondev_xx_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_yy_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_xy_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_xz_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_yz_crust_mantle.ocl);
 
-    clReleaseMemObject (mp->d_eps_trace_over_3_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_eps_trace_over_3_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_xx_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_yy_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_xy_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_xz_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_epsilondev_yz_inner_core.ocl);
 
-
-    clReleaseMemObject (mp->d_b_epsilondev_xx_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_yy_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_xy_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_xz_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_yz_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_b_epsilondev_xx_inner_core.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_yy_inner_core.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_xy_inner_core.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_xz_inner_core.ocl);
-    clReleaseMemObject (mp->d_b_epsilondev_yz_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_b_eps_trace_over_3_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_eps_trace_over_3_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_eps_trace_over_3_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_b_eps_trace_over_3_inner_core.ocl);
+      }
+    }
 
     //------------------------------------------
     // absorbing boundaries arrays
     //------------------------------------------
+    if (mp->absorbing_conditions){
+      clReleaseMemObject (mp->d_rho_vp_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_rho_vs_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_nkmin_xi_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_nkmin_eta_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_njmin_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_njmax_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_nimin_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_nimax_crust_mantle.ocl);
+      
+      if (mp->nspec2D_xmin_crust_mantle > 0) {
+        clReleaseMemObject (mp->d_ibelm_xmin_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_normal_xmin_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_xmin_crust_mantle.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_xmin_crust_mantle.ocl);
+        }
+      }
+      
+      if (mp->nspec2D_xmax_crust_mantle > 0) {
+        clReleaseMemObject (mp->d_ibelm_xmax_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_normal_xmax_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_xmax_crust_mantle.ocl);
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_xmax_crust_mantle.ocl);
+        }
+      }
+      
+      if (mp->nspec2D_ymin_crust_mantle > 0) {
+        clReleaseMemObject (mp->d_ibelm_ymin_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_normal_ymin_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_ymin_crust_mantle.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_ymin_crust_mantle.ocl);
+        }
+      }
+      
+      if (mp->nspec2D_ymax_crust_mantle > 0) {
+        clReleaseMemObject (mp->d_ibelm_ymax_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_normal_ymax_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_ymax_crust_mantle.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_ymax_crust_mantle.ocl);
+        }
+      }
 
-    clReleaseMemObject (mp->d_rho_vp_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_rho_vs_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_nkmin_xi_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_nkmin_eta_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_njmin_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_njmax_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_nimin_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_nimax_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_vp_outer_core.ocl);
+      clReleaseMemObject (mp->d_nkmin_xi_outer_core.ocl);
+      clReleaseMemObject (mp->d_nkmin_eta_outer_core.ocl);
+      clReleaseMemObject (mp->d_njmin_outer_core.ocl);
+      clReleaseMemObject (mp->d_njmax_outer_core.ocl);
+      clReleaseMemObject (mp->d_nimin_outer_core.ocl);
+      clReleaseMemObject (mp->d_nimax_outer_core.ocl);
+      
+      if (mp->nspec2D_xmin_outer_core > 0) {
+        clReleaseMemObject (mp->d_ibelm_xmin_outer_core.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_xmin_outer_core.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_xmin_outer_core.ocl);
+        }
+      }
+      if (mp->nspec2D_xmax_outer_core > 0) {
+        clReleaseMemObject (mp->d_ibelm_xmax_outer_core.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_xmax_outer_core.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_xmax_outer_core.ocl);
+        }
+      }
+      if (mp->nspec2D_ymin_outer_core > 0) {
+        clReleaseMemObject (mp->d_ibelm_ymin_outer_core.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_ymin_outer_core.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_ymin_outer_core.ocl);
+        }
+      }
+      if (mp->nspec2D_ymax_outer_core > 0) {
+        clReleaseMemObject (mp->d_ibelm_ymax_outer_core.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_ymax_outer_core.ocl);
+        
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_ymax_outer_core.ocl);
+        }
+      }
+      if (mp->nspec2D_zmin_outer_core > 0) {
+        if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+          clReleaseMemObject (mp->d_absorb_zmin_outer_core.ocl);
+        }
+      }
 
-
-    clReleaseMemObject (mp->d_ibelm_xmin_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_normal_xmin_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_xmin_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_absorb_xmin_crust_mantle.ocl);
-
-
-
-    clReleaseMemObject (mp->d_ibelm_xmax_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_normal_xmax_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_xmax_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_absorb_xmax_crust_mantle.ocl);
-
-
-
-    clReleaseMemObject (mp->d_ibelm_ymin_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_normal_ymin_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_ymin_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_absorb_ymin_crust_mantle.ocl);
-
-
-
-    clReleaseMemObject (mp->d_ibelm_ymax_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_normal_ymax_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_ymax_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_absorb_ymax_crust_mantle.ocl);
-
-
-    clReleaseMemObject (mp->d_vp_outer_core.ocl);
-    clReleaseMemObject (mp->d_nkmin_xi_outer_core.ocl);
-    clReleaseMemObject (mp->d_nkmin_eta_outer_core.ocl);
-    clReleaseMemObject (mp->d_njmin_outer_core.ocl);
-    clReleaseMemObject (mp->d_njmax_outer_core.ocl);
-    clReleaseMemObject (mp->d_nimin_outer_core.ocl);
-    clReleaseMemObject (mp->d_nimax_outer_core.ocl);
-
-
-    clReleaseMemObject (mp->d_ibelm_xmin_outer_core.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_xmin_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_absorb_xmin_outer_core.ocl);
-
-
-
-    clReleaseMemObject (mp->d_ibelm_xmax_outer_core.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_xmax_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_absorb_xmax_outer_core.ocl);
-
-
-
-    clReleaseMemObject (mp->d_ibelm_ymin_outer_core.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_ymin_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_absorb_ymin_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_ibelm_ymax_outer_core.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_ymax_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_absorb_ymax_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_absorb_zmin_outer_core.ocl);
-
-
+    }
 
     //------------------------------------------
     // MPI buffers
     //------------------------------------------
-
-
-    clReleaseMemObject (mp->d_nibool_interfaces_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_ibool_interfaces_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_send_accel_buffer_crust_mantle.ocl);
-
-
-    clReleaseMemObject (mp->d_b_send_accel_buffer_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_nibool_interfaces_inner_core.ocl);
-    clReleaseMemObject (mp->d_ibool_interfaces_inner_core.ocl);
-    clReleaseMemObject (mp->d_send_accel_buffer_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_b_send_accel_buffer_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_nibool_interfaces_outer_core.ocl);
-    clReleaseMemObject (mp->d_ibool_interfaces_outer_core.ocl);
-    clReleaseMemObject (mp->d_send_accel_buffer_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_b_send_accel_buffer_outer_core.ocl);
-
-
+    if (mp->num_interfaces_crust_mantle > 0) {
+      clReleaseMemObject (mp->d_nibool_interfaces_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_ibool_interfaces_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_send_accel_buffer_crust_mantle.ocl);
+      
+      if (mp->simulation_type == 3) {
+        clReleaseMemObject (mp->d_b_send_accel_buffer_crust_mantle.ocl);
+      }
+    }
+    
+    if (mp->num_interfaces_inner_core > 0) {
+      clReleaseMemObject (mp->d_nibool_interfaces_inner_core.ocl);
+      clReleaseMemObject (mp->d_ibool_interfaces_inner_core.ocl);
+      clReleaseMemObject (mp->d_send_accel_buffer_inner_core.ocl);
+      
+      if (mp->simulation_type == 3) {
+        clReleaseMemObject (mp->d_b_send_accel_buffer_inner_core.ocl);
+      }
+    }
+    if (mp->num_interfaces_outer_core > 0) {
+      clReleaseMemObject (mp->d_nibool_interfaces_outer_core.ocl);
+      clReleaseMemObject (mp->d_ibool_interfaces_outer_core.ocl);
+      clReleaseMemObject (mp->d_send_accel_buffer_outer_core.ocl);
+      
+      if (mp->simulation_type == 3) {
+        clReleaseMemObject (mp->d_b_send_accel_buffer_outer_core.ocl);
+      }
+    }
+ 
     //------------------------------------------
     // NOISE arrays
     //------------------------------------------
-
-
-    clReleaseMemObject (mp->d_ibelm_top_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_noise_surface_movie.ocl);
-
-
-    clReleaseMemObject (mp->d_noise_sourcearray.ocl);
-
-
-
-    clReleaseMemObject (mp->d_normal_x_noise.ocl);
-    clReleaseMemObject (mp->d_normal_y_noise.ocl);
-    clReleaseMemObject (mp->d_normal_z_noise.ocl);
-    clReleaseMemObject (mp->d_mask_noise.ocl);
-    clReleaseMemObject (mp->d_jacobian2D_top_crust_mantle.ocl);
-
-
-
-    clReleaseMemObject (mp->d_Sigma_kl.ocl);
-
+    if (mp->noise_tomography > 0) {
+      clReleaseMemObject (mp->d_ibelm_top_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_noise_surface_movie.ocl);
+      
+      if (mp->noise_tomography == 1) {
+        clReleaseMemObject (mp->d_noise_sourcearray.ocl);
+      }
+      
+      if (mp->noise_tomography > 1) {
+        clReleaseMemObject (mp->d_normal_x_noise.ocl);
+        clReleaseMemObject (mp->d_normal_y_noise.ocl);
+        clReleaseMemObject (mp->d_normal_z_noise.ocl);
+        clReleaseMemObject (mp->d_mask_noise.ocl);
+        clReleaseMemObject (mp->d_jacobian2D_top_crust_mantle.ocl);
+      }
+      
+      if (mp->noise_tomography == 3) {
+        clReleaseMemObject (mp->d_Sigma_kl.ocl);
+      }
+    }
 
     //------------------------------------------
     // crust_mantle
     //------------------------------------------
-
+    
     clReleaseMemObject (mp->d_xix_crust_mantle.ocl);
     clReleaseMemObject (mp->d_xiy_crust_mantle.ocl);
     clReleaseMemObject (mp->d_xiz_crust_mantle.ocl);
@@ -3759,85 +3797,99 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_gammay_crust_mantle.ocl);
     clReleaseMemObject (mp->d_gammaz_crust_mantle.ocl);
 
-    clReleaseMemObject (mp->d_muvstore_crust_mantle.ocl);
     clReleaseMemObject (mp->d_ibool_crust_mantle.ocl);
 
+    if (! mp->anisotropic_3D_mantle) {
+      clReleaseMemObject (mp->d_ispec_is_tiso_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_kappavstore_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_kappahstore_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_muvstore_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_muhstore_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_eta_anisostore_crust_mantle.ocl);
+      
+    } else {
+      clReleaseMemObject (mp->d_c11store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c12store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c13store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c14store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c15store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c16store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c22store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c23store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c24store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c25store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c26store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c33store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c34store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c35store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c36store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c44store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c45store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c46store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c55store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c56store_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_c66store_crust_mantle.ocl);
+    }
 
-    clReleaseMemObject (mp->d_kappavstore_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_kappahstore_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_muhstore_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_eta_anisostore_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_ispec_is_tiso_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_c11store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c12store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c13store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c14store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c15store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c16store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c22store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c23store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c24store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c25store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c26store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c33store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c34store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c35store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c36store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c44store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c45store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c46store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c55store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c56store_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_c66store_crust_mantle.ocl);
-
-
-    clReleaseMemObject (mp->d_rhostore_crust_mantle.ocl);
-
+    if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+      clReleaseMemObject (mp->d_rhostore_crust_mantle.ocl);
+    }
 
     clReleaseMemObject (mp->d_ystore_crust_mantle.ocl);
-
     clReleaseMemObject (mp->d_zstore_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_xstore_crust_mantle.ocl);
-
+    
+    if (mp->gravity) {
+      clReleaseMemObject (mp->d_xstore_crust_mantle.ocl);
+    }
 
     clReleaseMemObject (mp->d_phase_ispec_inner_crust_mantle.ocl);
-
     clReleaseMemObject (mp->d_ibelm_bottom_crust_mantle.ocl);
 
+    // wavefield
     clReleaseMemObject (mp->d_displ_crust_mantle.ocl);
     clReleaseMemObject (mp->d_veloc_crust_mantle.ocl);
     clReleaseMemObject (mp->d_accel_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_b_displ_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_veloc_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_b_accel_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_rho_kl_crust_mantle.ocl);
-
-
-    clReleaseMemObject (mp->d_cijkl_kl_crust_mantle.ocl);
-
-    clReleaseMemObject (mp->d_alpha_kl_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_beta_kl_crust_mantle.ocl);
+    
+    if (mp->simulation_type == 3) {
+      clReleaseMemObject (mp->d_b_displ_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_b_veloc_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_b_accel_crust_mantle.ocl);
+    }
 
     // mass matrix
-
-    clReleaseMemObject (mp->d_hess_kl_crust_mantle.ocl);
-
-
-
-    clReleaseMemObject (mp->d_rmassx_crust_mantle.ocl);
-    clReleaseMemObject (mp->d_rmassy_crust_mantle.ocl);
-
-
     clReleaseMemObject (mp->d_rmassz_crust_mantle.ocl);
+    
+    if (*NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+      clReleaseMemObject (mp->d_rmassx_crust_mantle.ocl);
+      clReleaseMemObject (mp->d_rmassy_crust_mantle.ocl);
+    }
 
+    // kernel simulations
+    if (mp->simulation_type == 3) {
+      if (mp->rotation && mp->exact_mass_matrix_for_rotation) {
+        clReleaseMemObject (mp->d_b_rmassx_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_b_rmassy_crust_mantle.ocl);
+      }
+      // kernels
+      clReleaseMemObject (mp->d_rho_kl_crust_mantle.ocl);
+      
+      if (!mp->anisotropic_kl){
+        clReleaseMemObject (mp->d_alpha_kl_crust_mantle.ocl);
+        clReleaseMemObject (mp->d_beta_kl_crust_mantle.ocl);
+        
+      } else {
+        clReleaseMemObject (mp->d_cijkl_kl_crust_mantle.ocl);
+      }
+      
+      if (mp->approximate_hess_kl) {
+        clReleaseMemObject (mp->d_hess_kl_crust_mantle.ocl);
+      }
+    }
 
     //------------------------------------------
     // outer_core
     //------------------------------------------
-
+    
     clReleaseMemObject (mp->d_xix_outer_core.ocl);
     clReleaseMemObject (mp->d_xiy_outer_core.ocl);
     clReleaseMemObject (mp->d_xiz_outer_core.ocl);
@@ -3849,16 +3901,17 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_gammaz_outer_core.ocl);
 
     clReleaseMemObject (mp->d_kappavstore_outer_core.ocl);
+    
+    if (mp->simulation_type == 3) {
+      clReleaseMemObject (mp->d_rhostore_outer_core.ocl);
+    }
 
-    clReleaseMemObject (mp->d_rhostore_outer_core.ocl);
-
+    clReleaseMemObject (mp->d_ibool_outer_core.ocl);
 
     clReleaseMemObject (mp->d_xstore_outer_core.ocl);
-
     clReleaseMemObject (mp->d_ystore_outer_core.ocl);
     clReleaseMemObject (mp->d_zstore_outer_core.ocl);
 
-    clReleaseMemObject (mp->d_ibool_outer_core.ocl);
     clReleaseMemObject (mp->d_phase_ispec_inner_outer_core.ocl);
 
     clReleaseMemObject (mp->d_ibelm_top_outer_core.ocl);
@@ -3869,23 +3922,28 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_normal_bottom_outer_core.ocl);
     clReleaseMemObject (mp->d_jacobian2D_bottom_outer_core.ocl);
 
+    // wavefield
     clReleaseMemObject (mp->d_displ_outer_core.ocl);
     clReleaseMemObject (mp->d_veloc_outer_core.ocl);
     clReleaseMemObject (mp->d_accel_outer_core.ocl);
-
-    clReleaseMemObject (mp->d_b_displ_outer_core.ocl);
-    clReleaseMemObject (mp->d_b_veloc_outer_core.ocl);
-    clReleaseMemObject (mp->d_b_accel_outer_core.ocl);
-    clReleaseMemObject (mp->d_rho_kl_outer_core.ocl);
-    clReleaseMemObject (mp->d_alpha_kl_outer_core.ocl);
-
+    
+    if (mp->simulation_type == 3) {
+      clReleaseMemObject (mp->d_b_displ_outer_core.ocl);
+      clReleaseMemObject (mp->d_b_veloc_outer_core.ocl);
+      clReleaseMemObject (mp->d_b_accel_outer_core.ocl);
+    }
+    
     // mass matrix
     clReleaseMemObject (mp->d_rmass_outer_core.ocl);
+
+    if (mp->simulation_type == 3) {
+      clReleaseMemObject (mp->d_rho_kl_outer_core.ocl);
+      clReleaseMemObject (mp->d_alpha_kl_outer_core.ocl);
+    }
 
     //------------------------------------------
     // inner_core
     //------------------------------------------
-
     clReleaseMemObject (mp->d_xix_inner_core.ocl);
     clReleaseMemObject (mp->d_xiy_inner_core.ocl);
     clReleaseMemObject (mp->d_xiz_inner_core.ocl);
@@ -3897,51 +3955,72 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_gammaz_inner_core.ocl);
 
     clReleaseMemObject (mp->d_muvstore_inner_core.ocl);
+    
+    if (! mp->anisotropic_inner_core) {
+      clReleaseMemObject (mp->d_kappavstore_inner_core.ocl);
+      
+    } else {
+      clReleaseMemObject (mp->d_c11store_inner_core.ocl);
+      clReleaseMemObject (mp->d_c12store_inner_core.ocl);
+      clReleaseMemObject (mp->d_c13store_inner_core.ocl);
+      clReleaseMemObject (mp->d_c33store_inner_core.ocl);
+      clReleaseMemObject (mp->d_c44store_inner_core.ocl);
+    }
+
+    if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+      clReleaseMemObject (mp->d_rhostore_inner_core.ocl);
+    }
+
     clReleaseMemObject (mp->d_ibool_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_ibelm_top_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_kappavstore_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_c11store_inner_core.ocl);
-    clReleaseMemObject (mp->d_c12store_inner_core.ocl);
-    clReleaseMemObject (mp->d_c13store_inner_core.ocl);
-    clReleaseMemObject (mp->d_c33store_inner_core.ocl);
-    clReleaseMemObject (mp->d_c44store_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_rhostore_inner_core.ocl);
-
     clReleaseMemObject (mp->d_idoubling_inner_core.ocl);
 
-    clReleaseMemObject (mp->d_xstore_inner_core.ocl);
-    clReleaseMemObject (mp->d_ystore_inner_core.ocl);
-    clReleaseMemObject (mp->d_zstore_inner_core.ocl);
+    // gravity
+    if (mp->gravity) {
+      clReleaseMemObject (mp->d_xstore_inner_core.ocl);
+      clReleaseMemObject (mp->d_ystore_inner_core.ocl);
+      clReleaseMemObject (mp->d_zstore_inner_core.ocl);
+    }
 
     clReleaseMemObject (mp->d_phase_ispec_inner_inner_core.ocl);
+    clReleaseMemObject (mp->d_ibelm_top_inner_core.ocl);
 
+    // wavefield
     clReleaseMemObject (mp->d_displ_inner_core.ocl);
     clReleaseMemObject (mp->d_veloc_inner_core.ocl);
     clReleaseMemObject (mp->d_accel_inner_core.ocl);
+    
+    if (mp->simulation_type == 3) {
+      clReleaseMemObject (mp->d_b_displ_inner_core.ocl);
+      clReleaseMemObject (mp->d_b_veloc_inner_core.ocl);
+      clReleaseMemObject (mp->d_b_accel_inner_core.ocl);
+    }
 
-
-    clReleaseMemObject (mp->d_b_displ_inner_core.ocl);
-    clReleaseMemObject (mp->d_b_veloc_inner_core.ocl);
-    clReleaseMemObject (mp->d_b_accel_inner_core.ocl);
-
-    clReleaseMemObject (mp->d_rho_kl_inner_core.ocl);
-    clReleaseMemObject (mp->d_alpha_kl_inner_core.ocl);
-    clReleaseMemObject (mp->d_beta_kl_inner_core.ocl);
     // mass matrix
-
-    clReleaseMemObject (mp->d_rmassx_inner_core.ocl);
-    clReleaseMemObject (mp->d_rmassy_inner_core.ocl);
     clReleaseMemObject (mp->d_rmassz_inner_core.ocl);
+    
+    if (mp->rotation && mp->exact_mass_matrix_for_rotation) {
+      clReleaseMemObject (mp->d_rmassx_inner_core.ocl);
+      clReleaseMemObject (mp->d_rmassy_inner_core.ocl);
+    }
+
+    // kernel simulations
+    if (mp->simulation_type == 3) {
+      if (mp->rotation && mp->exact_mass_matrix_for_rotation) {
+        clReleaseMemObject (mp->d_b_rmassx_inner_core.ocl);
+        clReleaseMemObject (mp->d_b_rmassy_inner_core.ocl);
+      }
+      // kernels
+      clReleaseMemObject (mp->d_rho_kl_inner_core.ocl);
+      clReleaseMemObject (mp->d_alpha_kl_inner_core.ocl);
+      clReleaseMemObject (mp->d_beta_kl_inner_core.ocl);
+    }
 
     // oceans
-
-    clReleaseMemObject (mp->d_rmass_ocean_load.ocl);
-    clReleaseMemObject (mp->d_ibool_ocean_load.ocl);
-    clReleaseMemObject (mp->d_normal_ocean_load.ocl);
+    if (mp->oceans) {
+      clReleaseMemObject (mp->d_ibool_ocean_load.ocl);
+      clReleaseMemObject (mp->d_rmass_ocean_load.ocl);
+      clReleaseMemObject (mp->d_normal_ocean_load.ocl);
+    }
     
 #ifdef USE_TEXTURES_FIELDS
     clReleaseMemObject (mp->d_displ_cm_tex);
@@ -3955,8 +4034,6 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
 #ifdef USE_TEXTURES_CONSTANTS
     clReleaseMemObject (mp->d_hprime_xx_cm_tex);
-    clReleaseMemObject (mp->d_hprime_xx_oc_tex);
-    clReleaseMemObject (mp->d_hprime_xx_ic_tex);
 #endif
     clFinish (mocl.command_queue);
   }

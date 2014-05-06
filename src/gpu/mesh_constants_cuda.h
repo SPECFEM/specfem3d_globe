@@ -26,7 +26,35 @@
  !
  !=====================================================================
 */
-  #ifdef USE_TEXTURES_FIELDS
+
+#include "kernel_proto.cu.h"
+
+void synchronize_cuda();
+
+// textures
+typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
+
+// restricted pointers: improves performance on Kepler ~ 10%
+// see: http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#restrict
+typedef const float* __restrict__ realw_const_p; // otherwise use: //typedef const float* realw_const_p;
+typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
+
+
+#define INITIALIZE_OFFSET_CUDA()
+
+#define INIT_OFFSET_CUDA(_buffer_, _offset_)                        \
+  if (run_opencl) {                                                 \
+    _buffer_##_##_offset_.cuda = mp->_buffer_.cuda + _offset_;      \
+  }                                                                 \
+
+#define RELEASE_OFFSET_CUDA(_buffer_, _offset_)
+
+#define TAKE_REF_CUDA(_buffer_)
+
+void print_CUDA_error_if_any(cudaError_t err, int num);
+
+#ifndef USE_OLDER_CUDA4_GPU
+#ifdef USE_TEXTURES_FIELDS
     // forward
     extern realw_texture d_displ_cm_tex;
     extern realw_texture d_accel_cm_tex;

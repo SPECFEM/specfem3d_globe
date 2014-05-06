@@ -410,7 +410,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     cl_uint num_platforms;
     
     clGetPlatformIDs(0, NULL, &num_platforms);
-    printf("num_platforms: %d\n",num_platforms);
+    
     if (num_platforms == 0) {
       fprintf(stderr,"No OpenCL platform available!\n");
       exit(1);
@@ -440,7 +440,6 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
           clGetPlatformInfo(platform_ids[i], props_to_check[j], info_length, info, NULL);
 
           if (strcasestr(info, platform_filter)) {
-            printf("Found platform %s\n", info);
             properties[1] = (cl_context_properties) platform_ids[i];
             found = 1;
           }
@@ -485,7 +484,6 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         
         clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, info_length, info, NULL);
         if (strcasestr(info, device_filter)) {
-          printf("Found device %s\n", info);
           matching_device_ids[found] = device_ids[i];
           found++;
         }
@@ -565,7 +563,7 @@ static char *trim_and_default(char *s)
 enum gpu_runtime_e {COMPILE, CUDA, OPENCL};
 extern EXTERN_LANG
 void FC_FUNC_ (initialize_gpu_device,
-                 INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {
+               INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {
   TRACE ("initialize_device");
 
   enum gpu_runtime_e runtime_type = (enum gpu_runtime_e) *runtime_f;

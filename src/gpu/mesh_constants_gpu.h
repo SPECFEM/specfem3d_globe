@@ -152,7 +152,9 @@ typedef float realw;
 //#define R_EARTH_KM 6368.0f
 
 // Asynchronous memory copies between GPU and CPU
+#ifndef GPU_ASYNC_COPY
 #define GPU_ASYNC_COPY 1
+#endif
 /*----------------------------------------------------------------------------------------------- */
 
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
@@ -179,13 +181,13 @@ typedef float realw;
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
 // Use textures for d_displ and d_accel ~ 1% performance boost
-#define USE_TEXTURES_FIELDS
+//#define USE_TEXTURES_FIELDS
 
 // Using texture memory for the hprime-style constants is slower on
 // Fermi generation hardware, but *may* be faster on Kepler
 // generation.
 // Use textures for hprime_xx
-#define USE_TEXTURES_CONSTANTS
+//#define USE_TEXTURES_CONSTANTS
 
 #ifdef USE_CUDA
   // CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()

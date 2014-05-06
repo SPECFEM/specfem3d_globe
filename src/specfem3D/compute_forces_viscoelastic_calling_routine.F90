@@ -151,7 +151,7 @@
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 1
       ! for crust/mantle
-      call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase,1)
+      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,1)
 
       ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
@@ -159,7 +159,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_crust_mantle,IREGION_CRUST_MANTLE,1)
         ! sends MPI buffers
-        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
@@ -168,7 +168,7 @@
       endif
 
       ! for inner core
-      call compute_forces_inner_core_cuda(Mesh_pointer,iphase,1)
+      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,1)
 
       ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
@@ -176,7 +176,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_inner_core,IREGION_INNER_CORE,1)
         ! sends MPI buffers
-        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -266,12 +266,12 @@
           !--- couple with outer core at the bottom of the mantle
           !---
           if( ACTUALLY_COUPLE_FLUID_CMB ) &
-               call compute_coupling_cmb_fluid_cuda(Mesh_pointer,1)
+               call compute_coupling_cmb_fluid_gpu(Mesh_pointer,1)
           !---
           !--- couple with outer core at the top of the inner core
           !---
           if( ACTUALLY_COUPLE_FLUID_ICB ) &
-               call compute_coupling_icb_fluid_cuda(Mesh_pointer,1)
+               call compute_coupling_icb_fluid_gpu(Mesh_pointer,1)
 
        endif
     endif ! iphase == 1
@@ -309,7 +309,7 @@
         ! preparation of the contribution between partitions using MPI
         ! transfers MPI buffers to CPU
         ! note: in case of asynchronous copy, this transfers boundary region to host asynchronously. The
-        !       MPI-send is done after compute_forces_viscoelastic_cuda,
+        !       MPI-send is done after compute_forces_viscoelastic_gpu,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_from_device(Mesh_pointer, &
                                        buffer_send_vector_crust_mantle,&
@@ -321,14 +321,14 @@
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronous transfers, sending over MPI can directly proceed
           ! crust mantle
-          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                         buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                         nibool_interfaces_crust_mantle,&
                         my_neighbours_crust_mantle, &
                         request_send_vector_cm,request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                         buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_ic, &
                         nibool_interfaces_inner_core,&
@@ -375,13 +375,13 @@
 
         ! waits for MPI send/receive requests to be completed and assembles values
         ! crust mantle
-        call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
                             buffer_recv_vector_crust_mantle, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                             request_send_vector_cm,request_recv_vector_cm, &
                             IREGION_CRUST_MANTLE,1) ! <-- 1 == fwd accel
         ! inner core
-        call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
                             buffer_recv_vector_inner_core, &
                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
                             request_send_vector_ic,request_recv_vector_ic, &
@@ -405,7 +405,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
-    call multiply_accel_elastic_cuda(Mesh_pointer,1)
+    call multiply_accel_elastic_gpu(Mesh_pointer,1)
   endif
 
   ! couples ocean with crust mantle
@@ -421,7 +421,7 @@
                                   NSPEC2D_TOP(IREGION_CRUST_MANTLE) )
     else
       ! on GPU
-      call compute_coupling_ocean_cuda(Mesh_pointer,1) ! <- 1 == forward arrays
+      call compute_coupling_ocean_gpu(Mesh_pointer,1) ! <- 1 == forward arrays
     endif
   endif
 
@@ -601,7 +601,7 @@
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 3
       ! for crust/mantle
-      call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase,3)
+      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,3)
 
       ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
@@ -609,7 +609,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_cm,IREGION_CRUST_MANTLE,3)
         ! sends MPI buffers
-        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
@@ -618,7 +618,7 @@
       endif
 
       ! for inner core
-      call compute_forces_inner_core_cuda(Mesh_pointer,iphase,3)
+      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,3)
 
       ! initiates asynchronous MPI transfer
       if( GPU_ASYNC_COPY .and. iphase == 2 ) then
@@ -627,7 +627,7 @@
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_inner_core,IREGION_INNER_CORE,3)
 
         ! sends MPI buffers
-        call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+        call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -702,12 +702,12 @@
         !--- couple with outer core at the bottom of the mantle
         !---
         if( ACTUALLY_COUPLE_FLUID_CMB ) &
-          call compute_coupling_cmb_fluid_cuda(Mesh_pointer,3)
+          call compute_coupling_cmb_fluid_gpu(Mesh_pointer,3)
         !---
         !--- couple with outer core at the top of the inner core
         !---
         if( ACTUALLY_COUPLE_FLUID_ICB ) &
-          call compute_coupling_icb_fluid_cuda(Mesh_pointer,3)
+          call compute_coupling_icb_fluid_gpu(Mesh_pointer,3)
       endif
     endif ! iphase == 1
 
@@ -745,7 +745,7 @@
         ! preparation of the contribution between partitions using MPI
         ! transfers MPI buffers to CPU
         ! note: in case of asynchronous copy, this transfers boundary region to host asynchronously. The
-        !       MPI-send is done after compute_forces_viscoelastic_cuda,
+        !       MPI-send is done after compute_forces_viscoelastic_gpu,
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_from_device(Mesh_pointer, &
                                        b_buffer_send_vector_cm,&
@@ -757,14 +757,14 @@
         if( .not. GPU_ASYNC_COPY ) then
           ! for synchronous transfers, sending over MPI can directly proceed
           ! crust mantle
-          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,&
                       my_neighbours_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
+          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,&
@@ -814,13 +814,13 @@
 
         ! waits for MPI send/receive requests to be completed and assembles values
         ! crust mantle
-        call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL, &
+        call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
                           b_buffer_recv_vector_cm, &
                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                           b_request_send_vector_cm,b_request_recv_vector_cm, &
                           IREGION_CRUST_MANTLE,3) ! <-- 3 == adjoint b_accel
         ! inner core
-        call assemble_MPI_vector_write_cuda(Mesh_pointer,NPROCTOT_VAL,&
+        call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL,&
                           b_buffer_recv_vector_inner_core, &
                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
                           b_request_send_vector_ic,b_request_recv_vector_ic, &
@@ -845,7 +845,7 @@
   else
      ! on GPU
      ! includes FORWARD_OR_ADJOINT == 3
-     call multiply_accel_elastic_cuda(Mesh_pointer,3)
+     call multiply_accel_elastic_gpu(Mesh_pointer,3)
   endif
 
   ! couples ocean with crust mantle
@@ -861,7 +861,7 @@
                                   NSPEC2D_TOP(IREGION_CRUST_MANTLE) )
     else
       ! on GPU
-      call compute_coupling_ocean_cuda(Mesh_pointer,3) ! <- 3 == backward/reconstructed arrays
+      call compute_coupling_ocean_gpu(Mesh_pointer,3) ! <- 3 == backward/reconstructed arrays
     endif
   endif
 

@@ -48,7 +48,7 @@ contains
     if( GPU_MODE ) then
       ! gets field values from GPU
       ! this transfers fields only in elements with stations for efficiency
-      call write_seismograms_transfer_cuda(Mesh_pointer, &
+      call write_seismograms_transfer_gpu(Mesh_pointer, &
                                 displ_crust_mantle,b_displ_crust_mantle, &
                                 eps_trace_over_3_crust_mantle, &
                                 epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &

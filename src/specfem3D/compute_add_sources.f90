@@ -133,7 +133,7 @@
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM=0
-    call compute_add_sources_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
+    call compute_add_sources_gpu(Mesh_pointer,NSOURCES,stf_pre_compute)
   endif
 
 
@@ -276,7 +276,7 @@
     endif
 
     ! adds adjoint source contributions
-    call compute_add_sources_adjoint_cuda(Mesh_pointer,nrec)
+    call compute_add_sources_adjoint_gpu(Mesh_pointer,nrec)
 
     if( GPU_ASYNC_COPY ) then
       ! starts asynchronously transfer of next adjoint arrays to GPU device memory
@@ -423,7 +423,7 @@
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM=0)
-    call compute_add_sources_backward_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
+    call compute_add_sources_backward_gpu(Mesh_pointer,NSOURCES,stf_pre_compute)
   endif
 
   end subroutine compute_add_sources_backward
