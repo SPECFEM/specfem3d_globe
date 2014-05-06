@@ -3359,7 +3359,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
 #ifdef USE_CUDA
-  if(run_cuda) {
+  if (run_cuda) {
     // synchronizes device
     synchronize_cuda();
   }
@@ -3372,7 +3372,6 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
 #ifdef USE_CUDA
   if (run_cuda) {
-
 #ifdef USE_TEXTURES_CONSTANTS
     cudaUnbindTexture(d_hprime_xx_tex);
     cudaUnbindTexture(d_hprimewgll_xx_tex);
@@ -3418,7 +3417,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   if (mp->nadj_rec_local > 0) {
 #ifdef USE_OPENCL
-    if (run_cuda && GPU_ASYNC_COPY) {
+    if (run_opencl && GPU_ASYNC_COPY) {
       RELEASE_PINNED_BUFFER_OCL (adj_sourcearrays_slice);
     }
 #endif
@@ -3433,68 +3432,72 @@ void FC_FUNC_ (prepare_cleanup_device,
   }
 
 #ifdef USE_OPENCL
-  if (mp->num_interfaces_crust_mantle > 0) {
-    if (GPU_ASYNC_COPY) {
-      RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_cm);
-      RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_cm);
+  if (run_opencl) {
+    if (mp->num_interfaces_crust_mantle > 0) {
+      if (GPU_ASYNC_COPY) {
+        RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_cm);
+        RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_cm);
       
-      if (mp->simulation_type == 3) {
-        RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_cm);
-        RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_cm);
+        if (mp->simulation_type == 3) {
+          RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_cm);
+          RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_cm);
+        }
       }
     }
-  }
-  if (mp->num_interfaces_inner_core > 0) {
-    if (GPU_ASYNC_COPY) {
-      RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_ic);
-      RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_ic);
+    if (mp->num_interfaces_inner_core > 0) {
+      if (GPU_ASYNC_COPY) {
+        RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_ic);
+        RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_ic);
       
-      if (mp->simulation_type == 3) {
-        RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_ic);
-        RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_ic);
+        if (mp->simulation_type == 3) {
+          RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_ic);
+          RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_ic);
+        }
       }
     }
-  }
-  if (mp->num_interfaces_outer_core > 0) {
-    if (GPU_ASYNC_COPY) {
-      RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_oc);
-      RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_oc);
+    if (mp->num_interfaces_outer_core > 0) {
+      if (GPU_ASYNC_COPY) {
+        RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_oc);
+        RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_oc);
       
-      if (mp->simulation_type == 3) {
-        RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_oc);
-        RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_oc);
+        if (mp->simulation_type == 3) {
+          RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_oc);
+          RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_oc);
+        }
       }
     }
   }
 #endif
 #ifdef USE_CUDA
-  if( mp->num_interfaces_crust_mantle > 0 ){
-    if( GPU_ASYNC_COPY){
-      cudaFreeHost(mp->h_send_accel_buffer_cm);
-      cudaFreeHost(mp->h_recv_accel_buffer_cm);
-      if( mp->simulation_type == 3 ){
-        cudaFreeHost(mp->h_b_send_accel_buffer_cm);
-        cudaFreeHost(mp->h_b_recv_accel_buffer_cm);
+  if (run_cuda) {
+    if (mp->num_interfaces_crust_mantle > 0) {
+      if( GPU_ASYNC_COPY){
+        cudaFreeHost(mp->h_send_accel_buffer_cm);
+        cudaFreeHost(mp->h_recv_accel_buffer_cm);
+        if( mp->simulation_type == 3 ){
+          cudaFreeHost(mp->h_b_send_accel_buffer_cm);
+          cudaFreeHost(mp->h_b_recv_accel_buffer_cm);
+        }
       }
     }
-  }
-  if( mp->num_interfaces_inner_core > 0 ){
-    if( GPU_ASYNC_COPY){
-      cudaFreeHost(mp->h_send_accel_buffer_ic);
-      cudaFreeHost(mp->h_recv_accel_buffer_ic);
-      if( mp->simulation_type == 3 ){
-        cudaFreeHost(mp->h_b_send_accel_buffer_ic);
-        cudaFreeHost(mp->h_b_recv_accel_buffer_ic);
+    if( mp->num_interfaces_inner_core > 0 ){
+      if( GPU_ASYNC_COPY){
+        cudaFreeHost(mp->h_send_accel_buffer_ic);
+        cudaFreeHost(mp->h_recv_accel_buffer_ic);
+        if( mp->simulation_type == 3 ){
+          cudaFreeHost(mp->h_b_send_accel_buffer_ic);
+          cudaFreeHost(mp->h_b_recv_accel_buffer_ic);
+        }
       }
     }
-  }
-  if( mp->num_interfaces_outer_core > 0 ){
-    if( GPU_ASYNC_COPY){
-      cudaFreeHost(mp->h_send_accel_buffer_oc);
-      cudaFreeHost(mp->h_recv_accel_buffer_oc);
-      if( mp->simulation_type == 3 ){
-        cudaFreeHost(mp->h_b_send_accel_buffer_oc);
-        cudaFreeHost(mp->h_b_recv_accel_buffer_oc);
+    if( mp->num_interfaces_outer_core > 0 ){
+      if( GPU_ASYNC_COPY){
+        cudaFreeHost(mp->h_send_accel_buffer_oc);
+        cudaFreeHost(mp->h_recv_accel_buffer_oc);
+        if( mp->simulation_type == 3 ){
+          cudaFreeHost(mp->h_b_send_accel_buffer_oc);
+          cudaFreeHost(mp->h_b_recv_accel_buffer_oc);
+        }
       }
     }
   }
@@ -3504,7 +3507,6 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
 #ifdef USE_OPENCL
   if (run_opencl) {
-
     if (mp->simulation_type == 1 || mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_sourcearrays.ocl);
       clReleaseMemObject (mp->d_stf_pre_compute.ocl);
@@ -3547,7 +3549,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     //------------------------------------------
     // gravity arrays
     //------------------------------------------
-    if (! mp->gravity) {
+    if (!mp->gravity) {
       clReleaseMemObject (mp->d_d_ln_density_dr_table.ocl);
       
     } else {

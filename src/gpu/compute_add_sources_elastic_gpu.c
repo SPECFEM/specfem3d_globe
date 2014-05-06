@@ -250,7 +250,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     cl_uint idx = 0;
     
     if (GPU_ASYNC_COPY) {
-      clCheck(clFinish(mocl.copy_queue));
+      clCheck(clFlush(mocl.copy_queue));
     }
 
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -342,10 +342,14 @@ void FC_FUNC_(transfer_adj_to_device,
 
   // copies extracted array values onto GPU
 #ifdef USE_OPENCL
+  if (run_opencl) {
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_adj_sourcearrays.ocl, CL_TRUE, 0,
+                                   mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw),
+                                   mp->h_adj_sourcearrays_slice, 0, NULL, NULL));
+  }
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
-    // copies extracted array values onto GPU
     print_CUDA_error_if_any(cudaMemcpy(mp->d_adj_sourcearrays.cuda, mp->h_adj_sourcearrays_slice,
                                        (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw),cudaMemcpyHostToDevice),71000);
 
@@ -401,7 +405,7 @@ please check mesh_constants_cuda.h");
 
 #if USE_OPENCL
   if (run_opencl) {
-    clCheck(clFinish(mocl.copy_queue));
+    clCheck(clFlush(mocl.copy_queue));
   }
 #endif
 #if USE_CUDA
@@ -440,7 +444,7 @@ please check mesh_constants_cuda.h");
   }
 #if USE_OPENCL
   if (run_opencl) {
-    clCheck(clFinish(mocl.command_queue));
+    clCheck(clFlush(mocl.command_queue));
     clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_adj_sourcearrays.ocl, CL_FALSE, 0,
                                    mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw),
                                    mp->h_adj_sourcearrays_slice, 0, NULL, NULL));

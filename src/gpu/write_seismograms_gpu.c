@@ -57,7 +57,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
 #ifdef USE_OPENCL
   if (run_opencl) {
     if (GPU_ASYNC_COPY) {
-      clCheck(clFinish(mocl.copy_queue));
+      clCheck(clFlush(mocl.copy_queue));
     }
     
     size_t global_work_size[2];
@@ -81,7 +81,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
 
     //copies array to CPU
     if (GPU_ASYNC_COPY) {
-      clCheck(clFinish(mocl.command_queue));
+      clCheck(clFlush(mocl.command_queue));
       clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_station_seismo_field.ocl, CL_FALSE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
                                     mp->h_station_seismo_field, 0, NULL, NULL));

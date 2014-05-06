@@ -93,7 +93,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
           // copies buffer to CPU
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.command_queue));
+            clCheck(clFlush(mocl.command_queue));
             clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_send_accel_buffer_crust_mantle.ocl, CL_FALSE, 0,
                                           size_mpi_buffer * sizeof (realw),
                                           mp->h_send_accel_buffer_cm, 0, NULL, NULL));
@@ -118,7 +118,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
           // copies buffer to CPU
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.command_queue));
+            clCheck(clFlush(mocl.command_queue));
             clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_b_send_accel_buffer_crust_mantle.ocl, CL_TRUE, 0,
                                           size_mpi_buffer * sizeof (realw),
                                           mp->h_b_send_accel_buffer_cm, 0, NULL, NULL));
@@ -216,7 +216,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
           // copies buffer to CPU
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.command_queue));
+            clCheck(clFlush(mocl.command_queue));
             clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_send_accel_buffer_inner_core.ocl, CL_TRUE, 0,
                                           size_mpi_buffer * sizeof (realw),
                                           mp->h_send_accel_buffer_ic, 0, NULL, NULL));
@@ -246,7 +246,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
           // copies buffer to CPU
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.command_queue));
+            clCheck(clFlush(mocl.command_queue));
             clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_b_send_accel_buffer_inner_core.ocl, CL_FALSE, 0,
                                           size_mpi_buffer * sizeof (realw),
                                           mp->h_b_send_accel_buffer_ic, 0, NULL, NULL));
@@ -357,7 +357,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
         if (*FORWARD_OR_ADJOINT == 1) {
           // copies vector buffer values to GPU
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.copy_queue));
+            clCheck(clFlush(mocl.copy_queue));
           } else {
             clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_send_accel_buffer_crust_mantle.ocl, CL_FALSE, 0,
                                            NDIM * (mp->max_nibool_interfaces_cm) * (mp->num_interfaces_crust_mantle)*sizeof (realw),
@@ -382,7 +382,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
           DEBUG_BACKWARD_ASSEMBLY ();
           
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.command_queue));
+            clCheck(clFlush(mocl.command_queue));
           } else {
             // copies vector buffer values to GPU
             clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_crust_mantle.ocl, CL_FALSE, 0,
@@ -481,7 +481,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
         if (*FORWARD_OR_ADJOINT == 1) {
           // copies buffer values to GPU
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.copy_queue));
+            clCheck(clFlush(mocl.copy_queue));
           } else {
             clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_send_accel_buffer_inner_core.ocl, CL_FALSE, 0,
                                            NDIM * (mp->max_nibool_interfaces_ic) * (mp->num_interfaces_inner_core)*sizeof (realw),
@@ -506,7 +506,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
           DEBUG_BACKWARD_ASSEMBLY ();
           
           if (GPU_ASYNC_COPY) {
-            clCheck(clFinish(mocl.copy_queue));
+            clCheck(clFlush(mocl.copy_queue));
           } else {
             // copies buffer values to GPU
             clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_inner_core.ocl, CL_FALSE, 0,
@@ -794,7 +794,7 @@ void FC_FUNC_(sync_copy_from_device,
       // waits for asynchronous copy to finish
 #ifdef USE_OPENCL
       if (run_opencl) {
-        clCheck(clFinish(mocl.copy_queue));
+        clCheck(clFlush(mocl.copy_queue));
       }
 #endif
 #ifdef USE_CUDA
@@ -820,7 +820,7 @@ void FC_FUNC_(sync_copy_from_device,
       // waits for asynchronous copy to finish
 #ifdef USE_OPENCL
       if (run_opencl) {
-        clCheck(clFinish(mocl.copy_queue));
+        clCheck(clFlush(mocl.copy_queue));
       }
 #endif
 #ifdef USE_CUDA
@@ -847,7 +847,7 @@ void FC_FUNC_(sync_copy_from_device,
       // waits for asynchronous copy to finish
 #ifdef USE_OPENCL
       if (run_opencl) {
-        clCheck(clFinish(mocl.copy_queue));
+        clCheck(clFlush(mocl.copy_queue));
       }
 #endif
 #ifdef USE_CUDA

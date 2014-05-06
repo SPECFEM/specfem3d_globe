@@ -53,7 +53,9 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
   // MPI buffer size
   size_mpi_buffer = mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core;
   // checks if anything to do
-  if( size_mpi_buffer <= 0 ) return;
+  if (size_mpi_buffer <= 0) {
+    return;
+  }
 
   int blocksize = BLOCKSIZE_TRANSFER;
   int size_padded = ((int) ceil ((double) mp->max_nibool_interfaces_oc / (double) blocksize)) * blocksize;
@@ -84,7 +86,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
 
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
-        clCheck(clFinish(mocl.command_queue));
+        clCheck(clFlush(mocl.command_queue));
         
         clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_TRUE,
                                       0, size_mpi_buffer * sizeof (realw),
@@ -117,7 +119,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
                                        global_work_size, local_work_size, 0, NULL, NULL));
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
-        clCheck(clFinish(mocl.command_queue));
+        clCheck(clFlush(mocl.command_queue));
         
         clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_TRUE,
                                       0, size_mpi_buffer * sizeof (realw),
@@ -229,7 +231,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     
     if (*FORWARD_OR_ADJOINT == 1) {      
       if (GPU_ASYNC_COPY) {
-        clCheck(clFinish(mocl.copy_queue));
+        clCheck(clFlush(mocl.copy_queue));
       } else {
         // copies scalar buffer onto GPU
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
@@ -259,7 +261,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
 
       // copies scalar buffer onto GPU
       if (GPU_ASYNC_COPY) {
-        clCheck(clFinish(mocl.copy_queue));
+        clCheck(clFlush(mocl.copy_queue));
       } else {
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
                                        mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw),
