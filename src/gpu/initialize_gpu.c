@@ -588,6 +588,8 @@ void FC_FUNC_ (initialize_gpu_device,
   if (runtime_type != COMPILE && runtime_type != CUDA) {
     printf("WARNING: GPU_RUNTIME parameter (=%d) incompatible with Cuda-only compilation (CUDA=%d, COMPILE=%d). Defaulting to Cuda.\n", runtime_type, CUDA, COMPILE);
   }
+#else
+  #error "GPU code compiled but neither Cuda nor OpenCL are enabled"
 #endif
 
 #ifdef USE_OPENCL

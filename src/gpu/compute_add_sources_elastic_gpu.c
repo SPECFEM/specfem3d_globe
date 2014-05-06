@@ -109,16 +109,6 @@ void FC_FUNC_ (compute_add_sources_gpu,
 /*----------------------------------------------------------------------------------------------- */
 // backward sources
 /*----------------------------------------------------------------------------------------------- */
-#ifdef USE_CUDA
-__global__ void compute_add_sources_adjoint_cuda_kernel(realw* accel,
-                                                        int nrec,
-                                                        realw* adj_sourcearrays,
-                                                        int* ibool,
-                                                        int* ispec_selected_rec,
-                                                        int* pre_computed_irec,
-                                                        int nadj_rec_local) {}
-
-#endif
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_add_sources_backward_gpu,
@@ -207,7 +197,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
   // adds adjoint sources
   // note: call this routine after transfer_adj_to_device**() to have correct adjoint sourcearrays in array d_adj_sourcearrays
 
-  TRACE("compute_add_sources_adjoint_cuda");
+  TRACE("compute_add_sources_adjoint_gpu");
 
   Mesh *mp = (Mesh *)(*Mesh_pointer); //get mesh pointer out of Fortran integer container
 
@@ -226,7 +216,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 #ifdef USE_CUDA
   if (run_cuda) {
     // waits for previous transfer_** calls to be finished
-    if( GPU_ASYNC_COPY ){
+    if (GPU_ASYNC_COPY ){
       // waits for asynchronous copy to finish
       cudaStreamSynchronize(mp->copy_stream);
     }
@@ -234,7 +224,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     dim3 grid(num_blocks_x,num_blocks_y,1);
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
-    compute_add_sources_adjoint_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
+    compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
                                                                                    nrec,
                                                                                    mp->d_adj_sourcearrays.cuda,
                                                                                    mp->d_ibool_crust_mantle.cuda,

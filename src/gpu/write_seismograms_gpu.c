@@ -358,21 +358,25 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   int* h_ispec_selected;
 
   // checks if anything to do
-  if( mp->nrec_local == 0 ) return;
+  if (mp->nrec_local == 0) {
+    return;
+  }
 
   // checks async-memcpy
-  if( GPU_ASYNC_COPY == 0 ){
+  if (GPU_ASYNC_COPY ==  0){
     exit_on_error("transfer_seismo_from_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
   }
 
   // waits for previous copy call to be finished
 #ifdef USE_CUDA
-  cudaStreamSynchronize(mp->copy_stream);
+  if (run_cuda) {
+    cudaStreamSynchronize(mp->copy_stream);
+  }
 #endif
 
   // transfers displacements
   // select target array on host
-  switch( mp->simulation_type ){
+  switch (mp->simulation_type) {
     case 1:
       // forward simulation
       h_field = displ;
@@ -394,11 +398,11 @@ void FC_FUNC_(transfer_seismo_from_device_async,
 
   // updates corresponding array on CPU
   int irec_local;
-  for(irec_local = 0 ; irec_local < mp->nrec_local; irec_local++) {
+  for (irec_local = 0 ; irec_local < mp->nrec_local; irec_local++) {
     irec = number_receiver_global[irec_local] - 1;
     ispec = h_ispec_selected[irec] - 1;
 
-    for(i = 0; i < NGLL3; i++) {
+    for (i = 0; i < NGLL3; i++) {
       iglob = ibool[i+NGLL3*ispec] - 1;
       h_field[0+3*iglob] = mp->h_station_seismo_field[0+3*i+irec_local*NGLL3*3];
       h_field[1+3*iglob] = mp->h_station_seismo_field[1+3*i+irec_local*NGLL3*3];

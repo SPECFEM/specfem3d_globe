@@ -615,12 +615,14 @@ void FC_FUNC_ (prepare_constants_device,
   mp->two_omega_earth = 0.f;
   mp->b_two_omega_earth = 0.f;
 #ifdef USE_CUDA
-// setup two streams, one for compute and one for host<->device memory copies
-  // uses pinned memory for asynchronous data transfers
-  // compute stream
-  cudaStreamCreate(&mp->compute_stream);
-  // copy stream (needed to transfer MPI buffers)
-  cudaStreamCreate(&mp->copy_stream);
+  if (run_cuda) {
+    // setup two streams, one for compute and one for host<->device memory copies
+    // uses pinned memory for asynchronous data transfers
+    // compute stream
+    cudaStreamCreate(&mp->compute_stream);
+    // copy stream (needed to transfer MPI buffers)
+    cudaStreamCreate(&mp->copy_stream);
+  }
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_constants_device");
