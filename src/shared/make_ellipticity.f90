@@ -155,19 +155,14 @@
     k(i)=eta(i)/(r(i)**3.0d0)
   enddo
 
-  g_a=4.0D0*i_rho
-
   bom=TWO_PI/(HOURS_PER_DAY*SECONDS_PER_HOUR)
 
 ! non-dimensionalized value
   bom=bom/sqrt(PI*GRAV*RHOAV)
 
-!! DK DK I think 24.d0 below stands for HOURS_PER_DAY and thus I replace it here
-!! DK DK in order to be consistent if someone uses the code one day for other planets
-!! DK DK with a different rotation rate, or for the Earth in the past of in the future i.e. with a different rate as well.
-!! DK DK Please do not hesitate to fix it back if my assumption below was wrong.
-!! DK DK  epsilonval(NR)=15.0d0*(bom**2.0d0)/(24.0d0*i_rho*(eta(NR)+2.0d0))
-  epsilonval(NR)=15.0d0*(bom**2.0d0)/(HOURS_PER_DAY*i_rho*(eta(NR)+2.0d0))
+  g_a = 4.0d0*i_rho
+! this is the equation right above (14.21) in Dahlen and Tromp (1998)
+  epsilonval(NR) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR)+2.0d0))
 
   do i=1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)
