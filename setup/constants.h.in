@@ -159,7 +159,13 @@
   double precision, parameter :: ONE_MINUS_F_SQUARED = (1.d0 - FLATTENING_F)**2
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature, currently does not work, DO NOT USE)
-  logical,parameter :: USE_GLL = .false.
+  logical, parameter :: USE_GLL = .false.
+
+! the code will print an error message and stop if it finds that the topography input file
+! contains values outside this range.
+! we take a safety margin just in case of a smoothed or modified model, which can locally create slightly different values
+  integer, parameter :: TOPO_MINIMUM = - 11500 ! (max depth in m, Mariana trench)
+  integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
 ! to avoid taking into account spurious oscillations in global model ETOPO
