@@ -30,7 +30,7 @@
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
 
-  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV,HOURS_PER_DAY,SECONDS_PER_HOUR
+  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV,HOURS_PER_DAY,SECONDS_PER_HOUR,R_UNIT_SPHERE
 
   implicit none
 
