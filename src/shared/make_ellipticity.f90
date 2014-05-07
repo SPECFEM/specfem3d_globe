@@ -143,11 +143,14 @@
 
   do i=2,NR
     call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
-!! DK DK Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
-!! DK DK The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
-!! DK DK The Radau approximation is mentioned on page 97.
+! Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
+! The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
+! The Radau approximation is mentioned on page 97.
+! For more details see Section 14.1.2 in Dahlen and Tromp (1998)
+! (see also in file ellipticity_equations_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code).
     call intgrl(i_radau,r,1,i,radau,s1,s2,s3)
     z=(2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
+! this comes from equation (14.19) in Dahlen and Tromp (1998)
     eta(i)=(25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
     k(i)=eta(i)/(r(i)**3.0d0)
   enddo
