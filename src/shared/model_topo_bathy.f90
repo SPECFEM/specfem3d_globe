@@ -84,8 +84,6 @@
   integer :: ival
   integer :: itopo_x,itopo_y,ier
   character(len=150) :: topo_bathy_file
-  integer,parameter :: TOPO_MINIMUM = - 10000 ! (depth in m )
-  integer,parameter :: TOPO_MAXIMUM = + 10000 ! (height in m )
 
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
