@@ -1353,54 +1353,55 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
       }
 #endif
     }
-  }
+  
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    // asynchronous MPI buffer
-    if (GPU_ASYNC_COPY) {
-      ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-      ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+    if (run_opencl) {
+      // asynchronous MPI buffer
+      if (GPU_ASYNC_COPY) {
+        ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+        ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
       
-      if (mp->simulation_type == 3) {
-        ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-        ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+        if (mp->simulation_type == 3) {
+          ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+          ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+        }
       }
     }
-  }
 #endif
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    // asynchronous MPI buffer
-    if (GPU_ASYNC_COPY) {
-      ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-      ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+    if (run_opencl) {
+      // asynchronous MPI buffer
+      if (GPU_ASYNC_COPY) {
+        ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+        ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
       
-      if (mp->simulation_type == 3) {
-        ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-        ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+        if (mp->simulation_type == 3) {
+          ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+          ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
+        }
       }
     }
-  }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    // asynchronous MPI buffer
-    if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned MPI buffers.
-      //       MPI buffers use pinned memory allocated by cudaMallocHost, which
-      //       enables the use of asynchronous memory copies from host <-> device
-      // send buffer
-      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
-      // receive buffer
-      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
-      if( mp->simulation_type == 3){
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
+    if (run_cuda) {
+      // asynchronous MPI buffer
+      if( GPU_ASYNC_COPY ){
+        // note: Allocate pinned MPI buffers.
+        //       MPI buffers use pinned memory allocated by cudaMallocHost, which
+        //       enables the use of asynchronous memory copies from host <-> device
+        // send buffer
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
+        // receive buffer
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
+        if( mp->simulation_type == 3){
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
+        }
       }
     }
-  }
 #endif
-
+  }
+  
   // inner core mesh
   mp->num_interfaces_inner_core = *num_interfaces_inner_core;
   mp->max_nibool_interfaces_ic = *max_nibool_interfaces_ic;
@@ -1444,41 +1445,41 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
       }
 #endif
     }
-  }
-
+    
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    // asynchronous MPI buffer
-    if (GPU_ASYNC_COPY) {
-      ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
-      ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
+    if (run_opencl) {
+      // asynchronous MPI buffer
+      if (GPU_ASYNC_COPY) {
+        ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
+        ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
       
-      if (mp->simulation_type == 3) {
-        ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
-        ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
+        if (mp->simulation_type == 3) {
+          ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
+          ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
+        }
       }
     }
-  }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    // asynchronous MPI buffer
-    if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned MPI buffers.
-      //       MPI buffers use pinned memory allocated by cudaMallocHost, which
-      //       enables the use of asynchronous memory copies from host <-> device
-      // send buffer
-      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
-      // receive buffer
-      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
-      // adjoint
-      if( mp->simulation_type == 3){
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
+    if (run_cuda) {
+      // asynchronous MPI buffer
+      if( GPU_ASYNC_COPY ){
+        // note: Allocate pinned MPI buffers.
+        //       MPI buffers use pinned memory allocated by cudaMallocHost, which
+        //       enables the use of asynchronous memory copies from host <-> device
+        // send buffer
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
+        // receive buffer
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
+        // adjoint
+        if( mp->simulation_type == 3){
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
+        }
       }
     }
-  }
 #endif
+  }
   // outer core mesh
   // note: uses only scalar wavefield arrays
   mp->num_interfaces_outer_core = *num_interfaces_outer_core;

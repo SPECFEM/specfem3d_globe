@@ -839,6 +839,11 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
+    local_work_size[0] = blocksize;
+    local_work_size[1] = 1;
+    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[1] = num_blocks_y;
+    
     idx = 0;
     d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, clck_(&errcode));
 
@@ -925,11 +930,6 @@ void FC_FUNC_ (check_norm_strain_from_device,
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_epsilondev_HH_crust_mantle[loop].ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
-
-      local_work_size[0] = blocksize;
-      local_work_size[1] = 1;
-      global_work_size[0] = num_blocks_x * blocksize;
-      global_work_size[1] = num_blocks_y;
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
