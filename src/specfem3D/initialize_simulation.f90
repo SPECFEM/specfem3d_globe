@@ -44,6 +44,9 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
+!! DK DK for Roland_Sylvain
+  if(ROLAND_SYLVAIN) call exit_MPI(myrank,'no need to run the solver to compute Roland_Sylvain integrals, only the mesher')
+
   if (myrank == 0) then
     ! read the parameter file and compute additional parameters
     call read_compute_parameters()
@@ -55,7 +58,7 @@
   ! check that the code is running with the requested nb of processes
   if( sizeprocs /= NPROCTOT ) then
     print*,'error: rank ',myrank,' - wrong number of MPI processes',sizeprocs,NPROCTOT
-    call exit_MPI(myrank,'wrong number of MPI processes(initialization specfem)')
+    call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
   endif
 
   ! synchronizes processes

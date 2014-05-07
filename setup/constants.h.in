@@ -420,7 +420,8 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-  integer, parameter :: NX_OBSERVATION = 500
+!! DK DK 2 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
+  integer, parameter :: NX_OBSERVATION = 2 ! 500
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
 ! the code will display sample output values at this particular point as a check
