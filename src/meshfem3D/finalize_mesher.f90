@@ -112,7 +112,7 @@
     if(NCHUNKS == 6) then
       write(IMAIN,*)
       write(IMAIN,*) 'computed total Earth mass for this density model and mesh: ',Earth_mass_total,' kg'
-      write(IMAIN,*) '   (should be not too far from 5.97E+24 kg)'
+      write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
       write(IMAIN,*)
       ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
       write(IMAIN,*) 'average density for this density model and mesh: ',Earth_mass_total / (volume_total * R_EARTH**3),' kg/m3'
