@@ -101,14 +101,6 @@
 !!-----------------------------------------------------------
 !! (uncomment desired resolution)
 
-!!--- ETOPO5 5-minute model, smoothed Harvard version
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 5
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
-
 !! DK DK for Roland_Sylvain this below could be changed if needed (i.e. using a non-smoothed version for instance)
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
