@@ -32,7 +32,7 @@
 
 ! this program uses a very simple window filter
 ! it works fine because the model has a very high resolution
-! in principle it would be better to use a circular cap to take
+! in principle it would be better to use a circular cap (i.e. a Gaussian filter) to take
 ! the notion of angular distance between points into account in the filter
 ! in practice though this simple filter works perfectly fine
 
