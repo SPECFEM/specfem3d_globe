@@ -62,7 +62,7 @@
   print *
   print *,'reading topo file'
 
-  open(unit=13,file='topo_bathy_etopo2_original_unmodified_unsmoothed.dat',status='old')
+  open(unit=13,file='topo_bathy_etopo2v2c_original_unmodified_unsmoothed.dat',status='old')
   do iy=1,NY_BATHY
     do ix=1,NX_BATHY
       read(13,*) ibathy_topo_ori(ix,iy)
@@ -148,7 +148,7 @@
   if(SMOOTH_THE_MODEL) then
     print *
     print *,'saving the smoothed model'
-    open(unit=13,file='topo_bathy_etopo2_smoothed_window_3.dat',status='unknown')
+    open(unit=13,file='topo_bathy_etopo2v2c_smoothed_window_3.dat',status='unknown')
     do iy=1,NY_BATHY
       do ix=1,NX_BATHY
         write(13,*) ibathy_topo(ix,iy)

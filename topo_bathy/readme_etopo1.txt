@@ -2,6 +2,16 @@
 ETOPO1  
 ----------------------------------------------------------------------
 
+First option:
+
+Raw to Gridded Data:
+    get file etopo1_ice_c_i2.zip from http://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ETOPO2v2-2006/ETOPO2v2c/raw_binary/
+    unzip etopo1_ice_c_i2.zip
+    xyz2grd etopo1_ice_c_i2.bin -Rd -I1m -Getopo1_ice_c.grd -F -ZTLh -V
+    grd2xyz -Rg etopo1_ice_c.grd | awk '{ print $3 }' > topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.dat
+
+
+Second, older option (now obsolete):
 
 1. download the whole world gridfile, ETOPO1 Ice Surface, in (georeferenced) tiff format 
    from this website:

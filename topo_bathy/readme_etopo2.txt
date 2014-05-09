@@ -8,16 +8,17 @@ GMT:
       This data set is included in the grdraster dataset for ease of plotting
 
 File Format:
-     The raw data is in etopo2.raw
+     The raw data is in ETOPO2v2c_i2_LSB.bin
      The file is a raw header-less binary stored as
      2-byte (16 bit) signed integers
      10800 columns and 5400 rows
 
 
 Raw to Gridded Data:
-    xyz2grd etopo2.raw -R-180/-90/-90/90 -I2m -Getopo2.grd -F -ZTLh -V
-    grd2xyz etopo2.grd -bo > etopo2.xyz
-
+    get file ETOPO2v2c_i2_LSB.zip from http://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ETOPO2v2-2006/ETOPO2v2c/raw_binary/
+    unzip ETOPO2v2c_i2_LSB.zip
+    xyz2grd ETOPO2v2c_i2_LSB.bin -Rd -I2m -Getopo2v2c.grd -F -ZTLh -V
+    grd2xyz -Rg etopo2v2c.grd | awk '{ print $3 }' > topo_bathy_etopo2v2c_original_unmodified_unsmoothed.dat
 
 Data Sources:
      For information about where the data originated check out
