@@ -38,7 +38,17 @@
 
   implicit none
 
-  include "../../setup/constants.h"
+!---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
+! size of topography and bathymetry file
+! integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
+
+!--- ETOPO2 2-minute model, not implemented yet
+! size of topography and bathymetry file
+  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
+
+!--- ETOPO1 1-minute model, implemented now, but data file must be created first
+! size of topography and bathymetry file
+! integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
 
 ! filter final surface using box filter
   logical, parameter :: SMOOTH_THE_MODEL = .true.
@@ -57,7 +67,6 @@
 
 ! read the topography file
   print *,'NX_BATHY,NY_BATHY = ',NX_BATHY,NY_BATHY
-  print *,'file used has a resolution of ',RESOLUTION_TOPO_FILE,' minutes'
 
   print *
   print *,'reading topo file'
