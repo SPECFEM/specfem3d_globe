@@ -163,7 +163,7 @@
 ! the code will print an error message and stop if it finds that the topography input file
 ! contains values outside this range.
 ! we take a safety margin just in case of a smoothed or modified model, which can locally create slightly different values
-  integer, parameter :: TOPO_MINIMUM = - 11500 ! (max depth in m, Mariana trench)
+  integer, parameter :: TOPO_MINIMUM = - 11200 ! (max depth in m, Mariana trench)
   integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
@@ -190,8 +190,16 @@
   integer, parameter :: ICRUST_CRUSTMAPS = 3
   integer, parameter :: ICRUST_EPCRUST = 4
 
-! increase smoothing for critical regions  (increases mesh stability)
-  logical, parameter :: SMOOTH_CRUST = .true.
+!-------------------------------
+! crustal model cap smoothing - extension range in degree
+! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
+!       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
+!       so far, the only thing that works is to smooth out values and take special care of the Andes...
+! TODO: one could try to adapt this degree range to the simulation resolution in the future
+  double precision, parameter :: CAP_SMOOTHING_DEGREE_DEFAULT = 1.0d0
+
+! increase smoothing for critical regions (for instance high mountains in Europe and in the Andes) to increases mesh stability
+  logical, parameter :: SMOOTH_CRUST_EVEN_MORE = .true.
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
@@ -199,14 +207,14 @@
 
 ! default crustal model
 ! (used as default when CRUSTAL flag is set for simulation)
-!!-- uncomment for using Crust1.0
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
-!!-- uncomment for using Crust2.0
+!-- uncomment for using Crust1.0
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
+!-- uncomment for using Crust2.0
   integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
-!!-- uncomment for using General Crustmaps instead
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-!!-- uncomment for using EPcrust instead (European regional model)
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
+!-- uncomment for using General Crustmaps instead
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+!-- uncomment for using EPcrust instead (European regional model)
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
 
 
 !!-----------------------------------------------------------

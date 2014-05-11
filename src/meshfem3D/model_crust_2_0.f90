@@ -46,7 +46,7 @@
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------
 
-  module model_crust_par
+  module model_crust_2_0_par
 
   ! crustal_model_constants
   ! crustal model parameters for crust2.0
@@ -59,18 +59,18 @@
   character(len=2) :: abbreviation(NCAP_CRUST/2,NCAP_CRUST)
   character(len=2) :: code(NKEYS_CRUST)
 
-  end module model_crust_par
+  end module model_crust_2_0_par
 
 !
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_broadcast(myrank)
+  subroutine model_crust_2_0_broadcast(myrank)
 
 ! standard routine to setup model
 
   use constants
-  use model_crust_par
+  use model_crust_2_0_par
 
   implicit none
 
@@ -85,7 +85,7 @@
            stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustal arrays')
 
-  ! the variables read are declared and stored in structure model_crust_par
+  ! the variables read are declared and stored in structure model_crust_2_0_par
   if(myrank == 0) call read_crust_model()
 
   ! broadcast the information read on the master to the nodes
@@ -97,7 +97,7 @@
   call bcast_all_ch_array2(abbreviation,NCAP_CRUST/2,NCAP_CRUST,2)
   call bcast_all_ch_array(code,NKEYS_CRUST,2)
 
-  end subroutine model_crust_broadcast
+  end subroutine model_crust_2_0_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -106,7 +106,7 @@
   subroutine model_crust(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
 
   use constants
-  use model_crust_par
+  use model_crust_2_0_par
 
   implicit none
 
@@ -204,7 +204,7 @@
   subroutine read_crust_model()
 
   use constants
-  use model_crust_par
+  use model_crust_2_0_par
 
   implicit none
 
@@ -276,7 +276,7 @@
 ! The cap is rotated to the North Pole.
 
   use constants
-  use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST,NCAP_CRUST
+  use model_crust_2_0_par,only: NLAYERS_CRUST,NKEYS_CRUST,NCAP_CRUST
 
   implicit none
 
@@ -334,12 +334,11 @@
   if(lon==180.0d0) lon=179.9999d0
   if(lon==-180.0d0) lon=-179.9999d0
 
-  ! sets up smoothing points
-  ! by default uses CAP smoothing with 1 degree
-  cap_degree = 1.0d0
+  ! sets up smoothing points based on cap smoothing
+  cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST ) then
+  if( SMOOTH_CRUST_EVEN_MORE ) then
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
     if( dist < CRITICAL_RANGE ) then
       ! increases cap smoothing degree
@@ -449,7 +448,7 @@
 
   subroutine get_crust_structure(ikey,vptyp,vstyp,rhtyp,thtp,thlr,velocp,velocs,dens)
 
-  use model_crust_par,only: NLAYERS_CRUST,NKEYS_CRUST
+  use model_crust_2_0_par,only: NLAYERS_CRUST,NKEYS_CRUST
 
   implicit none
 
