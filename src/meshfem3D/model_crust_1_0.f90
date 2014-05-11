@@ -265,8 +265,7 @@
   write(IMAIN,*)
 
   ! allocates temporary array
-  allocate(bnd(CRUST1_NP,CRUST1_NLA,CRUST1_NLO), &
-           stat=ier)
+  allocate(bnd(CRUST1_NP,CRUST1_NLA,CRUST1_NLO),stat=ier)
   if( ier /= 0 ) call exit_MPI(0,'error allocating crustal arrays in read routine')
 
   ! initializes
@@ -372,8 +371,7 @@
     close(77)
 
     ! checks min/max
-    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) &
-      stop 'incorrect moho depths in read_crust_1_0_model'
+    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
     ! debug: file output for smoothed data
     open(77,file='tmp-crust1.0-smooth.dat',status='unknown')
@@ -401,8 +399,7 @@
     close(77)
 
     ! checks min/max
-    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) &
-      stop 'incorrect moho depths in read_crust_1_0_model'
+    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
     ! frees memory
     deallocate(ths,thc)
@@ -435,15 +432,6 @@
   double precision :: lat,lon
   double precision,dimension(CRUST1_NP) :: rho,thick,velp,vels
 
-
-  !-------------------------------
-  ! CAP smoothing - extension range in degree
-  ! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
-  !       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
-  !       so far, the only thing that works is to smooth out values and take special care of the Andes...
-  ! TODO: one could try to adapt this degree range to the simulation resolution in future
-  double precision,parameter :: CAP_DEFAULT_DEGREE = 1.0d0
-
   ! work-around to avoid Jacobian problems when stretching mesh elements;
   ! one could also try to slightly change the shape of the doubling element bricks (which cause the problem)...
   !
@@ -469,18 +457,17 @@
     stop 'error in latitude/longitude range in crust1.0'
   endif
 
-  ! makes sure lat/lon are within range
+  ! makes sure lat/lon are within crust1.0 range
   if(lat==90.0d0) lat=89.9999d0
   if(lat==-90.0d0) lat=-89.9999d0
   if(lon==180.0d0) lon=179.9999d0
   if(lon==-180.0d0) lon=-179.9999d0
 
-  ! sets up smoothing points
-  ! by default uses CAP smoothing with 1 degree
-  cap_degree = CAP_DEFAULT_DEGREE
+  ! sets up smoothing points based on cap smoothing
+  cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST ) then
+  if( SMOOTH_CRUST_EVEN_MORE ) then
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
     if( dist < CRITICAL_RANGE ) then
       ! increases cap smoothing degree
@@ -493,8 +480,7 @@
     endif
   endif
 
-  ! gets smoothing points and weights
-  ! (see routine in model_crust.f90)
+  ! gets smoothing points and weights (see routine in model_crust_2_0.f90)
   call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
 
   ! initializes
@@ -589,5 +575,4 @@
   thtp(CRUST1_NP) = thtp(CRUST1_NP) - thtp(1) - thtp(2)
 
   end subroutine get_crust_1_0_structure
-
 
