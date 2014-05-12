@@ -55,14 +55,15 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   //prepare field transfer array on device
 
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    if (GPU_ASYNC_COPY) {
-      clCheck(clFlush(mocl.copy_queue));
-    }
-    
+  if (run_opencl) {    
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
+    cl_event kernel_evt;
+    
+    if (GPU_ASYNC_COPY) {
+      clCheck (clFinish (mocl.copy_queue));
+    }
     
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &d_ispec_selected->ocl));
@@ -76,20 +77,20 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_from_device_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_from_device_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, &kernel_evt));
 
     //copies array to CPU
     if (GPU_ASYNC_COPY) {
-      clCheck(clFlush(mocl.command_queue));
       clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_station_seismo_field.ocl, CL_FALSE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
-                                    mp->h_station_seismo_field, 0, NULL, NULL));
+                                    mp->h_station_seismo_field, 1, &kernel_evt, NULL));
     } else {
       clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_station_seismo_field.ocl, CL_TRUE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
                                     mp->h_station_seismo_field, 0, NULL, NULL));
     }
+    
+    clReleaseEvent (kernel_evt);
   }
 #endif
 #if USE_CUDA
@@ -189,7 +190,6 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
     global_work_size[1] = num_blocks_y;
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_strain_from_device_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
-
 
     //copies array to CPU
     clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_station_seismo_field.ocl, CL_TRUE, 0,
@@ -334,9 +334,7 @@ void FC_FUNC_ (write_seismograms_transfer_gpu,
 }
 
 /* ----------------------------------------------------------------------------------------------- */
-
 // data transfer to CPU host
-
 /* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
@@ -368,6 +366,11 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   }
 
   // waits for previous copy call to be finished
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    clCheck (clFinish (mocl.copy_queue));
+  }
+#endif
 #ifdef USE_CUDA
   if (run_cuda) {
     cudaStreamSynchronize(mp->copy_stream);

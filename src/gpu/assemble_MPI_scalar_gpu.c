@@ -68,6 +68,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
+    cl_event kernel_evt;
     
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.prepare_boundary_potential_on_device, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
@@ -82,21 +83,18 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
       global_work_size[0] = num_blocks_x * blocksize;
       global_work_size[1] = num_blocks_y;
       
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.prepare_boundary_potential_on_device, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.prepare_boundary_potential_on_device, 2, NULL, global_work_size, local_work_size, 0, NULL, &kernel_evt));
 
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
-        clCheck(clFlush(mocl.command_queue));
-        
         clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_TRUE,
                                       0, size_mpi_buffer * sizeof (realw),
-                                      mp->h_send_accel_buffer_oc, 0, NULL, NULL));
+                                      mp->h_send_accel_buffer_oc, 1, &kernel_evt, NULL));
 
       } else {
         clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_FALSE,
                                       0, size_mpi_buffer * sizeof (realw),
                                       send_buffer, 0, NULL, NULL));
-
       }
     }
     else if (*FORWARD_OR_ADJOINT == 3) {
@@ -116,14 +114,12 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
       global_work_size[1] = num_blocks_y;
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.prepare_boundary_potential_on_device, 2, NULL,
-                                       global_work_size, local_work_size, 0, NULL, NULL));
+                                       global_work_size, local_work_size, 0, NULL, &kernel_evt));
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
-        clCheck(clFlush(mocl.command_queue));
-        
         clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_TRUE,
                                       0, size_mpi_buffer * sizeof (realw),
-                                      mp->h_b_send_accel_buffer_oc, 0, NULL, NULL));
+                                      mp->h_b_send_accel_buffer_oc, 1, &kernel_evt, NULL));
 
       } else {
         clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_FALSE,
@@ -131,6 +127,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
                                       send_buffer, 0, NULL, NULL));
       }
     }
+    clReleaseEvent (kernel_evt);
   }
 #endif
 #ifdef USE_CUDA
@@ -231,7 +228,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     
     if (*FORWARD_OR_ADJOINT == 1) {      
       if (GPU_ASYNC_COPY) {
-        clCheck(clFlush(mocl.copy_queue));
+        clCheck (clFinish (mocl.copy_queue));
       } else {
         // copies scalar buffer onto GPU
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
@@ -261,7 +258,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
 
       // copies scalar buffer onto GPU
       if (GPU_ASYNC_COPY) {
-        clCheck(clFlush(mocl.copy_queue));
+        clCheck (clFinish (mocl.copy_queue));
       } else {
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
                                        mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw),

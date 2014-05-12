@@ -213,26 +213,6 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
   // the irec_local variable needs to be precomputed (as
   // h_pre_comp..), because normally it is in the loop updating accel,
   // and due to how it's incremented, it cannot be parallelized
-#ifdef USE_CUDA
-  if (run_cuda) {
-    // waits for previous transfer_** calls to be finished
-    if (GPU_ASYNC_COPY ){
-      // waits for asynchronous copy to finish
-      cudaStreamSynchronize(mp->copy_stream);
-    }
-
-    dim3 grid(num_blocks_x,num_blocks_y,1);
-    dim3 threads(NGLLX,NGLLX,NGLLX);
-
-    compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
-                                                                                   nrec,
-                                                                                   mp->d_adj_sourcearrays.cuda,
-                                                                                   mp->d_ibool_crust_mantle.cuda,
-                                                                                   mp->d_ispec_selected_rec.cuda,
-                                                                                   mp->d_pre_computed_irec.cuda,
-                                                                                   mp->nadj_rec_local);
-  }
-#endif
 #if USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[3];
@@ -240,7 +220,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     cl_uint idx = 0;
     
     if (GPU_ASYNC_COPY) {
-      clCheck(clFlush(mocl.copy_queue));
+      clCheck (clFinish (mocl.copy_queue));
     }
 
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -261,6 +241,26 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_add_sources_adjoint_kernel, 3, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // waits for previous transfer_** calls to be finished
+    if (GPU_ASYNC_COPY ){
+      // waits for asynchronous copy to finish
+      cudaStreamSynchronize(mp->copy_stream);
+    }
+
+    dim3 grid(num_blocks_x,num_blocks_y,1);
+    dim3 threads(NGLLX,NGLLX,NGLLX);
+
+    compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
+                                                                                   nrec,
+                                                                                   mp->d_adj_sourcearrays.cuda,
+                                                                                   mp->d_ibool_crust_mantle.cuda,
+                                                                                   mp->d_ispec_selected_rec.cuda,
+                                                                                   mp->d_pre_computed_irec.cuda,
+                                                                                   mp->nadj_rec_local);
   }
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -395,7 +395,7 @@ please check mesh_constants_cuda.h");
 
 #if USE_OPENCL
   if (run_opencl) {
-    clCheck(clFlush(mocl.copy_queue));
+    clCheck (clFinish (mocl.copy_queue));
   }
 #endif
 #if USE_CUDA
@@ -434,7 +434,7 @@ please check mesh_constants_cuda.h");
   }
 #if USE_OPENCL
   if (run_opencl) {
-    clCheck(clFlush(mocl.command_queue));
+    clCheck (clFinish (mocl.command_queue));
     clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_adj_sourcearrays.ocl, CL_FALSE, 0,
                                    mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw),
                                    mp->h_adj_sourcearrays_slice, 0, NULL, NULL));
