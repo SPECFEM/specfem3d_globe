@@ -624,6 +624,11 @@ void FC_FUNC_ (prepare_constants_device,
     cudaStreamCreate(&mp->copy_stream);
   }
 #endif
+#if USE_OPENCL
+  if (run_opencl) {
+    mp->has_last_copy_evt = 0;
+  }
+#endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_constants_device");
 #endif

@@ -218,9 +218,12 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     size_t global_work_size[3];
     size_t local_work_size[3];
     cl_uint idx = 0;
+    cl_event *copy_evt = NULL;
+    cl_uint num_evt = 0;
     
-    if (GPU_ASYNC_COPY) {
-      clCheck (clFinish (mocl.copy_queue));
+    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
+      copy_evt = &mp->last_copy_evt;
+      num_evt = 1;
     }
 
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -240,7 +243,12 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     global_work_size[2] = NGLLX;
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_add_sources_adjoint_kernel, 3, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
+                                     global_work_size, local_work_size, num_evt, copy_evt, NULL));
+
+    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+      mp->has_last_copy_evt = 0;
+    }
   }
 #endif
 #ifdef USE_CUDA
@@ -286,7 +294,7 @@ void FC_FUNC_(transfer_adj_to_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of Fortran integer container
 
   // check if anything to do
-  if(mp->nadj_rec_local == 0)
+  if (mp->nadj_rec_local == 0)
     return;
 
   // total number of receivers/adjoint sources
@@ -304,8 +312,8 @@ void FC_FUNC_(transfer_adj_to_device,
   int i,j,k,irec,irec_local;
 
   irec_local = 0;
-  for(irec = 0; irec < nrec; irec++) {
-    if(mp->myrank == h_islice_selected_rec[irec]) {
+  for (irec = 0; irec < nrec; irec++) {
+    if (mp->myrank == h_islice_selected_rec[irec]) {
       // takes only local sources
       for (k = 0; k < NGLLX; k++) {
         for (j = 0; j < NGLLX; j++) {
@@ -342,9 +350,6 @@ void FC_FUNC_(transfer_adj_to_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(mp->d_adj_sourcearrays.cuda, mp->h_adj_sourcearrays_slice,
                                        (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw),cudaMemcpyHostToDevice),71000);
-
-
-
   }
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -370,12 +375,12 @@ void FC_FUNC_(transfer_adj_to_device_async,
   Mesh *mp = (Mesh *)(*Mesh_pointer); //get mesh pointer out of Fortran integer container
 
   // check if anything to do
-  if( mp->nadj_rec_local == 0 ) {
+  if (mp->nadj_rec_local == 0) {
     return;
   }
 
   // checks async-memcpy
-  if( GPU_ASYNC_COPY == 0 ){
+  if (GPU_ASYNC_COPY == 0) {
     exit_on_error("transfer_adj_to_device_async must be called with GPU_ASYNC_COPY == 1, \
 please check mesh_constants_cuda.h");
   }
@@ -395,6 +400,11 @@ please check mesh_constants_cuda.h");
 
 #if USE_OPENCL
   if (run_opencl) {
+    if (mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+      mp->has_last_copy_evt = 0;
+    }
+    
     clCheck (clFinish (mocl.copy_queue));
   }
 #endif
@@ -434,10 +444,17 @@ please check mesh_constants_cuda.h");
   }
 #if USE_OPENCL
   if (run_opencl) {
-    clCheck (clFinish (mocl.command_queue));
+    cl_event *copy_evt = NULL;
+    cl_uint num_evt = 0;
+    
+    if (mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+    }
+    
     clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_adj_sourcearrays.ocl, CL_FALSE, 0,
                                    mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw),
-                                   mp->h_adj_sourcearrays_slice, 0, NULL, NULL));
+                                   mp->h_adj_sourcearrays_slice, num_evt, copy_evt, &mp->last_copy_evt));
+    mp->has_last_copy_evt = 1;
   }
 #endif
 #if USE_CUDA

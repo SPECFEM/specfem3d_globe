@@ -87,10 +87,13 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
 
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
+        if (mp->has_last_copy_evt) {
+          clCheck (clReleaseEvent (mp->last_copy_evt));
+        }
         clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_TRUE,
                                       0, size_mpi_buffer * sizeof (realw),
-                                      mp->h_send_accel_buffer_oc, 1, &kernel_evt, NULL));
-
+                                      mp->h_send_accel_buffer_oc, 1, &kernel_evt, &mp->last_copy_evt));
+        mp->has_last_copy_evt = 1;
       } else {
         clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_FALSE,
                                       0, size_mpi_buffer * sizeof (realw),
@@ -117,10 +120,13 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
                                        global_work_size, local_work_size, 0, NULL, &kernel_evt));
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
+        if (mp->has_last_copy_evt) {
+          clCheck (clReleaseEvent (mp->last_copy_evt));
+        }
         clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_TRUE,
                                       0, size_mpi_buffer * sizeof (realw),
-                                      mp->h_b_send_accel_buffer_oc, 1, &kernel_evt, NULL));
-
+                                      mp->h_b_send_accel_buffer_oc, 1, &kernel_evt, &mp->last_copy_evt));
+        mp->has_last_copy_evt = 1;
       } else {
         clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_FALSE,
                                       0, size_mpi_buffer * sizeof (realw),
@@ -209,7 +215,6 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
   // buffer size
   size_mpi_buffer = (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core);
 
-
   // checks if anything to do
   if( size_mpi_buffer <= 0 ) return;
 
@@ -225,11 +230,16 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
+    cl_event *copy_evt = NULL;
+    cl_uint num_evt = 0;
+    
+    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
+      copy_evt = &mp->last_copy_evt;
+      num_evt = 1;
+    }
     
     if (*FORWARD_OR_ADJOINT == 1) {      
-      if (GPU_ASYNC_COPY) {
-        clCheck (clFinish (mocl.copy_queue));
-      } else {
+      if (!GPU_ASYNC_COPY) {
         // copies scalar buffer onto GPU
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
                                        mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw),
@@ -250,16 +260,14 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
       global_work_size[1] = num_blocks_y;
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.assemble_boundary_potential_on_device, 2, NULL,
-                                       global_work_size, local_work_size, 0, NULL, NULL));
+                                       global_work_size, local_work_size, num_evt, copy_evt, NULL));
     }
     else if (*FORWARD_OR_ADJOINT == 3) {
       // debug
       DEBUG_BACKWARD_ASSEMBLY ();
 
       // copies scalar buffer onto GPU
-      if (GPU_ASYNC_COPY) {
-        clCheck (clFinish (mocl.copy_queue));
-      } else {
+      if (!GPU_ASYNC_COPY) {
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_b_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
                                        mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw),
                                        buffer_recv_scalar, 0, NULL, NULL));
@@ -278,7 +286,11 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
       global_work_size[1] = num_blocks_y;
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.assemble_boundary_potential_on_device, 2, NULL,
-                                       global_work_size, local_work_size, 0, NULL, NULL));
+                                       global_work_size, local_work_size, num_evt, copy_evt, NULL));
+    }
+    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+      mp->has_last_copy_evt = 0;
     }
   }
 #endif

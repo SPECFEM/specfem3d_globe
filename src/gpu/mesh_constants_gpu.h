@@ -875,12 +875,6 @@ typedef struct mesh_ {
   // optimizations
   // ------------------------------------------------------------------ //
 
-#if USE_CUDA
-  // overlapped memcpy streams
-  cudaStream_t compute_stream;
-  cudaStream_t copy_stream;
-#endif
-
   // A buffer for MPI send/recv, which is duplicated in Fortran but is
   // allocated with pinned memory to facilitate asynchronous device <->
   // host memory transfers
@@ -924,6 +918,17 @@ typedef struct mesh_ {
   cl_mem h_pinned_b_send_accel_buffer_oc;
   cl_mem h_pinned_b_recv_accel_buffer_oc;
 #endif
+
+#if USE_CUDA
+  // overlapped memcpy streams
+  cudaStream_t compute_stream;
+  cudaStream_t copy_stream;
+#endif
+#if USE_OPENCL
+  cl_event last_copy_evt;
+  int has_last_copy_evt;
+#endif
+  
 } Mesh;
 
 

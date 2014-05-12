@@ -60,9 +60,12 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     size_t local_work_size[2];
     cl_uint idx = 0;
     cl_event kernel_evt;
+    cl_event *copy_evt = NULL;
+    cl_uint num_evt = 0;
     
-    if (GPU_ASYNC_COPY) {
-      clCheck (clFinish (mocl.copy_queue));
+    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
+      copy_evt = &mp->last_copy_evt;
+      num_evt = 1;
     }
     
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
@@ -77,13 +80,18 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_from_device_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, &kernel_evt));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_from_device_kernel, 2, NULL, global_work_size, local_work_size, num_evt, copy_evt, &kernel_evt));
 
     //copies array to CPU
     if (GPU_ASYNC_COPY) {
+      if (mp->has_last_copy_evt) {
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+      }
+      
       clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_station_seismo_field.ocl, CL_FALSE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
-                                    mp->h_station_seismo_field, 1, &kernel_evt, NULL));
+                                    mp->h_station_seismo_field, 1, &kernel_evt, &mp->last_copy_evt));
+      mp->has_last_copy_evt = 1;
     } else {
       clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_station_seismo_field.ocl, CL_TRUE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
@@ -368,6 +376,10 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   // waits for previous copy call to be finished
 #ifdef USE_OPENCL
   if (run_opencl) {
+    if (mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+      mp->has_last_copy_evt = 0;
+    }
     clCheck (clFinish (mocl.copy_queue));
   }
 #endif
