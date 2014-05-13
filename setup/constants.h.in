@@ -101,38 +101,37 @@
 !!-----------------------------------------------------------
 !! (uncomment desired resolution)
 
-!!--- ETOPO5 5-minute model, smoothed Harvard version
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 5
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
-
-!! DK DK for Roland_Sylvain this below could be changed if needed (i.e. using a non-smoothed version for instance)
-!---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
+!---  ETOPO4 4-minute model
 ! size of topography and bathymetry file
   integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.dat'
   character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
 
-!!--- ETOPO2 2-minute model, not implemented yet
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 2
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
+!--- ETOPO2 2-minute model
+! size of topography and bathymetry file
+! integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
+! resolution of topography file in minutes
+! integer, parameter :: RESOLUTION_TOPO_FILE = 2
+! pathname of the topography file
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
+!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
+!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_smoothed_window_3.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_original_unmodified_unsmoothed.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_smoothed_window_3.dat'
 
-!!--- ETOPO1 1-minute model, implemented now, but data file must be created first
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 1
-!! pathname of the topography file (un-smoothed)
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
+!--- ETOPO1 1-minute model
+! size of topography and bathymetry file
+! integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
+! resolution of topography file in minutes
+! integer, parameter :: RESOLUTION_TOPO_FILE = 1
+! pathname of the topography file
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.dat'
+
 
 ! For the reference ellipsoid to convert geographic latitudes to geocentric:
 !
@@ -159,7 +158,13 @@
   double precision, parameter :: ONE_MINUS_F_SQUARED = (1.d0 - FLATTENING_F)**2
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature, currently does not work, DO NOT USE)
-  logical,parameter :: USE_GLL = .false.
+  logical, parameter :: USE_GLL = .false.
+
+! the code will print an error message and stop if it finds that the topography input file
+! contains values outside this range.
+! we take a safety margin just in case of a smoothed or modified model, which can locally create slightly different values
+  integer, parameter :: TOPO_MINIMUM = - 11200 ! (max depth in m, Mariana trench)
+  integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
 ! to avoid taking into account spurious oscillations in global model ETOPO
@@ -185,8 +190,16 @@
   integer, parameter :: ICRUST_CRUSTMAPS = 3
   integer, parameter :: ICRUST_EPCRUST = 4
 
-! increase smoothing for critical regions  (increases mesh stability)
-  logical, parameter :: SMOOTH_CRUST = .true.
+!-------------------------------
+! crustal model cap smoothing - extension range in degree
+! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
+!       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
+!       so far, the only thing that works is to smooth out values and take special care of the Andes...
+! TODO: one could try to adapt this degree range to the simulation resolution in the future
+  double precision, parameter :: CAP_SMOOTHING_DEGREE_DEFAULT = 1.0d0
+
+! increase smoothing for critical regions (for instance high mountains in Europe and in the Andes) to increases mesh stability
+  logical, parameter :: SMOOTH_CRUST_EVEN_MORE = .true.
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
@@ -194,14 +207,14 @@
 
 ! default crustal model
 ! (used as default when CRUSTAL flag is set for simulation)
-!!-- uncomment for using Crust1.0
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
-!!-- uncomment for using Crust2.0
+!-- uncomment for using Crust1.0
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
+!-- uncomment for using Crust2.0
   integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
-!!-- uncomment for using General Crustmaps instead
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-!!-- uncomment for using EPcrust instead (European regional model)
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
+!-- uncomment for using General Crustmaps instead
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+!-- uncomment for using EPcrust instead (European regional model)
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
 
 
 !!-----------------------------------------------------------
@@ -420,7 +433,8 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-  integer, parameter :: NX_OBSERVATION = 500
+!! DK DK 2 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
+  integer, parameter :: NX_OBSERVATION = 2 ! 500
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
 ! the code will display sample output values at this particular point as a check

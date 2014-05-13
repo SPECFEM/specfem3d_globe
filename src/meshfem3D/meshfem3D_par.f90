@@ -167,6 +167,8 @@
   equivalence(y_observation,y_observation1D)
   equivalence(z_observation,z_observation1D)
 
+  double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: lon_observation,lat_observation
+
   ! arrays containing the computed fields for Roland_Sylvain integrals at the observation points
   ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz, &

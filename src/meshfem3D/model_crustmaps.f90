@@ -369,7 +369,8 @@
   num_points = 1
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST ) then
+  if( SMOOTH_CRUST_EVEN_MORE ) then
+
     dist = dsqrt( (lon-LON_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
     if( dist < CRITICAL_RANGE_EUROPE ) then
       ! sets up smoothing points
@@ -388,6 +389,7 @@
       call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
+
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
     if( dist < CRITICAL_RANGE_ANDES ) then
       ! sets up smoothing points
@@ -406,6 +408,7 @@
       call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
+
   endif
 
   ! initializes

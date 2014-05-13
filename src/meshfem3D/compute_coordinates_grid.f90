@@ -331,7 +331,8 @@
 
   use constants
 
-  use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
+  use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation,lon_observation,lat_observation, &
+                                     ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES 
 
   use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
 
@@ -420,20 +421,26 @@
       ! add ellipticity
       if(ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,espl,espl2)
 
+      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+      call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
+
+      ! compute elevation at current point
+      if(TOPOGRAPHY) then
+        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+      else
+        elevation = ZERO
+      endif
+
+      ! store the values obtained for future display with GMT
+      if(myrank == 0) then
+        if( lon > 180.0d0 ) lon = lon - 360.0d0
+        write(IOUT,*) lon,lat,elevation
+        lon_observation(ix,iy,ichunk) = lon
+        lat_observation(ix,iy,ichunk) = lat
+      endif
+
       ! add topography
       if(TOPOGRAPHY) then
-        ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-        call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
-
-        ! compute elevation at current point
-        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
-
-        ! store the values obtained for future display with GMT
-        if(myrank == 0) then
-          if( lon > 180.0d0 ) lon = lon - 360.0d0
-          write(IOUT,*) lon,lat,elevation
-        endif
-
         ! non-dimensionalize the elevation, which is in meters
         elevation = elevation / R_EARTH
 

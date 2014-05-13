@@ -168,12 +168,14 @@
 
 ! see: Dahlen & Tromp, 1998: chapter 14.1.5 Geographic versus geocentric colatitude
 
+! (see also in file geographic_versus_geocentric_coordinates_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code)
+
 !
-! the location of a seismic station situated upon the Earth's surface is conventionally specified
+! The location of a seismic station situated upon the Earth's surface is conventionally specified
 ! by giving its elevation (e) above the geoid, its longitude (phi) with respect to Greenwich,
 ! and its geographical colatitude (theta_prime), which is the angle between the normal n to the reference ellipsoid
 ! and the normal z to the equatorial plane. (...)
-! it is necessary to convert the geographic colatitude (theta_prime) to the corresponding geocentric colatitude (theta),
+! It is necessary to convert the geographic colatitude (theta_prime) to the corresponding geocentric colatitude (theta),
 ! which is the angle between the radius vector r and z.
 !
 !
@@ -216,6 +218,115 @@
 !   theta_prime = PI/2 - atan( 1/(1 - e**2) * 1/tan(theta) )
 !               = PI/2 - atan( 1/(1 - e**2) * cos(theta)/sin(theta) )
 !               = PI/2 - atan( 1.00670466  * cos(theta)/sin(theta) )
+
+! -----------------------------------------------------------------------------------
+
+! Email from Daniel Peter, May 2014:
+
+! First, these are some excerpts from: Dahlen & Tromp, 1998: chapter
+! 14.1.5 Geographic versus geocentric colatitude
+
+! The location of a seismic station situated upon the Earth's surface is conventionally specified
+! by giving its elevation (e) above the geoid, its longitude (phi) with respect to Greenwich,
+! and its geographical colatitude (theta_prime), which is the angle
+! between the normal n to the reference ellipsoid
+! and the normal z to the equatorial plane. (...)
+! it is necessary to convert the geographic colatitude (theta_prime) to
+! the corresponding geocentric colatitude (theta),
+! which is the angle between the radius vector r and z.
+
+! Second, a while ago, in our email exchange with Jeroen about this, he states:
+
+! "
+! The conversion is given by D & T (14.32), and using the observed ellipticity given by (14.24)
+! this gives 1.00670466 (not 1.006760466).
+! If you use the hydrostatic value given by (14.23),
+! you would get 1.0066711.
+! One could argue for either one, but I prefer to use the best fitting observed value.
+!
+! With regards to the conversion from geographic to geocentric coordinates:
+! all station and event locations are reported by bulletins in map coordinates,
+! that is, geographic coordinates. Thus the assumption should be that
+! locations given in the STATIONS and CMTSOLUTION files are geographic
+! coordinates. When you are reading a topographic map, again the
+! assumption is that we are dealing with geographic coordinates,
+! and those coordinates need to be converted to geocentric coordinates.
+! "
+
+! It is a tricky thing to have a correct way of doing this, but I think we
+! are coherent when dealing with it, also in case ellipticity is turned
+! on. here some points to consider:
+
+! mesher:
+
+! - topography:
+! topography is always added on top of a spherical mesh
+! -> the geocentric mesh positions are converted to geographic ones to
+! find the corresponding elevation
+
+! - ellipticity:
+! is added at the very end of the compute_element_** routines, i.e. after
+! assigning mantle properties and topography.
+! it stretches out all mesh nodes in radial direction.
+! -> the ellipticity factor is based on the geocentric colatitude of the
+! initial mesh node location.
+
+! I think in the mesher the conversions are all fine and we don't need to
+! check for ELLIPTICITY in the conversion routines. topography data is in
+! general given in geographic positions, so we need to convert from
+! geocentric to geographic locations, no matter what ellipticity flag we
+! have set. in that sense, the flag ASSUME_PERFECT_SPHERE is overriding
+! this assumption, i.e. then we assume that topography data would be given
+! at geocentric positions.
+
+! The tricky part comes in the solver:
+
+! solver:
+
+! - moment tensor:
+! the moment tensor of the CMTSOLUTION is rotated from a spherical to a
+! cartesian representation, using the geocentric colatitude
+! - vertical component:
+! the vertical component at source/receiver locations is calculated with
+! respect to geocentric colatitude
+! - target position in the mesh:
+! to find the best source/receiver position in the mesh, the target
+! location is using the geocentric colatitude and corrects the radius for
+! topography and ellipticity when calculating the x/y/z cartesian
+! position. We then locate this x/y/z location in the mesh.
+
+! Note that we always convert the geographic latitude to geocentric
+! colatitude for source/station positions, unless ASSUME_PERFECT_SPHERE is
+! set. if that flag is set, we assume that source/station locations are
+! given in geocentric positions already.
+
+! I think the confusing part is for the elliptical mesh. in case of a
+! spherical mesh, we would locate the geocentric position in the spherical
+! mesh, which should be fine. however, for the elliptical case where
+! ELLIPTICITY is turn on, the mesh would be stretched out and x/y/z
+! positions of the mesh nodes are then what? geocentric or geographic now?
+! and what is the cartesian position of a location given in geographic
+! coordinates? since we map topography onto geocentric colatitude and
+! stretch out the ellipticity in radial direction, i think we always have
+! to convert first the source/receiver positions to geocentric ones to
+! then locate the best cartesian x/y/z location in the mesh. so, i think,
+! we are doing it the right way.
+
+! Not sure if i made this point clear, and i would welcome some more
+! thoughts about the rotations. the rotations for components and moment
+! tensors are using a vertical based on the geocentric colatitude? i'm not
+! sure if this is correct. so, my question would rather be: what is
+! vertical for a seismometer?
+
+! I would think that when you install one, you would use the plumb line to
+! orient it. this would mean that you are orienting it along the local
+! vertical, which is always perpendicular to the geoid. i guess you know
+! that the geoid looks like a potato and not like a perfect sphere, so
+! vertical on a seismometer seems not to be the same like the radial
+! direction in a geocentric framework...
+
+! Anyway, I'm sorry that I'm not giving a clear answer, but hopefully this
+! gives some thoughts.
 
   use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
 

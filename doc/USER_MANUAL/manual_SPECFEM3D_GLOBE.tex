@@ -143,7 +143,8 @@ Zhinan Xie,
 Hejun Zhu.\\
 
 The cover graphic of the manual was created
-by Santiago Lombeyda from Caltech's Center for Advanced Computing Research (CACR) \urlwithparentheses{http://www.cacr.caltech.edu}.\\
+by Santiago Lombeyda from Caltech's Center for Advanced Computing Research (CACR), USA, with free satellite clipart pictures
+from \texttt{www.4vector.com} and \texttt{www.clker.com} added to it.\\
 
 \section*{Current and past main participants or main sponsors}
 
@@ -229,8 +230,7 @@ parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.\\
 
 SPECFEM3D\_GLOBE won the Gordon Bell award for best performance at the SuperComputing~2003
-conference in Phoenix, Arizona (USA) (see \cite{KoTsChTr03}
-and \url{www.sc-conference.org/sc2003/nr_finalaward.html}).
+conference in Phoenix, Arizona (USA) (see \cite{KoTsChTr03}).
 It was a finalist again in 2008 for a run at 0.16 petaflops (sustained) on 149,784 processors of the `Jaguar' Cray XT5 system at Oak Ridge National Laboratories (USA) \citep{CaKoLaTiMiLeSnTr08}.
 It also won the BULL Joseph Fourier supercomputing award in 2010.\\
 
@@ -784,13 +784,13 @@ After adding ellipticity, the mesh becomes elliptical and thus geocentric and ge
 %
 From \cite{DaTr98}: "Spherically-symmetric Earth models all have the same hydrostatic surface ellipticity 1/299.8. This is 0.5 percent smaller than observed flattening of best-fitting ellipsoid 1/298.3. The discrepancy is referred to as the "excess equatorial bulge of the Earth", an early discovery of artificial satellite geodesy."
 %
-From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture, available at http://www.agu.org/books: "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A) by using the Clairaut differential equation to calculate the flattening 
+From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture, available at www.agu.org/books: "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A) by using the Clairaut differential equation to calculate the flattening 
 in function of the radius vector imply hydrostaticity. These have surface ellipticity 1/299.8 and
 a corresponding dynamical flattening of .0033 (PREM). The actual ellipticty of the Earth for a best-fitting ellipsoid is 1/298.3 with a corresponding dynamical flattening of .0034."
 %
 Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. And thus eccentricity squared $e^2 = 1 - (1-f)^2 = 1 - (1 - 1/299.8)^2 = 0.00665998813529$, and the correction factor used in the code to convert geographic latitudes to geocentric is $1 - e^2 = (1-f)^2 = (1 - 1/299.8)^2 = 0.9933400118647$.
 %
-As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. http://en.wikipedia.org/wiki/World\_Geodetic\_System) has $f = 1/298.2572236$.
+As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. en.wikipedia.org/wiki/World\_Geodetic\_System) has $f = 1/298.2572236$.
 %
 \item [{\texttt{TOPOGRAPHY}}] Set to \texttt{.true.} if topography and
 bathymetry should be incorporated based upon model ETOPO5 \citep{Etopo5}.
@@ -838,7 +838,7 @@ time function for the movie simulations. When this parameter is set
 to be 0, a default half duration that corresponds to the accuracy
 of the simulation is provided.
 \item [{\texttt{SAVE\_MESH\_FILES}}] Set this flag to \texttt{.true}\texttt{\small .}
-to save AVS \urlwithparentheses{www.avs.com}, OpenDX \urlwithparentheses{www.opendx.org}, or ParaView \urlwithparentheses{www.paraview.org}
+to save AVS \urlwithparentheses{http://www.avs.com}, OpenDX \urlwithparentheses{http://www.opendx.org}, or ParaView \urlwithparentheses{http://www.paraview.org}
 mesh files for subsequent viewing. Turning the flag on generates large
 (distributed) files in the \texttt{LOCAL\_PATH} directory. See Section~\ref{sec:Meshes}
 for a discussion of mesh viewing features.
@@ -886,7 +886,7 @@ by setting the parameters \texttt{OUTPUT\_SEISMOS\_ASCII\_TEXT}, \texttt{OUTPUT\
 and \texttt{OUTPUT\_SEI-}~\\
 \texttt{SMOS\_SAC\_BINARY}. One can choose any combination of these
 parameters (details on the formats follow in the description of each
-parameter). SAC \urlwithparentheses{www.iris.edu/software/sac/} is a signal-processing software
+parameter). SAC \urlwithparentheses{http://www.iris.edu/software/sac/} is a signal-processing software
 package. If a run crashes, you may still find usable (but shorter
 than requested) seismograms in this directory. On a fast machine set
 \texttt{NTSTEP\_BETWEEN\_OUTPUT\_SEISMOS} to a relatively high value
@@ -903,12 +903,12 @@ information). Files will be named with extension \texttt{.ascii}, e.g., \texttt{
 if you want to have the synthetic seismograms written in alphanumeric
 (human readable) SAC format, which includes header information on
 the source and receiver parameters (e.g., source/receiver coordinates,
-station name, etc., see Appendix~\ref{cha:SAC-headers}). For details on the format, please check the SAC webpage \urlwithparentheses{www.iris.edu/software/sac/}. Files will be named with extension \texttt{.sacan}.
+station name, etc., see Appendix~\ref{cha:SAC-headers}). For details on the format, please check the SAC webpage \urlwithparentheses{http://www.iris.edu/software/sac/}. Files will be named with extension \texttt{.sacan}.
 \item [{\texttt{OUTPUT\_SEISMOS\_SAC\_BINARY}}] Set this flag to \texttt{.true.}
 if you want to have the synthetic seismograms written in binary SAC
 format. The header information included is the same as for the alphanumeric
 SAC format (see Appendix~\ref{cha:SAC-headers}). Using this format requires the least disk space, which may be particulary important if you have a large number of stations.
-For details on the binary format please also check the SAC webpage \urlwithparentheses{www.iris.edu/software/sac/} and Appendix~\ref{cha:SAC-headers}. Files will be named with extension \texttt{.sac}.
+For details on the binary format please also check the SAC webpage \urlwithparentheses{http://www.iris.edu/software/sac/} and Appendix~\ref{cha:SAC-headers}. Files will be named with extension \texttt{.sac}.
 \item [{\texttt{ROTATE\_SEISMOGRAMS\_RT}}] Set this flag to \texttt{.true.}
 if you want to have radial (R) and transverse (T) horizontal components
 of the synthetic seismograms (default is \texttt{.false.} $\rightarrow$
@@ -1340,7 +1340,7 @@ Any other change to the \texttt{Par\_file} implies rerunning both
 the mesher and the solver.
 
 For any particular earthquake, the \texttt{CMTSOLUTION} file that
-represents the point source may be obtained directly from the Harvard Centroid-Moment Tensor (CMT) web page \urlwithparentheses{www.globalcmt.org}.
+represents the point source may be obtained directly from the Harvard Centroid-Moment Tensor (CMT) web page \urlwithparentheses{http://www.globalcmt.org}.
 It looks like this:
 
 \begin{lyxcode}
@@ -1383,7 +1383,7 @@ the postprocessing script \texttt{process\_syn.pl} (see Section \ref{sub:process
 with the \texttt{-h} flag, or the serial code \texttt{convolve\_source\_timefunction.f90}
 and the script \texttt{UTILS/convolve\_source\_timefunction.csh} for
 this purpose, or alternatively use signal-processing software packages
-such as SAC \urlwithparentheses{www.iris.edu/software/sac/}. Type
+such as SAC \urlwithparentheses{http://www.iris.edu/software/sac/}. Type
 
 \begin{lyxcode}
 make~convolve\_source\_timefunction
@@ -2276,7 +2276,7 @@ Finally, note again that those examples show only one contribution of the ensemb
 
 Use the serial code \texttt{combine\_AVS\_DX.f90} (type `\texttt{make
 combine\_AVS\_DX}' and then `\texttt{xcombine\_AVS\_DX}') to generate
-AVS \urlwithparentheses{www.avs.com} output files (in AVS UCD format) or OpenDX \urlwithparentheses{www.opendx.org}
+AVS \urlwithparentheses{http://www.avs.com} output files (in AVS UCD format) or OpenDX \urlwithparentheses{http://www.opendx.org}
 output files showing the mesh, the MPI partition (slices), the $\nchunks$
 chunks, the source and receiver location, etc. Use the AVS UCD files
 \texttt{AVS\_continent\_boundaries.inp} and \texttt{AVS\_plate\_boundaries.inp}
@@ -2546,7 +2546,7 @@ mesh2vtu~-i~file.mesh~-o~file.vtu
 \end{lyxcode}
 \item Notice that this program \texttt{mesh2vtu}, in the
 \texttt{UTILS/Visualization/Paraview/mesh2vtu} directory, uses the
-VTK \urlwithparentheses{www.vtk.org} run-time library for its execution. Therefore,
+VTK \urlwithparentheses{http://www.vtk.org} run-time library for its execution. Therefore,
 make sure you have it properly installed.
 \end{enumerate}
 \item \textbf{Copy over the source and receiver .vtk file}
@@ -2560,7 +2560,7 @@ in the next step.
 \item \textbf{View the mesh in ParaView}
 
 
-Finally, we can view the mesh in ParaView \urlwithparentheses{www.paraview.org}.
+Finally, we can view the mesh in ParaView \urlwithparentheses{http://www.paraview.org}.
 
 \begin{enumerate}
 \item Open ParaView.
@@ -2586,7 +2586,7 @@ lower and upper limits, or change the color scheme.
 $\rightarrow$\textsf{ Open data}, select \texttt{sr.vt}k, and click
 the \textsf{Accept} button. Choose \textsf{Filter} $\rightarrow$\textsf{
 Glyph}, and represent the points by `\textsf{spheres}'.
-\item For more information about ParaView, see the ParaView Users Guide \urlwithparentheses{www.paraview.org/files/v1.6/ParaViewUsersGuide.PDF}.
+\item For more information about ParaView, see the ParaView Users Guide \urlwithparentheses{http://www.paraview.org/files/v1.6/ParaViewUsersGuide.PDF}.
 \end{enumerate}
 \end{enumerate}
 For illustration purposes, Figure \ref{fig:P-wave-speed-finite-frequency}
@@ -2724,7 +2724,7 @@ directories on these nodes (\texttt{\small /scratch/}~\\
 for temporary storage of the database files. The scratch directories
 are created using \texttt{shmux}, a shell multiplexor that can execute
 the same commands on many hosts in parallel. \texttt{shmux} is available
-from Shmux \urlwithparentheses{web.taranis.org/shmux/}. Make sure that the \texttt{LOCAL\_PATH}
+from Shmux \urlwithparentheses{http://web.taranis.org/shmux/}. Make sure that the \texttt{LOCAL\_PATH}
 parameter in \texttt{DATA/Par\_file} is also set properly.
 \item The next portion of the script launches the mesher and then the solver
 using \texttt{run\_lsf.bash}.
@@ -3279,7 +3279,7 @@ to \texttt{.true.} in the parameter file \texttt{DATA/Par\_file}.
 
 Note: You need to have the \texttt{sismoutil-0.9b} package installed
 on your computer if you want to run this script on binary SAC files.
-The software is available via the ORFEUS web site \urlwithparentheses{www.orfeus-eu.org}.
+The software is available via the ORFEUS web site \urlwithparentheses{http://www.orfeus-eu.org}.
 
 In case the simulation crashes during run-time without computing and
 writing all time steps, the SAC files (if flags \texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}
@@ -3333,9 +3333,9 @@ of Technology, Department of Mechanical Engineering (Cambridge, Massachusetts, U
 The non-structured global numbering software was provided by Paul
 F. Fischer (Brown University, Providence, Rhode Island, USA, now at Argonne National Laboratory, USA).
 
-OpenDX \urlwithparentheses{www.opendx.org} is open-source based on IBM Data Explorer,
-AVS \urlwithparentheses{www.avs.com} is a trademark of Advanced Visualization Systems,
-and ParaView \urlwithparentheses{www.paraview.org} is an open-source visualization
+OpenDX \urlwithparentheses{http://www.opendx.org} is open-source based on IBM Data Explorer,
+AVS \urlwithparentheses{http://www.avs.com} is a trademark of Advanced Visualization Systems,
+and ParaView \urlwithparentheses{http://www.paraview.org} is an open-source visualization
 platform.{\small{} }{\small \par}
 
 Please e-mail your feedback, questions, comments, and suggestions
@@ -3591,7 +3591,7 @@ IRIS involve geographic coordinates.
 
 \chapter{\label{cha:SAC-headers}SAC Headers}
 
-Information about the simulation (i.e., event/station information, sampling rate, etc.) is written in the header of the seismograms in SAC format. The list of values and related explanation are given in Figure \ref{fig:SAC-headers}. Please check the SAC webpages \urlwithparentheses{www.iris.edu/software/sac/} for further information. Please note that the reference time KZTIME is the centroid time ($t_\text{CMT}=t_\text{PDE}+\texttt{time shift}$) which corresponds to zero time in the synthetics. For kinematic rupture simulations, KZTIME is equal to the CMT time of the source having the minimum time-shift in the \texttt{CMTSOLUTION} file, and coordinates, depth and half-duration of the event are not provided in the headers.
+Information about the simulation (i.e., event/station information, sampling rate, etc.) is written in the header of the seismograms in SAC format. The list of values and related explanation are given in Figure \ref{fig:SAC-headers}. Please check the SAC webpages \urlwithparentheses{http://www.iris.edu/software/sac/} for further information. Please note that the reference time KZTIME is the centroid time ($t_\text{CMT}=t_\text{PDE}+\texttt{time shift}$) which corresponds to zero time in the synthetics. For kinematic rupture simulations, KZTIME is equal to the CMT time of the source having the minimum time-shift in the \texttt{CMTSOLUTION} file, and coordinates, depth and half-duration of the event are not provided in the headers.
 
 \begin{figure}[ht]
 \noindent \begin{centering}

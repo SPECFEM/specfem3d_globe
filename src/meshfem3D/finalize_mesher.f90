@@ -112,7 +112,7 @@
     if(NCHUNKS == 6) then
       write(IMAIN,*)
       write(IMAIN,*) 'computed total Earth mass for this density model and mesh: ',Earth_mass_total,' kg'
-      write(IMAIN,*) '   (should be not too far from 5.97E+24 kg)'
+      write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
       write(IMAIN,*)
       ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
       write(IMAIN,*) 'average density for this density model and mesh: ',Earth_mass_total / (volume_total * R_EARTH**3),' kg/m3'
@@ -128,28 +128,28 @@
       write(IMAIN,*) 'maxval of norm of g vector on whole observation surface = ',maxval(temporary_array_for_sum),' m.s-2'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'minval of abs(G_xx) on whole observation surface = ',minval(abs(G_xx)),' Eotvos'
-      write(IMAIN,*) 'maxval of abs(G_xx) on whole observation surface = ',maxval(abs(G_xx)),' Eotvos'
+      write(IMAIN,*) 'minval of G_xx on whole observation surface = ',minval(G_xx),' Eotvos'
+      write(IMAIN,*) 'maxval of G_xx on whole observation surface = ',maxval(G_xx),' Eotvos'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'minval of abs(G_yy) on whole observation surface = ',minval(abs(G_yy)),' Eotvos'
-      write(IMAIN,*) 'maxval of abs(G_yy) on whole observation surface = ',maxval(abs(G_yy)),' Eotvos'
+      write(IMAIN,*) 'minval of G_yy on whole observation surface = ',minval(G_yy),' Eotvos'
+      write(IMAIN,*) 'maxval of G_yy on whole observation surface = ',maxval(G_yy),' Eotvos'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'minval of abs(G_zz) on whole observation surface = ',minval(abs(G_zz)),' Eotvos'
-      write(IMAIN,*) 'maxval of abs(G_zz) on whole observation surface = ',maxval(abs(G_zz)),' Eotvos'
+      write(IMAIN,*) 'minval of G_zz on whole observation surface = ',minval(G_zz),' Eotvos'
+      write(IMAIN,*) 'maxval of G_zz on whole observation surface = ',maxval(G_zz),' Eotvos'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'minval of abs(G_xy) on whole observation surface = ',minval(abs(G_xy)),' Eotvos'
-      write(IMAIN,*) 'maxval of abs(G_xy) on whole observation surface = ',maxval(abs(G_xy)),' Eotvos'
+      write(IMAIN,*) 'minval of G_xy on whole observation surface = ',minval(G_xy),' Eotvos'
+      write(IMAIN,*) 'maxval of G_xy on whole observation surface = ',maxval(G_xy),' Eotvos'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'minval of abs(G_xz) on whole observation surface = ',minval(abs(G_xz)),' Eotvos'
-      write(IMAIN,*) 'maxval of abs(G_xz) on whole observation surface = ',maxval(abs(G_xz)),' Eotvos'
+      write(IMAIN,*) 'minval of G_xz on whole observation surface = ',minval(G_xz),' Eotvos'
+      write(IMAIN,*) 'maxval of G_xz on whole observation surface = ',maxval(G_xz),' Eotvos'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'minval of abs(G_yz) on whole observation surface = ',minval(abs(G_yz)),' Eotvos'
-      write(IMAIN,*) 'maxval of abs(G_yz) on whole observation surface = ',maxval(abs(G_yz)),' Eotvos'
+      write(IMAIN,*) 'minval of G_yz on whole observation surface = ',minval(G_yz),' Eotvos'
+      write(IMAIN,*) 'maxval of G_yz on whole observation surface = ',maxval(G_yz),' Eotvos'
 
       write(IMAIN,*)
       write(IMAIN,*) 'Minval and maxval of trace of G, which in principle should be zero:'
@@ -196,14 +196,103 @@
       write(IMAIN,*) 'computed G_yz = ',G_yz(ixr,iyr,ichunkr),' Eotvos'
 
       ! for future GMT display
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_and_G_for_GMT.txt',status='unknown',action='write')
       ! loop on all the chunks and then on all the observation nodes in each chunk
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_x_for_GMT.txt',status='unknown',action='write')
       do ichunkval = 1,NCHUNKS_MAX
         do iyval = 1,NY_OBSERVATION
           do ixval = 1,NX_OBSERVATION
-            write(IOUT,*) g_x(ixval,iyval,ichunkval),g_y(ixval,iyval,ichunkval),g_z(ixval,iyval,ichunkval), &
-                          G_xx(ixval,iyval,ichunkval),G_yy(ixval,iyval,ichunkval),G_zz(ixval,iyval,ichunkval), &
-                          G_xy(ixval,iyval,ichunkval),G_xz(ixval,iyval,ichunkval),G_yz(ixval,iyval,ichunkval)
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),g_x(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_y_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),g_y(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_z_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),g_z(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_norm_of_g_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval), &
+                             sqrt(g_x(ixval,iyval,ichunkval)**2 + g_y(ixval,iyval,ichunkval)**2 + g_z(ixval,iyval,ichunkval)**2)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_xx_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_xx(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_yy_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_yy(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_zz_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_zz(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_xy_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_xy(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_xz_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_xz(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_yz_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_yz(ixval,iyval,ichunkval)
           enddo
         enddo
       enddo
