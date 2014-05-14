@@ -1,57 +1,18 @@
-/*
- !=====================================================================
- !
- !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
- !          --------------------------------------------------
- !
- !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
- !                        Princeton University, USA
- !                and CNRS / University of Marseille, France
- !                 (there are currently many more authors!)
- ! (c) Princeton University and CNRS / University of Marseille, April 2014
- !
- ! This program is free software; you can redistribute it and/or modify
- ! it under the terms of the GNU General Public License as published by
- ! the Free Software Foundation; either version 2 of the License, or
- ! (at your option) any later version.
- !
- ! This program is distributed in the hope that it will be useful,
- ! but WITHOUT ANY WARRANTY; without even the implied warranty of
- ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- ! GNU General Public License for more details.
- !
- ! You should have received a copy of the GNU General Public License along
- ! with this program; if not, write to the Free Software Foundation, Inc.,
- ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- !
- !=====================================================================
- */
+// from compute_forces_crust_mantle_cuda.cu
 
-#include <stdio.h>
-
-#include <cuda.h>
-#include <cublas.h>
-
-#include <sys/time.h>
-#include <sys/resource.h>
-
-#include "config.h"
-#include "mesh_constants_cuda.h"
-
+#define NDIM 3
+#define NGLLX 5
+#define NGLL2 25
+#define NGLL3 125
+#define NGLL3_PADDED 128
+#define N_SLS 3
+#define R_EARTH_KM 6371.0f
 
 #ifdef USE_TEXTURES_FIELDS
-//forward
-realw_texture d_displ_cm_tex;
-realw_texture d_accel_cm_tex;
-//backward/reconstructed
-realw_texture d_b_displ_cm_tex;
-realw_texture d_b_accel_cm_tex;
-
-//note: texture variables are implicitly static, and cannot be passed as arguments to cuda kernels;
-//      thus, 1) we thus use if-statements (FORWARD_OR_ADJOINT) to determine from which texture to fetch from
-//            2) we use templates
-//      since if-statements are a bit slower as the variable is only known at runtime, we use option 2)
-
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_cm_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_cm_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_displ_cm_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_accel_cm_tex;
 // templates definitions
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_cm(int x);
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_cm(int x);
@@ -66,28 +27,21 @@ template<> __device__ float texfetch_accel_cm<3>(int x) { return tex1Dfetch(d_b_
 #endif
 
 #ifdef USE_TEXTURES_CONSTANTS
-realw_texture d_hprime_xx_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_cm_tex;
 __constant__ size_t d_hprime_xx_tex_offset;
-// weighted
-realw_texture d_hprimewgll_xx_tex;
+texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprimewgll_xx_cm_tex;
 __constant__ size_t d_hprimewgll_xx_tex_offset;
 #endif
 
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// elemental routines
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// updates stress
+typedef float realw;
+typedef const restrict float * realw_const_p;
 
 __device__ void compute_element_cm_att_stress(int tx,int working_element,
-                                              realw_p R_xx,
-                                              realw_p R_yy,
-                                              realw_p R_xy,
-                                              realw_p R_xz,
-                                              realw_p R_yz,
+                                              realw* R_xx,
+                                              realw* R_yy,
+                                              realw* R_xy,
+                                              realw* R_xz,
+                                              realw* R_yz,
                                               realw* sigma_xx,
                                               realw* sigma_yy,
                                               realw* sigma_zz,
@@ -96,52 +50,39 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
                                               realw* sigma_yz) {
 
   realw R_xx_val,R_yy_val;
-  int offset_sls;
 
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // index
-    // note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
-    //       see local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
-    // indexing examples:
-    //   (i,j,k,ispec,i_sls) -> offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls)
-    //   (i_sls,i,j,k,ispec) -> offset_sls = i_sls + N_SLS*(tx + NGLL3*working_element)
-    //   (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
-    offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
-
-    R_xx_val = R_xx[offset_sls];
-    R_yy_val = R_yy[offset_sls];
+    // note: index for R_xx,.. here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
+    //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
+    R_xx_val = R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    R_yy_val = R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)];
 
     *sigma_xx = *sigma_xx - R_xx_val;
     *sigma_yy = *sigma_yy - R_yy_val;
     *sigma_zz = *sigma_zz + R_xx_val + R_yy_val;
-    *sigma_xy = *sigma_xy - R_xy[offset_sls];
-    *sigma_xz = *sigma_xz - R_xz[offset_sls];
-    *sigma_yz = *sigma_yz - R_yz[offset_sls];
+    *sigma_xy = *sigma_xy - R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    *sigma_xz = *sigma_xz - R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    *sigma_yz = *sigma_yz - R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)];
   }
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// updates R_memory
-
 __device__ void compute_element_cm_att_memory(int tx,int working_element,
-                                              realw_const_p d_muvstore,
-                                              realw_const_p factor_common,
-                                              realw_const_p alphaval,realw_const_p betaval,realw_const_p gammaval,
-                                              realw_p R_xx,realw_p R_yy,realw_p R_xy,realw_p R_xz,realw_p R_yz,
-                                              realw_p epsilondev_xx,realw_p epsilondev_yy,realw_p epsilondev_xy,
-                                              realw_p epsilondev_xz,realw_p epsilondev_yz,
+                                              realw* d_muvstore,
+                                              realw* factor_common,
+                                              realw* alphaval,realw* betaval,realw* gammaval,
+                                              realw* R_xx,realw* R_yy,realw* R_xy,realw* R_xz,realw* R_yz,
+                                              realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
+                                              realw* epsilondev_xz,realw* epsilondev_yz,
                                               realw epsilondev_xx_loc,realw epsilondev_yy_loc,realw epsilondev_xy_loc,
                                               realw epsilondev_xz_loc,realw epsilondev_yz_loc,
-                                              realw_const_p d_c44store,
-                                              const int ANISOTROPY,
-                                              const int USE_3D_ATTENUATION_ARRAYS) {
+                                              realw* d_c44store,
+                                              int ANISOTROPY,
+                                              int USE_3D_ATTENUATION_ARRAYS) {
 
   realw fac;
-  realw factor_loc;
   realw alphaval_loc,betaval_loc,gammaval_loc;
-  realw Sn,Snp1;
-  int offset_sls;
+  realw factor_loc,Sn,Snp1;
 
   // shear moduli for common factor (only Q_mu attenuation)
   if( ANISOTROPY ){
@@ -153,19 +94,16 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
   // use Runge-Kutta scheme to march in time
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // indices
-    // note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
+    // note: index for R_xx,... here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
+    //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
     //
-    // index:
-    // (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
-    offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
-
-    // either mustore(i,j,k,ispec) * factor_common(i,j,k,i_sls,ispec)
+    // either mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
     if( USE_3D_ATTENUATION_ARRAYS ){
       // array dimension: factor_common(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC)
-      factor_loc = fac * factor_common[offset_sls];
+      factor_loc = fac * factor_common[i_sls + N_SLS*(tx + NGLL3*working_element)];
     }else{
-      // array dimension: factor_common(1,1,1,N_SLS,NSPEC)
+      // array dimension: factor_common(N_SLS,1,1,1,NSPEC)
       factor_loc = fac * factor_common[i_sls + N_SLS*working_element];
     }
 
@@ -177,35 +115,35 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     // term in xx
     Sn   = factor_loc * epsilondev_xx[tx + NGLL3 * working_element]; //(i,j,k,ispec)
     Snp1   = factor_loc * epsilondev_xx_loc; //(i,j,k)
-    R_xx[offset_sls] = alphaval_loc * R_xx[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yy
     Sn   = factor_loc * epsilondev_yy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yy_loc;
-    R_yy[offset_sls] = alphaval_loc * R_yy[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
-
+    R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
     // term in zz not computed since zero trace
 
     // term in xy
     Sn   = factor_loc * epsilondev_xy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xy_loc;
-    R_xy[offset_sls] = alphaval_loc * R_xy[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in xz
     Sn   = factor_loc * epsilondev_xz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xz_loc;
-    R_xz[offset_sls] = alphaval_loc * R_xz[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yz
     Sn   = factor_loc * epsilondev_yz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yz_loc;
-    R_yz[offset_sls] = alphaval_loc * R_yz[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
+      alphaval_loc * R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
   }
 }
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// pre-computes gravity term
 
 __device__ void compute_element_cm_gravity(int tx,
                                           const int iglob,
@@ -329,19 +267,15 @@ __device__ void compute_element_cm_gravity(int tx,
   *rho_s_H3 = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl);
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// computes stresses for anisotropic element
-
 __device__ void compute_element_cm_aniso(int offset,
-                                         realw_const_p d_c11store,realw_const_p d_c12store,realw_const_p d_c13store,
-                                         realw_const_p d_c14store,realw_const_p d_c15store,realw_const_p d_c16store,
-                                         realw_const_p d_c22store,realw_const_p d_c23store,realw_const_p d_c24store,
-                                         realw_const_p d_c25store,realw_const_p d_c26store,realw_const_p d_c33store,
-                                         realw_const_p d_c34store,realw_const_p d_c35store,realw_const_p d_c36store,
-                                         realw_const_p d_c44store,realw_const_p d_c45store,realw_const_p d_c46store,
-                                         realw_const_p d_c55store,realw_const_p d_c56store,realw_const_p d_c66store,
-                                         const int ATTENUATION,
+                                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
+                                         realw* d_c14store,realw* d_c15store,realw* d_c16store,
+                                         realw* d_c22store,realw* d_c23store,realw* d_c24store,
+                                         realw* d_c25store,realw* d_c26store,realw* d_c33store,
+                                         realw* d_c34store,realw* d_c35store,realw* d_c36store,
+                                         realw* d_c44store,realw* d_c45store,realw* d_c46store,
+                                         realw* d_c55store,realw* d_c56store,realw* d_c66store,
+                                         int ATTENUATION,
                                          realw one_minus_sum_beta_use,
                                          realw duxdxl,realw duxdyl,realw duxdzl,
                                          realw duydxl,realw duydyl,realw duydzl,
@@ -406,13 +340,9 @@ __device__ void compute_element_cm_aniso(int offset,
              c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl;
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// computes stresses for isotropic element
-
 __device__ void compute_element_cm_iso(int offset,
-                                       realw_const_p d_kappavstore,realw_const_p d_muvstore,
-                                       const int ATTENUATION,
+                                       realw* d_kappavstore,realw* d_muvstore,
+                                       int ATTENUATION,
                                        realw one_minus_sum_beta_use,
                                        realw duxdxl,realw duydyl,realw duzdzl,
                                        realw duxdxl_plus_duydyl,realw duxdxl_plus_duzdzl,realw duydyl_plus_duzdzl,
@@ -445,21 +375,17 @@ __device__ void compute_element_cm_iso(int offset,
 
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// computes stresses for transversely isotropic element
-
 __device__ void compute_element_cm_tiso(int offset,
-                                        realw_const_p d_kappavstore,realw_const_p d_muvstore,
-                                        realw_const_p d_kappahstore,realw_const_p d_muhstore,realw_const_p d_eta_anisostore,
-                                        const int ATTENUATION,
+                                        realw* d_kappavstore,realw* d_muvstore,
+                                        realw* d_kappahstore,realw* d_muhstore,realw* d_eta_anisostore,
+                                        int ATTENUATION,
                                         realw one_minus_sum_beta_use,
                                         realw duxdxl,realw duxdyl,realw duxdzl,
                                         realw duydxl,realw duydyl,realw duydzl,
                                         realw duzdxl,realw duzdyl,realw duzdzl,
                                         realw duxdyl_plus_duydxl,realw duzdxl_plus_duxdzl,realw duzdyl_plus_duydzl,
                                         int iglob,
-                                        realw_const_p d_ystore, realw_const_p d_zstore,
+                                        realw* d_ystore, realw* d_zstore,
                                         realw* sigma_xx,realw* sigma_yy,realw* sigma_zz,
                                         realw* sigma_xy,realw* sigma_xz,realw* sigma_yz){
 
@@ -471,9 +397,10 @@ __device__ void compute_element_cm_tiso(int offset,
   realw costwothetasq,costwophisq,sintwophisq;
   realw etaminone,twoetaminone;
   realw two_eta_aniso,four_eta_aniso,six_eta_aniso;
-  realw two_rhovsvsq,two_rhovshsq;
-  realw four_rhovsvsq,four_rhovshsq;
+  realw two_rhovsvsq,two_rhovshsq; // two_rhovpvsq,two_rhovphsq
+  realw four_rhovsvsq,four_rhovshsq; // four_rhovpvsq,four_rhovphsq
   realw c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
+
   // cosine and sine function in CUDA only supported for float
   realw theta,phi;
 
@@ -483,7 +410,6 @@ __device__ void compute_element_cm_tiso(int offset,
 
   kappahl = d_kappahstore[offset];
   muhl = d_muhstore[offset];
-
   // use unrelaxed parameters if attenuation
   // eta does not need to be shifted since it is a ratio
   if( ATTENUATION ){
@@ -504,7 +430,7 @@ __device__ void compute_element_cm_tiso(int offset,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  if( sizeof( realw ) == sizeof( float ) ){
+  if( sizeof( theta ) == sizeof( float ) ){
     // float operations
 
     // sincos function return sinus and cosine for given value
@@ -568,17 +494,23 @@ __device__ void compute_element_cm_tiso(int offset,
   twoetaminone = 2.0f * eta_aniso - 1.0f;
 
   // precompute some products to reduce the CPU time
+
   two_eta_aniso = 2.0f * eta_aniso;
   four_eta_aniso = 4.0f * eta_aniso;
   six_eta_aniso = 6.0f * eta_aniso;
 
+  //two_rhovpvsq = 2.0f * rhovpvsq;
+  //two_rhovphsq = 2.0f * rhovphsq;
   two_rhovsvsq = 2.0f * rhovsvsq;
   two_rhovshsq = 2.0f * rhovshsq;
 
+  //four_rhovpvsq = 4.0f * rhovpvsq;
+  //four_rhovphsq = 4.0f * rhovphsq;
   four_rhovsvsq = 4.0f * rhovsvsq;
   four_rhovshsq = 4.0f * rhovshsq;
 
   // the 21 anisotropic coefficients computed using Mathematica
+
   c11 = rhovphsq*sinphifour + 2.0f*cosphisq*sinphisq*
         (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)*
         sinthetasq) + cosphifour*
@@ -705,10 +637,6 @@ __device__ void compute_element_cm_tiso(int offset,
               c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl;
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-
-// loads displacement into shared memory for element
 
 template<int FORWARD_OR_ADJOINT>
 __device__ void load_shared_memory_cm(const int* tx, const int* iglob,
@@ -731,63 +659,6 @@ __device__ void load_shared_memory_cm(const int* tx, const int* iglob,
 #endif
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// loads displacement into shared memory for element
-/*
-__device__ void load_shared_memory_hprime_hprimewgll(const int* tx,
-                                                     realw_const_p d_hprime_xx,
-                                                     realw_const_p d_hprimewgll_xx,
-                                                     realw* sh_hprime_xx,
-                                                     realw* sh_hprimewgll_xx ){
-
-  // way 1:
-  // each thread reads its corresponding value
-  // (might be faster sometimes...)
-  if( (*tx) < NGLL2 ) {
-#ifdef USE_TEXTURES_CONSTANTS
-    // debug
-    //printf("tex1dfetch offsets: %lu %lu\n",d_hprime_xx_tex_offset,d_hprimewgll_xx_tex_offset);
-    // hprime
-    sh_hprime_xx[(*tx)] = tex1Dfetch(d_hprime_xx_tex,tx + d_hprime_xx_tex_offset);
-    // weighted hprime
-    sh_hprimewgll_xx[(*tx)] = tex1Dfetch(d_hprimewgll_xx_tex,tx + d_hprimewgll_xx_tex_offset);
-#else
-    // hprime
-    sh_hprime_xx[(*tx)] = d_hprime_xx[(*tx)];
-    // weighted hprime
-    sh_hprimewgll_xx[(*tx)] = d_hprimewgll_xx[(*tx)];
-#endif
-  }
-
-  // way 2:
-  // gets constant arrays into shared memory
-  // (only ghost threads which would be idle anyway)
-  // slightly slower on Kepler...
-  if( (*tx) == NGLL3_PADDED-1 ) {
-    for(int m=0; m < NGLL2; m++){
-#ifdef USE_TEXTURES_CONSTANTS
-      // debug
-      //printf("tex1dfetch offsets: %lu %lu\n",d_hprime_xx_tex_offset,d_hprimewgll_xx_tex_offset);
-      // hprime
-      sh_hprime_xx[m] = tex1Dfetch(d_hprime_xx_tex,m + d_hprime_xx_tex_offset);
-      // weighted hprime
-      sh_hprimewgll_xx[m] = tex1Dfetch(d_hprimewgll_xx_tex,m + d_hprimewgll_xx_tex_offset);
-#else
-      // hprime
-      sh_hprime_xx[m] = d_hprime_xx[m];
-      // weighted hprime
-      sh_hprimewgll_xx[m] = d_hprimewgll_xx[m];
-#endif
-    }
-  }
-
-}
-*/
-
-/* ----------------------------------------------------------------------------------------------- */
-
-// loads hprime into shared memory for element
 
 __device__ void load_shared_memory_hprime(const int* tx,
                                           realw_const_p d_hprime_xx,
@@ -823,71 +694,80 @@ __device__ void load_shared_memory_hprimewgll(const int* tx,
 #endif
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// KERNEL 2
-//
-// for crust_mantle
-
-/* ----------------------------------------------------------------------------------------------- */
 
 template<int FORWARD_OR_ADJOINT> __global__ void
-#ifdef USE_LAUNCH_BOUNDS
-// adds compiler specification
-__launch_bounds__(NGLL3_PADDED,LAUNCH_MIN_BLOCKS)
+#ifdef USE_LAUNCH_BOUNDS__launch_bounds__(NGLL3_PADDED,LAUNCH_MIN_BLOCKS)
 #endif
-// main kernel
-Kernel_2_crust_mantle_impl( int nb_blocks_to_compute,
-                            const int* d_ibool,
-                            const int* d_ispec_is_tiso,
-                            const int* d_phase_ispec_inner,
-                            int num_phase_ispec,
-                            const int d_iphase,
-                            realw deltat,
-                            const int use_mesh_coloring_gpu,
-                            realw_const_p d_displ,
-                            realw_p d_accel,
-                            realw_const_p d_xix, realw_const_p d_xiy, realw_const_p d_xiz,
-                            realw_const_p d_etax, realw_const_p d_etay, realw_const_p d_etaz,
-                            realw_const_p d_gammax, realw_const_p d_gammay, realw_const_p d_gammaz,
-                            realw_const_p d_hprime_xx,
-                            realw_const_p d_hprimewgll_xx,
-                            realw_const_p d_wgllwgll_xy,
-                            realw_const_p d_wgllwgll_xz,
-                            realw_const_p d_wgllwgll_yz,
-                            realw_const_p d_kappavstore,
-                            realw_const_p d_muvstore,
-                            realw_const_p d_kappahstore,
-                            realw_const_p d_muhstore,
-                            realw_const_p d_eta_anisostore,
-                            const int COMPUTE_AND_STORE_STRAIN,
-                            realw_p epsilondev_xx,realw_p epsilondev_yy,realw_p epsilondev_xy,
-                            realw_p epsilondev_xz,realw_p epsilondev_yz,
-                            realw_p epsilon_trace_over_3,
-                            const int ATTENUATION,
-                            const int PARTIAL_PHYS_DISPERSION_ONLY,
-                            const int USE_3D_ATTENUATION_ARRAYS,
-                            realw_const_p one_minus_sum_beta,
-                            realw_const_p factor_common,
-                            realw_p R_xx, realw_p R_yy, realw_p R_xy, realw_p R_xz, realw_p R_yz,
-                            realw_const_p alphaval,
-                            realw_const_p betaval,
-                            realw_const_p gammaval,
-                            const int ANISOTROPY,
-                            realw_const_p d_c11store,realw_const_p d_c12store,realw_const_p d_c13store,
-                            realw_const_p d_c14store,realw_const_p d_c15store,realw_const_p d_c16store,
-                            realw_const_p d_c22store,realw_const_p d_c23store,realw_const_p d_c24store,
-                            realw_const_p d_c25store,realw_const_p d_c26store,realw_const_p d_c33store,
-                            realw_const_p d_c34store,realw_const_p d_c35store,realw_const_p d_c36store,
-                            realw_const_p d_c44store,realw_const_p d_c45store,realw_const_p d_c46store,
-                            realw_const_p d_c55store,realw_const_p d_c56store,realw_const_p d_c66store,
-                            const int GRAVITY,
-                            realw_const_p d_xstore,realw_const_p d_ystore,realw_const_p d_zstore,
-                            realw_const_p d_minus_gravity_table,
-                            realw_const_p d_minus_deriv_gravity_table,
-                            realw_const_p d_density_table,
-                            realw_const_p wgll_cube,
-                            const int NSPEC_CRUST_MANTLE_STRAIN_ONLY ){
+crust_mantle_impl_kernel( int nb_blocks_to_compute,
+                          const int* d_ibool,
+                          const int* d_ispec_is_tiso,
+                          const int* d_phase_ispec_inner,
+                          int num_phase_ispec,
+                          const int d_iphase,
+                          realw deltat,
+                          const int use_mesh_coloring_gpu,
+                          realw_const_p d_displ,
+                          realw_p d_accel,
+                          realw_const_p d_xix, realw_const_p d_xiy, realw_const_p d_xiz,
+                          realw_const_p d_etax, realw_const_p d_etay, realw_const_p d_etaz,
+                          realw_const_p d_gammax, realw_const_p d_gammay, realw_const_p d_gammaz,
+                          realw_const_p d_hprime_xx,
+                          realw_const_p d_hprimewgll_xx,
+                          realw_const_p d_wgllwgll_xy,
+                          realw_const_p d_wgllwgll_xz,
+                          realw_const_p d_wgllwgll_yz,
+                          realw_const_p d_kappavstore,
+                          realw_const_p d_muvstore,
+                          realw_const_p d_kappahstore,
+                          realw_const_p d_muhstore,
+                          realw_const_p d_eta_anisostore,
+                          const int COMPUTE_AND_STORE_STRAIN,
+                          realw_p epsilondev_xx,
+                          realw_p epsilondev_yy,
+                          realw_p epsilondev_xy,
+                          realw_p epsilondev_xz,
+                          realw_p epsilondev_yz,
+                          realw_p epsilon_trace_over_3,
+                          const int ATTENUATION,
+                          const int PARTIAL_PHYS_DISPERSION_ONLY,
+                          const int USE_3D_ATTENUATION_ARRAYS,
+                          realw_const_p one_minus_sum_beta,
+                          realw_const_p factor_common,
+                          realw_p R_xx, realw_p R_yy, realw_p R_xy, realw_p R_xz, realw_p R_yz,
+                          realw_const_p alphaval,
+                          realw_const_p betaval,
+                          realw_const_p gammaval,
+                          const int ANISOTROPY,
+                          realw_const_p d_c11store,
+                          realw_const_p d_c12store,
+                          realw_const_p d_c13store,
+                          realw_const_p d_c14store,
+                          realw_const_p d_c15store,
+                          realw_const_p d_c16store,
+                          realw_const_p d_c22store,
+                          realw_const_p d_c23store,
+                          realw_const_p d_c24store,
+                          realw_const_p d_c25store,
+                          realw_const_p d_c26store,
+                          realw_const_p d_c33store,
+                          realw_const_p d_c34store,
+                          realw_const_p d_c35store,
+                          realw_const_p d_c36store,
+                          realw_const_p d_c44store,
+                          realw_const_p d_c45store,
+                          realw_const_p d_c46store,
+                          realw_const_p d_c55store,
+                          realw_const_p d_c56store,
+                          realw_const_p d_c66store,
+                          const int GRAVITY,
+                          realw_const_p d_xstore,
+                          realw_const_p d_ystore,
+                          realw_const_p d_zstore,
+                          realw_const_p d_minus_gravity_table,
+                          realw_const_p d_minus_deriv_gravity_table,
+                          realw_const_p d_density_table,
+                          realw_const_p wgll_cube,
+                          const int NSPEC_CRUST_MANTLE_STRAIN_ONLY ){
 
   // block id == spectral-element id
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -1191,7 +1071,7 @@ Kernel_2_crust_mantle_impl( int nb_blocks_to_compute,
     sigma_zx = sigma_xz;
     sigma_zy = sigma_yz;
 
-    // Jacobian
+    // jacobian
     jacobianl = 1.0f / (xixl*(etayl*gammazl-etazl*gammayl)
                       - xiyl*(etaxl*gammazl-etazl*gammaxl)
                       + xizl*(etaxl*gammayl-etayl*gammaxl));
@@ -1398,397 +1278,4 @@ Kernel_2_crust_mantle_impl( int nb_blocks_to_compute,
       epsilondev_yz[tx + working_element*NGLL3] = epsilondev_yz_loc;
     }
   } // active
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
-                          int d_iphase,
-                          int* d_ibool,
-                          int* d_ispec_is_tiso,
-                          realw* d_xix,realw* d_xiy,realw* d_xiz,
-                          realw* d_etax,realw* d_etay,realw* d_etaz,
-                          realw* d_gammax,realw* d_gammay,realw* d_gammaz,
-                          realw* d_kappavstore,realw* d_muvstore,
-                          realw* d_kappahstore,realw* d_muhstore,
-                          realw* d_eta_anisostore,
-                          realw* d_epsilondev_xx,
-                          realw* d_epsilondev_yy,
-                          realw* d_epsilondev_xy,
-                          realw* d_epsilondev_xz,
-                          realw* d_epsilondev_yz,
-                          realw* d_epsilon_trace_over_3,
-                          realw* d_one_minus_sum_beta,
-                          realw* d_factor_common,
-                          realw* d_R_xx,
-                          realw* d_R_yy,
-                          realw* d_R_xy,
-                          realw* d_R_xz,
-                          realw* d_R_yz,
-                          realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                          realw* d_c14store,realw* d_c15store,realw* d_c16store,
-                          realw* d_c22store,realw* d_c23store,realw* d_c24store,
-                          realw* d_c25store,realw* d_c26store,realw* d_c33store,
-                          realw* d_c34store,realw* d_c35store,realw* d_c36store,
-                          realw* d_c44store,realw* d_c45store,realw* d_c46store,
-                          realw* d_c55store,realw* d_c56store,realw* d_c66store,
-                          realw* d_b_epsilondev_xx,
-                          realw* d_b_epsilondev_yy,
-                          realw* d_b_epsilondev_xy,
-                          realw* d_b_epsilondev_xz,
-                          realw* d_b_epsilondev_yz,
-                          realw* d_b_epsilon_trace_over_3,
-                          realw* d_b_R_xx,
-                          realw* d_b_R_yy,
-                          realw* d_b_R_xy,
-                          realw* d_b_R_xz,
-                          realw* d_b_R_yz,
-                          int FORWARD_OR_ADJOINT){
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("before kernel Kernel_2_crust_mantle");
-#endif
-
-  // if the grid can handle the number of blocks, we let it be 1D
-  // grid_2_x = nb_elem_color;
-  // nb_elem_color is just how many blocks we are computing now
-
-  int blocksize = NGLL3_PADDED;
-
-  int num_blocks_x, num_blocks_y;
-  get_blocks_xy(nb_blocks_to_compute,&num_blocks_x,&num_blocks_y);
-
-  dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(blocksize,1,1);
-
-  // Cuda timing
-  //cudaEvent_t start, stop;
-  //start_timing_cuda(&start,&stop);
-
-  // calls kernel functions on GPU device
-  if( FORWARD_OR_ADJOINT == 1 ){
-    // forward wavefields -> FORWARD_OR_ADJOINT == 1
-    Kernel_2_crust_mantle_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                  d_ibool,
-                                                  d_ispec_is_tiso,
-                                                  mp->d_phase_ispec_inner_crust_mantle,
-                                                  mp->num_phase_ispec_crust_mantle,
-                                                  d_iphase,
-                                                  mp->deltat,
-                                                  mp->use_mesh_coloring_gpu,
-                                                  mp->d_displ_crust_mantle,
-                                                  mp->d_accel_crust_mantle,
-                                                  d_xix, d_xiy, d_xiz,
-                                                  d_etax, d_etay, d_etaz,
-                                                  d_gammax, d_gammay, d_gammaz,
-                                                  mp->d_hprime_xx,
-                                                  mp->d_hprimewgll_xx,
-                                                  mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                                  d_kappavstore, d_muvstore,
-                                                  d_kappahstore, d_muhstore,
-                                                  d_eta_anisostore,
-                                                  mp->compute_and_store_strain,
-                                                  d_epsilondev_xx,d_epsilondev_yy,d_epsilondev_xy,
-                                                  d_epsilondev_xz,d_epsilondev_yz,
-                                                  d_epsilon_trace_over_3,
-                                                  mp->attenuation,
-                                                  mp->partial_phys_dispersion_only,
-                                                  mp->use_3d_attenuation_arrays,
-                                                  d_one_minus_sum_beta,d_factor_common,
-                                                  d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
-                                                  mp->d_alphaval,mp->d_betaval,mp->d_gammaval,
-                                                  mp->anisotropic_3D_mantle,
-                                                  d_c11store,d_c12store,d_c13store,
-                                                  d_c14store,d_c15store,d_c16store,
-                                                  d_c22store,d_c23store,d_c24store,
-                                                  d_c25store,d_c26store,d_c33store,
-                                                  d_c34store,d_c35store,d_c36store,
-                                                  d_c44store,d_c45store,d_c46store,
-                                                  d_c55store,d_c56store,d_c66store,
-                                                  mp->gravity,
-                                                  mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
-                                                  mp->d_minus_gravity_table,
-                                                  mp->d_minus_deriv_gravity_table,
-                                                  mp->d_density_table,
-                                                  mp->d_wgll_cube,
-                                                  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
-  }else if( FORWARD_OR_ADJOINT == 3 ){
-    // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
-    // debug
-    DEBUG_BACKWARD_FORCES();
-
-    Kernel_2_crust_mantle_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                   d_ibool,
-                                                   d_ispec_is_tiso,
-                                                   mp->d_phase_ispec_inner_crust_mantle,
-                                                   mp->num_phase_ispec_crust_mantle,
-                                                   d_iphase,
-                                                   mp->b_deltat,
-                                                   mp->use_mesh_coloring_gpu,
-                                                   mp->d_b_displ_crust_mantle,
-                                                   mp->d_b_accel_crust_mantle,
-                                                   d_xix, d_xiy, d_xiz,
-                                                   d_etax, d_etay, d_etaz,
-                                                   d_gammax, d_gammay, d_gammaz,
-                                                   mp->d_hprime_xx,
-                                                   mp->d_hprimewgll_xx,
-                                                   mp->d_wgllwgll_xy, mp->d_wgllwgll_xz, mp->d_wgllwgll_yz,
-                                                   d_kappavstore, d_muvstore,
-                                                   d_kappahstore, d_muhstore,
-                                                   d_eta_anisostore,
-                                                   mp->compute_and_store_strain,
-                                                   d_b_epsilondev_xx,d_b_epsilondev_yy,d_b_epsilondev_xy,
-                                                   d_b_epsilondev_xz,d_b_epsilondev_yz,
-                                                   d_b_epsilon_trace_over_3,
-                                                   mp->attenuation,
-                                                   mp->partial_phys_dispersion_only,
-                                                   mp->use_3d_attenuation_arrays,
-                                                   d_one_minus_sum_beta,d_factor_common,
-                                                   d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,
-                                                   mp->d_b_alphaval,mp->d_b_betaval,mp->d_b_gammaval,
-                                                   mp->anisotropic_3D_mantle,
-                                                   d_c11store,d_c12store,d_c13store,
-                                                   d_c14store,d_c15store,d_c16store,
-                                                   d_c22store,d_c23store,d_c24store,
-                                                   d_c25store,d_c26store,d_c33store,
-                                                   d_c34store,d_c35store,d_c36store,
-                                                   d_c44store,d_c45store,d_c46store,
-                                                   d_c55store,d_c56store,d_c66store,
-                                                   mp->gravity,
-                                                   mp->d_xstore_crust_mantle,mp->d_ystore_crust_mantle,mp->d_zstore_crust_mantle,
-                                                   mp->d_minus_gravity_table,
-                                                   mp->d_minus_deriv_gravity_table,
-                                                   mp->d_density_table,
-                                                   mp->d_wgll_cube,
-                                                   mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
-  }
-
-  // Cuda timing
-  //stop_timing_cuda(&start,&stop,"Kernel_2_crust_mantle");
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("Kernel_2_crust_mantle");
-#endif
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-
-extern "C"
-void FC_FUNC_(compute_forces_crust_mantle_cuda,
-              COMPUTE_FORCES_CRUST_MANTLE_CUDA)(long* Mesh_pointer_f,
-                                                int* iphase,
-                                                int* FORWARD_OR_ADJOINT_f) {
-
-  TRACE("compute_forces_crust_mantle_cuda");
-
-//debug time
-//  printf("Running compute_forces\n");
-//  double start_time = get_time();
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
-
-  int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
-
-  int num_elements;
-
-  if( *iphase == 1 )
-    num_elements = mp->nspec_outer_crust_mantle;
-  else
-    num_elements = mp->nspec_inner_crust_mantle;
-
-  // checks if anything to do
-  if( num_elements == 0 ) return;
-
-  // mesh coloring
-  if( mp->use_mesh_coloring_gpu ){
-
-    // note: array offsets require sorted arrays, such that e.g. ibool starts with elastic elements
-    //         and followed by acoustic ones.
-    //         elastic elements also start with outer than inner element ordering
-
-    int nb_colors,nb_blocks_to_compute;
-    int istart;
-    int offset,offset_nonpadded;
-    int offset_nonpadded_att1,offset_nonpadded_att2,offset_nonpadded_att3;
-    int offset_nonpadded_strain;
-    int offset_ispec;
-
-    // sets up color loop
-    if( *iphase == 1 ){
-      // outer elements
-      nb_colors = mp->num_colors_outer_crust_mantle;
-      istart = 0;
-
-      // array offsets
-      offset = 0;
-      offset_nonpadded = 0;
-      offset_nonpadded_att1 = 0;
-      offset_nonpadded_att2 = 0;
-      offset_nonpadded_att3 = 0;
-      offset_nonpadded_strain = 0;
-      offset_ispec = 0;
-    }else{
-      // inner elements (start after outer elements)
-      nb_colors = mp->num_colors_outer_crust_mantle + mp->num_colors_inner_crust_mantle;
-      istart = mp->num_colors_outer_crust_mantle;
-
-      // array offsets
-      offset = (mp->nspec_outer_crust_mantle) * NGLL3_PADDED;
-      offset_nonpadded = (mp->nspec_outer_crust_mantle) * NGLL3;
-      offset_nonpadded_att1 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
-
-      // for factor_common array
-      if( mp->use_3d_attenuation_arrays ){
-        offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * NGLL3;
-        offset_nonpadded_att3 = (mp->nspec_outer_crust_mantle) * NGLL3 * N_SLS;
-      }else{
-        offset_nonpadded_att2 = (mp->nspec_outer_crust_mantle) * 1;
-        offset_nonpadded_att3 = (mp->nspec_outer_crust_mantle) * 1 * N_SLS;
-      }
-      // for tiso models
-      if( ! mp->anisotropic_3D_mantle ){
-        offset_ispec = mp->nspec_outer_crust_mantle;
-      }
-      // for strain
-      if( ! ( mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1 ) ){
-        offset_nonpadded_strain = (mp->nspec_outer_crust_mantle) * NGLL3;
-      }
-    }
-
-    // loops over colors
-    for(int icolor = istart; icolor < nb_colors; icolor++){
-
-      nb_blocks_to_compute = mp->h_num_elem_colors_crust_mantle[icolor];
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-      // checks
-      if( nb_blocks_to_compute <= 0 ){
-        printf("error number of color blocks in crust_mantle: %d -- color = %d \n",
-               nb_blocks_to_compute,icolor);
-        exit(EXIT_FAILURE);
-      }
-#endif
-
-      Kernel_2_crust_mantle(nb_blocks_to_compute,mp,
-                            *iphase,
-                            mp->d_ibool_crust_mantle + offset_nonpadded,
-                            mp->d_ispec_is_tiso_crust_mantle + offset_ispec,
-                            mp->d_xix_crust_mantle + offset,mp->d_xiy_crust_mantle + offset,mp->d_xiz_crust_mantle + offset,
-                            mp->d_etax_crust_mantle + offset,mp->d_etay_crust_mantle + offset,mp->d_etaz_crust_mantle + offset,
-                            mp->d_gammax_crust_mantle + offset,mp->d_gammay_crust_mantle + offset,mp->d_gammaz_crust_mantle + offset,
-                            mp->d_kappavstore_crust_mantle + offset,
-                            mp->d_muvstore_crust_mantle + offset,
-                            mp->d_kappahstore_crust_mantle + offset,
-                            mp->d_muhstore_crust_mantle + offset,
-                            mp->d_eta_anisostore_crust_mantle + offset,
-                            mp->d_epsilondev_xx_crust_mantle + offset_nonpadded,
-                            mp->d_epsilondev_yy_crust_mantle + offset_nonpadded,
-                            mp->d_epsilondev_xy_crust_mantle + offset_nonpadded,
-                            mp->d_epsilondev_xz_crust_mantle + offset_nonpadded,
-                            mp->d_epsilondev_yz_crust_mantle + offset_nonpadded,
-                            mp->d_eps_trace_over_3_crust_mantle + offset_nonpadded_strain,
-                            mp->d_one_minus_sum_beta_crust_mantle + offset_nonpadded_att2,
-                            mp->d_factor_common_crust_mantle + offset_nonpadded_att3,
-                            mp->d_R_xx_crust_mantle + offset_nonpadded_att1,
-                            mp->d_R_yy_crust_mantle + offset_nonpadded_att1,
-                            mp->d_R_xy_crust_mantle + offset_nonpadded_att1,
-                            mp->d_R_xz_crust_mantle + offset_nonpadded_att1,
-                            mp->d_R_yz_crust_mantle + offset_nonpadded_att1,
-                            mp->d_c11store_crust_mantle + offset,mp->d_c12store_crust_mantle + offset,mp->d_c13store_crust_mantle + offset,
-                            mp->d_c14store_crust_mantle + offset,mp->d_c15store_crust_mantle + offset,mp->d_c16store_crust_mantle + offset,
-                            mp->d_c22store_crust_mantle + offset,mp->d_c23store_crust_mantle + offset,mp->d_c24store_crust_mantle + offset,
-                            mp->d_c25store_crust_mantle + offset,mp->d_c26store_crust_mantle + offset,mp->d_c33store_crust_mantle + offset,
-                            mp->d_c34store_crust_mantle + offset,mp->d_c35store_crust_mantle + offset,mp->d_c36store_crust_mantle + offset,
-                            mp->d_c44store_crust_mantle + offset,mp->d_c45store_crust_mantle + offset,mp->d_c46store_crust_mantle + offset,
-                            mp->d_c55store_crust_mantle + offset,mp->d_c56store_crust_mantle + offset,mp->d_c66store_crust_mantle + offset,
-                            mp->d_b_epsilondev_xx_crust_mantle + offset_nonpadded,
-                            mp->d_b_epsilondev_yy_crust_mantle + offset_nonpadded,
-                            mp->d_b_epsilondev_xy_crust_mantle + offset_nonpadded,
-                            mp->d_b_epsilondev_xz_crust_mantle + offset_nonpadded,
-                            mp->d_b_epsilondev_yz_crust_mantle + offset_nonpadded,
-                            mp->d_b_eps_trace_over_3_crust_mantle + offset_nonpadded,
-                            mp->d_b_R_xx_crust_mantle + offset_nonpadded_att1,
-                            mp->d_b_R_yy_crust_mantle + offset_nonpadded_att1,
-                            mp->d_b_R_xy_crust_mantle + offset_nonpadded_att1,
-                            mp->d_b_R_xz_crust_mantle + offset_nonpadded_att1,
-                            mp->d_b_R_yz_crust_mantle + offset_nonpadded_att1,
-                            FORWARD_OR_ADJOINT);
-
-      // for padded and aligned arrays
-      offset += nb_blocks_to_compute * NGLL3_PADDED;
-      // for no-aligned arrays
-      offset_nonpadded += nb_blocks_to_compute * NGLL3;
-      offset_nonpadded_att1 += nb_blocks_to_compute * NGLL3 * N_SLS;
-      // for factor_common array
-      if( mp->use_3d_attenuation_arrays ){
-        offset_nonpadded_att2 += nb_blocks_to_compute * NGLL3;
-        offset_nonpadded_att3 += nb_blocks_to_compute * NGLL3 * N_SLS;
-      }else{
-        offset_nonpadded_att2 += nb_blocks_to_compute * 1;
-        offset_nonpadded_att3 += nb_blocks_to_compute * 1 * N_SLS;
-      }
-      // for tiso models
-      if( ! mp->anisotropic_3D_mantle ){
-        offset_ispec += nb_blocks_to_compute;
-      }
-      // for strain
-      if( ! ( mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1 ) ){
-        offset_nonpadded_strain += nb_blocks_to_compute * NGLL3;
-      }
-
-    } // icolor
-
-  }else{
-
-    // no mesh coloring: uses atomic updates
-    Kernel_2_crust_mantle(num_elements,mp,
-                          *iphase,
-                          mp->d_ibool_crust_mantle,
-                          mp->d_ispec_is_tiso_crust_mantle,
-                          mp->d_xix_crust_mantle,mp->d_xiy_crust_mantle,mp->d_xiz_crust_mantle,
-                          mp->d_etax_crust_mantle,mp->d_etay_crust_mantle,mp->d_etaz_crust_mantle,
-                          mp->d_gammax_crust_mantle,mp->d_gammay_crust_mantle,mp->d_gammaz_crust_mantle,
-                          mp->d_kappavstore_crust_mantle,mp->d_muvstore_crust_mantle,
-                          mp->d_kappahstore_crust_mantle,mp->d_muhstore_crust_mantle,
-                          mp->d_eta_anisostore_crust_mantle,
-                          mp->d_epsilondev_xx_crust_mantle,
-                          mp->d_epsilondev_yy_crust_mantle,
-                          mp->d_epsilondev_xy_crust_mantle,
-                          mp->d_epsilondev_xz_crust_mantle,
-                          mp->d_epsilondev_yz_crust_mantle,
-                          mp->d_eps_trace_over_3_crust_mantle,
-                          mp->d_one_minus_sum_beta_crust_mantle,
-                          mp->d_factor_common_crust_mantle,
-                          mp->d_R_xx_crust_mantle,
-                          mp->d_R_yy_crust_mantle,
-                          mp->d_R_xy_crust_mantle,
-                          mp->d_R_xz_crust_mantle,
-                          mp->d_R_yz_crust_mantle,
-                          mp->d_c11store_crust_mantle,mp->d_c12store_crust_mantle,mp->d_c13store_crust_mantle,
-                          mp->d_c14store_crust_mantle,mp->d_c15store_crust_mantle,mp->d_c16store_crust_mantle,
-                          mp->d_c22store_crust_mantle,mp->d_c23store_crust_mantle,mp->d_c24store_crust_mantle,
-                          mp->d_c25store_crust_mantle,mp->d_c26store_crust_mantle,mp->d_c33store_crust_mantle,
-                          mp->d_c34store_crust_mantle,mp->d_c35store_crust_mantle,mp->d_c36store_crust_mantle,
-                          mp->d_c44store_crust_mantle,mp->d_c45store_crust_mantle,mp->d_c46store_crust_mantle,
-                          mp->d_c55store_crust_mantle,mp->d_c56store_crust_mantle,mp->d_c66store_crust_mantle,
-                          mp->d_b_epsilondev_xx_crust_mantle,
-                          mp->d_b_epsilondev_yy_crust_mantle,
-                          mp->d_b_epsilondev_xy_crust_mantle,
-                          mp->d_b_epsilondev_xz_crust_mantle,
-                          mp->d_b_epsilondev_yz_crust_mantle,
-                          mp->d_b_eps_trace_over_3_crust_mantle,
-                          mp->d_b_R_xx_crust_mantle,
-                          mp->d_b_R_yy_crust_mantle,
-                          mp->d_b_R_xy_crust_mantle,
-                          mp->d_b_R_xz_crust_mantle,
-                          mp->d_b_R_yz_crust_mantle,
-                          FORWARD_OR_ADJOINT);
-  }
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  //double end_time = get_time();
-  //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("compute_forces_crust_mantle_cuda");
-#endif
 }

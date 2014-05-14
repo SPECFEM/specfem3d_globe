@@ -1,5 +1,131 @@
 // from compute_kernels_cuda.cu
-__global__ void compute_iso_undo_att_kernel(realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,realw* epsilondev_xz,realw* epsilondev_yz,realw* epsilon_trace_over_3,realw* mu_kl,realw* kappa_kl,int NSPEC,realw deltat,int* d_ibool,realw* d_b_displ,realw* d_xix,realw* d_xiy,realw* d_xiz,realw* d_etax,realw* d_etay,realw* d_etaz,realw* d_gammax,realw* d_gammay,realw* d_gammaz,realw* d_hprime_xx) {
+#define NGLLX 5
+#define NGLL2 25
+#define NGLL3 125
+#define NGLL3_PADDED 128
+
+typedef float realw;
+
+__device__ void compute_element_strain_undo_att(int ispec,int ijk_ispec,
+                                                int* d_ibool,
+                                                realw* s_dummyx_loc,
+                                                realw* s_dummyy_loc,
+                                                realw* s_dummyz_loc,
+                                                realw* d_xix,realw* d_xiy,realw* d_xiz,
+                                                realw* d_etax,realw* d_etay,realw* d_etaz,
+                                                realw* d_gammax,realw* d_gammay,realw* d_gammaz,
+                                                realw* sh_hprime_xx,
+                                                realw* epsilondev_loc,
+                                                realw* epsilon_trace_over_3) {
+
+
+  // thread id == GLL point id
+  int tx = threadIdx.x;
+  int K = (tx/NGLL2);
+  int J = ((tx-K*NGLL2)/NGLLX);
+  int I = (tx-K*NGLL2-J*NGLLX);
+
+  int offset;
+
+  realw tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l;
+  realw xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl;
+  realw duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
+  realw templ;
+  realw fac1,fac2,fac3;
+
+  int l;
+
+// copy from global memory to shared memory
+// each thread writes one of the NGLL^3 = 125 data points
+
+  tempx1l = 0.f;
+  tempx2l = 0.f;
+  tempx3l = 0.f;
+
+  tempy1l = 0.f;
+  tempy2l = 0.f;
+  tempy3l = 0.f;
+
+  tempz1l = 0.f;
+  tempz2l = 0.f;
+  tempz3l = 0.f;
+
+  for (l=0;l<NGLLX;l++) {
+      fac1 = sh_hprime_xx[l*NGLLX+I];
+      tempx1l += s_dummyx_loc[K*NGLL2+J*NGLLX+l]*fac1;
+      tempy1l += s_dummyy_loc[K*NGLL2+J*NGLLX+l]*fac1;
+      tempz1l += s_dummyz_loc[K*NGLL2+J*NGLLX+l]*fac1;
+
+      fac2 = sh_hprime_xx[l*NGLLX+J];
+      tempx2l += s_dummyx_loc[K*NGLL2+l*NGLLX+I]*fac2;
+      tempy2l += s_dummyy_loc[K*NGLL2+l*NGLLX+I]*fac2;
+      tempz2l += s_dummyz_loc[K*NGLL2+l*NGLLX+I]*fac2;
+
+      fac3 = sh_hprime_xx[l*NGLLX+K];
+      tempx3l += s_dummyx_loc[l*NGLL2+J*NGLLX+I]*fac3;
+      tempy3l += s_dummyy_loc[l*NGLL2+J*NGLLX+I]*fac3;
+      tempz3l += s_dummyz_loc[l*NGLL2+J*NGLLX+I]*fac3;
+  }
+
+  // compute derivatives of ux, uy and uz with respect to x, y and z
+  offset = ispec*NGLL3_PADDED + tx;
+
+  xixl = d_xix[offset];
+  xiyl = d_xiy[offset];
+  xizl = d_xiz[offset];
+  etaxl = d_etax[offset];
+  etayl = d_etay[offset];
+  etazl = d_etaz[offset];
+  gammaxl = d_gammax[offset];
+  gammayl = d_gammay[offset];
+  gammazl = d_gammaz[offset];
+
+  duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l;
+  duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l;
+  duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l;
+
+  duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l;
+  duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l;
+  duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l;
+
+  duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l;
+  duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l;
+  duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l;
+
+  // computes deviatoric strain attenuation and/or for kernel calculations
+  templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
+
+  // local storage: stresses at this current time step
+  epsilondev_loc[0] = duxdxl - templ;   // xx
+  epsilondev_loc[1] = duydyl - templ;   // yy
+  epsilondev_loc[2] = 0.5f * ( duxdyl + duydxl ); // xy
+  epsilondev_loc[3] = 0.5f * ( duzdxl + duxdzl ); // xz
+  epsilondev_loc[4] = 0.5f * ( duzdyl + duydzl ); // yz
+  *epsilon_trace_over_3 = templ;
+}
+
+__global__ void compute_iso_undo_att_kernel(realw* epsilondev_xx,
+                                            realw* epsilondev_yy,
+                                            realw* epsilondev_xy,
+                                            realw* epsilondev_xz,
+                                            realw* epsilondev_yz,
+                                            realw* epsilon_trace_over_3,
+                                            realw* mu_kl,
+                                            realw* kappa_kl,
+                                            int NSPEC,
+                                            realw deltat,
+                                            int* d_ibool,
+                                            realw* d_b_displ,
+                                            realw* d_xix,
+                                            realw* d_xiy,
+                                            realw* d_xiz,
+                                            realw* d_etax,
+                                            realw* d_etay,
+                                            realw* d_etaz,
+                                            realw* d_gammax,
+                                            realw* d_gammay,
+                                            realw* d_gammaz,
+                                            realw* d_hprime_xx) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
   int ijk_ispec = threadIdx.x + NGLL3*ispec;

@@ -1,6 +1,8 @@
 // from compute_kernels_cuda.cu
+#define NGLLX 5
 #define NGLL2 25
 #define NGLL3 125
+#define NGLL3_PADDED 128
 
 typedef float realw;
 
