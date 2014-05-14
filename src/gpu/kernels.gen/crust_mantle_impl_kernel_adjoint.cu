@@ -402,7 +402,11 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);
 }
-__global__ void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_ispec_is_tiso, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const float * __restrict__ d_kappahstore, const float * __restrict__ d_muhstore, const float * __restrict__ d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c14store, const float * __restrict__ d_c15store, const float * __restrict__ d_c16store, const float * __restrict__ d_c22store, const float * __restrict__ d_c23store, const float * __restrict__ d_c24store, const float * __restrict__ d_c25store, const float * __restrict__ d_c26store, const float * __restrict__ d_c33store, const float * __restrict__ d_c34store, const float * __restrict__ d_c35store, const float * __restrict__ d_c36store, const float * __restrict__ d_c44store, const float * __restrict__ d_c45store, const float * __restrict__ d_c46store, const float * __restrict__ d_c55store, const float * __restrict__ d_c56store, const float * __restrict__ d_c66store, const int GRAVITY, const float * __restrict__ d_xstore, const float * __restrict__ d_ystore, const float * __restrict__ d_zstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){
+__global__ 
+#ifdef USE_LAUNCH_BOUNDS
+__launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
+#endif
+ void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_ispec_is_tiso, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const float * __restrict__ d_kappahstore, const float * __restrict__ d_muhstore, const float * __restrict__ d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c14store, const float * __restrict__ d_c15store, const float * __restrict__ d_c16store, const float * __restrict__ d_c22store, const float * __restrict__ d_c23store, const float * __restrict__ d_c24store, const float * __restrict__ d_c25store, const float * __restrict__ d_c26store, const float * __restrict__ d_c33store, const float * __restrict__ d_c34store, const float * __restrict__ d_c35store, const float * __restrict__ d_c36store, const float * __restrict__ d_c44store, const float * __restrict__ d_c45store, const float * __restrict__ d_c46store, const float * __restrict__ d_c55store, const float * __restrict__ d_c56store, const float * __restrict__ d_c66store, const int GRAVITY, const float * __restrict__ d_xstore, const float * __restrict__ d_ystore, const float * __restrict__ d_zstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){
   int bx;
   int tx;
   int K;
@@ -412,7 +416,6 @@ __global__ void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute,
   int offset;
   int iglob;
   int working_element;
-  int l;
   float tempx1l;
   float tempx2l;
   float tempx3l;
@@ -595,6 +598,7 @@ __global__ void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute,
     tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
 #else
+    int l;
     for(l=0; l<=NGLLX - (1); l+=1){
       fac1 = sh_hprime_xx[(l) * (NGLLX) + I - 0];
       tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);
@@ -648,10 +652,12 @@ __global__ void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute,
         epsilon_trace_over_3[tx + (working_element) * (NGLL3) - 0] = templ;
       }
     }
-    if(USE_3D_ATTENUATION_ARRAYS){
-      one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3) - 0];
-    } else {
-      one_minus_sum_beta_use = one_minus_sum_beta[working_element - 0];
+    if(ATTENUATION){
+      if(USE_3D_ATTENUATION_ARRAYS){
+        one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3) - 0];
+      } else {
+        one_minus_sum_beta_use = one_minus_sum_beta[working_element - 0];
+      }
     }
     if(ANISOTROPY){
       compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);

@@ -413,7 +413,7 @@ module BOAST
     return BOAST::impl_kernel(:inner_core, true, ref, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, r_earth_km, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
   end
 
-  def BOAST::impl_kernel(type, forward, ref = true, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
+  def BOAST::impl_kernel(type, forward, ref = true, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -523,6 +523,8 @@ module BOAST
     use_textures_constants  = Int("USE_TEXTURES_CONSTANTS",  :const => textures_constants)
     use_textures_fields     = Int("USE_TEXTURES_FIELDS",     :const => textures_fields)
     manually_unrolled_loops = Int("MANUALLY_UNROLLED_LOOPS", :const => unroll_loops)
+    use_launch_bounds       = Int("USE_LAUNCH_BOUNDS",       :const => launch_bounds)
+    launch_min_blocks       = Int("LAUNCH_MIN_BLOCKS",       :const => min_blocks)
 
     constants = []
 
@@ -548,7 +550,13 @@ module BOAST
       v.push(d_hprime_xx_tex)
     end
 
-    p = Procedure(function_name, v, constants)
+    if(get_lang == CUDA ) then
+      qualifiers = "\n#ifdef #{use_launch_bounds}\n__launch_bounds__(#{ngll3_padded}, #{launch_min_blocks})\n#endif\n"
+    elsif(get_lang == CL ) then
+      qualifiers = "__attribute__((reqd_work_group_size(#{ngll3_padded},1,1))) "
+    end
+
+    p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
     if(get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
@@ -602,10 +610,10 @@ module BOAST
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")
+        l = Int("l")
         decl active = Int("active", :size => 2, :signed => false)
         decl offset = Int("offset"), iglob = Int("iglob")
         decl working_element = Int("working_element")
-        decl l = Int("l")
         tempanl = ["x", "y", "z"].collect { |a|
           [ 1, 2, 3 ].collect { |n|
             Real("temp#{a}#{n}l")
@@ -759,6 +767,7 @@ module BOAST
           @@output.puts "#ifdef #{manually_unrolled_loops}"
             for_loop.unroll
           @@output.puts "#else"
+            decl l
             print for_loop
           @@output.puts "#endif"
 
@@ -841,12 +850,13 @@ module BOAST
               print sigma[1][2] === mul*duzdyl_plus_duydzl
             })
           elsif type == :crust_mantle then
-            print If(use_3d_attenuation_arrays, lambda {
-              print one_minus_sum_beta_use === one_minus_sum_beta[tx+working_element*ngll3]
-            }, lambda {
-              print one_minus_sum_beta_use === one_minus_sum_beta[working_element]
-            })
-
+            print If(attenuation) {
+              print If(use_3d_attenuation_arrays, lambda {
+                print one_minus_sum_beta_use === one_minus_sum_beta[tx+working_element*ngll3]
+              }, lambda {
+                print one_minus_sum_beta_use === one_minus_sum_beta[working_element]
+              })
+            }
             print If(anisotropy, lambda {
               print sub_compute_element_cm_aniso.call( offset,
                                                       *(d_cstore.flatten.reject { |e| e.nil?}),

@@ -81,7 +81,6 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   int offset;
   int iglob;
   int working_element;
-  int l;
   float temp1l;
   float temp2l;
   float temp3l;
@@ -176,6 +175,7 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
     temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - 0]) * (sh_hprime_xx[(4) * (NGLLX) + J - 0]);
     temp3l = temp3l + (s_dummy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(4) * (NGLLX) + K - 0]);
 #else
+    int l;
     for(l=0; l<=NGLLX - (1); l+=1){
       temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (sh_hprime_xx[(l) * (NGLLX) + I - 0]);
       temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (sh_hprime_xx[(l) * (NGLLX) + J - 0]);
