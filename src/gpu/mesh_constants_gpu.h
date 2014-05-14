@@ -207,8 +207,8 @@ typedef float realw;
 #endif
 
 // (optional) unrolling loops
-// leads up to ~1% performance increase
-//#define MANUALLY_UNROLLED_LOOPS
+// leads up to ~10% performance increase in OpenCL and ~1% in Cuda
+#define MANUALLY_UNROLLED_LOOPS
 
 // compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
