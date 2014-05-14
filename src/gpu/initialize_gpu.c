@@ -42,7 +42,7 @@ static struct {
   const char *name;
   const char *value;
 } _macro_to_kernel[] = {
-    /* macro values */
+  /* macro values */
   PASS(NDIM),
   PASS(NGLLX), PASS(NGLL2), PASS(NGLL3), PASS(NGLL3_PADDED),
   PASS(N_SLS),
@@ -51,17 +51,21 @@ static struct {
   PASS(COLORING_MIN_NSPEC_OUTER_CORE), PASS(COLORING_MIN_NSPEC_INNER_CORE),
   PASS(R_EARTH_KM),
   
-  /* macro functions: not working yet because of spaces */
-  /*
-   PASS(INDEX2(xsize, x, y)),
+  /* macro functions: not working yet, spaces not allowed in OCL compiler*/
+  
+/* PASS(INDEX2(xsize, x, y)),
    PASS(INDEX3(xsize, ysize, x, y, z)),
    PASS(INDEX4(xsize, ysize, zsize, x, y, z, i)),
    PASS(INDEX4_PADDED(xsize, ysize, zsize, x, y, z, i)),
    PASS(INDEX5(xsize, ysize, zsize, isize, x, y, z, i, j)),
-   PASS(INDEX6(xsize, ysize, zsize, isize, jsize, x, y, z, i, j, k)),
-  */
-  /* macro flags, passed only ifdef */
+   PASS(INDEX6(xsize, ysize, zsize, isize, jsize, x, y, z, i, j, k)), */
+  
+  /* macro flags, passed only ifdefed */
   PASS(MANUALLY_UNROLLED_LOOPS), PASS(USE_TEXTURES_CONSTANTS), PASS(USE_TEXTURES_FIELDS),
+
+  PASS(USE_LAUNCH_BOUNDS),
+  PASS(LAUNCH_MIN_BLOCKS),
+  
   {NULL, NULL}
 };
 #endif
@@ -540,21 +544,21 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
 static char *trim_and_default(char *s)
 {
-  //trim before
-  while(*s != '\0' && isspace(*s)) s++;
+  // trim before
+  while (*s != '\0' && isspace(*s)) s++;
 
   if (*s == '\0') {
     return s;
   }
-  //trim after
+  
+  // trim after
   char *back = s + strlen(s);
-  while(isspace(*--back));
-  *(back+1) = '\0';
+  while (isspace(*--back));
+  *(back + 1) = '\0';
 
+  // replace * by empty string
   if (strlen(s) == 1 && *s == '*') {
     *s = '\0';
-
-    return s;
   }
   
   return s;
