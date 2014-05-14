@@ -200,7 +200,7 @@
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
-      call model_crust_broadcast(myrank)
+      call model_crust_2_0_broadcast(myrank)
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps

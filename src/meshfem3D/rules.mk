@@ -85,8 +85,8 @@ meshfem3D_OBJECTS = \
 	$O/model_aniso_mantle.check.o \
 	$O/model_atten3D_QRFSI12.check.o \
 	$O/model_attenuation.check.o \
-	$O/model_crust.check.o \
 	$O/model_crust_1_0.check.o \
+	$O/model_crust_2_0.check.o \
 	$O/model_crustmaps.check.o \
 	$O/model_eucrust.check.o \
 	$O/model_epcrust.check.o \
@@ -132,8 +132,8 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_ak135_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_aniso_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_atten3d_qrfsi12_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/model_crust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_1_0_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_crust_2_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crustmaps_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_epcrust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_eucrust_par.$(FC_MODEXT) \
