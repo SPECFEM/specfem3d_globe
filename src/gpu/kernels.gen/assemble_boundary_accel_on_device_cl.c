@@ -10,16 +10,16 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
   } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
 }\n\
 #ifndef INDEX2\n\
-#define INDEX2(xsize,x,y) x + (y)*xsize\n\
+#define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
 #ifndef INDEX3\n\
-#define INDEX3(xsize,ysize,x,y,z) x + xsize*(y + ysize*z)\n\
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)\n\
 #endif\n\
 #ifndef INDEX4\n\
-#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*(z + zsize*i))\n\
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))\n\
 #endif\n\
 #ifndef INDEX5\n\
-#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))\n\
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\

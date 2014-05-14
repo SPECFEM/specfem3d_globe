@@ -10,16 +10,16 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
   } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
 }\n\
 #ifndef INDEX2\n\
-#define INDEX2(xsize,x,y) x + (y)*xsize\n\
+#define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
 #ifndef INDEX3\n\
-#define INDEX3(xsize,ysize,x,y,z) x + xsize*(y + ysize*z)\n\
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)\n\
 #endif\n\
 #ifndef INDEX4\n\
-#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*(z + zsize*i))\n\
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))\n\
 #endif\n\
 #ifndef INDEX5\n\
-#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))\n\
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
@@ -60,37 +60,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
-void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
-  float eps[6];\n\
-  float b_eps[6];\n\
-  int p;\n\
-  int i;\n\
-  int j;\n\
-  eps[0 - 0] = epsdev[0 - 0] + eps_trace_over_3;\n\
-  eps[1 - 0] = epsdev[1 - 0] + eps_trace_over_3;\n\
-  eps[2 - 0] =  -(eps[0 - 0] + eps[1 - 0]) + (eps_trace_over_3) * (3.0f);\n\
-  eps[3 - 0] = epsdev[4 - 0];\n\
-  eps[4 - 0] = epsdev[3 - 0];\n\
-  eps[5 - 0] = epsdev[2 - 0];\n\
-  b_eps[0 - 0] = b_epsdev[0 - 0] + b_eps_trace_over_3;\n\
-  b_eps[1 - 0] = b_epsdev[1 - 0] + b_eps_trace_over_3;\n\
-  b_eps[2 - 0] =  -(b_eps[0 - 0] + b_eps[1 - 0]) + (b_eps_trace_over_3) * (3.0f);\n\
-  b_eps[3 - 0] = b_epsdev[4 - 0];\n\
-  b_eps[4 - 0] = b_epsdev[3 - 0];\n\
-  b_eps[5 - 0] = b_epsdev[2 - 0];\n\
-  p = 0;\n\
-  for(i=0; i<=5; i+=1){\n\
-    for(j=0; j<=5; j+=1){\n\
-      prod[p - 0] = (eps[i - 0]) * (b_eps[j - 0]);\n\
-      if(j > i){\n\
-        prod[p - 0] = prod[p - 0] + (eps[j - 0]) * (b_eps[i - 0]);\n\
-        if(j > 2 && i < 3){\n\
-          prod[p - 0] = (prod[p - 0]) * (2.0f);\n\
-        }\n\
-      }\n\
-    }\n\
-  }\n\
-}\n\
 void compute_element_strain_undo_att(const int ispec, const int ijk_ispec, const __global int * d_ibool, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz, const __local float * sh_hprime_xx, float * epsilondev_loc, float * epsilon_trace_over_3){\n\
   int tx;\n\
   int K;\n\
@@ -183,6 +152,41 @@ void compute_element_strain_undo_att(const int ispec, const int ijk_ispec, const
   epsilondev_loc[4 - 0] = (duzdyl + duydzl) * (0.5f);\n\
   *(epsilon_trace_over_3) = templ;\n\
 }\n\
+void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
+  float eps[6];\n\
+  float b_eps[6];\n\
+  int p;\n\
+  int i;\n\
+  int j;\n\
+  eps[0 - 0] = epsdev[0 - 0] + eps_trace_over_3;\n\
+  eps[1 - 0] = epsdev[1 - 0] + eps_trace_over_3;\n\
+  eps[2 - 0] =  -(eps[0 - 0] + eps[1 - 0]) + (eps_trace_over_3) * (3.0f);\n\
+  eps[3 - 0] = epsdev[4 - 0];\n\
+  eps[4 - 0] = epsdev[3 - 0];\n\
+  eps[5 - 0] = epsdev[2 - 0];\n\
+  b_eps[0 - 0] = b_epsdev[0 - 0] + b_eps_trace_over_3;\n\
+  b_eps[1 - 0] = b_epsdev[1 - 0] + b_eps_trace_over_3;\n\
+  b_eps[2 - 0] =  -(b_eps[0 - 0] + b_eps[1 - 0]) + (b_eps_trace_over_3) * (3.0f);\n\
+  b_eps[3 - 0] = b_epsdev[4 - 0];\n\
+  b_eps[4 - 0] = b_epsdev[3 - 0];\n\
+  b_eps[5 - 0] = b_epsdev[2 - 0];\n\
+  p = 0;\n\
+  for(i=0; i<=5; i+=1){\n\
+    for(j=0; j<=5; j+=1){\n\
+      prod[p - 0] = (eps[i - 0]) * (b_eps[j - 0]);\n\
+      if(j > i){\n\
+        prod[p - 0] = prod[p - 0] + (eps[j - 0]) * (b_eps[i - 0]);\n\
+        if(j > 2 && i < 3){\n\
+          prod[p - 0] = (prod[p - 0]) * (2.0f);\n\
+        }\n\
+        if(i > 2){\n\
+          prod[p - 0] = (prod[p - 0]) * (4.0f);\n\
+        }\n\
+        p = p + 1;\n\
+      }\n\
+    }\n\
+  }\n\
+}\n\
 __kernel void compute_ani_undo_att_kernel(const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const __global float * epsilon_trace_over_3, __global float * cijkl_kl, const int NSPEC, const float deltat, const __global int * d_ibool, const __global float * d_b_displ, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz, const __global float * d_hprime_xx){\n\
   int ispec;\n\
   int ijk_ispec;\n\
@@ -206,9 +210,9 @@ __kernel void compute_ani_undo_att_kernel(const __global float * epsilondev_xx, 
   }\n\
   if(ispec < NSPEC){\n\
     iglob = d_ibool[ijk_ispec - 0] - (1);\n\
-    s_dummyx_loc[tx - 0] = d_b_displ[(iglob) * (3) + 0 - 0 + ( - (0)) * (3)];\n\
-    s_dummyy_loc[tx - 0] = d_b_displ[(iglob) * (3) + 1 - 0 + ( - (0)) * (3)];\n\
-    s_dummyz_loc[tx - 0] = d_b_displ[(iglob) * (3) + 2 - 0 + ( - (0)) * (3)];\n\
+    s_dummyx_loc[tx - 0] = d_b_displ[0 - 0 + (iglob - (0)) * (3)];\n\
+    s_dummyy_loc[tx - 0] = d_b_displ[1 - 0 + (iglob - (0)) * (3)];\n\
+    s_dummyz_loc[tx - 0] = d_b_displ[2 - 0 + (iglob - (0)) * (3)];\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
   if(ispec < NSPEC){\n\

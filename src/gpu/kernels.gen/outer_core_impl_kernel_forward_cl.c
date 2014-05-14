@@ -10,16 +10,16 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
   } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
 }\n\
 #ifndef INDEX2\n\
-#define INDEX2(xsize,x,y) x + (y)*xsize\n\
+#define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
 #ifndef INDEX3\n\
-#define INDEX3(xsize,ysize,x,y,z) x + xsize*(y + ysize*z)\n\
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)\n\
 #endif\n\
 #ifndef INDEX4\n\
-#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*(z + zsize*i))\n\
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))\n\
 #endif\n\
 #ifndef INDEX5\n\
-#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))\n\
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
@@ -82,7 +82,7 @@ void compute_element_oc_rotation(const int tx, const int working_element, const 
   d_A_array_rotation[tx + (working_element) * (NGLL3) - 0] = d_A_array_rotation[tx + (working_element) * (NGLL3) - 0] + source_euler_A;\n\
   d_B_array_rotation[tx + (working_element) * (NGLL3) - 0] = d_B_array_rotation[tx + (working_element) * (NGLL3) - 0] + source_euler_B;\n\
 }\n\
-__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * d_potential, __global float * d_potential_dot_dot, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz, const __global float * d_hprime_xx, const __global float * d_hprimewgll_xx, const __global float * wgllwgll_xy, const __global float * wgllwgll_xz, const __global float * wgllwgll_yz, const int GRAVITY, const __global float * d_xstore, const __global float * d_ystore, const __global float * d_zstore, const __global float * d_d_ln_density_dr_table, const __global float * d_minus_rho_g_over_kappa_fluid, const __global float * wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const int NSPEC_OUTER_CORE, __read_only image2d_t d_displ_oc_tex, __read_only image2d_t d_accel_oc_tex){\n\
+__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_d_ln_density_dr_table, const __global float * restrict d_minus_rho_g_over_kappa_fluid, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const int NSPEC_OUTER_CORE, __read_only image2d_t d_displ_oc_tex, __read_only image2d_t d_accel_oc_tex){\n\
 #ifdef USE_TEXTURES_FIELDS\n\
   const sampler_t sampler_d_displ_oc_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
   const sampler_t sampler_d_accel_oc_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\

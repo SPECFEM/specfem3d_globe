@@ -1,14 +1,14 @@
 #ifndef INDEX2
-#define INDEX2(xsize,x,y) x + (y)*xsize
+#define INDEX2(isize,i,j) i + isize*j
 #endif
 #ifndef INDEX3
-#define INDEX3(xsize,ysize,x,y,z) x + xsize*(y + ysize*z)
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)
 #endif
 #ifndef INDEX4
-#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*(z + zsize*i))
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))
 #endif
 #ifndef INDEX5
-#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
 #ifndef NDIM
 #define NDIM 3

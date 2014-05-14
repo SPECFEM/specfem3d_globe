@@ -51,12 +51,12 @@ module BOAST
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
+      sub_compute_element_strain_undo_att = compute_element_strain_undo_att(n_gllx, n_gll2, n_gll3, n_gll3_padded )
+      print sub_compute_element_strain_undo_att
       if type == :ani then
         sub_compute_strain_product =  compute_strain_product()
         print sub_compute_strain_product
       end
-      sub_compute_element_strain_undo_att = compute_element_strain_undo_att(n_gllx, n_gll2, n_gll3, n_gll3_padded )
-      print sub_compute_element_strain_undo_att
 
       decl p
 
@@ -90,7 +90,7 @@ module BOAST
       print If(ispec < nspec) {
         print iglob === d_ibool[ijk_ispec] - 1
         (0..2).each { |indx|
-          print s_dummy_loc[indx][tx] === d_b_displ[iglob*3+indx]
+          print s_dummy_loc[indx][tx] === d_b_displ[indx,iglob]
         }
       }
       print barrier(:local)
@@ -120,9 +120,9 @@ module BOAST
                                      (epsdev[0] + epsdev[1]) * (b_epsdev[0] + b_epsdev[1]) + \
                                      ( epsdev[2] * b_epsdev[2] + \
                                        epsdev[3] * b_epsdev[3] + \
-                                       epsdev[4] * b_epsdev[4]) * 2 )
+                                       epsdev[4] * b_epsdev[4]) * 2.0 )
 
-          print kappa_kl[ijk_ispec] === kappa_kl[ijk_ispec] + deltat * 9 * eps_trace_over_3 * b_eps_trace_over_3 
+          print kappa_kl[ijk_ispec] === kappa_kl[ijk_ispec] + deltat * ( eps_trace_over_3 * b_eps_trace_over_3 * 9.0 )
         end
       }
 

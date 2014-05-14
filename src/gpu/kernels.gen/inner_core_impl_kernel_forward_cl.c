@@ -10,16 +10,16 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
   } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
 }\n\
 #ifndef INDEX2\n\
-#define INDEX2(xsize,x,y) x + (y)*xsize\n\
+#define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
 #ifndef INDEX3\n\
-#define INDEX3(xsize,ysize,x,y,z) x + xsize*(y + ysize*z)\n\
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)\n\
 #endif\n\
 #ifndef INDEX4\n\
-#define INDEX4(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*(z + zsize*i))\n\
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))\n\
 #endif\n\
 #ifndef INDEX5\n\
-#define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))\n\
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
@@ -80,7 +80,7 @@ void compute_element_ic_att_stress(const int tx, const int working_element, cons
     sigma_yz[0 - 0] = sigma_yz[0 - 0] - (R_yz[offset - 0]);\n\
   }\n\
 }\n\
-void compute_element_ic_gravity(const int tx, const int iglob, const __global float * d_xstore, const __global float * d_ystore, const __global float * d_zstore, const __global float * d_minus_gravity_table, const __global float * d_minus_deriv_gravity_table, const __global float * d_density_table, const __global float * wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
+void compute_element_ic_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
   float radius;\n\
   float theta;\n\
   float phi;\n\
@@ -196,7 +196,7 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
     R_yz[offset - 0] = (alphaval_loc) * (R_yz[offset - 0]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
-__kernel void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_idoubling, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * d_displ, __global float * d_accel, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz, const __global float * d_hprime_xx, const __global float * d_hprimewgll_xx, const __global float * d_wgllwgll_xy, const __global float * d_wgllwgll_xz, const __global float * d_wgllwgll_yz, const __global float * d_kappavstore, const __global float * d_muvstore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * one_minus_sum_beta, const __global float * factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, const int ANISOTROPY, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c33store, const __global float * d_c44store, const int GRAVITY, const __global float * d_xstore, const __global float * d_ystore, const __global float * d_zstore, const __global float * d_minus_gravity_table, const __global float * d_minus_deriv_gravity_table, const __global float * d_density_table, const __global float * wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE, __read_only image2d_t d_displ_ic_tex, __read_only image2d_t d_accel_ic_tex){\n\
+__kernel void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_idoubling, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c33store, const __global float * restrict d_c44store, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE, __read_only image2d_t d_displ_ic_tex, __read_only image2d_t d_accel_ic_tex){\n\
 #ifdef USE_TEXTURES_FIELDS\n\
   const sampler_t sampler_d_displ_ic_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
   const sampler_t sampler_d_accel_ic_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\

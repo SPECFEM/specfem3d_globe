@@ -73,21 +73,21 @@ module BOAST
     v.push num_phase_ispec         = Int("num_phase_ispec",          :dir => :in)
     v.push d_iphase                = Int("d_iphase",                 :dir => :in)
     v.push use_mesh_coloring_gpu   = Int("use_mesh_coloring_gpu",    :dir => :in)
-    v.push d_potential             = Real("d_potential",             :dir => :in, :dim => [Dim()] )
+    v.push d_potential             = Real("d_potential",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_potential_dot_dot     = Real("d_potential_dot_dot",     :dir => :inout, :dim => [Dim()] )
-    v.push *d_xi = [d_xix          = Real("d_xix",                   :dir => :in, :dim => [Dim()] ), d_xiy = Real("d_xiy",:dir => :in, :dim => [Dim()] ), d_xiz = Real("d_xiz",:dir => :in, :dim => [Dim()] ) ]
-    v.push *d_eta = [d_etax        = Real("d_etax",                  :dir => :in, :dim => [Dim()] ), d_etay = Real("d_etay",:dir => :in, :dim => [Dim()] ), d_etaz = Real("d_etaz",:dir => :in, :dim => [Dim()] ) ]
-    v.push *d_gamma = [d_gammax    = Real("d_gammax",                :dir => :in, :dim => [Dim()] ), d_gammay = Real("d_gammay",:dir => :in, :dim => [Dim()] ), d_gammaz = Real("d_gammaz",:dir => :in, :dim => [Dim()] ) ]
-    v.push d_hprime_xx             = Real("d_hprime_xx",             :dir => :in, :dim => [Dim()] )
-    v.push d_hprimewgll_xx         = Real("d_hprimewgll_xx",         :dir => :in, :dim => [Dim()] )
-    v.push wgllwgll_xy             = Real("wgllwgll_xy",             :dir => :in, :dim => [Dim()] )
-    v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :dim => [Dim()] )
-    v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :dim => [Dim()] )
+    v.push *d_xi = [d_xix          = Real("d_xix",                   :dir => :in, :restrict => true, :dim => [Dim()] ), d_xiy = Real("d_xiy",:dir => :in, :restrict => true, :dim => [Dim()] ), d_xiz = Real("d_xiz",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push *d_eta = [d_etax        = Real("d_etax",                  :dir => :in, :restrict => true, :dim => [Dim()] ), d_etay = Real("d_etay",:dir => :in, :restrict => true, :dim => [Dim()] ), d_etaz = Real("d_etaz",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push *d_gamma = [d_gammax    = Real("d_gammax",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_gammay = Real("d_gammay",:dir => :in, :restrict => true, :dim => [Dim()] ), d_gammaz = Real("d_gammaz",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_hprime_xx             = Real("d_hprime_xx",             :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_hprimewgll_xx         = Real("d_hprimewgll_xx",         :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push wgllwgll_xy             = Real("wgllwgll_xy",             :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :dim => [Dim()] ) ]
-    v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :dim => [Dim()] )
-    v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :dim => [Dim()] )  
-    v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :dim => [Dim()] )
+    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :restrict => true, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )  
+    v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push rotation                = Int( "ROTATION",                :dir => :in)
     v.push time                    = Real("time",                    :dir => :in)
     v.push two_omega_earth         = Real("two_omega_earth",         :dir => :in)

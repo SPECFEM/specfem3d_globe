@@ -13,11 +13,11 @@ module BOAST
     v.push iglob             = Int( "iglob",             :dir => :in)
     #v.push working_element   = Int( "working_element",   :dir => :in)
     #v.push d_ibool                 = Int("d_ibool",                  :dir => :in, :dim => [Dim()] )
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :dim => [Dim()] ) ]
-    v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :dim => [Dim()] )
-    v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :dim => [Dim()] )
-    v.push d_density_table         = Real("d_density_table",         :dir => :in, :dim => [Dim()] )
-    v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :dim => [Dim()] )
+    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :restrict => true, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push jacobianl               = Real("jacobianl", :dir => :in)
     v.push *s_dummy_loc = ["x", "y", "z"].collect { |a|
                                      Real("s_dummy#{a}_loc", :dir => :in, :dim => [Dim(ngll3)], :local => true )

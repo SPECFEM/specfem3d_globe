@@ -39,6 +39,10 @@ module BOAST
             print If( Expression("&&", j>2, i<3) ) {
               print prod[p] === prod[p]*2.0
             }
+            print If(i>2) {
+              print prod[p] === prod[p]*4.0
+            }
+            print p === p + 1
           }
         }
       }
