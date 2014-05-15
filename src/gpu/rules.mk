@@ -122,7 +122,7 @@ BUILD_VERSION_TXT += support
 CUDA_DEBUG := --cudart=shared
 
 boast_kernels :
-	cd $S/boast ;\
+	cd boast ;\
 	mkdir ../$(BOAST_DIR_NAME) -p ;\
 	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
 
