@@ -423,6 +423,52 @@ when undoing attenuation using the UNDO\_ATTENUATION option in DATA/Par\_file.
 To do so, ask your system administrator for the option to add to your batch submission script; it is for instance 
 \texttt{\#BSUB -x} with SLURM and \texttt{\#\$ -l exclusive=TRUE} with Sun Grid Engine (SGE).
 
+\section{Using the GPU version of the code}
+
+This was written by Kevin Pouget from Grenoble, France, in May 2014; it should be translated to English at some point (in the meantime 
+users can cut and paste it in Google Translate or similar):
+
+We have now added OpenCL support.
+Au niveau de la configuration, OpenCL s'active de la facon suivante:
+
+    ./configure --with-opencl OCL\_LIB=.. OCL\_INC=.. OCL\_GPU\_FLAGS=..
+
+La configuration avec CUDA n'a pas chang\'e,
+
+    ./configure --with-cuda=cuda5 CUDA\_FLAGS=.. CUDA\_LIB=.. CUDA\_INC=.. MPI\_INC=.. ..
+
+et les deux runtimes peuvent \^etre compile simultan\'ement en mergeant les deux lignes.
+
+Au niveau de la configuration runtime, nous avons ajoute 3 options en plus du GPU\_MODE:
+
+    GPU\_MODE = .true.
+    GPU\_RUNTIME = 2
+    GPU\_PLATFORM = NVIDIA
+    GPU\_DEVICE = Tesla
+
+    GPU\_RUNTIME, GPU\_PLATFORM, GPU\_DEVICE ne sont pas parse si le GPU\_MODE n'est pas active
+    GPU\_RUNTIME peut prendre les valeurs 2 (OpenCL), 1 (Cuda) ou 0 (Compile-time, qui ne marche pas si specfem a ete compile avec --with-opencl et --with-cuda)
+    GPU\_PLATFORM et GPU\_DEVICE sont des filtres (case insensitive) sur le nom de la plate-forme et du device en OpenCL, et uniquement le nom du device en Cuda
+        en multi-processeur (MPI), chaqu'un des processus prendra un GPU dans ce sous ensemble, en round-robin
+        un filtre "*" matchera toutes les plate-formes/devices
+
+Sinon pas de modification importante je pense, le dossier src/cuda s'appelle maintenant src/gpu et, pareil, les wrappers Fortran/C ont \'et\'e renommes \_gpu au lieu de \_cuda.
+Dans le code, --with-opencl active la macro pr\'eprocesseur USE\_OPENCL, et --with-cuda active USE\_CUDA ; et GPU\_RUNTIME va activer la variable globale run\_opencl ou run\_cuda.
+Et comme le disait Brice, le support des textures n'a pas ete valide en OpenCL. Le code est ecrit et compile, mais il faudra finir le debugging quand les plate-formes
+supporteront OpenCL 1.2.
+
+Nous avons test\'e l'ex\'ecution sur les exemples regional\_Greece\_small et global\_s362ani\_small, et les sismogrammes sont identiques a ceux g\'en\'er\'es par la version d'origine.
+
+Note about the OpenCL version: the OpenCL calculation kernels were created by Brice Videau and Kevin Pouget from Grenoble, France, using their software package called
+BOAST; see:
+
+Title	BOAST: Bringing Optimization through Automatic Source-to-Source Tranformations
+Publication Type	Conference Proceedings
+Year of Publication	2013
+Authors	Videau, B, Marangozova-Martin, V, Cronsioe, J
+Secondary Title	Tokyo, Japan
+Series Title	Proceedings of the 7th International Symposium on Embedded Multicore/Manycore System-on-Chip (MCSoC)
+
 \section{Compiling on an IBM BlueGene}
 
 \underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
