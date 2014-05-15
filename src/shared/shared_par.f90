@@ -97,6 +97,9 @@
 
   ! GPU simulations
   logical :: GPU_MODE
+  integer :: GPU_RUNTIME
+  character(len=11) :: GPU_PLATFORM
+  character(len=11) :: GPU_DEVICE
 
   ! adios file output
   logical :: ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &

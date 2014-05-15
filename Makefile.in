@@ -54,8 +54,9 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 
 #######################################
 ####
-#### CUDA
+#### GPU
 #### with configure: ./configure --with-cuda=cuda5 CUDA_FLAGS=.. CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
+#### with configure: ./configure --with-opencl OCL_GPU_FLAGS=.. OCL_LIB=.. OCL_INC=.. MPI_INC=.. ..
 ####
 #######################################
 
@@ -65,6 +66,9 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 @COND_CUDA5_TRUE@CUDA5 = yes
 @COND_CUDA5_FALSE@CUDA5 = no
 
+@COND_OCL_TRUE@OCL = yes
+@COND_OCL_FALSE@OCL = no
+
 MPI_INCLUDES = @MPI_INCLUDES@
 CUDA_FLAGS = @CUDA_FLAGS@
 CUDA_INC = @CUDA_CPPFLAGS@ -I${SETUP}
@@ -72,6 +76,28 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
 
 @COND_CUDA_TRUE@NVCC = nvcc
 @COND_CUDA_FALSE@NVCC = @CC@
+
+OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
+OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
+
+OCL_INC = @OCL_CFLAGS@ -I${SETUP}
+OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
+
+ifeq ($(OCL), yes)
+  ifeq ($(CUDA), yes)
+    GPU_CUDA_AND_OCL = yes
+  endif
+endif
+
+ifeq ($(OCL), no)
+  ifeq ($(CUDA), no)
+    NO_GPU = yes
+  endif
+endif
+
+ifneq ($(NO_GPU), yes)
+  HAS_GPU = yes
+endif
 
 # GPU architecture
 
@@ -172,10 +198,13 @@ SUBDIRS = \
 	shared \
 	create_header_file \
 	compute_optimized_dumping_undo_att \
-	cuda \
 	meshfem3D \
 	specfem3D \
 	auxiliaries
+
+ifeq ($(HAS_GPU),yes)
+  SUBDIRS := gpu $(SUBDIRS)
+endif
 
 # default targets
 DEFAULT = \

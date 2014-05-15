@@ -228,6 +228,14 @@
   ! GPU simulations
   call read_value_logical(GPU_MODE, 'solver.GPU_MODE', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_MODE'
+  if (GPU_MODE) then
+     call read_value_integer(GPU_RUNTIME, 'solver.GPU_RUNTIME', ierr)
+     if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_RUNTIME'
+     call read_value_string(GPU_PLATFORM, 'solver.GPU_PLATFORM', ierr)
+     if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_PLATFORM'
+     call read_value_string(GPU_DEVICE, 'solver.GPU_DEVICE', ierr)
+     if (ierr /= 0) stop 'an error occurred while reading the parameter file: GPU_DEVICE'
+  endif
 
   ! ADIOS file format output
   call read_value_logical(ADIOS_ENABLED, 'solver.ADIOS_ENABLED', ierr)

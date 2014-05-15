@@ -238,7 +238,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and isotropic/anisotropic kernels
-    call compute_kernels_cm_cuda(Mesh_pointer,deltat)
+    call compute_kernels_cm_gpu(Mesh_pointer,deltat)
 
   endif
 
@@ -574,7 +574,7 @@
     if( deviatoric_outercore ) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_oc_cuda(Mesh_pointer,deltat)
+    call compute_kernels_oc_gpu(Mesh_pointer,deltat)
 
   endif
 
@@ -679,7 +679,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk and shear modulus kernel
-    call compute_kernels_ic_cuda(Mesh_pointer,deltat)
+    call compute_kernels_ic_gpu(Mesh_pointer,deltat)
 
   endif
 
@@ -786,7 +786,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_hess_cuda(Mesh_pointer,deltat)
+    call compute_kernels_hess_gpu(Mesh_pointer,deltat)
 
   endif
 

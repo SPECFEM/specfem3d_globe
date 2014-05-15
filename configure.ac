@@ -44,7 +44,7 @@ AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
 ###
-### CUDA
+### GPU
 ###
 
 AC_ARG_WITH([cuda],
@@ -54,6 +54,12 @@ AC_ARG_WITH([cuda],
     [want_cuda=no])
 AM_CONDITIONAL([COND_CUDA], [test x"$want_cuda" != xno])
 AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
+
+AC_ARG_WITH([opencl],
+ [AC_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
+    [want_opencl="$withval"],
+    [want_opencl=no])
+AM_CONDITIONAL([COND_OCL], [test "$want_opencl" != no])
 
 ###
 ### VTK
@@ -187,13 +193,20 @@ CONFIGURE_FLAGS="FC=$FC FCFLAGS=$FCFLAGS"
 AC_SUBST([CONFIGURE_FLAGS])
 
 ###
-### CUDA
+### GPU
 ###
 
 AS_IF([test x"$want_cuda" != xno], [
     AS_BOX([CUDA])
     AC_ARG_VAR(CUDA_FLAGS, [Cuda compiler flags])
     CIT_CUDA_CONFIG
+])
+
+AS_IF([test x"$want_opencl" != xno], [
+    AS_BOX([OCL])
+    AC_ARG_VAR(OCL_CPU_FLAGS, [OpenCL CPU compiler flags])
+    AC_ARG_VAR(OCL_GPU_FLAGS, [OpenCL GPU compiler flags])
+    CIT_OPENCL_CONFIG
 ])
 
 ###

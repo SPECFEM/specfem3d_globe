@@ -424,7 +424,7 @@
 
   else
     ! on GPU
-    call noise_add_source_master_rec_cu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)
+    call noise_add_source_master_rec_gpu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)
   endif
 
   end subroutine noise_add_source_master_rec
@@ -550,7 +550,7 @@
 
   else
     ! on GPU
-    call noise_add_surface_movie_cuda(Mesh_pointer,noise_surface_movie)
+    call noise_add_surface_movie_gpu(Mesh_pointer,noise_surface_movie)
   endif
 
   end subroutine noise_read_add_surface_movie
@@ -615,7 +615,7 @@
 
   else
     ! on GPU
-    call compute_kernels_strgth_noise_cu(Mesh_pointer,noise_surface_movie,deltat)
+    call compute_kernels_strgth_noise_gpu(Mesh_pointer,noise_surface_movie,deltat)
   endif
 
   end subroutine compute_kernels_strength_noise

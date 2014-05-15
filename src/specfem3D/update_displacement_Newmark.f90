@@ -87,11 +87,11 @@
     ! on GPU
     ! Includes FORWARD_OR_ADJOINT == 1
     ! crust/mantle region
-    call update_displacement_cm_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
+    call update_displacement_cm_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
     ! outer core region
-    call update_displacement_oc_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
+    call update_displacement_oc_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
     ! inner core region
-    call update_displacement_ic_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
+    call update_displacement_ic_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
   endif
 
   end subroutine update_displacement_Newmark
@@ -130,11 +130,11 @@
     ! on GPU
     ! Includes FORWARD_OR_ADJOINT == 3
     ! crust/mantle region
-    call update_displacement_cm_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    call update_displacement_cm_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
     ! outer core region
-    call update_displacement_oc_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    call update_displacement_oc_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
     ! inner core region
-    call update_displacement_ic_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    call update_displacement_ic_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
   endif
 
   end subroutine update_displacement_Newmark_backward
@@ -231,7 +231,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
-    call update_veloc_acoustic_cuda(Mesh_pointer,deltatover2,1)
+    call update_veloc_acoustic_gpu(Mesh_pointer,deltatover2,1)
   endif
 
   end subroutine update_veloc_acoustic_newmark
@@ -257,7 +257,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
-    call update_veloc_acoustic_cuda(Mesh_pointer,b_deltatover2,3)
+    call update_veloc_acoustic_gpu(Mesh_pointer,b_deltatover2,3)
   endif
 
   end subroutine update_veloc_acoustic_newmark_backward
@@ -321,7 +321,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
-    call update_veloc_elastic_cuda(Mesh_pointer,deltatover2,1)
+    call update_veloc_elastic_gpu(Mesh_pointer,deltatover2,1)
 
   endif
 
@@ -350,7 +350,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
-    call update_veloc_elastic_cuda(Mesh_pointer,b_deltatover2,3)
+    call update_veloc_elastic_gpu(Mesh_pointer,b_deltatover2,3)
 
   endif
 
