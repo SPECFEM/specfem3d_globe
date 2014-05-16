@@ -428,7 +428,7 @@ To do so, ask your system administrator for the option to add to your batch subm
 SPECFEM now supports OpenCL and NVidia Cuda GPU acceleration.
 
 OpenCL can be enabled with the \texttt{--with-opencl} flag, and the
-compilation can be controled through 3 variables: \texttt{OCL\_LIB=},
+compilation can be controlled through three variables: \texttt{OCL\_LIB=},
 \texttt{OCL\_INC=} and \texttt{OCL\_GPU\_FLAGS=}.\\
 
 \noindent
@@ -446,7 +446,7 @@ and \texttt{ MPI\_INC=} variables.\\
 Both environments can be compiled simultaneously by merging these two lines.
 
 For the runtime configuration, the \texttt{GPU\_MODE} flag must be set
-to \texttt{.true.}. In addition, we use 3 parameters to select the
+to \texttt{.true.}. In addition, we use three parameters to select the
 environments and GPU: \\
 
 \noindent
@@ -457,8 +457,7 @@ environments and GPU: \\
 
 \texttt{GPU\_RUNTIME} sets the runtime environments: $2$ for OpenCL,
 $1$ for Cuda and 0 for compile-time decision (hence, SPECFEM should
-have been compiled with \texttt{--with-opencl} xor/exclusive or
-\texttt{--with-cuda}).
+have been compiled with only one of \texttt{--with-opencl} or \texttt{--with-cuda}).
 
 \texttt{GPU\_PLATFORM} and \texttt{GPU\_DEVICE} are (case-insensitive)
 filters on the platform and device name in OpenCL, device name only in
@@ -467,7 +466,7 @@ this filtered subset, in round-robin. The star filter (\texttt{*})
 will match the first platform and all its devices.
 
 \texttt{GPU\_RUNTIME}, \texttt{GPU\_PLATFORM} and \texttt{GPU\_DEVICE}
-are not read if \texttt{GPU\_MODE} was not activated.
+are not read if \texttt{GPU\_MODE} is not activated.
 
 Regarding the filesystem structure, directory \texttt{src/cuda}  is now called
 \texttt{src/gpu} and, likewise, Fortran/C wrappers are now suffixed
@@ -490,12 +489,11 @@ Note about the OpenCL version: the OpenCL calculation kernels were
 created by Brice Videau and Kevin Pouget from Grenoble, France, using
 their software package called BOAST; see:
 
-Title	BOAST: Bringing Optimization through Automatic Source-to-Source Tranformations
-Publication Type	Conference Proceedings
-Year of Publication	2013
-Authors	Videau, B, Marangozova-Martin, V, Cronsioe, J
-Secondary Title	Tokyo, Japan
-Series Title	Proceedings of the 7th International Symposium on Embedded Multicore/Manycore System-on-Chip (MCSoC)
+Title:	BOAST: Bringing Optimization through Automatic Source-to-Source Tranformations,
+2013,
+Videau, B, Marangozova-Martin, V, Cronsioe, J,
+Tokyo, Japan,
+Proceedings of the 7th International Symposium on Embedded Multicore/Manycore System-on-Chip (MCSoC).
 
 \section{Compiling on an IBM BlueGene}
 
