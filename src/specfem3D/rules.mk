@@ -157,7 +157,7 @@ specfem3D_SHARED_OBJECTS = \
 ###
 
 gpu_specfem3D_STUBS = \
-	$O/specfem3D_gpu___gpu___method_stubs.o \
+	$O/specfem3D_gpu_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
 ifdef NO_GPU  
