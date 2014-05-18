@@ -50,7 +50,7 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     clCheck (clSetKernelArg (mocl.kernels.noise_transfer_surface_to_host_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibelm_top_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.noise_transfer_surface_to_host_kernel, idx++, sizeof (int), (void *) &mp->nspec2D_top_crust_mantle));
     clCheck (clSetKernelArg (mocl.kernels.noise_transfer_surface_to_host_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
@@ -121,7 +121,7 @@ void FC_FUNC_ (noise_add_source_master_rec_gpu,
       size_t global_work_size[2];
       size_t local_work_size[2];
       cl_uint idx = 0;
-      
+
       clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
       clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
       clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (int), (void *) &irec_master_noise));
@@ -175,7 +175,7 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-    
+
   if (run_opencl) {
     clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_FALSE, 0,
                                    NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle)*sizeof (realw),

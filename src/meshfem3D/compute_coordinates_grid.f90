@@ -332,7 +332,7 @@
   use constants
 
   use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation,lon_observation,lat_observation, &
-                                     ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES 
+                                     ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
   use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
 

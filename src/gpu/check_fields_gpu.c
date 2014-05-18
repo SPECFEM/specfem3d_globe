@@ -250,7 +250,7 @@ void exit_on_error (char *info) {
     fprintf (fp, "ERROR: %s\n", info);
     fclose (fp);
   }
-  
+
   // stops program
 #ifdef WITH_MPI
   MPI_Abort (MPI_COMM_WORLD, 1);
@@ -537,7 +537,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, &errcode);
 
     if (*FORWARD_OR_ADJOINT == 1) {
@@ -642,7 +642,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-    
+
   if (run_opencl) {
     d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x*num_blocks_y*sizeof (realw), NULL, &errcode);
 
@@ -669,7 +669,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 #endif
 #ifdef USE_CUDA
   dim3 grid,threads;
-  
+
   if (run_cuda) {
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
@@ -843,7 +843,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
-    
+
     idx = 0;
     d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, clck_(&errcode));
 

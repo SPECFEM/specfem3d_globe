@@ -54,7 +54,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
     size_t global_work_size[3];
     size_t local_work_size[3];
     cl_uint idx = 0;
-    
+
     // copies source time function buffer values to GPU
     clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_FALSE, 0,
                                    NSOURCES * sizeof (double),
@@ -85,7 +85,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
-    
+
     // copies source time function buffer values to GPU
     print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute.cuda,h_stf_pre_compute,
                                        NSOURCES*sizeof(double),cudaMemcpyHostToDevice),71018);
@@ -136,7 +136,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // copies source time function buffer values to GPU
     clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_FALSE, 0,
                                    NSOURCES * sizeof (double),
@@ -220,7 +220,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     cl_uint idx = 0;
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
-    
+
     if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
       copy_evt = &mp->last_copy_evt;
       num_evt = 1;
@@ -404,7 +404,7 @@ please check mesh_constants_cuda.h");
       clCheck (clReleaseEvent (mp->last_copy_evt));
       mp->has_last_copy_evt = 0;
     }
-    
+
     clCheck (clFinish (mocl.copy_queue));
   }
 #endif
@@ -446,11 +446,11 @@ please check mesh_constants_cuda.h");
   if (run_opencl) {
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
-    
+
     if (mp->has_last_copy_evt) {
       clCheck (clReleaseEvent (mp->last_copy_evt));
     }
-    
+
     clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_adj_sourcearrays.ocl, CL_FALSE, 0,
                                    mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw),
                                    mp->h_adj_sourcearrays_slice, num_evt, copy_evt, &mp->last_copy_evt));

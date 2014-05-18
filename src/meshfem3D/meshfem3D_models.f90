@@ -777,24 +777,14 @@
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
-      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case (ICRUST_EPCRUST)
-!      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
-      ! within EPCRUST region
-!      if (lat >= EPCRUST_LAT_MIN .and. lat <= EPCRUST_LAT_MAX &
-!          .and. lon >= EPCRUST_LON_MIN .and. lon<=EPCRUST_LON_MAX ) then
-!          vpc=0.0d0
-!          vsc=0.0d0
-!          rhoc=0.0d0
-!          moho=0.0d0
-!          found_crust = .false.
-          call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
-!      endif
+      call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case default
       stop 'crustal model type not defined'
