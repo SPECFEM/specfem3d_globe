@@ -230,7 +230,7 @@
 
               scaleval = dsqrt(PI*GRAV*RHOAV)
 
-              if( x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
+              if( x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST &
                 .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
                 ! above sediment basement, returns average upper crust value
                 ! since no special sediment values are given

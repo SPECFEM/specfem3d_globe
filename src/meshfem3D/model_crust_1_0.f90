@@ -142,8 +142,7 @@
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
 
-  ! note: we ignore water & ice sheets
-  ! (only elastic layers are considered)
+  ! note: we ignore water and ice sheets (only elastic layers are considered)
 
   ! whole sediment thickness
   h_sed = thicks(3) + thicks(4) + thicks(5)
@@ -182,15 +181,15 @@
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(4)
     vs = vss(4)
     rho = rhos(4)
-  else if(x > x5 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  else if(x > x5 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(5)
     vs = vss(5)
     rho = rhos(5)
@@ -321,7 +320,7 @@
   ! frees memory
   deallocate(bnd)
 
-  ! additional info
+  ! output debug info if needed
   if( DEBUG_FILE_OUTPUT ) then
     ! allocates temporary arrays
     allocate(thc(CRUST_NLA,CRUST_NLO), &
@@ -401,7 +400,8 @@
 
     ! frees memory
     deallocate(ths,thc)
-  endif
+
+  endif ! of if( DEBUG_FILE_OUTPUT )
 
   end subroutine read_crust_1_0_model
 

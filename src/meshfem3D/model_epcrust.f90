@@ -217,7 +217,7 @@
 
   found_crust=.true.
 
-  if ( dep > basement .and. INCLUDE_SEDIMENTS_CRUST &
+  if ( dep > basement .and. INCLUDE_SEDIMENTS_IN_CRUST &
           .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS ) then ! Hejun Zhu add minimum sediment thickness
     vp=vpsmooth(1)
     vs=vssmooth(1)

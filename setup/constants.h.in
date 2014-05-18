@@ -202,7 +202,7 @@
   logical, parameter :: SMOOTH_CRUST_EVEN_MORE = .true.
 
 ! use sedimentary layers in crustal model
-  logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+  logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
 ! default crustal model
