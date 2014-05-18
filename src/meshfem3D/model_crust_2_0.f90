@@ -126,8 +126,9 @@
   logical,intent(in) :: elem_in_crust
 
   ! local parameters
+  double precision :: thicks_1
   double precision :: h_sed,h_uc
-  double precision :: x3,x4,x5,x6,x7
+  double precision :: x1,x3,x4,x5,x6,x7
   double precision :: scaleval
   double precision,dimension(CRUST_NP):: vps,vss,rhos,thicks
 
@@ -141,44 +142,50 @@
   call crust_2_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,abbreviation, &
                         code,crust_thickness,crust_vp,crust_vs,crust_rho)
 
-  ! note: for seismic wave propagation we ignore the water and ice sheets (oceans are re-added later as an ocean load)
+  ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
+  ! note: but for Roland_Sylvain gravity calculations we include the ice
+  if( INCLUDE_ICE_IN_CRUST ) then
+    thicks_1 = thicks(1)
+  else
+    thicks_1 = ZERO
+  endif
 
-  ! whole sediment thickness
-  h_sed = thicks(3) + thicks(4)
+  ! whole sediment thickness (with ice if included)
+  h_sed = thicks_1 + thicks(3) + thicks(4)
 
-  ! upper crust thickness (including sediments above)
+  ! upper crust thickness (including sediments above, and also ice if included)
   h_uc = h_sed + thicks(5)
 
   ! non-dimensionalization factor
   scaleval = ONE / R_EARTH_KM
 
-  ! non-dimensionalizes thickness (given in km)
+  ! non-dimensionalize thicknesses (given in km)
+
+  ! ice
+  x1 = ONE - thicks_1 * scaleval
   ! upper sediment
-  x3 = ONE - thicks(3) * scaleval
+  x3 = ONE - (thicks_1 + thicks(3)) * scaleval
   ! all sediments
   x4 = ONE - h_sed * scaleval
   ! upper crust
   x5 = ONE - h_uc * scaleval
   ! middle crust
-  x6 = ONE - (h_uc+thicks(6)) * scaleval
+  x6 = ONE - (h_uc + thicks(6)) * scaleval
   ! lower crust
-  x7 = ONE - (h_uc+thicks(6)+thicks(7)) * scaleval
-
-  ! checks moho value
-  !moho = h_uc + thicks(6) + thicks(7)
-  !if( moho /= thicks(CRUST_NP) ) then
-  ! print*,'moho:',moho,thicks(CRUST_NP)
-  ! print*,'  lat/lon/x:',lat,lon,x
-  !endif
+  x7 = ONE - (h_uc + thicks(6) + thicks(7)) * scaleval
 
   ! no matter if found_crust is true or false, compute moho thickness
-  moho = (h_uc+thicks(6)+thicks(7)) * scaleval
+  moho = (h_uc + thicks(6) + thicks(7)) * scaleval
 
   ! gets corresponding crustal velocities and density
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  if(x > x1 .and. INCLUDE_ICE_IN_CRUST ) then
+    vp = vps(1)
+    vs = vss(1)
+    rho = rhos(1)
+  else if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
