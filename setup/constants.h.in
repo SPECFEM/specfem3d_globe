@@ -203,6 +203,7 @@
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
+  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for Roland_Sylvain gravity calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
 ! default crustal model

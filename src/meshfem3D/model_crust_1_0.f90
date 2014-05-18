@@ -26,7 +26,7 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! CRUST 1.0 model
+! CRUST 1.0 model by Laske et al. (2013)
 ! see: http://igppweb.ucsd.edu/~gabi/crust1.html
 !
 ! Initial release:
@@ -128,8 +128,9 @@
   logical,intent(in) :: elem_in_crust
 
   ! local parameters
+  double precision :: thicks_2
   double precision :: h_sed,h_uc
-  double precision :: x3,x4,x5,x6,x7,x8
+  double precision :: x2,x3,x4,x5,x6,x7,x8
   double precision :: scaleval
   double precision,dimension(CRUST_NP):: vps,vss,rhos,thicks
 
@@ -142,46 +143,52 @@
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
 
-  ! note: for seismic wave propagation we ignore the water and ice sheets (oceans are re-added later as an ocean load)
+  ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
+  ! note: but for Roland_Sylvain gravity calculations we include the ice
+  if( INCLUDE_ICE_IN_CRUST ) then
+    thicks_2 = thicks(2)
+  else
+    thicks_2 = ZERO
+  endif
 
-  ! whole sediment thickness
-  h_sed = thicks(3) + thicks(4) + thicks(5)
+  ! whole sediment thickness (with ice if included)
+  h_sed = thicks_2 + thicks(3) + thicks(4) + thicks(5)
 
-  ! upper crust thickness (including sediments above)
+  ! upper crust thickness (including sediments above, and also ice if included)
   h_uc = h_sed + thicks(6)
 
   ! non-dimensionalization factor
   scaleval = ONE / R_EARTH_KM
 
-  ! non-dimensionalizes thickness (given in km)
+  ! non-dimensionalize thicknesses (given in km)
+
+  ! ice
+  x2 = ONE - thicks_2 * scaleval
   ! upper sediment
-  x3 = ONE - thicks(3) * scaleval
+  x3 = ONE - (thicks_2 + thicks(3)) * scaleval
   ! middle sediment
-  x4 = ONE - (thicks(3) + thicks(4)) * scaleval
+  x4 = ONE - (thicks_2 + thicks(3) + thicks(4)) * scaleval
   ! all sediments
   x5 = ONE - h_sed * scaleval
   ! upper crust
   x6 = ONE - h_uc * scaleval
   ! middle crust
-  x7 = ONE - (h_uc+thicks(7)) * scaleval
+  x7 = ONE - (h_uc + thicks(7)) * scaleval
   ! lower crust
-  x8 = ONE - (h_uc+thicks(7)+thicks(8)) * scaleval
-
-  ! checks moho value
-  !moho = h_uc + thicks(6) + thicks(7)
-  !if( moho /= thicks(CRUST_NP) ) then
-  ! print*,'moho:',moho,thicks(CRUST_NP)
-  ! print*,'  lat/lon/x:',lat,lon,x
-  !endif
+  x8 = ONE - (h_uc + thicks(7) + thicks(8)) * scaleval
 
   ! no matter if found_crust is true or false, compute moho thickness
-  moho = (h_uc+thicks(7)+thicks(8)) * scaleval
+  moho = (h_uc + thicks(7) + thicks(8)) * scaleval
 
   ! gets corresponding crustal velocities and density
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  if(x > x2 .and. INCLUDE_ICE_IN_CRUST ) then
+    vp = vps(2)
+    vs = vss(2)
+    rho = rhos(2)
+  else if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
@@ -322,7 +329,8 @@
 
   ! output debug info if needed
   if( DEBUG_FILE_OUTPUT ) then
-    ! allocates temporary arrays
+
+    ! allocate temporary arrays
     allocate(thc(CRUST_NLA,CRUST_NLO), &
              ths(CRUST_NLA,CRUST_NLO), &
              stat=ier)
