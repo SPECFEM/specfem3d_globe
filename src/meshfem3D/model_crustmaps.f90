@@ -28,15 +28,15 @@
 !--------------------------------------------------------------------------------------------------
 ! General Crustmaps
 !
-! combines Crust2.0 and EUcrust07 for moho depths; the crustal maps are
-! interpolating the crustal velocities from Crust2.0 onto the more detailed EUcrust
+! combines Crust2.0 and EUcrust07 for moho depths; the crustal maps
+! interpolate the crustal velocities from Crust2.0 onto the more detailed EUcrust
 ! crustal depths where ever they are defined.
 
 ! current crustmaps (cmaps) take sediment thickness
 ! and moho depths from EUcrust07 if possible and interpolate corresponding
 ! velocity/densities given from Crust2.0.
 !
-! main author: Matthias Meschede (meschede@princeton.edu)
+! main author: Matthias Meschede (meschede AT princeton DOT edu)
 !--------------------------------------------------------------------------------------------------
 
   module model_crustmaps_par
@@ -177,7 +177,7 @@
     velocsnp(l) = velocsnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
     velocssp(l) = velocssp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
 
-!    print *,'thicknessnp(',l,')',thicknessnp(l)
+!   print *,'thicknessnp(',l,')',thicknessnp(l)
   enddo
 
   end subroutine read_general_crustmap
@@ -193,9 +193,7 @@
 
   implicit none
 
-  double precision, intent(out), &
-    dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION)&
-    :: var
+  double precision, intent(out), dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION) :: var
   character(len=1), intent(in) :: var_letter
   integer, intent(in) :: ind
 
@@ -224,7 +222,6 @@
   close(1)
 
   end subroutine read_general_crustmap_layer
-
 
 
 !
@@ -262,14 +259,12 @@
   x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-!  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
-!   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+! if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
   if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
-!  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
-!   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+! else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
   else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
    vp = vps(2)
    vs = vss(2)
@@ -451,7 +446,7 @@
     weightlr=(1.0-weightup)*(1.0-weightleft)
 
     if(iupcolat==0) then
-      ! north pole
+      ! North pole
       do i=1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thicknessnp(i)+weightur*thicknessnp(i)+&
                  weightll*thickness(1,ileftlng,i)+weightlr*thickness(1,irightlng,i)
@@ -464,7 +459,7 @@
                weightll*velocs(1,ileftlng,i)+weightlr*velocs(1,irightlng,i)
       enddo
     else if(iupcolat==180*CRUSTMAP_RESOLUTION) then
-      ! south pole
+      ! South pole
       do i=1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thickness(iupcolat,ileftlng,i)+weightur*thickness(iupcolat,irightlng,i)+&
                  weightll*thicknesssp(i)+weightlr*thicknesssp(i)
@@ -485,10 +480,10 @@
                weightll*velocp(iupcolat+1,ileftlng,i)+weightlr*velocp(iupcolat+1,irightlng,i)
        velsl(i)=weightul*velocs(iupcolat,ileftlng,i)+weightur*velocs(iupcolat,irightlng,i)+&
                weightll*velocs(iupcolat+1,ileftlng,i)+weightlr*velocs(iupcolat+1,irightlng,i)
-    !   thicks(i)=1.0
-    !   rhos(i)=1.0
-    !   velp(i)=1.0
-    !   vels(i)=1.0i
+    !  thicks(i)=1.0
+    !  rhos(i)=1.0
+    !  velp(i)=1.0
+    !  vels(i)=1.0i
       enddo
     endif
 
@@ -533,6 +528,7 @@
   if(lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
     stop 'error in latitude/longitude range in icolat_ilon'
 
+! map longitudes to [0,360]
   if(lng<0) then
     xlng=lng+360.0
   else
@@ -555,3 +551,4 @@
   if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
   end subroutine ibilinearmap
+
