@@ -168,11 +168,11 @@
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(4)
     vs = vss(4)
     rho = rhos(4)

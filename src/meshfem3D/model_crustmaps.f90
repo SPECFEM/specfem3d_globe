@@ -259,13 +259,13 @@
   x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-! if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
+! if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
-! else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
+! else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
    vp = vps(2)
    vs = vss(2)
    rho = rhos(2)
