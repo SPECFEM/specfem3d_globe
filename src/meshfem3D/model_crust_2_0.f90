@@ -266,14 +266,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine crust_CAPsmoothed(lat,lon,velp,vels,rho,thick,abbreviation,&
-                              code,thlr,velocp,velocs,dens)
+  subroutine crust_CAPsmoothed(lat,lon,velp,vels,rho,thick,abbreviation,code,thlr,velocp,velocs,dens)
 
 ! crustal vp and vs in km/s, layer thickness in km
 !
 ! crust2.0 is smoothed with a cap of size CAP using NTHETA points
 ! in the theta direction and NPHI in the phi direction.
-! The cap is rotated to the North Pole.
+! The cap is first rotated to the North Pole for easier implementation.
 
   use constants
   use model_crust_2_0_par,only: NLAYERS_CRUST,NKEYS_CRUST,NCAP_CRUST
@@ -472,7 +471,7 @@
     thtp(i)=thlr(i,ikey)
   enddo
 
-  !   get distance to Moho from the bottom of the ocean or the ice
+  ! get distance to Moho from the bottom of the ocean or the ice
   thtp(NLAYERS_CRUST) = thlr(NLAYERS_CRUST,ikey) - thtp(1) - thtp(2)
 
   end subroutine get_crust_structure
@@ -545,8 +544,7 @@
   sinp = dsin(phi)
   cosp = dcos(phi)
 
-  ! set up rotation matrix to go from cap at North pole
-  ! to cap around point of interest
+  ! set up rotation matrix to go from cap at North pole to cap around point of interest
   rotation_matrix(1,1) = cosp*cost
   rotation_matrix(1,2) = -sinp
   rotation_matrix(1,3) = cosp*sint
@@ -571,7 +569,7 @@
 
       i = i+1
 
-      !  get the weight associated with this integration point (same for all phi)
+      ! get the weight associated with this integration point (same for all phi)
       weight(i) = wght
 
       total = total + weight(i)

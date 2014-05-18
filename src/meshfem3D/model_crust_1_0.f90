@@ -41,8 +41,8 @@
 ! 1) water
 ! 2) ice
 ! 3) upper sediments   (VP, VS, rho not defined in all cells)
-! 4) middle sediments  "
-! 5) lower sediments   "
+! 4) middle sediments  (VP, VS, rho not defined in all cells)
+! 5) lower sediments   (VP, VS, rho not defined in all cells)
 ! 6) upper crystalline crust
 ! 7) middle crystalline crust
 ! 8) lower crystalline crust
