@@ -174,7 +174,7 @@
   ! print*,'  lat/lon/x:',lat,lon,x
   !endif
 
-  ! no matter found_crust true or false, output moho thickness
+  ! no matter if found_crust is true or false, compute moho thickness
   moho = (h_uc+thicks(7)+thicks(8)) * scaleval
 
   ! gets corresponding crustal velocities and density

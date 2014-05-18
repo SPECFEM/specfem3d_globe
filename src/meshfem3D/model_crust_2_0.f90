@@ -141,17 +141,27 @@
   call crust_2_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,abbreviation, &
                         code,crust_thickness,crust_vp,crust_vs,crust_rho)
 
+  ! note: we ignore water and ice sheets (only elastic layers are considered)
+
+  ! whole sediment thickness
+  h_sed = thicks(3) + thicks(4)
+
+  ! upper crust thickness (including sediments above)
+  h_uc = h_sed + thicks(5)
+
   ! non-dimensionalization factor
   scaleval = ONE / R_EARTH_KM
 
   ! non-dimensionalizes thickness (given in km)
   ! upper sediment
   x3 = ONE - thicks(3) * scaleval
-  h_sed = thicks(3) + thicks(4)
+  ! all sediments
   x4 = ONE - h_sed * scaleval
-  h_uc = h_sed + thicks(5)
+  ! upper crust
   x5 = ONE - h_uc * scaleval
+  ! middle crust
   x6 = ONE - (h_uc+thicks(6)) * scaleval
+  ! lower crust
   x7 = ONE - (h_uc+thicks(6)+thicks(7)) * scaleval
 
   ! checks moho value
@@ -161,7 +171,7 @@
   ! print*,'  lat/lon/x:',lat,lon,x
   !endif
 
-  ! no matter found_crust true or false, output moho thickness
+  ! no matter if found_crust is true or false, compute moho thickness
   moho = (h_uc+thicks(6)+thicks(7)) * scaleval
 
   ! gets corresponding crustal velocities and density
@@ -395,8 +405,10 @@
     if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
       velpl(3) = velpl(5)
       velpl(4) = velpl(5)
+
       velsl(3) = velsl(5)
       velsl(4) = velsl(5)
+
       rhol(3) = rhol(5)
       rhol(4) = rhol(5)
     endif
