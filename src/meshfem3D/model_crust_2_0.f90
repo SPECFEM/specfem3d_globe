@@ -141,7 +141,7 @@
   call crust_2_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,abbreviation, &
                         code,crust_thickness,crust_vp,crust_vs,crust_rho)
 
-  ! note: we ignore water and ice sheets (only elastic layers are considered)
+  ! note: for seismic wave propagation we ignore the water and ice sheets (oceans are re-added later as an ocean load)
 
   ! whole sediment thickness
   h_sed = thicks(3) + thicks(4)
