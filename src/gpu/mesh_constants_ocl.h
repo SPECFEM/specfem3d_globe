@@ -81,7 +81,7 @@ const char* clewErrorString (cl_int error);
                                   mp->h_##_buffer_,                     \
                                   0, NULL, NULL));                      \
   clCheck(clReleaseMemObject (mp->h_pinned_##_buffer_))
-                                                                
+
 extern int mocl_errcode;
 static inline cl_int _clCheck(cl_int errcode, const char *file, int line, const char *func) {
   mocl_errcode = errcode;
@@ -110,11 +110,11 @@ struct mesh_programs_s {
 
   #include "kernel_list.h"
 };
-  
+
 struct mesh_kernels_s {
 #undef BOAST_KERNEL
 #define BOAST_KERNEL(__kern_name__) cl_kernel __kern_name__
-  
+
   #include "kernel_list.h"
 };
 

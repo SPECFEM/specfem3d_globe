@@ -55,19 +55,19 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   //prepare field transfer array on device
 
 #ifdef USE_OPENCL
-  if (run_opencl) {    
+  if (run_opencl) {
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
     cl_event kernel_evt;
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
-    
+
     if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
       copy_evt = &mp->last_copy_evt;
       num_evt = 1;
     }
-    
+
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &d_ispec_selected->ocl));
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
@@ -87,7 +87,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
       if (mp->has_last_copy_evt) {
         clCheck (clReleaseEvent (mp->last_copy_evt));
       }
-      
+
       clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_station_seismo_field.ocl, CL_FALSE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
                                     mp->h_station_seismo_field, 1, &kernel_evt, &mp->last_copy_evt));
@@ -97,7 +97,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
                                     mp->h_station_seismo_field, 0, NULL, NULL));
     }
-    
+
     clReleaseEvent (kernel_evt);
   }
 #endif
@@ -133,14 +133,14 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     print_CUDA_error_if_any(cudaMemcpy(mp->h_station_seismo_field,mp->d_station_seismo_field.cuda,
                                        3*NGLL3*(mp->nrec_local)*sizeof(realw),cudaMemcpyDeviceToHost),77000);
 
-	}
+  }
   }
 #endif
   if (!GPU_ASYNC_COPY) {
     for (irec_local = 0; irec_local < mp->nrec_local; irec_local++) {
       irec = number_receiver_global[irec_local] - 1;
       ispec = h_ispec_selected[irec] - 1;
-      
+
       for (i = 0; i < NGLL3; i++) {
         iglob = ibool[i+NGLL3*ispec] - 1;
         h_field[0+3*iglob] = mp->h_station_seismo_field[0+3*i+irec_local*NGLL3*3];
@@ -183,7 +183,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     //prepare field transfer array on device
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_strain_from_device_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_strain_from_device_kernel, idx++, sizeof (cl_mem), (void *) &d_ispec_selected->ocl));

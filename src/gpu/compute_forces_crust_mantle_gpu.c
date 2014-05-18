@@ -132,7 +132,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     size_t local_work_size[2];
     cl_kernel *crust_mantle_kernel_p;
     cl_uint idx = 0;
-    
+
     if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
       goto skipexec;
     } else if (FORWARD_OR_ADJOINT == 3) {
@@ -144,7 +144,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     } else {
       crust_mantle_kernel_p = &mocl.kernels.crust_mantle_impl_kernel_adjoint;
     }
-    
+
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &nb_blocks_to_compute));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ibool.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ispec_is_tiso.ocl));

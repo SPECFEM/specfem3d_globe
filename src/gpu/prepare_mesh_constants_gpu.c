@@ -91,7 +91,7 @@ void moclEnqueueFillBuffer (Mesh *mp, cl_mem *buffer, int val, size_t size) {
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-    
+
   clCheck (clSetKernelArg (*memset_kern, idx++, sizeof (cl_mem), (void *) buffer));
   clCheck (clSetKernelArg (*memset_kern, idx++, sizeof (cl_int), (void *) &val));
 
@@ -205,7 +205,7 @@ void copy_todevice_realw (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_ar
 void initialize_dummy_buffers(Mesh *mp) {
 #ifdef USE_OPENCL
   #define INIT_DUMMY_BUFFER(_field_) mp->_field_.ocl = NULL;
-  
+
   #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
   #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
   #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
@@ -214,7 +214,7 @@ void initialize_dummy_buffers(Mesh *mp) {
 #endif
 #ifdef USE_CUDA
   #define INIT_DUMMY_BUFFER(_field_) mp->_field_.cuda = NULL
-  
+
   #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
   #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
   #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
@@ -226,7 +226,7 @@ void initialize_dummy_buffers(Mesh *mp) {
 // setup functions
 void setConst (gpu_realw_mem *buffer, size_t size, realw *array) {
   size *= sizeof(realw);
-  
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     cl_int errcode;
@@ -292,7 +292,7 @@ void FC_FUNC_ (prepare_constants_device,
 #ifdef USE_OPENCL
   cl_int errcode;
 #endif
-  
+
   initialize_dummy_buffers(mp);
   // checks if NGLLX == 5
   if (*h_NGLLX != NGLLX) {
@@ -305,7 +305,7 @@ void FC_FUNC_ (prepare_constants_device,
   // sets constant arrays
   setConst (&mp->d_hprime_xx, NGLL2, h_hprime_xx);
   setConst (&mp->d_hprimewgll_xx, NGLL2, h_hprimewgll_xx);
-  
+
   setConst (&mp->d_wgllwgll_xy, NGLL2, h_wgllwgll_xy);
   setConst (&mp->d_wgllwgll_xz, NGLL2, h_wgllwgll_xz);
   setConst (&mp->d_wgllwgll_yz, NGLL2, h_wgllwgll_yz);
@@ -322,7 +322,7 @@ void FC_FUNC_ (prepare_constants_device,
     mp->d_hprimewgll_xx_cm_tex = moclGetDummyImage2D(mp);
 #endif //USE_TEXTURES_CONSTANTS
   }
-#endif 
+#endif
 #ifdef USE_CUDA
   if (run_cuda) {
     // Using texture memory for the hprime-style constants is slower on
@@ -346,7 +346,7 @@ void FC_FUNC_ (prepare_constants_device,
                                             &channelDesc, sizeof(realw)*(NGLL2)), 1102);
     // d_hprime_xx was cudaMalloced, so offset is 0
     //print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprime_xx_tex_offset,&offset,sizeof(offset)),11202);
-    
+
     // weighted
     const textureReference* d_hprimewgll_xx_tex_ptr;
     print_CUDA_error_if_any(cudaGetTextureReference(&d_hprimewgll_xx_tex_ptr, "d_hprimewgll_xx_tex"), 1107);
@@ -361,7 +361,7 @@ void FC_FUNC_ (prepare_constants_device,
     //print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprime_xx_tex_offset,&offset,sizeof(offset)),11202);
     // debug
     //if( mp->myrank == 0 ) printf("texture constants hprime_xx: offset = %lu \n",offset);
-    
+
     // weighted
     print_CUDA_error_if_any(cudaBindTexture(&offset, &d_hprimewgll_xx_tex, mp->d_hprimewgll_xx.cuda,
                                             &channelDesc, sizeof(realw)*(NGLL2)), 11204);
@@ -470,19 +470,19 @@ void FC_FUNC_ (prepare_constants_device,
         ALLOC_PINNED_BUFFER_OCL (station_seismo_field, NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
       } else {
         mp->h_station_seismo_field = (realw *) malloc (NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
-        
+
         if (mp->h_station_seismo_field == NULL) {
           exit_on_error("h_station_seismo_field not allocated \n");
         }
       }
-    
+
       // for adjoint strain
       if (mp->simulation_type == 2) {
         mp->d_station_strain_field.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
                                                          NGLL3 * mp->nrec_local * sizeof (realw),
                                                          NULL, clck_(&errcode));
         mp->h_station_strain_field = (realw *) malloc (NGLL3 * mp->nrec_local * sizeof(realw));
-        
+
         if (mp->h_station_strain_field == NULL) {
           exit_on_error("h_station_strain_field not allocated \n");
         }
@@ -503,7 +503,7 @@ void FC_FUNC_ (prepare_constants_device,
         mp->h_station_seismo_field = (realw*) malloc( NDIM*NGLL3*(mp->nrec_local)*sizeof(realw) );
         if (mp->h_station_seismo_field == NULL) exit_on_error("h_station_seismo_field not allocated \n");
       }
-    
+
       // for adjoint strain
       if (mp->simulation_type == 2) {
         print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_station_strain_field),
@@ -1358,14 +1358,14 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
       }
 #endif
     }
-  
+
 #ifdef USE_OPENCL
     if (run_opencl) {
       // asynchronous MPI buffer
       if (GPU_ASYNC_COPY) {
         ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
         ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-      
+
         if (mp->simulation_type == 3) {
           ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
           ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
@@ -1379,7 +1379,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
       if (GPU_ASYNC_COPY) {
         ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
         ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-      
+
         if (mp->simulation_type == 3) {
           ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
           ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
@@ -1406,7 +1406,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
     }
 #endif
   }
-  
+
   // inner core mesh
   mp->num_interfaces_inner_core = *num_interfaces_inner_core;
   mp->max_nibool_interfaces_ic = *max_nibool_interfaces_ic;
@@ -1450,14 +1450,14 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
       }
 #endif
     }
-    
+
 #ifdef USE_OPENCL
     if (run_opencl) {
       // asynchronous MPI buffer
       if (GPU_ASYNC_COPY) {
         ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
         ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
-      
+
         if (mp->simulation_type == 3) {
           ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
           ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
@@ -1516,7 +1516,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #endif
 
     /***************************/
-    
+
     if (mp->simulation_type == 3) {
 #ifdef USE_OPENCL
       if (run_opencl) {
@@ -1533,14 +1533,14 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
     }
 
     /**************************/
-    
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     // asynchronous MPI buffer
     if (GPU_ASYNC_COPY) {
       ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
       ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
-      
+
       if (mp->simulation_type == 3) {
         ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
         ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
@@ -2271,10 +2271,10 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   if (run_opencl) {
 #ifdef USE_TEXTURES_FIELDS
     cl_image_format format = {CL_R, CL_UNSIGNED_INT32};
-    
+
     mp->d_displ_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_crust_mantle.ocl, clck_(&errcode));
     mp->d_accel_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_crust_mantle.ocl, clck_(&errcode));
-    
+
     if (mp->simulation_type == 3) {
       mp->d_b_displ_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_crust_mantle.ocl, clck_(&errcode));
       mp->d_b_accel_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_crust_mantle.ocl, clck_(&errcode));
@@ -2282,7 +2282,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #else
     mp->d_displ_cm_tex = moclGetDummyImage2D(mp);
     mp->d_accel_cm_tex = moclGetDummyImage2D(mp);
-    
+
     mp->d_b_displ_cm_tex = moclGetDummyImage2D(mp);
     mp->d_b_accel_cm_tex = moclGetDummyImage2D(mp);
 #endif
@@ -2742,7 +2742,7 @@ void FC_FUNC_ (prepare_outer_core_device,
 #else
     mp->d_displ_oc_tex = moclGetDummyImage2D(mp);
     mp->d_accel_oc_tex = moclGetDummyImage2D(mp);
-    
+
     mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
     mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
 #endif
@@ -2757,7 +2757,7 @@ void FC_FUNC_ (prepare_outer_core_device,
     print_CUDA_error_if_any(cudaGetTextureReference(&d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
     print_CUDA_error_if_any(cudaBindTexture(0, d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
                                             &channelDesc, sizeof(realw)*size_glob), 5021);
-    
+
     const textureReference* d_accel_oc_tex_ref_ptr;
     print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
     print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
@@ -2768,7 +2768,7 @@ void FC_FUNC_ (prepare_outer_core_device,
       print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_oc_tex_ref_ptr, "d_b_displ_oc_tex"), 5021);
       print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_oc_tex_ref_ptr, mp->d_b_displ_outer_core,
                                               &channelDesc, sizeof(realw)*size_glob), 5021);
-      
+
       const textureReference* d_b_accel_oc_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_oc_tex_ref_ptr, "d_b_accel_oc_tex"), 5023);
         print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_oc_tex_ref_ptr, mp->d_b_accel_outer_core,
@@ -3220,7 +3220,7 @@ void FC_FUNC_ (prepare_inner_core_device,
     cl_image_format format = {CL_R, CL_UNSIGNED_INT32};
     mp->d_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_inner_core.ocl, clck_(&errcode));
     mp->d_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_inner_core.ocl, clck_(&errcode));
-    
+
     if( mp->simulation_type == 3 ){
       mp->d_b_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_inner_core.ocl, clck_(&errcode));
       mp->d_b_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_inner_core.ocl, clck_(&errcode));
@@ -3228,7 +3228,7 @@ void FC_FUNC_ (prepare_inner_core_device,
 #else
     mp->d_displ_ic_tex = moclGetDummyImage2D(mp);
     mp->d_accel_ic_tex = moclGetDummyImage2D(mp);
-    
+
     mp->d_b_displ_ic_tex = moclGetDummyImage2D(mp);
     mp->d_b_accel_ic_tex = moclGetDummyImage2D(mp);
 #endif
@@ -3445,7 +3445,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (GPU_ASYNC_COPY) {
         RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_cm);
         RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_cm);
-      
+
         if (mp->simulation_type == 3) {
           RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_cm);
           RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_cm);
@@ -3456,7 +3456,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (GPU_ASYNC_COPY) {
         RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_ic);
         RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_ic);
-      
+
         if (mp->simulation_type == 3) {
           RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_ic);
           RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_ic);
@@ -3467,7 +3467,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (GPU_ASYNC_COPY) {
         RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_oc);
         RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_oc);
-      
+
         if (mp->simulation_type == 3) {
           RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_oc);
           RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_oc);
@@ -3547,7 +3547,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     if (mp->rotation) {
       clReleaseMemObject (mp->d_A_array_rotation.ocl);
       clReleaseMemObject (mp->d_B_array_rotation.ocl);
-      
+
       if (mp->simulation_type == 3) {
         clReleaseMemObject (mp->d_b_A_array_rotation.ocl);
         clReleaseMemObject (mp->d_b_B_array_rotation.ocl);
@@ -3559,7 +3559,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     //------------------------------------------
     if (!mp->gravity) {
       clReleaseMemObject (mp->d_d_ln_density_dr_table.ocl);
-      
+
     } else {
       clReleaseMemObject (mp->d_minus_rho_g_over_kappa_fluid.ocl);
       clReleaseMemObject (mp->d_minus_gravity_table.ocl);
@@ -3573,7 +3573,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     if (mp->attenuation) {
       clReleaseMemObject (mp->d_one_minus_sum_beta_crust_mantle.ocl);
       clReleaseMemObject (mp->d_one_minus_sum_beta_inner_core.ocl);
-      
+
       if (! mp->partial_phys_dispersion_only) {
         clReleaseMemObject (mp->d_factor_common_crust_mantle.ocl);
         clReleaseMemObject (mp->d_R_xx_crust_mantle.ocl);
@@ -3588,11 +3588,11 @@ void FC_FUNC_ (prepare_cleanup_device,
         clReleaseMemObject (mp->d_R_xz_inner_core.ocl);
         clReleaseMemObject (mp->d_R_yz_inner_core.ocl);
       }
-      
+
       clReleaseMemObject (mp->d_alphaval.ocl);
       clReleaseMemObject (mp->d_betaval.ocl);
       clReleaseMemObject (mp->d_gammaval.ocl);
-      
+
       if (mp->simulation_type == 3) {
         clReleaseMemObject (mp->d_b_alphaval.ocl);
         clReleaseMemObject (mp->d_b_betaval.ocl);
@@ -3618,7 +3618,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
       clReleaseMemObject (mp->d_eps_trace_over_3_crust_mantle.ocl);
       clReleaseMemObject (mp->d_eps_trace_over_3_inner_core.ocl);
-      
+
       if (mp->simulation_type == 3 && ! mp->undo_attenuation){
         clReleaseMemObject (mp->d_b_epsilondev_xx_crust_mantle.ocl);
         clReleaseMemObject (mp->d_b_epsilondev_yy_crust_mantle.ocl);
@@ -3649,17 +3649,17 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_njmax_crust_mantle.ocl);
       clReleaseMemObject (mp->d_nimin_crust_mantle.ocl);
       clReleaseMemObject (mp->d_nimax_crust_mantle.ocl);
-      
+
       if (mp->nspec2D_xmin_crust_mantle > 0) {
         clReleaseMemObject (mp->d_ibelm_xmin_crust_mantle.ocl);
         clReleaseMemObject (mp->d_normal_xmin_crust_mantle.ocl);
         clReleaseMemObject (mp->d_jacobian2D_xmin_crust_mantle.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_xmin_crust_mantle.ocl);
         }
       }
-      
+
       if (mp->nspec2D_xmax_crust_mantle > 0) {
         clReleaseMemObject (mp->d_ibelm_xmax_crust_mantle.ocl);
         clReleaseMemObject (mp->d_normal_xmax_crust_mantle.ocl);
@@ -3668,22 +3668,22 @@ void FC_FUNC_ (prepare_cleanup_device,
           clReleaseMemObject (mp->d_absorb_xmax_crust_mantle.ocl);
         }
       }
-      
+
       if (mp->nspec2D_ymin_crust_mantle > 0) {
         clReleaseMemObject (mp->d_ibelm_ymin_crust_mantle.ocl);
         clReleaseMemObject (mp->d_normal_ymin_crust_mantle.ocl);
         clReleaseMemObject (mp->d_jacobian2D_ymin_crust_mantle.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_ymin_crust_mantle.ocl);
         }
       }
-      
+
       if (mp->nspec2D_ymax_crust_mantle > 0) {
         clReleaseMemObject (mp->d_ibelm_ymax_crust_mantle.ocl);
         clReleaseMemObject (mp->d_normal_ymax_crust_mantle.ocl);
         clReleaseMemObject (mp->d_jacobian2D_ymax_crust_mantle.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_ymax_crust_mantle.ocl);
         }
@@ -3696,11 +3696,11 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_njmax_outer_core.ocl);
       clReleaseMemObject (mp->d_nimin_outer_core.ocl);
       clReleaseMemObject (mp->d_nimax_outer_core.ocl);
-      
+
       if (mp->nspec2D_xmin_outer_core > 0) {
         clReleaseMemObject (mp->d_ibelm_xmin_outer_core.ocl);
         clReleaseMemObject (mp->d_jacobian2D_xmin_outer_core.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_xmin_outer_core.ocl);
         }
@@ -3708,7 +3708,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (mp->nspec2D_xmax_outer_core > 0) {
         clReleaseMemObject (mp->d_ibelm_xmax_outer_core.ocl);
         clReleaseMemObject (mp->d_jacobian2D_xmax_outer_core.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_xmax_outer_core.ocl);
         }
@@ -3716,7 +3716,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (mp->nspec2D_ymin_outer_core > 0) {
         clReleaseMemObject (mp->d_ibelm_ymin_outer_core.ocl);
         clReleaseMemObject (mp->d_jacobian2D_ymin_outer_core.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_ymin_outer_core.ocl);
         }
@@ -3724,7 +3724,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (mp->nspec2D_ymax_outer_core > 0) {
         clReleaseMemObject (mp->d_ibelm_ymax_outer_core.ocl);
         clReleaseMemObject (mp->d_jacobian2D_ymax_outer_core.ocl);
-        
+
         if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
           clReleaseMemObject (mp->d_absorb_ymax_outer_core.ocl);
         }
@@ -3744,17 +3744,17 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_nibool_interfaces_crust_mantle.ocl);
       clReleaseMemObject (mp->d_ibool_interfaces_crust_mantle.ocl);
       clReleaseMemObject (mp->d_send_accel_buffer_crust_mantle.ocl);
-      
+
       if (mp->simulation_type == 3) {
         clReleaseMemObject (mp->d_b_send_accel_buffer_crust_mantle.ocl);
       }
     }
-    
+
     if (mp->num_interfaces_inner_core > 0) {
       clReleaseMemObject (mp->d_nibool_interfaces_inner_core.ocl);
       clReleaseMemObject (mp->d_ibool_interfaces_inner_core.ocl);
       clReleaseMemObject (mp->d_send_accel_buffer_inner_core.ocl);
-      
+
       if (mp->simulation_type == 3) {
         clReleaseMemObject (mp->d_b_send_accel_buffer_inner_core.ocl);
       }
@@ -3763,23 +3763,23 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_nibool_interfaces_outer_core.ocl);
       clReleaseMemObject (mp->d_ibool_interfaces_outer_core.ocl);
       clReleaseMemObject (mp->d_send_accel_buffer_outer_core.ocl);
-      
+
       if (mp->simulation_type == 3) {
         clReleaseMemObject (mp->d_b_send_accel_buffer_outer_core.ocl);
       }
     }
- 
+
     //------------------------------------------
     // NOISE arrays
     //------------------------------------------
     if (mp->noise_tomography > 0) {
       clReleaseMemObject (mp->d_ibelm_top_crust_mantle.ocl);
       clReleaseMemObject (mp->d_noise_surface_movie.ocl);
-      
+
       if (mp->noise_tomography == 1) {
         clReleaseMemObject (mp->d_noise_sourcearray.ocl);
       }
-      
+
       if (mp->noise_tomography > 1) {
         clReleaseMemObject (mp->d_normal_x_noise.ocl);
         clReleaseMemObject (mp->d_normal_y_noise.ocl);
@@ -3787,7 +3787,7 @@ void FC_FUNC_ (prepare_cleanup_device,
         clReleaseMemObject (mp->d_mask_noise.ocl);
         clReleaseMemObject (mp->d_jacobian2D_top_crust_mantle.ocl);
       }
-      
+
       if (mp->noise_tomography == 3) {
         clReleaseMemObject (mp->d_Sigma_kl.ocl);
       }
@@ -3796,7 +3796,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     //------------------------------------------
     // crust_mantle
     //------------------------------------------
-    
+
     clReleaseMemObject (mp->d_xix_crust_mantle.ocl);
     clReleaseMemObject (mp->d_xiy_crust_mantle.ocl);
     clReleaseMemObject (mp->d_xiz_crust_mantle.ocl);
@@ -3816,7 +3816,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_muvstore_crust_mantle.ocl);
       clReleaseMemObject (mp->d_muhstore_crust_mantle.ocl);
       clReleaseMemObject (mp->d_eta_anisostore_crust_mantle.ocl);
-      
+
     } else {
       clReleaseMemObject (mp->d_c11store_crust_mantle.ocl);
       clReleaseMemObject (mp->d_c12store_crust_mantle.ocl);
@@ -3847,7 +3847,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
     clReleaseMemObject (mp->d_ystore_crust_mantle.ocl);
     clReleaseMemObject (mp->d_zstore_crust_mantle.ocl);
-    
+
     if (mp->gravity) {
       clReleaseMemObject (mp->d_xstore_crust_mantle.ocl);
     }
@@ -3859,7 +3859,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_displ_crust_mantle.ocl);
     clReleaseMemObject (mp->d_veloc_crust_mantle.ocl);
     clReleaseMemObject (mp->d_accel_crust_mantle.ocl);
-    
+
     if (mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_b_displ_crust_mantle.ocl);
       clReleaseMemObject (mp->d_b_veloc_crust_mantle.ocl);
@@ -3868,7 +3868,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
     // mass matrix
     clReleaseMemObject (mp->d_rmassz_crust_mantle.ocl);
-    
+
     if (*NCHUNKS_VAL != 6 && mp->absorbing_conditions){
       clReleaseMemObject (mp->d_rmassx_crust_mantle.ocl);
       clReleaseMemObject (mp->d_rmassy_crust_mantle.ocl);
@@ -3882,15 +3882,15 @@ void FC_FUNC_ (prepare_cleanup_device,
       }
       // kernels
       clReleaseMemObject (mp->d_rho_kl_crust_mantle.ocl);
-      
+
       if (!mp->anisotropic_kl){
         clReleaseMemObject (mp->d_alpha_kl_crust_mantle.ocl);
         clReleaseMemObject (mp->d_beta_kl_crust_mantle.ocl);
-        
+
       } else {
         clReleaseMemObject (mp->d_cijkl_kl_crust_mantle.ocl);
       }
-      
+
       if (mp->approximate_hess_kl) {
         clReleaseMemObject (mp->d_hess_kl_crust_mantle.ocl);
       }
@@ -3899,7 +3899,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     //------------------------------------------
     // outer_core
     //------------------------------------------
-    
+
     clReleaseMemObject (mp->d_xix_outer_core.ocl);
     clReleaseMemObject (mp->d_xiy_outer_core.ocl);
     clReleaseMemObject (mp->d_xiz_outer_core.ocl);
@@ -3911,7 +3911,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_gammaz_outer_core.ocl);
 
     clReleaseMemObject (mp->d_kappavstore_outer_core.ocl);
-    
+
     if (mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_rhostore_outer_core.ocl);
     }
@@ -3936,13 +3936,13 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_displ_outer_core.ocl);
     clReleaseMemObject (mp->d_veloc_outer_core.ocl);
     clReleaseMemObject (mp->d_accel_outer_core.ocl);
-    
+
     if (mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_b_displ_outer_core.ocl);
       clReleaseMemObject (mp->d_b_veloc_outer_core.ocl);
       clReleaseMemObject (mp->d_b_accel_outer_core.ocl);
     }
-    
+
     // mass matrix
     clReleaseMemObject (mp->d_rmass_outer_core.ocl);
 
@@ -3965,10 +3965,10 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_gammaz_inner_core.ocl);
 
     clReleaseMemObject (mp->d_muvstore_inner_core.ocl);
-    
+
     if (! mp->anisotropic_inner_core) {
       clReleaseMemObject (mp->d_kappavstore_inner_core.ocl);
-      
+
     } else {
       clReleaseMemObject (mp->d_c11store_inner_core.ocl);
       clReleaseMemObject (mp->d_c12store_inner_core.ocl);
@@ -3998,7 +3998,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_displ_inner_core.ocl);
     clReleaseMemObject (mp->d_veloc_inner_core.ocl);
     clReleaseMemObject (mp->d_accel_inner_core.ocl);
-    
+
     if (mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_b_displ_inner_core.ocl);
       clReleaseMemObject (mp->d_b_veloc_inner_core.ocl);
@@ -4007,7 +4007,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
     // mass matrix
     clReleaseMemObject (mp->d_rmassz_inner_core.ocl);
-    
+
     if (mp->rotation && mp->exact_mass_matrix_for_rotation) {
       clReleaseMemObject (mp->d_rmassx_inner_core.ocl);
       clReleaseMemObject (mp->d_rmassy_inner_core.ocl);
@@ -4031,7 +4031,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_rmass_ocean_load.ocl);
       clReleaseMemObject (mp->d_normal_ocean_load.ocl);
     }
-    
+
 #ifdef USE_TEXTURES_FIELDS
     clReleaseMemObject (mp->d_displ_cm_tex);
     clReleaseMemObject (mp->d_accel_cm_tex);
@@ -4251,7 +4251,7 @@ void FC_FUNC_ (prepare_cleanup_device,
           cudaFree(mp->d_absorb_zmin_outer_core.cuda);
         }
       }
-      
+
     }
 
     //------------------------------------------

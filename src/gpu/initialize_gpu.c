@@ -50,22 +50,22 @@ static struct {
   PASS(IFLAG_IN_FICTITIOUS_CUBE),
   PASS(COLORING_MIN_NSPEC_OUTER_CORE), PASS(COLORING_MIN_NSPEC_INNER_CORE),
   PASS(R_EARTH_KM),
-  
+
   /* macro functions: not working yet, spaces not allowed in OCL compiler*/
-  
+
 /* PASS(INDEX2(xsize, x, y)),
    PASS(INDEX3(xsize, ysize, x, y, z)),
    PASS(INDEX4(xsize, ysize, zsize, x, y, z, i)),
    PASS(INDEX4_PADDED(xsize, ysize, zsize, x, y, z, i)),
    PASS(INDEX5(xsize, ysize, zsize, isize, x, y, z, i, j)),
    PASS(INDEX6(xsize, ysize, zsize, isize, jsize, x, y, z, i, j, k)), */
-  
+
   /* macro flags, passed only ifdefed */
   PASS(MANUALLY_UNROLLED_LOOPS), PASS(USE_TEXTURES_CONSTANTS), PASS(USE_TEXTURES_FIELDS),
 
   PASS(USE_LAUNCH_BOUNDS),
   PASS(LAUNCH_MIN_BLOCKS),
-  
+
   {NULL, NULL}
 };
 #endif
@@ -103,7 +103,7 @@ exiting...\n");
   if (device_count == 0) {
     exit_on_error("CUDA runtime error: there is no device supporting CUDA\n");
   }
-  
+
   *nb_devices = device_count;
 
   // releases previous contexts
@@ -117,7 +117,7 @@ exiting...\n");
   int nbMatchingDevices = 0;
   struct cudaDeviceProp deviceProp;
   int i;
-  
+
   for (i = 0; i < device_count; i++) {
     // get device properties
     cudaGetDeviceProperties(&deviceProp, i);
@@ -131,13 +131,13 @@ exiting...\n");
     printf("ERROR: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
     exit(1);
   }
-  
+
   int myDevice = matchingDevices[myrank % nbMatchingDevices];
   free(matchingDevices);
-  
+
   cudaSetDevice(myDevice);
   cudaGetDeviceProperties(&deviceProp, myDevice);
-  
+
   // exit if the machine has no CUDA-enabled device
   if (deviceProp.major == 9999 && deviceProp.minor == 9999){
     fprintf(stderr,"No CUDA-enabled device found, exiting...\n\n");
@@ -263,7 +263,7 @@ void build_kernels (void);
 
 static void initialize_ocl_device(const char *platform_filter, const char *device_filter, int myrank, int *nb_devices) {
   ocl_select_device(platform_filter, device_filter, myrank, nb_devices);
-  
+
   // outputs device info to file
   char filename[BUFSIZ];
   FILE *fp;
@@ -284,7 +284,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
     clGetDeviceInfo(mocl.device, CL_DEVICE_NAME, sizeof(name), name, NULL);
     clGetDeviceInfo(mocl.device, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t), &image2d_max_size[0], NULL);
     clGetDeviceInfo(mocl.device, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &image2d_max_size[1], NULL);
-    
+
     fprintf (fp, "Device Name = %s\n", name);
     fprintf (fp, "Type: %d\n", (int) device_type);
     fprintf (fp, "local_mem_size: %zu\n", local_mem_size);
@@ -325,9 +325,9 @@ void build_kernels (void) {
     pos += written;
     len -= written;
   }
-  
+
   #include "kernel_inc_cl.c"
-  
+
 #undef BOAST_KERNEL
 #define BOAST_KERNEL(__kern_name__)                                     \
   mocl.programs.__kern_name__##_program = clCreateProgramWithSource(    \
@@ -349,7 +349,7 @@ void build_kernels (void) {
   mocl.kernels.__kern_name__ = clCreateKernel (                         \
                                mocl.programs.__kern_name__ ## _program, \
                                #__kern_name__ , clck_(&errcode));
-  
+
   #include "kernel_list.h"
 }
 
@@ -389,12 +389,12 @@ static void get_platform_version(cl_platform_id platform_id, struct _opencl_vers
 
     char *cl_platform_version;
     cl_platform_version = (char *) malloc(cl_platform_version_size);
-    
+
     if (cl_platform_version == NULL) {
       fprintf(stderr,"Error: Failed to create string (out of memory)!\n");
       exit(1);
     }
-    
+
     clCheck(clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, cl_platform_version_size, cl_platform_version, NULL));
     //OpenCL<space><major_version.minor_version><space><platform-specific information>
     char minor[2], major[2];
@@ -412,23 +412,23 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     cl_int errcode = CL_SUCCESS;
     cl_platform_id *platform_ids;
     cl_uint num_platforms;
-    
+
     clGetPlatformIDs(0, NULL, &num_platforms);
-    
+
     if (num_platforms == 0) {
       fprintf(stderr,"No OpenCL platform available!\n");
       exit(1);
     }
-    
+
     platform_ids = (cl_platform_id *) malloc(num_platforms * sizeof(cl_platform_id));
-    
+
     clGetPlatformIDs(num_platforms, platform_ids, NULL);
-    
+
     cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, 0, 0 };
     if (strlen(platform_filter)) {
       cl_uint found = 0;
       cl_uint i;
-      
+
       for (i = 0; i < num_platforms && !found; i++) {
         size_t info_length;
         char *info;
@@ -438,20 +438,20 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
         for (j = 0; j < 2 && !found; j++) {
           clGetPlatformInfo(platform_ids[i], props_to_check[j], 0, NULL, &info_length);
-        
+
           info = (char *) malloc(info_length * sizeof(char));
-        
+
           clGetPlatformInfo(platform_ids[i], props_to_check[j], info_length, info, NULL);
 
           if (strcasestr(info, platform_filter)) {
             properties[1] = (cl_context_properties) platform_ids[i];
             found = 1;
           }
-        
+
           free(info);
         }
       }
-      
+
       if (!found) {
         fprintf(stderr, "No matching OpenCL platform available : %s!\n", platform_filter);
         exit(1);
@@ -459,54 +459,54 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     } else {
       properties[1] = (cl_context_properties) platform_ids[0];
     }
-    
+
     if (strlen(device_filter)) {
       cl_uint found = 0;
       cl_uint i;
       cl_uint num_devices;
       cl_device_id *device_ids;
       cl_device_id *matching_device_ids;
-      
+
       clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, 0, NULL, &num_devices);
       if (num_devices == 0) {
         fprintf(stderr,"No device of type %d!\n", (int) OCL_DEV_TYPE);
         exit(1);
       }
-      
+
       device_ids = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
-      
+
       matching_device_ids = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
-      
+
       clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, num_devices, device_ids, NULL);
       for (i = 0; i < num_devices; i++) {
         size_t info_length;
         char *info;
-        
+
         clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, 0, NULL, &info_length);
-        
+
         info = (char *) malloc(info_length * sizeof(char));
-        
+
         clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, info_length, info, NULL);
         if (strcasestr(info, device_filter)) {
           matching_device_ids[found] = device_ids[i];
           found++;
         }
-        
+
         free(info);
       }
-      
+
       if (!found) {
         fprintf(stderr, "No matching OpenCL device available : %s!\n", device_filter);
         exit(1);
       }
-      
+
       mocl.context = clCreateContext(properties, found, matching_device_ids, NULL, NULL, clck_(&errcode));
       free (matching_device_ids);
       free (device_ids);
     } else {
       mocl.context = clCreateContextFromType(properties, OCL_DEV_TYPE, NULL, NULL, clck_(&errcode));
     }
-    
+
     //get the number of devices available in the context (devices which are of DEVICE_TYPE_GPU of platform platform_ids[0])
     struct _opencl_version  platform_version;
     get_platform_version((cl_platform_id) properties[1], &platform_version);
@@ -522,16 +522,16 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     }
    mocl.nb_devices = *nb_devices;
    free(platform_ids);
- 
+
    size_t szParmDataBytes;
    cl_device_id* cdDevices;
-  
+
    // get the list of GPU devices associated with context
    clGetContextInfo(mocl.context, CL_CONTEXT_DEVICES, 0, NULL, &szParmDataBytes);
    cdDevices = (cl_device_id *) malloc(szParmDataBytes);
-   
+
    clGetContextInfo(mocl.context, CL_CONTEXT_DEVICES, szParmDataBytes, cdDevices, NULL);
-  
+
    mocl.device = cdDevices[myrank % mocl.nb_devices];
    free(cdDevices);
 
@@ -550,7 +550,7 @@ static char *trim_and_default(char *s)
   if (*s == '\0') {
     return s;
   }
-  
+
   // trim after
   char *back = s + strlen(s);
   while (isspace(*--back));
@@ -560,7 +560,7 @@ static char *trim_and_default(char *s)
   if (strlen(s) == 1 && *s == '*') {
     *s = '\0';
   }
-  
+
   return s;
 }
 
@@ -574,7 +574,7 @@ void FC_FUNC_ (initialize_gpu_device,
 
   platform_filter = trim_and_default(platform_filter);
   device_filter = trim_and_default(device_filter);
-  
+
 #if defined(USE_OPENCL) && defined(USE_CUDA)
   run_cuda = runtime_type == CUDA;
   run_opencl = runtime_type == OPENCL;

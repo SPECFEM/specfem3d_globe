@@ -118,7 +118,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &interface_type));
@@ -295,7 +295,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_potential->ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (int), (void *) &interface_type));
@@ -431,7 +431,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &interface_type));

@@ -65,13 +65,13 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
               TRANSFER_ASMBL_ACCEL_TO_DEVICE)(long* Mesh_pointer,
                                               realw* buffer_recv_vector,
                                               int* IREGION,
-                                              int* FORWARD_OR_ADJOINT) {} 
+                                              int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(transfer_buffer_to_device_async,
               TRANSFER_BUFFER_TO_DEVICE_ASYNC)(long* Mesh_pointer,
                                              realw* buffer,
                                              int* IREGION,
-                                             int* FORWARD_OR_ADJOINT) {} 
+                                             int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(sync_copy_from_device,
               SYNC_copy_FROM_DEVICE)(long* Mesh_pointer,
@@ -156,19 +156,19 @@ void FC_FUNC_(compute_add_sources_backward_gpu,
 
 void FC_FUNC_(compute_add_sources_adjoint_gpu,
               COMPUTE_ADD_SOURCES_ADJOINT_GPU)(long* Mesh_pointer,
-                                                int* h_nrec) {} 
+                                                int* h_nrec) {}
 
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer,
                                       int* h_nrec,
                                                 realw* h_adj_sourcearrays,
-                                      int* h_islice_selected_rec) {} 
+                                      int* h_islice_selected_rec) {}
 
 void FC_FUNC_(transfer_adj_to_device_async,
               TRANSFER_ADJ_TO_DEVICE_ASYNC)(long* Mesh_pointer,
                                             int* h_nrec,
                                             realw* h_adj_sourcearrays,
-                                            int* h_islice_selected_rec) {} 
+                                            int* h_islice_selected_rec) {}
 
 
 //
@@ -718,7 +718,7 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
                                                realw* R_yy,
                                                realw* R_xy,
                                                realw* R_xz,
-                                               realw* R_yz) {} 
+                                               realw* R_yz) {}
 void FC_FUNC_(transfer_b_rmemory_cm_to_device,
               TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long* Mesh_pointer,
                                                realw* b_R_xx,
@@ -732,7 +732,7 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
                                                realw* R_yy,
                                                realw* R_xy,
                                                realw* R_xz,
-                                               realw* R_yz) {} 
+                                               realw* R_yz) {}
 
 void FC_FUNC_(transfer_b_rmemory_ic_to_device,
               TRANSFER_B_RMEMORY_IC_TO_DEVICE)(long* Mesh_pointer,
@@ -845,7 +845,7 @@ void FC_FUNC_(write_seismograms_transfer_gpu,
                                                int* number_receiver_global,
                                                int* ispec_selected_rec,
                                                int* ispec_selected_source,
-                                               int* ibool) {} 
+                                               int* ibool) {}
 
 void FC_FUNC_(transfer_seismo_from_device_async,
               TRANSFER_SEISMO_FROM_DEVICE_ASYNC)(long* Mesh_pointer_f,

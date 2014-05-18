@@ -47,7 +47,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
 
   TRACE ("transfer_boun_pot_from_device");
   int size_mpi_buffer;
-  
+
   Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
 
   // MPI buffer size
@@ -69,7 +69,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
     size_t local_work_size[2];
     cl_uint idx = 0;
     cl_event kernel_evt;
-    
+
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.prepare_boundary_potential_on_device, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.prepare_boundary_potential_on_device, idx++, sizeof (cl_mem), (void *) &mp->d_send_accel_buffer_outer_core.ocl));
@@ -82,7 +82,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
       local_work_size[1] = 1;
       global_work_size[0] = num_blocks_x * blocksize;
       global_work_size[1] = num_blocks_y;
-      
+
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.prepare_boundary_potential_on_device, 2, NULL, global_work_size, local_work_size, 0, NULL, &kernel_evt));
 
       // copies buffer to CPU
@@ -148,7 +148,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
                                                                                     mp->max_nibool_interfaces_oc,
                                                                                     mp->d_nibool_interfaces_outer_core.cuda,
                                                                                     mp->d_ibool_interfaces_outer_core.cuda);
-      
+
       // copies buffer to CPU
       if (GPU_ASYNC_COPY) {
         // waits until kernel is finished before starting async memcpy
@@ -177,11 +177,11 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
       if( GPU_ASYNC_COPY ){
         // waits until kernel is finished before starting async memcpy
         cudaStreamSynchronize(mp->compute_stream);
-        
+
         // copies buffer to CPU
         cudaMemcpyAsync(mp->h_b_send_accel_buffer_oc,mp->d_b_send_accel_buffer_outer_core.cuda,size_mpi_buffer*sizeof(realw),
                         cudaMemcpyDeviceToHost,mp->copy_stream);
-       
+
       }else{
         // synchronous copy
         print_CUDA_error_if_any(cudaMemcpy(send_buffer,mp->d_b_send_accel_buffer_outer_core.cuda,
@@ -232,20 +232,20 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     cl_uint idx = 0;
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
-    
+
     if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
       copy_evt = &mp->last_copy_evt;
       num_evt = 1;
     }
-    
-    if (*FORWARD_OR_ADJOINT == 1) {      
+
+    if (*FORWARD_OR_ADJOINT == 1) {
       if (!GPU_ASYNC_COPY) {
         // copies scalar buffer onto GPU
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_send_accel_buffer_outer_core.ocl, CL_FALSE, 0,
                                        mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw),
                                        buffer_recv_scalar, 0, NULL, NULL));
       }
-      
+
       //assemble forward field
       clCheck (clSetKernelArg (mocl.kernels.assemble_boundary_potential_on_device, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core));
       clCheck (clSetKernelArg (mocl.kernels.assemble_boundary_potential_on_device, idx++, sizeof (cl_mem), (void *) &mp->d_send_accel_buffer_outer_core));

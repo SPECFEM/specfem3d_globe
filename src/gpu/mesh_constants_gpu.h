@@ -883,13 +883,13 @@ typedef struct mesh_ {
   float* h_recv_accel_buffer_cm;
   float* h_b_send_accel_buffer_cm;
   float* h_b_recv_accel_buffer_cm;
-  
+
   // inner core
   float* h_send_accel_buffer_ic;
   float* h_recv_accel_buffer_ic;
   float* h_b_send_accel_buffer_ic;
   float* h_b_recv_accel_buffer_ic;
-  
+
   // outer core
   float* h_send_accel_buffer_oc;
   float* h_recv_accel_buffer_oc;
@@ -905,13 +905,13 @@ typedef struct mesh_ {
   cl_mem h_pinned_recv_accel_buffer_cm;
   cl_mem h_pinned_b_send_accel_buffer_cm;
   cl_mem h_pinned_b_recv_accel_buffer_cm;
-  
+
   // inner core
   cl_mem h_pinned_send_accel_buffer_ic;
   cl_mem h_pinned_recv_accel_buffer_ic;
   cl_mem h_pinned_b_send_accel_buffer_ic;
   cl_mem h_pinned_b_recv_accel_buffer_ic;
-  
+
   // outer core
   cl_mem h_pinned_send_accel_buffer_oc;
   cl_mem h_pinned_recv_accel_buffer_oc;
@@ -928,7 +928,7 @@ typedef struct mesh_ {
   cl_event last_copy_evt;
   int has_last_copy_evt;
 #endif
-  
+
 } Mesh;
 
 

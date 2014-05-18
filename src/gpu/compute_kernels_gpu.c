@@ -50,7 +50,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-    
+
   if (run_opencl) {
     // density kernel
     clCheck (clSetKernelArg (mocl.kernels.compute_rho_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
@@ -332,7 +332,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-    
+
   if (run_opencl) {
     clCheck (clSetKernelArg (mocl.kernels.compute_rho_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_inner_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_rho_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_inner_core.ocl));
@@ -446,7 +446,7 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     clCheck (clSetKernelArg (mocl.kernels.compute_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rhostore_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_kappavstore_outer_core.ocl));
@@ -528,7 +528,7 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // copies surface buffer to GPU
     clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_FALSE, 0,
                                    NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw),

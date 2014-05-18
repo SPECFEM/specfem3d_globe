@@ -52,7 +52,7 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // launches GPU kernel
     if (*FORWARD_OR_ADJOINT == 1) {
 
@@ -86,7 +86,7 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_coupling_fluid_CMB_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
   }
 skip_exec:;
-  
+
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
@@ -146,7 +146,7 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // launches GPU kernel
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.compute_coupling_fluid_ICB_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_inner_core.ocl));
@@ -239,7 +239,7 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // launches GPU kernel
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.compute_coupling_CMB_fluid_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
@@ -343,7 +343,7 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // launches GPU kernel
     if (*FORWARD_OR_ADJOINT == 1) {
 
@@ -455,7 +455,7 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // uses corrected mass matrices
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.compute_coupling_ocean_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));

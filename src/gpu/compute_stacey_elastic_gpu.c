@@ -114,7 +114,7 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // absorbing boundary contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -269,7 +269,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // adjoint simulations: needs absorbing boundary buffer
     // copies array to GPU
 
@@ -415,7 +415,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     // absorbing boundary contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));

@@ -71,7 +71,7 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     //launch kernel
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_inner_core.ocl));
@@ -187,7 +187,7 @@ void FC_FUNC_ (update_displacement_cm_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     //launch kernel
     if (*FORWARD_OR_ADJOINT == 1) {
 
@@ -297,7 +297,7 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-    
+
     //launch kernel
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
@@ -393,7 +393,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-    
+
   if (run_opencl) {
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -428,7 +428,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 #endif
 #ifdef USE_CUDA
   dim3 grid,threads;
-  
+
   if (run_cuda) {
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
@@ -467,7 +467,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
     idx = 0;
-    
+
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_inner_core.ocl));
@@ -555,7 +555,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
-  
+
   if (run_opencl) {
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -581,7 +581,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 #endif
 #ifdef USE_CUDA
   dim3 grid,threads;
-  
+
   if (run_cuda) {
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
@@ -611,7 +611,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
     idx = 0;
-    
+
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_inner_core.ocl));
@@ -673,7 +673,7 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-  
+
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
@@ -748,7 +748,7 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-  
+
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
