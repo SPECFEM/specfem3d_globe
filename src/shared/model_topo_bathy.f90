@@ -123,27 +123,6 @@
   enddo
   close(13)
 
-  ! note: we check the limits after reading in the data. this seems to perform slightly faster
-  !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
-
-  ! imposes limits
-  if( USE_MAXIMUM_HEIGHT_TOPO .or. USE_MAXIMUM_DEPTH_OCEANS ) then
-    do itopo_y=1,NY_BATHY
-      do itopo_x=1,NX_BATHY
-
-        ! impose maximum height of mountains, to suppress oscillations in Himalaya etc.
-        if(USE_MAXIMUM_HEIGHT_TOPO .and. ibathy_topo(itopo_x,itopo_y) > MAXIMUM_HEIGHT_TOPO) &
-          ibathy_topo(itopo_x,itopo_y) = MAXIMUM_HEIGHT_TOPO
-
-        ! impose maximum depth of oceans, to suppress oscillations near deep trenches
-        if(USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
-          ibathy_topo(itopo_x,itopo_y) = MAXIMUM_DEPTH_OCEANS
-
-      enddo
-    enddo
-
-  endif
-
   ! user output
   write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
 
