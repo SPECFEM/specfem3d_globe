@@ -29,6 +29,9 @@ grdimage topography_of_SPECFEM_mesh.grd -CGMTglobe.cpt -Rd -JK$central_meridian/
 ## DK DK offset of -1.5 inch
 pscoast -Rd -JK$central_meridian/9i -B45g30:."Topography of SPECFEM3D_GLOBE mesh": -W -Dc -A1000 -U/-0.75i/-1.5i/"SPECFEM3D_GLOBE calculations by Dimitri Komatitsch" -V -O >> $ps
 
+## DK DK convert the final file to PDF
+ps2pdf $ps
+
 # Clean up
-rm -f .gmt* gmt.conf gmt.history topography_of_SPECFEM_mesh.grd
+rm -f .gmt* gmt.conf gmt.history topography_of_SPECFEM_mesh.grd $ps
 
