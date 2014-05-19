@@ -6,6 +6,11 @@
 # All following but the last need both "-K" and "-O"
 # The last one needs _only_ "-O"
 
+if [[ ! -f GMTglobe.cpt ]]; then
+    echo "Color palette file GMTglobe.cpt not found!"
+    exit 1
+fi
+
 ps=topography_of_SPECFEM_mesh.ps
 
 central_meridian=0
