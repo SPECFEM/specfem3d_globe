@@ -166,15 +166,8 @@
   integer, parameter :: TOPO_MINIMUM = - 11200 ! (max depth in m, Mariana trench)
   integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
-! maximum depth of the oceans in trenches and height of topo in mountains
-! to avoid taking into account spurious oscillations in global model ETOPO
-  logical, parameter :: USE_MAXIMUM_HEIGHT_TOPO = .false.
-  integer, parameter :: MAXIMUM_HEIGHT_TOPO = +20000
-  logical, parameter :: USE_MAXIMUM_DEPTH_OCEANS = .false.
-  integer, parameter :: MAXIMUM_DEPTH_OCEANS = -20000
-
 ! minimum thickness in meters to include the effect of the oceans and topo
-  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
+  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 50.d0
 
 
 !!-----------------------------------------------------------
