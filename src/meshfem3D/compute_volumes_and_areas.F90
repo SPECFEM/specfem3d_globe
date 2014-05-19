@@ -306,7 +306,7 @@
   do ispec = 1,nspec
 
     ! print information about number of elements done so far
-    if(myrank == 0 .and. mod(ispec,NSPEC_DISPLAY_INTERVAL) == 0) then
+    if(myrank == 0 .and. (mod(ispec,NSPEC_DISPLAY_INTERVAL) == 0 .or. ispec == nspec)) then
        write(IMAIN,*) 'for Roland_Sylvain integrals ',ispec,' elements computed out of ',nspec
        ! write time stamp file to give information about progression of simulation
        write(outputname,"('/timestamp_reg',i1.1,'_ispec',i7.7,'_out_of_',i7.7)") iregion_code,ispec,nspec
