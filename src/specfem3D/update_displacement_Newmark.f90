@@ -198,12 +198,20 @@
   ! local parameters
   integer :: i
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( NGLOB, displ, veloc, accel, &
+!$OMP deltat, deltatsqover2, deltatover2 ) &
+!$OMP PRIVATE(i)
+
   ! Newmark time scheme update
+!$OMP DO SCHEDULE(GUIDED)
   do i=1,NGLOB
     displ(i) = displ(i) + deltat * veloc(i) + deltatsqover2 * accel(i)
     veloc(i) = veloc(i) + deltatover2 * accel(i)
     accel(i) = 0._CUSTOM_REAL
   enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 
   end subroutine update_displ_acoustic
 
@@ -279,9 +287,6 @@
 
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
-
-  ! mass matrix
-!!!!!  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_outer_core
 
   real(kind=CUSTOM_REAL) :: deltatover2
 
@@ -393,17 +398,26 @@
   !   - inner core region
   !         needs both, acceleration update & velocity corrector terms
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( NGLOB_CM, veloc_crust_mantle, deltatover2, &
+!$OMP accel_crust_mantle, NGLOB_IC, veloc_inner_core, accel_inner_core) &
+!$OMP PRIVATE(i)
+
   if(FORCE_VECTORIZATION_VAL) then
 
     ! crust/mantle
+!$OMP DO SCHEDULE(GUIDED)
     do i=1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
+!$OMP ENDDO
 
+!$OMP DO SCHEDULE(GUIDED)
     ! inner core
     do i=1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
+!$OMP ENDDO
 
   else
 
@@ -418,6 +432,8 @@
     enddo
 
   endif
+
+!$OMP END PARALLEL
 
   end subroutine update_veloc_elastic
 
