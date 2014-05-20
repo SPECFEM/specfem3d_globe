@@ -432,8 +432,8 @@
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
 ! the code will display sample output values at this particular point as a check
-  integer, parameter :: ixr = NX_OBSERVATION / 3
-  integer, parameter :: iyr = NY_OBSERVATION / 4
+  integer, parameter :: ixr = max(NX_OBSERVATION / 3, 1)
+  integer, parameter :: iyr = max(NY_OBSERVATION / 4, 1)
   integer, parameter :: ichunkr = 3
 
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
