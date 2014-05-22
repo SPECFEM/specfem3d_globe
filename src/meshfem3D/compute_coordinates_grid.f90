@@ -378,7 +378,28 @@
     call bcast_all_dp(y_observation1D, NTOTAL_OBSERVATION)
     call bcast_all_dp(z_observation1D, NTOTAL_OBSERVATION)
 
-  else
+!   loop on all the chunks and then on all the observation nodes in each chunk
+    do ichunk = 1,NCHUNKS_MAX
+      do iy = 1,NY_OBSERVATION
+        do ix = 1,NX_OBSERVATION
+
+          x_top = x_observation(ix,iy,ichunk)
+          y_top = y_observation(ix,iy,ichunk)
+          z_top = z_observation(ix,iy,ichunk)
+
+          ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+          call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
+
+          ! store the values obtained for future display with GMT
+          if( lon > 180.0d0 ) lon = lon - 360.0d0
+          lon_observation(ix,iy,ichunk) = lon
+          lat_observation(ix,iy,ichunk) = lat
+
+        enddo
+      enddo
+    enddo
+
+  else ! of if(REUSE_EXISTING_OBSERVATION_SURF)
 
   ! for future GMT display
   if(myrank == 0) then
