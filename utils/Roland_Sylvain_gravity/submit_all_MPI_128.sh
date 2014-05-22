@@ -8,6 +8,7 @@
 mkdir -p DATABASES_MPI OUTPUT_FILES
 mkdir -p OUTPUT_FILES/DATABASES_MPI
 
+# if a saved observation grid exists from a previous run, copy it to the OUTPUT_FILES directory
 if [[ -f saved_observation_grid_real_x_y_z_used_by_the_code.txt ]]; then
   cp saved_observation_grid_real_x_y_z_used_by_the_code.txt OUTPUT_FILES
 fi
