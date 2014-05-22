@@ -331,15 +331,15 @@
 
   use constants
 
-  use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation,lon_observation,lat_observation, &
-                                     ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
+  use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation,x_observation1D,y_observation1D,z_observation1D, &
+                           lon_observation,lat_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
   use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
 
   implicit none
 
 ! local variables
-  integer :: ix,iy,ichunk
+  integer :: ix,iy,ichunk,ier
 
   double precision :: gamma,x,y,rgt
   double precision :: x_top,y_top,z_top
@@ -350,9 +350,42 @@
 ! the observation surface is always above the whole Earth, thus each mesh chunk has a size of PI / 2 in each direction
   double precision, parameter :: ANGULAR_WIDTH_XI_RAD = PI_OVER_TWO, ANGULAR_WIDTH_ETA_RAD = PI_OVER_TWO
 
+! reuse an existing observation surface created in another run and stored to disk,
+! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
+! and results for a 3D Earth with topography)
+  if(REUSE_EXISTING_OBSERVATION_SURF) then
+
+    if(myrank == 0) then
+      open(unit=9965,file=trim(OUTPUT_FILES)//'/saved_observation_grid_real_x_y_z_used_by_the_code.txt',status='old', &
+                                                                                               action='read',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening file for REUSE_EXISTING_OBSERVATION_SURF')
+
+!     loop on all the chunks and then on all the observation nodes in each chunk
+      do ichunk = 1,NCHUNKS_MAX
+        do iy = 1,NY_OBSERVATION
+          do ix = 1,NX_OBSERVATION
+            ! read the saved values
+            read(9965,*) x_observation(ix,iy,ichunk),y_observation(ix,iy,ichunk),z_observation(ix,iy,ichunk)
+          enddo
+        enddo
+      enddo
+      close(unit=9965)
+
+    endif
+
+!   the 3D and 1D versions of these arrays are equivalenced in the module in which they are declared
+    call bcast_all_dp(x_observation1D, NTOTAL_OBSERVATION)
+    call bcast_all_dp(y_observation1D, NTOTAL_OBSERVATION)
+    call bcast_all_dp(z_observation1D, NTOTAL_OBSERVATION)
+
+  else
+
   ! for future GMT display
-  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/observation_grid_long_lat_topo_for_GMT.txt', &
-                                     status='unknown',action='write')
+  if(myrank == 0) then
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/observation_grid_long_lat_topo_for_GMT.txt',status='unknown',action='write')
+    open(unit=9965,file=trim(OUTPUT_FILES)//'/saved_observation_grid_real_x_y_z_used_by_the_code.txt',status='unknown', &
+                                                                                                 action='write')
+  endif
 
 ! loop on all the chunks and then on all the observation nodes in each chunk
   do ichunk = 1,NCHUNKS_MAX
@@ -454,12 +487,20 @@
       y_observation(ix,iy,ichunk) = y_top * observation_elevation_ratio
       z_observation(ix,iy,ichunk) = z_top * observation_elevation_ratio
 
+      ! store the values obtained so that they can be reused from other runs
+      if(myrank == 0) write(9965,*) x_observation(ix,iy,ichunk),y_observation(ix,iy,ichunk),z_observation(ix,iy,ichunk)
+
       enddo
     enddo
   enddo
 
   ! for future GMT display
-  if(myrank == 0) close(unit=IOUT)
+  if(myrank == 0) then
+    close(unit=IOUT)
+    close(unit=9965)
+  endif
+
+  endif ! of if(REUSE_EXISTING_OBSERVATION_SURF)
 
   end subroutine compute_observation_surface
 

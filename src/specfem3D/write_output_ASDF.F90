@@ -849,8 +849,13 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
 
   call synchronize_all()
-  call MPI_Gather(local_dim, 1, MPI_INTEGER, dim_all_proc, 1, &
-                  MPI_INTEGER, 0, comm, ierr)
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+  call MPI_Gather(local_dim, 1, MPI_INTEGER, dim_all_proc, 1, MPI_INTEGER, 0, comm, ierr)
 
   if(rank==0)then
     offset_proc(1)=0
@@ -860,8 +865,17 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
     global_dim=sum(dim_all_proc(1:nproc))
   endif
 
-  call MPI_Scatter(offset_proc, 1, MPI_INTEGER, offset, &
-                              1, MPI_INTEGER, 0, comm, ierr)
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+  call MPI_Scatter(offset_proc, 1, MPI_INTEGER, offset, 1, MPI_INTEGER, 0, comm, ierr)
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
   call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
 
   deallocate(dim_all_proc, STAT=ierr)
