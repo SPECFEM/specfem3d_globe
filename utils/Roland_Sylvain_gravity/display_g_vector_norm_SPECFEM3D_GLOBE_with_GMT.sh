@@ -18,7 +18,7 @@ makecpt  -T-0.03/0.03/0.0001 -Z > color2.cpt
 file=results_norm_of_g
 
 ## DK DK subtract the 3D result with topography and s20rts from the 1D result for the reference ellipsoid calculation
-#grdmath new_SPECFEM3D_GLOBE_NEX_160_on_600_cores_whole_Earth_with_topo_and_s40rts/${file}.grd new_SPECFEM3D_GLOBE_NEX_160_on_600_cores_whole_Earth_with_ellipticity_only_and_PREM1D/${file}.grd NEG ADD = ${file}_difference.grd
+grdmath new_SPECFEM3D_GLOBE_NEX_160_on_600_cores_whole_Earth_with_topo_and_s40rts/${file}.grd new_SPECFEM3D_GLOBE_NEX_160_on_600_cores_whole_Earth_with_ellipticity_only_and_PREM1D/${file}.grd NEG ADD = ${file}_difference.grd
 
 ## DK DK offset de 4.5cm
 ## DK DK -Rd signifie -R-180/180/-90/90
