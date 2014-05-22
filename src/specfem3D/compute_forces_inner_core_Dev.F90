@@ -169,8 +169,23 @@
   endif
 
 !$OMP PARALLEL DEFAULT( NONE ) &
-!$OMP SHARED( num_elements, phase_ispec_inner, iphase, idoubling, ibool, displ_inner_core, hprime_xx, hprime_xxT, xix, xiy, xiz, etax, etay, etaz, gammax, gammay, gammaz, COMPUTE_AND_STORE_STRAIN, c11store,  c12store, c13store, c33store, c44store, one_minus_sum_beta, muvstore, kappavstore, R_xx, R_yy, R_xy, R_xz, R_yz, xstore, ystore, zstore, minus_gravity_table, minus_deriv_gravity_table, density_table, wgll_cube, hprimewgll_xxT, hprimewgll_xx, wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accel_inner_core, USE_LDDRK, R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, vnspec, factor_common, deltat, alphaval,betaval,gammaval, epsilondev_xx,epsilondev_yy,epsilondev_xy, epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
-!$OMP PRIVATE( ispec_p, ispec, iglob, dummyx_loc, dummyy_loc, dummyz_loc, tempx2, tempy2, tempz2, xixl, xiyl, xizl, etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, duxdxl, tempx1, tempx3, duxdyl, duxdzl, duydxl, tempy1, tempy3, duydyl, duydzl, tempz1, tempz3, duzdxl, duzdyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, templ, epsilondev_loc, c11l, c12l, c13l, c33l, c44l, minus_sum_beta, mul, sigma_xx, sigma_yy, sigma_zz, sigma_xy, sigma_xz, sigma_yz, kappal, lambdalplus2mul, lambdal, sigma_yx, sigma_zx, sigma_zy, radius, theta, phi, cos_theta, sin_theta, cos_phi, sin_phi, cos_theta_sq, sin_theta_sq, cos_phi_sq, sin_phi_sq, int_radius, minus_g, rho, gxl, gyl, gzl, minus_dg, minus_g_over_radius, minus_dg_plus_g_over_radius, Hxxl, Hyyl, Hzzl, Hxyl, Hxzl, Hyzl, sx_l, sy_l, sz_l, factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, sum_terms, newtempx1, newtempx3 , newtempy1, newtempy3, newtempz1, newtempz3, R_xx_val, R_yy_val)
+!$OMP SHARED( num_elements, phase_ispec_inner, iphase, idoubling, ibool, displ_inner_core, hprime_xx, hprime_xxT, &
+!$OMP xix, xiy, xiz, etax, etay, etaz, gammax, gammay, gammaz, COMPUTE_AND_STORE_STRAIN, c11store,  c12store, c13store, &
+!$OMP c33store, c44store, one_minus_sum_beta, muvstore, kappavstore, R_xx, R_yy, R_xy, R_xz, R_yz, xstore, ystore, zstore, &
+!$OMP minus_gravity_table, minus_deriv_gravity_table, density_table, wgll_cube, hprimewgll_xxT, hprimewgll_xx, wgllwgll_yz_3D, &
+!$OMP wgllwgll_xz_3D, wgllwgll_xy_3D, accel_inner_core, USE_LDDRK, R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+!$OMP vnspec, factor_common, deltat, alphaval,betaval,gammaval, epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+!$OMP epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
+!$OMP PRIVATE( ispec_p, ispec, iglob, dummyx_loc, dummyy_loc, dummyz_loc, tempx2, tempy2, tempz2, xixl, xiyl, xizl, &
+!$OMP etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, duxdxl, tempx1, tempx3, duxdyl, duxdzl, duydxl, &
+!$OMP tempy1, tempy3, duydyl, duydzl, tempz1, tempz3, duzdxl, duzdyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, &
+!$OMP duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, templ, epsilondev_loc, &
+!$OMP c11l, c12l, c13l, c33l, c44l, minus_sum_beta, mul, sigma_xx, sigma_yy, sigma_zz, sigma_xy, sigma_xz, sigma_yz, &
+!$OMP kappal, lambdalplus2mul, lambdal, sigma_yx, sigma_zx, sigma_zy, radius, theta, phi, cos_theta, sin_theta, cos_phi, &
+!$OMP sin_phi, cos_theta_sq, sin_theta_sq, cos_phi_sq, sin_phi_sq, int_radius, minus_g, rho, gxl, gyl, gzl, minus_dg, &
+!$OMP minus_g_over_radius, minus_dg_plus_g_over_radius, Hxxl, Hyyl, Hzzl, Hxyl, Hxzl, Hyzl, sx_l, sy_l, sz_l, &
+!$OMP factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, sum_terms, newtempx1, newtempx3 , newtempy1, &
+!$OMP newtempy3, newtempz1, newtempz3, R_xx_val, R_yy_val)
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements

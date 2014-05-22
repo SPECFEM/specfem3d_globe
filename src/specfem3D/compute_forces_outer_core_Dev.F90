@@ -143,7 +143,8 @@
 !$OMP d_ln_density_dr_table, hprime_xx, hprime_xxT, xix, xiy, xiz,  etax, etay, etaz, &
 !$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation,   &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
-!$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, istage, B_array_rotation_lddrk, div_displfluid ) &
+!$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
+!$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
 !$OMP PRIVATE( &
 !$OMP ispec_p, ispec, iglob, dummyx_loc, radius, theta, phi, &
 !$OMP cos_theta, sin_theta, cos_phi, sin_phi, int_radius, &
@@ -153,9 +154,7 @@
 !$OMP dpotentialdxl, tempx1, tempx3, dpotentialdyl, dpotentialdzl, two_omega_deltat, cos_two_omega_t, &
 !$OMP sin_two_omega_t, source_euler_A, source_euler_B, A_rotation, B_rotation, ux_rotation, uy_rotation, &
 !$OMP dpotentialdx_with_rot, dpotentialdy_with_rot, gxl, gyl, gzl, gravity_term, &
-!$OMP sum_terms, newtempx1, newtempx3, &
-!$OMP newtempx2   &
-!$OMP )
+!$OMP sum_terms, newtempx1, newtempx3, newtempx2 )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
