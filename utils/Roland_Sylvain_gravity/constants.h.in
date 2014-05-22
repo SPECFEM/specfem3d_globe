@@ -63,7 +63,7 @@
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41
 ! uncomment this to write messages to a text file
-  integer, parameter :: IMAIN = 42
+  integer, parameter :: IMAIN = 6
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
 ! I/O unit for noise data files
@@ -103,12 +103,12 @@
 
 !---  ETOPO4 4-minute model
 ! size of topography and bathymetry file
-  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
+! integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
 ! resolution of topography file in minutes
-  integer, parameter :: RESOLUTION_TOPO_FILE = 4
+! integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file
 ! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.dat'
-  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
 
 !--- ETOPO2 2-minute model
 ! size of topography and bathymetry file
@@ -125,11 +125,11 @@
 
 !--- ETOPO1 1-minute model
 ! size of topography and bathymetry file
-! integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
+  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
 ! resolution of topography file in minutes
-! integer, parameter :: RESOLUTION_TOPO_FILE = 1
+  integer, parameter :: RESOLUTION_TOPO_FILE = 1
 ! pathname of the topography file
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.dat'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.dat'
 ! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.dat'
 
 
@@ -167,7 +167,7 @@
   integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
 ! minimum thickness in meters to include the effect of the oceans and topo
-  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 50.d0
+  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 2.d0 !!!! 100.d0
 
 
 !!-----------------------------------------------------------
@@ -196,15 +196,15 @@
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
-  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for Roland_Sylvain gravity calculations
-  double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
+  logical, parameter :: INCLUDE_ICE_IN_CRUST = .true.
+  double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = -100000.d0 ! minimim thickness in km
 
 ! default crustal model
 ! (used as default when CRUSTAL flag is set for simulation)
 !-- uncomment for using Crust1.0
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
+  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
 !-- uncomment for using Crust2.0
-  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
 !-- uncomment for using General Crustmaps instead
 ! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 !-- uncomment for using EPcrust instead (European regional model)
@@ -409,12 +409,12 @@
 !!-----------------------------------------------------------
 
 !! DK DK for Roland_Sylvain
-  logical, parameter :: ROLAND_SYLVAIN = .false.
+  logical, parameter :: ROLAND_SYLVAIN = .true.
 
 ! reuse an existing observation surface created in another run and stored to disk,
 ! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
 ! and results for a 3D Earth with topography)
-  logical, parameter :: REUSE_EXISTING_OBSERVATION_SURF = .false.
+  logical, parameter :: REUSE_EXISTING_OBSERVATION_SURF = .true.
 
 ! altitude of the observation points in km
   double precision, parameter :: altitude_of_observation_points = 255.d0
@@ -432,13 +432,13 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-!! DK DK 4 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
-  integer, parameter :: NX_OBSERVATION = 4 ! 500
+!! DK DK 2 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
+  integer, parameter :: NX_OBSERVATION = 500 ! 10 !!!!!!!!!!!!! 100
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
 ! the code will display sample output values at this particular point as a check
-  integer, parameter :: ixr = max(NX_OBSERVATION / 3, 1)
-  integer, parameter :: iyr = max(NY_OBSERVATION / 4, 1)
+  integer, parameter :: ixr = NX_OBSERVATION / 3
+  integer, parameter :: iyr = NY_OBSERVATION / 4
   integer, parameter :: ichunkr = 3
 
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
