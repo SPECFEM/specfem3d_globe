@@ -84,7 +84,7 @@
     accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
     accel(3,i) = accel(3,i)*rmassz(i)
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine multiply_accel_elastic
