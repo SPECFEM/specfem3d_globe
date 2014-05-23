@@ -318,7 +318,9 @@
     ! updates acceleration
 
 #ifdef FORCE_VECTORIZATION
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
 !$OMP CRITICAL
+#endif
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
 ! (only common points between different elements can be the same)
@@ -337,13 +339,24 @@
 
           ! do NOT use array syntax ":" for the three statements below otherwise most compilers
           ! will not be able to vectorize the outer loop
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(INDEX_IJK,1)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(INDEX_IJK,2)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(INDEX_IJK,3)
 
 #ifdef FORCE_VECTORIZATION
     enddo
-!$OMP END CRITICAL
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
 #else
         enddo
       enddo
