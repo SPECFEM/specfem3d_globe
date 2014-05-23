@@ -877,30 +877,6 @@
 
   else
 
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG since using the routines below is unsafe (see the above comment), I remove them for now
-!! DK DK BUG
-!! DK DK BUG
-    goto 777
-
-!! DK DK BUG
-!! DK DK BUG
-! the attenuation values for s362ani + ATTENUATION = .true. currently depend on the compiler used and on the compiler options used,
-! i.e. the lines below are unreliable. I am not sure why, it is probably either that elem_in_crust is not correctly set,
-! and / or that r_prem >(ONE-moho) is sensitive to roundoff noise and thus compiler-dependent,
-! in which case it should be changed to:
-!
-! if (r_prem - (ONE-moho) < some_epsilon_to_define) then...
-!      or something like that
-!
-! To be safe I have commented out the current code and checked that the bug (i.e. getting compiler-dependent results) is now gone.
-! If you fix that routine and check with Matthieu and Elliott that it then works fine on different machines
-! with different compilers please let us know and we will update the Git version
-! (including the master branch) and make an announcement to users.
-!! DK DK BUG
-!! DK DK BUG
-
     select case (REFERENCE_1D_MODEL)
 
       ! case(REFERENCE_MODEL_PREM)
@@ -934,13 +910,6 @@
         endif
 
     end select
-
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG since using the routines above is unsafe (see the above comment), I remove them for now
-!! DK DK BUG
-!! DK DK BUG
-  777 continue
 
   endif
 
