@@ -82,6 +82,8 @@
   double precision :: r,r_prem,moho
   integer :: i,j,k,i_sls
 
+  moho=0.0
+
   ! loops over all GLL points for this spectral element
   do k=1,NGLLZ
     do j=1,NGLLY
