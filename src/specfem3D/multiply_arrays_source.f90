@@ -1,4 +1,4 @@
-!=====================================================================   
+!=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
@@ -84,7 +84,7 @@
     accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
     accel(3,i) = accel(3,i)*rmassz(i)
   enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   end subroutine multiply_accel_elastic

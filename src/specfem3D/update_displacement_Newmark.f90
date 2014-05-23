@@ -1,4 +1,4 @@
-!=====================================================================   
+!=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
@@ -210,7 +210,7 @@
     veloc(i) = veloc(i) + deltatover2 * accel(i)
     accel(i) = 0._CUSTOM_REAL
   enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   end subroutine update_displ_acoustic
@@ -410,14 +410,14 @@
     do i=1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
-!$OMP ENDDO
+!$OMP enddo
 
 !$OMP DO SCHEDULE(GUIDED)
     ! inner core
     do i=1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
-!$OMP ENDDO
+!$OMP enddo
 
   else
 

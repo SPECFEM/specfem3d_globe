@@ -1,4 +1,4 @@
-!=====================================================================   
+!=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
@@ -782,7 +782,7 @@
     endif ! end of test to exclude fictitious elements in central cube
 
   enddo ! of spectral element loop
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   contains

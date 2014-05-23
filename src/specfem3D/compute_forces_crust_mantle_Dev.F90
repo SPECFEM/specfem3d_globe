@@ -1,4 +1,4 @@
-!=====================================================================   
+!=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
@@ -394,7 +394,7 @@
     endif
 
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   contains
