@@ -161,11 +161,19 @@
   ! Newmark time scheme update
   if(FORCE_VECTORIZATION_VAL) then
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( NGLOB, displ, veloc, accel, &
+!$OMP deltat, deltatsqover2, deltatover2 ) &
+!$OMP PRIVATE(i)
+
+!$OMP DO SCHEDULE(GUIDED)
     do i=1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
       accel(i,1) = 0._CUSTOM_REAL
     enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   else
 

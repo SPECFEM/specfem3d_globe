@@ -29,8 +29,6 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
-
-
   subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                             deltat, &
                                             displ_inner_core, &
@@ -185,7 +183,11 @@
 !$OMP sin_phi, cos_theta_sq, sin_theta_sq, cos_phi_sq, sin_phi_sq, int_radius, minus_g, rho, gxl, gyl, gzl, minus_dg, &
 !$OMP minus_g_over_radius, minus_dg_plus_g_over_radius, Hxxl, Hyyl, Hzzl, Hxyl, Hxzl, Hyzl, sx_l, sy_l, sz_l, &
 !$OMP factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, sum_terms, newtempx1, newtempx3 , newtempy1, &
-!$OMP newtempy3, newtempz1, newtempz3, R_xx_val, R_yy_val)
+!$OMP newtempy3, newtempz1, newtempz3
+#ifdef FORCE_VECTORIZATION
+!$OMP ,R_xx_val, R_yy_val &
+#endif
+!$OMP )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
@@ -705,7 +707,9 @@
 
       ! sum contributions from each element to the global mesh and add gravity terms
 #ifdef FORCE_VECTORIZATION
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
 !$OMP CRITICAL
+#endif
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
 ! (only common points between different elements can be the same)
@@ -723,13 +727,24 @@
             iglob = ibool(INDEX_IJK,ispec)
             ! do NOT use array syntax ":" for the three statements below
             ! otherwise most compilers will not be able to vectorize the outer loop
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
             accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(INDEX_IJK,1)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
             accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(INDEX_IJK,2)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
             accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(INDEX_IJK,3)
 
 #ifdef FORCE_VECTORIZATION
       enddo
-!$OMP END CRITICAL
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
 #else
           enddo
         enddo

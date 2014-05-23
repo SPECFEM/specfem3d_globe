@@ -388,7 +388,9 @@
     ! updates acceleration
 
 #ifdef FORCE_VECTORIZATION
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
 !$OMP CRITICAL
+#endif
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
 ! (only common points between different elements can be the same)
@@ -403,11 +405,16 @@
         do i=1,NGLLX
 #endif
           iglob = ibool(INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accelfluid(iglob) = accelfluid(iglob) + sum_terms(INDEX_IJK)
 
 #ifdef FORCE_VECTORIZATION
     enddo
-!$OMP END CRITICAL
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
 #else
         enddo
       enddo
