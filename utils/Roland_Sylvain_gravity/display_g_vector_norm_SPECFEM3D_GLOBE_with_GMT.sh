@@ -11,7 +11,9 @@ gmtset ANNOT_FONT_SIZE_PRIMARY 10p HEADER_FONT_SIZE 18p PLOT_DEGREE_FORMAT ddd:m
 # DK DK for absolute norm of the g vector
 #makecpt  -T9.0/9.2/0.001 -Z > color2.cpt
 # DK DK for the difference between the 3D calculation and the 1D reference calculation
-makecpt  -T-0.03/0.03/0.0001 -Z > color2.cpt
+#makecpt  -T-0.03/0.03/0.0001 -Z > color2.cpt
+#-0.00668716430664 z_max: 0.00217151641846 name: z
+makecpt  -T-0.007/0.007/0.00001 -Z > color2.cpt
 
 ################################
 
