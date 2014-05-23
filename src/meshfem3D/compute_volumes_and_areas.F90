@@ -25,8 +25,8 @@
 !
 !=====================================================================
 
-  subroutine compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+  subroutine compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
+                            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                             NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                             volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
@@ -177,7 +177,8 @@
   ! compute Earth mass of that part of the slice and then total Earth mass
 
   subroutine compute_Earth_mass(myrank,Earth_mass_total, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+                            Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+                            nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
   use constants
@@ -185,12 +186,15 @@
   implicit none
 
   double precision :: Earth_mass_total
+  double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
   integer :: myrank
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
   integer,dimension(nspec) :: idoubling
+
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
@@ -199,15 +203,24 @@
 
   ! local parameters
   double precision :: weight
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl,rhol
   integer :: i,j,k,ispec
-  double precision :: Earth_mass_local,Earth_mass_total_region
+
+  double precision :: Earth_mass_local
+  double precision :: Earth_center_of_mass_x_local,Earth_center_of_mass_y_local,Earth_center_of_mass_z_local
+
+  double precision :: Earth_mass_total_region
+  double precision :: Earth_center_of_mass_x_tot_reg,Earth_center_of_mass_y_tot_reg,Earth_center_of_mass_z_tot_reg
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  double precision, parameter :: non_dimensionalizing_factor = RHOAV*R_EARTH**3
+  double precision, parameter :: non_dimensionalizing_factor1 = RHOAV*R_EARTH**3
+  double precision, parameter :: non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_EARTH
 
   ! initializes
   Earth_mass_local = ZERO
+  Earth_center_of_mass_x_local = ZERO
+  Earth_center_of_mass_y_local = ZERO
+  Earth_center_of_mass_z_local = ZERO
 
   ! calculates volume of all elements in mesh
   do ispec = 1,nspec
@@ -236,7 +249,13 @@
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-          Earth_mass_local = Earth_mass_local + dble(jacobianl)*rhostore(i,j,k,ispec)*weight
+          rhol = rhostore(i,j,k,ispec)
+
+          Earth_mass_local = Earth_mass_local + dble(jacobianl)*rhol*weight
+
+          Earth_center_of_mass_x_local = Earth_center_of_mass_x_local + dble(jacobianl)*rhol*xstore(i,j,k,ispec)*weight
+          Earth_center_of_mass_y_local = Earth_center_of_mass_y_local + dble(jacobianl)*rhol*ystore(i,j,k,ispec)*weight
+          Earth_center_of_mass_z_local = Earth_center_of_mass_z_local + dble(jacobianl)*rhol*zstore(i,j,k,ispec)*weight
 
         enddo
       enddo
@@ -244,14 +263,29 @@
   enddo
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor
+  Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor1
+
+  Earth_center_of_mass_x_local = Earth_center_of_mass_x_local * non_dimensionalizing_factor2
+  Earth_center_of_mass_y_local = Earth_center_of_mass_y_local * non_dimensionalizing_factor2
+  Earth_center_of_mass_z_local = Earth_center_of_mass_z_local * non_dimensionalizing_factor2
 
   ! use an MPI reduction to compute the total Earth mass
   Earth_mass_total_region = ZERO
+  Earth_center_of_mass_x_tot_reg = ZERO
+  Earth_center_of_mass_y_tot_reg = ZERO
+  Earth_center_of_mass_z_tot_reg = ZERO
   call sum_all_dp(Earth_mass_local,Earth_mass_total_region)
+  call sum_all_dp(Earth_center_of_mass_x_local,Earth_center_of_mass_x_tot_reg)
+  call sum_all_dp(Earth_center_of_mass_y_local,Earth_center_of_mass_y_tot_reg)
+  call sum_all_dp(Earth_center_of_mass_z_local,Earth_center_of_mass_z_tot_reg)
 
-  !   sum volume over all the regions
-  if(myrank == 0) Earth_mass_total = Earth_mass_total + Earth_mass_total_region
+  ! sum volume over all the regions
+  if(myrank == 0) then
+    Earth_mass_total = Earth_mass_total + Earth_mass_total_region
+    Earth_center_of_mass_x_total = Earth_center_of_mass_x_total + Earth_center_of_mass_x_tot_reg
+    Earth_center_of_mass_y_total = Earth_center_of_mass_y_total + Earth_center_of_mass_y_tot_reg
+    Earth_center_of_mass_z_total = Earth_center_of_mass_z_total + Earth_center_of_mass_z_tot_reg
+  endif
 
   end subroutine compute_Earth_mass
 
