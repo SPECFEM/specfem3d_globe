@@ -156,8 +156,9 @@
   ! check area and volume of the final mesh
   double precision :: volume_total
 
-  ! check Earth mass computed in the final mesh
+  ! check Earth mass and Earth center of mass computed in the final mesh
   double precision :: Earth_mass_total
+  double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
   ! arrays containing the positions of the observation points in non-dimensionalized value for Roland_Sylvain integrals
   ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops

@@ -47,8 +47,8 @@
 
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
-    IMAIN,volume_total,Earth_mass_total,myrank,LOCAL_PATH, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IMAIN,volume_total,Earth_mass_total,Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+    myrank,LOCAL_PATH,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
     R_CENTRAL_CUBE,RICB,RCMB, &
@@ -419,14 +419,15 @@
     endif
 
     ! compute volume, bottom and top area of that part of the slice, and then the total
-    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
+                            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                             NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                             volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
     ! compute Earth mass of that part of the slice, and then total Earth mass
     call compute_Earth_mass(myrank,Earth_mass_total, &
-        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+        nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
         etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
 !! DK DK for Roland_Sylvain

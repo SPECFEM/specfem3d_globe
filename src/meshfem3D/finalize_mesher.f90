@@ -117,6 +117,14 @@
       ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
       write(IMAIN,*) 'average density for this density model and mesh: ',Earth_mass_total / (volume_total * R_EARTH**3),' kg/m3'
       write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
+      write(IMAIN,*)
+      write(IMAIN,*) 'position of the center of mass of the Earth for this density model and mesh: '
+      write(IMAIN,*) '   x = ',(Earth_center_of_mass_x_total / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*) '   y = ',(Earth_center_of_mass_y_total / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*) '   z = ',(Earth_center_of_mass_z_total / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*) '   distance to center = ',(sqrt(Earth_center_of_mass_x_total**2 + Earth_center_of_mass_y_total**2 + &
+                                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*)
     endif
 
 !! DK DK for Roland_Sylvain

@@ -43,6 +43,9 @@
   ! and Roland_Sylvain integrals
   volume_total = ZERO
   Earth_mass_total = ZERO
+  Earth_center_of_mass_x_total = ZERO
+  Earth_center_of_mass_y_total = ZERO
+  Earth_center_of_mass_z_total = ZERO
 
   g_x(:,:,:) = ZERO
   g_y(:,:,:) = ZERO
