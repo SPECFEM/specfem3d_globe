@@ -355,7 +355,7 @@
 #ifdef FORCE_VECTORIZATION
     enddo
 #ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
+!$OMP END CRITICAL
 #endif
 #else
         enddo
