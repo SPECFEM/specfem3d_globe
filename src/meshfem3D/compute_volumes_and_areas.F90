@@ -203,6 +203,7 @@
 
   ! local parameters
   double precision :: weight
+  double precision :: x_meshpoint,y_meshpoint,z_meshpoint
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl,rhol
   integer :: i,j,k,ispec
 
@@ -253,9 +254,20 @@
 
           Earth_mass_local = Earth_mass_local + dble(jacobianl)*rhol*weight
 
-          Earth_center_of_mass_x_local = Earth_center_of_mass_x_local + dble(jacobianl)*rhol*xstore(i,j,k,ispec)*weight
-          Earth_center_of_mass_y_local = Earth_center_of_mass_y_local + dble(jacobianl)*rhol*ystore(i,j,k,ispec)*weight
-          Earth_center_of_mass_z_local = Earth_center_of_mass_z_local + dble(jacobianl)*rhol*zstore(i,j,k,ispec)*weight
+          x_meshpoint = xstore(i,j,k,ispec)
+          y_meshpoint = ystore(i,j,k,ispec)
+          z_meshpoint = zstore(i,j,k,ispec)
+
+!! DK DK for Roland_Sylvain gravity calculations we may want to shift the reference frame to a pre-computed center of mass
+          if(SHIFT_TO_THIS_CENTER_OF_MASS) then
+            x_meshpoint = x_meshpoint - x_shift
+            y_meshpoint = y_meshpoint - y_shift
+            z_meshpoint = z_meshpoint - z_shift
+          endif
+
+          Earth_center_of_mass_x_local = Earth_center_of_mass_x_local + dble(jacobianl)*rhol*x_meshpoint*weight
+          Earth_center_of_mass_y_local = Earth_center_of_mass_y_local + dble(jacobianl)*rhol*y_meshpoint*weight
+          Earth_center_of_mass_z_local = Earth_center_of_mass_z_local + dble(jacobianl)*rhol*z_meshpoint*weight
 
         enddo
       enddo
@@ -336,6 +348,9 @@
   integer :: ix,iy,ichunk
 #endif
 
+  ! if we do not want to compute the gravity integrals, only the center of mass (computed before)
+  if(ONLY_COMPUTE_CENTER_OF_MASS) return
+
   ! calculates volume of all elements in mesh
   do ispec = 1,nspec
 
@@ -378,13 +393,20 @@
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-    if(CHECK_FOR_NEGATIVE_JACOBIANS .and. jacobianl <= ZERO) stop 'error: negative Jacobian found in integral calculation'
+          if(CHECK_FOR_NEGATIVE_JACOBIANS .and. jacobianl <= ZERO) stop 'error: negative Jacobian found in integral calculation'
 
-    x_meshpoint = xstore(i,j,k,ispec)
-    y_meshpoint = ystore(i,j,k,ispec)
-    z_meshpoint = zstore(i,j,k,ispec)
+          x_meshpoint = xstore(i,j,k,ispec)
+          y_meshpoint = ystore(i,j,k,ispec)
+          z_meshpoint = zstore(i,j,k,ispec)
 
-    common_multiplying_factor = jacobianl * weight * rhostore(i,j,k,ispec)
+!! DK DK for Roland_Sylvain gravity calculations we may want to shift the reference frame to a pre-computed center of mass
+          if(SHIFT_TO_THIS_CENTER_OF_MASS) then
+            x_meshpoint = x_meshpoint - x_shift
+            y_meshpoint = y_meshpoint - y_shift
+            z_meshpoint = z_meshpoint - z_shift
+          endif
+
+          common_multiplying_factor = jacobianl * weight * rhostore(i,j,k,ispec)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!! beginning of loop on all the data to create

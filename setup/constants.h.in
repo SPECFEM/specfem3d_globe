@@ -416,6 +416,19 @@
 ! and results for a 3D Earth with topography)
   logical, parameter :: REUSE_EXISTING_OBSERVATION_SURF = .false.
 
+! only compute the center of mass of the 3D model (very cheap), or also compute the gravity integrals (expensive)
+  logical, parameter :: ONLY_COMPUTE_CENTER_OF_MASS = .false.
+
+! we may want to shift the reference frame to a pre-computed center of mass
+  logical, parameter :: SHIFT_TO_THIS_CENTER_OF_MASS = .true.
+
+! position of the center of mass of the Earth for this density model and mesh,
+! but first convert it to meters and then make it non-dimensional
+  double precision, parameter :: x_shift =   0.606220633681674d0 * 1000.d0 / R_EARTH !    km
+  double precision, parameter :: y_shift =   0.433103991863316d0 * 1000.d0 / R_EARTH !    km
+  double precision, parameter :: z_shift =   0.520078637496872d0 * 1000.d0 / R_EARTH !    km
+!    distance to center =   0.908605697566306       km
+
 ! altitude of the observation points in km
   double precision, parameter :: altitude_of_observation_points = 255.d0
 
