@@ -82,7 +82,9 @@
   double precision :: r,r_prem,moho
   integer :: i,j,k,i_sls
 
-  moho=0.0
+  ! it is *CRUCIAL* to leave this initialization here, this was the cause of the "s362ani + attenuation" bug in 2013 and 2014
+  ! thus please never remove the line below
+  moho = 0.d0
 
   ! loops over all GLL points for this spectral element
   do k=1,NGLLZ

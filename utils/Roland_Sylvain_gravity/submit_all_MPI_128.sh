@@ -15,6 +15,6 @@ fi
 
 ulimit -S -s unlimited
 
-#ccc_msub -p genb002 -q gpu script_MPI_030.sh
+#ccc_msub -p genb002 -q gpu script_MPI_128.sh
 ccc_msub -q standard script_MPI_128.sh
 
