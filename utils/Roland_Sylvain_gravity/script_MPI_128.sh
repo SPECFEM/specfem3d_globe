@@ -12,7 +12,7 @@
 ##################MSUB -A gen7165
 #MSUB -A gen6351
 #MSUB -r SPECFEM128          # Nom du job                
-#MSUB -T 86400                # Limite de temps elapsed du job en secondes
+#MSUB -T 28800               # Limite de temps elapsed du job en secondes
 #BSUB -x              # mode exclusif
 #MSUB -o output_night_%I.o          # Sortie standard et %I est le job_ID
 #MSUB -e output_night_%I.e          # Sortie d'erreur et %I est le job_ID
@@ -23,10 +23,6 @@ set -x
 
 # ${BRIDGE_MSUB_PWD} est une variable d'environnement representant le repertoire de soumission
 cd ${BRIDGE_MSUB_PWD}
-
-#export CUDA_PROFILE=1
-#export CUDA_PROFILE_LOG=dimitri_CUDA_profile.log
-#export CUDA_PROFILE_CONFIG=dimitri_CUDA_profile_config.txt
 
 ##########################
 
