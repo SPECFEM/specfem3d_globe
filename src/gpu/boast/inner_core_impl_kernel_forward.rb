@@ -553,7 +553,7 @@ module BOAST
     if(get_lang == CUDA ) then
       qualifiers = "\n#ifdef #{use_launch_bounds}\n__launch_bounds__(#{ngll3_padded}, #{launch_min_blocks})\n#endif\n"
     elsif(get_lang == CL ) then
-      qualifiers = "" # "__attribute__((reqd_work_group_size(#{ngll3_padded},1,1))) " (inefficient)
+      qualifiers = "__attribute__((reqd_work_group_size(#{ngll3_padded},1,1))) " #(inefficient)
     end
 
     p = Procedure(function_name, v, constants, :qualifiers => qualifiers)

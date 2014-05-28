@@ -4046,6 +4046,10 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_hprime_xx_cm_tex);
 #endif
     clFinish (mocl.command_queue);
+    release_kernels();
+    clReleaseCommandQueue (mocl.command_queue);
+    clReleaseContext (mocl.context);
+   
   }
 #endif
 
