@@ -78,7 +78,7 @@
   real EVLA,EVLO,EVEL,EVDP
   real MAG,DIST,AZ,BAZ,GCARC
   real DEPMEN
-  real USER0 ,USER1 ,USER2 !,USER3,USER4
+  real USER0,USER1,USER2,USER3,USER4
   real CMPAZ,CMPINC
 
   integer NZYEAR,NZJDAY,NZHOUR,NZMIN,NZSEC
@@ -194,6 +194,8 @@
   shortest_period = (256/NEX_XI)*(ANGULAR_WIDTH_XI_IN_DEGREES/90)*17
   USER1  = shortest_period
   USER2  = 500.0d0
+  USER3  = undef
+  USER4  = undef
   ! we remove any PDE information, since the simulation could also start
   ! with a "pure" CMT solution, without having any PDE info
   !
@@ -395,8 +397,7 @@
       write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
       write(IOUT_SAC,510) undef,    STLA,    STLO,    STEL,   STDP
       write(IOUT_SAC,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
-      write(IOUT_SAC,510) USER0,    USER1,   USER2,   undef,  undef
-      !write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,  USER4
+      write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,  USER4
       write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
       write(IOUT_SAC,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
       write(IOUT_SAC,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, undef

@@ -735,10 +735,6 @@
     close(27)
     deallocate(tmp_data)
 
-    ! alternative: e.g. first component only
-    !write(27) epsilondev_crust_mantle(1,:,:,:,:)
-    !close(27)
-
     ! inner core
     write(outputname,"('proc',i6.6,'_reg3_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
@@ -761,10 +757,6 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
-
-    ! alternative: e.g. first component only
-    !write(27) epsilondev_inner_core(1,:,:,:,:)
-    !close(27)
   endif
 
   end subroutine write_movie_volume_divcurl

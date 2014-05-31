@@ -358,8 +358,6 @@
     return
   endif
 
-  !write(IMAIN,*) '  model ppm at ',sngl(lat),sngl(lon),sngl(r_depth)
-
   ! loop over neighboring points
   dvs = 0.0
   weight_sum = 0.0
