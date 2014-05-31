@@ -802,15 +802,6 @@
                                            tau_e,tau_s,T_c_source, &
                                            moho,Qmu,Qkappa,elem_in_crust)
 
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
-!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 ).
-!! DK DK BUG   I thus temporarily patched it to avoid the problematic lines;
-!! DK DK BUG   of course this should be changed / fixed in the future.
-!! DK DK BUG
-!! DK DK BUG
-
 ! sets attenuation values tau_e and Qmu for a given point
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
