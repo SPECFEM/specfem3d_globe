@@ -290,106 +290,74 @@
 
     ! compute non-symmetric terms for gravity
     if(GRAVITY_VAL) then
-        ! use mesh coordinates to get theta and phi
-        ! x y and z contain r theta and phi
-        iglob = ibool(INDEX_IJK,ispec)
+      ! use mesh coordinates to get theta and phi
+      ! x y and z contain r theta and phi
+      iglob = ibool(INDEX_IJK,ispec)
 
-        dtheta = dble(ystore(iglob))
-        dphi = dble(zstore(iglob))
+      dtheta = dble(ystore(iglob))
+      dphi = dble(zstore(iglob))
 
-        cos_theta = dcos(dtheta)
-        sin_theta = dsin(dtheta)
-        cos_phi = dcos(dphi)
-        sin_phi = dsin(dphi)
+      cos_theta = dcos(dtheta)
+      sin_theta = dsin(dtheta)
+      cos_phi = dcos(dphi)
+      sin_phi = dsin(dphi)
 
-        cos_theta_sq = cos_theta*cos_theta
-        sin_theta_sq = sin_theta*sin_theta
-        cos_phi_sq = cos_phi*cos_phi
-        sin_phi_sq = sin_phi*sin_phi
+      cos_theta_sq = cos_theta*cos_theta
+      sin_theta_sq = sin_theta*sin_theta
+      cos_phi_sq = cos_phi*cos_phi
+      sin_phi_sq = sin_phi*sin_phi
 
-        ! get g, rho and dg/dr=dg
-        ! spherical components of the gravitational acceleration
-        ! for efficiency replace with lookup table every 100 m in radial direction
-        radius = dble(xstore(iglob))
+      ! get g, rho and dg/dr=dg
+      ! spherical components of the gravitational acceleration
+      ! for efficiency replace with lookup table every 100 m in radial direction
+      radius = dble(xstore(iglob))
 
-        int_radius = nint(10.d0 * radius * R_EARTH_KM )
-        minus_g = minus_gravity_table(int_radius)
-        minus_dg = minus_deriv_gravity_table(int_radius)
-        rho = density_table(int_radius)
+      int_radius = nint(10.d0 * radius * R_EARTH_KM )
+      minus_g = minus_gravity_table(int_radius)
+      minus_dg = minus_deriv_gravity_table(int_radius)
+      rho = density_table(int_radius)
 
-        ! Cartesian components of the gravitational acceleration
-        gxl = minus_g*sin_theta*cos_phi
-        gyl = minus_g*sin_theta*sin_phi
-        gzl = minus_g*cos_theta
+      ! Cartesian components of the gravitational acceleration
+      gxl = minus_g*sin_theta*cos_phi
+      gyl = minus_g*sin_theta*sin_phi
+      gzl = minus_g*cos_theta
 
-        ! Cartesian components of gradient of gravitational acceleration
-        ! obtained from spherical components
-        minus_g_over_radius = minus_g / radius
-        minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
+      ! Cartesian components of gradient of gravitational acceleration
+      ! obtained from spherical components
+      minus_g_over_radius = minus_g / radius
+      minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
 
-        Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-        Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-        Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-        Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-        Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-        Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
+      Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
+      Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
+      Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
+      Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
+      Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
+      Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-        ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
+      ! get displacement and multiply by density to compute G tensor
+      sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
+      sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
+      sz_l = rho * dble(dummyz_loc(INDEX_IJK)) ! dble(displ_crust_mantle(3,iglob))
 
-          ! get displacement and multiply by density to compute G tensor
-          sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
-          sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
-          sz_l = rho * dble(dummyz_loc(INDEX_IJK)) ! dble(displ_crust_mantle(3,iglob))
+      ! compute G tensor from s . g and add to sigma (not symmetric)
+      sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
+      sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
+      sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
 
-          ! compute G tensor from s . g and add to sigma (not symmetric)
-          sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-          sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-          sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+      sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
+      sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
 
-          sigma_xy = sigma_xy - sngl(sx_l * gyl)
-          sigma_yx = sigma_yx - sngl(sy_l * gxl)
+      sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
+      sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
 
-          sigma_xz = sigma_xz - sngl(sx_l * gzl)
-          sigma_zx = sigma_zx - sngl(sz_l * gxl)
+      sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
+      sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
 
-          sigma_yz = sigma_yz - sngl(sy_l * gzl)
-          sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-          ! precompute vector
-          factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-          rho_s_H(INDEX_IJK,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-          rho_s_H(INDEX_IJK,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-          rho_s_H(INDEX_IJK,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-        else
-
-          ! get displacement and multiply by density to compute G tensor
-          sx_l = rho * dummyx_loc(INDEX_IJK) ! displ_crust_mantle(1,iglob)
-          sy_l = rho * dummyy_loc(INDEX_IJK) ! displ_crust_mantle(2,iglob)
-          sz_l = rho * dummyz_loc(INDEX_IJK) ! displ_crust_mantle(3,iglob)
-
-          ! compute G tensor from s . g and add to sigma (not symmetric)
-          sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-          sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-          sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-          sigma_xy = sigma_xy - sx_l * gyl
-          sigma_yx = sigma_yx - sy_l * gxl
-
-          sigma_xz = sigma_xz - sx_l * gzl
-          sigma_zx = sigma_zx - sz_l * gxl
-
-          sigma_yz = sigma_yz - sy_l * gzl
-          sigma_zy = sigma_zy - sz_l * gyl
-
-          ! precompute vector
-          factor = jacobianl * wgll_cube(INDEX_IJK)
-          rho_s_H(INDEX_IJK,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-          rho_s_H(INDEX_IJK,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-          rho_s_H(INDEX_IJK,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-        endif
+      ! precompute vector
+      factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
+      rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
+      rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
+      rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
 
     endif  ! end of section with gravity terms
 
@@ -863,105 +831,73 @@
 
     ! compute non-symmetric terms for gravity
     if(GRAVITY_VAL) then
-        ! use mesh coordinates to get theta and phi
-        ! x y and z contain r theta and phi
-        iglob = ibool(INDEX_IJK,ispec)
+      ! use mesh coordinates to get theta and phi
+      ! x y and z contain r theta and phi
+      iglob = ibool(INDEX_IJK,ispec)
 
-        dtheta = dble(ystore(iglob))
-        dphi = dble(zstore(iglob))
-        radius = dble(xstore(iglob))
+      dtheta = dble(ystore(iglob))
+      dphi = dble(zstore(iglob))
+      radius = dble(xstore(iglob))
 
-        cos_theta = dcos(dtheta)
-        sin_theta = dsin(dtheta)
-        cos_phi = dcos(dphi)
-        sin_phi = dsin(dphi)
+      cos_theta = dcos(dtheta)
+      sin_theta = dsin(dtheta)
+      cos_phi = dcos(dphi)
+      sin_phi = dsin(dphi)
 
-        cos_theta_sq = cos_theta*cos_theta
-        sin_theta_sq = sin_theta*sin_theta
-        cos_phi_sq = cos_phi*cos_phi
-        sin_phi_sq = sin_phi*sin_phi
+      cos_theta_sq = cos_theta*cos_theta
+      sin_theta_sq = sin_theta*sin_theta
+      cos_phi_sq = cos_phi*cos_phi
+      sin_phi_sq = sin_phi*sin_phi
 
-        ! get g, rho and dg/dr=dg
-        ! spherical components of the gravitational acceleration
-        ! for efficiency replace with lookup table every 100 m in radial direction
-        int_radius = nint(10.d0 * radius * R_EARTH_KM )
-        minus_g = minus_gravity_table(int_radius)
-        minus_dg = minus_deriv_gravity_table(int_radius)
-        rho = density_table(int_radius)
+      ! get g, rho and dg/dr=dg
+      ! spherical components of the gravitational acceleration
+      ! for efficiency replace with lookup table every 100 m in radial direction
+      int_radius = nint(10.d0 * radius * R_EARTH_KM )
+      minus_g = minus_gravity_table(int_radius)
+      minus_dg = minus_deriv_gravity_table(int_radius)
+      rho = density_table(int_radius)
 
-        ! Cartesian components of the gravitational acceleration
-        gxl = minus_g*sin_theta*cos_phi
-        gyl = minus_g*sin_theta*sin_phi
-        gzl = minus_g*cos_theta
+      ! Cartesian components of the gravitational acceleration
+      gxl = minus_g*sin_theta*cos_phi
+      gyl = minus_g*sin_theta*sin_phi
+      gzl = minus_g*cos_theta
 
-        ! Cartesian components of gradient of gravitational acceleration
-        ! obtained from spherical components
-        minus_g_over_radius = minus_g / radius
-        minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
+      ! Cartesian components of gradient of gravitational acceleration
+      ! obtained from spherical components
+      minus_g_over_radius = minus_g / radius
+      minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
 
-        Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-        Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-        Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-        Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-        Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-        Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
+      Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
+      Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
+      Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
+      Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
+      Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
+      Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-        ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
+      ! get displacement and multiply by density to compute G tensor
+      sx_l = rho * dble(dummyx_loc(INDEX_IJK))
+      sy_l = rho * dble(dummyy_loc(INDEX_IJK))
+      sz_l = rho * dble(dummyz_loc(INDEX_IJK))
 
-          ! get displacement and multiply by density to compute G tensor
-          sx_l = rho * dble(dummyx_loc(INDEX_IJK))
-          sy_l = rho * dble(dummyy_loc(INDEX_IJK))
-          sz_l = rho * dble(dummyz_loc(INDEX_IJK))
+      ! compute G tensor from s . g and add to sigma (not symmetric)
+      sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
+      sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
+      sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
 
-          ! compute G tensor from s . g and add to sigma (not symmetric)
-          sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-          sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-          sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+      sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
+      sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
 
-          sigma_xy = sigma_xy - sngl(sx_l * gyl)
-          sigma_yx = sigma_yx - sngl(sy_l * gxl)
+      sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
+      sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
 
-          sigma_xz = sigma_xz - sngl(sx_l * gzl)
-          sigma_zx = sigma_zx - sngl(sz_l * gxl)
+      sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
+      sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
 
-          sigma_yz = sigma_yz - sngl(sy_l * gzl)
-          sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-          ! precompute vector
-          factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-          rho_s_H(INDEX_IJK,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-          rho_s_H(INDEX_IJK,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-          rho_s_H(INDEX_IJK,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-        else
-
-          ! get displacement and multiply by density to compute G tensor
-          sx_l = rho * dummyx_loc(INDEX_IJK)
-          sy_l = rho * dummyy_loc(INDEX_IJK)
-          sz_l = rho * dummyz_loc(INDEX_IJK)
-
-          ! compute G tensor from s . g and add to sigma (not symmetric)
-          sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-          sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-          sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-          sigma_xy = sigma_xy - sx_l * gyl
-          sigma_yx = sigma_yx - sy_l * gxl
-
-          sigma_xz = sigma_xz - sx_l * gzl
-          sigma_zx = sigma_zx - sz_l * gxl
-
-          sigma_yz = sigma_yz - sy_l * gzl
-          sigma_zy = sigma_zy - sz_l * gyl
-
-          ! precompute vector
-          factor = jacobianl * wgll_cube(INDEX_IJK)
-          rho_s_H(INDEX_IJK,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-          rho_s_H(INDEX_IJK,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-          rho_s_H(INDEX_IJK,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-        endif
+      ! precompute vector
+      factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
+      rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
+      rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
+      rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
 
     endif  ! end of section with gravity terms
 
@@ -1270,105 +1206,73 @@
 
     ! compute non-symmetric terms for gravity
     if(GRAVITY_VAL) then
-        ! use mesh coordinates to get theta and phi
-        ! x y and z contain r theta and phi
-        iglob = ibool(INDEX_IJK,ispec)
+      ! use mesh coordinates to get theta and phi
+      ! x y and z contain r theta and phi
+      iglob = ibool(INDEX_IJK,ispec)
 
-        dtheta = dble(ystore(iglob))
-        dphi = dble(zstore(iglob))
-        radius = dble(xstore(iglob))
+      dtheta = dble(ystore(iglob))
+      dphi = dble(zstore(iglob))
+      radius = dble(xstore(iglob))
 
-        cos_theta = dcos(dtheta)
-        sin_theta = dsin(dtheta)
-        cos_phi = dcos(dphi)
-        sin_phi = dsin(dphi)
+      cos_theta = dcos(dtheta)
+      sin_theta = dsin(dtheta)
+      cos_phi = dcos(dphi)
+      sin_phi = dsin(dphi)
 
-        cos_theta_sq = cos_theta*cos_theta
-        sin_theta_sq = sin_theta*sin_theta
-        cos_phi_sq = cos_phi*cos_phi
-        sin_phi_sq = sin_phi*sin_phi
+      cos_theta_sq = cos_theta*cos_theta
+      sin_theta_sq = sin_theta*sin_theta
+      cos_phi_sq = cos_phi*cos_phi
+      sin_phi_sq = sin_phi*sin_phi
 
-        ! get g, rho and dg/dr=dg
-        ! spherical components of the gravitational acceleration
-        ! for efficiency replace with lookup table every 100 m in radial direction
-        int_radius = nint(10.d0 * radius * R_EARTH_KM )
-        minus_g = minus_gravity_table(int_radius)
-        minus_dg = minus_deriv_gravity_table(int_radius)
-        rho = density_table(int_radius)
+      ! get g, rho and dg/dr=dg
+      ! spherical components of the gravitational acceleration
+      ! for efficiency replace with lookup table every 100 m in radial direction
+      int_radius = nint(10.d0 * radius * R_EARTH_KM )
+      minus_g = minus_gravity_table(int_radius)
+      minus_dg = minus_deriv_gravity_table(int_radius)
+      rho = density_table(int_radius)
 
-        ! Cartesian components of the gravitational acceleration
-        gxl = minus_g*sin_theta*cos_phi
-        gyl = minus_g*sin_theta*sin_phi
-        gzl = minus_g*cos_theta
+      ! Cartesian components of the gravitational acceleration
+      gxl = minus_g*sin_theta*cos_phi
+      gyl = minus_g*sin_theta*sin_phi
+      gzl = minus_g*cos_theta
 
-        ! Cartesian components of gradient of gravitational acceleration
-        ! obtained from spherical components
-        minus_g_over_radius = minus_g / radius
-        minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
+      ! Cartesian components of gradient of gravitational acceleration
+      ! obtained from spherical components
+      minus_g_over_radius = minus_g / radius
+      minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
 
-        Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-        Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-        Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-        Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-        Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-        Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
+      Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
+      Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
+      Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
+      Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
+      Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
+      Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-        ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
+      ! get displacement and multiply by density to compute G tensor
+      sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
+      sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
+      sz_l = rho * dble(dummyz_loc(INDEX_IJK)) !  dble(displ_crust_mantle(3,iglob))
 
-          ! get displacement and multiply by density to compute G tensor
-          sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
-          sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
-          sz_l = rho * dble(dummyz_loc(INDEX_IJK)) !  dble(displ_crust_mantle(3,iglob))
+      ! compute G tensor from s . g and add to sigma (not symmetric)
+      sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
+      sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
+      sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
 
-          ! compute G tensor from s . g and add to sigma (not symmetric)
-          sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-          sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-          sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
+      sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
+      sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
 
-          sigma_xy = sigma_xy - sngl(sx_l * gyl)
-          sigma_yx = sigma_yx - sngl(sy_l * gxl)
+      sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
+      sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
 
-          sigma_xz = sigma_xz - sngl(sx_l * gzl)
-          sigma_zx = sigma_zx - sngl(sz_l * gxl)
+      sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
+      sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
 
-          sigma_yz = sigma_yz - sngl(sy_l * gzl)
-          sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-          ! precompute vector
-          factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-          rho_s_H(INDEX_IJK,1) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-          rho_s_H(INDEX_IJK,2) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-          rho_s_H(INDEX_IJK,3) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-        else
-
-          ! get displacement and multiply by density to compute G tensor
-          sx_l = rho * dummyx_loc(INDEX_IJK)  ! displ_crust_mantle(1,iglob)
-          sy_l = rho * dummyy_loc(INDEX_IJK)  !  displ_crust_mantle(2,iglob)
-          sz_l = rho * dummyz_loc(INDEX_IJK)  ! displ_crust_mantle(3,iglob)
-
-          ! compute G tensor from s . g and add to sigma (not symmetric)
-          sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-          sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-          sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-          sigma_xy = sigma_xy - sx_l * gyl
-          sigma_yx = sigma_yx - sy_l * gxl
-
-          sigma_xz = sigma_xz - sx_l * gzl
-          sigma_zx = sigma_zx - sz_l * gxl
-
-          sigma_yz = sigma_yz - sy_l * gzl
-          sigma_zy = sigma_zy - sz_l * gyl
-
-          ! precompute vector
-          factor = jacobianl * wgll_cube(INDEX_IJK)
-          rho_s_H(INDEX_IJK,1) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-          rho_s_H(INDEX_IJK,2) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-          rho_s_H(INDEX_IJK,3) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-        endif
+      ! precompute vector
+      factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
+      rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
+      rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
+      rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
 
     endif  ! end of section with gravity terms
 

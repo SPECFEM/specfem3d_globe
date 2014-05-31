@@ -85,14 +85,10 @@
     ! store North, East and Vertical components
 
     ! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      seismograms(:,irec_local,seismo_current) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
-           nu(:,2,irec)*uyd + nu(:,3,irec)*uzd))
-    else
-      seismograms(:,irec_local,seismo_current) = scale_displ*(nu(:,1,irec)*uxd + &
-           nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
-    endif
-
+    seismograms(:,irec_local,seismo_current) = real(scale_displ*(nu(:,1,irec)*uxd + &
+                                                                 nu(:,2,irec)*uyd + &
+                                                                 nu(:,3,irec)*uzd), &
+                                                    kind=CUSTOM_REAL)
 
   enddo
 
@@ -253,25 +249,16 @@
     eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
     ! distinguish between single and double precision for reals
-    if (CUSTOM_REAL == SIZE_REAL) then
-      seismograms(1,irec_local,it-nit_written) = sngl(eps_loc_new(1,1))
-      seismograms(2,irec_local,it-nit_written) = sngl(eps_loc_new(2,2))
-      seismograms(3,irec_local,it-nit_written) = sngl(eps_loc_new(3,3))
-      seismograms(4,irec_local,it-nit_written) = sngl(eps_loc_new(1,2))
-      seismograms(5,irec_local,it-nit_written) = sngl(eps_loc_new(1,3))
-      seismograms(6,irec_local,it-nit_written) = sngl(eps_loc_new(2,3))
-      seismograms(7:9,irec_local,it-nit_written) = sngl(scale_displ*(nu_source(:,1,irec)*uxd + &
-                  nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd))
-    else
-      seismograms(1,irec_local,it-nit_written) = eps_loc_new(1,1)
-      seismograms(2,irec_local,it-nit_written) = eps_loc_new(2,2)
-      seismograms(3,irec_local,it-nit_written) = eps_loc_new(3,3)
-      seismograms(4,irec_local,it-nit_written) = eps_loc_new(1,2)
-      seismograms(5,irec_local,it-nit_written) = eps_loc_new(1,3)
-      seismograms(6,irec_local,it-nit_written) = eps_loc_new(2,3)
-      seismograms(7:9,irec_local,it-nit_written) = scale_displ*(nu_source(:,1,irec)*uxd + &
-                  nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)
-    endif
+    seismograms(1,irec_local,it-nit_written) = real(eps_loc_new(1,1), kind=CUSTOM_REAL)
+    seismograms(2,irec_local,it-nit_written) = real(eps_loc_new(2,2), kind=CUSTOM_REAL)
+    seismograms(3,irec_local,it-nit_written) = real(eps_loc_new(3,3), kind=CUSTOM_REAL)
+    seismograms(4,irec_local,it-nit_written) = real(eps_loc_new(1,2), kind=CUSTOM_REAL)
+    seismograms(5,irec_local,it-nit_written) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
+    seismograms(6,irec_local,it-nit_written) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
+    seismograms(7:9,irec_local,it-nit_written) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
+                                                                   nu_source(:,2,irec)*uyd + &
+                                                                   nu_source(:,3,irec)*uzd), &
+                                                      kind=CUSTOM_REAL)
 
     ! interpolators
     ! note: we explicitly copy the store arrays to local temporary arrays here

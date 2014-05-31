@@ -164,18 +164,12 @@
         do ipoin = 1,npoin2D_cube_from_slices
           if(NPROC_XI==1) then
             if(ibool_central_cube(imsg,ipoin) > 0 ) then
-              if(CUSTOM_REAL == SIZE_REAL) then
-                array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(imsg,ipoin,idimension))
-              else
-                array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
-              endif
+              array_central_cube(ibool_central_cube(imsg,ipoin)) = real(buffer_all_cube_from_slices(imsg,ipoin,idimension), &
+                                                                        kind=CUSTOM_REAL)
             endif
           else
-            if(CUSTOM_REAL == SIZE_REAL) then
-              array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(imsg,ipoin,idimension))
-            else
-              array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
-            endif
+            array_central_cube(ibool_central_cube(imsg,ipoin)) = real(buffer_all_cube_from_slices(imsg,ipoin,idimension), &
+                                                                      kind=CUSTOM_REAL)
           endif
         enddo
       enddo
@@ -186,29 +180,17 @@
         if(NPROC_XI==1) then
           if( ibool_central_cube(nb_msgs_theor_in_cube,ipoin) > 0 ) then
             if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
-              if(CUSTOM_REAL == SIZE_REAL) then
-                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-                  array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-                  sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
-              else
-                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-                  array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-                  buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
-              endif
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+                real(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension), kind=CUSTOM_REAL)
             endif
             mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
           endif
         else
           if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
-            if(CUSTOM_REAL == SIZE_REAL) then
-              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-                sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
-            else
-              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-                array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-                buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
-            endif
+            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+              real(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension), kind=CUSTOM_REAL)
           endif
           mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
         endif
@@ -279,11 +261,8 @@
           ipoin = ipoin + 1
 
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,1:ndim_assemble))
-          else
-            vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = buffer_slices(ipoin,1:ndim_assemble)
-          endif
+          vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = real(buffer_slices(ipoin,1:ndim_assemble), &
+                                                                                kind=CUSTOM_REAL)
 
         enddo
       enddo

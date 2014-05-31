@@ -431,8 +431,8 @@
   if( GPU_MODE ) then
     if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
       call exit_mpi(myrank,'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5')
-    if( CUSTOM_REAL /= 4 ) &
-      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == 4')
+    if( CUSTOM_REAL /= SIZE_REAL ) &
+      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == SIZE_REAL')
     if( ATTENUATION_VAL ) then
       if( N_SLS /= 3 ) &
         call exit_mpi(myrank,'GPU mode does not support N_SLS /= 3 yet')
@@ -510,8 +510,8 @@
     ! check for GPU runs
     if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
       stop 'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5'
-    if( CUSTOM_REAL /= 4 ) &
-      stop 'GPU mode runs only with CUSTOM_REAL == 4'
+    if( CUSTOM_REAL /= SIZE_REAL) &
+      stop 'GPU mode runs only with CUSTOM_REAL == SIZE_REAL'
     if( ATTENUATION_VAL ) then
       if( N_SLS /= 3 ) &
         stop 'GPU mode does not support N_SLS /= 3 yet'

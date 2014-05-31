@@ -601,11 +601,8 @@ contains
       ! subtract half duration of the source to make sure travel time is correct
       do isample = nit_written+1,min(it,NSTEP)
         ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          write(IOUT,*) sngl(dble(isample-1)*DT - t0),' ',seismograms(iorientation,irec_local,isample-nit_written)
-        else
-          write(IOUT,*) dble(isample-1)*DT - t0,' ',seismograms(iorientation,irec_local,isample-nit_written)
-        endif
+        write(IOUT,*) real(dble(isample-1)*DT - t0, kind=CUSTOM_REAL), ' ', &
+                      seismograms(iorientation,irec_local,isample-nit_written)
       enddo
 
       close(IOUT)

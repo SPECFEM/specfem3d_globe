@@ -562,15 +562,9 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            xstore_s(iglob) = sngl(xstore(i,j,k,ispec))
-            ystore_s(iglob) = sngl(ystore(i,j,k,ispec))
-            zstore_s(iglob) = sngl(zstore(i,j,k,ispec))
-          else
-            xstore_s(iglob) = xstore(i,j,k,ispec)
-            ystore_s(iglob) = ystore(i,j,k,ispec)
-            zstore_s(iglob) = zstore(i,j,k,ispec)
-          endif
+          xstore_s(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
+          ystore_s(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
+          zstore_s(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo

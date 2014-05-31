@@ -65,27 +65,15 @@
     do l=1,NGLLY
       do k=1,NGLLX
 
-        if( CUSTOM_REAL == SIZE_REAL ) then
-          xixd    = dble(xix(k,l,m))
-          xiyd    = dble(xiy(k,l,m))
-          xizd    = dble(xiz(k,l,m))
-          etaxd   = dble(etax(k,l,m))
-          etayd   = dble(etay(k,l,m))
-          etazd   = dble(etaz(k,l,m))
-          gammaxd = dble(gammax(k,l,m))
-          gammayd = dble(gammay(k,l,m))
-          gammazd = dble(gammaz(k,l,m))
-        else
-          xixd    = xix(k,l,m)
-          xiyd    = xiy(k,l,m)
-          xizd    = xiz(k,l,m)
-          etaxd   = etax(k,l,m)
-          etayd   = etay(k,l,m)
-          etazd   = etaz(k,l,m)
-          gammaxd = gammax(k,l,m)
-          gammayd = gammay(k,l,m)
-          gammazd = gammaz(k,l,m)
-        endif
+        xixd    = dble(xix(k,l,m))
+        xiyd    = dble(xiy(k,l,m))
+        xizd    = dble(xiz(k,l,m))
+        etaxd   = dble(etax(k,l,m))
+        etayd   = dble(etay(k,l,m))
+        etazd   = dble(etaz(k,l,m))
+        gammaxd = dble(gammax(k,l,m))
+        gammayd = dble(gammay(k,l,m))
+        gammazd = dble(gammaz(k,l,m))
 
         G11(k,l,m) = Mxx*xixd+Mxy*xiyd+Mxz*xizd
         G12(k,l,m) = Mxx*etaxd+Mxy*etayd+Mxz*etazd
@@ -116,12 +104,8 @@
     enddo
   enddo
 
-! distinguish between single and double precision for reals
-  if(CUSTOM_REAL == SIZE_REAL) then
-    sourcearray(:,:,:,:) = sngl(sourcearrayd(:,:,:,:))
-  else
-    sourcearray(:,:,:,:) = sourcearrayd(:,:,:,:)
-  endif
+  ! distinguish between single and double precision for reals
+  sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:), kind=CUSTOM_REAL)
 
   end subroutine compute_arrays_source
 
@@ -279,11 +263,7 @@
     call multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_u(:,itime))
 
     ! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      adj_sourcearray(:,:,:,:,itime) = sngl(sourcearrayd(:,:,:,:))
-    else
-      adj_sourcearray(:,:,:,:,itime) = sourcearrayd(:,:,:,:)
-    endif
+    adj_sourcearray(:,:,:,:,itime) = real(sourcearrayd(:,:,:,:), kind=CUSTOM_REAL)
 
   enddo
 

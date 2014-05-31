@@ -530,11 +530,7 @@
    iNIT = 1
   endif
 
-  if(CUSTOM_REAL == SIZE_REAL) then
-    vector_scaled = vector_crust_mantle*sngl(scalingval)
-  else
-    vector_scaled = vector_crust_mantle*scalingval
-  endif
+  vector_scaled = vector_crust_mantle*real(scalingval, kind=CUSTOM_REAL)
 
   ipoints_3dmovie = 0
 

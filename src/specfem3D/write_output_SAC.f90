@@ -621,11 +621,7 @@
     ! now write SAC time series to file
     ! BS BS write whole time series at once (hope to increase I/O performance
     ! compared to using a loop on it)
-    if (CUSTOM_REAL == SIZE_REAL) then
-      tmp(1:seismo_current) = seismogram_tmp(iorientation,1:seismo_current)
-    else if (CUSTOM_REAL == SIZE_DOUBLE) then
-      tmp(1:seismo_current) = real(seismogram_tmp(iorientation,1:seismo_current))
-    endif
+    tmp(1:seismo_current) = real(seismogram_tmp(iorientation,1:seismo_current))
     call write_n_real(tmp(1:seismo_current),seismo_current)
 
     call close_file()

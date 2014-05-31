@@ -619,15 +619,9 @@
 
     ibool_selected(i) = ipoin
 
-    if( CUSTOM_REAL == SIZE_REAL ) then
-      xstore_selected(i) = dble(xstore(ipoin))
-      ystore_selected(i) = dble(ystore(ipoin))
-      zstore_selected(i) = dble(zstore(ipoin))
-    else
-      xstore_selected(i) = xstore(ipoin)
-      ystore_selected(i) = ystore(ipoin)
-      zstore_selected(i) = zstore(ipoin)
-    endif
+    xstore_selected(i) = dble(xstore(ipoin))
+    ystore_selected(i) = dble(ystore(ipoin))
+    zstore_selected(i) = dble(zstore(ipoin))
   enddo
 
   ! sort buffer obtained to be conforming with neighbor in other chunk
