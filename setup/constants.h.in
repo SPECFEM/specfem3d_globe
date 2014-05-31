@@ -77,9 +77,6 @@
 ! I/O unit for sac files
   integer, parameter :: IOUT_SAC = 48
 
-! I/O Bluegene serial access
-  logical, parameter :: IO_BLUEGENE_SERIAL = .false.
-
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
 ! uncomment line below for PREM with oceans
@@ -655,9 +652,6 @@
 ! this is at most 1, except when there is only once slice per chunk
 ! in which case it is 4
   integer, parameter :: NUMCORNERS_SHARED = 4
-
-! number of slaves per corner
-  integer, parameter :: NUMSLAVES = 2
 
 ! number of layers in PREM
   integer, parameter :: NR = 640
