@@ -231,7 +231,7 @@ backup:
 ifdef CLEAN
 clean:
 	@echo "cleaning by CLEAN defined"
-	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS)) $O/*
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
 else
 clean:
 	@echo "cleaning by CLEAN not defined"
