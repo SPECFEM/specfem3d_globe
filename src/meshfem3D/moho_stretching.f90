@@ -377,7 +377,7 @@
   double precision,parameter ::  R60=6311000.d0/R_EARTH
 
   ! checks moho position: supposed to be at 60 km
-  if( RMOHO_STRETCH_ADJUSTEMENT /= -20000.d0 ) &
+  if( RMOHO_STRETCH_ADJUSTMENT /= -20000.d0 ) &
     stop 'wrong moho stretch adjustement for stretch_deep_moho'
   if( RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R60 ) &
     stop 'wrong moho depth '
@@ -526,7 +526,7 @@
   double precision,parameter ::  R60=6311000.d0/R_EARTH
 
   ! checks moho position: supposed to be at 55 km
-  if( RMOHO_STRETCH_ADJUSTEMENT /= -15000.d0 ) &
+  if( RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &
     stop 'wrong moho stretch adjustement for stretch_deep_moho'
   if( RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
     stop 'wrong moho depth '
