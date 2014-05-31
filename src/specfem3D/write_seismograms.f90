@@ -131,7 +131,7 @@ contains
           islice_selected_rec, &
           seismo_offset,seismo_current, &
           OUTPUT_SEISMOS_ASCII_TEXT, &
-          OUTPUT_SEISMOS_ASDF, DT, &
+          OUTPUT_SEISMOS_ASDF, &
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
