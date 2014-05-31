@@ -146,7 +146,6 @@ FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,
 
   TRACE("prepare_adj_io_thread");
 
-  int rc;
   size_t bytes_to_read = *length;
 
   // checks if buffer valid
