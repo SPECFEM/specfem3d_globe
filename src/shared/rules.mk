@@ -45,6 +45,7 @@ shared_OBJECTS = \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
+	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/get_value_parameters.shared.o \

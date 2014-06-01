@@ -62,7 +62,6 @@ meshfem3D_OBJECTS = \
 	$O/fix_non_blocking_flags.check.o \
 	$O/get_absorb.check.o \
 	$O/get_ellipticity.check.o \
-	$O/get_global.check.o \
 	$O/get_jacobian_boundaries.check.o \
 	$O/get_jacobian_discontinuities.check.o \
 	$O/get_model.check.o \
@@ -165,6 +164,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
+	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/get_value_parameters.shared.o \
