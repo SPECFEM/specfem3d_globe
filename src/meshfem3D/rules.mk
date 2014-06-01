@@ -107,7 +107,6 @@ meshfem3D_OBJECTS = \
 	$O/setup_inner_outer.check.o \
 	$O/setup_model.check.o \
 	$O/setup_MPI_interfaces.check.o \
-	$O/sort_array_coordinates.check.o \
 	$O/stretching_function.check.o \
 	$O/test_MPI_interfaces.check.o \
 	$O/write_AVS_DX_global_chunks_data.check.o \
@@ -185,6 +184,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)

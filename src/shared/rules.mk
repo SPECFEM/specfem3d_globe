@@ -66,6 +66,7 @@ shared_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_c_binary.cc.o \
 	$O/write_VTK_file.shared.o \

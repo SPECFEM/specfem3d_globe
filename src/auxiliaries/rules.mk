@@ -77,6 +77,7 @@ auxiliaries_SHARED_OBJECTS = \
 	$O/read_value_parameters.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$(EMPTY_MACRO)
 
 

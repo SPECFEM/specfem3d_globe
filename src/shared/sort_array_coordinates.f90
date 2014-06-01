@@ -69,9 +69,9 @@
     ! sort within each segment
     ioff=1
     do iseg=1,nseg
-      if(j == 1) then
+      if (j == 1) then
         call rank_buffers(x(ioff),ind,ninseg(iseg))
-      else if(j == 2) then
+      else if (j == 2) then
         call rank_buffers(y(ioff),ind,ninseg(iseg))
       else
         call rank_buffers(z(ioff),ind,ninseg(iseg))
@@ -85,24 +85,24 @@
 
     ! check for jumps in current coordinate
     ! define a tolerance, normalized radius is 1., so let's use a small value
-    if(j == 1) then
+    if (j == 1) then
       do i=2,npointot
-        if(dabs(x(i)-x(i-1)) > SMALLVALTOL ) ifseg(i)=.true.
+        if (dabs(x(i)-x(i-1)) > SMALLVALTOL) ifseg(i)=.true.
       enddo
-    else if(j == 2) then
+    else if (j == 2) then
       do i=2,npointot
-        if(dabs(y(i)-y(i-1)) > SMALLVALTOL ) ifseg(i)=.true.
+        if (dabs(y(i)-y(i-1)) > SMALLVALTOL) ifseg(i)=.true.
       enddo
     else
       do i=2,npointot
-        if(dabs(z(i)-z(i-1)) > SMALLVALTOL ) ifseg(i)=.true.
+        if (dabs(z(i)-z(i-1)) > SMALLVALTOL) ifseg(i)=.true.
       enddo
     endif
 
     ! count up number of different segments
     nseg=0
     do i=1,npointot
-      if(ifseg(i)) then
+      if (ifseg(i)) then
         nseg=nseg+1
         ninseg(nseg)=1
       else
@@ -115,7 +115,7 @@
   ! assign global node numbers (now sorted lexicographically)
   ig=0
   do i=1,npointot
-    if(ifseg(i)) ig=ig+1
+    if (ifseg(i)) ig=ig+1
     iglob(locval(i))=ig
   enddo
 
@@ -208,29 +208,23 @@
   ! local parameter
   integer :: i
 
-  do i=1,n
-    W(i)=A(i)
-    IW(i)=IA(i)
-  enddo
+  W(:) = A(:)
+  IW(:) = IA(:)
 
   do i=1,n
     A(i)=W(ind(i))
     IA(i)=IW(ind(i))
   enddo
 
-  do i=1,n
-    W(i)=B(i)
-    IW(i)=IB(i)
-  enddo
+  W(:) = B(:)
+  IW(:) = IB(:)
 
   do i=1,n
     B(i)=W(ind(i))
     IB(i)=IW(ind(i))
   enddo
 
-  do i=1,n
-    W(i)=C(i)
-  enddo
+  W(:) = C(:)
 
   do i=1,n
     C(i)=W(ind(i))
