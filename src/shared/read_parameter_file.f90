@@ -42,7 +42,6 @@
 
 ! local variables
   integer :: ierr
-  integer, external :: err_occurred
 
   ! sets the base pathname for output files
   OUTPUT_FILES = 'OUTPUT_FILES'
@@ -257,11 +256,6 @@
 
   ! closes parameter file
   call close_parameter_file()
-
-  ! checks
-  if(err_occurred() /= 0) then
-    stop 'an error occurred while reading the parameter file'
-  endif
 
   ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
   if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
