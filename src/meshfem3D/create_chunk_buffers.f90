@@ -87,9 +87,8 @@
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
 
   ! arrays for sorting routine
-  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
+  integer, dimension(:), allocatable :: ninseg,iglob,locval
   logical, dimension(:), allocatable :: ifseg
-  double precision, dimension(:), allocatable :: work
 
   ! pairs generated theoretically
 
@@ -239,13 +238,10 @@
           xstore_selected(NGLOB2DMAX_XY), &
           ystore_selected(NGLOB2DMAX_XY), &
           zstore_selected(NGLOB2DMAX_XY), &
-          ind(NGLOB2DMAX_XY), &
           ninseg(NGLOB2DMAX_XY), &
           iglob(NGLOB2DMAX_XY), &
           locval(NGLOB2DMAX_XY), &
           ifseg(NGLOB2DMAX_XY), &
-          iwork(NGLOB2DMAX_XY), &
-          work(NGLOB2DMAX_XY), &
           stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary arrays in create_chunk_buffers')
 
@@ -724,7 +720,7 @@
             ! sort on x, y and z, the other arrays will be swapped as well
 
             call sort_array_coordinates(npoin2D,xstore_selected,ystore_selected,zstore_selected, &
-              ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+                                        ibool_selected,iglob,locval,ifseg,nglob,ninseg)
 
             ! check that no duplicate has been detected
             if(nglob /= npoin2D) call exit_MPI(myrank,'duplicates detected in buffer')
@@ -1023,7 +1019,7 @@
         ! sort array read based upon the coordinates of the points
         ! to ensure conforming matching with other buffers from neighbors
         call sort_array_coordinates(NGLOB1D_RADIAL,xread1D,yread1D,zread1D, &
-                      ibool1D,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+                                    ibool1D,iglob,locval,ifseg,nglob,ninseg)
 
         ! check that no duplicates have been found
         if(nglob /= NGLOB1D_RADIAL) then
@@ -1087,13 +1083,10 @@
   deallocate(xstore_selected)
   deallocate(ystore_selected)
   deallocate(zstore_selected)
-  deallocate(ind)
   deallocate(ninseg)
   deallocate(iglob)
   deallocate(locval)
   deallocate(ifseg)
-  deallocate(iwork)
-  deallocate(work)
 
   deallocate(mask_ibool)
 

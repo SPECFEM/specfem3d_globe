@@ -48,31 +48,21 @@
   integer, intent(out) :: nglob
 
   ! local variables
-  double precision, dimension(:), allocatable :: work
-  integer, dimension(:), allocatable :: ind,ninseg,iwork,idummy
+  integer, dimension(:), allocatable :: ninseg,idummy
   integer :: ier
 
   ! dynamically allocate arrays
-  allocate(ind(npointot),stat=ier)
-  if (ier /= 0) stop 'error while allocating ind'
-
   allocate(ninseg(npointot),stat=ier)
   if (ier /= 0) stop 'error while allocating ninseg'
 
   allocate(idummy(npointot),stat=ier)
   if (ier /= 0) stop 'error while allocating idummy'
 
-  allocate(iwork(npointot),stat=ier)
-  if (ier /= 0) stop 'error while allocating iwork'
-
-  allocate(work(npointot),stat=ier)
-  if (ier /= 0) stop 'error while allocating work'
-
   call sort_array_coordinates(npointot,xp,yp,zp,idummy,iglob,locval,ifseg, &
-                              nglob,ind,ninseg,iwork,work)
+                              nglob,ninseg)
 
   ! deallocate arrays
-  deallocate(ind,ninseg,idummy,iwork,work)
+  deallocate(ninseg,idummy)
 
   end subroutine get_global
 
