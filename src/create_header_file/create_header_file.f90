@@ -36,7 +36,6 @@
   implicit none
 
   double precision :: static_memory_size
-  character(len=150) HEADER_FILE
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
@@ -53,9 +52,8 @@
 
 ! ************** PROGRAM STARTS HERE **************
 
-  call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
   print *
-  print *,'creating file ', trim(HEADER_FILE), ' to compile solver with correct values'
+  print *,'creating file OUTPUT_FILES/values_from_mesher.h to compile solver with correct values'
 
 ! read the parameter file and compute additional parameters
   call read_compute_parameters()

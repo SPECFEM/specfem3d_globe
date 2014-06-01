@@ -198,15 +198,10 @@
   integer, intent(in) :: ind
 
   ! local variables
-  character(len=50) :: config_name
-  character(len=150) :: default_name
   character(len=150) :: eucrust
   integer :: ier, ila, iln
 
-  write(config_name,'(a,a1,i1)') 'model.eucrust', var_letter, ind
-  write(default_name,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
-
-  call get_value_string(eucrust, config_name, default_name)
+  write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
 
   open(unit=1,file=trim(eucrust),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then

@@ -44,8 +44,8 @@
   integer :: ierr
   integer, external :: err_occurred
 
-  ! gets the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  ! sets the base pathname for output files
+  OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ierr)

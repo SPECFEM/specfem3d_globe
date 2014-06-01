@@ -64,8 +64,8 @@
   ! synchronizes processes
   call synchronize_all()
 
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  ! set the base pathname for output files
+  OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
@@ -215,7 +215,7 @@
   else
     rec_filename = 'DATA/STATIONS_ADJOINT'
   endif
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+  STATIONS = rec_filename
 
   ! get total number of receivers
   if(myrank == 0) then

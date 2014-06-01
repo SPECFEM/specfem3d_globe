@@ -242,14 +242,14 @@
 
   double precision :: h_moho_min,h_moho_max
 
-  character(len=150) :: CNtype2, CNtype2_key_modif
+  character(len=*), parameter :: CNtype2 = 'DATA/crust2.0/CNtype2.txt'
+  character(len=*), parameter :: CNtype2_key_modif = 'DATA/crust2.0/CNtype2_key_modif.txt'
 
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: CRUST2.0'
   write(IMAIN,*)
 
-  call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
   open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(CNtype2), '": ', ier
@@ -263,7 +263,6 @@
   enddo
   close(1)
 
-  call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
   open(unit=1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(CNtype2_key_modif), '": ', ier

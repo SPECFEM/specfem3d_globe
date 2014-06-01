@@ -146,16 +146,14 @@
   ! local parameters
   integer ::            ier,counter,i
   double precision ::    lon,lat,depth,dvs,vs
-  character(len=150) ::  filename,line
-
-  call get_value_string(filename, 'model.PPM', trim(PPM_file_path))
+  character(len=150) ::  line
 
   !e.g. Mediterranean model
   ! counts entries
   counter=0
-  open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
+  open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
-    write(IMAIN,*) ' error opening: ',trim(filename)
+    write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call flush_IMAIN()
     ! stop
     call exit_mpi(0,"error opening model ppm")
@@ -177,7 +175,7 @@
   PPM_num_v = counter
   if( counter < 1 ) then
     write(IMAIN,*)
-    write(IMAIN,*) '  model PPM:',filename
+    write(IMAIN,*) '  model PPM:',PPM_file_path
     write(IMAIN,*) '     no values read in!!!!!!'
     write(IMAIN,*)
     write(IMAIN,*)
@@ -186,7 +184,7 @@
     call exit_mpi(0,' no model PPM ')
   else
     write(IMAIN,*)
-    write(IMAIN,*) 'model PPM:',trim(filename)
+    write(IMAIN,*) 'model PPM:',trim(PPM_file_path)
     write(IMAIN,*) '  values: ',counter
     write(IMAIN,*)
     call flush_IMAIN()
@@ -198,9 +196,9 @@
   PPM_dvs(:) = 0.0
 
   ! vs values
-  open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
+  open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
-    write(IMAIN,*) ' error opening: ',trim(filename)
+    write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call exit_mpi(0,"error opening model ppm")
   endif
   read(10,'(a150)') line   ! first line is text
@@ -222,7 +220,7 @@
   close(10)
   if( counter /= PPM_num_v ) then
     write(IMAIN,*)
-    write(IMAIN,*) '  model PPM:',filename
+    write(IMAIN,*) '  model PPM:',PPM_file_path
     write(IMAIN,*) '     error values read in!!!!!!'
     write(IMAIN,*) '  expected: ',PPM_num_v
     write(IMAIN,*) '  got: ',counter
@@ -292,7 +290,7 @@
   enddo
 
   if( abs(PPM_dlat) < 1.e-15 .or. abs(PPM_dlon) < 1.e-15 .or. abs(PPM_ddepth) < 1.e-15) then
-    write(IMAIN,*) '  model PPM:',filename
+    write(IMAIN,*) '  model PPM:',PPM_file_path
     write(IMAIN,*) '     error in delta values:'
     write(IMAIN,*) '     dlat : ',PPM_dlat,' dlon: ',PPM_dlon,' ddepth: ',PPM_ddepth
     call flush_IMAIN()

@@ -83,14 +83,11 @@
   real :: val
   integer :: ival
   integer :: itopo_x,itopo_y,ier
-  character(len=150) :: topo_bathy_file
-
-  call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
   ! reads in topography values from file
-  open(unit=13,file=trim(topo_bathy_file),status='old',action='read',iostat=ier)
+  open(unit=13,file=trim(PATHNAME_TOPO_FILE),status='old',action='read',iostat=ier)
   if( ier /= 0 ) then
-    print*,'error opening:',trim(topo_bathy_file)
+    print*,'error opening:',trim(PATHNAME_TOPO_FILE)
     call exit_mpi(0,'error opening topography data file')
   endif
 

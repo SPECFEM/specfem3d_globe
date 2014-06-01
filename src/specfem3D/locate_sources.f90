@@ -135,8 +135,6 @@
   double precision :: time_start,tCPU
   double precision, external :: wtime
 
-  character(len=150) :: OUTPUT_FILES
-
   ! get MPI starting time for all sources
   time_start = wtime()
 
@@ -176,10 +174,7 @@
 
   ! appends receiver locations to sr.vtk file
   if( myrank == 0 ) then
-    ! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
-
-    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
   endif
@@ -899,7 +894,6 @@
   double precision, external :: comp_source_time_function,comp_source_spectrum
   double precision, external :: comp_source_time_function_rickr
 
-  character(len=150) :: OUTPUT_FILES
   character(len=150) :: plot_file
 
   ! number of points to plot the source time function and spectrum
@@ -909,9 +903,6 @@
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
   call flush_IMAIN()
-
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   ! print the source-time function
   if(NSOURCES == 1) then
@@ -927,7 +918,7 @@
   endif
 
   ! output file
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
+  open(unit=IOUT,file='OUTPUT_FILES'//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_time_function file')
 
@@ -986,7 +977,7 @@
     endif
   endif
 
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
+  open(unit=IOUT,file='OUTPUT_FILES'//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_spectrum file')
 

@@ -121,11 +121,9 @@
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
-  character(len=150) HEADER_FILE
 
   ! copy number of elements and points in an include file for the solver
-  call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
-  open(unit=IOUT,file=HEADER_FILE,status='unknown',iostat=ier)
+  open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown',iostat=ier)
   if( ier /= 0 ) stop 'error opening OUTPUT_FILES/values_from_mesher.h'
 
   write(IOUT,*)

@@ -75,7 +75,7 @@
   ! local parameters
   integer :: nglob
   integer :: NGLOB1D_RADIAL
-  character(len=150) :: OUTPUT_FILES,ERR_MSG
+  character(len=150) :: ERR_MSG
 
   ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
@@ -253,10 +253,8 @@
   ! file output
   if( DEBUG ) then
     if(myrank == 0) then
-      ! get the base pathname for output files
-      call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
       ! file to store the list of processors for each message for faces
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown')
+      open(unit=IOUT,file='OUTPUT_FILES/list_messages_faces.txt',status='unknown')
     endif
   endif
 
@@ -927,7 +925,7 @@
   if( DEBUG ) then
     ! file to store the list of processors for each message for corners
     if(myrank == 0) &
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
+      open(unit=IOUT,file='OUTPUT_FILES/list_messages_corners.txt',status='unknown')
   endif
 
   ! loop over all the messages to create the addressing

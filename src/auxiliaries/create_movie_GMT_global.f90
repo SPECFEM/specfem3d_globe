@@ -110,7 +110,6 @@
   integer :: istamp1,istamp2
 
   character(len=256) :: line
-  character(len=150) :: CMTSOLUTION
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -273,10 +272,8 @@
     cmt_t_shift = 0.0
     cmt_hdur = 0.0
 
-    call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
-
     ! reads in source lat/lon
-    open(IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ierror )
+    open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ierror )
     if( ierror == 0 ) then
       ! skip first line, event name,timeshift,half duration
       read(IIN,*,iostat=ierror ) line ! PDE line

@@ -48,7 +48,7 @@
   double precision scaleM
   double precision t_shift(NSOURCES)
   character(len=5) datasource
-  character(len=256) string, CMTSOLUTION
+  character(len=256) string
 
   ! initializes
   lat(:) = 0.d0
@@ -67,9 +67,7 @@
 !
 !---- read hypocenter info
 !
-  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
-
-  open(unit=1,file=CMTSOLUTION,status='old',action='read')
+  open(unit=1,file='DATA/CMTSOLUTION',status='old',action='read')
 
 ! read source number isource
   do isource=1,NSOURCES
