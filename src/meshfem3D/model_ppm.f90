@@ -922,7 +922,7 @@
               y0 = yl(i,j,k,ispec)
               z0 = zl(i,j,k,ispec)
 
-              ! calculate weights based on gaussian smoothing
+              ! calculate weights based on Gaussian smoothing
               call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
                       xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
@@ -941,7 +941,7 @@
               tk_rhovp(i,j,k,ispec) = tk_rhovp(i,j,k,ispec) + sum(exp_val(:,:,:) * ks_rhovp(:,:,:,ispec2))
               tk_rhovs(i,j,k,ispec) = tk_rhovs(i,j,k,ispec) + sum(exp_val(:,:,:) * ks_rhovs(:,:,:,ispec2))
 
-              ! normalization, integrated values of gaussian smoothing function
+              ! normalization, integrated values of Gaussian smoothing function
               bk(i,j,k,ispec) = bk(i,j,k,ispec) + sum(exp_val(:,:,:))
 
             enddo
@@ -1086,7 +1086,7 @@
   !          +(zz(:,:,:,ispec2)-z0)**2 )/(2*sigma2) )*factor(:,:,:)
 
   ! from basin code smoothing:
-  ! gaussian function
+  ! Gaussian function
   !exp_val(:,:,:) = exp( -(xx(:,:,:,ispec2)-x0)**2/(sigma_h2) &
   !                      -(yy(:,:,:,ispec2)-y0)**2/(sigma_h2) &
   !                      -(zz(:,:,:,ispec2)-z0)**2/(sigma_v2) ) * factor(:,:,:)
@@ -1101,7 +1101,7 @@
         call get_distance_vec(dist_h,dist_v,x0,y0,z0, &
             xx_elem(ii,jj,kk),yy_elem(ii,jj,kk),zz_elem(ii,jj,kk))
 
-        ! gaussian function
+        ! Gaussian function
         exp_val(ii,jj,kk) = exp( - dist_h*dist_h/sigma_h2 &
                                   - dist_v*dist_v/sigma_v2 )    ! * factor(ii,jj,kk)
 

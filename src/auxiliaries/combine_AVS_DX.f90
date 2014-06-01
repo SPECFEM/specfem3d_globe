@@ -701,7 +701,7 @@
 
 ! compute total area consisting of oceans
 ! and suppress areas that are not considered oceans if needed
-! use arbitrary threshold to suppress artefacts in ETOPO5 model
+! use arbitrary threshold to suppress artifacts in ETOPO5 model
       if(xval >= -0.018) then
         if(OCEANS_ONLY) xval = 0.
         above_zero = above_zero + 1

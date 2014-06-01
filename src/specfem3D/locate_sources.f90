@@ -400,7 +400,7 @@
           enddo
         enddo
 
-        ! calculates a gaussian mask around source point
+        ! calculates a Gaussian mask around source point
         if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
           call calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
                                 x_target_source,y_target_source,z_target_source, &
@@ -782,7 +782,7 @@
                             x_target_source,y_target_source,z_target_source, &
                             ibool,xstore,ystore,zstore,NGLOB)
 
-! calculate a gaussian function mask in the crust_mantle region
+! calculate a Gaussian function mask in the crust_mantle region
 ! which is 0 around the source locations and 1 everywhere else
 
   use constants
@@ -802,7 +802,7 @@
   integer i,j,k,iglob
   double precision dist_sq,sigma_sq
 
-  ! standard deviation for gaussian
+  ! standard deviation for Gaussian
   ! (removes factor 10 added for search radius from typical_size)
   sigma_sq = typical_size * typical_size / 100.0
 
@@ -817,7 +817,7 @@
                   +(y_target_source - dble(ystore(iglob)))**2 &
                   +(z_target_source - dble(zstore(iglob)))**2
 
-        ! adds gaussian function value to mask
+        ! adds Gaussian function value to mask
         ! (mask value becomes 0 closer to source location, 1 everywhere else )
         mask_source(i,j,k,ispec) = mask_source(i,j,k,ispec) &
                   * ( 1.0_CUSTOM_REAL - exp( - dist_sq / sigma_sq ) )
@@ -939,7 +939,7 @@
       t0 = USER_T0
     endif
   endif
-  ! convert the half duration for triangle STF to the one for gaussian STF
+  ! convert the half duration for triangle STF to the one for Gaussian STF
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
   hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE

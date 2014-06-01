@@ -162,7 +162,7 @@
 ! files rather than be defined within the CODE
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
-! Variables (tau_sigma and tau_epslion ( or tau_mu) )
+! Variables (tau_sigma and tau_epsilon ( or tau_mu) )
   subroutine model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
                                     R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
@@ -749,7 +749,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !                dimension(nf)
 !     tau_s = Tau_sigma  Stress relaxation time (see References)
 !                dimension(nsls)
-!     tau_e = Tau_epislon Strain relaxation time (see References)
+!     tau_e = Tau_epsilon Strain relaxation time (see References)
 !                dimension(nsls)!
 !   Output
 !     B     = Real Moduli      ( M2 Dahlen and Tromp pp.203 )
@@ -814,7 +814,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !
 !    Uses attenuation_simplex_variables to store constant values
 !
-!    See atteunation_simplex_setup
+!    See attenuation_simplex_setup
 !
   double precision function attenuation_eval(Xin,AS_V)
 

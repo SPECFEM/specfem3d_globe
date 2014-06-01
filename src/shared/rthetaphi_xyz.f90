@@ -265,14 +265,14 @@
 
 ! - moment tensor:
 ! the moment tensor of the CMTSOLUTION is rotated from a spherical to a
-! cartesian representation, using the geocentric colatitude
+! Cartesian representation, using the geocentric colatitude
 ! - vertical component:
 ! the vertical component at source/receiver locations is calculated with
 ! respect to geocentric colatitude
 ! - target position in the mesh:
 ! to find the best source/receiver position in the mesh, the target
 ! location is using the geocentric colatitude and corrects the radius for
-! topography and ellipticity when calculating the x/y/z cartesian
+! topography and ellipticity when calculating the x/y/z Cartesian
 ! position. We then locate this x/y/z location in the mesh.
 
 ! Note that we always convert the geographic latitude to geocentric
@@ -285,11 +285,11 @@
 ! mesh, which should be fine. however, for the elliptical case where
 ! ELLIPTICITY is turn on, the mesh would be stretched out and x/y/z
 ! positions of the mesh nodes are then what? geocentric or geographic now?
-! and what is the cartesian position of a location given in geographic
+! and what is the Cartesian position of a location given in geographic
 ! coordinates? since we map topography onto geocentric colatitude and
 ! stretch out the ellipticity in radial direction, i think we always have
 ! to convert first the source/receiver positions to geocentric ones to
-! then locate the best cartesian x/y/z location in the mesh. so, i think,
+! then locate the best Cartesian x/y/z location in the mesh. so, i think,
 ! we are doing it the right way.
 
 ! Not sure if i made this point clear, and i would welcome some more

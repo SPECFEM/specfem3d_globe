@@ -162,7 +162,7 @@
       rgt = (r_top / R_EARTH)*gamma
       rgb = (r_bottom / R_EARTH)*gamma
 
-    ! define the mesh points on the top and the bottom in the six regions of the cubed shpere
+    ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
       select case (ichunk)
 
         case(CHUNK_AB)
@@ -428,7 +428,7 @@
 ! keeping in mind that the code non-dimensionalizes the radius of the spherical Earth to one
       rgt = R_UNIT_SPHERE*gamma
 
-    ! define the mesh points on the top and the bottom in the six regions of the cubed shpere
+    ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
       select case (ichunk)
 
         case(CHUNK_AB)
