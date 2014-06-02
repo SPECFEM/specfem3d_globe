@@ -131,7 +131,7 @@ contains
           islice_selected_rec, &
           seismo_offset,seismo_current, &
           OUTPUT_SEISMOS_ASCII_TEXT, &
-          OUTPUT_SEISMOS_ASDF, DT, &
+          OUTPUT_SEISMOS_ASDF, &
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
@@ -156,8 +156,8 @@ contains
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if(ier /= 0) call exit_mpi(myrank,'error while allocating one temporary seismogram')
 
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  ! set the base pathname for output files
+  OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! writes out seismograms
   if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
@@ -539,7 +539,6 @@ contains
   integer :: iorientation,isample
 
   character(len=4) :: chn
-  character(len=150) :: clean_LOCAL_PATH,final_LOCAL_PATH
   character(len=256) :: sisname
   character(len=2) :: bic
 
@@ -575,13 +574,7 @@ contains
 
       ! create the name of the seismogram file for each slice
       ! file name includes the name of the station, the network and the component
-      write(sisname,"(a,i6.6,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
-
-      ! suppress white spaces if any
-      clean_LOCAL_PATH = adjustl(LOCAL_TMP_PATH)
-
-      ! create full final local path
-      final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
+      write(sisname,"(a2,i6.6,'.',a,'.',a3,'.sem')") '/S',irec,'NT',chn
 
       ! save seismograms in text format with no subsampling.
       ! Because we do not subsample the output, this can result in large files
@@ -590,22 +583,19 @@ contains
       ! the results with the source time function
       if(it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !open new file
-        open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
+        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)),&
               status='unknown',action='write')
       else if(it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !append to existing file
-        open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
+        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)),&
               status='old',position='append',action='write')
       endif
       ! make sure we never write more than the maximum number of time steps
       ! subtract half duration of the source to make sure travel time is correct
       do isample = nit_written+1,min(it,NSTEP)
         ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          write(IOUT,*) sngl(dble(isample-1)*DT - t0),' ',seismograms(iorientation,irec_local,isample-nit_written)
-        else
-          write(IOUT,*) dble(isample-1)*DT - t0,' ',seismograms(iorientation,irec_local,isample-nit_written)
-        endif
+        write(IOUT,*) real(dble(isample-1)*DT - t0, kind=CUSTOM_REAL), ' ', &
+                      seismograms(iorientation,irec_local,isample-nit_written)
       enddo
 
       close(IOUT)

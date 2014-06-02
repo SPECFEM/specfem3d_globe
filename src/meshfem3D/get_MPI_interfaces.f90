@@ -592,10 +592,9 @@
 
   ! local parameters
   ! arrays for sorting routine
-  double precision, dimension(:), allocatable :: work
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
   integer, dimension(:), allocatable :: ibool_selected
-  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
+  integer, dimension(:), allocatable :: ninseg,iglob,locval
   logical, dimension(:), allocatable :: ifseg
   integer :: nglob_selected,i,ipoin,ier
 
@@ -604,13 +603,10 @@
           xstore_selected(npoin), &
           ystore_selected(npoin), &
           zstore_selected(npoin), &
-          ind(npoin), &
           ninseg(npoin), &
           iglob(npoin), &
           locval(npoin), &
-          ifseg(npoin), &
-          iwork(npoin), &
-          work(npoin),stat=ier)
+          ifseg(npoin),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error sort MPI interface: allocating temporary sorting arrays')
 
   ! sets up working arrays
@@ -619,22 +615,15 @@
 
     ibool_selected(i) = ipoin
 
-    if( CUSTOM_REAL == SIZE_REAL ) then
-      xstore_selected(i) = dble(xstore(ipoin))
-      ystore_selected(i) = dble(ystore(ipoin))
-      zstore_selected(i) = dble(zstore(ipoin))
-    else
-      xstore_selected(i) = xstore(ipoin)
-      ystore_selected(i) = ystore(ipoin)
-      zstore_selected(i) = zstore(ipoin)
-    endif
+    xstore_selected(i) = dble(xstore(ipoin))
+    ystore_selected(i) = dble(ystore(ipoin))
+    zstore_selected(i) = dble(zstore(ipoin))
   enddo
 
   ! sort buffer obtained to be conforming with neighbor in other chunk
   ! sort on x, y and z, the other arrays will be swapped as well
   call sort_array_coordinates(npoin,xstore_selected,ystore_selected,zstore_selected, &
-                             ibool_selected,iglob,locval,ifseg,nglob_selected, &
-                             ind,ninseg,iwork,work)
+                              ibool_selected,iglob,locval,ifseg,nglob_selected,ninseg)
 
   ! check that no duplicate has been detected
   if(nglob_selected /= npoin) call exit_MPI(myrank,'error sort MPI interface: duplicates detected in buffer')
@@ -644,7 +633,7 @@
 
   ! frees array memory
   deallocate(ibool_selected,xstore_selected,ystore_selected,zstore_selected, &
-            ind,ninseg,iglob,locval,ifseg,iwork,work)
+             ninseg,iglob,locval,ifseg)
 
 
   end subroutine sort_MPI_interface

@@ -103,11 +103,7 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            tmp_array(iglob) = sngl(xstore(i,j,k,ispec))
-          else
-            tmp_array(iglob) = xstore(i,j,k,ispec)
-          endif
+          tmp_array(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo
@@ -122,11 +118,7 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            tmp_array(iglob) = sngl(ystore(i,j,k,ispec))
-          else
-            tmp_array(iglob) = ystore(i,j,k,ispec)
-          endif
+          tmp_array(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo
@@ -141,11 +133,7 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            tmp_array(iglob) = sngl(zstore(i,j,k,ispec))
-          else
-            tmp_array(iglob) = zstore(i,j,k,ispec)
-          endif
+          tmp_array(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo

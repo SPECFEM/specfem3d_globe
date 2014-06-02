@@ -277,17 +277,12 @@
             gzl = cos_theta
 
             ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              gravity_term(i,j,k) = &
-                sngl(minus_rho_g_over_kappa_fluid(int_radius) * &
-                dble(jacobianl) * wgll_cube(i,j,k) * &
-               (dble(dpotentialdx_with_rot) * gxl + &
-                dble(dpotentialdy_with_rot) * gyl + dble(dpotentialdzl) * gzl))
-            else
-              gravity_term(i,j,k) = minus_rho_g_over_kappa_fluid(int_radius) * &
-                 jacobianl * wgll_cube(i,j,k) * (dpotentialdx_with_rot * gxl + &
-                 dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
-            endif
+            gravity_term(i,j,k) = &
+              real(minus_rho_g_over_kappa_fluid(int_radius) * dble(jacobianl) * wgll_cube(i,j,k) &
+                   * (dble(dpotentialdx_with_rot) * gxl &
+                    + dble(dpotentialdy_with_rot) * gyl &
+                    + dble(dpotentialdzl)         * gzl), &
+                   kind=CUSTOM_REAL)
 
             ! divergence of displacement field with gravity on
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD

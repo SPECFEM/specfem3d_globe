@@ -226,13 +226,10 @@ all: default
 
 default: $(DEFAULT)
 
-backup:
-	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
-
 ifdef CLEAN
 clean:
 	@echo "cleaning by CLEAN defined"
-	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS)) $O/*
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
 else
 clean:
 	@echo "cleaning by CLEAN not defined"
@@ -257,7 +254,7 @@ help:
 	@echo "    xcreate_movie_GMT_global"
 	@echo ""
 
-.PHONY: all default backup clean help
+.PHONY: all default clean help
 
 #######################################
 
@@ -290,8 +287,7 @@ endef
 $(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
 
 # Other old shortcuts
-bak: backup
 mesh: $E/xmeshfem3D
 spec: $E/xspecfem3D
-.PHONY: bak mesh spec
+.PHONY: mesh spec
 

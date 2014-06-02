@@ -106,7 +106,7 @@
           status='unknown',action='write',iostat=ios)
     if( ios /= 0 ) call exit_MPI(myrank,'error opening output file irec_master_noise')
 
-    WRITE(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
+    write(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
     close(IOUT_NOISE)
   endif
 
@@ -224,21 +224,21 @@
           status='unknown',action='write',iostat=ier)
      if( ier /= 0 ) call exit_MPI(myrank,'error opening output file NOISE_SIMULATION')
 
-     WRITE(IOUT_NOISE,*) '*******************************************************************************'
-     WRITE(IOUT_NOISE,*) '*******************************************************************************'
-     WRITE(IOUT_NOISE,*) 'WARNING!!!!!!!!!!!!'
-     WRITE(IOUT_NOISE,*) 'You are running simulations using NOISE TOMOGRAPHY techniques.'
-     WRITE(IOUT_NOISE,*) 'Please make sure you understand the procedures before you have a try.'
-     WRITE(IOUT_NOISE,*) 'Displacements everywhere at the free surface are saved every timestep,'
-     WRITE(IOUT_NOISE,*) 'so make sure that LOCAL_TMP_PATH in DATA/Par_file is not global.'
-     WRITE(IOUT_NOISE,*) 'Otherwise the disk storage may be a serious issue, as is the speed of I/O.'
-     WRITE(IOUT_NOISE,*) 'Also make sure that NO earthquakes are included,'
-     WRITE(IOUT_NOISE,*) 'i.e., set moment tensor to be ZERO in CMTSOLUTION'
-     WRITE(IOUT_NOISE,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-     WRITE(IOUT_NOISE,*) 'If you just want a regular EARTHQUAKE simulation,'
-     WRITE(IOUT_NOISE,*) 'set NOISE_TOMOGRAPHY=0 in DATA/Par_file'
-     WRITE(IOUT_NOISE,*) '*******************************************************************************'
-     WRITE(IOUT_NOISE,*) '*******************************************************************************'
+     write(IOUT_NOISE,*) '*******************************************************************************'
+     write(IOUT_NOISE,*) '*******************************************************************************'
+     write(IOUT_NOISE,*) 'WARNING!!!!!!!!!!!!'
+     write(IOUT_NOISE,*) 'You are running simulations using NOISE TOMOGRAPHY techniques.'
+     write(IOUT_NOISE,*) 'Please make sure you understand the procedures before you have a try.'
+     write(IOUT_NOISE,*) 'Displacements everywhere at the free surface are saved every timestep,'
+     write(IOUT_NOISE,*) 'so make sure that LOCAL_TMP_PATH in DATA/Par_file is not global.'
+     write(IOUT_NOISE,*) 'Otherwise the disk storage may be a serious issue, as is the speed of I/O.'
+     write(IOUT_NOISE,*) 'Also make sure that NO earthquakes are included,'
+     write(IOUT_NOISE,*) 'i.e., set moment tensor to be ZERO in CMTSOLUTION'
+     write(IOUT_NOISE,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+     write(IOUT_NOISE,*) 'If you just want a regular EARTHQUAKE simulation,'
+     write(IOUT_NOISE,*) 'set NOISE_TOMOGRAPHY=0 in DATA/Par_file'
+     write(IOUT_NOISE,*) '*******************************************************************************'
+     write(IOUT_NOISE,*) '*******************************************************************************'
      close(IOUT_NOISE)
   endif
 
@@ -354,7 +354,7 @@
 
   if (myrank == 0) then
      open(unit=IOUT_NOISE,file='OUTPUT_FILES/nu_master',status='unknown',action='write')
-     WRITE(IOUT_NOISE,*) 'The direction (NEZ) of selected component of master receiver is', nu_master
+     write(IOUT_NOISE,*) 'The direction (NEZ) of selected component of master receiver is', nu_master
      close(IOUT_NOISE)
   endif
 

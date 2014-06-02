@@ -1,30 +1,30 @@
 /*
- !=====================================================================
- !
- !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
- !          --------------------------------------------------
- !
- !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
- !                        Princeton University, USA
- !                and CNRS / University of Marseille, France
- !                 (there are currently many more authors!)
- ! (c) Princeton University and CNRS / University of Marseille, April 2014
- !
- ! This program is free software; you can redistribute it and/or modify
- ! it under the terms of the GNU General Public License as published by
- ! the Free Software Foundation; either version 2 of the License, or
- ! (at your option) any later version.
- !
- ! This program is distributed in the hope that it will be useful,
- ! but WITHOUT ANY WARRANTY; without even the implied warranty of
- ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- ! GNU General Public License for more details.
- !
- ! You should have received a copy of the GNU General Public License along
- ! with this program; if not, write to the Free Software Foundation, Inc.,
- ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- !
- !=====================================================================
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
 */
 
 #include <stdio.h>
@@ -33,8 +33,6 @@
 #include "config.h"
 
 typedef float realw;
-
-
 
 //
 // src/gpu/assemble_MPI_scalar_gpu.cu
@@ -57,9 +55,9 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
 
 void FC_FUNC_(transfer_boun_from_device,
               TRANSFER_BOUN_FROM_DEVICE)(long* Mesh_pointer_f,
-                                               realw* send_accel_buffer,
-                                               int* IREGION,
-                                               int* FORWARD_OR_ADJOINT){}
+                                         realw* send_accel_buffer,
+                                         int* IREGION,
+                                         int* FORWARD_OR_ADJOINT){}
 
 void FC_FUNC_(transfer_asmbl_accel_to_device,
               TRANSFER_ASMBL_ACCEL_TO_DEVICE)(long* Mesh_pointer,
@@ -69,16 +67,16 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
 
 void FC_FUNC_(transfer_buffer_to_device_async,
               TRANSFER_BUFFER_TO_DEVICE_ASYNC)(long* Mesh_pointer,
-                                             realw* buffer,
-                                             int* IREGION,
-                                             int* FORWARD_OR_ADJOINT) {}
+                                               realw* buffer,
+                                               int* IREGION,
+                                               int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(sync_copy_from_device,
               SYNC_copy_FROM_DEVICE)(long* Mesh_pointer,
                                      int* iphase,
                                      realw* send_buffer,
-                                              int* IREGION,
-                                              int* FORWARD_OR_ADJOINT) {}
+                                     int* IREGION,
+                                     int* FORWARD_OR_ADJOINT) {}
 
 
 //
@@ -86,18 +84,18 @@ void FC_FUNC_(sync_copy_from_device,
 //
 
 void FC_FUNC_(pause_for_debug,
-              PAUSE_FOR_DEBUG)() {}
+              PAUSE_FOR_DEBUG)(void) {}
 
 void FC_FUNC_(output_free_device_memory,
               OUTPUT_FREE_DEVICE_MEMORY)(int* myrank) {}
 
 void FC_FUNC_(get_free_device_memory,
-              get_FREE_DEVICE_MEMORY)(realw* free, realw* used, realw* total ) {}
+              get_FREE_DEVICE_MEMORY)(realw* free, realw* used, realw* total) {}
 
 void FC_FUNC_(check_norm_acoustic_from_device,
               CHECK_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
-                                                  long* Mesh_pointer_f,
-                                                  int* FORWARD_OR_ADJOINT) {}
+                                               long* Mesh_pointer_f,
+                                               int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(check_norm_elastic_from_device,
               CHECK_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
@@ -109,35 +107,35 @@ void FC_FUNC_(check_norm_strain_from_device,
                                              realw* strain_norm2,
                                              long* Mesh_pointer_f) {}
 
- void FC_FUNC_(check_max_norm_displ_gpu,
- CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ,long* Mesh_pointer_f,int* announceID) {}
+void FC_FUNC_(check_max_norm_displ_gpu,
+              CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ, long* Mesh_pointer_f, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_vector,
- CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {}
+void FC_FUNC_(check_max_norm_vector,
+              CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_displ,
- CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {}
+void FC_FUNC_(check_max_norm_displ,
+              CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_b_displ_gpu,
- CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ,long* Mesh_pointer_f,int* announceID) {}
+void FC_FUNC_(check_max_norm_b_displ_gpu,
+              CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ, long* Mesh_pointer_f, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_b_accel_gpu,
- CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel,long* Mesh_pointer_f,int* announceID) {}
+void FC_FUNC_(check_max_norm_b_accel_gpu,
+              CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel, long* Mesh_pointer_f, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_b_veloc_gpu,
- CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc,long* Mesh_pointer_f,int* announceID) {}
+void FC_FUNC_(check_max_norm_b_veloc_gpu,
+              CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc, long* Mesh_pointer_f, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_b_displ,
- CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ,int* announceID) {}
+void FC_FUNC_(check_max_norm_b_displ,
+              CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ, int* announceID) {}
 
- void FC_FUNC_(check_max_norm_b_accel,
- CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel,int* announceID) {}
+void FC_FUNC_(check_max_norm_b_accel,
+              CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel, int* announceID) {}
 
- void FC_FUNC_(check_error_vectors,
- CHECK_ERROR_VECTORS)(int* sizef, realw* vector1,realw* vector2) {}
+void FC_FUNC_(check_error_vectors,
+              CHECK_ERROR_VECTORS)(int* sizef, realw* vector1, realw* vector2) {}
 
- void FC_FUNC_(get_max_accel,
- GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {}
+void FC_FUNC_(get_max_accel,
+              GET_MAX_ACCEL)(int* itf, int* sizef, long* Mesh_pointer) {}
 
 
 //
@@ -146,22 +144,22 @@ void FC_FUNC_(check_norm_strain_from_device,
 
 void FC_FUNC_(compute_add_sources_gpu,
               COMPUTE_ADD_SOURCES_GPU)(long* Mesh_pointer_f,
-                                        int* NSOURCESf,
-                                        double* h_stf_pre_compute) {}
+                                       int* NSOURCESf,
+                                       double* h_stf_pre_compute) {}
 
 void FC_FUNC_(compute_add_sources_backward_gpu,
               COMPUTE_ADD_SOURCES_BACKWARD_GPU)(long* Mesh_pointer_f,
-                                                 int* NSOURCESf,
-                                                 double* h_stf_pre_compute) {}
+                                                int* NSOURCESf,
+                                                double* h_stf_pre_compute) {}
 
 void FC_FUNC_(compute_add_sources_adjoint_gpu,
               COMPUTE_ADD_SOURCES_ADJOINT_GPU)(long* Mesh_pointer,
-                                                int* h_nrec) {}
+                                               int* h_nrec) {}
 
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer,
                                       int* h_nrec,
-                                                realw* h_adj_sourcearrays,
+                                      realw* h_adj_sourcearrays,
                                       int* h_islice_selected_rec) {}
 
 void FC_FUNC_(transfer_adj_to_device_async,
@@ -177,23 +175,23 @@ void FC_FUNC_(transfer_adj_to_device_async,
 
 void FC_FUNC_(compute_coupling_fluid_cmb_gpu,
               COMPUTE_COUPLING_FLUID_CMB_GPU)(long* Mesh_pointer_f,
-                                               int* FORWARD_OR_ADJOINT) {}
+                                              int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(compute_coupling_fluid_icb_gpu,
               COMPUTE_COUPLING_FLUID_ICB_GPU)(long* Mesh_pointer_f,
-                                               int* FORWARD_OR_ADJOINT) {}
+                                              int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(compute_coupling_cmb_fluid_gpu,
               COMPUTE_COUPLING_CMB_FLUID_GPU)(long* Mesh_pointer_f,
-                                               int* FORWARD_OR_ADJOINT) {}
+                                              int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(compute_coupling_icb_fluid_gpu,
               COMPUTE_COUPLING_ICB_FLUID_GPU)(long* Mesh_pointer_f,
-                                               int* FORWARD_OR_ADJOINT) {}
+                                              int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(compute_coupling_ocean_gpu,
               COMPUTE_COUPLING_OCEAN_GPU)(long* Mesh_pointer_f,
-                                           int* FORWARD_OR_ADJOINT) {}
+                                          int* FORWARD_OR_ADJOINT) {}
 
 
 //
@@ -202,8 +200,8 @@ void FC_FUNC_(compute_coupling_ocean_gpu,
 
 void FC_FUNC_(compute_forces_crust_mantle_gpu,
               COMPUTE_FORCES_CRUST_MANTLE_GPU)(long* Mesh_pointer_f,
-                                                int* iphase,
-                                                int* FORWARD_OR_ADJOINT_f) {}
+                                               int* iphase,
+                                               int* FORWARD_OR_ADJOINT_f) {}
 
 
 //
@@ -212,8 +210,8 @@ void FC_FUNC_(compute_forces_crust_mantle_gpu,
 
 void FC_FUNC_(compute_forces_inner_core_gpu,
               COMPUTE_FORCES_INNER_CORE_GPU)(long* Mesh_pointer_f,
-                                              int* iphase,
-                                              int* FORWARD_OR_ADJOINT_f) {}
+                                             int* iphase,
+                                             int* FORWARD_OR_ADJOINT_f) {}
 
 
 //
@@ -222,9 +220,9 @@ void FC_FUNC_(compute_forces_inner_core_gpu,
 
 void FC_FUNC_(compute_forces_outer_core_gpu,
               COMPUTE_FORCES_OUTER_CORE_GPU)(long* Mesh_pointer_f,
-                                              int* iphase,
-                                              realw* time_f,
-                                              int* FORWARD_OR_ADJOINT_f) {}
+                                             int* iphase,
+                                             realw* time_f,
+                                             int* FORWARD_OR_ADJOINT_f) {}
 
 
 //
@@ -247,7 +245,7 @@ void FC_FUNC_(compute_kernels_strgth_noise_gpu,
 
 void FC_FUNC_(compute_kernels_hess_gpu,
               COMPUTE_KERNELS_HESS_GPU)(long* Mesh_pointer,
-                                         realw* deltat_f) {}
+                                        realw* deltat_f) {}
 
 
 //
@@ -256,17 +254,17 @@ void FC_FUNC_(compute_kernels_hess_gpu,
 
 void FC_FUNC_(compute_stacey_acoustic_gpu,
               COMPUTE_STACEY_ACOUSTIC_GPU)(long* Mesh_pointer_f,
-                                            realw* absorb_potential,
-                                            int* itype) {}
+                                           realw* absorb_potential,
+                                           int* itype) {}
 
 void FC_FUNC_(compute_stacey_acoustic_backward_gpu,
               COMPUTE_STACEY_ACOUSTIC_BACKWARD_GPU)(long* Mesh_pointer_f,
-                                                     realw* absorb_potential,
-                                                     int* itype) {}
+                                                    realw* absorb_potential,
+                                                    int* itype) {}
 
 void FC_FUNC_(compute_stacey_acoustic_undoatt_gpu,
               COMPUTE_STACEY_ACOUSTIC_UNDOATT_GPU)(long* Mesh_pointer_f,
-                                                    int* itype) {}
+                                                   int* itype) {}
 
 
 //
@@ -275,17 +273,17 @@ void FC_FUNC_(compute_stacey_acoustic_undoatt_gpu,
 
 void FC_FUNC_(compute_stacey_elastic_gpu,
               COMPUTE_STACEY_ELASTIC_GPU)(long* Mesh_pointer_f,
-                                           realw* absorb_field,
-                                           int* itype) {}
+                                          realw* absorb_field,
+                                          int* itype) {}
 
 void FC_FUNC_(compute_stacey_elastic_backward_gpu,
               COMPUTE_STACEY_ELASTIC_BACKWARD_GPU)(long* Mesh_pointer_f,
-                                                    realw* absorb_field,
-                                                    int* itype) {}
+                                                   realw* absorb_field,
+                                                   int* itype) {}
 
 void FC_FUNC_(compute_stacey_elastic_undoatt_gpu,
               COMPUTE_STACEY_ELASTIC_UNDOATT_GPU)(long* Mesh_pointer_f,
-                                                   int* itype) {}
+                                                  int* itype) {}
 
 
 //
@@ -293,9 +291,12 @@ void FC_FUNC_(compute_stacey_elastic_undoatt_gpu,
 //
 
 void FC_FUNC_(initialize_gpu_device,
-              INITIALIZE_GPU_DEVICE)(int *runtime_f, const char *platform_filter, const char *device_filter, int *myrank_f, int *nb_devices) {
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA Support. To enable GPU support, reconfigure with --with-gpu and/or --with-opencl flag.\n");
- exit(1);
+              INITIALIZE_GPU_DEVICE)(int *runtime_f, const char *platform_filter, const char *device_filter,
+                                     int *myrank_f, int *nb_devices)
+{
+  fprintf(stderr, "ERROR: GPU_MODE enabled without GPU/CUDA Support. "
+                  "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl flag.\n");
+  exit(1);
 }
 
 
@@ -319,13 +320,13 @@ void FC_FUNC_(noise_transfer_surface_to_host,
 
 void FC_FUNC_(noise_add_source_master_rec_gpu,
               NOISE_ADD_SOURCE_MASTER_REC_GPU)(long* Mesh_pointer_f,
-                                              int* it_f,
-                                              int* irec_master_noise_f,
-                                              int* islice_selected_rec) {}
+                                               int* it_f,
+                                               int* irec_master_noise_f,
+                                               int* islice_selected_rec) {}
 
 void FC_FUNC_(noise_add_surface_movie_gpu,
               NOISE_ADD_SURFACE_MOVIE_GPU)(long* Mesh_pointer_f,
-                                            realw* h_noise_surface_movie) {}
+                                           realw* h_noise_surface_movie) {}
 
 
 //
@@ -388,32 +389,32 @@ void FC_FUNC_(prepare_fields_gravity_device,
 
 void FC_FUNC_(prepare_fields_attenuat_device,
               PREPARE_FIELDS_ATTENUAT_DEVICE)(long* Mesh_pointer_f,
-                                                 realw* R_xx_crust_mantle,
-                                                 realw* R_yy_crust_mantle,
-                                                 realw* R_xy_crust_mantle,
-                                                 realw* R_xz_crust_mantle,
-                                                 realw* R_yz_crust_mantle,
-                                                 realw* b_R_xx_crust_mantle,
-                                                 realw* b_R_yy_crust_mantle,
-                                                 realw* b_R_xy_crust_mantle,
-                                                 realw* b_R_xz_crust_mantle,
-                                                 realw* b_R_yz_crust_mantle,
-                                                 realw* factor_common_crust_mantle,
-                                                 realw* one_minus_sum_beta_crust_mantle,
-                                                 realw* R_xx_inner_core,
-                                                 realw* R_yy_inner_core,
-                                                 realw* R_xy_inner_core,
-                                                 realw* R_xz_inner_core,
-                                                 realw* R_yz_inner_core,
-                                                 realw* b_R_xx_inner_core,
-                                                 realw* b_R_yy_inner_core,
-                                                 realw* b_R_xy_inner_core,
-                                                 realw* b_R_xz_inner_core,
-                                                 realw* b_R_yz_inner_core,
-                                                 realw* factor_common_inner_core,
-                                                 realw* one_minus_sum_beta_inner_core,
-                                                 realw* alphaval,realw* betaval,realw* gammaval,
-                                                 realw* b_alphaval,realw* b_betaval,realw* b_gammaval) {}
+                                              realw* R_xx_crust_mantle,
+                                              realw* R_yy_crust_mantle,
+                                              realw* R_xy_crust_mantle,
+                                              realw* R_xz_crust_mantle,
+                                              realw* R_yz_crust_mantle,
+                                              realw* b_R_xx_crust_mantle,
+                                              realw* b_R_yy_crust_mantle,
+                                              realw* b_R_xy_crust_mantle,
+                                              realw* b_R_xz_crust_mantle,
+                                              realw* b_R_yz_crust_mantle,
+                                              realw* factor_common_crust_mantle,
+                                              realw* one_minus_sum_beta_crust_mantle,
+                                              realw* R_xx_inner_core,
+                                              realw* R_yy_inner_core,
+                                              realw* R_xy_inner_core,
+                                              realw* R_xz_inner_core,
+                                              realw* R_yz_inner_core,
+                                              realw* b_R_xx_inner_core,
+                                              realw* b_R_yy_inner_core,
+                                              realw* b_R_xy_inner_core,
+                                              realw* b_R_xz_inner_core,
+                                              realw* b_R_yz_inner_core,
+                                              realw* factor_common_inner_core,
+                                              realw* one_minus_sum_beta_inner_core,
+                                              realw* alphaval,realw* betaval,realw* gammaval,
+                                              realw* b_alphaval,realw* b_betaval,realw* b_gammaval) {}
 
 void FC_FUNC_(prepare_fields_strain_device,
               PREPARE_FIELDS_STRAIN_DEVICE)(long* Mesh_pointer_f,
@@ -587,7 +588,7 @@ void FC_FUNC_(prepare_inner_core_device,
 
 void FC_FUNC_(prepare_cleanup_device,
               PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f,
-              int* NCHUNKS_VAL) {}
+                                      int* NCHUNKS_VAL) {}
 
 
 //
@@ -680,12 +681,12 @@ void FC_FUNC_(transfer_accel_oc_from_device,
 
 void FC_FUNC_(transfer_strain_cm_from_device,
               TRANSFER_STRAIN_CM_FROM_DEVICE)(long* Mesh_pointer,
-                                                  realw* eps_trace_over_3,
-                                                  realw* epsilondev_xx,
-                                                  realw* epsilondev_yy,
-                                                  realw* epsilondev_xy,
-                                                  realw* epsilondev_xz,
-                                                  realw* epsilondev_yz) {}
+                                              realw* eps_trace_over_3,
+                                              realw* epsilondev_xx,
+                                              realw* epsilondev_yy,
+                                              realw* epsilondev_xy,
+                                              realw* epsilondev_xz,
+                                              realw* epsilondev_yz) {}
 
 void FC_FUNC_(transfer_b_strain_cm_to_device,
               TRANSFER_B_STRAIN_CM_TO_DEVICE)(long* Mesh_pointer,
@@ -719,6 +720,7 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
                                                realw* R_xy,
                                                realw* R_xz,
                                                realw* R_yz) {}
+
 void FC_FUNC_(transfer_b_rmemory_cm_to_device,
               TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long* Mesh_pointer,
                                                realw* b_R_xx,
@@ -726,6 +728,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
                                                realw* b_R_xy,
                                                realw* b_R_xz,
                                                realw* b_R_yz) {}
+
 void FC_FUNC_(transfer_rmemory_ic_from_device,
               TRANSFER_RMEMORY_IC_FROM_DEVICE)(long* Mesh_pointer,
                                                realw* R_xx,
@@ -749,8 +752,8 @@ void FC_FUNC_(transfer_rotation_from_device,
 
 void FC_FUNC_(transfer_b_rotation_to_device,
               TRANSFER_B_ROTATION_TO_DEVICE)(long* Mesh_pointer,
-                                              realw* A_array_rotation,
-                                              realw* B_array_rotation) {}
+                                             realw* A_array_rotation,
+                                             realw* B_array_rotation) {}
 
 void FC_FUNC_(transfer_kernels_cm_to_host,
               TRANSFER_KERNELS_CM_TO_HOST)(long* Mesh_pointer,
@@ -780,8 +783,8 @@ void FC_FUNC_(transfer_kernels_noise_to_host,
 
 void FC_FUNC_(transfer_kernels_hess_cm_tohost,
               TRANSFER_KERNELS_HESS_CM_TOHOST)(long* Mesh_pointer,
-                                              realw* h_hess_kl,
-                                              int* NSPEC) {}
+                                               realw* h_hess_kl,
+                                               int* NSPEC) {}
 
 
 //
@@ -790,42 +793,42 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
 
 void FC_FUNC_(update_displacement_ic_gpu,
               UPDATE_DISPLACMENT_IC_GPU)(long* Mesh_pointer_f,
-                                          realw* deltat_f,
-                                          realw* deltatsqover2_f,
-                                          realw* deltatover2_f,
-                                          int* FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_(update_displacement_cm_gpu,
-              UPDATE_DISPLACMENT_CM_GPU)(long* Mesh_pointer_f,
-                                          realw* deltat_f,
-                                          realw* deltatsqover2_f,
-                                          realw* deltatover2_f,
-                                          int* FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_(update_displacement_oc_gpu,
-              UPDATE_DISPLACEMENT_OC_gpu)(long* Mesh_pointer_f,
-                                           realw* deltat_f,
-                                           realw* deltatsqover2_f,
-                                           realw* deltatover2_f,
-                                           int* FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_(multiply_accel_elastic_gpu,
-              MULTIPLY_ACCEL_ELASTIC_GPU)(long* Mesh_pointer,
-                                           int* FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_(update_veloc_elastic_gpu,
-              UPDATE_VELOC_ELASTIC_GPU)(long* Mesh_pointer,
+                                         realw* deltat_f,
+                                         realw* deltatsqover2_f,
                                          realw* deltatover2_f,
                                          int* FORWARD_OR_ADJOINT) {}
 
+void FC_FUNC_(update_displacement_cm_gpu,
+              UPDATE_DISPLACMENT_CM_GPU)(long* Mesh_pointer_f,
+                                         realw* deltat_f,
+                                         realw* deltatsqover2_f,
+                                         realw* deltatover2_f,
+                                         int* FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_(update_displacement_oc_gpu,
+              UPDATE_DISPLACEMENT_OC_gpu)(long* Mesh_pointer_f,
+                                          realw* deltat_f,
+                                          realw* deltatsqover2_f,
+                                          realw* deltatover2_f,
+                                          int* FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_(multiply_accel_elastic_gpu,
+              MULTIPLY_ACCEL_ELASTIC_GPU)(long* Mesh_pointer,
+                                          int* FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_(update_veloc_elastic_gpu,
+              UPDATE_VELOC_ELASTIC_GPU)(long* Mesh_pointer,
+                                        realw* deltatover2_f,
+                                        int* FORWARD_OR_ADJOINT) {}
+
 void FC_FUNC_(multiply_accel_acoustic_gpu,
               MULTIPLY_ACCEL_ACOUSTIC_GPU)(long* Mesh_pointer,
-                                            int* FORWARD_OR_ADJOINT) {}
+                                           int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(update_veloc_acoustic_gpu,
               UPDATE_VELOC_ACOUSTIC_GPU)(long* Mesh_pointer,
-                                          realw* deltatover2_f,
-                                          int* FORWARD_OR_ADJOINT) {}
+                                         realw* deltatover2_f,
+                                         int* FORWARD_OR_ADJOINT) {}
 
 
 //
@@ -834,26 +837,26 @@ void FC_FUNC_(update_veloc_acoustic_gpu,
 
 void FC_FUNC_(write_seismograms_transfer_gpu,
               WRITE_SEISMOGRAMS_TRANSFER_GPU)(long* Mesh_pointer_f,
-                                               realw* displ,
-                                               realw* b_displ,
-                                               realw* eps_trace_over_3,
-                                               realw* epsilondev_xx,
-                                               realw* epsilondev_yy,
-                                               realw* epsilondev_xy,
-                                               realw* epsilondev_xz,
-                                               realw* epsilondev_yz,
-                                               int* number_receiver_global,
-                                               int* ispec_selected_rec,
-                                               int* ispec_selected_source,
-                                               int* ibool) {}
+                                              realw* displ,
+                                              realw* b_displ,
+                                              realw* eps_trace_over_3,
+                                              realw* epsilondev_xx,
+                                              realw* epsilondev_yy,
+                                              realw* epsilondev_xy,
+                                              realw* epsilondev_xz,
+                                              realw* epsilondev_yz,
+                                              int* number_receiver_global,
+                                              int* ispec_selected_rec,
+                                              int* ispec_selected_source,
+                                              int* ibool) {}
 
 void FC_FUNC_(transfer_seismo_from_device_async,
               TRANSFER_SEISMO_FROM_DEVICE_ASYNC)(long* Mesh_pointer_f,
                                                  realw* displ,
                                                  realw* b_displ,
-                                               int* number_receiver_global,
-                                               int* ispec_selected_rec,
-                                               int* ispec_selected_source,
-                                               int* ibool) {}
+                                                 int* number_receiver_global,
+                                                 int* ispec_selected_rec,
+                                                 int* ispec_selected_source,
+                                                 int* ibool) {}
 
 

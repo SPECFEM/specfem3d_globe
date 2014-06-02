@@ -78,7 +78,7 @@
   real EVLA,EVLO,EVEL,EVDP
   real MAG,DIST,AZ,BAZ,GCARC
   real DEPMEN
-  real USER0 ,USER1 ,USER2 !,USER3,USER4
+  real USER0,USER1,USER2,USER3,USER4
   real CMPAZ,CMPINC
 
   integer NZYEAR,NZJDAY,NZHOUR,NZMIN,NZSEC
@@ -155,7 +155,7 @@
   INTERNAL = -12345.00 ! SAC internal variables, always left undefined
   BYSAC    = -12345.00 ! values calculated by SAC from other variables
   !
-  DELTA  = DT          ! [REQUIRED]
+  DELTA  = sngl(DT)    ! [REQUIRED]
   DEPMIN = BYSAC
   DEPMAX = BYSAC
   DEPMEN = BYSAC
@@ -171,45 +171,47 @@
   A      = undef  !###
 
   !station values:
-  STLA = stlat(irec)
-  STLO = stlon(irec)
-  STEL = stele(irec)
-  STDP = stbur(irec)
+  STLA = sngl(stlat(irec))
+  STLO = sngl(stlon(irec))
+  STEL = sngl(stele(irec))
+  STDP = sngl(stbur(irec))
 
   !event values (hypocenter):
   ! note: this writes out the CMT location, which might be different
   ! to the event location given in the first, PDE line
-  EVLA   = cmt_lat
-  EVLO   = cmt_lon
+  EVLA   = sngl(cmt_lat)
+  EVLO   = sngl(cmt_lon)
   EVEL   = undef  !not defined
-  EVDP   = cmt_depth
+  EVDP   = sngl(cmt_depth)
 
 
   ! by Ebru
   ! SAC headers will have new format
-  USER0  = cmt_hdur !half duration from CMT file if not changed to t0=0.d0 (point source)
+  USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0=0.d0 (point source)
 
   ! USER1 and USER2 slots are used for the shortest and longest periods at which
   ! simulations are accurate, respectively.
   shortest_period = (256/NEX_XI)*(ANGULAR_WIDTH_XI_IN_DEGREES/90)*17
-  USER1  = shortest_period
+  USER1  = sngl(shortest_period)
   USER2  = 500.0d0
+  USER3  = undef
+  USER4  = undef
   ! we remove any PDE information, since the simulation could also start
   ! with a "pure" CMT solution, without having any PDE info
   !
-  !USER1  = t_shift !time shift between PDE and CMT solutions
+  !USER1  = sngl(t_shift) !time shift between PDE and CMT solutions
   !PDE location values (different from CMT location, usually):
-  !USER2  = depth !PDE depth
-  !USER3  = elat !PDE event latitude
-  !USER4  = elon !PDE event longitude
+  !USER2  = sngl(depth) !PDE depth
+  !USER3  = sngl(elat) !PDE event latitude
+  !USER4  = sngl(elon) !PDE event longitude
   !
   !cmt location values (different from hypocenter location, usually):
-  ! USER0  = cmt_lat
-  ! USER1  = cmt_lon
-  !USER0  = elat
-  !USER1  = elon
-  !USER2  = depth
-  !USER3  = cmt_hdur !half duration from CMT if not changed to t0=0.d0 (point source)
+  ! USER0  = sngl(cmt_lat)
+  ! USER1  = sngl(cmt_lon)
+  !USER0  = sngl(elat)
+  !USER1  = sngl(elon)
+  !USER2  = sngl(depth)
+  !USER3  = sngl(cmt_hdur) !half duration from CMT if not changed to t0=0.d0 (point source)
 
   ! just to avoid compiler warning
   value1 = elat
@@ -224,8 +226,8 @@
   !
   ! it's confusing, and as a result, we will omit it.
   ! by Ebru
-  MAG    = undef
-  IMAGTYP= undef
+  MAG     = undef
+  IMAGTYP = int(undef)
 
   !MAG    = mb    !
   !IMAGTYP= 52    ! 52 = Mb? 55 = Mw!
@@ -395,8 +397,7 @@
       write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
       write(IOUT_SAC,510) undef,    STLA,    STLO,    STEL,   STDP
       write(IOUT_SAC,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
-      write(IOUT_SAC,510) USER0,    USER1,   USER2,   undef,  undef
-      !write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,  USER4
+      write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,  USER4
       write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
       write(IOUT_SAC,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
       write(IOUT_SAC,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, undef
@@ -620,11 +621,7 @@
     ! now write SAC time series to file
     ! BS BS write whole time series at once (hope to increase I/O performance
     ! compared to using a loop on it)
-    if (CUSTOM_REAL == SIZE_REAL) then
-      tmp(1:seismo_current) = seismogram_tmp(iorientation,1:seismo_current)
-    else if (CUSTOM_REAL == SIZE_DOUBLE) then
-      tmp(1:seismo_current) = real(seismogram_tmp(iorientation,1:seismo_current))
-    endif
+    tmp(1:seismo_current) = real(seismogram_tmp(iorientation,1:seismo_current))
     call write_n_real(tmp(1:seismo_current),seismo_current)
 
     call close_file()

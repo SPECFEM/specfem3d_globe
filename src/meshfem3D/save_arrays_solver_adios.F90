@@ -433,11 +433,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            tmp_array_x(iglob) = sngl(xstore(i,j,k,ispec))
-          else
-            tmp_array_x(iglob) = xstore(i,j,k,ispec)
-          endif
+          tmp_array_x(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo
@@ -450,11 +446,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            tmp_array_y(iglob) = sngl(ystore(i,j,k,ispec))
-          else
-            tmp_array_y(iglob) = ystore(i,j,k,ispec)
-          endif
+          tmp_array_y(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo
@@ -467,11 +459,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           ! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            tmp_array_z(iglob) = sngl(zstore(i,j,k,ispec))
-          else
-            tmp_array_z(iglob) = zstore(i,j,k,ispec)
-          endif
+          tmp_array_z(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
         enddo
       enddo
     enddo

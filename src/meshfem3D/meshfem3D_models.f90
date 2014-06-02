@@ -802,15 +802,6 @@
                                            tau_e,tau_s,T_c_source, &
                                            moho,Qmu,Qkappa,elem_in_crust)
 
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
-!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 ).
-!! DK DK BUG   I thus temporarily patched it to avoid the problematic lines;
-!! DK DK BUG   of course this should be changed / fixed in the future.
-!! DK DK BUG
-!! DK DK BUG
-
 ! sets attenuation values tau_e and Qmu for a given point
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
@@ -952,15 +943,9 @@
 
       ! takes stored GLL values from file
       ! ( note that these values are non-dimensionalized)
-      if(CUSTOM_REAL == SIZE_REAL) then
-        vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
-        vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
-        rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-      else
-        vp = MGLL_V%vp_new(i,j,k,ispec)
-        vs = MGLL_V%vs_new(i,j,k,ispec)
-        rho = MGLL_V%rho_new(i,j,k,ispec)
-      endif
+      vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
+      vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
       ! isotropic model
       vpv = vp
       vph = vp
@@ -978,21 +963,12 @@
       endif
 
       ! takes stored GLL values from file
-      if(CUSTOM_REAL == SIZE_REAL) then
-        vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
-        vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
-        vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
-        vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
-        rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-        eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
-      else
-        vph = MGLL_V%vph_new(i,j,k,ispec)
-        vpv = MGLL_V%vpv_new(i,j,k,ispec)
-        vsh = MGLL_V%vsh_new(i,j,k,ispec)
-        vsv = MGLL_V%vsv_new(i,j,k,ispec)
-        rho = MGLL_V%rho_new(i,j,k,ispec)
-        eta_aniso = MGLL_V%eta_new(i,j,k,ispec)
-      endif
+      vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+      vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+      vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+      vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+      eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
     endif
     ! no mantle vp perturbation
     dvp = 0.0d0

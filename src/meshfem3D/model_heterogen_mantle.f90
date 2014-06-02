@@ -172,35 +172,35 @@
     z_high = z_low + 1
 
     ! rho1 at: x_low y_low z_low
-    rec_read = 1+(x_low*N_R*N_R)+(y_low*N_R)+z_low
+    rec_read = int(1+(x_low*N_R*N_R)+(y_low*N_R)+z_low)
     rho1 = HMM_rho_in(rec_read)
 
     ! rho2 at: x_low y_high z_low
-    rec_read = 1+(x_low*N_R*N_R)+(y_high*N_R)+z_low
+    rec_read = int(1+(x_low*N_R*N_R)+(y_high*N_R)+z_low)
     rho2 = HMM_rho_in(rec_read)
 
     ! rho3 at: x_high y_low z_low
-    rec_read = 1+(x_high*N_R*N_R)+(y_low*N_R)+z_low
+    rec_read = int(1+(x_high*N_R*N_R)+(y_low*N_R)+z_low)
     rho3 = HMM_rho_in(rec_read)
 
     ! rho4 at: x_high y_high z_low
-    rec_read = 1+(x_high*N_R*N_R)+(y_high*N_R)+z_low
+    rec_read = int(1+(x_high*N_R*N_R)+(y_high*N_R)+z_low)
     rho4 = HMM_rho_in(rec_read)
 
     ! rho5 at: x_low y_low z_high
-    rec_read = 1+(x_low*N_R*N_R)+(y_low*N_R)+z_high
+    rec_read = int(1+(x_low*N_R*N_R)+(y_low*N_R)+z_high)
     rho5 = HMM_rho_in(rec_read)
 
     ! rho6 at: x_low y_high z_high
-    rec_read = 1+(x_low*N_R*N_R)+(y_high*N_R)+z_high
+    rec_read = int(1+(x_low*N_R*N_R)+(y_high*N_R)+z_high)
     rho6 = HMM_rho_in(rec_read)
 
     ! rho7 at: x_high y_low z_high
-    rec_read = 1+(x_high*N_R*N_R)+(y_low*N_R)+z_high
+    rec_read = int(1+(x_high*N_R*N_R)+(y_low*N_R)+z_high)
     rho7 = HMM_rho_in(rec_read)
 
     ! rho8 at: x_high y_high z_high
-    rec_read = 1+(x_high*N_R*N_R)+(y_high*N_R)+z_high
+    rec_read = int(1+(x_high*N_R*N_R)+(y_high*N_R)+z_high)
     rho8 = HMM_rho_in(rec_read)
 
     ! perform linear interpolation between the 8 points

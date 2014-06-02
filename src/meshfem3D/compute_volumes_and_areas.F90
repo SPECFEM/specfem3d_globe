@@ -310,8 +310,8 @@
 
   use constants
 
-  use meshfem3D_par,only: x_observation,y_observation,z_observation,g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz, &
-     x_observation1D,y_observation1D,z_observation1D,g_x1D,g_y1D,g_z1D,G_xx1D,G_yy1D,G_zz1D,G_xy1D,G_xz1D,G_yz1D,OUTPUT_FILES
+  use meshfem3D_par,only: x_observation1D,y_observation1D,z_observation1D, &
+     g_x1D,g_y1D,g_z1D,G_xx1D,G_yy1D,G_zz1D,G_xy1D,G_xz1D,G_yz1D,OUTPUT_FILES
 
   implicit none
 
@@ -377,7 +377,7 @@
 
           weight = wxgll(i)*wygll(j)*wzgll(k)
 
-          ! compute the jacobian
+          ! compute the Jacobian
           xixl = xixstore(i,j,k,ispec)
           xiyl = xiystore(i,j,k,ispec)
           xizl = xizstore(i,j,k,ispec)

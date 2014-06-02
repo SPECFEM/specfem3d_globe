@@ -130,7 +130,7 @@
 
   TMP = (WIDTH / ( GLL_SPACING * dble(NEX_MAX)) * DEG2KM * PTS_PER_WAVELENGTH ) / &
        S_VELOCITY_MIN
-  MIN_ATTENUATION_PERIOD = TMP
+  MIN_ATTENUATION_PERIOD = int(TMP)
 
   if(N_SLS < 2 .OR. N_SLS > 5) then
      stop 'N_SLS must be greater than 1 or less than 6'
@@ -141,7 +141,7 @@
   ! The max attenuation period for 3 SLS is optimally
   !   1.75 decades from the min attenuation period, see THETA above
   TMP = TMP * 10.0d0**THETA(N_SLS)
-  MAX_ATTENUATION_PERIOD = TMP
+  MAX_ATTENUATION_PERIOD = int(TMP)
 
   end subroutine auto_attenuation_periods
 

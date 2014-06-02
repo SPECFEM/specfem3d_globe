@@ -315,20 +315,12 @@
         gzl = temp_gzl(INDEX_IJK)
 
         ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          gravity_term(INDEX_IJK) = &
-                  sngl( minus_rho_g_over_kappa_fluid(int_radius) &
-                  * dble(jacobianl) * wgll_cube(INDEX_IJK) &
-                  * (dble(dpotentialdx_with_rot) * gxl  &
-                     + dble(dpotentialdy_with_rot) * gyl &
-                     + dble(dpotentialdzl) * gzl) )
-        else
-          gravity_term(INDEX_IJK) = minus_rho_g_over_kappa_fluid(int_radius) * &
-                    jacobianl * wgll_cube(INDEX_IJK) &
-                    * (dpotentialdx_with_rot * gxl  &
-                      + dpotentialdy_with_rot * gyl &
-                      + dpotentialdzl * gzl)
-        endif
+        gravity_term(INDEX_IJK) = &
+                real(minus_rho_g_over_kappa_fluid(int_radius) &
+                   * dble(jacobianl) * wgll_cube(INDEX_IJK) &
+                   * (dble(dpotentialdx_with_rot) * gxl  &
+                    + dble(dpotentialdy_with_rot) * gyl &
+                    + dble(dpotentialdzl)         * gzl), kind=CUSTOM_REAL)
 
         ! divergence of displacement field with gravity on
         ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
@@ -336,10 +328,10 @@
         !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
         if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
           div_displfluid(INDEX_IJK,ispec) =  &
-                    minus_rho_g_over_kappa_fluid(int_radius) &
-                    * (dpotentialdx_with_rot * gxl &
-                     + dpotentialdy_with_rot * gyl &
-                     + dpotentialdzl * gzl)
+                    real(minus_rho_g_over_kappa_fluid(int_radius) &
+                       * (dpotentialdx_with_rot * gxl &
+                        + dpotentialdy_with_rot * gyl &
+                        + dpotentialdzl         * gzl), kind=CUSTOM_REAL)
         endif
 
       endif

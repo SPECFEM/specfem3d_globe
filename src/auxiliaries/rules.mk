@@ -67,15 +67,16 @@ auxiliaries_SHARED_OBJECTS = \
 	$O/count_points.shared.o \
 	$O/create_serial_name_database.shared.o \
 	$O/define_all_layers.shared.o \
+	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
-	$O/get_value_parameters.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$(EMPTY_MACRO)
 
 

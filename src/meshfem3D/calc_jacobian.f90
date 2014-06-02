@@ -212,27 +212,15 @@
 
         ! resave the derivatives and the Jacobian
         ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          xixstore(i,j,k,ispec) = sngl(xix)
-          xiystore(i,j,k,ispec) = sngl(xiy)
-          xizstore(i,j,k,ispec) = sngl(xiz)
-          etaxstore(i,j,k,ispec) = sngl(etax)
-          etaystore(i,j,k,ispec) = sngl(etay)
-          etazstore(i,j,k,ispec) = sngl(etaz)
-          gammaxstore(i,j,k,ispec) = sngl(gammax)
-          gammaystore(i,j,k,ispec) = sngl(gammay)
-          gammazstore(i,j,k,ispec) = sngl(gammaz)
-        else
-          xixstore(i,j,k,ispec) = xix
-          xiystore(i,j,k,ispec) = xiy
-          xizstore(i,j,k,ispec) = xiz
-          etaxstore(i,j,k,ispec) = etax
-          etaystore(i,j,k,ispec) = etay
-          etazstore(i,j,k,ispec) = etaz
-          gammaxstore(i,j,k,ispec) = gammax
-          gammaystore(i,j,k,ispec) = gammay
-          gammazstore(i,j,k,ispec) = gammaz
-        endif
+        xixstore(i,j,k,ispec) = real(xix, kind=CUSTOM_REAL)
+        xiystore(i,j,k,ispec) = real(xiy, kind=CUSTOM_REAL)
+        xizstore(i,j,k,ispec) = real(xiz, kind=CUSTOM_REAL)
+        etaxstore(i,j,k,ispec) = real(etax, kind=CUSTOM_REAL)
+        etaystore(i,j,k,ispec) = real(etay, kind=CUSTOM_REAL)
+        etazstore(i,j,k,ispec) = real(etaz, kind=CUSTOM_REAL)
+        gammaxstore(i,j,k,ispec) = real(gammax, kind=CUSTOM_REAL)
+        gammaystore(i,j,k,ispec) = real(gammay, kind=CUSTOM_REAL)
+        gammazstore(i,j,k,ispec) = real(gammaz, kind=CUSTOM_REAL)
 
       enddo
     enddo
@@ -359,17 +347,10 @@
         ! inverts Jacobian
         jacobian_inv = ONE / jacobian
 
-        if (CUSTOM_REAL == SIZE_REAL) then
-           jacobian2D(i,j,ispecb) = sngl(jacobian)
-           normal(1,i,j,ispecb) = sngl(unx * jacobian_inv)
-           normal(2,i,j,ispecb) = sngl(uny * jacobian_inv)
-           normal(3,i,j,ispecb) = sngl(unz * jacobian_inv)
-        else
-           jacobian2D(i,j,ispecb) = jacobian
-           normal(1,i,j,ispecb) = unx * jacobian_inv
-           normal(2,i,j,ispecb) = uny * jacobian_inv
-           normal(3,i,j,ispecb) = unz * jacobian_inv
-        endif
+        jacobian2D(i,j,ispecb) = real(jacobian, kind=CUSTOM_REAL)
+        normal(1,i,j,ispecb) = real(unx * jacobian_inv, kind=CUSTOM_REAL)
+        normal(2,i,j,ispecb) = real(uny * jacobian_inv, kind=CUSTOM_REAL)
+        normal(3,i,j,ispecb) = real(unz * jacobian_inv, kind=CUSTOM_REAL)
      enddo
   enddo
 

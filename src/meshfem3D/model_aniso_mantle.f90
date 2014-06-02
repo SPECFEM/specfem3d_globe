@@ -383,7 +383,8 @@
   double precision,dimension(:,:,:,:),allocatable :: bet2 ! bet2(14,34,37,73)
   double precision :: alph(73,37),ph(73,37)
   integer :: ier
-  character(len=150) :: glob_prem3sm01, globpreman3sm01
+  character(len=*), parameter :: glob_prem3sm01 = 'DATA/Montagner_model/glob-prem3sm01'
+  character(len=*), parameter :: globpreman3sm01 = 'DATA/Montagner_model/globpreman3sm01'
 
   ! dynamic allocation
   allocate(bet2(14,34,37,73),stat=ier)
@@ -396,7 +397,6 @@
 !
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
-  call get_value_string(glob_prem3sm01, 'model.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
   open(19,file=glob_prem3sm01,status='old',action='read',iostat=ier)
   if( ier /= 0 ) stop 'error opening file DATA/Montagner_model/glob-prem3sm01'
 
@@ -458,7 +458,6 @@
 ! beta(ipa,idep,ilat,ilon) are sorted in (amplitude, phase)
 ! normalized, in percents: 100 G/L
 !
-  call get_value_string(globpreman3sm01, 'model.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
   open(unit=15,file=globpreman3sm01,status='old',action='read',iostat=ier)
   if( ier /= 0 ) stop 'error opening file DATA/Montagner_model/globpreman3sm01'
 
@@ -555,12 +554,11 @@
   double precision corpar(21,47)
   double precision aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
   character(len=80) nullval
-  character(len=150) Adrem119
+  character(len=150), parameter :: Adrem119 = 'DATA/Montagner_model/Adrem119'
 
      ifanis = 1
      nri = 47
 
-     call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
      open(unit=13,file=Adrem119,status='old',action='read')
      read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
 

@@ -142,7 +142,7 @@
               !                         reason for this is that the adjoint wavefield is in general smoother
               !                         since the adjoint sources normally are obtained for filtered traces.
               !                         numerically, the time derivative by a finite-difference scheme should
-              !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+              !                         behave better for smoother wavefields, thus containing less numerical artifacts.
               rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
                  + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
                            + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
@@ -191,7 +191,7 @@
               !                         reason for this is that the adjoint wavefield is in general smoother
               !                         since the adjoint sources normally are obtained for filtered traces.
               !                         numerically, the time derivative by a finite-difference scheme should
-              !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+              !                         behave better for smoother wavefields, thus containing less numerical artifacts.
               rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
                  + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
                            + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
