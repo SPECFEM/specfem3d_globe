@@ -939,10 +939,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   double precision rho, chi, psi, sigma
   double precision xin(n), y(n), v(n,n+1), fv(n+1)
-  double precision vtmp(n,n+1)
   double precision usual_delta, zero_term_delta
   double precision xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
-  integer place(n+1)
 
   double precision max_size_simplex, max_value
 
@@ -993,12 +991,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
      fv(j+1) = funk(x,AS_V)
   enddo
 
-  call qsort_local(fv,n+1,place)
-
-  do i = 1,n+1
-     vtmp(:,i) = v(:,place(i))
-  enddo
-  v = vtmp
+  call heap_sort_local(n+1, fv, v)
 
   how = initial
   itercount = 1
@@ -1099,11 +1092,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
         endif
      endif
 
-     call qsort_local(fv,n+1,place)
-     do i = 1,n+1
-        vtmp(:,i) = v(:,place(i))
-     enddo
-     v = vtmp
+     call heap_sort_local(n+1, fv, v)
 
      itercount = itercount + 1
      if (prnt == 3) then
@@ -1208,52 +1197,95 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !-------------------------------------------------------------------------------------------------
 !
 
-!    - Implementation of a Bubble Sort Routine
+!    - Implementation of a Heap Sort Routine
 !    Input
+!      n = Input
+!         Length of arrays
 !      X = Input/Output
 !         Vector to be sorted
 !         dimension(n)
-!      n = Input
-!         Length of X
-!      I = Output
-!         Sorted Indices of vector X
+!      Y = Input/Output
+!         Vector to be sorted alongside X
+!         dimension(n)
 !
 !      Example:
 !         X = [ 4 3 1 2 ] on Input
-!         I = [ 1 2 3 4 ] Computed Internally (in order)
+!         Y = [ 1 2 3 4 ] on Input
 !
 !         X = [ 1 2 3 4 ] on Output
-!         I = [ 3 4 2 1 ] on Output
+!         Y = [ 3 4 2 1 ] on Output
 !
-  subroutine qsort_local(X,n,I)
+  subroutine heap_sort_local(N, X, Y)
 
   implicit none
+  integer, intent(in) :: N
+  double precision, dimension(N), intent(inout) :: X
+  double precision, dimension(N), intent(inout) :: Y
 
-  integer n
-  double precision X(n)
-  integer I(n)
+  ! local parameters
+  double precision :: tmp
+  integer :: i
 
-  integer j,k
-  double precision rtmp
-  integer itmp
+  ! checks if anything to do
+  if (N < 2) return
 
-  do j = 1,n
-     I(j) = j
+  ! builds heap
+  do i = N/2, 1, -1
+    call heap_sort_siftdown(i, N)
   enddo
 
-  do j = 1,n
-     do k = 1,n-j
-        if(X(k+1) < X(k)) then
-           rtmp   = X(k)
-           X(k)   = X(k+1)
-           X(k+1) = rtmp
+  ! sorts array
+  do i = N, 2, -1
+    ! swaps last and first entry in this section
+    tmp = X(1)
+    X(1) = X(i)
+    X(i) = tmp
+    tmp = Y(1)
+    Y(1) = Y(i)
+    Y(i) = tmp
 
-           itmp   = I(k)
-           I(k)   = I(k+1)
-           I(k+1) = itmp
-        endif
-     enddo
+    call heap_sort_siftdown(1, i - 1)
   enddo
 
-  end subroutine qsort_local
+!
+!----
+!
 
+  contains
+
+    subroutine heap_sort_siftdown(start, bottom)
+
+    implicit none
+
+    integer, intent(in) :: start, bottom
+
+    ! local parameters
+    integer :: i, j
+    double precision :: xtmp, ytmp
+
+    i = start
+    xtmp = X(i)
+    ytmp = Y(i)
+
+    j = 2 * i
+    do while (j <= bottom)
+      ! chooses larger value first in this section
+      if (j < bottom) then
+        if (X(j) <= X(j+1)) j = j + 1
+      endif
+
+      ! checks if section already smaller than initial value
+      if (X(j) < xtmp) exit
+
+      X(i) = X(j)
+      Y(i) = Y(j)
+      i = j
+      j = 2 * i
+    enddo
+
+    X(i) = xtmp
+    Y(i) = ytmp
+
+    end subroutine heap_sort_siftdown
+
+  end subroutine heap_sort_local
