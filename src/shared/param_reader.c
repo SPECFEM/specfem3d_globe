@@ -56,7 +56,9 @@ by Dennis McRitchie (Princeton University, USA)
 #include <string.h>
 #include <regex.h>
 
+#ifndef LINE_MAX
 #define LINE_MAX 255
+#endif
 
 /*
  * Mac OS X's gcc does not support strnlen and strndup.

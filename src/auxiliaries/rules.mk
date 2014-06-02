@@ -157,10 +157,10 @@ $O/%.auxsolver.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_m
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.auxsolver_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DUSE_VTK_INSTEAD_OF_MESH
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
 
 $O/%.auxadios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DADIOS_INPUT
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT
 
 $O/%.auxadios_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DADIOS_INPUT -DUSE_VTK_INSTEAD_OF_MESH
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
