@@ -939,8 +939,10 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   double precision rho, chi, psi, sigma
   double precision xin(n), y(n), v(n,n+1), fv(n+1)
+  double precision vtmp(n,n+1)
   double precision usual_delta, zero_term_delta
   double precision xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
+  integer place(n+1)
 
   double precision max_size_simplex, max_value
 
@@ -991,7 +993,12 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
      fv(j+1) = funk(x,AS_V)
   enddo
 
-  call heap_sort_local(n+1, fv, v)
+  call heap_sort_local(n+1, fv, place)
+
+  do i = 1,n+1
+    vtmp(:,i) = v(:,place(i))
+  enddo
+  v = vtmp
 
   how = initial
   itercount = 1
@@ -1092,7 +1099,12 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
         endif
      endif
 
-     call heap_sort_local(n+1, fv, v)
+     call heap_sort_local(n+1, fv, place)
+
+     do i = 1,n+1
+       vtmp(:,i) = v(:,place(i))
+     enddo
+     v = vtmp
 
      itercount = itercount + 1
      if (prnt == 3) then
@@ -1204,13 +1216,12 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !      X = Input/Output
 !         Vector to be sorted
 !         dimension(n)
-!      Y = Input/Output
-!         Vector to be sorted alongside X
-!         dimension(n)
+!      Y = Output
+!         Sorted Indices of vector X
 !
 !      Example:
 !         X = [ 4 3 1 2 ] on Input
-!         Y = [ 1 2 3 4 ] on Input
+!         Y = [ 1 2 3 4 ] Computed Internally (in order)
 !
 !         X = [ 1 2 3 4 ] on Output
 !         Y = [ 3 4 2 1 ] on Output
@@ -1220,11 +1231,16 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   implicit none
   integer, intent(in) :: N
   double precision, dimension(N), intent(inout) :: X
-  double precision, dimension(N), intent(inout) :: Y
+  integer, dimension(N), intent(out) :: Y
 
   ! local parameters
   double precision :: tmp
+  integer :: itmp
   integer :: i
+
+  do i = 1,N
+     Y(i) = i
+  enddo
 
   ! checks if anything to do
   if (N < 2) return
@@ -1240,9 +1256,9 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     tmp = X(1)
     X(1) = X(i)
     X(i) = tmp
-    tmp = Y(1)
+    itmp = Y(1)
     Y(1) = Y(i)
-    Y(i) = tmp
+    Y(i) = itmp
 
     call heap_sort_siftdown(1, i - 1)
   enddo
@@ -1261,7 +1277,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
     ! local parameters
     integer :: i, j
-    double precision :: xtmp, ytmp
+    double precision :: xtmp
+    integer :: ytmp
 
     i = start
     xtmp = X(i)
