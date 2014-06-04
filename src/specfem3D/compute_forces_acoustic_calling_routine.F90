@@ -50,17 +50,9 @@
 
   ! current simulated time
   if(USE_LDDRK)then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      timeval = sngl((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
-    else
-      timeval = (dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
-    endif
+    timeval = real((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
-    if(CUSTOM_REAL == SIZE_REAL) then
-      timeval = sngl((dble(it-1)*DT-t0)*scale_t_inv)
-    else
-      timeval = (dble(it-1)*DT-t0)*scale_t_inv
-    endif
+    timeval = real((dble(it-1)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   ! ****************************************************
@@ -303,25 +295,14 @@
 
   ! current simulated time
   if(USE_LDDRK)then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      b_time = sngl((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv)
-    else
-      b_time = (dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv
-    endif
+    b_time = real((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
-    if(CUSTOM_REAL == SIZE_REAL) then
-      b_time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
-    else
-      b_time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
-    endif
+    b_time = real((dble(NSTEP-it)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   if(UNDO_ATTENUATION)then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      b_time = sngl((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv)
-    else
-      b_time = (dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv
-    endif
+    b_time = real((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv, &
+                  kind=CUSTOM_REAL)
   endif
 
   ! ****************************************************

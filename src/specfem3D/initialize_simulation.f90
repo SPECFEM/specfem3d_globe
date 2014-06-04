@@ -64,8 +64,8 @@
   ! synchronizes processes
   call synchronize_all()
 
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  ! set the base pathname for output files
+  OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
@@ -215,7 +215,7 @@
   else
     rec_filename = 'DATA/STATIONS_ADJOINT'
   endif
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+  STATIONS = rec_filename
 
   ! get total number of receivers
   if(myrank == 0) then
@@ -431,8 +431,8 @@
   if( GPU_MODE ) then
     if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
       call exit_mpi(myrank,'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5')
-    if( CUSTOM_REAL /= 4 ) &
-      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == 4')
+    if( CUSTOM_REAL /= SIZE_REAL ) &
+      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == SIZE_REAL')
     if( ATTENUATION_VAL ) then
       if( N_SLS /= 3 ) &
         call exit_mpi(myrank,'GPU mode does not support N_SLS /= 3 yet')
@@ -510,8 +510,8 @@
     ! check for GPU runs
     if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
       stop 'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5'
-    if( CUSTOM_REAL /= 4 ) &
-      stop 'GPU mode runs only with CUSTOM_REAL == 4'
+    if( CUSTOM_REAL /= SIZE_REAL) &
+      stop 'GPU mode runs only with CUSTOM_REAL == SIZE_REAL'
     if( ATTENUATION_VAL ) then
       if( N_SLS /= 3 ) &
         stop 'GPU mode does not support N_SLS /= 3 yet'

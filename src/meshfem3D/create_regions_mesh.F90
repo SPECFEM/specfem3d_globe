@@ -1187,7 +1187,7 @@
     enddo
   enddo
 
-  call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
+  call get_global(npointot,xp,yp,zp,ibool,locval,ifseg,nglob)
 
   deallocate(xp,yp,zp)
   deallocate(locval,ifseg)

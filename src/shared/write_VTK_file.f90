@@ -331,7 +331,6 @@
     phival = zstore_dummy(i)
     call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
-    !write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
     write(IOUT_VTK,'(3e18.6)') xval,yval,zval
   enddo
   write(IOUT_VTK,*) ""
@@ -514,7 +513,6 @@
         phival = store_val_z_all(i,iproc)
         call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
-        !write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
         write(IOUT_VTK,'(3e18.6)') xval,yval,zval
       enddo
     enddo

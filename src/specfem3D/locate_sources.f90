@@ -135,8 +135,6 @@
   double precision :: time_start,tCPU
   double precision, external :: wtime
 
-  character(len=150) :: OUTPUT_FILES
-
   ! get MPI starting time for all sources
   time_start = wtime()
 
@@ -176,10 +174,7 @@
 
   ! appends receiver locations to sr.vtk file
   if( myrank == 0 ) then
-    ! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
-
-    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
   endif
@@ -405,7 +400,7 @@
           enddo
         enddo
 
-        ! calculates a gaussian mask around source point
+        ! calculates a Gaussian mask around source point
         if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
           call calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
                                 x_target_source,y_target_source,z_target_source, &
@@ -787,7 +782,7 @@
                             x_target_source,y_target_source,z_target_source, &
                             ibool,xstore,ystore,zstore,NGLOB)
 
-! calculate a gaussian function mask in the crust_mantle region
+! calculate a Gaussian function mask in the crust_mantle region
 ! which is 0 around the source locations and 1 everywhere else
 
   use constants
@@ -807,7 +802,7 @@
   integer i,j,k,iglob
   double precision dist_sq,sigma_sq
 
-  ! standard deviation for gaussian
+  ! standard deviation for Gaussian
   ! (removes factor 10 added for search radius from typical_size)
   sigma_sq = typical_size * typical_size / 100.0
 
@@ -822,7 +817,7 @@
                   +(y_target_source - dble(ystore(iglob)))**2 &
                   +(z_target_source - dble(zstore(iglob)))**2
 
-        ! adds gaussian function value to mask
+        ! adds Gaussian function value to mask
         ! (mask value becomes 0 closer to source location, 1 everywhere else )
         mask_source(i,j,k,ispec) = mask_source(i,j,k,ispec) &
                   * ( 1.0_CUSTOM_REAL - exp( - dist_sq / sigma_sq ) )
@@ -899,7 +894,6 @@
   double precision, external :: comp_source_time_function,comp_source_spectrum
   double precision, external :: comp_source_time_function_rickr
 
-  character(len=150) :: OUTPUT_FILES
   character(len=150) :: plot_file
 
   ! number of points to plot the source time function and spectrum
@@ -909,9 +903,6 @@
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
   call flush_IMAIN()
-
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   ! print the source-time function
   if(NSOURCES == 1) then
@@ -927,7 +918,7 @@
   endif
 
   ! output file
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
+  open(unit=IOUT,file='OUTPUT_FILES'//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_time_function file')
 
@@ -948,7 +939,7 @@
       t0 = USER_T0
     endif
   endif
-  ! convert the half duration for triangle STF to the one for gaussian STF
+  ! convert the half duration for triangle STF to the one for Gaussian STF
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
   hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
@@ -986,7 +977,7 @@
     endif
   endif
 
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
+  open(unit=IOUT,file='OUTPUT_FILES'//plot_file, &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_spectrum file')
 

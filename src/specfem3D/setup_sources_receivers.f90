@@ -172,7 +172,7 @@
     endif
   endif
 
-  ! convert the half duration for triangle STF to the one for gaussian STF
+  ! convert the half duration for triangle STF to the one for Gaussian STF
   hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
@@ -182,7 +182,7 @@
   if( USE_FORCE_POINT_SOURCE ) then
     ! note: point force sources will give the dominant frequency in hdur,
     !          thus the main period is 1/hdur.
-    !          also, these sources use a Ricker source time function instead of a gaussian.
+    !          also, these sources use a Ricker source time function instead of a Gaussian.
     !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
     t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
   endif

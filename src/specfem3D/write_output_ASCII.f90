@@ -99,18 +99,10 @@
     ! writes out to file
     if(SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
       ! distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT) sngl(timeval),sngl(value)
-      else
-        write(IOUT) timeval,value
-      endif
+      write(IOUT) real(timeval, kind=CUSTOM_REAL), real(value, kind=CUSTOM_REAL)
     else
       ! distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT,*) sngl(timeval),' ',sngl(value)
-      else
-        write(IOUT,*) timeval,' ',value
-      endif
+      write(IOUT,*) real(timeval, kind=CUSTOM_REAL), ' ', real(value, kind=CUSTOM_REAL)
     endif
   enddo
 

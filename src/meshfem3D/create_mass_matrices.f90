@@ -132,12 +132,8 @@
 
           case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
             ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rmassz(iglob) = rmassz(iglob) + &
-                     sngl(dble(rhostore(i,j,k,ispec)) * dble(jacobianl) * weight)
-            else
-              rmassz(iglob) = rmassz(iglob) + rhostore(i,j,k,ispec) * jacobianl * weight
-            endif
+            rmassz(iglob) = rmassz(iglob) + &
+                   real(dble(rhostore(i,j,k,ispec)) * dble(jacobianl) * weight, kind=CUSTOM_REAL)
 
           ! fluid in outer core
           case( IREGION_OUTER_CORE )
@@ -145,13 +141,9 @@
             ! no anisotropy in the fluid, use kappav
 
             ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rmassz(iglob) = rmassz(iglob) + &
-                     sngl(dble(jacobianl) * weight * dble(rhostore(i,j,k,ispec)) / dble(kappavstore(i,j,k,ispec)))
-            else
-              rmassz(iglob) = rmassz(iglob) + &
-                     jacobianl * weight * rhostore(i,j,k,ispec) / kappavstore(i,j,k,ispec)
-            endif
+            rmassz(iglob) = rmassz(iglob) + &
+                   real(dble(jacobianl) * weight * dble(rhostore(i,j,k,ispec)) / dble(kappavstore(i,j,k,ispec)), &
+                        kind=CUSTOM_REAL)
 
           case default
             call exit_MPI(myrank,'wrong region code')
@@ -268,17 +260,9 @@
   b_two_omega_earth_dt = 0._CUSTOM_REAL
 
   ! distinguish between single and double precision for reals
-  if(CUSTOM_REAL == SIZE_REAL) then
-    two_omega_earth_dt = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat)
-  else
-    two_omega_earth_dt = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat
-  endif
+  two_omega_earth_dt = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
 
-  if(CUSTOM_REAL == SIZE_REAL) then
-    b_two_omega_earth_dt = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat)
-  else
-    b_two_omega_earth_dt = - 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat
-  endif
+  b_two_omega_earth_dt = - real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
 
   ! definition depends if region is fluid or solid
   select case( iregion_code)
@@ -313,21 +297,15 @@
                             + xizl*(etaxl*gammayl-etayl*gammaxl))
 
             ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rmassx(iglob) = rmassx(iglob) - two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-              rmassy(iglob) = rmassy(iglob) + two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-            else
-              rmassx(iglob) = rmassx(iglob) - two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
-              rmassy(iglob) = rmassy(iglob) + two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
-            endif
+            rmassx(iglob) = rmassx(iglob) &
+                - two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
+            rmassy(iglob) = rmassy(iglob) &
+                + two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
 
-            if(CUSTOM_REAL == SIZE_REAL) then
-              b_rmassx(iglob) = b_rmassx(iglob) - b_two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-              b_rmassy(iglob) = b_rmassy(iglob) + b_two_omega_earth_dt * 0.5_CUSTOM_REAL*sngl(dble(jacobianl) * weight)
-            else
-              b_rmassx(iglob) = b_rmassx(iglob) - b_two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
-              b_rmassy(iglob) = b_rmassy(iglob) + b_two_omega_earth_dt * 0.5_CUSTOM_REAL * jacobianl * weight
-            endif
+            b_rmassx(iglob) = b_rmassx(iglob) &
+                - b_two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
+            b_rmassy(iglob) = b_rmassy(iglob) &
+                + b_two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
           enddo
         enddo
       enddo
@@ -402,13 +380,8 @@
   if( .not. allocated(nimin) ) call exit_MPI(myrank,'error Stacey array not allocated')
 
   ! use the non-dimensional time step to make the mass matrix correction
-  if(CUSTOM_REAL == SIZE_REAL) then
-    deltat = sngl(DT*dsqrt(PI*GRAV*RHOAV))
-    deltatover2 = sngl(0.5d0*deltat)
-  else
-    deltat = DT*dsqrt(PI*GRAV*RHOAV)
-    deltatover2 = 0.5d0*deltat
-  endif
+  deltat = real(DT*dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
+  deltatover2 = real(0.5d0*deltat, kind=CUSTOM_REAL)
 
   ! weights on surfaces
   do i=1,NGLLX
@@ -462,22 +435,12 @@
 
                 weight = jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
 
-                if(CUSTOM_REAL == SIZE_REAL) then
-                   rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                   rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                   rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                   if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                     b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
-                     b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
-                   endif
-                else
-                   rmassx(iglob) = rmassx(iglob) + tx*weight
-                   rmassy(iglob) = rmassy(iglob) + ty*weight
-                   rmassz(iglob) = rmassz(iglob) + tz*weight
-                   if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                     b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
-                     b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
-                   endif
+                rmassx(iglob) = rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+                rmassy(iglob) = rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
+                rmassz(iglob) = rmassz(iglob) + real(tz*weight, kind=CUSTOM_REAL)
+                if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+                  b_rmassx(iglob) = b_rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+                  b_rmassy(iglob) = b_rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
                 endif
              enddo
           enddo
@@ -513,22 +476,12 @@
 
                 weight = jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
 
-                if(CUSTOM_REAL == SIZE_REAL) then
-                   rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                   rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                   rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                   if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                     b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
-                     b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
-                   endif
-                else
-                   rmassx(iglob) = rmassx(iglob) + tx*weight
-                   rmassy(iglob) = rmassy(iglob) + ty*weight
-                   rmassz(iglob) = rmassz(iglob) + tz*weight
-                   if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                     b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
-                     b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
-                   endif
+                rmassx(iglob) = rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+                rmassy(iglob) = rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
+                rmassz(iglob) = rmassz(iglob) + real(tz*weight, kind=CUSTOM_REAL)
+                if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+                  b_rmassx(iglob) = b_rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+                  b_rmassy(iglob) = b_rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
                 endif
              enddo
           enddo
@@ -561,22 +514,12 @@
 
              weight = jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
 
-             if(CUSTOM_REAL == SIZE_REAL) then
-                rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                  b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
-                  b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
-                endif
-             else
-                rmassx(iglob) = rmassx(iglob) + tx*weight
-                rmassy(iglob) = rmassy(iglob) + ty*weight
-                rmassz(iglob) = rmassz(iglob) + tz*weight
-                if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                  b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
-                  b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
-                endif
+             rmassx(iglob) = rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+             rmassy(iglob) = rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
+             rmassz(iglob) = rmassz(iglob) + real(tz*weight, kind=CUSTOM_REAL)
+             if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+               b_rmassx(iglob) = b_rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+               b_rmassy(iglob) = b_rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
              endif
           enddo
        enddo
@@ -607,22 +550,12 @@
 
              weight = jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
 
-             if(CUSTOM_REAL == SIZE_REAL) then
-                rmassx(iglob) = rmassx(iglob) + sngl(tx*weight)
-                rmassy(iglob) = rmassy(iglob) + sngl(ty*weight)
-                rmassz(iglob) = rmassz(iglob) + sngl(tz*weight)
-                if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                  b_rmassx(iglob) = b_rmassx(iglob) + sngl(tx*weight)
-                  b_rmassy(iglob) = b_rmassy(iglob) + sngl(ty*weight)
-                endif
-             else
-                rmassx(iglob) = rmassx(iglob) + tx*weight
-                rmassy(iglob) = rmassy(iglob) + ty*weight
-                rmassz(iglob) = rmassz(iglob) + tz*weight
-                if(ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)then
-                  b_rmassx(iglob) = b_rmassx(iglob) + tx*weight
-                  b_rmassy(iglob) = b_rmassy(iglob) + ty*weight
-                endif
+             rmassx(iglob) = rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+             rmassy(iglob) = rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
+             rmassz(iglob) = rmassz(iglob) + real(tz*weight, kind=CUSTOM_REAL)
+             if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+               b_rmassx(iglob) = b_rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+               b_rmassy(iglob) = b_rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
              endif
           enddo
        enddo
@@ -654,11 +587,7 @@
 
                 weight = jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
 
-                if(CUSTOM_REAL == SIZE_REAL) then
-                   rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-                else
-                   rmassz(iglob) = rmassz(iglob) + weight*sn
-                endif
+                rmassz(iglob) = rmassz(iglob) + real(weight*sn, kind=CUSTOM_REAL)
              enddo
           enddo
        enddo
@@ -685,11 +614,7 @@
 
                 weight = jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
 
-                if(CUSTOM_REAL == SIZE_REAL) then
-                   rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-                else
-                   rmassz(iglob) = rmassz(iglob) + weight*sn
-                endif
+                rmassz(iglob) = rmassz(iglob) + real(weight*sn, kind=CUSTOM_REAL)
              enddo
           enddo
        enddo
@@ -713,11 +638,7 @@
 
              weight = jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
 
-             if(CUSTOM_REAL == SIZE_REAL) then
-                rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-             else
-                rmassz(iglob) = rmassz(iglob) + weight*sn
-             endif
+             rmassz(iglob) = rmassz(iglob) + real(weight*sn, kind=CUSTOM_REAL)
           enddo
        enddo
     enddo
@@ -739,11 +660,7 @@
 
              weight = jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
 
-             if(CUSTOM_REAL == SIZE_REAL) then
-                rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-             else
-                rmassz(iglob) = rmassz(iglob) + weight*sn
-             endif
+             rmassz(iglob) = rmassz(iglob) + real(weight*sn, kind=CUSTOM_REAL)
           enddo
        enddo
     enddo
@@ -762,11 +679,7 @@
 
              weight = jacobian2D_bottom(i,j,ispec2D)*wgllwgll_xy(i,j)
 
-             if(CUSTOM_REAL == SIZE_REAL) then
-                rmassz(iglob) = rmassz(iglob) + sngl(weight*sn)
-             else
-                rmassz(iglob) = rmassz(iglob) + weight*sn
-             endif
+             rmassz(iglob) = rmassz(iglob) + real(weight*sn, kind=CUSTOM_REAL)
           enddo
        enddo
     enddo
@@ -925,11 +838,7 @@
         iglob = ibool(i,j,k,ispec)
 
         ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + sngl(weight)
-        else
-          rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + weight
-        endif
+        rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + real(weight, kind=CUSTOM_REAL)
 
       enddo
     enddo

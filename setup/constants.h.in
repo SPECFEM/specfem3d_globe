@@ -77,9 +77,6 @@
 ! I/O unit for sac files
   integer, parameter :: IOUT_SAC = 48
 
-! I/O Bluegene serial access
-  logical, parameter :: IO_BLUEGENE_SERIAL = .false.
-
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
 ! uncomment line below for PREM with oceans
@@ -656,9 +653,6 @@
 ! in which case it is 4
   integer, parameter :: NUMCORNERS_SHARED = 4
 
-! number of slaves per corner
-  integer, parameter :: NUMSLAVES = 2
-
 ! number of layers in PREM
   integer, parameter :: NR = 640
 
@@ -738,8 +732,8 @@
 ! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
 !  and RMIDDLE_CRUST to become 15 km with stretching function stretch_tab)
   double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.75d0
-  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = 5000.d0 ! moho up to 35km
-  double precision, parameter :: R80_STRETCH_ADJUSTEMENT = -40000.d0 ! r80 down to 120km
+  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = 5000.d0 ! moho up to 35km
+  double precision, parameter :: R80_STRETCH_ADJUSTMENT = -40000.d0 ! r80 down to 120km
 
 ! adapted regional moho stretching
 ! 1 chunk simulations, 3-layer crust
@@ -748,9 +742,9 @@
   logical, parameter :: REGIONAL_MOHO_MESH_ASIA = .false.   ! used only for fixing time step
   logical, parameter :: HONOR_DEEP_MOHO = .false.
 !!-- uncomment for e.g. Europe case, where deep moho is rare
-!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -15000.d0  ! moho mesh boundary down to 55km
+!  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! moho mesh boundary down to 55km
 !!-- uncomment for deep moho cases, e.g. Asia case (Himalayan moho)
-!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -20000.d0  ! moho mesh boundary down to 60km
+!  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! moho mesh boundary down to 60km
 
 !!-----------------------------------------------------------
 !!

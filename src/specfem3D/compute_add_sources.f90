@@ -82,11 +82,7 @@
           endif
 
           !     distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            stf_used = sngl(stf)
-          else
-            stf_used = stf
-          endif
+          stf_used = real(stf, kind=CUSTOM_REAL)
 
           !     add source array
           ispec = ispec_selected_source(isource)
@@ -382,11 +378,7 @@
           stf = comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
 
           !     distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            stf_used = sngl(stf)
-          else
-            stf_used = stf
-          endif
+          stf_used = real(stf, kind=CUSTOM_REAL)
 
           !     add source array
           ispec = ispec_selected_source(isource)

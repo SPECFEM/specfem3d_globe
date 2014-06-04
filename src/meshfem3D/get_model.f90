@@ -190,157 +190,78 @@
 
 ! define elastic parameters in the model
 
-        ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
+        rhostore(i,j,k,ispec) = real(rho, kind=CUSTOM_REAL)
+        kappavstore(i,j,k,ispec) = real(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0), kind=CUSTOM_REAL)
+        kappahstore(i,j,k,ispec) = real(rho*(vph*vph - 4.d0*vsh*vsh/3.d0), kind=CUSTOM_REAL)
+        muvstore(i,j,k,ispec) = real(rho*vsv*vsv, kind=CUSTOM_REAL)
+        muhstore(i,j,k,ispec) = real(rho*vsh*vsh, kind=CUSTOM_REAL)
+        eta_anisostore(i,j,k,ispec) = real(eta_aniso, kind=CUSTOM_REAL)
 
-          rhostore(i,j,k,ispec) = sngl(rho)
-          kappavstore(i,j,k,ispec) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
-          kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))
-          muvstore(i,j,k,ispec) = sngl(rho*vsv*vsv)
-          muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
-          eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
+        if (HETEROGEN_3D_MANTLE) then
+          dvpstore(i,j,k,ispec) = real(dvp, kind=CUSTOM_REAL)
+        endif
 
-          if (HETEROGEN_3D_MANTLE) then
-            dvpstore(i,j,k,ispec) = sngl(dvp)
+        if(ABSORBING_CONDITIONS) then
+          if(iregion_code == IREGION_OUTER_CORE) then
+            ! we need just vp in the outer core for Stacey conditions
+            rho_vp(i,j,k,ispec) = real(vph, kind=CUSTOM_REAL)
+            rho_vs(i,j,k,ispec) = real(0.d0, kind=CUSTOM_REAL)
+          else
+            rho_vp(i,j,k,ispec) = real(rho*vph, kind=CUSTOM_REAL)
+            rho_vs(i,j,k,ispec) = real(rho*vsh, kind=CUSTOM_REAL)
           endif
+        endif
 
-          if(ABSORBING_CONDITIONS) then
-            if(iregion_code == IREGION_OUTER_CORE) then
-              ! we need just vp in the outer core for Stacey conditions
-              rho_vp(i,j,k,ispec) = sngl(vph)
-              rho_vs(i,j,k,ispec) = sngl(0.d0)
-            else
-              rho_vp(i,j,k,ispec) = sngl(rho*vph)
-              rho_vs(i,j,k,ispec) = sngl(rho*vsh)
-            endif
-          endif
+        if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+          c11store(i,j,k,ispec) = real(c11, kind=CUSTOM_REAL)
+          c33store(i,j,k,ispec) = real(c33, kind=CUSTOM_REAL)
+          c12store(i,j,k,ispec) = real(c12, kind=CUSTOM_REAL)
+          c13store(i,j,k,ispec) = real(c13, kind=CUSTOM_REAL)
+          c44store(i,j,k,ispec) = real(c44, kind=CUSTOM_REAL)
+        endif
 
-          if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-            c11store(i,j,k,ispec) = sngl(c11)
-            c33store(i,j,k,ispec) = sngl(c33)
-            c12store(i,j,k,ispec) = sngl(c12)
-            c13store(i,j,k,ispec) = sngl(c13)
-            c44store(i,j,k,ispec) = sngl(c44)
-          endif
-
-          if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-            c11store(i,j,k,ispec) = sngl(c11)
-            c12store(i,j,k,ispec) = sngl(c12)
-            c13store(i,j,k,ispec) = sngl(c13)
-            c14store(i,j,k,ispec) = sngl(c14)
-            c15store(i,j,k,ispec) = sngl(c15)
-            c16store(i,j,k,ispec) = sngl(c16)
-            c22store(i,j,k,ispec) = sngl(c22)
-            c23store(i,j,k,ispec) = sngl(c23)
-            c24store(i,j,k,ispec) = sngl(c24)
-            c25store(i,j,k,ispec) = sngl(c25)
-            c26store(i,j,k,ispec) = sngl(c26)
-            c33store(i,j,k,ispec) = sngl(c33)
-            c34store(i,j,k,ispec) = sngl(c34)
-            c35store(i,j,k,ispec) = sngl(c35)
-            c36store(i,j,k,ispec) = sngl(c36)
-            c44store(i,j,k,ispec) = sngl(c44)
-            c45store(i,j,k,ispec) = sngl(c45)
-            c46store(i,j,k,ispec) = sngl(c46)
-            c55store(i,j,k,ispec) = sngl(c55)
-            c56store(i,j,k,ispec) = sngl(c56)
-            c66store(i,j,k,ispec) = sngl(c66)
-          endif
-
-        else
-          !double precision
-
-          rhostore(i,j,k,ispec) = rho
-          kappavstore(i,j,k,ispec) = rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0)
-          kappahstore(i,j,k,ispec) = rho*(vph*vph - 4.d0*vsh*vsh/3.d0)
-          muvstore(i,j,k,ispec) = rho*vsv*vsv
-          muhstore(i,j,k,ispec) = rho*vsh*vsh
-          eta_anisostore(i,j,k,ispec) = eta_aniso
-
-          if (HETEROGEN_3D_MANTLE) then
-            dvpstore(i,j,k,ispec) = dvp
-          endif
-
-          if(ABSORBING_CONDITIONS) then
-            if(iregion_code == IREGION_OUTER_CORE) then
-              ! we need just vp in the outer core for Stacey conditions
-              rho_vp(i,j,k,ispec) = vph
-              rho_vs(i,j,k,ispec) = 0.d0
-            else
-              rho_vp(i,j,k,ispec) = rho*vph
-              rho_vs(i,j,k,ispec) = rho*vsh
-            endif
-          endif
-
-          if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-            c11store(i,j,k,ispec) = c11
-            c33store(i,j,k,ispec) = c33
-            c12store(i,j,k,ispec) = c12
-            c13store(i,j,k,ispec) = c13
-            c44store(i,j,k,ispec) = c44
-          endif
-
-          if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-            c11store(i,j,k,ispec) = c11
-            c12store(i,j,k,ispec) = c12
-            c13store(i,j,k,ispec) = c13
-            c14store(i,j,k,ispec) = c14
-            c15store(i,j,k,ispec) = c15
-            c16store(i,j,k,ispec) = c16
-            c22store(i,j,k,ispec) = c22
-            c23store(i,j,k,ispec) = c23
-            c24store(i,j,k,ispec) = c24
-            c25store(i,j,k,ispec) = c25
-            c26store(i,j,k,ispec) = c26
-            c33store(i,j,k,ispec) = c33
-            c34store(i,j,k,ispec) = c34
-            c35store(i,j,k,ispec) = c35
-            c36store(i,j,k,ispec) = c36
-            c44store(i,j,k,ispec) = c44
-            c45store(i,j,k,ispec) = c45
-            c46store(i,j,k,ispec) = c46
-            c55store(i,j,k,ispec) = c55
-            c56store(i,j,k,ispec) = c56
-            c66store(i,j,k,ispec) = c66
-          endif
-
-        endif ! of CUSTOM_REAL
+        if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+          c11store(i,j,k,ispec) = real(c11, kind=CUSTOM_REAL)
+          c12store(i,j,k,ispec) = real(c12, kind=CUSTOM_REAL)
+          c13store(i,j,k,ispec) = real(c13, kind=CUSTOM_REAL)
+          c14store(i,j,k,ispec) = real(c14, kind=CUSTOM_REAL)
+          c15store(i,j,k,ispec) = real(c15, kind=CUSTOM_REAL)
+          c16store(i,j,k,ispec) = real(c16, kind=CUSTOM_REAL)
+          c22store(i,j,k,ispec) = real(c22, kind=CUSTOM_REAL)
+          c23store(i,j,k,ispec) = real(c23, kind=CUSTOM_REAL)
+          c24store(i,j,k,ispec) = real(c24, kind=CUSTOM_REAL)
+          c25store(i,j,k,ispec) = real(c25, kind=CUSTOM_REAL)
+          c26store(i,j,k,ispec) = real(c26, kind=CUSTOM_REAL)
+          c33store(i,j,k,ispec) = real(c33, kind=CUSTOM_REAL)
+          c34store(i,j,k,ispec) = real(c34, kind=CUSTOM_REAL)
+          c35store(i,j,k,ispec) = real(c35, kind=CUSTOM_REAL)
+          c36store(i,j,k,ispec) = real(c36, kind=CUSTOM_REAL)
+          c44store(i,j,k,ispec) = real(c44, kind=CUSTOM_REAL)
+          c45store(i,j,k,ispec) = real(c45, kind=CUSTOM_REAL)
+          c46store(i,j,k,ispec) = real(c46, kind=CUSTOM_REAL)
+          c55store(i,j,k,ispec) = real(c55, kind=CUSTOM_REAL)
+          c56store(i,j,k,ispec) = real(c56, kind=CUSTOM_REAL)
+          c66store(i,j,k,ispec) = real(c66, kind=CUSTOM_REAL)
+        endif
 
         if(ATTENUATION) then
           if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
 
             ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              do i_sls = 1,N_SLS
-                tau_e_store(i,j,k,i_sls,ispec) = sngl(tau_e(i_sls))
-              enddo
-              Qmu_store(i,j,k,ispec)     = sngl(Qmu)
-            else
-              do i_sls = 1,N_SLS
-                tau_e_store(i,j,k,i_sls,ispec) = tau_e(i_sls)
-              enddo
-              Qmu_store(i,j,k,ispec)     = Qmu
-            endif
+            do i_sls = 1,N_SLS
+              tau_e_store(i,j,k,i_sls,ispec) = real(tau_e(i_sls), kind=CUSTOM_REAL)
+            enddo
+            Qmu_store(i,j,k,ispec) = real(Qmu, kind=CUSTOM_REAL)
 
           else
 
             ! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              ! store values from mid-point for whole element
-              if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
-                do i_sls = 1,N_SLS
-                  tau_e_store(1,1,1,i_sls,ispec) = sngl(tau_e(i_sls))
-                enddo
-                Qmu_store(1,1,1,ispec)     = sngl(Qmu)
-              endif
-            else
-              ! store values from mid-point for whole element
-              if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
-                do i_sls = 1,N_SLS
-                  tau_e_store(1,1,1,i_sls,ispec) = tau_e(i_sls)
-                enddo
-                Qmu_store(1,1,1,ispec)     = Qmu
-              endif
+            ! store values from mid-point for whole element
+            if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+              do i_sls = 1,N_SLS
+                tau_e_store(1,1,1,i_sls,ispec) = real(tau_e(i_sls), kind=CUSTOM_REAL)
+              enddo
+              Qmu_store(1,1,1,ispec) = real(Qmu, kind=CUSTOM_REAL)
             endif
 
           endif

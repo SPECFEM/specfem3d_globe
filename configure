@@ -6926,8 +6926,8 @@ if test x"$want_vec" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: FORCE_VECTORIZATION is enabled" >&5
 $as_echo "$as_me: FORCE_VECTORIZATION is enabled" >&6;}
 
-  FLAGS_CHECK+=" ${FC_DEFINE}FORCE_VECTORIZATION"
-  CPPFLAGS+=" -DFORCE_VECTORIZATION"
+  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
 
 fi
 

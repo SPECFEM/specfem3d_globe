@@ -62,7 +62,6 @@ meshfem3D_OBJECTS = \
 	$O/fix_non_blocking_flags.check.o \
 	$O/get_absorb.check.o \
 	$O/get_ellipticity.check.o \
-	$O/get_global.check.o \
 	$O/get_jacobian_boundaries.check.o \
 	$O/get_jacobian_discontinuities.check.o \
 	$O/get_model.check.o \
@@ -108,7 +107,6 @@ meshfem3D_OBJECTS = \
 	$O/setup_inner_outer.check.o \
 	$O/setup_model.check.o \
 	$O/setup_MPI_interfaces.check.o \
-	$O/sort_array_coordinates.check.o \
 	$O/stretching_function.check.o \
 	$O/test_MPI_interfaces.check.o \
 	$O/write_AVS_DX_global_chunks_data.check.o \
@@ -165,9 +163,9 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
+	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
-	$O/get_value_parameters.shared.o \
 	$O/gll_library.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/intgrl.shared.o \
@@ -185,6 +183,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
