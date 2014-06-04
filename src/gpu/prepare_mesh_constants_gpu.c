@@ -3406,7 +3406,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
   }
 #endif
-
+  
   if (mp->nrec_local > 0) {
 #ifdef USE_OPENCL
     if (run_opencl && GPU_ASYNC_COPY) {
@@ -3515,6 +3515,14 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
 #ifdef USE_OPENCL
   if (run_opencl) {
+    clReleaseMemObject (mp->d_hprime_xx.ocl);
+    clReleaseMemObject (mp->d_hprimewgll_xx.ocl);
+
+    clReleaseMemObject (mp->d_wgllwgll_xy.ocl);
+    clReleaseMemObject (mp->d_wgllwgll_xz.ocl);
+    clReleaseMemObject (mp->d_wgllwgll_yz.ocl);
+    clReleaseMemObject (mp->d_wgll_cube.ocl);
+    
     if (mp->simulation_type == 1 || mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_sourcearrays.ocl);
       clReleaseMemObject (mp->d_stf_pre_compute.ocl);
@@ -4048,8 +4056,8 @@ void FC_FUNC_ (prepare_cleanup_device,
     clFinish (mocl.command_queue);
     release_kernels();
     clReleaseCommandQueue (mocl.command_queue);
+    clReleaseCommandQueue (mocl.copy_queue);
     clReleaseContext (mocl.context);
-   
   }
 #endif
 
