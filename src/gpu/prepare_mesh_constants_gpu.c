@@ -3406,7 +3406,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
   }
 #endif
-  
+
   if (mp->nrec_local > 0) {
 #ifdef USE_OPENCL
     if (run_opencl && GPU_ASYNC_COPY) {
