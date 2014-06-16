@@ -333,10 +333,6 @@
     write(IMAIN,*)
 
     write(IMAIN,*)
-    write(IMAIN,*) 'total number of time steps in the solver will be: ',NSTEP
-    write(IMAIN,*)
-
-    write(IMAIN,*)
     write(IMAIN,*) 'time-stepping of the solver will be: ',DT
     write(IMAIN,*)
 
@@ -350,45 +346,6 @@
     write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
     write(IMAIN,*)
     call flush_IMAIN()
-
-    ! evaluate the amount of static memory needed by the solver
-    call memory_eval(doubling_index,this_region_has_a_doubling, &
-                     ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                     ratio_sampling_array,NPROCTOT, &
-                     NSPEC,NGLOB, &
-                     NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                     NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                     NSPEC_INNER_CORE_ATTENUATION, &
-                     NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                     NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                     NSPEC_CRUST_MANTLE_ADJOINT, &
-                     NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                     NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                     NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                     static_memory_size)
-
-    ! create include file for the solver
-    call save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
-                          NSOURCES, &
-                          static_memory_size, &
-                          NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                          NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                          NSPEC_INNER_CORE_ATTENUATION, &
-                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                          NSPEC_CRUST_MANTLE_ADJOINT, &
-                          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
 
   endif   ! end of section executed by main process only
 

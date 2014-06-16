@@ -121,8 +121,10 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: PARTIAL_PHYS_DISPERSION_ONLY'
   call read_value_logical(UNDO_ATTENUATION, 'UNDO_ATTENUATION', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: UNDO_ATTENUATION'
-  call read_value_integer(NT_DUMP_ATTENUATION, 'NT_DUMP_ATTENUATION', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: NT_DUMP_ATTENUATION'
+  call read_value_double_precision(MEMORY_INSTALLED_PER_CORE_IN_GB, 'MEMORY_INSTALLED_PER_CORE_IN_GB', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: MEMORY_INSTALLED_PER_CORE_IN_GB'
+  call read_value_double_precision(PERCENT_OF_MEM_TO_USE_PER_CORE, 'PERCENT_OF_MEM_TO_USE_PER_CORE', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: PERCENT_OF_MEM_TO_USE_PER_CORE'
 
   ! mass matrix corrections
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'EXACT_MASS_MATRIX_FOR_ROTATION', ierr)

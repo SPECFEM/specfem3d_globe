@@ -83,7 +83,15 @@
 
   ! attenuation parameters
   logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY,ATTENUATION_1D_WITH_3D_STORAGE
-  integer :: NT_DUMP_ATTENUATION
+
+  ! exact (full) undoing of attenuation
+  ! How much memory (in GB) is installed on the machine per CPU core (or per GPU card or per INTEL MIC Phi board)
+  double precision :: MEMORY_INSTALLED_PER_CORE_IN_GB
+
+  ! exact (full) undoing of attenuation
+  ! What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
+  ! need to leave some memory available for the GNU/Linux system to run
+  double precision :: PERCENT_OF_MEM_TO_USE_PER_CORE
 
   ! LDD Runge-Kutta time scheme
   logical :: USE_LDDRK,INCREASE_CFL_FOR_LDDRK

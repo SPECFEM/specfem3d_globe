@@ -36,13 +36,13 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 45
+  integer, parameter :: nparam_i = 44
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 57
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 32
+  integer, parameter :: nparam_dp = 34
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -74,7 +74,7 @@
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
             NOISE_TOMOGRAPHY, &
-            NT_DUMP_ATTENUATION,ATT1,ATT2,ATT3,ATT4,ATT5, &
+            ATT1,ATT2,ATT3,ATT4,ATT5, &
             GPU_RUNTIME /)
 
     bcast_logical = (/ &
@@ -108,7 +108,8 @@
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
             R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
             MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,&
-            RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT &
+            RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT, &
+            MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE &
             /)
   endif
 
@@ -199,13 +200,12 @@
     MOVIE_START = bcast_integer(36)
     MOVIE_STOP = bcast_integer(37)
     NOISE_TOMOGRAPHY = bcast_integer(38)
-    NT_DUMP_ATTENUATION = bcast_integer(39)
-    ATT1 = bcast_integer(40)
-    ATT2 = bcast_integer(41)
-    ATT3 = bcast_integer(42)
-    ATT4 = bcast_integer(43)
-    ATT5 = bcast_integer(44)
-    GPU_RUNTIME = bcast_integer(45)
+    ATT1 = bcast_integer(39)
+    ATT2 = bcast_integer(40)
+    ATT3 = bcast_integer(41)
+    ATT4 = bcast_integer(42)
+    ATT5 = bcast_integer(43)
+    GPU_RUNTIME = bcast_integer(44)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -299,7 +299,8 @@
     MOVIE_SOUTH = bcast_double_precision(30)
     RMOHO_FICTITIOUS_IN_MESHER = bcast_double_precision(31)
     RATIO_BY_WHICH_TO_INCREASE_IT = bcast_double_precision(32)
-
+    MEMORY_INSTALLED_PER_CORE_IN_GB = bcast_double_precision(33)
+    PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(34)
   endif
 
   end subroutine broadcast_computed_parameters
