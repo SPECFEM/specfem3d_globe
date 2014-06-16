@@ -198,7 +198,6 @@ OUTPUT = $B/OUTPUT_FILES
 SUBDIRS = \
 	shared \
 	create_header_file \
-	compute_optimized_dumping_undo_att \
 	meshfem3D \
 	specfem3D \
 	auxiliaries
@@ -210,7 +209,6 @@ endif
 # default targets
 DEFAULT = \
 	xcreate_header_file \
-	xcompute_optimized_dumping_undo_att \
 	xmeshfem3D \
 	xspecfem3D \
 	xcombine_vol_data \
@@ -243,7 +241,6 @@ help:
 	@echo "    xmeshfem3D"
 	@echo "    xspecfem3D"
 	@echo "    xcreate_header_file"
-	@echo "    xcompute_optimized_dumping_undo_att"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
 	@echo "    xcombine_vol_data_adios"

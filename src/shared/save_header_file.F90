@@ -28,7 +28,6 @@
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
   subroutine save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
-                              NSOURCES, &
                               static_memory_size, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM, &
                               NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
@@ -43,7 +42,7 @@
                               NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                               NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                               NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
+                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal )
 
 ! daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
 !              for SIMULATION_TYPE == 1 or equal to NSPEC_CRUST_MANTLE for SIMULATION_TYPE == 3 or SAVE_FORWARD set to .true.
@@ -84,7 +83,7 @@
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
-  integer :: NPROC,NPROCTOT,NSOURCES
+  integer :: NPROC,NPROCTOT,NT_DUMP_ATTENUATION_optimal
 
 
   ! static memory size needed by the solver
@@ -266,10 +265,6 @@
   write(IOUT,*) '! average distance between points in degrees = ',360./real(4*NEX_XI*(NGLLX-1))
   write(IOUT,*) '! average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
   write(IOUT,*) '! average size of a spectral element in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI)
-  write(IOUT,*) '!'
-  write(IOUT,*) '! number of time steps = ',NSTEP
-  write(IOUT,*) '!'
-  write(IOUT,*) '! number of seismic sources = ',NSOURCES
   write(IOUT,*) '!'
   write(IOUT,*)
 
@@ -587,6 +582,10 @@
 #else
   write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .false.'
 #endif
+
+!! DK DK for UNDO_ATTENUATION
+  write(IOUT,*)
+  write(IOUT,*) 'integer, parameter :: NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
 
   close(IOUT)
 
