@@ -1,0 +1,1 @@
+./calc_modes_qmxd_no_ocean_prem_ani_noocean_Q_Cowling.pl -m CMTSOLUTION_VANUATU -S STATIONS -O SYNT_ANI -C -s 2.0 -n 12100 -c MXZ/MXE/MXN
