@@ -39,7 +39,7 @@
   integer, parameter :: nparam_i = 44
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 57
+  integer, parameter :: nparam_l = 58
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -99,7 +99,7 @@
             ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
-            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS &
+            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS, ADIOS_FOR_UNDO_ATTENUATION &
             /)
 
     bcast_double_precision = (/ &
@@ -265,6 +265,7 @@
     ADIOS_FOR_AVS_DX = bcast_logical(55)
     ADIOS_FOR_KERNELS = bcast_logical(56)
     ADIOS_FOR_MODELS = bcast_logical(57)
+    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(58)
 
     ! double precisions
     DT = bcast_double_precision(1)

@@ -72,6 +72,7 @@ subroutine save_intermediate_forward_arrays_adios()
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
+  call define_epsilon_forward_arrays_adios(adios_group, group_size_inc)
   call define_rotation_forward_arrays_adios(adios_group, group_size_inc)
   call define_attenuation_forward_arrays_adios(adios_group, group_size_inc)
 
@@ -83,6 +84,7 @@ subroutine save_intermediate_forward_arrays_adios()
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
+  call write_epsilon_forward_arrays_adios(adios_handle)
   call write_rotation_forward_arrays_adios(adios_handle)
   call write_attenuation_forward_arrays_adios(adios_handle)
   ! Reset the path to its original value to avoid bugs.
@@ -135,6 +137,7 @@ subroutine save_forward_arrays_adios()
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
+  call define_epsilon_forward_arrays_adios(adios_group, group_size_inc)
   ! TODO check following:
   ! conditional definition of vars seem to mess with the group size,
   ! even if the variables are conditionally written.
@@ -153,6 +156,7 @@ subroutine save_forward_arrays_adios()
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
+  call write_epsilon_forward_arrays_adios(adios_handle)
   if (ROTATION_VAL) then
       call write_rotation_forward_arrays_adios(adios_handle)
   endif
@@ -237,6 +241,55 @@ subroutine define_common_forward_arrays_adios(adios_group, group_size_inc)
   call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
                                  "", STRINGIFY_VAR(epsilondev_yz_inner_core))
 end subroutine define_common_forward_arrays_adios
+
+
+!-------------------------------------------------------------------------------
+!> Define ADIOS forward arrays that are always dumped 
+!! except for undo attenuation.
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+subroutine define_epsilon_forward_arrays_adios(adios_group, group_size_inc)
+  use adios_write_mod
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  use adios_helpers_mod
+
+  implicit none
+
+  integer(kind=8), intent(in) :: adios_group
+  integer(kind=8), intent(inout) :: group_size_inc
+
+  integer :: local_dim
+  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                  "", STRINGIFY_VAR(epsilondev_xx_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                  "", STRINGIFY_VAR(epsilondev_yy_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                  "", STRINGIFY_VAR(epsilondev_xy_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                  "", STRINGIFY_VAR(epsilondev_xz_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                  "", STRINGIFY_VAR(epsilondev_yz_crust_mantle))
+
+
+  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                 "", STRINGIFY_VAR(epsilondev_xx_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                 "", STRINGIFY_VAR(epsilondev_yy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                 "", STRINGIFY_VAR(epsilondev_xy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                 "", STRINGIFY_VAR(epsilondev_xz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, &
+                                 "", STRINGIFY_VAR(epsilondev_yz_inner_core))
+end subroutine define_epsilon_forward_arrays_adios
+
 
 !-------------------------------------------------------------------------------
 !> Define ADIOS forward arrays that are dumped if ROTATION is true.
@@ -360,6 +413,33 @@ subroutine write_common_forward_arrays_adios(adios_handle)
                                   local_dim, STRINGIFY_VAR(veloc_outer_core))
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
                                   local_dim, STRINGIFY_VAR(accel_outer_core))
+end subroutine write_common_forward_arrays_adios
+
+
+!-------------------------------------------------------------------------------
+!>  Schedule writes of ADIOS forward arrays that are always dumped.
+!! \param adios_handle The handle to the adios bp file
+!! \param group_size_inc The number of MPI processes involved in the writing
+subroutine write_epsilon_forward_arrays_adios(adios_handle)
+
+  use adios_write_mod
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  use adios_helpers_mod
+
+  implicit none
+
+  integer(kind=8), intent(in) :: adios_handle
+
+  integer :: local_dim !, adios_err
+
+  integer :: sizeprocs
+
+  ! number of MPI processes
+  call world_size(sizeprocs)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
@@ -384,7 +464,8 @@ subroutine write_common_forward_arrays_adios(adios_handle)
                              local_dim, STRINGIFY_VAR(epsilondev_xz_inner_core))
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
                              local_dim, STRINGIFY_VAR(epsilondev_yz_inner_core))
-end subroutine write_common_forward_arrays_adios
+end subroutine write_epsilon_forward_arrays_adios
+
 
 !-------------------------------------------------------------------------------
 !>  Schedule writes of ADIOS forward arrays that are dumped if ROTATION is true.
@@ -492,3 +573,81 @@ end subroutine write_attenuation_forward_arrays_adios
   !call check_adios_err(myrank,adios_err)
 !end subroutine write_1D_global_array_adios_dims
 
+!-------------------------------------------------------------------------------
+!> \brief Write selected forward arrays in an ADIOS file.
+!!
+!! This subroutine is only used for forward simulations when
+!! SAVE_FORWARD is set to .true. It dumps the same arrays than
+!! save_intermediate_forward_arrays_adios() except than some arrays
+!! are only dumped if ROTATION and ATTENUATION are set to .true.
+subroutine save_forward_arrays_undoatt_adios()
+
+  ! External imports
+  use adios_write_mod
+  ! Internal imports
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  use adios_helpers_mod, only: check_adios_err
+
+
+  implicit none
+  ! Local parameters
+  integer :: comm, iteration_on_subset_tmp
+  character(len=150) :: outputname
+  integer(kind=8) :: group_size_inc
+  ! ADIOS variables
+  character(len=150) :: group_name 
+  integer                 :: adios_err
+  integer(kind=8)         :: adios_group, adios_handle
+  integer(kind=8)         :: adios_totalsize
+
+  ! current subset iteration
+  iteration_on_subset_tmp = iteration_on_subset
+
+  write(outputname,'(a, a, i6.6, a)') trim(LOCAL_PATH), '/save_frame_at', &
+                                      iteration_on_subset_tmp,'.bp'
+  write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
+                               iteration_on_subset_tmp
+
+  call world_duplicate(comm)
+
+  group_size_inc = 0
+
+  call adios_declare_group(adios_group, group_name, "iter", 1, adios_err)
+  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+
+  ! Define ADIOS variables
+  call define_common_forward_arrays_adios(adios_group, group_size_inc)
+  ! TODO check following:
+  ! conditional definition of vars seem to mess with the group size,
+  ! even if the variables are conditionally written.
+  !if (ROTATION_VAL) then
+  call define_rotation_forward_arrays_adios(adios_group, group_size_inc)
+  !endif
+  !if (ATTENUATION_VAL) then
+  call define_attenuation_forward_arrays_adios(adios_group, group_size_inc)
+  !endif
+
+  ! Open an ADIOS handler to the restart file.
+  call adios_open (adios_handle, group_name, & outputname, "w", comm, adios_err)
+  call adios_group_size (adios_handle, group_size_inc, &
+                         adios_totalsize, adios_err)
+
+  ! Issue the order to write the previously defined variable to the ADIOS file
+  call write_common_forward_arrays_adios(adios_handle)
+  if (ROTATION_VAL) then
+      call write_rotation_forward_arrays_adios(adios_handle)
+  endif
+  if (ATTENUATION_VAL) then
+    call write_attenuation_forward_arrays_adios(adios_handle)
+  endif
+  ! Reset the path to its original value to avoid bugs.
+  call adios_set_path (adios_handle, "", adios_err)
+
+  ! Close ADIOS handler to the restart file.
+  call adios_close(adios_handle, adios_err)
+
+end subroutine save_forward_arrays_undoatt_adios
