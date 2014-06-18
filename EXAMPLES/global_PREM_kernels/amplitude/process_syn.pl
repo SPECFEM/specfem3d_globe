@@ -1,0 +1,1 @@
+../../../utils/seis_process/process_syn.pl

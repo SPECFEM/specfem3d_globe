@@ -1,0 +1,105 @@
+PROGRAMS.tar.gz - programs for obtaining model values at specific locations
+                  and some GMT (http://gmt.soest.hawaii.edu) plotting tools.
+
+GRD.tar.gz - longitude-latitude-velocity files with vsh and vsv [km/s]
+             evaluated on a grid of points at many depths in the mantle
+
+---------------
+
+1-D MODELS:
+
+REF - our new reference model
+
+PREM750_CARDS - the PREM model
+
+---------------
+
+3-D MODELS:
+
+S362ANI - our preferred global model of shear-wave velocity. In this model,
+          radial anisotropy is confined to the uppermost mantle (that is,
+          since the anisotropy is parameterized with only the four uppermost 
+          splines, it becomes very small below a depth of 250 km,
+          and vanishes at 410 km). The 1-D reference model is REF.
+
+S362WMANI - a version of S362ANI with anisotropy allowed throughout the mantle.
+
+S362ANI_PREM - a version of S362ANI calculated using PREM as the 
+               1-D reference model.
+
+S2.9EA - a global model with higher resolution in the upper mantle beneath 
+         Eurasia calculated using REF as the 1-D reference model.
+
+---------------
+
+REFERENCE:
+
+The reference for REF and for the 3D models is
+
+Kustowski, B., Dziewonski A. M., and G.  Ekstrom, 2006, 
+Modeling the anisotropic shear-wave velocity structure in the Earth's mantle
+on global and regional scales, 
+Eos Trans. AGU, 87, (52), Fall Meet. Suppl., Abstract S41E-02
+
+---------------
+
+COMPILATION
+
+Use the Makefile in the 'src' directory. All programs are written in Fortran 77 and have been tested on Solaris, Mac OS, and Cygwin (GNU). Note, that, in order to make the compilation on Mac OS and GNU possible, in the 'Makefile', I used a single precision version of a subroutine 'splcon' (defined in 'splconsngl.f'). However, the models have been derived using a double precision version of 'splcon' (defined in 'splcondble.f'), which, at this point, can be compiled only on Solaris. If you have any questions/comments/suggestions regarding compilation, please let me know.
+
+---------------
+
+PLOTTING VELOCITY and ANISOTROPY
+
+The 'velani_global.e' script shows how to evaluate global models
+at a given depth and plot them using GMT plotting tools.
+
+The 'velani_eurasia.e' script shows how to evaluate the model
+of Eurasia at a given depth and plot it using GMT.
+The boundary of the high-resolution part of the model is defined 
+in 'BEURA.bound', which is embedded on the figure.
+
+Both scripts use the program 'velani', 
+which evaluates vsh, vsv, Voigt average, and vsh-vsv. 
+The output is in km/s, if 'absolute' is selected, 
+or in per cent, if 'relative' is selected.
+(The vsh and vsv evaluations are relative to vsh and vsv
+in the reference model, respectively.
+Both the Voigt-average and vsh-vsv evaluations are relative
+to the Voigt average in the reference model.)
+
+'velani' evaluates the velocity and anisotropy only within a selected
+rectangular region of interest at points separated by the specified 
+'pixel size'.
+
+If requested, the average calculated within the entire region of interest
+is removed.
+
+---------------
+
+PLOTTING TOPOGRAPHY
+
+The script 'topo.e' shows how to plot the topography of the 410-km and 650-km 
+discontinuities. The script uses the program 'topo'. 
+The topography is defined in the model as depressions in km.
+
+---------------
+
+SUBROUTINES EVALUATING ALL PARAMETERS AT A GIVEN POINT
+
+The program 'bin/test_subshsv' demonstrates how to call a subroutine 'subshsv',
+which returns perturbations in vsh,vsv,vph,vpv,eta, and density at a given
+colatitude, longitude, and radius; and a subroutine 'subtopo', which returns
+depressions in the transition zone discontinuities. 
+It is assumed that the 3-D model is S362ANI and the reference model is REF.
+
+---------------
+
+CONTACT
+
+If you have any questions, do not hesitate to contact me at 
+
+kustowsk [at] eps (dot) harvard (dot) edu
+
+
+Bogdan Kustowski

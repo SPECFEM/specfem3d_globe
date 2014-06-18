@@ -1,0 +1,29 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+This directory contains a travel-time adjoint source for 
+station: 
+
+GAR - Garm, Tajikistan (http://ida.ucsd.edu/public/II/GAR/gar.html)
+
+
+The adjoint source files were created by:
+  > ./create_adjoint_source.sh
+
+
+The time window is taken from 190 to 225 s. According to phtimes, it includes:
+ Pn         198.73
+ pPn        201.82
+ sPn        203.74
+ P          206.55
+ PnPn       206.64
+
+  
+note: the adjoint stations file STATIONS_ADJOINT must be copied over into directory DATA/
+      for the setup of the kernel simulation. the script "process.kernel.sh" does this for you.
+
+      Keep in mind that these adjoint source files are setup specifically for this
+      default example and must match the duration length of the forward simulation. 
+      Changing the simulation length would require to recalculate these files.
+

@@ -1,0 +1,46 @@
+Benchmark normal-mode (obani-qmxd) vs. sem
+------------------------------------------
+
+Each directory corresponds to an experiement
+normal-mode vs. sem which is hopefully sufficiently defined 
+by the directory's name 
+
+The standard contents of each directory are the following:
+QMXD/	*.qmxd.bz2 : ascii unprocessed qmxd-seismograms 
+	 DATA/ : cmt and stations files 
+		and command line launching the qmxd script 
+		(available in /opt/seismo-util/bin)  
+
+SEMD/ 	*.semd.ascii.bz2 : ascii unprocessed sem-seismograms
+	DATA/ : cmt, stations and parameter files
+
+processing : processing script 
+	    (convolve, filter, write sac file and rotate)	 
+	    needs process_synt.pl and rotate.pl
+	    (in SPECFEM3D_GLOBE_V4.0/UTILS/)
+
+CMTSOLUTION : input file for processing
+STATIONS    : input files for processing  
+
+Computing Benchmarks:
+To compute synthetics which match with those in each directory, use
+the CMTSOLUTION and STATIONS files located at
+	prem_*/SEMD/DATA/CMTSOLUTION
+	prem_*/SEMD/DATA/STATIONS
+The SEMD/DATA/CMTSOLUTION has the "half duration" set to 0.0 seconds as opposed to 
+the CMTSOLUTION in each base directory (prem_*/CMTSOLUTION) which has 
+the "half duration" set to a value used in post processing to agree 
+with the filtering.
+
+Post Processing Concerns for Small Epicentral Distances or Long Records:
+Post processing scripts such as ./process_syn.pl use a taper before filtering to
+reduce artifacts due to possible steps occurring at the beginning and end of 
+seismograms.  This taper, implemented in the program SAC, determines the taper width
+based on the length of the record, defaulting to 5% of the beginning and end of 
+the record.  For records with small epicentral distances the arrivals are near the 
+beginning of the seismogram and have a good possibility of being reduced in amplitude
+as a result of the filter.  This may result in a mismatch between the SEMD synthetics 
+and those computed in another fashion (QMXD).
+
+Anne Sieminski 22 Aug 2007
+Brian Savage 17 Sep 2007

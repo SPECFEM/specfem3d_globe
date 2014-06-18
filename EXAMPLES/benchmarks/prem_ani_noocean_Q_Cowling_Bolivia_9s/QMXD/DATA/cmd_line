@@ -1,0 +1,1 @@
+./calc_modes_qmxd_no_ocean_prem_ani_noocean_Q_Cowling.pl -m CMTSOLUTION_BOLIVIA -S STATIONS -O SYNT_ANI -C -s 4.768 -n 14200 -c MXZ/MXE/MXN
