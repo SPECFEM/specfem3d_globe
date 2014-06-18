@@ -60,7 +60,25 @@ RECORD_LENGTH_IN_MINUTES        = 50.0d0
 ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 PARTIAL_PHYS_DISPERSION_ONLY    = .false.
 UNDO_ATTENUATION                = .false.
-NT_DUMP_ATTENUATION             = 100   # how often we dump restart files to undo attenuation, only needed when using UNDO_ATTENUATION
+# How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
+#         (or per GPU card or per INTEL MIC Phi board)
+#   (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)
+#   (this value is for instance:
+#   -  4 GB on Tiger at Princeton
+#   -  4 GB or 2 GB on the non-GPU part of Titan at ORNL i.e. when using CPUs only there
+#             depending on whether you use 8 or 16 MPI tasks per compute node
+#   - 32 GB on the GPU part of Titan at ORNL
+#   -  2 GB on the machine used by Christina Morency
+#   -  2 GB on the TACC machine used by Min Chen
+#   -  1.5 GB on the GPU cluster in Marseille)
+MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
+# What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
+# need to leave some memory available for the GNU/Linux system to run
+#   (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;
+#    values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory
+#    on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
+#    a higher value and if the adjoint crashes then try again with a lower value)
+PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 
 # three mass matrices instead of one are needed to handle rotation very accurately;
 # otherwise rotation is handled slightly less accurately (but still reasonably well);

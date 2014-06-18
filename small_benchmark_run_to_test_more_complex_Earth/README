@@ -1,4 +1,0 @@
-This is a small validation test that you can run when trying SPECFEM3D_GLOBE on a new machine. Put your results in directory "OUTPUT_FILES" and then type "gnuplot plotall.gnu" (first uncompress the reference seismograms in directory OUTPUT_FILES_reference_OK using bunzip2). This will create a PDF file with 387 pages, each containing a red curve (the reference) and a blue curve (the seismogram you computed on your new machine). If you notice any difference on any of the 387 pages, the code on your new machine (or your new machine, or both) has a problem. If the 387 sets of curves are identical (and thus superimposed and you see a single blue curve on each page), then everything is OK and the code works fine on your new machine.
-
-Dimitri Komatitsch, CNRS, Marseille, France, November 2011.
-
