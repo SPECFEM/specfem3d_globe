@@ -1,0 +1,104 @@
+      SUBROUTINE YLM(XLAT,XLON,LMAX,Y,WK1,WK2,WK3)
+C
+      COMPLEX TEMP,FAC,DFAC
+      DIMENSION WK1(1),WK2(1),WK3(1),Y(1)
+C
+C     WK1,WK2,WK3 SHOULD BE DIMENSIONED AT LEAST (LMAX+1)*4
+C
+      DATA RADIAN/57.2957795/
+C
+      THETA=(90.-XLAT)/RADIAN
+      PHI=XLON/RADIAN
+C
+      IND=0
+      LM1=LMAX+1
+      DO 10 IL1=1,LM1
+      L=IL1-1
+      CALL LEGNDR(THETA,L,L,WK1,WK2,WK3)
+C
+      FAC=(1.,0.)
+      DFAC=CEXP(CMPLX(0.,PHI))
+C
+      DO 20 IM=1,IL1
+      TEMP=FAC*CMPLX(WK1(IM),0.)
+      IND=IND+1
+      Y(IND)=REAL(TEMP)
+      IF(IM.EQ.1) GOTO 20
+      IND=IND+1
+      Y(IND)=AIMAG(TEMP)
+   20 FAC=FAC*DFAC
+C
+   10 CONTINUE
+      RETURN
+      END
+c
+      SUBROUTINE LEGNDR(THETA,L,M,X,XP,XCOSEC)
+      DIMENSION X(2),XP(2),XCOSEC(2)
+      DOUBLE PRECISION SMALL,SUM,COMPAR,CT,ST,FCT,COT,FPI,X1,X2,X3,
+     1F1,F2,XM,TH,DFLOAT
+      DATA FPI/12.56637062D0/
+      DFLOAT(I)=FLOAT(I)
+      SUM=0.D0
+      LP1=L+1
+      TH=THETA
+      CT=DCOS(TH)
+      ST=DSIN(TH)
+      MP1=M+1
+      FCT=DSQRT(DFLOAT(2*L+1)/FPI)
+      SFL3=SQRT(FLOAT(L*(L+1)))
+      COMPAR=DFLOAT(2*L+1)/FPI
+      DSFL3=SFL3
+      SMALL=1.D-16*COMPAR
+      DO 1 I=1,MP1
+      X(I)=0.
+      XCOSEC(I)=0.
+    1 XP(I)=0.
+      IF(L.GT.1.AND.ABS(THETA).GT.1.E-5) GO TO 3
+      X(1)=FCT
+      IF(L.EQ.0) RETURN
+      X(1)=CT*FCT
+      X(2)=-ST*FCT/DSFL3
+      XP(1)=-ST*FCT
+      XP(2)=-.5D0*CT*FCT*DSFL3
+      IF(ABS(THETA).LT.1.E-5) XCOSEC(2)=XP(2)
+      IF(ABS(THETA).GE.1.E-5) XCOSEC(2)=X(2)/ST
+      RETURN
+    3 X1=1.D0
+      X2=CT
+      DO 4 I=2,L
+      X3=(DFLOAT(2*I-1)*CT*X2-DFLOAT(I-1)*X1)/DFLOAT(I)
+      X1=X2
+    4 X2=X3
+      COT=CT/ST
+      COSEC=1./ST
+      X3=X2*FCT
+      X2=DFLOAT(L)*(X1-CT*X2)*FCT/ST
+      X(1)=X3
+      X(2)=X2
+      SUM=X3*X3
+      XP(1)=-X2
+      XP(2)=DFLOAT(L*(L+1))*X3-COT*X2
+      X(2)=-X(2)/SFL3
+      XCOSEC(2)=X(2)*COSEC
+      XP(2)=-XP(2)/SFL3
+      SUM=SUM+2.D0*X(2)*X(2)
+      IF(SUM-COMPAR.GT.SMALL) RETURN
+      X1=X3
+      X2=-X2/DSQRT(DFLOAT(L*(L+1)))
+      DO 5 I=3,MP1
+      K=I-1
+      F1=DSQRT(DFLOAT((L+I-1)*(L-I+2)))
+      F2=DSQRT(DFLOAT((L+I-2)*(L-I+3)))
+      XM=K
+      X3=-(2.D0*COT*(XM-1.D0)*X2+F2*X1)/F1
+      SUM=SUM+2.D0*X3*X3
+      IF(SUM-COMPAR.GT.SMALL.AND.I.NE.LP1) RETURN
+      X(I)=X3
+      XCOSEC(I)=X(I)*COSEC
+      X1=X2
+      XP(I)=-(F1*X2+XM*COT*X3)
+    5 X2=X3
+      RETURN
+      end
+
+ 
