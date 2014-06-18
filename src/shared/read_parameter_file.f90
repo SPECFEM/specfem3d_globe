@@ -255,6 +255,8 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_KERNELS'
   call read_value_logical(ADIOS_FOR_MODELS, 'ADIOS_FOR_MODELS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_MODELS'
+  call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ierr)
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATT'
 
   ! closes parameter file
   call close_parameter_file()

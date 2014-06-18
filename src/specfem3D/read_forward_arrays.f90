@@ -264,49 +264,53 @@
   ! current subset iteration
   iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
 
-  ! reads in saved wavefield
-  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+  if (ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
+    call read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
+  else
+    ! reads in saved wavefield
+    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
-  ! debug
-  !if(myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
+    ! debug
+    !if(myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
 
-  ! opens corresponding snapshot file for reading
-  open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
-       status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for reading')
+    ! opens corresponding snapshot file for reading
+    open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
+         status='old',action='read',form='unformatted',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for reading')
 
-  read(IIN) b_displ_crust_mantle
-  read(IIN) b_veloc_crust_mantle
-  read(IIN) b_accel_crust_mantle
+    read(IIN) b_displ_crust_mantle
+    read(IIN) b_veloc_crust_mantle
+    read(IIN) b_accel_crust_mantle
 
-  read(IIN) b_displ_inner_core
-  read(IIN) b_veloc_inner_core
-  read(IIN) b_accel_inner_core
+    read(IIN) b_displ_inner_core
+    read(IIN) b_veloc_inner_core
+    read(IIN) b_accel_inner_core
 
-  read(IIN) b_displ_outer_core
-  read(IIN) b_veloc_outer_core
-  read(IIN) b_accel_outer_core
+    read(IIN) b_displ_outer_core
+    read(IIN) b_veloc_outer_core
+    read(IIN) b_accel_outer_core
 
-  if (ROTATION_VAL) then
-    read(IIN) b_A_array_rotation
-    read(IIN) b_B_array_rotation
+    if (ROTATION_VAL) then
+      read(IIN) b_A_array_rotation
+      read(IIN) b_B_array_rotation
+    endif
+
+    if (ATTENUATION_VAL) then
+      read(IIN) b_R_xx_crust_mantle
+      read(IIN) b_R_yy_crust_mantle
+      read(IIN) b_R_xy_crust_mantle
+      read(IIN) b_R_xz_crust_mantle
+      read(IIN) b_R_yz_crust_mantle
+
+      read(IIN) b_R_xx_inner_core
+      read(IIN) b_R_yy_inner_core
+      read(IIN) b_R_xy_inner_core
+      read(IIN) b_R_xz_inner_core
+      read(IIN) b_R_yz_inner_core
+    endif
+
+    close(IIN)
   endif
-
-  if (ATTENUATION_VAL) then
-    read(IIN) b_R_xx_crust_mantle
-    read(IIN) b_R_yy_crust_mantle
-    read(IIN) b_R_xy_crust_mantle
-    read(IIN) b_R_xz_crust_mantle
-    read(IIN) b_R_yz_crust_mantle
-
-    read(IIN) b_R_xx_inner_core
-    read(IIN) b_R_yy_inner_core
-    read(IIN) b_R_xy_inner_core
-    read(IIN) b_R_xz_inner_core
-    read(IIN) b_R_yz_inner_core
-  endif
-
-  close(IIN)
 
   ! transfers fields onto GPU
   if( GPU_MODE ) then
