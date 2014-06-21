@@ -627,7 +627,6 @@ subroutine read_mesh_databases_addressing_adios()
   implicit none
 
   ! local parameters
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
   integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
   integer :: ierr,iproc,iproc_read,iproc_xi,iproc_eta
 
