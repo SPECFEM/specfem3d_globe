@@ -209,6 +209,11 @@ SAVE_REGULAR_KL                 = .false.
 
 # set to true to use GPUs
 GPU_MODE                        = .false.
+# Only used if GPU_MODE = .true. :
+GPU_RUNTIME                     = 1 
+# 2 (OpenCL), 1 (Cuda) ou 0 (Compile-time -- does not work if configured with --with-cuda *AND* --with-opencl)
+GPU_PLATFORM                    = NVIDIA
+GPU_DEVICE                      = Tesla
 
 # set to true to use the ADIOS library for I/Os
 ADIOS_ENABLED                   = .false.
