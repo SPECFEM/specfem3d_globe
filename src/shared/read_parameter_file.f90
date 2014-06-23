@@ -115,8 +115,6 @@
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
 
   ! attenuation parameters
-  call read_value_logical(ATTENUATION_1D_WITH_3D_STORAGE, 'ATTENUATION_1D_WITH_3D_STORAGE', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION_1D_WITH_3D_STORAGE'
   call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'PARTIAL_PHYS_DISPERSION_ONLY', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: PARTIAL_PHYS_DISPERSION_ONLY'
   call read_value_logical(UNDO_ATTENUATION, 'UNDO_ATTENUATION', ierr)
@@ -267,10 +265,8 @@
     print*
     print*,'**************'
     print*,'using globe version 5.1.5 compatible simulation parameters'
-    if( .not. ATTENUATION_1D_WITH_3D_STORAGE ) then
-      print*,'setting ATTENUATION_1D_WITH_3D_STORAGE to .true. for compatibility with globe version 5.1.5 '
-      ATTENUATION_1D_WITH_3D_STORAGE = .true.
-    endif
+    if( .not. ATTENUATION_1D_WITH_3D_STORAGE ) &
+      stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
     if( UNDO_ATTENUATION ) then
       print*,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
       UNDO_ATTENUATION = .false.

@@ -82,7 +82,7 @@
   character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
   ! attenuation parameters
-  logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY,ATTENUATION_1D_WITH_3D_STORAGE
+  logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY
 
   ! exact (full) undoing of attenuation
   ! How much memory (in GB) is installed on the machine per CPU core (or per GPU card or per INTEL MIC Phi board)

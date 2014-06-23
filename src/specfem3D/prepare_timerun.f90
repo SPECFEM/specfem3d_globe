@@ -2165,7 +2165,7 @@
        write(IMAIN,*)
        write(IMAIN,*)"  GPU usage: not available."
     endif
-    
+
     call flush_IMAIN()
   endif
 

@@ -43,8 +43,7 @@
 
   use shared_input_parameters,only: &
     ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-    ATTENUATION,ATTENUATION_1D_WITH_3D_STORAGE, &
-    USE_FULL_TISO_MANTLE
+    ATTENUATION,USE_FULL_TISO_MANTLE
 
   use shared_compute_parameters, only: &
     REFERENCE_1D_MODEL,THREE_D_MODEL, &
