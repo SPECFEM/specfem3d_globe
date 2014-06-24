@@ -265,6 +265,17 @@
 
 !!-----------------------------------------------------------
 !!
+!! for attenuation
+!!
+!!-----------------------------------------------------------
+
+! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
+! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
+  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
+
+
+!!-----------------------------------------------------------
+!!
 !! mesh optimization
 !!
 !!-----------------------------------------------------------
@@ -375,37 +386,10 @@
 
 !!-----------------------------------------------------------
 !!
-!! debugging flags
-!!
-!!-----------------------------------------------------------
-
-! flags to actually assemble with MPI or not
-! and to actually match fluid and solid regions of the Earth or not
-! should always be set to true except when debugging code
-  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_SLICES = .true.
-  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_CHUNKS = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
-
-! flag to turn off the conversion of geographic to geocentric coordinates for
-! the seismic source and the stations; i.e. assume a perfect sphere, which
-! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
-  logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
-
-! flags to do benchmark runs to measure scaling of the code
-! for a limited number of time steps only, setting the initial field to 1
-! to make sure gradual underflow trapping does not slow down the code
-  logical, parameter :: DO_BENCHMARK_RUN_ONLY = .false.
-  integer, parameter :: NSTEP_FOR_BENCHMARK = 300
-  logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
-
-!!-----------------------------------------------------------
-!!
 !! for Roland_Sylvain integrals
 !!
 !!-----------------------------------------------------------
 
-!! DK DK for Roland_Sylvain
   logical, parameter :: ROLAND_SYLVAIN = .false.
 
 ! reuse an existing observation surface created in another run and stored to disk,
@@ -456,6 +440,34 @@
 
 ! for the FORCE_VECTORIZATION 1D version of some loops
   integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
+
+
+!!-----------------------------------------------------------
+!!
+!! debugging flags
+!!
+!!-----------------------------------------------------------
+
+! flags to actually assemble with MPI or not
+! and to actually match fluid and solid regions of the Earth or not
+! should always be set to true except when debugging code
+  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_SLICES = .true.
+  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_CHUNKS = .true.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
+
+! flag to turn off the conversion of geographic to geocentric coordinates for
+! the seismic source and the stations; i.e. assume a perfect sphere, which
+! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
+  logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
+
+! flags to do benchmark runs to measure scaling of the code
+! for a limited number of time steps only, setting the initial field to 1
+! to make sure gradual underflow trapping does not slow down the code
+  logical, parameter :: DO_BENCHMARK_RUN_ONLY = .false.
+  integer, parameter :: NSTEP_FOR_BENCHMARK = 300
+  logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
+
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------

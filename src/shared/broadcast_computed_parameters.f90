@@ -39,7 +39,7 @@
   integer, parameter :: nparam_i = 44
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 57
+  integer, parameter :: nparam_l = 56
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -94,7 +94,7 @@
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
             ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
             USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK, &
-            EXACT_MASS_MATRIX_FOR_ROTATION,ATTENUATION_1D_WITH_3D_STORAGE, &
+            EXACT_MASS_MATRIX_FOR_ROTATION, &
             GPU_MODE, &
             ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
@@ -255,16 +255,15 @@
     USE_FULL_TISO_MANTLE = bcast_logical(45)
     SAVE_SOURCE_MASK = bcast_logical(46)
     EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(47)
-    ATTENUATION_1D_WITH_3D_STORAGE = bcast_logical(48)
-    GPU_MODE = bcast_logical(49)
-    ADIOS_ENABLED = bcast_logical(50)
-    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(51)
-    ADIOS_FOR_MPI_ARRAYS = bcast_logical(52)
-    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(53)
-    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(54)
-    ADIOS_FOR_AVS_DX = bcast_logical(55)
-    ADIOS_FOR_KERNELS = bcast_logical(56)
-    ADIOS_FOR_MODELS = bcast_logical(57)
+    GPU_MODE = bcast_logical(48)
+    ADIOS_ENABLED = bcast_logical(49)
+    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(50)
+    ADIOS_FOR_MPI_ARRAYS = bcast_logical(51)
+    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(52)
+    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(53)
+    ADIOS_FOR_AVS_DX = bcast_logical(54)
+    ADIOS_FOR_KERNELS = bcast_logical(55)
+    ADIOS_FOR_MODELS = bcast_logical(56)
 
     ! double precisions
     DT = bcast_double_precision(1)
