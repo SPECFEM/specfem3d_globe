@@ -159,6 +159,7 @@
   print *
 
   ! checks options
+  if( it1 < 1 ) stop 'the first time step must be >= 1'
   if( it2 == -1 ) it2 = NSTEP
 
 
