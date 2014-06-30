@@ -22,6 +22,9 @@ $parser = OptionParser::new do |opts|
   opts.on("-o","--output-dir DIR","Output directory") { |dir|
     $options[:output_dir] = dir
   }
+  opts.on("-p","--platform PLATFORM","Output directory") { |platform|
+    $options[:platform] = platform
+  }
   opts.parse!
 end
 
@@ -111,7 +114,7 @@ kernels.each { |kern|
       }
       res += "\";\n"
       f.print res
-      k.build(:verbose => $options[:verbose], :platform_vendor => "NVIDIA" ) if $options[:check]
+      k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] ) if $options[:check]
     end
     if $options[:check] and (kern.to_s == "crust_mantle_impl_kernel_forward" or kern.to_s == "compute_stacey_acoustic_kernel") then
       inputs = k.load_ref_inputs("../kernels.test/")
