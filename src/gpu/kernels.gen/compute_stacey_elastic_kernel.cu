@@ -74,90 +74,90 @@ __global__ void compute_stacey_elastic_kernel(const float * veloc, float * accel
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if(iface < num_abs_boundary_faces){
-    ispec = abs_boundary_ispec[iface - 0] - (1);
+    ispec = abs_boundary_ispec[iface - (0)] - (1);
     switch(interface_type){
       case 0 :
-        if(nkmin_xi[INDEX2(2, 0, iface) - 0] == 0 || njmin[INDEX2(2, 0, iface) - 0] == 0){
+        if(nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0){
            return ;
         }
         i = 0;
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(j < njmin[INDEX2(2, 0, iface) - 0] - (1) || j > NGLLX - (1)){
+        if(j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > NGLLX - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + j - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + j - (0)];
         break;
       case 1 :
-        if(nkmin_xi[INDEX2(2, 1, iface) - 0] == 0 || njmin[INDEX2(2, 1, iface) - 0] == 0){
+        if(nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0){
            return ;
         }
         i = NGLLX - (1);
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(j < njmin[INDEX2(2, 1, iface) - 0] - (1) || j > njmax[INDEX2(2, 1, iface) - 0] - (1)){
+        if(j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + j - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + j - (0)];
         break;
       case 2 :
-        if(nkmin_eta[INDEX2(2, 0, iface) - 0] == 0 || nimin[INDEX2(2, 0, iface) - 0] == 0){
+        if(nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0){
            return ;
         }
         j = 0;
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(i < nimin[INDEX2(2, 0, iface) - 0] - (1) || i > nimax[INDEX2(2, 0, iface) - 0] - (1)){
+        if(i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + i - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];
         break;
       case 3 :
-        if(nkmin_eta[INDEX2(2, 1, iface) - 0] == 0 || nimin[INDEX2(2, 1, iface) - 0] == 0){
+        if(nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0){
            return ;
         }
         j = NGLLX - (1);
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(i < nimin[INDEX2(2, 1, iface) - 0] - (1) || i > nimax[INDEX2(2, 1, iface) - 0] - (1)){
+        if(i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + i - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];
         break;
       }
   }
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
-  vx = veloc[(iglob) * (3) + 0 - 0];
-  vy = veloc[(iglob) * (3) + 1 - 0];
-  vz = veloc[(iglob) * (3) + 2 - 0];
-  nx = abs_boundary_normal[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0];
-  ny = abs_boundary_normal[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0];
-  nz = abs_boundary_normal[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0];
+  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+  vx = veloc[(iglob) * (3) + 0 - (0)];
+  vy = veloc[(iglob) * (3) + 1 - (0)];
+  vz = veloc[(iglob) * (3) + 2 - (0)];
+  nx = abs_boundary_normal[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)];
+  ny = abs_boundary_normal[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)];
+  nz = abs_boundary_normal[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)];
   vn = (vx) * (nx) + (vy) * (ny) + (vz) * (nz);
-  rho_vp_temp = rho_vp[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0];
-  rho_vs_temp = rho_vs[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0];
+  rho_vp_temp = rho_vp[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];
+  rho_vs_temp = rho_vs[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];
   tx = ((rho_vp_temp) * (vn)) * (nx) + (rho_vs_temp) * (vx - ((vn) * (nx)));
   ty = ((rho_vp_temp) * (vn)) * (ny) + (rho_vs_temp) * (vy - ((vn) * (ny)));
   tz = ((rho_vp_temp) * (vn)) * (nz) + (rho_vs_temp) * (vz - ((vn) * (nz)));
-  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - 0]) * (fac1);
+  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);
   atomicAdd(accel + (iglob) * (3) + 0, ( -(tx)) * (jacobianw));
   atomicAdd(accel + (iglob) * (3) + 1, ( -(ty)) * (jacobianw));
   atomicAdd(accel + (iglob) * (3) + 2, ( -(tz)) * (jacobianw));
   if(SAVE_FORWARD){
-    b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0] = (tx) * (jacobianw);
-    b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0] = (ty) * (jacobianw);
-    b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0] = (tz) * (jacobianw);
+    b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)] = (tx) * (jacobianw);
+    b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)] = (ty) * (jacobianw);
+    b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)] = (tz) * (jacobianw);
   }
 }

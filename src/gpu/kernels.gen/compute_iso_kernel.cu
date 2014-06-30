@@ -55,7 +55,7 @@ __global__ void compute_iso_kernel(const float * epsilondev_xx, const float * ep
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if(ispec < NSPEC){
     ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
-    mu_kl[ijk_ispec - 0] = mu_kl[ijk_ispec - 0] + (deltat) * ((epsilondev_xx[ijk_ispec - 0]) * (b_epsilondev_xx[ijk_ispec - 0]) + (epsilondev_yy[ijk_ispec - 0]) * (b_epsilondev_yy[ijk_ispec - 0]) + (epsilondev_xx[ijk_ispec - 0] + epsilondev_yy[ijk_ispec - 0]) * (b_epsilondev_xx[ijk_ispec - 0] + b_epsilondev_yy[ijk_ispec - 0]) + ((epsilondev_xy[ijk_ispec - 0]) * (b_epsilondev_xy[ijk_ispec - 0]) + (epsilondev_xz[ijk_ispec - 0]) * (b_epsilondev_xz[ijk_ispec - 0]) + (epsilondev_yz[ijk_ispec - 0]) * (b_epsilondev_yz[ijk_ispec - 0])) * (2));
-    kappa_kl[ijk_ispec - 0] = kappa_kl[ijk_ispec - 0] + (deltat) * (((epsilon_trace_over_3[ijk_ispec - 0]) * (b_epsilon_trace_over_3[ijk_ispec - 0])) * (9));
+    mu_kl[ijk_ispec - (0)] = mu_kl[ijk_ispec - (0)] + (deltat) * ((epsilondev_xx[ijk_ispec - (0)]) * (b_epsilondev_xx[ijk_ispec - (0)]) + (epsilondev_yy[ijk_ispec - (0)]) * (b_epsilondev_yy[ijk_ispec - (0)]) + (epsilondev_xx[ijk_ispec - (0)] + epsilondev_yy[ijk_ispec - (0)]) * (b_epsilondev_xx[ijk_ispec - (0)] + b_epsilondev_yy[ijk_ispec - (0)]) + ((epsilondev_xy[ijk_ispec - (0)]) * (b_epsilondev_xy[ijk_ispec - (0)]) + (epsilondev_xz[ijk_ispec - (0)]) * (b_epsilondev_xz[ijk_ispec - (0)]) + (epsilondev_yz[ijk_ispec - (0)]) * (b_epsilondev_yz[ijk_ispec - (0)])) * (2));
+    kappa_kl[ijk_ispec - (0)] = kappa_kl[ijk_ispec - (0)] + (deltat) * (((epsilon_trace_over_3[ijk_ispec - (0)]) * (b_epsilon_trace_over_3[ijk_ispec - (0)])) * (9));
   }
 }

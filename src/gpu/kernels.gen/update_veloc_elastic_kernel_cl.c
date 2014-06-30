@@ -64,9 +64,9 @@ __kernel void update_veloc_elastic_kernel(__global float * veloc, const __global
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
   if(id < size){\n\
-    veloc[(id) * (3) - 0] = veloc[(id) * (3) - 0] + (deltatover2) * (accel[(id) * (3) - 0]);\n\
-    veloc[(id) * (3) + 1 - 0] = veloc[(id) * (3) + 1 - 0] + (deltatover2) * (accel[(id) * (3) + 1 - 0]);\n\
-    veloc[(id) * (3) + 2 - 0] = veloc[(id) * (3) + 2 - 0] + (deltatover2) * (accel[(id) * (3) + 2 - 0]);\n\
+    veloc[(id) * (3) - (0)] = veloc[(id) * (3) - (0)] + (deltatover2) * (accel[(id) * (3) - (0)]);\n\
+    veloc[(id) * (3) + 1 - (0)] = veloc[(id) * (3) + 1 - (0)] + (deltatover2) * (accel[(id) * (3) + 1 - (0)]);\n\
+    veloc[(id) * (3) + 2 - (0)] = veloc[(id) * (3) + 2 - (0)] + (deltatover2) * (accel[(id) * (3) + 2 - (0)]);\n\
   }\n\
 }\n\
 ";

@@ -73,18 +73,18 @@ __kernel void compute_coupling_ocean_kernel(__global float * accel_crust_mantle,
   float additional_term_z;\n\
   ipoin = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
   if(ipoin < npoin_ocean_load){\n\
-    iglob = ibool_ocean_load[ipoin - 0] - (1);\n\
-    nx = normal_ocean_load[INDEX2(NDIM, 0, ipoin) - 0];\n\
-    ny = normal_ocean_load[INDEX2(NDIM, 1, ipoin) - 0];\n\
-    nz = normal_ocean_load[INDEX2(NDIM, 2, ipoin) - 0];\n\
-    force_normal_comp = ((accel_crust_mantle[0 - 0 + (iglob - (0)) * (3)]) * (nx)) / (rmassx_crust_mantle[iglob - 0]) + ((accel_crust_mantle[1 - 0 + (iglob - (0)) * (3)]) * (ny)) / (rmassy_crust_mantle[iglob - 0]) + ((accel_crust_mantle[2 - 0 + (iglob - (0)) * (3)]) * (nz)) / (rmassz_crust_mantle[iglob - 0]);\n\
-    rmass = rmass_ocean_load[ipoin - 0];\n\
-    additional_term_x = (rmass - (rmassx_crust_mantle[iglob - 0])) * (force_normal_comp);\n\
-    additional_term_y = (rmass - (rmassy_crust_mantle[iglob - 0])) * (force_normal_comp);\n\
-    additional_term_z = (rmass - (rmassz_crust_mantle[iglob - 0])) * (force_normal_comp);\n\
-    accel_crust_mantle[0 - 0 + (iglob - (0)) * (3)] = accel_crust_mantle[0 - 0 + (iglob - (0)) * (3)] + (additional_term_x) * (nx);\n\
-    accel_crust_mantle[1 - 0 + (iglob - (0)) * (3)] = accel_crust_mantle[1 - 0 + (iglob - (0)) * (3)] + (additional_term_y) * (ny);\n\
-    accel_crust_mantle[2 - 0 + (iglob - (0)) * (3)] = accel_crust_mantle[2 - 0 + (iglob - (0)) * (3)] + (additional_term_z) * (nz);\n\
+    iglob = ibool_ocean_load[ipoin - (0)] - (1);\n\
+    nx = normal_ocean_load[INDEX2(NDIM, 0, ipoin) - (0)];\n\
+    ny = normal_ocean_load[INDEX2(NDIM, 1, ipoin) - (0)];\n\
+    nz = normal_ocean_load[INDEX2(NDIM, 2, ipoin) - (0)];\n\
+    force_normal_comp = ((accel_crust_mantle[0 - (0) + (iglob - (0)) * (3)]) * (nx)) / (rmassx_crust_mantle[iglob - (0)]) + ((accel_crust_mantle[1 - (0) + (iglob - (0)) * (3)]) * (ny)) / (rmassy_crust_mantle[iglob - (0)]) + ((accel_crust_mantle[2 - (0) + (iglob - (0)) * (3)]) * (nz)) / (rmassz_crust_mantle[iglob - (0)]);\n\
+    rmass = rmass_ocean_load[ipoin - (0)];\n\
+    additional_term_x = (rmass - (rmassx_crust_mantle[iglob - (0)])) * (force_normal_comp);\n\
+    additional_term_y = (rmass - (rmassy_crust_mantle[iglob - (0)])) * (force_normal_comp);\n\
+    additional_term_z = (rmass - (rmassz_crust_mantle[iglob - (0)])) * (force_normal_comp);\n\
+    accel_crust_mantle[0 - (0) + (iglob - (0)) * (3)] = accel_crust_mantle[0 - (0) + (iglob - (0)) * (3)] + (additional_term_x) * (nx);\n\
+    accel_crust_mantle[1 - (0) + (iglob - (0)) * (3)] = accel_crust_mantle[1 - (0) + (iglob - (0)) * (3)] + (additional_term_y) * (ny);\n\
+    accel_crust_mantle[2 - (0) + (iglob - (0)) * (3)] = accel_crust_mantle[2 - (0) + (iglob - (0)) * (3)] + (additional_term_z) * (nz);\n\
   }\n\
 }\n\
 ";

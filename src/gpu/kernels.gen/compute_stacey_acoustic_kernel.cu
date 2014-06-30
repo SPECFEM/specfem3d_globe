@@ -63,67 +63,67 @@ __global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acous
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if(iface < num_abs_boundary_faces){
-    ispec = abs_boundary_ispec[iface - 0] - (1);
+    ispec = abs_boundary_ispec[iface - (0)] - (1);
     switch(interface_type){
       case 4 :
-        if(nkmin_xi[INDEX2(2, 0, iface) - 0] == 0 || njmin[INDEX2(2, 0, iface) - 0] == 0){
+        if(nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0){
            return ;
         }
         i = 0;
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(j < njmin[INDEX2(2, 0, iface) - 0] - (1) || j > njmax[INDEX2(2, 0, iface) - 0] - (1)){
+        if(j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > njmax[INDEX2(2, 0, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + j - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + j - (0)];
         break;
       case 5 :
-        if(nkmin_xi[INDEX2(2, 1, iface) - 0] == 0 || njmin[INDEX2(2, 1, iface) - 0] == 0){
+        if(nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0){
            return ;
         }
         i = NGLLX - (1);
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(j < njmin[INDEX2(2, 1, iface) - 0] - (1) || j > njmax[INDEX2(2, 1, iface) - 0] - (1)){
+        if(j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + j - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + j - (0)];
         break;
       case 6 :
-        if(nkmin_eta[INDEX2(2, 0, iface) - 0] == 0 || nimin[INDEX2(2, 0, iface) - 0] == 0){
+        if(nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0){
            return ;
         }
         j = 0;
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(i < nimin[INDEX2(2, 0, iface) - 0] - (1) || i > nimax[INDEX2(2, 0, iface) - 0] - (1)){
+        if(i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + i - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];
         break;
       case 7 :
-        if(nkmin_eta[INDEX2(2, 1, iface) - 0] == 0 || nimin[INDEX2(2, 1, iface) - 0] == 0){
+        if(nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0){
            return ;
         }
         j = NGLLX - (1);
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(i < nimin[INDEX2(2, 1, iface) - 0] - (1) || i > nimax[INDEX2(2, 1, iface) - 0] - (1)){
+        if(i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)){
            return ;
         }
-        fac1 = wgllwgll[(k) * (NGLLX) + i - 0];
+        fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];
         break;
       case 8 :
         k = 0;
@@ -135,15 +135,15 @@ __global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acous
         if(i < 0 || i > NGLLX - (1)){
            return ;
         }
-        fac1 = wgllwgll[(j) * (NGLLX) + i - 0];
+        fac1 = wgllwgll[(j) * (NGLLX) + i - (0)];
         break;
       }
   }
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
-  sn = (potential_dot_acoustic[iglob - 0]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0]);
-  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - 0]) * (fac1);
+  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+  sn = (potential_dot_acoustic[iglob - (0)]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)]);
+  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);
   atomicAdd(potential_dot_dot_acoustic + iglob, ( -(sn)) * (jacobianw));
   if(SAVE_FORWARD){
-    b_absorb_potential[INDEX2(NGLL2, igll, iface) - 0] = (sn) * (jacobianw);
+    b_absorb_potential[INDEX2(NGLL2, igll, iface) - (0)] = (sn) * (jacobianw);
   }
 }

@@ -79,20 +79,20 @@ __kernel void compute_coupling_ICB_fluid_kernel(const __global float * displ_inn
   j = get_local_id(1);\n\
   iface = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
   if(iface < NSPEC2D_TOP_IC){\n\
-    ispec = ibelm_top_inner_core[iface - 0] - (1);\n\
-    ispec_selected = ibelm_bottom_outer_core[iface - 0] - (1);\n\
+    ispec = ibelm_top_inner_core[iface - (0)] - (1);\n\
+    ispec_selected = ibelm_bottom_outer_core[iface - (0)] - (1);\n\
     k = NGLLX - (1);\n\
     k_corresp = 0;\n\
-    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - 0] - (1);\n\
-    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - 0];\n\
-    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - 0];\n\
-    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - 0];\n\
-    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - 0]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - 0]);\n\
-    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - (0)] - (1);\n\
+    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - (0)];\n\
+    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - (0)];\n\
+    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];\n\
+    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);\n\
+    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
     if(GRAVITY){\n\
-      pressure = (RHO_BOTTOM_OC) * ((minus_g_icb) * ((displ_inner_core[(iglob_ic) * (3) - 0]) * (nx) + (displ_inner_core[(iglob_ic) * (3) + 1 - 0]) * (ny) + (displ_inner_core[(iglob_ic) * (3) + 2 - 0]) * (nz)) - (accel_outer_core[iglob_oc - 0]));\n\
+      pressure = (RHO_BOTTOM_OC) * ((minus_g_icb) * ((displ_inner_core[(iglob_ic) * (3) - (0)]) * (nx) + (displ_inner_core[(iglob_ic) * (3) + 1 - (0)]) * (ny) + (displ_inner_core[(iglob_ic) * (3) + 2 - (0)]) * (nz)) - (accel_outer_core[iglob_oc - (0)]));\n\
     } else {\n\
-      pressure = ( -(RHO_BOTTOM_OC)) * (accel_outer_core[iglob_oc - 0]);\n\
+      pressure = ( -(RHO_BOTTOM_OC)) * (accel_outer_core[iglob_oc - (0)]);\n\
     }\n\
     atomicAdd(accel_inner_core + (iglob_ic) * (3) + 0, (( -(weight)) * (nx)) * (pressure));\n\
     atomicAdd(accel_inner_core + (iglob_ic) * (3) + 1, (( -(weight)) * (ny)) * (pressure));\n\

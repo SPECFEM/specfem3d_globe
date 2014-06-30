@@ -68,20 +68,20 @@ __global__ void compute_coupling_ICB_fluid_kernel(const float * displ_inner_core
   j = threadIdx.y;
   iface = blockIdx.x + (gridDim.x) * (blockIdx.y);
   if(iface < NSPEC2D_TOP_IC){
-    ispec = ibelm_top_inner_core[iface - 0] - (1);
-    ispec_selected = ibelm_bottom_outer_core[iface - 0] - (1);
+    ispec = ibelm_top_inner_core[iface - (0)] - (1);
+    ispec_selected = ibelm_bottom_outer_core[iface - (0)] - (1);
     k = NGLLX - (1);
     k_corresp = 0;
-    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - 0] - (1);
-    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - 0];
-    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - 0];
-    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - 0];
-    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - 0]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - 0]);
-    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - (0)] - (1);
+    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - (0)];
+    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - (0)];
+    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];
+    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);
+    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
     if(GRAVITY){
-      pressure = (RHO_BOTTOM_OC) * ((minus_g_icb) * ((displ_inner_core[(iglob_ic) * (3) - 0]) * (nx) + (displ_inner_core[(iglob_ic) * (3) + 1 - 0]) * (ny) + (displ_inner_core[(iglob_ic) * (3) + 2 - 0]) * (nz)) - (accel_outer_core[iglob_oc - 0]));
+      pressure = (RHO_BOTTOM_OC) * ((minus_g_icb) * ((displ_inner_core[(iglob_ic) * (3) - (0)]) * (nx) + (displ_inner_core[(iglob_ic) * (3) + 1 - (0)]) * (ny) + (displ_inner_core[(iglob_ic) * (3) + 2 - (0)]) * (nz)) - (accel_outer_core[iglob_oc - (0)]));
     } else {
-      pressure = ( -(RHO_BOTTOM_OC)) * (accel_outer_core[iglob_oc - 0]);
+      pressure = ( -(RHO_BOTTOM_OC)) * (accel_outer_core[iglob_oc - (0)]);
     }
     atomicAdd(accel_inner_core + (iglob_ic) * (3) + 0, (( -(weight)) * (nx)) * (pressure));
     atomicAdd(accel_inner_core + (iglob_ic) * (3) + 1, (( -(weight)) * (ny)) * (pressure));

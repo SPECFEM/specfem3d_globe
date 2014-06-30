@@ -67,12 +67,12 @@ __kernel void prepare_boundary_accel_on_device(const __global float * d_accel, _
   int iinterface;\n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
   for(iinterface=0; iinterface<=num_interfaces - (1); iinterface+=1){\n\
-    if(id < d_nibool_interfaces[iinterface - 0]){\n\
+    if(id < d_nibool_interfaces[iinterface - (0)]){\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\
-      iglob = d_ibool_interfaces[iloc - 0] - (1);\n\
-      d_send_accel_buffer[(iloc) * (3) + 0 - 0] = d_accel[(iglob) * (3) + 0 - 0];\n\
-      d_send_accel_buffer[(iloc) * (3) + 1 - 0] = d_accel[(iglob) * (3) + 1 - 0];\n\
-      d_send_accel_buffer[(iloc) * (3) + 2 - 0] = d_accel[(iglob) * (3) + 2 - 0];\n\
+      iglob = d_ibool_interfaces[iloc - (0)] - (1);\n\
+      d_send_accel_buffer[(iloc) * (3) + 0 - (0)] = d_accel[(iglob) * (3) + 0 - (0)];\n\
+      d_send_accel_buffer[(iloc) * (3) + 1 - (0)] = d_accel[(iglob) * (3) + 1 - (0)];\n\
+      d_send_accel_buffer[(iloc) * (3) + 2 - (0)] = d_accel[(iglob) * (3) + 2 - (0)];\n\
     }\n\
   }\n\
 }\n\

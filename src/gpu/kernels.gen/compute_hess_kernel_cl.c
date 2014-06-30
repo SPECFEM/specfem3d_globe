@@ -67,8 +67,8 @@ __kernel void compute_hess_kernel(const __global int * ibool, const __global flo
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if(ispec < NSPEC_AB){\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
-    iglob = ibool[ijk_ispec - 0] - (1);\n\
-    hess_kl[ijk_ispec - 0] = hess_kl[ijk_ispec - 0] + (deltat) * ((accel[0 - 0 + (iglob - (0)) * (3)]) * (b_accel[0 - 0 + (iglob - (0)) * (3)]) + (accel[1 - 0 + (iglob - (0)) * (3)]) * (b_accel[1 - 0 + (iglob - (0)) * (3)]) + (accel[2 - 0 + (iglob - (0)) * (3)]) * (b_accel[2 - 0 + (iglob - (0)) * (3)]));\n\
+    iglob = ibool[ijk_ispec - (0)] - (1);\n\
+    hess_kl[ijk_ispec - (0)] = hess_kl[ijk_ispec - (0)] + (deltat) * ((accel[0 - (0) + (iglob - (0)) * (3)]) * (b_accel[0 - (0) + (iglob - (0)) * (3)]) + (accel[1 - (0) + (iglob - (0)) * (3)]) * (b_accel[1 - (0) + (iglob - (0)) * (3)]) + (accel[2 - (0) + (iglob - (0)) * (3)]) * (b_accel[2 - (0) + (iglob - (0)) * (3)]));\n\
   }\n\
 }\n\
 ";

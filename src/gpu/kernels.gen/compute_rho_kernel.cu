@@ -56,7 +56,7 @@ __global__ void compute_rho_kernel(const int * ibool, const float * accel, const
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if(ispec < NSPEC){
     ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
-    iglob = ibool[ijk_ispec - 0] - (1);
-    rho_kl[ijk_ispec - 0] = rho_kl[ijk_ispec - 0] + (deltat) * ((accel[0 - 0 + (iglob - (0)) * (3)]) * (b_displ[0 - 0 + (iglob - (0)) * (3)]) + (accel[1 - 0 + (iglob - (0)) * (3)]) * (b_displ[1 - 0 + (iglob - (0)) * (3)]) + (accel[2 - 0 + (iglob - (0)) * (3)]) * (b_displ[2 - 0 + (iglob - (0)) * (3)]));
+    iglob = ibool[ijk_ispec - (0)] - (1);
+    rho_kl[ijk_ispec - (0)] = rho_kl[ijk_ispec - (0)] + (deltat) * ((accel[0 - (0) + (iglob - (0)) * (3)]) * (b_displ[0 - (0) + (iglob - (0)) * (3)]) + (accel[1 - (0) + (iglob - (0)) * (3)]) * (b_displ[1 - (0) + (iglob - (0)) * (3)]) + (accel[2 - (0) + (iglob - (0)) * (3)]) * (b_displ[2 - (0) + (iglob - (0)) * (3)]));
   }
 }

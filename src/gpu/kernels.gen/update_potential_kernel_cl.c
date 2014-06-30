@@ -64,9 +64,9 @@ __kernel void update_potential_kernel(__global float * potential_acoustic, __glo
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
   if(id < size){\n\
-    potential_acoustic[id - 0] = potential_acoustic[id - 0] + (deltat) * (potential_dot_acoustic[id - 0]) + (deltatsqover2) * (potential_dot_dot_acoustic[id - 0]);\n\
-    potential_dot_acoustic[id - 0] = potential_dot_acoustic[id - 0] + (deltatover2) * (potential_dot_dot_acoustic[id - 0]);\n\
-    potential_dot_dot_acoustic[id - 0] = 0.0f;\n\
+    potential_acoustic[id - (0)] = potential_acoustic[id - (0)] + (deltat) * (potential_dot_acoustic[id - (0)]) + (deltatsqover2) * (potential_dot_dot_acoustic[id - (0)]);\n\
+    potential_dot_acoustic[id - (0)] = potential_dot_acoustic[id - (0)] + (deltatover2) * (potential_dot_dot_acoustic[id - (0)]);\n\
+    potential_dot_dot_acoustic[id - (0)] = 0.0f;\n\
   }\n\
 }\n\
 ";

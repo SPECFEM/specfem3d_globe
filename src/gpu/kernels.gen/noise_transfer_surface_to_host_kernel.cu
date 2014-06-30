@@ -60,13 +60,13 @@ __global__ void noise_transfer_surface_to_host_kernel(const int * ibelm_top, con
     int k;
     int ispec;
     int iglob;
-    ispec = ibelm_top[iface - 0] - (1);
+    ispec = ibelm_top[iface - (0)] - (1);
     k = NGLLX - (1);
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0] = displ[(iglob) * (3) - 0];
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0] = displ[(iglob) * (3) - 0];
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0] = displ[(iglob) * (3) - 0];
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)] = displ[(iglob) * (3) - (0)];
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)] = displ[(iglob) * (3) - (0)];
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)] = displ[(iglob) * (3) - (0)];
   }
 }
