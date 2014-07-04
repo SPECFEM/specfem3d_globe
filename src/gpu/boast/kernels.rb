@@ -116,11 +116,14 @@ kernels.each { |kern|
       f.print res
       k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] ) if $options[:check]
     end
-    if $options[:check] and (kern.to_s == "crust_mantle_impl_kernel_forward" or kern.to_s == "compute_stacey_acoustic_kernel") then
+    if $options[:check] then
       inputs = k.load_ref_inputs("../kernels.test/")
       outputs_ref = k.load_ref_outputs("../kernels.test/")
-      puts k.run(*inputs).inspect
-      puts k.compare_ref( outputs_ref, inputs ).inspect
+      inputs.each_key { |key|
+        puts key
+        puts k.run(*(inputs[key])).inspect
+        puts k.compare_ref( outputs_ref[key], inputs[key] ).inspect
+      }
     end
     f.close
   }
