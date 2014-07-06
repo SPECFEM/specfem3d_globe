@@ -871,8 +871,9 @@ Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. 
 As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. en.wikipedia.org/wiki/World\_Geodetic\_System) has $f = 1/298.2572236$.
 %
 \item [{\texttt{TOPOGRAPHY}}] Set to \texttt{.true.} if topography and
-bathymetry should be incorporated based upon model ETOPO5 \citep{Etopo5}.
+bathymetry should be incorporated based upon model ETOPO4 \citep{Etopo5}.
 This feature adds no cost to the simulation.
+It you want to use other topographic models, use the script download\_the\_whole\_topography\_database\_if\_you\_want\_other\_topographic\_models.bash provided in the root directory of the code and change the name of the topographic model to use in file \texttt{setup/constants.h.in} before configuring the code with the \texttt{configure} script.
 \item [{\texttt{GRAVITY}}] Set to \texttt{.true.} if self-gravitation should
 be incorporated in the Cowling approximation \citep{KoTr02b,DaTr98}.
 Turning this feature on is relatively inexpensive, both from the perspective
