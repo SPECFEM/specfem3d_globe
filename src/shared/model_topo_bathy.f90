@@ -80,35 +80,32 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
-  real :: val
-  integer :: ival
-  integer :: itopo_x,itopo_y,ier
+  integer(kind=8) :: filesize
+  integer(kind=2) :: ival
+  integer :: indx,itopo_x,itopo_y
+  logical :: byteswap
 
   ! reads in topography values from file
-  open(unit=13,file=trim(PATHNAME_TOPO_FILE),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) then
-    print*,'error opening:',trim(PATHNAME_TOPO_FILE)
-    call exit_mpi(0,'error opening topography data file')
-  endif
+  filesize = NX_BATHY * NY_BATHY * 2 + 2
+  call open_file_abs_r(10, trim(PATHNAME_TOPO_FILE), len_trim(PATHNAME_TOPO_FILE), filesize)
+
+  ! checks byte ordering
+  indx = 1
+  call read_abs(10, ival, 2, indx)
+  byteswap = (ival == z'3412')
 
   ! reads in topography array
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
-      read(13,*,iostat=ier) val
-
-      ! checks
-      if( ier /= 0 ) then
-        print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
-        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
-        call exit_mpi(0,'error reading topo_bathy file')
+      indx = indx + 1
+      call read_abs(10, ival, 2, indx)
+      if (byteswap) then
+        ival = ishftc(ival, 8, 16)
       endif
-
-      ! converts to integer
-      ival = nint(val)
 
       ! checks values
       if( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
-        print*,'error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
+        print*,'error read topo_bathy: ival = ',ival,'ix,iy = ',itopo_x,itopo_y
         print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
         call exit_mpi(0,'error reading topo_bathy file')
       endif
@@ -118,7 +115,7 @@
 
     enddo
   enddo
-  close(13)
+  call close_file_abs(10)
 
   ! user output
   write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
