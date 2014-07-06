@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# this only needs to be done once and for all
-
 # this is optional, the default topography file topo_bathy_etopo4_smoothed_window_7.dat used by SPECFEM3D_GLOBE
 # is already included in the source code
+
+# this only needs to be done once (and for all)
 
 cd DATA/topo_bathy
 
