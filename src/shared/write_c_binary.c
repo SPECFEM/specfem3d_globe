@@ -151,7 +151,8 @@ achieved with 16 KB buffers: */
 //                          first 0 - 3 indices for crust mantle files
 //                          last 4 - 8 indices for outer core files
 //                          index 9 - for NOISE_TOMOGRAPHY (SURFACE_MOVIE)
-#define ABS_FILEID 10
+//                          index 10 - for topography file
+#define ABS_FILEID 11
 
 // file points
 static FILE * fp_abs[ABS_FILEID];
