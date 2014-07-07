@@ -60,7 +60,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
-__kernel void compute_coupling_CMB_fluid_kernel(const __global float * displ_crust_mantle, __global float * accel_crust_mantle, const __global float * accel_outer_core, const __global int * ibool_crust_mantle, const __global int * ibelm_bottom_crust_mantle, const __global float * normal_top_outer_core, const __global float * jacobian2D_top_outer_core, const __global float * wgllwgll_xy, const __global int * ibool_outer_core, const __global int * ibelm_top_outer_core, const float RHO_TOP_OC, const float minus_g_cmb, int GRAVITY, const int NSPEC2D_BOTTOM_CM){\n\
+__kernel void compute_coupling_CMB_fluid_kernel(const __global float * displ_crust_mantle, __global float * accel_crust_mantle, const __global float * accel_outer_core, const __global int * ibool_crust_mantle, const __global int * ibelm_bottom_crust_mantle, const __global float * normal_top_outer_core, const __global float * jacobian2D_top_outer_core, const __global float * wgllwgll_xy, const __global int * ibool_outer_core, const __global int * ibelm_top_outer_core, const float RHO_TOP_OC, const float minus_g_cmb, const int GRAVITY, const int NSPEC2D_BOTTOM_CM){\n\
   int i;\n\
   int j;\n\
   int k;\n\

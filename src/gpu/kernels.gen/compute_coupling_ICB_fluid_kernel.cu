@@ -49,7 +49,7 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
-__global__ void compute_coupling_ICB_fluid_kernel(const float * displ_inner_core, float * accel_inner_core, const float * accel_outer_core, const int * ibool_inner_core, const int * ibelm_top_inner_core, const float * normal_bottom_outer_core, const float * jacobian2D_bottom_outer_core, const float * wgllwgll_xy, const int * ibool_outer_core, const int * ibelm_bottom_outer_core, const float RHO_BOTTOM_OC, const float minus_g_icb, int GRAVITY, const int NSPEC2D_TOP_IC){
+__global__ void compute_coupling_ICB_fluid_kernel(const float * displ_inner_core, float * accel_inner_core, const float * accel_outer_core, const int * ibool_inner_core, const int * ibelm_top_inner_core, const float * normal_bottom_outer_core, const float * jacobian2D_bottom_outer_core, const float * wgllwgll_xy, const int * ibool_outer_core, const int * ibelm_bottom_outer_core, const float RHO_BOTTOM_OC, const float minus_g_icb, const int GRAVITY, const int NSPEC2D_TOP_IC){
   int i;
   int j;
   int k;
