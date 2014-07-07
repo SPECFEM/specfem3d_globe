@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# conversion of topography files from ASCII to binary to reduce their size.
+# endianness (little-endian or big-endian machines) is properly handled based on a byte-order mark written in the header.
+# script written by Elliott Sales de Andrade.
+
 from __future__ import print_function
 import sys
 from io import BytesIO
