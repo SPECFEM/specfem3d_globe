@@ -1,4 +1,32 @@
 cuda_kernels_OBJS := \
+	$O/assemble_boundary_accel_on_device.cuda-kernel.o \
+	$O/assemble_boundary_potential_on_device.cuda-kernel.o \
+	$O/prepare_boundary_potential_on_device.cuda-kernel.o \
+	$O/prepare_boundary_accel_on_device.cuda-kernel.o \
+	$O/get_maximum_scalar_kernel.cuda-kernel.o \
+	$O/get_maximum_vector_kernel.cuda-kernel.o \
+	$O/compute_add_sources_adjoint_kernel.cuda-kernel.o \
+	$O/compute_add_sources_kernel.cuda-kernel.o \
+	$O/compute_coupling_fluid_CMB_kernel.cuda-kernel.o \
+	$O/compute_coupling_fluid_ICB_kernel.cuda-kernel.o \
+	$O/compute_coupling_CMB_fluid_kernel.cuda-kernel.o \
+	$O/compute_coupling_ICB_fluid_kernel.cuda-kernel.o \
+	$O/compute_coupling_ocean_kernel.cuda-kernel.o \
+	$O/write_seismograms_transfer_from_device_kernel.cuda-kernel.o \
+	$O/write_seismograms_transfer_strain_from_device_kernel.cuda-kernel.o \
+	$O/noise_transfer_surface_to_host_kernel.cuda-kernel.o \
+	$O/noise_add_source_master_rec_kernel.cuda-kernel.o \
+	$O/noise_add_surface_movie_kernel.cuda-kernel.o \
+	$O/compute_stacey_acoustic_kernel.cuda-kernel.o \
+	$O/compute_stacey_acoustic_backward_kernel.cuda-kernel.o \
+	$O/compute_stacey_elastic_kernel.cuda-kernel.o \
+	$O/compute_stacey_elastic_backward_kernel.cuda-kernel.o \
+	$O/update_disp_veloc_kernel.cuda-kernel.o \
+	$O/update_potential_kernel.cuda-kernel.o \
+	$O/update_accel_elastic_kernel.cuda-kernel.o \
+	$O/update_veloc_elastic_kernel.cuda-kernel.o \
+	$O/update_accel_acoustic_kernel.cuda-kernel.o \
+	$O/update_veloc_acoustic_kernel.cuda-kernel.o \
 	$O/outer_core_impl_kernel_forward.cuda-kernel.o \
 	$O/outer_core_impl_kernel_adjoint.cuda-kernel.o \
 	$O/inner_core_impl_kernel_forward.cuda-kernel.o \
