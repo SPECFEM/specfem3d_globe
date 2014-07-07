@@ -8,7 +8,7 @@
 cd DATA/topo_bathy
 
 echo " "
-echo "downloading the whole topography database, which has a size of YYYYYYY GB; this may take a while..."
+echo "downloading the whole topography database, which has a size of 1.7 GB; this may take a while..."
 echo " "
 
 wget http://data.geodynamics.org/specfem/specfem3d_globe/topo_bathy/etopo1_ice_c.grd.bz2
