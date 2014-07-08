@@ -18,7 +18,7 @@ setup/precision.h
 # Build time
 bin/
 obj/
-OUTPUT_FILES/
+OUTPUT_FILES/*
 
 # Documentation
 doc/USER_MANUAL/figures/*-eps-converted-to.pdf
