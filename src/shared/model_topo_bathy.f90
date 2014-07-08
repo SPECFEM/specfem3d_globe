@@ -84,6 +84,8 @@
   integer(kind=2) :: ival
   integer :: indx,itopo_x,itopo_y
   logical :: byteswap
+  integer(kind=2) :: HEADER_IS_BYTE_SWAPPED
+  data HEADER_IS_BYTE_SWAPPED/z'3412'/
 
   ! reads in topography values from file
   filesize = NX_BATHY * NY_BATHY * 2 + 2
@@ -92,7 +94,7 @@
   ! checks byte ordering
   indx = 1
   call read_abs(10, ival, 2, indx)
-  byteswap = (ival == z'3412')
+  byteswap = (ival == HEADER_IS_BYTE_SWAPPED)
 
   ! reads in topography array
   do itopo_y=1,NY_BATHY
