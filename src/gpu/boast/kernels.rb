@@ -22,8 +22,11 @@ $parser = OptionParser::new do |opts|
   opts.on("-o","--output-dir DIR","Output directory") { |dir|
     $options[:output_dir] = dir
   }
-  opts.on("-p","--platform PLATFORM","Output directory") { |platform|
+  opts.on("-p","--platform PLATFORM","Selected Platform") { |platform|
     $options[:platform] = platform
+  }
+  opts.on("-k","--kernel KERNEL","Selected kernel") { |kernel|
+    $options[:kernel] = kernel
   }
   opts.parse!
 end
@@ -85,7 +88,9 @@ class Float
   end
 end
 
-kernels.each { |kern|
+kerns = kernels
+kerns = kerns.select { |k,v| k.to_s.match($options[:kernel]) } if $options[:kernel]
+kerns.each { |kern|
   require "./#{kern.to_s}.rb"
   puts kern.to_s
   langs.each { |lang|
