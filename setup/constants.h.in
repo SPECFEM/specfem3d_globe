@@ -468,6 +468,18 @@
   integer, parameter :: NSTEP_FOR_BENCHMARK = 300
   logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
 
+! compute an alpha sensitivity kernel directly by dumping the whole forward
+! run to disk instead of rebuilding it backwards from the final time step in a second stage;
+! used for debugging and validation purposes only, in order to have an exact reference for the sensitivity kernels.
+! use wisely, this requires several terabytes (yes, tera) of disk space.
+! In the future that option should become standard at some point though.
+! For now, in order to save disk space, it is implemented for the alpha kernel only
+! (because it only requires saving a scalar: the trace of epsilon) and for surface wave
+! kernels only, this way we can save the upper mantle only and ignore the rest.
+! In the future it will be easy to generalize this though.
+  logical, parameter :: EXACT_UNDOING_TO_DISK = .false.
+  ! ID of the huge file in which we dump all the time steps of the simulation
+  integer, parameter :: IFILE_FOR_EXACT_UNDOING = 244
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------

@@ -382,7 +382,7 @@
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = ',NGLOB_CRUST_MANTLE_OCEANS
   write(IOUT,*)
 
-! this to allow for code elimination by compiler in solver for performance
+! this to allow for code elimination by the compiler in the solver for performance
 
   if(TRANSVERSE_ISOTROPY) then
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.'

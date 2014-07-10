@@ -362,13 +362,16 @@
     call exit_MPI(myrank,'cannot have both UNDO_ATTENUATION and PARTIAL_PHYS_DISPERSION_ONLY, please check Par_file...')
 
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
-      if(.not. UNDO_ATTENUATION )then
-        if(.not. PARTIAL_PHYS_DISPERSION_ONLY) then
-          call exit_MPI(myrank, &
+      if(.not. EXACT_UNDOING_TO_DISK)then
+        if(.not. UNDO_ATTENUATION )then
+          if(.not. PARTIAL_PHYS_DISPERSION_ONLY) then
+            call exit_MPI(myrank, &
                     'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
+          endif
         endif
       endif
 

@@ -298,6 +298,7 @@
   if( UNDO_ATTENUATION .and. NUMBER_OF_RUNS /= 1) &
     stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATTENUATION'
 
+  !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
   if(UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
 
