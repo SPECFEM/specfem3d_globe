@@ -26,7 +26,7 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! CRUST 1.0 model
+! CRUST 1.0 model by Laske et al. (2013)
 ! see: http://igppweb.ucsd.edu/~gabi/crust1.html
 !
 ! Initial release:
@@ -41,8 +41,8 @@
 ! 1) water
 ! 2) ice
 ! 3) upper sediments   (VP, VS, rho not defined in all cells)
-! 4) middle sediments  "
-! 5) lower sediments   "
+! 4) middle sediments  (VP, VS, rho not defined in all cells)
+! 5) lower sediments   (VP, VS, rho not defined in all cells)
 ! 6) upper crystalline crust
 ! 7) middle crystalline crust
 ! 8) lower crystalline crust
@@ -57,19 +57,16 @@
 
   ! crustal_model_constants
   ! crustal model parameters for crust1.0
-  integer, parameter :: CRUST1_NP  = 9
-  integer, parameter :: CRUST1_NLO = 360
-  integer, parameter :: CRUST1_NLA = 180
-
-  ! cap smoothing
-  integer, parameter :: NCAP_CRUST1 = 180
+  integer, parameter :: CRUST_NP  = 9
+  integer, parameter :: CRUST_NLO = 360
+  integer, parameter :: CRUST_NLA = 180
 
   ! model_crust_variables
   ! Vp, Vs and density
-  double precision, dimension(:,:,:),allocatable :: crust1_vp,crust1_vs,crust1_rho
+  double precision, dimension(:,:,:), allocatable :: crust_vp,crust_vs,crust_rho
 
   ! layer thickness
-  double precision, dimension(:,:,:),allocatable :: crust1_thk
+  double precision, dimension(:,:,:), allocatable :: crust_thickness
 
   end module model_crust_1_0_par
 
@@ -90,27 +87,27 @@
   integer :: ier
 
   ! allocate crustal arrays
-  allocate(crust1_vp(CRUST1_NP,CRUST1_NLA,CRUST1_NLO), &
-           crust1_vs(CRUST1_NP,CRUST1_NLA,CRUST1_NLO), &
-           crust1_rho(CRUST1_NP,CRUST1_NLA,CRUST1_NLO), &
-           crust1_thk(CRUST1_NP,CRUST1_NLA,CRUST1_NLO), &
+  allocate(crust_thickness(CRUST_NP,CRUST_NLA,CRUST_NLO), &
+           crust_vp(CRUST_NP,CRUST_NLA,CRUST_NLO), &
+           crust_vs(CRUST_NP,CRUST_NLA,CRUST_NLO), &
+           crust_rho(CRUST_NP,CRUST_NLA,CRUST_NLO), &
            stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustal arrays')
 
   ! initializes
-  crust1_vp(:,:,:) = ZERO
-  crust1_vs(:,:,:) = ZERO
-  crust1_rho(:,:,:) = ZERO
-  crust1_thk(:,:,:) = ZERO
+  crust_vp(:,:,:) = ZERO
+  crust_vs(:,:,:) = ZERO
+  crust_rho(:,:,:) = ZERO
+  crust_thickness(:,:,:) = ZERO
 
   ! the variables read are declared and stored in structure model_crust_1_0_par
   if(myrank == 0) call read_crust_1_0_model()
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_dp(crust1_vp,CRUST1_NP*CRUST1_NLA*CRUST1_NLO)
-  call bcast_all_dp(crust1_vs,CRUST1_NP*CRUST1_NLA*CRUST1_NLO)
-  call bcast_all_dp(crust1_rho,CRUST1_NP*CRUST1_NLA*CRUST1_NLO)
-  call bcast_all_dp(crust1_thk,CRUST1_NP*CRUST1_NLA*CRUST1_NLO)
+  call bcast_all_dp(crust_thickness,CRUST_NP*CRUST_NLA*CRUST_NLO)
+  call bcast_all_dp(crust_vp,CRUST_NP*CRUST_NLA*CRUST_NLO)
+  call bcast_all_dp(crust_vs,CRUST_NP*CRUST_NLA*CRUST_NLO)
+  call bcast_all_dp(crust_rho,CRUST_NP*CRUST_NLA*CRUST_NLO)
 
   end subroutine model_crust_1_0_broadcast
 
@@ -128,13 +125,14 @@
   double precision,intent(in) :: lat,lon,x
   double precision,intent(out) :: vp,vs,rho,moho
   logical,intent(out) :: found_crust
-  logical,intent(in):: elem_in_crust
+  logical,intent(in) :: elem_in_crust
 
   ! local parameters
+  double precision :: thicks_2
   double precision :: h_sed,h_uc
-  double precision :: x3,x4,x5,x6,x7,x8
+  double precision :: x2,x3,x4,x5,x6,x7,x8
   double precision :: scaleval
-  double precision,dimension(CRUST1_NP):: vps,vss,rhos,thicks
+  double precision,dimension(CRUST_NP):: vps,vss,rhos,thicks
 
   ! initializes
   vp = ZERO
@@ -145,55 +143,60 @@
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
 
-  ! note: we ignore water & ice sheets
-  ! (only elastic layers are considered)
+  ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
+  ! note: but for Roland_Sylvain gravity calculations we include the ice
+  if( INCLUDE_ICE_IN_CRUST ) then
+    thicks_2 = thicks(2)
+  else
+    thicks_2 = ZERO
+  endif
 
-  ! whole sediment thickness
-  h_sed = thicks(3) + thicks(4) + thicks(5)
+  ! whole sediment thickness (with ice if included)
+  h_sed = thicks_2 + thicks(3) + thicks(4) + thicks(5)
 
-  ! upper crust thickness (including sediments above)
+  ! upper crust thickness (including sediments above, and also ice if included)
   h_uc = h_sed + thicks(6)
 
   ! non-dimensionalization factor
   scaleval = ONE / R_EARTH_KM
 
-  ! non-dimensionalizes thickness (given in km)
+  ! non-dimensionalize thicknesses (given in km)
+
+  ! ice
+  x2 = ONE - thicks_2 * scaleval
   ! upper sediment
-  x3 = ONE - thicks(3) * scaleval
+  x3 = ONE - (thicks_2 + thicks(3)) * scaleval
   ! middle sediment
-  x4 = ONE - (thicks(3) + thicks(4)) * scaleval
+  x4 = ONE - (thicks_2 + thicks(3) + thicks(4)) * scaleval
   ! all sediments
   x5 = ONE - h_sed * scaleval
   ! upper crust
   x6 = ONE - h_uc * scaleval
   ! middle crust
-  x7 = ONE - (h_uc+thicks(7)) * scaleval
+  x7 = ONE - (h_uc + thicks(7)) * scaleval
   ! lower crust
-  x8 = ONE - (h_uc+thicks(7)+thicks(8)) * scaleval
+  x8 = ONE - (h_uc + thicks(7) + thicks(8)) * scaleval
 
-  ! checks moho value
-  !moho = h_uc + thicks(6) + thicks(7)
-  !if( moho /= thicks(NLAYERS_CRUST) ) then
-  ! print*,'moho:',moho,thicks(NLAYERS_CRUST)
-  ! print*,'  lat/lon/x:',lat,lon,x
-  !endif
+  ! no matter if found_crust is true or false, compute moho thickness
+  moho = (h_uc + thicks(7) + thicks(8)) * scaleval
 
-  ! No matter found_crust true or false, output moho thickness
-  moho = (h_uc+thicks(7)+thicks(8)) * scaleval
-
-  ! initializes
+  ! gets corresponding crustal velocities and density
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  if(x > x2 .and. INCLUDE_ICE_IN_CRUST ) then
+    vp = vps(2)
+    vs = vss(2)
+    rho = rhos(2)
+  else if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(4)
     vs = vss(4)
     rho = rhos(4)
-  else if(x > x5 .and. INCLUDE_SEDIMENTS_CRUST ) then
+  else if(x > x5 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
     vp = vps(5)
     vs = vss(5)
     rho = rhos(5)
@@ -265,8 +268,7 @@
   write(IMAIN,*)
 
   ! allocates temporary array
-  allocate(bnd(CRUST1_NP,CRUST1_NLA,CRUST1_NLO), &
-           stat=ier)
+  allocate(bnd(CRUST_NP,CRUST_NLA,CRUST_NLO),stat=ier)
   if( ier /= 0 ) call exit_MPI(0,'error allocating crustal arrays in read routine')
 
   ! initializes
@@ -298,12 +300,12 @@
   endif
 
   ! reads in data values
-  do j = 1,CRUST1_NLA
-    do i = 1,CRUST1_NLO
-      read(51,*)(crust1_vp(k,j,i),k=1,CRUST1_NP)
-      read(52,*)(crust1_vs(k,j,i),k=1,CRUST1_NP)
-      read(53,*)(crust1_rho(k,j,i),k=1,CRUST1_NP)
-      read(54,*)(bnd(k,j,i),k=1,CRUST1_NP)
+  do j = 1,CRUST_NLA
+    do i = 1,CRUST_NLO
+      read(51,*)(crust_vp(k,j,i),k=1,CRUST_NP)
+      read(52,*)(crust_vs(k,j,i),k=1,CRUST_NP)
+      read(53,*)(crust_rho(k,j,i),k=1,CRUST_NP)
+      read(54,*)(bnd(k,j,i),k=1,CRUST_NP)
     enddo
   enddo
 
@@ -314,10 +316,10 @@
   close(54)
 
   ! determines layer thickness
-  do j = 1,CRUST1_NLA
-    do i = 1,CRUST1_NLO
-      do k = 1,CRUST1_NP - 1
-        crust1_thk(k,j,i) = - (bnd(k+1,j,i) - bnd(k,j,i))
+  do j = 1,CRUST_NLA
+    do i = 1,CRUST_NLO
+      do k = 1,CRUST_NP - 1
+        crust_thickness(k,j,i) = - (bnd(k+1,j,i) - bnd(k,j,i))
       enddo
     enddo
   enddo
@@ -325,11 +327,12 @@
   ! frees memory
   deallocate(bnd)
 
-  ! additional info
+  ! output debug info if needed
   if( DEBUG_FILE_OUTPUT ) then
-    ! allocates temporary arrays
-    allocate(thc(CRUST1_NLA,CRUST1_NLO), &
-             ths(CRUST1_NLA,CRUST1_NLO), &
+
+    ! allocate temporary arrays
+    allocate(thc(CRUST_NLA,CRUST_NLO), &
+             ths(CRUST_NLA,CRUST_NLO), &
              stat=ier)
     if( ier /= 0 ) call exit_MPI(0,'error allocating crustal arrays in read routine')
 
@@ -345,35 +348,35 @@
 
     ! crustal thickness
     ! thickness = ice (layer index 2) + sediment (index 3+4+5) + crystalline crust (index 6+7+8)
-    do j = 1,CRUST1_NLA
-      do i = 1,CRUST1_NLO
+    do j = 1,CRUST_NLA
+      do i = 1,CRUST_NLO
+
         ! crustal thickness with ice
-        !thc(j,i) = crust1_thk(2,j,i) &
-        !         + crust1_thk(3,j,i) + crust1_thk(4,j,i) + crust1_thk(5,j,i)  &
-        !         + crust1_thk(6,j,i) + crust1_thk(7,j,i) + crust1_thk(8,j,i)
+        !thc(j,i) = crust_thickness(2,j,i) &
+        !         + crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i)  &
+        !         + crust_thickness(6,j,i) + crust_thickness(7,j,i) + crust_thickness(8,j,i)
 
         ! sediment thickness
-        ths(j,i) = crust1_thk(3,j,i) + crust1_thk(4,j,i) + crust1_thk(5,j,i)
+        ths(j,i) = crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i)
 
 
         ! crustal thickness without ice
         ! note: etopo1 has topography including ice ("ice surface" version) and at base of ice sheets ("bedrock" version)
         !       see: http://www.ngdc.noaa.gov/mgg/global/global.html
-        thc(j,i) = crust1_thk(3,j,i) + crust1_thk(4,j,i) + crust1_thk(5,j,i)  &
-                 + crust1_thk(6,j,i) + crust1_thk(7,j,i) + crust1_thk(8,j,i)
+        thc(j,i) = crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i)  &
+                 + crust_thickness(6,j,i) + crust_thickness(7,j,i) + crust_thickness(8,j,i)
 
         ! limit moho thickness
         if(thc(j,i) > h_moho_max) h_moho_max = thc(j,i)
         if(thc(j,i) < h_moho_min) h_moho_min = thc(j,i)
 
-        write(77,*)(90.0-j+0.5),(-180.0+i-0.5),thc(j,i)+crust1_thk(2,j,i),thc(j,i),ths(j,i),crust1_thk(2,j,i)
+        write(77,*)(90.0-j+0.5),(-180.0+i-0.5),thc(j,i)+crust_thickness(2,j,i),thc(j,i),ths(j,i),crust_thickness(2,j,i)
       enddo
     enddo
     close(77)
 
     ! checks min/max
-    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) &
-      stop 'incorrect moho depths in read_crust_1_0_model'
+    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
     ! debug: file output for smoothed data
     open(77,file='tmp-crust1.0-smooth.dat',status='unknown')
@@ -383,10 +386,10 @@
     h_moho_max = -HUGEVAL
 
     ! smoothed version
-    do j = 1,CRUST1_NLA
-      lat = 90.d0 - j + 0.5
-      do i = 1,CRUST1_NLO
-        lon = -180.d0 + i - 0.5
+    do j = 1,CRUST_NLA
+      lat = 90.d0 - j + 0.5d0
+      do i = 1,CRUST_NLO
+        lon = -180.d0 + i - 0.5d0
         x = 1.0d0
         call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,found_crust,.false.)
 
@@ -401,12 +404,12 @@
     close(77)
 
     ! checks min/max
-    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) &
-      stop 'incorrect moho depths in read_crust_1_0_model'
+    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
     ! frees memory
     deallocate(ths,thc)
-  endif
+
+  endif ! of if( DEBUG_FILE_OUTPUT )
 
   end subroutine read_crust_1_0_model
 
@@ -420,7 +423,7 @@
 !
 ! crust1.0 gets smoothed with a cap of size CAP using NTHETA points
 ! in the theta direction and NPHI in the phi direction.
-! The cap is rotated to the North Pole.
+! The cap is first rotated to the North Pole for easier implementation.
 
   use constants
   use model_crust_1_0_par
@@ -433,16 +436,7 @@
 
   ! argument variables
   double precision :: lat,lon
-  double precision,dimension(CRUST1_NP) :: rho,thick,velp,vels
-
-
-  !-------------------------------
-  ! CAP smoothing - extension range in degree
-  ! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
-  !       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
-  !       so far, the only thing that works is to smooth out values and take special care of the Andes...
-  ! TODO: one could try to adapt this degree range to the simulation resolution in future
-  double precision,parameter :: CAP_DEFAULT_DEGREE = 1.0d0
+  double precision,dimension(CRUST_NP) :: rho,thick,velp,vels
 
   ! work-around to avoid Jacobian problems when stretching mesh elements;
   ! one could also try to slightly change the shape of the doubling element bricks (which cause the problem)...
@@ -456,7 +450,7 @@
 
   ! local variables
   double precision :: xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
-  double precision :: rhol(CRUST1_NP),thickl(CRUST1_NP),velpl(CRUST1_NP),velsl(CRUST1_NP)
+  double precision :: rhol(CRUST_NP),thickl(CRUST_NP),velpl(CRUST_NP),velsl(CRUST_NP)
 
   double precision :: weightl,cap_degree
   double precision :: dist
@@ -469,18 +463,17 @@
     stop 'error in latitude/longitude range in crust1.0'
   endif
 
-  ! makes sure lat/lon are within range
+  ! makes sure lat/lon are within crust1.0 range
   if(lat==90.0d0) lat=89.9999d0
   if(lat==-90.0d0) lat=-89.9999d0
   if(lon==180.0d0) lon=179.9999d0
   if(lon==-180.0d0) lon=-179.9999d0
 
-  ! sets up smoothing points
-  ! by default uses CAP smoothing with 1 degree
-  cap_degree = CAP_DEFAULT_DEGREE
+  ! sets up smoothing points based on cap smoothing
+  cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST ) then
+  if( SMOOTH_CRUST_EVEN_MORE ) then
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
     if( dist < CRITICAL_RANGE ) then
       ! increases cap smoothing degree
@@ -494,7 +487,6 @@
   endif
 
   ! gets smoothing points and weights
-  ! (see routine in model_crust.f90)
   call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
 
   ! initializes
@@ -562,7 +554,6 @@
 
   end subroutine crust_1_0_CAPsmoothed
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -574,20 +565,19 @@
   implicit none
 
   ! argument variables
-  integer,intent(in) :: icolat,ilon
-  double precision,intent(out) :: rhtyp(CRUST1_NP),thtp(CRUST1_NP)
-  double precision,intent(out) :: vptyp(CRUST1_NP),vstyp(CRUST1_NP)
+  integer, intent(in) :: icolat,ilon
+  double precision, intent(out) :: rhtyp(CRUST_NP),thtp(CRUST_NP)
+  double precision, intent(out) :: vptyp(CRUST_NP),vstyp(CRUST_NP)
 
-  ! sets vp,vs and rho for all layers
-  vptyp(:) = crust1_vp(:,icolat,ilon)
-  vstyp(:) = crust1_vs(:,icolat,ilon)
-  rhtyp(:) = crust1_rho(:,icolat,ilon)
-  thtp(:) = crust1_thk(:,icolat,ilon)
+  ! set vp,vs and rho for all layers
+  vptyp(:) = crust_vp(:,icolat,ilon)
+  vstyp(:) = crust_vs(:,icolat,ilon)
+  rhtyp(:) = crust_rho(:,icolat,ilon)
+  thtp(:) = crust_thickness(:,icolat,ilon)
 
   ! get distance to Moho from the bottom of the ocean or the ice
   ! value could be used for checking, but is unused so far...
-  thtp(CRUST1_NP) = thtp(CRUST1_NP) - thtp(1) - thtp(2)
+  thtp(CRUST_NP) = thtp(CRUST_NP) - thtp(1) - thtp(2)
 
   end subroutine get_crust_1_0_structure
-
 

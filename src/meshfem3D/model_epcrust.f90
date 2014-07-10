@@ -104,7 +104,6 @@
 
   implicit none
 
-  character(len=150) EPCRUST_FNM
   character(len=150),dimension(15) :: header
   double precision,dimension(15) :: tmp
   integer:: ilon,jlat,ier
@@ -114,11 +113,9 @@
   write(IMAIN,*) 'incorporating crustal model: EPcrust 1.0'
   write(IMAIN,*)
 
-  call get_value_string(EPCRUST_FNM,'model.EPCRUST_FNM',PATHNAME_EPCRUST)
-
-  open(unit=1001,file=trim(EPCRUST_FNM),status='old',action='read',iostat=ier)
+  open(unit=1001,file=trim(PATHNAME_EPCRUST),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(EPCRUST_FNM), '": ', ier
+    write(IMAIN,*) 'error opening "', trim(PATHNAME_EPCRUST), '": ', ier
     call flush_IMAIN()
     ! stop
     call exit_MPI(0, 'error model epcrust')
@@ -217,7 +214,7 @@
 
   found_crust=.true.
 
-  if ( dep > basement .and. INCLUDE_SEDIMENTS_CRUST &
+  if ( dep > basement .and. INCLUDE_SEDIMENTS_IN_CRUST &
           .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS ) then ! Hejun Zhu add minimum sediment thickness
     vp=vpsmooth(1)
     vs=vssmooth(1)

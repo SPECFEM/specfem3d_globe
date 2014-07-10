@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
 !-------------------------------------------------------------------------------------------------
 !
 ! MPI wrapper functions
@@ -62,7 +61,6 @@
 
   end subroutine finalize_mpi
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -80,8 +78,6 @@
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
 
   end subroutine abort_mpi
-
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -122,7 +118,6 @@
 
   end subroutine synchronize_all_comm
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -150,14 +145,12 @@
   integer :: request
   logical :: flag_result_test
 
-  ! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
-
   integer :: ier
 
-  call MPI_TEST(request,flag_result_test,msg_status,ier)
+  call MPI_TEST(request,flag_result_test,MPI_STATUS_IGNORE,ier)
 
   end subroutine test_request
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -256,11 +249,9 @@
 
   integer :: req
 
-  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
-
   integer :: ier
 
-  call mpi_wait(req,req_mpi_status,ier)
+  call mpi_wait(req,MPI_STATUS_IGNORE,ier)
 
   end subroutine wait_req
 
@@ -350,6 +341,9 @@
   integer,dimension(countval) :: send
 
   ! seems not to be supported on all kind of MPI implementations...
+  !! DK DK: yes, I confirm, using MPI_IN_PLACE is tricky
+  !! DK DK (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
+  !! DK DK      for how to use it right)
   !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
 
   send(:) = buffer(:)
@@ -358,7 +352,6 @@
   if( ier /= 0 ) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -414,6 +407,24 @@
 
   end subroutine sum_all_dp
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_3Darray_dp(sendbuf, recvbuf, nx,ny,nz)
+
+  use mpi
+
+  implicit none
+
+  integer :: nx,ny,nz
+  double precision, dimension(nx,ny,nz) :: sendbuf, recvbuf
+  integer :: ier
+
+  ! this works only if the arrays are contiguous in memory (which is always the case for static arrays, as used in the code)
+  call MPI_REDUCE(sendbuf,recvbuf,nx*ny*nz,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
+
+  end subroutine sum_all_3Darray_dp
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -530,7 +541,6 @@
 
   end subroutine bcast_all_singler
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -567,7 +577,6 @@
   call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_singledp
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -645,11 +654,9 @@
 
   end subroutine bcast_all_l
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_singlei(recvbuf, dest, recvtag)
 
@@ -660,18 +667,15 @@
   integer :: dest,recvtag
   integer :: recvbuf
 
-  ! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
   integer :: ier
 
-  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_singlei
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_singlel(recvbuf, dest, recvtag)
 
@@ -682,18 +686,15 @@
   integer :: dest,recvtag
   logical :: recvbuf
 
-  ! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
   integer :: ier
 
-  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_singlel
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
@@ -705,18 +706,15 @@
   integer :: recvcount
   integer,dimension(recvcount) :: recvbuf
 
-  ! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_RECV(recvbuf,recvcount,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_i
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
@@ -731,18 +729,15 @@
   integer :: recvcount
   real(kind=CUSTOM_REAL),dimension(recvcount) :: recvbuf
 
-  ! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_RECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_cr
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine recv_dp(recvbuf, recvcount, dest, recvtag)
 
@@ -754,14 +749,11 @@
   integer :: recvcount
   double precision,dimension(recvcount) :: recvbuf
 
-  ! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_RECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_dp
-
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -862,7 +854,6 @@
 
   end subroutine send_dp
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -881,14 +872,11 @@
   real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
   real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
 
-! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
-
   integer :: ier
 
   call MPI_SENDRECV(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
                     recvbuf,recvcount,CUSTOM_MPI_TYPE,source,recvtag, &
-                    MPI_COMM_WORLD,msg_status,ier)
+                    MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine sendrecv_cr
 
@@ -907,14 +895,11 @@
   double precision, dimension(sendcount) :: sendbuf
   double precision, dimension(recvcount) :: recvbuf
 
-! MPI status of messages to be received
-  integer :: msg_status(MPI_STATUS_SIZE)
-
   integer :: ier
 
   call MPI_SENDRECV(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
                     recvbuf,recvcount,MPI_DOUBLE_PRECISION,source,recvtag, &
-                    MPI_COMM_WORLD,msg_status,ier)
+                    MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
   end subroutine sendrecv_dp
 
@@ -1009,7 +994,6 @@
 
   end subroutine gather_all_dp
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1089,8 +1073,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-
 
   subroutine world_size(sizeval)
 

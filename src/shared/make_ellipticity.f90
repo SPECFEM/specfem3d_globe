@@ -30,7 +30,7 @@
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
 
-  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV,HOURS_PER_DAY,SECONDS_PER_HOUR
+  use constants,only: NR,TWO_PI,PI,GRAV,RHOAV,HOURS_PER_DAY,SECONDS_PER_HOUR,R_UNIT_SPHERE
 
   implicit none
 
@@ -143,28 +143,26 @@
 
   do i=2,NR
     call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
-!! DK DK Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
-!! DK DK The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
-!! DK DK The Radau approximation is mentioned on page 97.
+! Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
+! The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
+! The Radau approximation is mentioned on page 97.
+! For more details see Section 14.1.2 in Dahlen and Tromp (1998)
+! (see also in file ellipticity_equations_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code).
     call intgrl(i_radau,r,1,i,radau,s1,s2,s3)
     z=(2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
+! this comes from equation (14.19) in Dahlen and Tromp (1998)
     eta(i)=(25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
     k(i)=eta(i)/(r(i)**3.0d0)
   enddo
-
-  g_a=4.0D0*i_rho
 
   bom=TWO_PI/(HOURS_PER_DAY*SECONDS_PER_HOUR)
 
 ! non-dimensionalized value
   bom=bom/sqrt(PI*GRAV*RHOAV)
 
-!! DK DK I think 24.d0 below stands for HOURS_PER_DAY and thus I replace it here
-!! DK DK in order to be consistent if someone uses the code one day for other planets
-!! DK DK with a different rotation rate, or for the Earth in the past of in the future i.e. with a different rate as well.
-!! DK DK Please do not hesitate to fix it back if my assumption below was wrong.
-!! DK DK  epsilonval(NR)=15.0d0*(bom**2.0d0)/(24.0d0*i_rho*(eta(NR)+2.0d0))
-  epsilonval(NR)=15.0d0*(bom**2.0d0)/(HOURS_PER_DAY*i_rho*(eta(NR)+2.0d0))
+  g_a = 4.0d0*i_rho
+! this is the equation right above (14.21) in Dahlen and Tromp (1998)
+  epsilonval(NR) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR)+2.0d0))
 
   do i=1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)

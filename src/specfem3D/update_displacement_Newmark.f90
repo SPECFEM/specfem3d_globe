@@ -87,11 +87,11 @@
     ! on GPU
     ! Includes FORWARD_OR_ADJOINT == 1
     ! crust/mantle region
-    call update_displacement_cm_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
+    call update_displacement_cm_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
     ! outer core region
-    call update_displacement_oc_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
+    call update_displacement_oc_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
     ! inner core region
-    call update_displacement_ic_cuda(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
+    call update_displacement_ic_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
   endif
 
   end subroutine update_displacement_Newmark
@@ -130,11 +130,11 @@
     ! on GPU
     ! Includes FORWARD_OR_ADJOINT == 3
     ! crust/mantle region
-    call update_displacement_cm_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    call update_displacement_cm_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
     ! outer core region
-    call update_displacement_oc_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    call update_displacement_oc_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
     ! inner core region
-    call update_displacement_ic_cuda(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
+    call update_displacement_ic_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
   endif
 
   end subroutine update_displacement_Newmark_backward
@@ -161,11 +161,19 @@
   ! Newmark time scheme update
   if(FORCE_VECTORIZATION_VAL) then
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( NGLOB, displ, veloc, accel, &
+!$OMP deltat, deltatsqover2, deltatover2 ) &
+!$OMP PRIVATE(i)
+
+!$OMP DO SCHEDULE(GUIDED)
     do i=1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
       accel(i,1) = 0._CUSTOM_REAL
     enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   else
 
@@ -198,12 +206,20 @@
   ! local parameters
   integer :: i
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( NGLOB, displ, veloc, accel, &
+!$OMP deltat, deltatsqover2, deltatover2 ) &
+!$OMP PRIVATE(i)
+
   ! Newmark time scheme update
+!$OMP DO SCHEDULE(GUIDED)
   do i=1,NGLOB
     displ(i) = displ(i) + deltat * veloc(i) + deltatsqover2 * accel(i)
     veloc(i) = veloc(i) + deltatover2 * accel(i)
     accel(i) = 0._CUSTOM_REAL
   enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   end subroutine update_displ_acoustic
 
@@ -231,7 +247,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
-    call update_veloc_acoustic_cuda(Mesh_pointer,deltatover2,1)
+    call update_veloc_acoustic_gpu(Mesh_pointer,deltatover2,1)
   endif
 
   end subroutine update_veloc_acoustic_newmark
@@ -257,7 +273,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
-    call update_veloc_acoustic_cuda(Mesh_pointer,b_deltatover2,3)
+    call update_veloc_acoustic_gpu(Mesh_pointer,b_deltatover2,3)
   endif
 
   end subroutine update_veloc_acoustic_newmark_backward
@@ -279,9 +295,6 @@
 
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
-
-  ! mass matrix
-!!!!!  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_outer_core
 
   real(kind=CUSTOM_REAL) :: deltatover2
 
@@ -321,7 +334,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 1
-    call update_veloc_elastic_cuda(Mesh_pointer,deltatover2,1)
+    call update_veloc_elastic_gpu(Mesh_pointer,deltatover2,1)
 
   endif
 
@@ -350,7 +363,7 @@
   else
     ! on GPU
     ! includes FORWARD_OR_ADJOINT == 3
-    call update_veloc_elastic_cuda(Mesh_pointer,b_deltatover2,3)
+    call update_veloc_elastic_gpu(Mesh_pointer,b_deltatover2,3)
 
   endif
 
@@ -393,17 +406,26 @@
   !   - inner core region
   !         needs both, acceleration update & velocity corrector terms
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( NGLOB_CM, veloc_crust_mantle, deltatover2, &
+!$OMP accel_crust_mantle, NGLOB_IC, veloc_inner_core, accel_inner_core) &
+!$OMP PRIVATE(i)
+
   if(FORCE_VECTORIZATION_VAL) then
 
     ! crust/mantle
+!$OMP DO SCHEDULE(GUIDED)
     do i=1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
+!$OMP enddo
 
+!$OMP DO SCHEDULE(GUIDED)
     ! inner core
     do i=1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
+!$OMP enddo
 
   else
 
@@ -418,6 +440,8 @@
     enddo
 
   endif
+
+!$OMP END PARALLEL
 
   end subroutine update_veloc_elastic
 

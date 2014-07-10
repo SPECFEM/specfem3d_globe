@@ -28,15 +28,15 @@
 !--------------------------------------------------------------------------------------------------
 ! General Crustmaps
 !
-! combines Crust2.0 and EUcrust07 for moho depths; the crustal maps are
-! interpolating the crustal velocities from Crust2.0 onto the more detailed EUcrust
+! combines Crust2.0 and EUcrust07 for moho depths; the crustal maps
+! interpolate the crustal velocities from Crust2.0 onto the more detailed EUcrust
 ! crustal depths where ever they are defined.
 
 ! current crustmaps (cmaps) take sediment thickness
 ! and moho depths from EUcrust07 if possible and interpolate corresponding
 ! velocity/densities given from Crust2.0.
 !
-! main author: Matthias Meschede (meschede@princeton.edu)
+! main author: Matthias Meschede (meschede AT princeton DOT edu)
 !--------------------------------------------------------------------------------------------------
 
   module model_crustmaps_par
@@ -177,7 +177,7 @@
     velocsnp(l) = velocsnp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
     velocssp(l) = velocssp(l)/360.0/dble(CRUSTMAP_RESOLUTION)
 
-!    print *,'thicknessnp(',l,')',thicknessnp(l)
+!   print *,'thicknessnp(',l,')',thicknessnp(l)
   enddo
 
   end subroutine read_general_crustmap
@@ -193,22 +193,15 @@
 
   implicit none
 
-  double precision, intent(out), &
-    dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION)&
-    :: var
+  double precision, intent(out), dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION) :: var
   character(len=1), intent(in) :: var_letter
   integer, intent(in) :: ind
 
   ! local variables
-  character(len=50) :: config_name
-  character(len=150) :: default_name
   character(len=150) :: eucrust
   integer :: ier, ila, iln
 
-  write(config_name,'(a,a1,i1)') 'model.eucrust', var_letter, ind
-  write(default_name,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
-
-  call get_value_string(eucrust, config_name, default_name)
+  write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
 
   open(unit=1,file=trim(eucrust),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
@@ -224,7 +217,6 @@
   close(1)
 
   end subroutine read_general_crustmap_layer
-
 
 
 !
@@ -262,15 +254,13 @@
   x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-!  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
-!   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
+! if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
-!  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
-!   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
+! else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
    vp = vps(2)
    vs = vss(2)
    rho = rhos(2)
@@ -369,8 +359,9 @@
   num_points = 1
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST ) then
-    dist = dsqrt( (lon-LAT_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
+  if( SMOOTH_CRUST_EVEN_MORE ) then
+
+    dist = dsqrt( (lon-LON_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
     if( dist < CRITICAL_RANGE_EUROPE ) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
@@ -388,6 +379,7 @@
       call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
+
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
     if( dist < CRITICAL_RANGE_ANDES ) then
       ! sets up smoothing points
@@ -406,6 +398,7 @@
       call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
+
   endif
 
   ! initializes
@@ -448,7 +441,7 @@
     weightlr=(1.0-weightup)*(1.0-weightleft)
 
     if(iupcolat==0) then
-      ! north pole
+      ! North pole
       do i=1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thicknessnp(i)+weightur*thicknessnp(i)+&
                  weightll*thickness(1,ileftlng,i)+weightlr*thickness(1,irightlng,i)
@@ -461,7 +454,7 @@
                weightll*velocs(1,ileftlng,i)+weightlr*velocs(1,irightlng,i)
       enddo
     else if(iupcolat==180*CRUSTMAP_RESOLUTION) then
-      ! south pole
+      ! South pole
       do i=1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thickness(iupcolat,ileftlng,i)+weightur*thickness(iupcolat,irightlng,i)+&
                  weightll*thicknesssp(i)+weightlr*thicknesssp(i)
@@ -482,10 +475,10 @@
                weightll*velocp(iupcolat+1,ileftlng,i)+weightlr*velocp(iupcolat+1,irightlng,i)
        velsl(i)=weightul*velocs(iupcolat,ileftlng,i)+weightur*velocs(iupcolat,irightlng,i)+&
                weightll*velocs(iupcolat+1,ileftlng,i)+weightlr*velocs(iupcolat+1,irightlng,i)
-    !   thicks(i)=1.0
-    !   rhos(i)=1.0
-    !   velp(i)=1.0
-    !   vels(i)=1.0i
+    !  thicks(i)=1.0
+    !  rhos(i)=1.0
+    !  velp(i)=1.0
+    !  vels(i)=1.0i
       enddo
     endif
 
@@ -530,6 +523,7 @@
   if(lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
     stop 'error in latitude/longitude range in icolat_ilon'
 
+! map longitudes to [0,360]
   if(lng<0) then
     xlng=lng+360.0
   else
@@ -552,3 +546,177 @@
   if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
   end subroutine ibilinearmap
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! hash table to define the crustal type using an integer instead of characters
+! because working with integers in the rest of the routines results in much faster code
+  subroutine hash_crustal_type(crustaltype, ihash)
+
+    implicit none
+
+    character(len=2), intent(in) :: crustaltype
+    integer, intent(out) :: ihash
+
+    ihash = iachar(crustaltype(1:1)) + 128*iachar(crustaltype(2:2)) + 1
+
+  end subroutine hash_crustal_type
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine icolat_ilon(xlat,xlon,icolat,ilon)
+
+  implicit none
+
+! argument variables
+  double precision :: xlat,xlon
+  integer :: icolat,ilon
+
+  if(xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
+    stop 'error in latitude/longitude range in icolat_ilon'
+
+  icolat = int(1+( (90.d0-xlat)*0.5d0 ))
+  if(icolat == 91) icolat = 90
+
+  ilon = int(1+( (180.d0+xlon)*0.5d0 ))
+  if(ilon == 181) ilon = 1
+
+  if(icolat>90 .or. icolat<1) stop 'error in routine icolat_ilon'
+  if(ilon<1 .or. ilon>180) stop 'error in routine icolat_ilon'
+
+  end subroutine icolat_ilon
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine CAP_vardegree(lon,lat,xlon,xlat,weight,CAP_DEGREE,NTHETA,NPHI)
+
+! calculates weighting points to smooth around lon/lat location with
+! a smoothing range of CAP_DEGREE
+!
+! The cap is rotated to the North Pole.
+!
+! returns: xlon,xlat,weight
+
+  use constants
+
+  implicit none
+
+  ! sampling rate
+  integer :: NTHETA
+  integer :: NPHI
+
+  ! smoothing size (in degrees)
+  double precision :: CAP_DEGREE
+
+  ! argument variables
+  double precision :: lat,lon
+  double precision,dimension(NTHETA*NPHI) :: xlon,xlat,weight
+
+  ! local variables
+  double precision :: CAP
+  double precision :: theta,phi,sint,cost,sinp,cosp,wght,total
+  double precision :: r_rot,theta_rot,phi_rot
+  double precision :: rotation_matrix(3,3),x(3),xc(3)
+  double precision :: dtheta,dphi,cap_area,dweight,pi_over_nphi
+  integer :: i,j,k,itheta,iphi
+
+  ! initializes
+  xlon(:) = ZERO
+  xlat(:) = ZERO
+  weight(:) = ZERO
+
+  ! checks cap degree size
+  if( CAP_DEGREE < TINYVAL ) then
+    ! no cap smoothing
+    print*,'error cap:',CAP_DEGREE
+    print*,'  lat/lon:',lat,lon
+    stop 'error cap_degree too small'
+  endif
+
+  ! pre-compute parameters
+  CAP = CAP_DEGREE * DEGREES_TO_RADIANS
+  dtheta = 0.5d0 * CAP / dble(NTHETA)
+  dphi = TWO_PI / dble(NPHI)
+
+  cap_area = TWO_PI * ( ONE - dcos(CAP) )
+  dweight = CAP / dble(NTHETA) * dphi / cap_area
+  pi_over_nphi = PI/dble(NPHI)
+
+  ! colatitude/longitude in radian
+  theta = (90.0d0 - lat ) * DEGREES_TO_RADIANS
+  phi = lon * DEGREES_TO_RADIANS
+
+  sint = dsin(theta)
+  cost = dcos(theta)
+  sinp = dsin(phi)
+  cosp = dcos(phi)
+
+  ! set up rotation matrix to go from cap at North pole to cap around point of interest
+  rotation_matrix(1,1) = cosp*cost
+  rotation_matrix(1,2) = -sinp
+  rotation_matrix(1,3) = cosp*sint
+  rotation_matrix(2,1) = sinp*cost
+  rotation_matrix(2,2) = cosp
+  rotation_matrix(2,3) = sinp*sint
+  rotation_matrix(3,1) = -sint
+  rotation_matrix(3,2) = ZERO
+  rotation_matrix(3,3) = cost
+
+  ! calculates points over a cap at the North pole and rotates them to specified lat/lon point
+  i = 0
+  total = ZERO
+  do itheta = 1,NTHETA
+
+    theta = dble(2*itheta-1)*dtheta
+    cost = dcos(theta)
+    sint = dsin(theta)
+    wght = sint*dweight
+
+    do iphi = 1,NPHI
+
+      i = i+1
+
+      ! get the weight associated with this integration point (same for all phi)
+      weight(i) = wght
+
+      total = total + weight(i)
+      phi = dble(2*iphi-1)*pi_over_nphi
+      cosp = dcos(phi)
+      sinp = dsin(phi)
+
+      ! x,y,z coordinates of integration point in cap at North pole
+      xc(1) = sint*cosp
+      xc(2) = sint*sinp
+      xc(3) = cost
+
+      ! get x,y,z coordinates in cap around point of interest
+      do j=1,3
+        x(j) = ZERO
+        do k=1,3
+          x(j) = x(j)+rotation_matrix(j,k)*xc(k)
+        enddo
+      enddo
+
+      ! get latitude and longitude (degrees) of integration point
+      call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
+      call reduce(theta_rot,phi_rot)
+      xlat(i) = (PI_OVER_TWO - theta_rot) * RADIANS_TO_DEGREES
+      xlon(i) = phi_rot * RADIANS_TO_DEGREES
+      if(xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
+
+    enddo
+
+  enddo
+  if(abs(total - ONE) > 0.001d0) then
+    print*,'error cap:',total,CAP_DEGREE
+    stop 'error in cap integration for variable degree'
+  endif
+
+  end subroutine CAP_vardegree
+

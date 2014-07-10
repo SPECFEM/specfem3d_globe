@@ -47,8 +47,8 @@
 
   use meshfem3D_par,only: &
     ibool,idoubling,xstore,ystore,zstore, &
-    IMAIN,volume_total,Earth_mass_total,Roland_Sylvain_integr_total,myrank,LOCAL_PATH, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IMAIN,volume_total,Earth_mass_total,Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+    myrank,LOCAL_PATH,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     IFLAG_IN_FICTITIOUS_CUBE, &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS, &
     R_CENTRAL_CUBE,RICB,RCMB, &
@@ -152,9 +152,14 @@
                           offset_proc_xi,offset_proc_eta)
 
 
-  ! only create global addressing and the MPI buffers in the first pass
   select case(ipass)
-  case( 1 )
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  case( 1 ) !!!!!!!!!!! first pass of the mesher
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  ! only create global addressing and the MPI buffers in the first pass
+
     ! creates ibool index array for projection from local to global points
     call synchronize_all()
     if( myrank == 0) then
@@ -176,14 +181,16 @@
 
 
     ! sets up Stacey absorbing boundary indices (nimin,nimax,..)
-    if(NCHUNKS /= 6) then
-      call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
-                      njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
-                      NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
-    endif
+    if(NCHUNKS /= 6) call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
+                                     njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
+                                     NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  case( 2 ) !!!!!!!!!!! second pass of the mesher
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! only create mass matrix and save all the final arrays in the second pass
-  case( 2 )
+
     ! precomputes Jacobian for 2D absorbing boundary surfaces
     call synchronize_all()
     if( myrank == 0) then
@@ -204,6 +211,10 @@
                                  NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
                                  xigll,yigll,zigll)
+
+!! DK DK for Roland_Sylvain
+! creation of the top observation surface if region is the crust_mantle
+    if(ROLAND_SYLVAIN .and. iregion_code == IREGION_CRUST_MANTLE) call compute_observation_surface()
 
     ! create chunk buffers if more than one chunk
     call synchronize_all()
@@ -345,7 +356,7 @@
     if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
-    ! note: for Stacey boundaries, needs indexing nimin,.. filled in in first pass
+    ! note: for Stacey boundaries, needs indexing nimin,.. filled in the first pass
     call create_mass_matrices(nspec,nglob,idoubling,ibool, &
                               iregion_code,xstore,ystore,zstore, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM)
@@ -408,14 +419,15 @@
     endif
 
     ! compute volume, bottom and top area of that part of the slice, and then the total
-    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
+                            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                             NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                             volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
     ! compute Earth mass of that part of the slice, and then total Earth mass
     call compute_Earth_mass(myrank,Earth_mass_total, &
-        nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
+        Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+        nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
         etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
 !! DK DK for Roland_Sylvain
@@ -428,9 +440,8 @@
       endif
 
       ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
-      call compute_Roland_Sylvain_integr(myrank,Roland_Sylvain_integr_total, &
-          nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
-          etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+      call compute_Roland_Sylvain_integr(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
     endif
 
@@ -1176,7 +1187,7 @@
     enddo
   enddo
 
-  call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
+  call get_global(npointot,xp,yp,zp,ibool,locval,ifseg,nglob)
 
   deallocate(xp,yp,zp)
   deallocate(locval,ifseg)

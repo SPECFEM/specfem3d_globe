@@ -38,6 +38,13 @@
   ! timing
   double precision, external :: wtime
 
+  ! for EXACT_UNDOING_TO_DISK
+  integer :: ispec,iglob,i,j,k,counter,record_length
+  real(kind=CUSTOM_REAL) :: radius
+  integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
+  character(len=150) outputname
+
 !
 !   s t a r t   t i m e   i t e r a t i o n s
 !
@@ -70,6 +77,69 @@
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
 
+  if(EXACT_UNDOING_TO_DISK) then
+
+    if(GPU_MODE) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK not supported for GPUs')
+
+    if(UNDO_ATTENUATION) &
+      call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK needs UNDO_ATTENUATION to be off because it computes the kernel directly instead')
+
+    if(SIMULATION_TYPE == 1 .and. .not. SAVE_FORWARD) &
+      call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires SAVE_FORWARD if SIMULATION_TYPE == 1')
+
+    if(ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
+
+!! DK DK determine the largest value of iglob that we need to save to disk,
+!! DK DK since we save the upper mantle only in the case of surface-wave kernels
+    ! crust_mantle
+    allocate(integer_mask_ibool_exact_undo(NGLOB_CRUST_MANTLE))
+    integer_mask_ibool_exact_undo(:) = -1
+
+    counter = 0
+    do ispec = 1, NSPEC_CRUST_MANTLE
+      do k = 1, NGLLZ
+        do j = 1, NGLLY
+          do i = 1, NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+            ! xstore ystore zstore have previously been converted to r theta phi, thus xstore now stores the radius
+            radius = xstore_crust_mantle(iglob) ! <- radius r (normalized)
+            ! save that element only if it is in the upper mantle
+            if(radius >= R670 / R_EARTH) then
+              ! if this point has not yet been found before
+              if(integer_mask_ibool_exact_undo(iglob) == -1) then
+                ! create a new unique point
+                counter = counter + 1
+                integer_mask_ibool_exact_undo(iglob) = counter
+              endif
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+!    print *,'myrank, counter, NGLOB, ratio = ',myrank, counter, NGLOB_CRUST_MANTLE, &
+!                 real(counter) / NGLOB_CRUST_MANTLE
+!   print *,'myrank, R670, ratioR670surR_EARTH = ',myrank, R670, R670 / R_EARTH
+
+    ! allocate the buffer used to dump a single time step
+    allocate(buffer_for_disk(counter))
+
+    ! open the file in which we will dump all the time steps (in a single file)
+    write(outputname,"('huge_dumps/proc',i6.6,'_huge_dump_of_all_time_steps.bin')") myrank
+    inquire(iolength=record_length) buffer_for_disk
+    ! we write to or read from the file depending on the simulation type
+    if(SIMULATION_TYPE == 1) then
+      open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='write', status='unknown', &
+                      form='unformatted', access='direct', recl=record_length)
+    else if(SIMULATION_TYPE == 3) then
+      open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='read', status='old', &
+                      form='unformatted', access='direct', recl=record_length)
+    else
+      call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
+    endif
+
+  endif ! of if(EXACT_UNDOING_TO_DISK)
+
   do it = it_begin,it_end
 
     ! simulation status output and stability check
@@ -96,9 +166,26 @@
 
     enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
 
-    ! kernel simulations (forward and adjoint wavefields)
-    if( SIMULATION_TYPE == 3 ) then
+    ! save the forward run to disk for the alpha kernel only
+    if(EXACT_UNDOING_TO_DISK .and. SIMULATION_TYPE == 1) then
+      do ispec = 1, NSPEC_CRUST_MANTLE
+        do k = 1, NGLLZ
+          do j = 1, NGLLY
+            do i = 1, NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec)
+              if(integer_mask_ibool_exact_undo(iglob) /= -1) &
+                buffer_for_disk(integer_mask_ibool_exact_undo(iglob)) = eps_trace_over_3_crust_mantle(i,j,k,ispec)
+            enddo
+          enddo
+        enddo
+      enddo
+      write(IFILE_FOR_EXACT_UNDOING,rec=it) buffer_for_disk
+    endif
 
+    ! kernel simulations (forward and adjoint wavefields)
+    if(SIMULATION_TYPE == 3) then
+
+      if(.not. EXACT_UNDOING_TO_DISK) then
       ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
 
       ! reconstructs forward wavefields based on last stored wavefield data
@@ -129,6 +216,25 @@
         call read_forward_arrays()
       endif
 
+      else ! of if(.not. EXACT_UNDOING_TO_DISK)
+
+        ! read the forward run from disk for the alpha kernel only
+        ! here we time revert the forward run by reading time step NSTEP - it + 1
+        read(IFILE_FOR_EXACT_UNDOING,rec=NSTEP-it+1) buffer_for_disk
+        do ispec = 1, NSPEC_CRUST_MANTLE
+          do k = 1, NGLLZ
+            do j = 1, NGLLY
+              do i = 1, NGLLX
+                iglob = ibool_crust_mantle(i,j,k,ispec)
+                if(integer_mask_ibool_exact_undo(iglob) /= -1) &
+                  b_eps_trace_over_3_crust_mantle(i,j,k,ispec) = buffer_for_disk(integer_mask_ibool_exact_undo(iglob))
+              enddo
+            enddo
+          enddo
+        enddo
+
+      endif ! of if(.not. EXACT_UNDOING_TO_DISK)
+
       ! adjoint simulations: kernels
       call compute_kernels()
 
@@ -158,6 +264,9 @@
     endif
 
   enddo   ! end of main time loop
+
+  ! close the huge file that contains a dump of all the time steps to disk
+  if(EXACT_UNDOING_TO_DISK) close(IFILE_FOR_EXACT_UNDOING)
 
   !
   !---- end of time iteration loop

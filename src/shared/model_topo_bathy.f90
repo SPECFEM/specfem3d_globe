@@ -56,7 +56,7 @@
 
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
-    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    if(.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
 
   ! broadcast the information read on the master to the nodes
@@ -80,40 +80,34 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
-  real :: val
-  integer :: ival
-  integer :: itopo_x,itopo_y,ier
-  character(len=150) :: topo_bathy_file
-  integer,parameter :: TOPO_MINIMUM = - 10000 ! (depth in m )
-  integer,parameter :: TOPO_MAXIMUM = + 10000 ! (height in m )
-
-  call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
+  integer(kind=8) :: filesize
+  integer(kind=2) :: ival
+  integer :: indx,itopo_x,itopo_y
+  logical :: byteswap
+  integer(kind=2) :: HEADER_IS_BYTE_SWAPPED
+  data HEADER_IS_BYTE_SWAPPED/z'3412'/
 
   ! reads in topography values from file
-  open(unit=13,file=trim(topo_bathy_file),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) then
-    print*,'error opening:',trim(topo_bathy_file)
-    call exit_mpi(0,'error opening topography data file')
-  endif
+  filesize = NX_BATHY * NY_BATHY * 2 + 2
+  call open_file_abs_r(10, trim(PATHNAME_TOPO_FILE), len_trim(PATHNAME_TOPO_FILE), filesize)
+
+  ! checks byte ordering
+  indx = 1
+  call read_abs(10, ival, 2, indx)
+  byteswap = (ival == HEADER_IS_BYTE_SWAPPED)
 
   ! reads in topography array
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
-      read(13,*,iostat=ier) val
-
-      ! checks
-      if( ier /= 0 ) then
-        print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
-        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
-        call exit_mpi(0,'error reading topo_bathy file')
+      indx = indx + 1
+      call read_abs(10, ival, 2, indx)
+      if (byteswap) then
+        ival = ishftc(ival, 8, 16)
       endif
-
-      ! converts to integer
-      ival = nint(val)
 
       ! checks values
       if( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
-        print*,'error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
+        print*,'error read topo_bathy: ival = ',ival,'ix,iy = ',itopo_x,itopo_y
         print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
         call exit_mpi(0,'error reading topo_bathy file')
       endif
@@ -123,28 +117,7 @@
 
     enddo
   enddo
-  close(13)
-
-  ! note: we check the limits after reading in the data. this seems to perform slightly faster
-  !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
-
-  ! imposes limits
-  if( USE_MAXIMUM_HEIGHT_TOPO .or. USE_MAXIMUM_DEPTH_OCEANS ) then
-    do itopo_y=1,NY_BATHY
-      do itopo_x=1,NX_BATHY
-
-        ! impose maximum height of mountains, to suppress oscillations in Himalaya etc.
-        if(USE_MAXIMUM_HEIGHT_TOPO .and. ibathy_topo(itopo_x,itopo_y) > MAXIMUM_HEIGHT_TOPO) &
-          ibathy_topo(itopo_x,itopo_y) = MAXIMUM_HEIGHT_TOPO
-
-        ! impose maximum depth of oceans, to suppress oscillations near deep trenches
-        if(USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
-          ibathy_topo(itopo_x,itopo_y) = MAXIMUM_DEPTH_OCEANS
-
-      enddo
-    enddo
-
-  endif
+  call close_file_abs(10)
 
   ! user output
   write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
@@ -176,6 +149,7 @@
   ! saves topography and bathymetry file for solver
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
+
   if( ier /= 0 ) then
     ! inform about missing database topo file
     print*,'TOPOGRAPHY problem:'
@@ -214,6 +188,7 @@
   ! reads topography and bathymetry file from saved database file
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='read',iostat=ier)
+
   if( ier /= 0 ) then
     ! inform user
     print*,'TOPOGRAPHY problem:'
@@ -226,7 +201,8 @@
     call read_topo_bathy_file(ibathy_topo)
 
     ! saves database topo file for next time
-    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    if(.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
   else
     ! database topo file exists
     read(27) ibathy_topo
@@ -235,6 +211,7 @@
     ! user output
     write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
     call flush_IMAIN()
+
   endif
 
   end subroutine read_topo_bathy_database
@@ -310,19 +287,18 @@
             + dble(ibathy_topo(iel1+1,iadd1))*ratio_lon*(1.-ratio_lat) &
             + dble(ibathy_topo(iel1+1,iadd1+1))*ratio_lon*ratio_lat &
             + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+
   else if( iadd1 <= NY_BATHY-1 .and. iel1 == NX_BATHY ) then
     ! interpolates for points on longitude border
     value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &
             + dble(ibathy_topo(1,iadd1))*ratio_lon*(1.-ratio_lat) &
             + dble(ibathy_topo(1,iadd1+1))*ratio_lon*ratio_lat &
             + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+
   else
     ! for points on latitude boundaries
     value = dble(ibathy_topo(iel1,iadd1))
   endif
 
   end subroutine get_topo_bathy
-
-! -------------------------------------------
-
 

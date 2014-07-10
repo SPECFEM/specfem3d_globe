@@ -2,13 +2,16 @@
 
 # Attempt to guess suitable flags for the Fortran compiler.
 
-# can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
+# one can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
 # to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
 
-# can also add -DFORCE_VECTORIZATION to force vectorization and unrolling of some critical loops, however this breaks
+# one can also add -DFORCE_VECTORIZATION to force vectorization and unrolling of some critical loops, however this breaks
 # range checking options at run time (for instance -check all for Intel ifort) and, more importantly, modern compilers
 # vectorize the SPECFEM3D_GLOBE code very well and in practice this option only makes the code 3% to 5% faster in the best case,
 # therefore we suggest not activating it.
+
+# for the OpenMP version, one can add -DUSE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL to use OpenMP ATOMIC statements
+# for some critical loops instead of OpenMP CRITICAL regions.
 
 ###########################################################################################################################
 ###########################################################################################################################
@@ -93,8 +96,9 @@ case $my_FC in
         #
         # GNU gfortran
         #
-        DEF_FFLAGS="-std=gnu -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow " # -mcmodel=medium
-        # useful for debugging: add -ffpe-trap=overflow,zero -fbacktrace -fbounds-check
+        DEF_FFLAGS="-std=gnu -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow" # -mcmodel=medium
+        # useful for debugging: add   -ggdb -fbacktrace -fbounds-check
+        # useful to track loss of accuracy because of automatic double to single precision conversion:  -Wconversion  (this may generate many warnings...)
         ;;
     g95|*/g95)
         #
@@ -167,7 +171,7 @@ case $my_FC in
         # CFLAGS = -Wl,-relax
         #
 # deleted -qxflag=dvz because it requires handler function __xl_dzx and thus linking will fail 
-        DEF_FFLAGS="-O4 -qnostrict -qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036 -Q -Q+rank,swap_all -Wl,-relax"
+        DEF_FFLAGS="-O4 -qnostrict -qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036 -Q -Wl,-relax"
         # Options -qreport -qsource -qlist create a *.lst file containing detailed information about vectorization.
         # On IBM BlueGene at IDRIS (France) use:
         # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto

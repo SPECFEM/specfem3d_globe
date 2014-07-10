@@ -139,15 +139,13 @@
   character(len=20), dimension(NSOURCES) :: e_n
   real :: ms
   character(len=5) :: datasource
-  character(len=150) :: string,CMTSOLUTION
+  character(len=150) :: string
 
 !
 !---- read hypocenter info
 !
-  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
-
-  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
-  if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info_serial)'
+  open(unit=IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ios)
+  if(ios /= 0) stop 'error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
 
   ! example header line of CMTSOLUTION file
   !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan

@@ -246,7 +246,7 @@
 !-------------------------------------------------------------------------------------------------
 
 
-  subroutine assemble_MPI_scalar_send_cuda(NPROC, &
+  subroutine assemble_MPI_scalar_send_gpu(NPROC, &
                                           buffer_send_scalar,buffer_recv_scalar, &
                                           num_interfaces,max_nibool_interfaces, &
                                           nibool_interfaces, &
@@ -295,13 +295,13 @@
 
   endif
 
-  end subroutine assemble_MPI_scalar_send_cuda
+  end subroutine assemble_MPI_scalar_send_gpu
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_scalar_write_cuda(Mesh_pointer,NPROC, &
+  subroutine assemble_MPI_scalar_write_gpu(Mesh_pointer,NPROC, &
                                             buffer_recv_scalar, &
                                             num_interfaces,max_nibool_interfaces, &
                                             request_send_scalar,request_recv_scalar, &
@@ -338,7 +338,7 @@
     ! adding contributions of neighbours
     call transfer_asmbl_pot_to_device(Mesh_pointer,buffer_recv_scalar,FORWARD_OR_ADJOINT)
 
-    ! note: adding contributions of neighbours has been done just above for cuda
+    ! note: adding contributions of neighbours has been done just above for gpu
     !do iinterface = 1, num_interfaces
     !  do ipoin = 1, nibool_interfaces(iinterface)
     !    array_val(ibool_interfaces(ipoin,iinterface)) = &
@@ -354,13 +354,13 @@
 
   endif
 
-  end subroutine assemble_MPI_scalar_write_cuda
+  end subroutine assemble_MPI_scalar_write_gpu
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-! with cuda functions...
+! with gpu functions...
 
   subroutine transfer_boundarypot_to_device(Mesh_pointer, NPROC, &
                                             buffer_recv_scalar, &

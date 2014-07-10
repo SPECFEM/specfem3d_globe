@@ -203,52 +203,55 @@
     endif
   endif
 
-  ! current subset iteration
-  iteration_on_subset_tmp = iteration_on_subset
+  if( ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
+    call save_forward_arrays_undoatt_adios()
+  else
+    ! current subset iteration
+    iteration_on_subset_tmp = iteration_on_subset
 
-  ! saves frame of the forward simulation
+    ! saves frame of the forward simulation
 
-  write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+    write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
-  ! debug
-  !if(myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
+    ! debug
+    !if(myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
+    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname, &
+         status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
 
-  open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname, &
-       status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
+    write(IOUT) displ_crust_mantle
+    write(IOUT) veloc_crust_mantle
+    write(IOUT) accel_crust_mantle
 
-  write(IOUT) displ_crust_mantle
-  write(IOUT) veloc_crust_mantle
-  write(IOUT) accel_crust_mantle
+    write(IOUT) displ_inner_core
+    write(IOUT) veloc_inner_core
+    write(IOUT) accel_inner_core
 
-  write(IOUT) displ_inner_core
-  write(IOUT) veloc_inner_core
-  write(IOUT) accel_inner_core
+    write(IOUT) displ_outer_core
+    write(IOUT) veloc_outer_core
+    write(IOUT) accel_outer_core
 
-  write(IOUT) displ_outer_core
-  write(IOUT) veloc_outer_core
-  write(IOUT) accel_outer_core
+    if (ROTATION_VAL) then
+      write(IOUT) A_array_rotation
+      write(IOUT) B_array_rotation
+    endif
 
-  if (ROTATION_VAL) then
-    write(IOUT) A_array_rotation
-    write(IOUT) B_array_rotation
+    if (ATTENUATION_VAL) then
+      write(IOUT) R_xx_crust_mantle
+      write(IOUT) R_yy_crust_mantle
+      write(IOUT) R_xy_crust_mantle
+      write(IOUT) R_xz_crust_mantle
+      write(IOUT) R_yz_crust_mantle
+
+      write(IOUT) R_xx_inner_core
+      write(IOUT) R_yy_inner_core
+      write(IOUT) R_xy_inner_core
+      write(IOUT) R_xz_inner_core
+      write(IOUT) R_yz_inner_core
+    endif
+
+    close(IOUT)
   endif
-
-  if (ATTENUATION_VAL) then
-    write(IOUT) R_xx_crust_mantle
-    write(IOUT) R_yy_crust_mantle
-    write(IOUT) R_xy_crust_mantle
-    write(IOUT) R_xz_crust_mantle
-    write(IOUT) R_yz_crust_mantle
-
-    write(IOUT) R_xx_inner_core
-    write(IOUT) R_yy_inner_core
-    write(IOUT) R_xy_inner_core
-    write(IOUT) R_xz_inner_core
-    write(IOUT) R_yz_inner_core
-  endif
-
-  close(IOUT)
 
   end subroutine save_forward_arrays_undoatt
 

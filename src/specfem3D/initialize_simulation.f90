@@ -44,9 +44,21 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
+!! DK DK for Roland_Sylvain
+  if(ROLAND_SYLVAIN) call exit_MPI(myrank,'no need to run the solver to compute Roland_Sylvain integrals, only the mesher')
+
   if (myrank == 0) then
     ! read the parameter file and compute additional parameters
     call read_compute_parameters()
+
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
+!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
+    if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+      NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+      ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
+      if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+    endif
   endif
 
   ! distributes parameters from master to all processes
@@ -55,14 +67,14 @@
   ! check that the code is running with the requested nb of processes
   if( sizeprocs /= NPROCTOT ) then
     print*,'error: rank ',myrank,' - wrong number of MPI processes',sizeprocs,NPROCTOT
-    call exit_MPI(myrank,'wrong number of MPI processes(initialization specfem)')
+    call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
   endif
 
   ! synchronizes processes
   call synchronize_all()
 
-  ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  ! set the base pathname for output files
+  OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
@@ -212,7 +224,7 @@
   else
     rec_filename = 'DATA/STATIONS_ADJOINT'
   endif
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+  STATIONS = rec_filename
 
   ! get total number of receivers
   if(myrank == 0) then
@@ -350,13 +362,16 @@
     call exit_MPI(myrank,'cannot have both UNDO_ATTENUATION and PARTIAL_PHYS_DISPERSION_ONLY, please check Par_file...')
 
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
-      if(.not. UNDO_ATTENUATION )then
-        if(.not. PARTIAL_PHYS_DISPERSION_ONLY) then
-          call exit_MPI(myrank, &
+      if(.not. EXACT_UNDOING_TO_DISK)then
+        if(.not. UNDO_ATTENUATION )then
+          if(.not. PARTIAL_PHYS_DISPERSION_ONLY) then
+            call exit_MPI(myrank, &
                     'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
+          endif
         endif
       endif
 
@@ -428,8 +443,8 @@
   if( GPU_MODE ) then
     if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
       call exit_mpi(myrank,'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5')
-    if( CUSTOM_REAL /= 4 ) &
-      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == 4')
+    if( CUSTOM_REAL /= SIZE_REAL ) &
+      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == SIZE_REAL')
     if( ATTENUATION_VAL ) then
       if( N_SLS /= 3 ) &
         call exit_mpi(myrank,'GPU mode does not support N_SLS /= 3 yet')
@@ -449,7 +464,7 @@
   use specfem_par
   implicit none
   ! local parameters
-  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+  integer :: ngpu_devices,ngpu_devices_min,ngpu_devices_max
   integer :: iproc
 
   !----------------------------------------------------------------
@@ -493,8 +508,8 @@
     enddo
   endif
 
-  ! initializes number of local cuda devices
-  ncuda_devices = 0
+  ! initializes number of local gpu devices
+  ngpu_devices = 0
 
   ! GPU_MODE now defined in Par_file
   if( GPU_MODE ) then
@@ -507,26 +522,26 @@
     ! check for GPU runs
     if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
       stop 'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5'
-    if( CUSTOM_REAL /= 4 ) &
-      stop 'GPU mode runs only with CUSTOM_REAL == 4'
+    if( CUSTOM_REAL /= SIZE_REAL) &
+      stop 'GPU mode runs only with CUSTOM_REAL == SIZE_REAL'
     if( ATTENUATION_VAL ) then
       if( N_SLS /= 3 ) &
         stop 'GPU mode does not support N_SLS /= 3 yet'
     endif
 
     ! initializes GPU and outputs info to files for all processes
-    call initialize_cuda_device(myrank,ncuda_devices)
+    call initialize_gpu_device(GPU_RUNTIME, GPU_PLATFORM, GPU_DEVICE, myrank,ngpu_devices)
   endif
 
   ! collects min/max of local devices found for statistics
   call synchronize_all()
-  call min_all_i(ncuda_devices,ncuda_devices_min)
-  call max_all_i(ncuda_devices,ncuda_devices_max)
+  call min_all_i(ngpu_devices,ngpu_devices_min)
+  call max_all_i(ngpu_devices,ngpu_devices_max)
 
   if( GPU_MODE ) then
     if( myrank == 0 ) then
-      write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min
-      write(IMAIN,*) "                                max =",ncuda_devices_max
+      write(IMAIN,*) "GPU number of devices per node: min =",ngpu_devices_min
+      write(IMAIN,*) "                                max =",ngpu_devices_max
       write(IMAIN,*)
       call flush_IMAIN()
     endif

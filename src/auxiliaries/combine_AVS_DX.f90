@@ -145,7 +145,7 @@
   if(.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 
 ! get the base pathname for output files
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  OUTPUT_FILES = 'OUTPUT_FILES'
 
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format'
@@ -701,7 +701,7 @@
 
 ! compute total area consisting of oceans
 ! and suppress areas that are not considered oceans if needed
-! use arbitrary threshold to suppress artefacts in ETOPO5 model
+! use arbitrary threshold to suppress artifacts in ETOPO5 model
       if(xval >= -0.018) then
         if(OCEANS_ONLY) xval = 0.
         above_zero = above_zero + 1

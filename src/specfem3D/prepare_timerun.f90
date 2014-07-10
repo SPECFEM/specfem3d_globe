@@ -677,20 +677,12 @@
   scale_veloc = scale_displ * scale_t_inv
 
   ! distinguish between single and double precision for reals
-  if(CUSTOM_REAL == SIZE_REAL) then
-    deltat = sngl(DT*scale_t_inv)
-  else
-    deltat = DT*scale_t_inv
-  endif
+  deltat = real(DT*scale_t_inv, kind=CUSTOM_REAL)
   deltatover2 = 0.5d0*deltat
   deltatsqover2 = 0.5d0*deltat*deltat
 
   if (SIMULATION_TYPE == 3) then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      b_deltat = - sngl(DT*scale_t_inv)
-    else
-      b_deltat = - DT*scale_t_inv
-    endif
+    b_deltat = - real(DT*scale_t_inv, kind=CUSTOM_REAL)
     b_deltatover2 = 0.5d0*b_deltat
     b_deltatsqover2 = 0.5d0*b_deltat*b_deltat
   endif
@@ -699,25 +691,13 @@
   if(ROTATION_VAL) then
     ! distinguish between single and double precision for reals
     if (SIMULATION_TYPE == 1) then
-      if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
-      else
-        two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
-      endif
+      two_omega_earth = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     else
-      if(CUSTOM_REAL == SIZE_REAL) then
-        two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
-      else
-        two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
-      endif
+      two_omega_earth = - real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     endif
 
     if (SIMULATION_TYPE == 3) then
-      if(CUSTOM_REAL == SIZE_REAL) then
-        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv))
-      else
-        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv)
-      endif
+      b_two_omega_earth = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     endif
   else
     two_omega_earth = 0._CUSTOM_REAL
@@ -801,13 +781,8 @@
     call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_icb_dble)
 
     ! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      minus_g_cmb = sngl(- g_cmb_dble)
-      minus_g_icb = sngl(- g_icb_dble)
-    else
-      minus_g_cmb = - g_cmb_dble
-      minus_g_icb = - g_icb_dble
-    endif
+    minus_g_cmb = real(- g_cmb_dble, kind=CUSTOM_REAL)
+    minus_g_icb = real(- g_icb_dble, kind=CUSTOM_REAL)
 
   else
 
@@ -980,35 +955,19 @@
 
   ! precompute Runge-Kutta coefficients
   call get_attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)
-  if(CUSTOM_REAL == SIZE_REAL) then
-    alphaval = sngl(alphaval_dble)
-    betaval  = sngl(betaval_dble)
-    gammaval = sngl(gammaval_dble)
-  else
-    alphaval = alphaval_dble
-    betaval  = betaval_dble
-    gammaval = gammaval_dble
-  endif
+  alphaval = real(alphaval_dble, kind=CUSTOM_REAL)
+  betaval  = real(betaval_dble, kind=CUSTOM_REAL)
+  gammaval = real(gammaval_dble, kind=CUSTOM_REAL)
 
   if (SIMULATION_TYPE == 3) then
    call get_attenuation_memory_values(tau_sigma_dble, b_deltat, alphaval_dble, betaval_dble, gammaval_dble)
-   if(CUSTOM_REAL == SIZE_REAL) then
-     b_alphaval = sngl(alphaval_dble)
-     b_betaval  = sngl(betaval_dble)
-     b_gammaval = sngl(gammaval_dble)
-   else
-     b_alphaval = alphaval_dble
-     b_betaval  = betaval_dble
-     b_gammaval = gammaval_dble
-   endif
+   b_alphaval = real(alphaval_dble, kind=CUSTOM_REAL)
+   b_betaval  = real(betaval_dble, kind=CUSTOM_REAL)
+   b_gammaval = real(gammaval_dble, kind=CUSTOM_REAL)
   endif
 
   if( USE_LDDRK ) then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      tau_sigma_CUSTOM_REAL(:) = sngl(tau_sigma_dble(:))
-    else
-      tau_sigma_CUSTOM_REAL(:) = tau_sigma_dble(:)
-    endif
+    tau_sigma_CUSTOM_REAL(:) = real(tau_sigma_dble(:), kind=CUSTOM_REAL)
   endif
 
   if(UNDO_ATTENUATION) then
@@ -1887,25 +1846,14 @@
   allocate(cr_wgll_cube(NGLLX,NGLLY,NGLLZ),stat=ier)
   if( ier /= 0 ) stop 'error allocating cr_wgll_cube'
 
-  if(CUSTOM_REAL == SIZE_REAL) then
-    ! d_ln_density_dr_table needed for no gravity case
-    cr_d_ln_density_dr_table(:) = sngl(d_ln_density_dr_table(:))
-    ! these are needed for gravity cases only
-    cr_minus_rho_g_over_kappa_fluid(:) = sngl(minus_rho_g_over_kappa_fluid(:))
-    cr_minus_gravity_table(:) = sngl(minus_gravity_table(:))
-    cr_minus_deriv_gravity_table(:) = sngl(minus_deriv_gravity_table(:))
-    cr_density_table(:) = sngl(density_table(:))
-    cr_wgll_cube(:,:,:) = sngl(wgll_cube(:,:,:))
-  else
-    ! d_ln_density_dr_table needed for no gravity case
-    cr_d_ln_density_dr_table(:) = d_ln_density_dr_table(:)
-    ! these are needed for gravity cases only
-    cr_minus_rho_g_over_kappa_fluid(:) = minus_rho_g_over_kappa_fluid(:)
-    cr_minus_gravity_table(:) = minus_gravity_table(:)
-    cr_minus_deriv_gravity_table(:) = minus_deriv_gravity_table(:)
-    cr_density_table(:) = density_table(:)
-    cr_wgll_cube(:,:,:) = wgll_cube(:,:,:)
-  endif
+  ! d_ln_density_dr_table needed for no gravity case
+  cr_d_ln_density_dr_table(:) = real(d_ln_density_dr_table(:), kind=CUSTOM_REAL)
+  ! these are needed for gravity cases only
+  cr_minus_rho_g_over_kappa_fluid(:) = real(minus_rho_g_over_kappa_fluid(:), kind=CUSTOM_REAL)
+  cr_minus_gravity_table(:) = real(minus_gravity_table(:), kind=CUSTOM_REAL)
+  cr_minus_deriv_gravity_table(:) = real(minus_deriv_gravity_table(:), kind=CUSTOM_REAL)
+  cr_density_table(:) = real(density_table(:), kind=CUSTOM_REAL)
+  cr_wgll_cube(:,:,:) = real(wgll_cube(:,:,:), kind=CUSTOM_REAL)
 
   ! prepares on GPU
   call prepare_fields_gravity_device(Mesh_pointer, &
@@ -2205,12 +2153,19 @@
   if( myrank == 0 ) then
     ! gets memory usage for main process
     call get_free_device_memory(free_mb,used_mb,total_mb)
+
     ! outputs info
-    write(IMAIN,*)
-    write(IMAIN,*)"  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
-    write(IMAIN,*)"             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
-    write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
-    write(IMAIN,*)
+    if (total_mb /= 0) then
+       write(IMAIN,*)
+       write(IMAIN,*)"  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
+       write(IMAIN,*)"             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
+       write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
+       write(IMAIN,*)
+    else
+       write(IMAIN,*)
+       write(IMAIN,*)"  GPU usage: not available."
+    endif
+
     call flush_IMAIN()
   endif
 

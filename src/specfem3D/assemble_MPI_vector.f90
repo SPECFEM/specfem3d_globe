@@ -170,7 +170,7 @@
 ! check: MP_CSS_INTERRUPT environment variable on IBM systems
 
 
-  subroutine assemble_MPI_vector_send_cuda(NPROC, &
+  subroutine assemble_MPI_vector_send_gpu(NPROC, &
                                           buffer_send_vector,buffer_recv_vector, &
                                           num_interfaces,max_nibool_interfaces, &
                                           nibool_interfaces, &
@@ -219,13 +219,13 @@
 
   endif
 
-  end subroutine assemble_MPI_vector_send_cuda
+  end subroutine assemble_MPI_vector_send_gpu
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_vector_write_cuda(Mesh_pointer,NPROC, &
+  subroutine assemble_MPI_vector_write_gpu(Mesh_pointer,NPROC, &
                                             buffer_recv_vector, &
                                             num_interfaces,max_nibool_interfaces, &
                                             request_send_vector,request_recv_vector, &
@@ -283,14 +283,14 @@
 
   endif
 
-  end subroutine assemble_MPI_vector_write_cuda
+  end subroutine assemble_MPI_vector_write_gpu
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-! with cuda functions...
+! with gpu functions...
 
   subroutine transfer_boundary_to_device(Mesh_pointer, NPROC, &
                                             buffer_recv_vector, &

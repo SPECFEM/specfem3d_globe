@@ -143,6 +143,7 @@
   print *
 
   ! checks options
+  if( it1 < 1 ) stop 'the first time step must be >= 1'
   if( it2 == -1 ) it2 = NSTEP
 
 ! --------------------------------------
@@ -610,7 +611,7 @@
 
     !--- sort the list based upon coordinates to get rid of multiples
     print *,'sorting list of points'
-    call get_global_AVS(nspectot_AVS_max,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
+    call get_global(npointot,xp,yp,zp,iglob,locval,ifseg,nglob)
 
     !--- print total number of points found
     print *
@@ -847,6 +848,8 @@
 
   implicit none
 
+  include "OUTPUT_FILES/values_from_mesher.h"
+
   print *
   print *,'reading parameter file'
   print *
@@ -854,238 +857,17 @@
   ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
+!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
+    if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  endif
+
   ! checks
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
-!  if(MOVIE_COARSE) stop 'create_movie_AVS_DX does not work with MOVIE_COARSE'
-
   end subroutine read_AVS_DX_parameters
 
-!
-!=====================================================================
-!
-
-
-  subroutine get_global_AVS(nspec,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
-
-! this routine MUST be in double precision to avoid sensitivity
-! to roundoff errors in the coordinates of the points
-
-! leave sorting subroutines in same source file to allow for inlining
-
-  use constants
-
-  implicit none
-
-  integer npointot
-  integer iglob(npointot),locval(npointot)
-  logical ifseg(npointot)
-  double precision xp(npointot),yp(npointot),zp(npointot)
-  integer nspec,nglob
-
-  integer ispec,i,j
-  integer ieoff,ilocnum,nseg,ioff,iseg,ig
-
-! for dynamic memory allocation
-  integer ierror
-
-  integer, dimension(:), allocatable :: ind,ninseg,iwork
-  double precision, dimension(:), allocatable :: work
-
-  print *
-  print *,'Allocating arrays of size ',npointot
-  print *
-
-! dynamically allocate arrays
-  allocate(ind(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating ind'
-
-  allocate(ninseg(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating ninseg'
-
-  allocate(iwork(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating iwork'
-
-  allocate(work(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating work'
-
-! establish initial pointers
-  do ispec=1,nspec
-    ieoff=NGNOD2D_AVS_DX*(ispec-1)
-    do ilocnum=1,NGNOD2D_AVS_DX
-      locval(ieoff+ilocnum)=ieoff+ilocnum
-    enddo
-  enddo
-
-  ifseg(:)=.false.
-
-  nseg=1
-  ifseg(1)=.true.
-  ninseg(1)=npointot
-
-  do j=1,NDIM
-
-! sort within each segment
-  ioff=1
-  do iseg=1,nseg
-    if(j == 1) then
-      call rank(xp(ioff),ind,ninseg(iseg))
-    else if(j == 2) then
-      call rank(yp(ioff),ind,ninseg(iseg))
-    else
-      call rank(zp(ioff),ind,ninseg(iseg))
-    endif
-    call swap_all(locval(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
-    ioff=ioff+ninseg(iseg)
-  enddo
-
-! check for jumps in current coordinate
-! compare the coordinates of the points within a small tolerance
-  if(j == 1) then
-    do i=2,npointot
-      if(dabs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-    enddo
-  else if(j == 2) then
-    do i=2,npointot
-      if(dabs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-    enddo
-  else
-    do i=2,npointot
-      if(dabs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-    enddo
-  endif
-
-! count up number of different segments
-  nseg=0
-  do i=1,npointot
-    if(ifseg(i)) then
-      nseg=nseg+1
-      ninseg(nseg)=1
-    else
-      ninseg(nseg)=ninseg(nseg)+1
-    endif
-  enddo
-  enddo
-
-! assign global node numbers (now sorted lexicographically)
-  ig=0
-  do i=1,npointot
-    if(ifseg(i)) ig=ig+1
-    iglob(locval(i))=ig
-  enddo
-
-  nglob=ig
-
-! deallocate arrays
-  deallocate(ind)
-  deallocate(ninseg)
-  deallocate(iwork)
-  deallocate(work)
-
-! -----------------------------------
-
-! get_global_AVS internal procedures follow
-
-! sorting routines put in same file to allow for inlining
-
-  contains
-
-! -----------------------------------
-
-  subroutine rank(A,IND,N)
-!
-! Use Heap Sort (Numerical Recipes)
-!
-  implicit none
-
-  integer n
-  double precision A(n)
-  integer IND(n)
-
-  integer i,j,l,ir,indx
-  double precision q
-
-  do j=1,n
-   IND(j)=j
-  enddo
-
-  if (n == 1) return
-
-  L=n/2+1
-  ir=n
-  100 CONTINUE
-   IF (l>1) THEN
-      l=l-1
-      indx=ind(l)
-      q=a(indx)
-   ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
-      ir=ir-1
-      if (ir == 1) then
-         ind(1)=indx
-         return
-      endif
-   endif
-   i=l
-   j=l+l
-  200    CONTINUE
-   IF (J <= IR) THEN
-      IF (J<IR) THEN
-         IF ( A(IND(j))<A(IND(j+1)) ) j=j+1
-      endif
-      IF (q<A(IND(j))) THEN
-         IND(I)=IND(J)
-         I=J
-         J=J+J
-      ELSE
-         J=IR+1
-      endif
-   goto 200
-   endif
-   IND(I)=INDX
-  goto 100
-  end subroutine rank
-
-! ------------------------------------------------------------------
-
-  subroutine swap_all(IA,A,B,C,IW,W,ind,n)
-!
-! swap arrays IA, A, B and C according to addressing in array IND
-!
-  implicit none
-
-  integer n
-
-  integer IND(n)
-  integer IA(n),IW(n)
-  double precision A(n),B(n),C(n),W(n)
-
-  integer i
-
-  IW(:) = IA(:)
-  W(:) = A(:)
-
-  do i=1,n
-    IA(i)=IW(ind(i))
-    A(i)=W(ind(i))
-  enddo
-
-  W(:) = B(:)
-
-  do i=1,n
-    B(i)=W(ind(i))
-  enddo
-
-  W(:) = C(:)
-
-  do i=1,n
-    C(i)=W(ind(i))
-  enddo
-
-  end subroutine swap_all
-
-! ------------------------------------------------------------------
-
-  end subroutine get_global_AVS

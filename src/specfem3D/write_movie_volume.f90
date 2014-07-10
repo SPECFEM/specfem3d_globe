@@ -328,7 +328,7 @@
   ! input
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: eps_trace_over_3_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -483,7 +483,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle
 
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
 
   double precision :: scalingval
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
@@ -530,11 +530,7 @@
    iNIT = 1
   endif
 
-  if(CUSTOM_REAL == SIZE_REAL) then
-    vector_scaled = vector_crust_mantle*sngl(scalingval)
-  else
-    vector_scaled = vector_crust_mantle*scalingval
-  endif
+  vector_scaled = vector_crust_mantle*real(scalingval, kind=CUSTOM_REAL)
 
   ipoints_3dmovie = 0
 
@@ -735,10 +731,6 @@
     close(27)
     deallocate(tmp_data)
 
-    ! alternative: e.g. first component only
-    !write(27) epsilondev_crust_mantle(1,:,:,:,:)
-    !close(27)
-
     ! inner core
     write(outputname,"('proc',i6.6,'_reg3_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
@@ -761,10 +753,6 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
-
-    ! alternative: e.g. first component only
-    !write(27) epsilondev_inner_core(1,:,:,:,:)
-    !close(27)
   endif
 
   end subroutine write_movie_volume_divcurl

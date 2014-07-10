@@ -1,3 +1,30 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
 !-------------------------------------------------------------------------------
 !> \file write_output_ASDF.F90
 !! \brief Write subroutines for writing ASDF seismograms to file using
@@ -849,8 +876,13 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
 
   call synchronize_all()
-  call MPI_Gather(local_dim, 1, MPI_INTEGER, dim_all_proc, 1, &
-                  MPI_INTEGER, 0, comm, ierr)
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+  call MPI_Gather(local_dim, 1, MPI_INTEGER, dim_all_proc, 1, MPI_INTEGER, 0, comm, ierr)
 
   if(rank==0)then
     offset_proc(1)=0
@@ -860,8 +892,17 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
     global_dim=sum(dim_all_proc(1:nproc))
   endif
 
-  call MPI_Scatter(offset_proc, 1, MPI_INTEGER, offset, &
-                              1, MPI_INTEGER, 0, comm, ierr)
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+  call MPI_Scatter(offset_proc, 1, MPI_INTEGER, offset, 1, MPI_INTEGER, 0, comm, ierr)
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
   call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
 
   deallocate(dim_all_proc, STAT=ierr)
