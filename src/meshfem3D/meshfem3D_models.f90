@@ -62,12 +62,10 @@
   endif
 
   ! sets up spline coefficients for ellipticity
-  if(ELLIPTICITY) &
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   ! read topography and bathymetry file
-  if(TOPOGRAPHY) &
-    call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
+  if(TOPOGRAPHY) call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
   ! reads 1D reference models
   ! re-defines/initializes models 1066a and ak135 and ref
@@ -202,7 +200,7 @@
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
-      call model_crust_broadcast(myrank)
+      call model_crust_2_0_broadcast(myrank)
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
@@ -779,24 +777,14 @@
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
-      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case (ICRUST_EPCRUST)
-!      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
-      ! within EPCRUST region
-!      if (lat >= EPCRUST_LAT_MIN .and. lat <= EPCRUST_LAT_MAX &
-!          .and. lon >= EPCRUST_LON_MIN .and. lon<=EPCRUST_LON_MAX ) then
-!          vpc=0.0d0
-!          vsc=0.0d0
-!          rhoc=0.0d0
-!          moho=0.0d0
-!          found_crust = .false.
-          call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
-!      endif
+      call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case default
       stop 'crustal model type not defined'
@@ -813,15 +801,6 @@
   subroutine meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                                            tau_e,tau_s,T_c_source, &
                                            moho,Qmu,Qkappa,elem_in_crust)
-
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG   routine meshfem3D_models_getatten_val() is unsafe and for instance breaks s362ani + attenuation
-!! DK DK BUG   (see the so-called mcmodel=medium bug at https://github.com/geodynamics/specfem3d/issues/8 ).
-!! DK DK BUG   I thus temporarily patched it to avoid the problematic lines;
-!! DK DK BUG   of course this should be changed / fixed in the future.
-!! DK DK BUG
-!! DK DK BUG
 
 ! sets attenuation values tau_e and Qmu for a given point
 !
@@ -889,30 +868,6 @@
 
   else
 
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG since using the routines below is unsafe (see the above comment), I remove them for now
-!! DK DK BUG
-!! DK DK BUG
-    goto 777
-
-!! DK DK BUG
-!! DK DK BUG
-! the attenuation values for s362ani + ATTENUATION = .true. currently depend on the compiler used and on the compiler options used,
-! i.e. the lines below are unreliable. I am not sure why, it is probably either that elem_in_crust is not correctly set,
-! and / or that r_prem >(ONE-moho) is sensitive to roundoff noise and thus compiler-dependent,
-! in which case it should be changed to:
-!
-! if (r_prem - (ONE-moho) < some_epsilon_to_define) then...
-!      or something like that
-!
-! To be safe I have commented out the current code and checked that the bug (i.e. getting compiler-dependent results) is now gone.
-! If you fix that routine and check with Matthieu and Elliott that it then works fine on different machines
-! with different compilers please let us know and we will update the Git version
-! (including the master branch) and make an announcement to users.
-!! DK DK BUG
-!! DK DK BUG
-
     select case (REFERENCE_1D_MODEL)
 
       ! case(REFERENCE_MODEL_PREM)
@@ -946,13 +901,6 @@
         endif
 
     end select
-
-!! DK DK BUG
-!! DK DK BUG
-!! DK DK BUG since using the routines above is unsafe (see the above comment), I remove them for now
-!! DK DK BUG
-!! DK DK BUG
-  777 continue
 
   endif
 
@@ -995,15 +943,9 @@
 
       ! takes stored GLL values from file
       ! ( note that these values are non-dimensionalized)
-      if(CUSTOM_REAL == SIZE_REAL) then
-        vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
-        vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
-        rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-      else
-        vp = MGLL_V%vp_new(i,j,k,ispec)
-        vs = MGLL_V%vs_new(i,j,k,ispec)
-        rho = MGLL_V%rho_new(i,j,k,ispec)
-      endif
+      vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
+      vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
       ! isotropic model
       vpv = vp
       vph = vp
@@ -1021,21 +963,12 @@
       endif
 
       ! takes stored GLL values from file
-      if(CUSTOM_REAL == SIZE_REAL) then
-        vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
-        vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
-        vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
-        vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
-        rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-        eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
-      else
-        vph = MGLL_V%vph_new(i,j,k,ispec)
-        vpv = MGLL_V%vpv_new(i,j,k,ispec)
-        vsh = MGLL_V%vsh_new(i,j,k,ispec)
-        vsv = MGLL_V%vsv_new(i,j,k,ispec)
-        rho = MGLL_V%rho_new(i,j,k,ispec)
-        eta_aniso = MGLL_V%eta_new(i,j,k,ispec)
-      endif
+      vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+      vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+      vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+      vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+      eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
     endif
     ! no mantle vp perturbation
     dvp = 0.0d0

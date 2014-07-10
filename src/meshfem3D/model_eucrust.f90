@@ -104,7 +104,7 @@
 
   ! local variables
   character(len=80):: line
-  character(len=150):: filename
+  character(len=*), parameter :: filename = 'DATA/eucrust-07/ds01.txt'
   integer:: i,ier
   double precision:: vp_uppercrust,vp_lowercrust,vp_avg,topo,basement
   double precision:: upper_lower_depth,moho_depth,lat,lon
@@ -122,7 +122,6 @@
   eucrust_ucdepth(:) = ZERO
 
   ! opens data file
-  call get_value_string(filename, 'model.eu', 'DATA/eucrust-07/ds01.txt')
   open(unit=11,file=filename,status='old',action='read',iostat=ier)
   if ( ier /= 0 ) then
     write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
@@ -230,7 +229,7 @@
 
               scaleval = dsqrt(PI*GRAV*RHOAV)
 
-              if( x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
+              if( x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST &
                 .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
                 ! above sediment basement, returns average upper crust value
                 ! since no special sediment values are given

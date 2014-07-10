@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
                         shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
                         dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &

@@ -44,7 +44,7 @@ AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
 ###
-### CUDA
+### GPU
 ###
 
 AC_ARG_WITH([cuda],
@@ -54,6 +54,12 @@ AC_ARG_WITH([cuda],
     [want_cuda=no])
 AM_CONDITIONAL([COND_CUDA], [test x"$want_cuda" != xno])
 AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
+
+AC_ARG_WITH([opencl],
+ [AC_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
+    [want_opencl="$withval"],
+    [want_opencl=no])
+AM_CONDITIONAL([COND_OCL], [test "$want_opencl" != no])
 
 ###
 ### VTK
@@ -83,9 +89,9 @@ AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 
 AC_ARG_ENABLE([vectorization],
     [AC_HELP_STRING([--enable-vectorization],
-        [build FORCE_VECTORIZATION enabled version @<:@default=no@:>@])],
+        [build FORCE_VECTORIZATION enabled version @<:@default=yes@:>@])],
     [want_vec="$enableval"],
-    [want_vec=no])
+    [want_vec=yes])
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ############################################################
@@ -187,13 +193,20 @@ CONFIGURE_FLAGS="FC=$FC FCFLAGS=$FCFLAGS"
 AC_SUBST([CONFIGURE_FLAGS])
 
 ###
-### CUDA
+### GPU
 ###
 
 AS_IF([test x"$want_cuda" != xno], [
     AS_BOX([CUDA])
     AC_ARG_VAR(CUDA_FLAGS, [Cuda compiler flags])
     CIT_CUDA_CONFIG
+])
+
+AS_IF([test x"$want_opencl" != xno], [
+    AS_BOX([OCL])
+    AC_ARG_VAR(OCL_CPU_FLAGS, [OpenCL CPU compiler flags])
+    AC_ARG_VAR(OCL_GPU_FLAGS, [OpenCL GPU compiler flags])
+    CIT_OPENCL_CONFIG
 ])
 
 ###
@@ -204,8 +217,8 @@ AS_IF([test x"$want_vec" != xno],[
   AS_BOX([FORCE VECTORIZATION])
   AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
 
-  FLAGS_CHECK+=" ${FC_DEFINE}FORCE_VECTORIZATION"
-  CPPFLAGS+=" -DFORCE_VECTORIZATION"
+  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
 ])
 
 ###

@@ -108,7 +108,7 @@
 
       else
         ! on GPU
-        call compute_stacey_acoustic_cuda(Mesh_pointer,absorb_xmin_outer_core,4) ! <= xmin
+        call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmin_outer_core,4) ! <= xmin
       endif
 
       ! writes absorbing boundary values to file
@@ -153,7 +153,7 @@
 
       else
         ! on GPU
-        call compute_stacey_acoustic_cuda(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
+        call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
       endif
 
       if( SAVE_FORWARD ) then
@@ -195,7 +195,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_cuda(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
+      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
     endif
 
     if( SAVE_FORWARD ) then
@@ -235,7 +235,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_cuda(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
+      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
     endif
 
     if( SAVE_FORWARD ) then
@@ -274,7 +274,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_cuda(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
+      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
     endif
 
     if( SAVE_FORWARD ) then
@@ -363,7 +363,7 @@
         enddo
       else
         ! on GPU
-        call compute_stacey_acoustic_backward_cuda(Mesh_pointer,absorb_xmin_outer_core,4) ! <= xmin
+        call compute_stacey_acoustic_backward_gpu(Mesh_pointer,absorb_xmin_outer_core,4) ! <= xmin
       endif
     endif
   endif
@@ -396,7 +396,7 @@
         enddo
       else
         ! on GPU
-        call compute_stacey_acoustic_backward_cuda(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
+        call compute_stacey_acoustic_backward_gpu(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
       endif
     endif
   endif
@@ -427,7 +427,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_backward_cuda(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
+      call compute_stacey_acoustic_backward_gpu(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
     endif
   endif
 
@@ -457,7 +457,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_backward_cuda(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
+      call compute_stacey_acoustic_backward_gpu(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
     endif
   endif
 
@@ -486,7 +486,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_backward_cuda(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
+      call compute_stacey_acoustic_backward_gpu(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
     endif
   endif
 
@@ -562,7 +562,7 @@
         enddo
       else
         ! on GPU
-        call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,4) ! <= xmin
+        call compute_stacey_acoustic_undoatt_gpu(Mesh_pointer,4) ! <= xmin
       endif
     endif
   endif
@@ -597,7 +597,7 @@
         enddo
       else
         ! on GPU
-        call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,5) ! <= xmax
+        call compute_stacey_acoustic_undoatt_gpu(Mesh_pointer,5) ! <= xmax
       endif
     endif
   endif
@@ -630,7 +630,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,6) ! <= ymin
+      call compute_stacey_acoustic_undoatt_gpu(Mesh_pointer,6) ! <= ymin
     endif
   endif
 
@@ -662,7 +662,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,7) ! <= ymax
+      call compute_stacey_acoustic_undoatt_gpu(Mesh_pointer,7) ! <= ymax
     endif
   endif
 
@@ -693,7 +693,7 @@
       enddo
     else
       ! on GPU
-      call compute_stacey_acoustic_undoatt_cuda(Mesh_pointer,8) ! <= zmin
+      call compute_stacey_acoustic_undoatt_gpu(Mesh_pointer,8) ! <= zmin
     endif
   endif
 

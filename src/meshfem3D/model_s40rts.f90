@@ -113,10 +113,8 @@
 
   ! local parameters
   integer :: k,l,m,ier
-  character(len=150) :: S40RTS, P12
-
-  call get_value_string(S40RTS, 'model.S40RTS', 'DATA/s40rts/S40RTS.dat')
-  call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')    !model P12 is in s20rts data directory
+  character(len=*), parameter :: S40RTS = 'DATA/s40rts/S40RTS.dat'
+  character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'    !model P12 is in s20rts data directory
 
   ! S40RTS degree 40 S model from Ritsema
   open(unit=10,file=trim(S40RTS),status='old',action='read',iostat=ier)

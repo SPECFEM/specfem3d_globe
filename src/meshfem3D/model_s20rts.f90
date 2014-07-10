@@ -110,10 +110,8 @@
   ! local parameters
   integer :: k,l,m,ier
 
-  character(len=150) :: S20RTS, P12
-
-  call get_value_string(S20RTS, 'model.S20RTS', 'DATA/s20rts/S20RTS.dat')
-  call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')
+  character(len=*), parameter :: S20RTS = 'DATA/s20rts/S20RTS.dat'
+  character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'
 
   ! S20RTS degree 20 S model from Ritsema
   open(unit=10,file=S20RTS,status='old',action='read',iostat=ier)

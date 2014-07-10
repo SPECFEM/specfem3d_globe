@@ -38,6 +38,9 @@
   ! crust mantle
   call compute_kernels_crust_mantle()
 
+  ! only information to compute the crust_mantle kernels was saved to disk
+  if(EXACT_UNDOING_TO_DISK) return
+
   ! outer core
   call compute_kernels_outer_core(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
               displ_outer_core,accel_outer_core,b_displ_outer_core,b_accel_outer_core, &
@@ -87,6 +90,7 @@
   integer :: i,j,k,ispec,iglob
 
   if( .not. GPU_MODE ) then
+
     ! on CPU
     ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE
@@ -142,7 +146,7 @@
               !                         reason for this is that the adjoint wavefield is in general smoother
               !                         since the adjoint sources normally are obtained for filtered traces.
               !                         numerically, the time derivative by a finite-difference scheme should
-              !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+              !                         behave better for smoother wavefields, thus containing less numerical artifacts.
               rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
                  + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
                            + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
@@ -175,6 +179,11 @@
 
         ! isotropic kernels
 
+        ! if EXACT_UNDOING_TO_DISK is set, currently the rho and beta kernels below will be computed but will be equal
+        ! to zero everywhere because the backward field is then not computed, and only the alpha kernel
+        ! will be computed correctly based on the values of the forward run saved to disk in the first run
+        ! and read back at the beginning of this routine
+
         do k = 1, NGLLZ
           do j = 1, NGLLY
             do i = 1, NGLLX
@@ -191,7 +200,7 @@
               !                         reason for this is that the adjoint wavefield is in general smoother
               !                         since the adjoint sources normally are obtained for filtered traces.
               !                         numerically, the time derivative by a finite-difference scheme should
-              !                         behave better for smoother wavefields, thus containing less numerical artefacts.
+              !                         behave better for smoother wavefields, thus containing less numerical artifacts.
               rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
                  + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
                            + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
@@ -238,7 +247,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and isotropic/anisotropic kernels
-    call compute_kernels_cm_cuda(Mesh_pointer,deltat)
+    call compute_kernels_cm_gpu(Mesh_pointer,deltat)
 
   endif
 
@@ -574,7 +583,7 @@
     if( deviatoric_outercore ) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_oc_cuda(Mesh_pointer,deltat)
+    call compute_kernels_oc_gpu(Mesh_pointer,deltat)
 
   endif
 
@@ -679,7 +688,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk and shear modulus kernel
-    call compute_kernels_ic_cuda(Mesh_pointer,deltat)
+    call compute_kernels_ic_gpu(Mesh_pointer,deltat)
 
   endif
 
@@ -786,7 +795,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_hess_cuda(Mesh_pointer,deltat)
+    call compute_kernels_hess_gpu(Mesh_pointer,deltat)
 
   endif
 

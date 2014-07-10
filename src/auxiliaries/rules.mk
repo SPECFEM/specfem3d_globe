@@ -67,15 +67,16 @@ auxiliaries_SHARED_OBJECTS = \
 	$O/count_points.shared.o \
 	$O/create_serial_name_database.shared.o \
 	$O/define_all_layers.shared.o \
+	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
-	$O/get_value_parameters.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$(EMPTY_MACRO)
 
 
@@ -144,7 +145,7 @@ $O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
 ##
 ## auxiliaries
 ##
-$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o
+$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.auxsolver.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
@@ -157,10 +158,10 @@ $O/%.auxsolver.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_m
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.auxsolver_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DUSE_VTK_INSTEAD_OF_MESH
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
 
 $O/%.auxadios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DADIOS_INPUT
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT
 
 $O/%.auxadios_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< -DADIOS_INPUT -DUSE_VTK_INSTEAD_OF_MESH
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH

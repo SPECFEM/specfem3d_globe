@@ -266,7 +266,7 @@ module specfem_par
   ! GPU
   !-----------------------------------------------------------------
 
-  ! CUDA mesh pointer<->integer wrapper
+  ! CUDA mesh pointer <-> integer wrapper
   integer(kind=8) :: Mesh_pointer
 
   !-----------------------------------------------------------------

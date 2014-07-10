@@ -128,7 +128,6 @@
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name_found
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name_found
   double precision, dimension(nrec) :: stlat_found,stlon_found,stele_found,stbur_found,epidist_found
-  character(len=150) :: STATIONS
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
@@ -139,7 +138,6 @@
   double precision :: typical_size
   logical :: located_target
 
-  character(len=150) :: OUTPUT_FILES
   character(len=2) :: bic
 
   integer :: nrec_SUBSET_current_size,irec_in_this_subset,irec_already_done
@@ -214,8 +212,7 @@
 
   ! read that STATIONS file on the master
   if(myrank == 0) then
-    call get_value_string(STATIONS, 'solver.STATIONS', trim(rec_filename))
-    open(unit=IIN,file=STATIONS,status='old',action='read',iostat=ier)
+    open(unit=IIN,file=trim(rec_filename),status='old',action='read',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
 
     ! loop on all the stations to read station information
@@ -501,14 +498,13 @@
   if(myrank == 0) then
 
     ! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
     call band_instrument_code(DT,bic)
 
     ! create file for QmX Harvard
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
+    open(unit=IOUT,file='OUTPUT_FILES/RECORDHEADERS', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file RECORDHEADERS')
 
@@ -810,7 +806,7 @@
   if(myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
@@ -904,7 +900,7 @@
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
+    open(unit=IOUT,file='OUTPUT_FILES/output_list_stations.txt', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file output_list_stations.txt')
     write(IOUT,*)
@@ -919,7 +915,7 @@
 
     ! write out a filtered station list
     if( NCHUNKS_VAL /= 6 ) then
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
+      open(unit=IOUT,file='OUTPUT_FILES/STATIONS_FILTERED', &
             status='unknown',iostat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information

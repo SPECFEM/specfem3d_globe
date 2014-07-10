@@ -43,8 +43,7 @@
 
   use shared_input_parameters,only: &
     ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
-    ATTENUATION,ATTENUATION_1D_WITH_3D_STORAGE, &
-    USE_FULL_TISO_MANTLE
+    ATTENUATION,USE_FULL_TISO_MANTLE
 
   use shared_compute_parameters, only: &
     REFERENCE_1D_MODEL,THREE_D_MODEL, &
@@ -156,11 +155,34 @@
   ! check area and volume of the final mesh
   double precision :: volume_total
 
-  ! check Earth mass computed in the final mesh
+  ! check Earth mass and Earth center of mass computed in the final mesh
   double precision :: Earth_mass_total
+  double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
-  ! compute Roland_Sylvain integrals in the final mesh
-  double precision, dimension(9) :: Roland_Sylvain_integr_total
+  ! arrays containing the positions of the observation points in non-dimensionalized value for Roland_Sylvain integrals
+  ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
+  double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: x_observation,y_observation,z_observation
+  double precision, dimension(NTOTAL_OBSERVATION) :: x_observation1D,y_observation1D,z_observation1D
+  equivalence(x_observation,x_observation1D)
+  equivalence(y_observation,y_observation1D)
+  equivalence(z_observation,z_observation1D)
+
+  double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: lon_observation,lat_observation
+
+  ! arrays containing the computed fields for Roland_Sylvain integrals at the observation points
+  ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
+  double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz, &
+                                                                            temporary_array_for_sum
+  double precision, dimension(NTOTAL_OBSERVATION) :: g_x1D,g_y1D,g_z1D,G_xx1D,G_yy1D,G_zz1D,G_xy1D,G_xz1D,G_yz1D
+  equivalence(g_x,g_x1D)
+  equivalence(g_y,g_y1D)
+  equivalence(g_z,g_z1D)
+  equivalence(G_xx,G_xx1D)
+  equivalence(G_yy,G_yy1D)
+  equivalence(G_zz,G_zz1D)
+  equivalence(G_xy,G_xy1D)
+  equivalence(G_xz,G_xz1D)
+  equivalence(G_yz,G_yz1D)
 
   ! for loop on all the slices
   integer :: iregion_code
@@ -185,17 +207,17 @@
   double precision :: static_memory_size
 
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-         NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-         NSPEC_CRUST_MANTLE_ADJOINT, &
-         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
+             NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+             NSPEC_INNER_CORE_ATTENUATION, &
+             NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+             NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+             NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+             NSPEC_CRUST_MANTLE_ADJOINT, &
+             NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+             NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+             NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+             NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+             NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
   ! this for the different corners of the slice (which are different if the superbrick is cut)
   ! 1 : xi_min, eta_min

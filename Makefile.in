@@ -31,6 +31,7 @@
 
 FC = @FC@
 FCFLAGS = #@FCFLAGS@
+FC_DEFINE = @FC_DEFINE@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 
@@ -54,8 +55,9 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 
 #######################################
 ####
-#### CUDA
+#### GPU
 #### with configure: ./configure --with-cuda=cuda5 CUDA_FLAGS=.. CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
+#### with configure: ./configure --with-opencl OCL_GPU_FLAGS=.. OCL_LIB=.. OCL_INC=.. MPI_INC=.. ..
 ####
 #######################################
 
@@ -65,6 +67,9 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 @COND_CUDA5_TRUE@CUDA5 = yes
 @COND_CUDA5_FALSE@CUDA5 = no
 
+@COND_OCL_TRUE@OCL = yes
+@COND_OCL_FALSE@OCL = no
+
 MPI_INCLUDES = @MPI_INCLUDES@
 CUDA_FLAGS = @CUDA_FLAGS@
 CUDA_INC = @CUDA_CPPFLAGS@ -I${SETUP}
@@ -72,6 +77,28 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
 
 @COND_CUDA_TRUE@NVCC = nvcc
 @COND_CUDA_FALSE@NVCC = @CC@
+
+OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
+OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
+
+OCL_INC = @OCL_CFLAGS@ -I${SETUP}
+OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
+
+ifeq ($(OCL), yes)
+  ifeq ($(CUDA), yes)
+    GPU_CUDA_AND_OCL = yes
+  endif
+endif
+
+ifeq ($(OCL), no)
+  ifeq ($(CUDA), no)
+    NO_GPU = yes
+  endif
+endif
+
+ifneq ($(NO_GPU), yes)
+  HAS_GPU = yes
+endif
 
 # GPU architecture
 
@@ -171,16 +198,17 @@ OUTPUT = $B/OUTPUT_FILES
 SUBDIRS = \
 	shared \
 	create_header_file \
-	compute_optimized_dumping_undo_att \
-	cuda \
 	meshfem3D \
 	specfem3D \
 	auxiliaries
 
+ifeq ($(HAS_GPU),yes)
+  SUBDIRS := gpu $(SUBDIRS)
+endif
+
 # default targets
 DEFAULT = \
 	xcreate_header_file \
-	xcompute_optimized_dumping_undo_att \
 	xmeshfem3D \
 	xspecfem3D \
 	xcombine_vol_data \
@@ -196,13 +224,10 @@ all: default
 
 default: $(DEFAULT)
 
-backup:
-	cp -rp src setup DATA/Par_file* Makefile go_mesher* go_solver* mymachines bak
-
 ifdef CLEAN
 clean:
 	@echo "cleaning by CLEAN defined"
-	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS)) $O/*
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
 else
 clean:
 	@echo "cleaning by CLEAN not defined"
@@ -216,7 +241,6 @@ help:
 	@echo "    xmeshfem3D"
 	@echo "    xspecfem3D"
 	@echo "    xcreate_header_file"
-	@echo "    xcompute_optimized_dumping_undo_att"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
 	@echo "    xcombine_vol_data_adios"
@@ -227,7 +251,7 @@ help:
 	@echo "    xcreate_movie_GMT_global"
 	@echo ""
 
-.PHONY: all default backup clean help
+.PHONY: all default clean help
 
 #######################################
 
@@ -260,8 +284,7 @@ endef
 $(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
 
 # Other old shortcuts
-bak: backup
 mesh: $E/xmeshfem3D
 spec: $E/xspecfem3D
-.PHONY: bak mesh spec
+.PHONY: mesh spec
 

@@ -408,13 +408,12 @@ subroutine read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat,  &
   character(len=:), allocatable, intent(out)  :: datasource  ! F03 feature
   ! Local variables
   character(len=5)   :: datasource_tmp
-  character(len=256) :: CMTSOLUTION, string
+  character(len=256) :: string
   ! extract all unmodified values from CMTSOLUTION
   ! get_cmt() routine modify the read values
   ! TODO factorize what follows and get_cmt.f90 and probably one or two other
   !      routines
-  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
-  open(unit=1,file=CMTSOLUTION,status='old',action='read')
+  open(unit=1,file='DATA/CMTSOLUTION',status='old',action='read')
   datasource_length = 4*NSOURCES ! a datasource is 4 character, by convention
   allocate(character(len=(datasource_length)) :: datasource, stat=ier)
   if (ier /=0) &
@@ -504,11 +503,10 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
   ! Local variables
   character(len=MAX_LENGTH_STATION_NAME) :: station_name_tmp
   character(len=MAX_LENGTH_NETWORK_NAME) :: network_name_tmp
-  character(len=256) :: STATIONS, string
+  character(len=256) :: string
 
   ! Extract values from STATIONS File
-  call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
-  open(unit=1,file=STATIONS,iostat=ier,status='old',action='read')
+  open(unit=1,file='DATA/STATIONS',iostat=ier,status='old',action='read')
   NSTATIONS = 0
   do while(ier == 0)
   read(1,"(a)",iostat=ier) string
@@ -529,7 +527,7 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
   stele(irec),      stbur(irec)
   if( ier /= 0 ) then
     write(IMAIN,*) 'error reading in station ',irec
-    call exit_MPI(myrank,'error reading in station in STATIONS file')
+    call exit_MPI(myrank,'error reading in station in DATA/STATIONS file')
   endif
   station_name = station_name // trim(station_name_tmp) // " "
   network_name = network_name // trim(network_name_tmp) // " "

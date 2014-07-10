@@ -840,13 +840,8 @@
   double precision :: sintwophisq,sintwothetasq
   double precision :: costhreetheta,sinthreetheta,costhreephi,sinthreephi
 
-   if (CUSTOM_REAL == SIZE_REAL) then
-      theta = dble(theta_in)
-      phi = dble(phi_in)
-    else
-      theta = theta_in
-      phi = phi_in
-    endif
+  theta = dble(theta_in)
+  phi = dble(phi_in)
 
   costheta = dcos(theta)
   sintheta = dsin(theta)

@@ -28,7 +28,6 @@
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
   subroutine save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
-                              NSOURCES, &
                               static_memory_size, &
                               NSPEC2D_TOP,NSPEC2D_BOTTOM, &
                               NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
@@ -43,7 +42,7 @@
                               NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                               NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                               NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
+                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal )
 
 ! daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
 !              for SIMULATION_TYPE == 1 or equal to NSPEC_CRUST_MANTLE for SIMULATION_TYPE == 3 or SAVE_FORWARD set to .true.
@@ -64,6 +63,7 @@
 !
 
   use constants
+
   use shared_parameters,only: TOPOGRAPHY, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ELLIPTICITY,GRAVITY,ROTATION, &
@@ -76,7 +76,6 @@
     SAVE_REGULAR_KL, &
     PARTIAL_PHYS_DISPERSION_ONLY, &
     ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION, &
-    ATTENUATION_1D_WITH_3D_STORAGE, &
     ATT1,ATT2,ATT3,ATT4,ATT5, &
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE
 
@@ -84,7 +83,7 @@
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
-  integer :: NPROC,NPROCTOT,NSOURCES
+  integer :: NPROC,NPROCTOT,NT_DUMP_ATTENUATION_optimal
 
 
   ! static memory size needed by the solver
@@ -121,11 +120,9 @@
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
-  character(len=150) HEADER_FILE
 
   ! copy number of elements and points in an include file for the solver
-  call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
-  open(unit=IOUT,file=HEADER_FILE,status='unknown',iostat=ier)
+  open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown',iostat=ier)
   if( ier /= 0 ) stop 'error opening OUTPUT_FILES/values_from_mesher.h'
 
   write(IOUT,*)
@@ -269,10 +266,6 @@
   write(IOUT,*) '! average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
   write(IOUT,*) '! average size of a spectral element in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI)
   write(IOUT,*) '!'
-  write(IOUT,*) '! number of time steps = ',NSTEP
-  write(IOUT,*) '!'
-  write(IOUT,*) '! number of seismic sources = ',NSOURCES
-  write(IOUT,*) '!'
   write(IOUT,*)
 
   write(IOUT,*) '! approximate static memory needed by the solver:'
@@ -389,7 +382,7 @@
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = ',NGLOB_CRUST_MANTLE_OCEANS
   write(IOUT,*)
 
-! this to allow for code elimination by compiler in solver for performance
+! this to allow for code elimination by the compiler in the solver for performance
 
   if(TRANSVERSE_ISOTROPY) then
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.'
@@ -551,14 +544,6 @@
   endif
   write(IOUT,*)
 
-  ! unused... (dynamic allocation used)
-  !if (SAVE_SOURCE_MASK) then
-  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = NSPEC_CRUST_MANTLE'
-  !else
-  !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_MASK_SOURCE = 1'
-  !endif
-  !write(IOUT,*)
-
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
@@ -597,6 +582,10 @@
 #else
   write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .false.'
 #endif
+
+!! DK DK for UNDO_ATTENUATION
+  write(IOUT,*)
+  write(IOUT,*) 'integer, parameter :: NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
 
   close(IOUT)
 

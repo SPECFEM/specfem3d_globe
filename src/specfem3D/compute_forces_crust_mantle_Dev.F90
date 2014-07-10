@@ -29,7 +29,6 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
-
   subroutine compute_forces_crust_mantle_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_crust_mantle, &
@@ -155,6 +154,41 @@
     num_elements = nspec_inner
   endif
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+!$OMP one_minus_sum_beta,epsilon_trace_over_3,c11store,c12store,c13store,c14store,c15store, &
+!$OMP c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+!$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store,ispec_is_tiso, &
+!$OMP kappavstore,muvstore,kappahstore,muhstore,eta_anisostore,ibool,ystore,zstore, &
+!$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
+!$OMP xstore,minus_gravity_table,minus_deriv_gravity_table,density_table, &
+!$OMP displ_crust_mantle,wgll_cube,hprime_xxt,hprime_xx, &
+!$OMP vnspec, &
+!$OMP accel_crust_mantle, &
+!$OMP hprimewgll_xx,hprimewgll_xxt, &
+!$OMP alphaval,betaval, &
+!$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+!$OMP gammaval,factor_common, &
+!$OMP iphase, &
+!$OMP phase_ispec_inner, &
+!$OMP num_elements, USE_LDDRK, &
+#ifdef FORCE_VECTORIZATION
+!$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
+#endif
+!$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+!$OMP deltat, COMPUTE_AND_STORE_STRAIN ) &
+!$OMP PRIVATE(ispec,fac1,fac2,fac3,sum_terms,ispec_p, &
+#ifdef FORCE_VECTORIZATION
+!$OMP ijk, &
+#else
+!$OMP i,j,k, &
+#endif
+!$OMP tempx1,tempx2,tempx3, &
+!$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
+!$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+!$OMP iglob,epsilondev_loc)
+
+!$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
 
     ispec = phase_ispec_inner(ispec_p,iphase)
@@ -284,6 +318,9 @@
     ! updates acceleration
 
 #ifdef FORCE_VECTORIZATION
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
 ! (only common points between different elements can be the same)
@@ -302,12 +339,24 @@
 
           ! do NOT use array syntax ":" for the three statements below otherwise most compilers
           ! will not be able to vectorize the outer loop
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(INDEX_IJK,1)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(INDEX_IJK,2)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(INDEX_IJK,3)
 
 #ifdef FORCE_VECTORIZATION
     enddo
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
 #else
         enddo
       enddo
@@ -358,6 +407,8 @@
     endif
 
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
+!$OMP enddo
+!$OMP END PARALLEL
 
   contains
 

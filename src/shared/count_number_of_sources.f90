@@ -38,12 +38,10 @@
 
   integer :: ios,icounter
 
-  character(len=150) :: CMTSOLUTION,dummystring
+  character(len=150) :: dummystring
 
-  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
-
-  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
-  if(ios /= 0) stop 'error opening CMTSOLUTION file'
+  open(unit=IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ios)
+  if(ios /= 0) stop 'error opening DATA/CMTSOLUTION file'
 
   icounter = 0
   do while(ios == 0)

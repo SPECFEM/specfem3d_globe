@@ -54,11 +54,13 @@
     call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
     cost = dcos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
     p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
     ! get ellipticity using spline evaluation
     call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
 
+! this is eq (14.4) in Dahlen and Tromp (1998)
     factor = ONE-(TWO/3.0d0)*ell*p20
 
     xelm(ia) = x*factor
@@ -74,7 +76,7 @@
 !
 
   !> Hejun
-  ! get ellipticity according to GLL points
+  ! ellipticity at the GLL points
   ! JAN08, 2010
   subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
 
@@ -106,11 +108,13 @@
         call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
         cost = dcos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
         p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
         ! get ellipticity using spline evaluation
         call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
 
+! this is eq (14.4) in Dahlen and Tromp (1998)
         factor = ONE-(TWO/3.0d0)*ell*p20
 
         xstore(i,j,k,ispec) = x*factor
@@ -122,4 +126,42 @@
   enddo
 
   end subroutine get_ellipticity_gll
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_ellipticity_single_point(x,y,z,nspl,rspl,espl,espl2)
+
+  use constants
+
+  implicit none
+
+  integer :: nspl
+  double precision :: x,y,z
+  double precision :: rspl(NR),espl(NR),espl2(NR)
+
+  ! local parameters
+  double precision :: ell
+  double precision :: r,theta,phi,factor
+  double precision :: cost,p20
+
+  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+
+  cost = dcos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+  p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
+
+  ! get ellipticity using spline evaluation
+  call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+
+! this is eq (14.4) in Dahlen and Tromp (1998)
+  factor = ONE-(TWO/3.0d0)*ell*p20
+
+  x = x*factor
+  y = y*factor
+  z = z*factor
+
+  end subroutine get_ellipticity_single_point
 

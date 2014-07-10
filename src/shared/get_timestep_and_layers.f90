@@ -437,6 +437,10 @@
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) &
     DT = DT*(1.d0 - 0.8d0)  ! *0.20d0
 
+  ! reduces time step size for "no mud" version of AK135F model
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) &
+    DT = DT*(1.d0 - 0.05d0)
+
   ! reduces time step size for crustmaps crustal model
   if( ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS ) &
     DT = DT*(1.d0 - 0.3d0)

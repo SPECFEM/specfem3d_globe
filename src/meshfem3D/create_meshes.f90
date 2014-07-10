@@ -43,7 +43,20 @@
   ! and Roland_Sylvain integrals
   volume_total = ZERO
   Earth_mass_total = ZERO
-  Roland_Sylvain_integr_total(:) = ZERO
+  Earth_center_of_mass_x_total = ZERO
+  Earth_center_of_mass_y_total = ZERO
+  Earth_center_of_mass_z_total = ZERO
+
+  g_x(:,:,:) = ZERO
+  g_y(:,:,:) = ZERO
+  g_z(:,:,:) = ZERO
+
+  G_xx(:,:,:) = ZERO
+  G_yy(:,:,:) = ZERO
+  G_zz(:,:,:) = ZERO
+  G_xy(:,:,:) = ZERO
+  G_xz(:,:,:) = ZERO
+  G_yz(:,:,:) = ZERO
 
   ! make sure everybody is synchronized
   call synchronize_all()

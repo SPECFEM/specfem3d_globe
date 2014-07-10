@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            April 2011
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -166,9 +166,6 @@ subroutine define_adios_float_scalar(adios_group, group_size_inc,  &
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
 
   ! adios: 6 == real(kind=8)
-  !print *, len_trim(name)
-  !print *, trim(path)
-  !print *, len_trim(path)
   call adios_define_var (adios_group, trim(name), trim(path), 5,  "", "", "", varid)
   group_size_inc = group_size_inc + 4
 end subroutine define_adios_float_scalar
@@ -198,10 +195,6 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc,  &
   integer(kind=4),     intent(in)  :: var
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
-  ! Local vars
-  !character(len=256) :: full_name
-
-  !full_name = trim(path) // trim(name)
 
   ! adios: 2 ~ integer(kind=4)
   !write (*,'("--- adios_define_var scalar path=",a20," name=",a20)') path, name
@@ -257,9 +250,6 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, &
   character(len=*), intent(in) :: array_name
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
-
-  !print *,"in define dims"
-  !print *,"array_name:", trim(array_name)
 
   call define_adios_integer_scalar (adios_group, &
       group_size_inc, trim(array_name), "local_dim", local_dim)
@@ -1314,9 +1304,6 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
   integer(kind=8) :: var_id
 
   full_name = trim(path)//trim(array_name)
-
-  !print *,"in define local:"
-  !print *,"full_name:", trim(full_name)
 
   call adios_define_var(adios_group, array_name, path, 9, "", "", "", var_id )
   group_size_inc = group_size_inc + 1*local_dim

@@ -77,9 +77,6 @@
 ! I/O unit for sac files
   integer, parameter :: IOUT_SAC = 48
 
-! I/O Bluegene serial access
-  logical, parameter :: IO_BLUEGENE_SERIAL = .false.
-
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
 ! uncomment line below for PREM with oceans
@@ -91,6 +88,8 @@
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
 
+! maximum number of chunks (full sphere)
+  integer, parameter :: NCHUNKS_MAX = 6
 
 !!-----------------------------------------------------------
 !!
@@ -99,38 +98,37 @@
 !!-----------------------------------------------------------
 !! (uncomment desired resolution)
 
-!!--- ETOPO5 5-minute model, smoothed Harvard version
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 5
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
-
-!! DK DK for Roland_Sylvain this below could be changed if needed (i.e. using a non-smoothed version for instance)
-!---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
+!---  ETOPO4 4-minute model
 ! size of topography and bathymetry file
   integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file
-  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.bin'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin'
 
-!!--- ETOPO2 2-minute model, not implemented yet
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 2
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
+!--- ETOPO2 2-minute model
+! size of topography and bathymetry file
+! integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
+! resolution of topography file in minutes
+! integer, parameter :: RESOLUTION_TOPO_FILE = 2
+! pathname of the topography file
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
+!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
+!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_smoothed_window_3.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_original_unmodified_unsmoothed.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_smoothed_window_3.bin'
 
-!!--- ETOPO1 1-minute model, implemented now, but data file must be created first
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 1
-!! pathname of the topography file (un-smoothed)
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
+!--- ETOPO1 1-minute model
+! size of topography and bathymetry file
+! integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
+! resolution of topography file in minutes
+! integer, parameter :: RESOLUTION_TOPO_FILE = 1
+! pathname of the topography file
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.bin'
+
 
 ! For the reference ellipsoid to convert geographic latitudes to geocentric:
 !
@@ -157,17 +155,16 @@
   double precision, parameter :: ONE_MINUS_F_SQUARED = (1.d0 - FLATTENING_F)**2
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature, currently does not work, DO NOT USE)
-  logical,parameter :: USE_GLL = .false.
+  logical, parameter :: USE_GLL = .false.
 
-! maximum depth of the oceans in trenches and height of topo in mountains
-! to avoid taking into account spurious oscillations in global model ETOPO
-  logical, parameter :: USE_MAXIMUM_HEIGHT_TOPO = .false.
-  integer, parameter :: MAXIMUM_HEIGHT_TOPO = +20000
-  logical, parameter :: USE_MAXIMUM_DEPTH_OCEANS = .false.
-  integer, parameter :: MAXIMUM_DEPTH_OCEANS = -20000
+! the code will print an error message and stop if it finds that the topography input file
+! contains values outside this range.
+! we take a safety margin just in case of a smoothed or modified model, which can locally create slightly different values
+  integer, parameter :: TOPO_MINIMUM = - 11200 ! (max depth in m, Mariana trench)
+  integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
 ! minimum thickness in meters to include the effect of the oceans and topo
-  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
+  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 50.d0
 
 
 !!-----------------------------------------------------------
@@ -183,23 +180,32 @@
   integer, parameter :: ICRUST_CRUSTMAPS = 3
   integer, parameter :: ICRUST_EPCRUST = 4
 
-! increase smoothing for critical regions  (increases mesh stability)
-  logical, parameter :: SMOOTH_CRUST = .true.
+!-------------------------------
+! crustal model cap smoothing - extension range in degree
+! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
+!       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
+!       so far, the only thing that works is to smooth out values and take special care of the Andes...
+! TODO: one could try to adapt this degree range to the simulation resolution in the future
+  double precision, parameter :: CAP_SMOOTHING_DEGREE_DEFAULT = 1.0d0
+
+! increase smoothing for critical regions (for instance high mountains in Europe and in the Andes) to increases mesh stability
+  logical, parameter :: SMOOTH_CRUST_EVEN_MORE = .true.
 
 ! use sedimentary layers in crustal model
-  logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+  logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
+  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for Roland_Sylvain gravity calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
 ! default crustal model
 ! (used as default when CRUSTAL flag is set for simulation)
-!!-- uncomment for using Crust1.0
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
-!!-- uncomment for using Crust2.0
+!-- uncomment for using Crust1.0
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
+!-- uncomment for using Crust2.0
   integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
-!!-- uncomment for using General Crustmaps instead
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-!!-- uncomment for using EPcrust instead (European regional model)
-!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
+!-- uncomment for using General Crustmaps instead
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+!-- uncomment for using EPcrust instead (European regional model)
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
 
 
 !!-----------------------------------------------------------
@@ -255,6 +261,17 @@
 ! distance threshold (in km) above which we consider that a receiver
 ! is located outside the mesh and therefore excluded from the station list
   double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0
+
+
+!!-----------------------------------------------------------
+!!
+!! for attenuation
+!!
+!!-----------------------------------------------------------
+
+! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
+! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
+  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 
 
 !!-----------------------------------------------------------
@@ -369,6 +386,64 @@
 
 !!-----------------------------------------------------------
 !!
+!! for Roland_Sylvain integrals
+!!
+!!-----------------------------------------------------------
+
+  logical, parameter :: ROLAND_SYLVAIN = .false.
+
+! reuse an existing observation surface created in another run and stored to disk,
+! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
+! and results for a 3D Earth with topography)
+  logical, parameter :: REUSE_EXISTING_OBSERVATION_SURF = .false.
+
+! only compute the center of mass of the 3D model (very cheap), or also compute the gravity integrals (expensive)
+  logical, parameter :: ONLY_COMPUTE_CENTER_OF_MASS = .false.
+
+! we may want to shift the reference frame to a pre-computed center of mass
+  logical, parameter :: SHIFT_TO_THIS_CENTER_OF_MASS = .true.
+
+! position of the center of mass of the Earth for this density model and mesh,
+! but first convert it to meters and then make it non-dimensional
+  double precision, parameter :: x_shift =   0.606220633681674d0 * 1000.d0 / R_EARTH !    km
+  double precision, parameter :: y_shift =   0.433103991863316d0 * 1000.d0 / R_EARTH !    km
+  double precision, parameter :: z_shift =   0.520078637496872d0 * 1000.d0 / R_EARTH !    km
+!    distance to center =   0.908605697566306       km
+
+! altitude of the observation points in km
+  double precision, parameter :: altitude_of_observation_points = 255.d0
+
+! elevation ratio of the points at which we observe
+  double precision, parameter :: observation_elevation_ratio = (R_EARTH_KM + altitude_of_observation_points) / R_EARTH_KM
+
+! compute the contribution of the crust only (otherwise by default compute the contribution of the whole Earth)
+  logical, parameter :: COMPUTE_CRUST_CONTRIB_ONLY = .false.
+
+! check for negative Jacobians in the calculation of integrals or not
+! (can safely be done once to check that the mesh is OK at a given resolution, and then permanently
+!  turned off in future runs because the mesh does not change)
+  logical, parameter :: CHECK_FOR_NEGATIVE_JACOBIANS = .true.
+
+! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
+! at the altitude of the observation point
+!! DK DK 4 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
+  integer, parameter :: NX_OBSERVATION = 4 ! 500
+  integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
+
+! the code will display sample output values at this particular point as a check
+  integer, parameter :: ixr = max(NX_OBSERVATION / 3, 1)
+  integer, parameter :: iyr = max(NY_OBSERVATION / 4, 1)
+  integer, parameter :: ichunkr = 3
+
+! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
+  integer, parameter :: NSPEC_DISPLAY_INTERVAL = 100
+
+! for the FORCE_VECTORIZATION 1D version of some loops
+  integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
+
+
+!!-----------------------------------------------------------
+!!
 !! debugging flags
 !!
 !!-----------------------------------------------------------
@@ -393,39 +468,18 @@
   integer, parameter :: NSTEP_FOR_BENCHMARK = 300
   logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
 
-!!-----------------------------------------------------------
-!!
-!! for Roland_Sylvain integrals
-!!
-!!-----------------------------------------------------------
-
-!! DK DK for Roland_Sylvain
-  logical, parameter :: ROLAND_SYLVAIN = .false.
-
-! altitude of the observation point
-  double precision, parameter :: altitude_of_observation_point = 255.d0 ! in km
-
-! standard gravity at the surface of the Earth
-  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
-
-  double precision, parameter :: SQUARE_ROOT_OF_THREE = 1.73205080756887729352d0
-
-! position of the observation point in non-dimensionalized value
-
-!! DK DK along X only
-! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM
-! double precision, parameter :: y_observation = 0.d0
-! double precision, parameter :: z_observation = 0.d0
-
-!! DK DK along diagonal
-! double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-! double precision, parameter :: y_observation = x_observation
-! double precision, parameter :: z_observation = x_observation
-
-!! DK DK point randomly chosen in space, not at the right elevation we want
-  double precision, parameter :: x_observation = (R_EARTH_KM + altitude_of_observation_point) / R_EARTH_KM / SQUARE_ROOT_OF_THREE
-  double precision, parameter :: y_observation = x_observation * 1.12d0
-  double precision, parameter :: z_observation = x_observation * 1.38d0
+! compute an alpha sensitivity kernel directly by dumping the whole forward
+! run to disk instead of rebuilding it backwards from the final time step in a second stage;
+! used for debugging and validation purposes only, in order to have an exact reference for the sensitivity kernels.
+! use wisely, this requires several terabytes (yes, tera) of disk space.
+! In the future that option should become standard at some point though.
+! For now, in order to save disk space, it is implemented for the alpha kernel only
+! (because it only requires saving a scalar: the trace of epsilon) and for surface wave
+! kernels only, this way we can save the upper mantle only and ignore the rest.
+! In the future it will be easy to generalize this though.
+  logical, parameter :: EXACT_UNDOING_TO_DISK = .false.
+  ! ID of the huge file in which we dump all the time steps of the simulation
+  integer, parameter :: IFILE_FOR_EXACT_UNDOING = 244
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
@@ -471,6 +525,9 @@
 ! double precision, parameter :: GRAV = 6.6723d-11
   double precision, parameter :: GRAV = 6.67384d-11
 
+! standard gravity at the surface of the Earth
+  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
+
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
   double precision, parameter :: ONE_HALF = HALF, ONE_FOURTH = 0.25d0, ONE_EIGHTH = 0.125d0, ONE_SIXTEENTH = 0.0625d0
@@ -504,9 +561,6 @@
 ! A person walking at a distance of 2 meters provides a gravity gradient signal of approximately one Eotvos.
 ! Mountains can create signals of several hundred Eotvos.
   double precision, parameter :: SI_UNITS_TO_EOTVOS = 1.d+9
-
-! maximum number of chunks (full sphere)
-  integer, parameter :: NCHUNKS_MAX = 6
 
 ! define block type based upon chunk number (between 1 and 6)
 ! do not change this numbering, chunk AB must be number 1 for central cube
@@ -623,9 +677,6 @@
 ! in which case it is 4
   integer, parameter :: NUMCORNERS_SHARED = 4
 
-! number of slaves per corner
-  integer, parameter :: NUMSLAVES = 2
-
 ! number of layers in PREM
   integer, parameter :: NR = 640
 
@@ -705,8 +756,8 @@
 ! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
 !  and RMIDDLE_CRUST to become 15 km with stretching function stretch_tab)
   double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.75d0
-  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = 5000.d0 ! moho up to 35km
-  double precision, parameter :: R80_STRETCH_ADJUSTEMENT = -40000.d0 ! r80 down to 120km
+  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = 5000.d0 ! moho up to 35km
+  double precision, parameter :: R80_STRETCH_ADJUSTMENT = -40000.d0 ! r80 down to 120km
 
 ! adapted regional moho stretching
 ! 1 chunk simulations, 3-layer crust
@@ -715,9 +766,9 @@
   logical, parameter :: REGIONAL_MOHO_MESH_ASIA = .false.   ! used only for fixing time step
   logical, parameter :: HONOR_DEEP_MOHO = .false.
 !!-- uncomment for e.g. Europe case, where deep moho is rare
-!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -15000.d0  ! moho mesh boundary down to 55km
+!  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! moho mesh boundary down to 55km
 !!-- uncomment for deep moho cases, e.g. Asia case (Himalayan moho)
-!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -20000.d0  ! moho mesh boundary down to 60km
+!  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! moho mesh boundary down to 60km
 
 !!-----------------------------------------------------------
 !!

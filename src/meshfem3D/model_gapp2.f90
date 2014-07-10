@@ -98,12 +98,11 @@
   implicit none
 
   integer i,ir,ia,io,ier
-  character(len=150) GAPP2
+  character(len=150), parameter :: GAPP2 = 'DATA/3dvpGAP_P2'
 
 !...........................................input data
 
   ! default model: 3dvpGAP_P2
-  call get_value_string(GAPP2, 'model.GAPP2', 'DATA/3dvpGAP_P2')
 
   ! reads in GAP-P2 model from Obayashi
   open(unit=10,file=GAPP2,status='old',action='read',iostat=ier)

@@ -137,6 +137,26 @@
     num_elements = nspec_inner
   endif
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( &
+!$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, xstore, ystore, zstore, &
+!$OMP d_ln_density_dr_table, hprime_xx, hprime_xxT, xix, xiy, xiz,  etax, etay, etaz, &
+!$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation,   &
+!$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
+!$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
+!$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
+!$OMP PRIVATE( &
+!$OMP ispec_p, ispec, iglob, dummyx_loc, radius, theta, phi, &
+!$OMP cos_theta, sin_theta, cos_phi, sin_phi, int_radius, &
+!$OMP displ_times_grad_x_ln_rho, displ_times_grad_y_ln_rho, displ_times_grad_z_ln_rho, &
+!$OMP temp_gxl, temp_gyl, temp_gzl, tempx2, &
+!$OMP xixl, xiyl, xizl, etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, &
+!$OMP dpotentialdxl, tempx1, tempx3, dpotentialdyl, dpotentialdzl, two_omega_deltat, cos_two_omega_t, &
+!$OMP sin_two_omega_t, source_euler_A, source_euler_B, A_rotation, B_rotation, ux_rotation, uy_rotation, &
+!$OMP dpotentialdx_with_rot, dpotentialdy_with_rot, gxl, gyl, gzl, gravity_term, &
+!$OMP sum_terms, newtempx1, newtempx3, newtempx2 )
+
+!$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
 
     ispec = phase_ispec_inner(ispec_p,iphase)
@@ -295,20 +315,12 @@
         gzl = temp_gzl(INDEX_IJK)
 
         ! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          gravity_term(INDEX_IJK) = &
-                  sngl( minus_rho_g_over_kappa_fluid(int_radius) &
-                  * dble(jacobianl) * wgll_cube(INDEX_IJK) &
-                  * (dble(dpotentialdx_with_rot) * gxl  &
-                     + dble(dpotentialdy_with_rot) * gyl &
-                     + dble(dpotentialdzl) * gzl) )
-        else
-          gravity_term(INDEX_IJK) = minus_rho_g_over_kappa_fluid(int_radius) * &
-                    jacobianl * wgll_cube(INDEX_IJK) &
-                    * (dpotentialdx_with_rot * gxl  &
-                      + dpotentialdy_with_rot * gyl &
-                      + dpotentialdzl * gzl)
-        endif
+        gravity_term(INDEX_IJK) = &
+                real(minus_rho_g_over_kappa_fluid(int_radius) &
+                   * dble(jacobianl) * wgll_cube(INDEX_IJK) &
+                   * (dble(dpotentialdx_with_rot) * gxl  &
+                    + dble(dpotentialdy_with_rot) * gyl &
+                    + dble(dpotentialdzl)         * gzl), kind=CUSTOM_REAL)
 
         ! divergence of displacement field with gravity on
         ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
@@ -316,10 +328,10 @@
         !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
         if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
           div_displfluid(INDEX_IJK,ispec) =  &
-                    minus_rho_g_over_kappa_fluid(int_radius) &
-                    * (dpotentialdx_with_rot * gxl &
-                     + dpotentialdy_with_rot * gyl &
-                     + dpotentialdzl * gzl)
+                    real(minus_rho_g_over_kappa_fluid(int_radius) &
+                       * (dpotentialdx_with_rot * gxl &
+                        + dpotentialdy_with_rot * gyl &
+                        + dpotentialdzl         * gzl), kind=CUSTOM_REAL)
         endif
 
       endif
@@ -368,6 +380,9 @@
     ! updates acceleration
 
 #ifdef FORCE_VECTORIZATION
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
 ! we can force vectorization using a compiler directive here because we know that there is no dependency
 ! inside a given spectral element, since all the global points of a local elements are different by definition
 ! (only common points between different elements can be the same)
@@ -382,10 +397,16 @@
         do i=1,NGLLX
 #endif
           iglob = ibool(INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
           accelfluid(iglob) = accelfluid(iglob) + sum_terms(INDEX_IJK)
 
 #ifdef FORCE_VECTORIZATION
     enddo
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
 #else
         enddo
       enddo
@@ -426,6 +447,8 @@
     endif
 
   enddo   ! spectral element loop
+!$OMP enddo
+!$OMP END PARALLEL
 
   contains
 

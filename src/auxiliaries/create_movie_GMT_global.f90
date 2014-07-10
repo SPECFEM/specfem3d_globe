@@ -45,6 +45,8 @@
 
   implicit none
 
+  include "OUTPUT_FILES/values_from_mesher.h"
+
 !---------------------
 ! USER PARAMETER
 
@@ -110,7 +112,6 @@
   integer :: istamp1,istamp2
 
   character(len=256) :: line
-  character(len=150) :: CMTSOLUTION
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -124,6 +125,15 @@
 
 ! read the parameter file and compute additional parameters
   call read_compute_parameters()
+
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
+!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
+    if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  endif
 
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
@@ -149,6 +159,7 @@
   print *
 
   ! checks options
+  if( it1 < 1 ) stop 'the first time step must be >= 1'
   if( it2 == -1 ) it2 = NSTEP
 
 
@@ -273,10 +284,8 @@
     cmt_t_shift = 0.0
     cmt_hdur = 0.0
 
-    call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
-
     ! reads in source lat/lon
-    open(IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ierror )
+    open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ierror )
     if( ierror == 0 ) then
       ! skip first line, event name,timeshift,half duration
       read(IIN,*,iostat=ierror ) line ! PDE line

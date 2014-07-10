@@ -670,8 +670,8 @@
       ! mesh will honor 3D crustal moho topography
       ! moves MOHO up 5km to honor moho topography deeper than 35 km
       ! moves R80 down to 120km depth in order to have less squeezing for elements below moho
-      RMOHO_FICTITIOUS_IN_MESHER = RMOHO_FICTITIOUS_IN_MESHER + RMOHO_STRETCH_ADJUSTEMENT
-      R80_FICTITIOUS_IN_MESHER = R80_FICTITIOUS_IN_MESHER + R80_STRETCH_ADJUSTEMENT
+      RMOHO_FICTITIOUS_IN_MESHER = RMOHO_FICTITIOUS_IN_MESHER + RMOHO_STRETCH_ADJUSTMENT
+      R80_FICTITIOUS_IN_MESHER = R80_FICTITIOUS_IN_MESHER + R80_STRETCH_ADJUSTMENT
     endif
   endif
 

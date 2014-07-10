@@ -102,26 +102,15 @@
           ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
           call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
 
-          if( CUSTOM_REAL == SIZE_REAL ) then
-            do i_sls = 1,N_SLS
-              factor_common(i,j,k,i_sls,ispec)    = sngl(fc(i_sls))
-            enddo
-            one_minus_sum_beta(i,j,k,ispec) = sngl(omsb)
-          else
-            do i_sls = 1,N_SLS
-              factor_common(i,j,k,i_sls,ispec)    = fc(i_sls)
-            enddo
-            one_minus_sum_beta(i,j,k,ispec) = omsb
-          endif
+          do i_sls = 1,N_SLS
+            factor_common(i,j,k,i_sls,ispec) = real(fc(i_sls), kind=CUSTOM_REAL)
+          enddo
+          one_minus_sum_beta(i,j,k,ispec) = real(omsb, kind=CUSTOM_REAL)
 
           ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
           call get_attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
 
-          if( CUSTOM_REAL == SIZE_REAL ) then
-            scale_factor(i,j,k,ispec) = sngl(sf)
-          else
-            scale_factor(i,j,k,ispec) = sf
-          endif
+          scale_factor(i,j,k,ispec) = real(sf, kind=CUSTOM_REAL)
         enddo
       enddo
     enddo

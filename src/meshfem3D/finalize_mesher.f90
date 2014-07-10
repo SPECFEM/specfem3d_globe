@@ -38,7 +38,66 @@
   double precision, external :: wtime
 
   ! for Roland_Sylvain integrals
-  double precision :: g_x, g_y, g_z, G_xx, G_yy, G_zz, G_xy, G_xz, G_yz, real_altitude_of_observ_point
+  ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  ! for the gravity vector force, a distance is involved in the dimensions
+  double precision, parameter :: nondimensionalizing_factor_gi  = RHOAV * R_EARTH
+  ! for the second-order gravity tensor, no distance is involved in the dimensions
+  double precision, parameter :: nondimensionalizing_factor_Gij = RHOAV
+
+  double precision, parameter :: scaling_factor_gi = GRAV * nondimensionalizing_factor_gi
+  double precision, parameter :: scaling_factor_Gij_Eotvos = GRAV * nondimensionalizing_factor_Gij * SI_UNITS_TO_EOTVOS
+
+  double precision :: real_altitude_of_observ_point
+
+  integer :: ixval,iyval,ichunkval
+
+  if(ROLAND_SYLVAIN) then
+
+    ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
+    ! and also take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+    ! the final result is in m.s-2 i.e. in S.I. units
+    g_x(:,:,:) = g_x(:,:,:) * scaling_factor_gi
+    g_y(:,:,:) = g_y(:,:,:) * scaling_factor_gi
+    g_z(:,:,:) = g_z(:,:,:) * scaling_factor_gi
+
+    ! the final result is in Eotvos = 1.e+9 s-2
+    G_xx(:,:,:) = G_xx(:,:,:) * scaling_factor_Gij_Eotvos
+    G_yy(:,:,:) = G_yy(:,:,:) * scaling_factor_Gij_Eotvos
+    G_zz(:,:,:) = G_zz(:,:,:) * scaling_factor_Gij_Eotvos
+    G_xy(:,:,:) = G_xy(:,:,:) * scaling_factor_Gij_Eotvos
+    G_xz(:,:,:) = G_xz(:,:,:) * scaling_factor_Gij_Eotvos
+    G_yz(:,:,:) = G_yz(:,:,:) * scaling_factor_Gij_Eotvos
+
+    ! use an MPI reduction to compute the total value of the integral into a temporary array
+    ! and then copy it back into the original array
+    call sum_all_3Darray_dp(g_x,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) g_x(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(g_y,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) g_y(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(g_z,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) g_z(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(G_xx,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) G_xx(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(G_yy,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) G_yy(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(G_zz,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) G_zz(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(G_xy,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) G_xy(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(G_xz,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) G_xz(:,:,:) = temporary_array_for_sum(:,:,:)
+
+    call sum_all_3Darray_dp(G_yz,temporary_array_for_sum,NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX)
+    if(myrank == 0) G_yz(:,:,:) = temporary_array_for_sum(:,:,:)
+
+  endif
 
   !--- print number of points and elements in the mesh for each region
   if(myrank == 0) then
@@ -53,55 +112,199 @@
     if(NCHUNKS == 6) then
       write(IMAIN,*)
       write(IMAIN,*) 'computed total Earth mass for this density model and mesh: ',Earth_mass_total,' kg'
-      write(IMAIN,*) '   (should be not too far from 5.97E+24 kg)'
+      write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
       write(IMAIN,*)
       ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
       write(IMAIN,*) 'average density for this density model and mesh: ',Earth_mass_total / (volume_total * R_EARTH**3),' kg/m3'
       write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
+      write(IMAIN,*)
+      write(IMAIN,*) 'position of the center of mass of the Earth for this density model and mesh: '
+      write(IMAIN,*) '   x = ',(Earth_center_of_mass_x_total / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*) '   y = ',(Earth_center_of_mass_y_total / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*) '   z = ',(Earth_center_of_mass_z_total / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*) '   distance to center = ',(sqrt(Earth_center_of_mass_x_total**2 + Earth_center_of_mass_y_total**2 + &
+                                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0,' km'
+      write(IMAIN,*)
     endif
 
 !! DK DK for Roland_Sylvain
-    ! Roland_Sylvain integrals
     if(ROLAND_SYLVAIN) then
 
-! in m.s-2
-      g_x  = Roland_Sylvain_integr_total(1)
-      g_y  = Roland_Sylvain_integr_total(2)
-      g_z  = Roland_Sylvain_integr_total(3)
-
-! in Eotvos = 1.e+9 s-2
-      G_xx = Roland_Sylvain_integr_total(4) * SI_UNITS_TO_EOTVOS
-      G_yy = Roland_Sylvain_integr_total(5) * SI_UNITS_TO_EOTVOS
-      G_zz = Roland_Sylvain_integr_total(6) * SI_UNITS_TO_EOTVOS
-      G_xy = Roland_Sylvain_integr_total(7) * SI_UNITS_TO_EOTVOS
-      G_xz = Roland_Sylvain_integr_total(8) * SI_UNITS_TO_EOTVOS
-      G_yz = Roland_Sylvain_integr_total(9) * SI_UNITS_TO_EOTVOS
+      temporary_array_for_sum(:,:,:) = sqrt(g_x(:,:,:)**2 + g_y(:,:,:)**2 + g_z(:,:,:)**2)
+      write(IMAIN,*)
+      write(IMAIN,*) 'minval of norm of g vector on whole observation surface = ',minval(temporary_array_for_sum),' m.s-2'
+      write(IMAIN,*) 'maxval of norm of g vector on whole observation surface = ',maxval(temporary_array_for_sum),' m.s-2'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'computed total Roland_Sylvain integral g_x  = ',g_x,' m.s-2'
-      write(IMAIN,*) 'computed total Roland_Sylvain integral g_y  = ',g_y,' m.s-2'
-      write(IMAIN,*) 'computed total Roland_Sylvain integral g_z  = ',g_z,' m.s-2'
-      write(IMAIN,*)
-      write(IMAIN,*) 'computed norm of g vector = ',sqrt(g_x**2 + g_y**2 + g_z**2),' m.s-2'
+      write(IMAIN,*) 'minval of G_xx on whole observation surface = ',minval(G_xx),' Eotvos'
+      write(IMAIN,*) 'maxval of G_xx on whole observation surface = ',maxval(G_xx),' Eotvos'
 
-      real_altitude_of_observ_point = sqrt(x_observation**2 + y_observation**2 + z_observation**2)
+      write(IMAIN,*)
+      write(IMAIN,*) 'minval of G_yy on whole observation surface = ',minval(G_yy),' Eotvos'
+      write(IMAIN,*) 'maxval of G_yy on whole observation surface = ',maxval(G_yy),' Eotvos'
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'minval of G_zz on whole observation surface = ',minval(G_zz),' Eotvos'
+      write(IMAIN,*) 'maxval of G_zz on whole observation surface = ',maxval(G_zz),' Eotvos'
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'minval of G_xy on whole observation surface = ',minval(G_xy),' Eotvos'
+      write(IMAIN,*) 'maxval of G_xy on whole observation surface = ',maxval(G_xy),' Eotvos'
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'minval of G_xz on whole observation surface = ',minval(G_xz),' Eotvos'
+      write(IMAIN,*) 'maxval of G_xz on whole observation surface = ',maxval(G_xz),' Eotvos'
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'minval of G_yz on whole observation surface = ',minval(G_yz),' Eotvos'
+      write(IMAIN,*) 'maxval of G_yz on whole observation surface = ',maxval(G_yz),' Eotvos'
+
+      write(IMAIN,*)
+      write(IMAIN,*) 'Minval and maxval of trace of G, which in principle should be zero:'
+      write(IMAIN,*)
+      temporary_array_for_sum(:,:,:) = abs(G_xx(:,:,:) + G_yy(:,:,:) + G_zz(:,:,:))
+      write(IMAIN,*) 'minval of abs(G_xx + G_yy + G_zz) on whole observation surface = ',minval(temporary_array_for_sum),' Eotvos'
+      write(IMAIN,*) 'maxval of abs(G_xx + G_yy + G_zz) on whole observation surface = ',maxval(temporary_array_for_sum),' Eotvos'
+
+      write(IMAIN,*)
+      write(IMAIN,*) '-----------------------------'
+      write(IMAIN,*)
+      write(IMAIN,*) 'displaying the fields computed at:'
+      write(IMAIN,*) '    ix_observation = ',ixr,' out of ',NX_OBSERVATION
+      write(IMAIN,*) '    iy_observation = ',iyr,' out of ',NY_OBSERVATION
+      write(IMAIN,*) '    of mesh chunk ',ichunkr
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed g_x  = ',g_x(ixr,iyr,ichunkr),' m.s-2'
+      write(IMAIN,*) 'computed g_y  = ',g_y(ixr,iyr,ichunkr),' m.s-2'
+      write(IMAIN,*) 'computed g_z  = ',g_z(ixr,iyr,ichunkr),' m.s-2'
+      write(IMAIN,*)
+      write(IMAIN,*) 'computed norm of g vector = ',sqrt(g_x(ixr,iyr,ichunkr)**2 + g_y(ixr,iyr,ichunkr)**2 + &
+                                                                 g_z(ixr,iyr,ichunkr)**2),' m.s-2'
+
+      real_altitude_of_observ_point = sqrt(x_observation(ixr,iyr,ichunkr)**2 + y_observation(ixr,iyr,ichunkr)**2 + &
+                                                                 z_observation(ixr,iyr,ichunkr)**2)
 ! gravity force vector norm decays approximately as (r / r_prime)^2 above the surface of the Earth
       write(IMAIN,*) '  (should be not too far from ', &
                              sngl(STANDARD_GRAVITY_EARTH * (R_UNIT_SPHERE / real_altitude_of_observ_point)**2),' m.s-2)'
 
       write(IMAIN,*)
-      write(IMAIN,*) 'computed total Roland_Sylvain integral G_xx = ',G_xx,' Eotvos'
-      write(IMAIN,*) 'computed total Roland_Sylvain integral G_yy = ',G_yy,' Eotvos'
-      write(IMAIN,*) 'computed total Roland_Sylvain integral G_zz = ',G_zz,' Eotvos'
+      write(IMAIN,*) 'computed G_xx = ',G_xx(ixr,iyr,ichunkr),' Eotvos'
+      write(IMAIN,*) 'computed G_yy = ',G_yy(ixr,iyr,ichunkr),' Eotvos'
+      write(IMAIN,*) 'computed G_zz = ',G_zz(ixr,iyr,ichunkr),' Eotvos'
       write(IMAIN,*)
       write(IMAIN,*) 'G tensor should be traceless, G_xx + G_yy + G_zz = 0.'
-      write(IMAIN,*) 'Actual sum obtained = ',G_xx + G_yy + G_zz
-      if(max(abs(G_xx),abs(G_yy),abs(G_zz)) > TINYVAL) write(IMAIN,*) ' i.e., ', &
-             sngl(100.d0*abs(G_xx + G_yy + G_zz) / max(abs(G_xx),abs(G_yy),abs(G_zz))),'% of max(abs(Gxx),abs(Gyy),abs(Gzz))'
+      write(IMAIN,*) 'Actual sum obtained = ',G_xx(ixr,iyr,ichunkr) + G_yy(ixr,iyr,ichunkr) + G_zz(ixr,iyr,ichunkr)
+      if(max(abs(G_xx(ixr,iyr,ichunkr)),abs(G_yy(ixr,iyr,ichunkr)),abs(G_zz(ixr,iyr,ichunkr))) > TINYVAL) &
+           write(IMAIN,*) ' i.e., ',sngl(100.d0*abs(G_xx(ixr,iyr,ichunkr) + G_yy(ixr,iyr,ichunkr) + G_zz(ixr,iyr,ichunkr)) / &
+                                     max(abs(G_xx(ixr,iyr,ichunkr)),abs(G_yy(ixr,iyr,ichunkr)),abs(G_zz(ixr,iyr,ichunkr)))), &
+                                     '% of max(abs(G_xx),abs(G_yy),abs(G_zz))'
       write(IMAIN,*)
-      write(IMAIN,*) 'computed total Roland_Sylvain integral G_xy = ',G_xy,' Eotvos'
-      write(IMAIN,*) 'computed total Roland_Sylvain integral G_xz = ',G_xz,' Eotvos'
-      write(IMAIN,*) 'computed total Roland_Sylvain integral G_yz = ',G_yz,' Eotvos'
+      write(IMAIN,*) 'computed G_xy = ',G_xy(ixr,iyr,ichunkr),' Eotvos'
+      write(IMAIN,*) 'computed G_xz = ',G_xz(ixr,iyr,ichunkr),' Eotvos'
+      write(IMAIN,*) 'computed G_yz = ',G_yz(ixr,iyr,ichunkr),' Eotvos'
+
+      ! for future GMT display
+      ! loop on all the chunks and then on all the observation nodes in each chunk
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_x_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),g_x(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_y_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),g_y(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_g_z_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),g_z(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_norm_of_g_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval), &
+                             sqrt(g_x(ixval,iyval,ichunkval)**2 + g_y(ixval,iyval,ichunkval)**2 + g_z(ixval,iyval,ichunkval)**2)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_xx_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_xx(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_yy_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_yy(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_zz_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_zz(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_xy_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_xy(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_xz_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_xz(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
+
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/results_G_yz_for_GMT.txt',status='unknown',action='write')
+      do ichunkval = 1,NCHUNKS_MAX
+        do iyval = 1,NY_OBSERVATION
+          do ixval = 1,NX_OBSERVATION
+            write(IOUT,*) lon_observation(ixval,iyval,ichunkval),lat_observation(ixval,iyval,ichunkval),G_yz(ixval,iyval,ichunkval)
+          enddo
+        enddo
+      enddo
+      close(unit=IOUT)
 
     endif
 
@@ -130,10 +333,6 @@
     write(IMAIN,*)
 
     write(IMAIN,*)
-    write(IMAIN,*) 'total number of time steps in the solver will be: ',NSTEP
-    write(IMAIN,*)
-
-    write(IMAIN,*)
     write(IMAIN,*) 'time-stepping of the solver will be: ',DT
     write(IMAIN,*)
 
@@ -147,45 +346,6 @@
     write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
     write(IMAIN,*)
     call flush_IMAIN()
-
-    ! evaluate the amount of static memory needed by the solver
-    call memory_eval(doubling_index,this_region_has_a_doubling, &
-                     ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                     ratio_sampling_array,NPROCTOT, &
-                     NSPEC,NGLOB, &
-                     NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                     NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                     NSPEC_INNER_CORE_ATTENUATION, &
-                     NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                     NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                     NSPEC_CRUST_MANTLE_ADJOINT, &
-                     NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                     NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                     NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                     static_memory_size)
-
-    ! create include file for the solver
-    call save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
-                          NSOURCES, &
-                          static_memory_size, &
-                          NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                          NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                          NSPEC_INNER_CORE_ATTENUATION, &
-                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                          NSPEC_CRUST_MANTLE_ADJOINT, &
-                          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION )
 
   endif   ! end of section executed by main process only
 
