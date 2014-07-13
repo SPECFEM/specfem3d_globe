@@ -42,9 +42,10 @@
                               NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                               NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                               NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal )
+                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
+                              PRINT_INFO_TO_SCREEN)
 
-! daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
+! Daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
 !              for SIMULATION_TYPE == 1 or equal to NSPEC_CRUST_MANTLE for SIMULATION_TYPE == 3 or SAVE_FORWARD set to .true.
 !              the value is determined in routine memory_eval() and passed here as argument.
 !
@@ -60,7 +61,6 @@
 ! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
 ! was compiled with SIMULATION_TYPE == 1
 ! ****************************************************************************************************
-!
 
   use constants
 
@@ -77,14 +77,15 @@
     PARTIAL_PHYS_DISPERSION_ONLY, &
     ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION, &
     ATT1,ATT2,ATT3,ATT4,ATT5, &
-    MOVIE_VOLUME,MOVIE_VOLUME_TYPE
+    MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
+    UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+    this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array
 
   implicit none
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
   integer :: NPROC,NPROCTOT,NT_DUMP_ATTENUATION_optimal
-
 
   ! static memory size needed by the solver
   double precision :: static_memory_size
@@ -120,6 +121,183 @@
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
+
+!! DK DK for UNDO_ATTENUATION
+  integer :: saved_SIMULATION_TYPE
+  integer :: number_of_dumpings_to_do
+  double precision :: static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping
+
+  logical :: PRINT_INFO_TO_SCREEN
+
+! evaluate the amount of static memory needed by the solver
+  call memory_eval(doubling_index,this_region_has_a_doubling, &
+                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                   ratio_sampling_array,NPROCTOT,NSPEC,NGLOB, &
+                   NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                   NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                   NSPEC_INNER_CORE_ATTENUATION, &
+                   NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                   NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                   NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                   NSPEC_CRUST_MANTLE_ADJOINT, &
+                   NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                   NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                   NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                   NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                   NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
+
+  if(PRINT_INFO_TO_SCREEN) then
+
+  print *
+  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see'
+  print *,'some statistics about the mesh'
+  print *
+
+  print *,'number of processors = ',NPROCTOT
+  print *
+  print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+  print *
+  print *,'total elements per slice = ',sum(NSPEC)
+  print *,'total points per slice = ',sum(nglob)
+  print *
+  print *,'the total number of time steps will be NSTEP = ',NSTEP
+  print *,'the time step of the solver will be DT = ',sngl(DT)
+  print *,'the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
+  print *,'                    i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
+  print *
+  if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
+    print *,'MOVIE_VOLUME :',MOVIE_VOLUME
+    print *,'MOVIE_SURFACE:',MOVIE_SURFACE
+    print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
+    print *
+  endif
+  print *,'on NEC SX, make sure "loopcnt=" parameter'
+! use fused loops on NEC SX
+  print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
+  print *
+
+  print *,'approximate static memory needed by the solver:'
+  print *,'----------------------------------------------'
+  print *
+  print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
+  print *
+  print *,'(you can get a more precise estimate of the size used per MPI process'
+  print *,' by typing "size -d bin/xspecfem3D"'
+  print *,' after compiling the code with the DATA/Par_file you plan to use)'
+  print *
+  print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
+  print *,'                                = ',static_memory_size/1048576.d0,' MiB'
+  print *,'                                = ',static_memory_size/1.d9,' GB'
+  print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
+  print *
+
+! note: using less memory becomes an issue only if the strong scaling of the code is poor.
+!          Some users will run simulations with an executable using far less than 80% RAM per core
+!          if they prefer having a faster computational time (and use a higher number of cores).
+
+  print *,'   (should be below 80% or 90% of the memory installed per core)'
+  print *,'   (if significantly more, the job will not run by lack of memory)'
+  print *,'   (note that if significantly less, you waste a significant amount'
+  print *,'    of memory per processor core)'
+  print *,'   (but that can be perfectly acceptable if you can afford it and'
+  print *,'    want faster results by using more cores)'
+  print *
+  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  else
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  endif
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
+  print *
+
+  endif ! of if(PRINT_INFO_TO_SCREEN)
+
+  if(UNDO_ATTENUATION) then
+
+    if(PRINT_INFO_TO_SCREEN) then
+      print *,'*******************************************************************************'
+      print *,'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
+      print *,'*******************************************************************************'
+      print *
+    endif
+
+! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
+! thus set it to that value here in this serial code even if it has a different value in the Par_file
+    saved_SIMULATION_TYPE = SIMULATION_TYPE
+    SIMULATION_TYPE = 3
+
+! evaluate the amount of static memory needed by the solver, but imposing that SIMULATION_TYPE = 3
+! because that is by far the most expensive setup for runs in terms of memory usage, thus that is
+! the type of run for which we need to make sure that everything fits in memory
+    call memory_eval(doubling_index,this_region_has_a_doubling, &
+                     ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                     ratio_sampling_array,NPROCTOT,NSPEC,NGLOB, &
+                     NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                     NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                     NSPEC_INNER_CORE_ATTENUATION, &
+                     NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                     NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                     NSPEC_CRUST_MANTLE_ADJOINT, &
+                     NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                     NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                     NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
+
+    call compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
+                     static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
+
+! restore the simulation type that we have temporarily erased
+    SIMULATION_TYPE = saved_SIMULATION_TYPE
+
+    if(PRINT_INFO_TO_SCREEN) then
+
+    print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
+    print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
+
+    print *
+    print *,'each time step to store in memory to undo attenuation will require storing ', &
+                  size_to_store_at_each_time_step,' GB per core'
+    print *
+    print *,'*******************************************************************************'
+    print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
+    print *,'*******************************************************************************'
+
+    print *
+    print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
+
+    print *
+    print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
+
+    print *
+    print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
+
+    print *
+    print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+
+    print *
+    print *,'*******************************************************************************'
+    print *,'ALL dumpings on the disk will require storing ', &
+                   disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+    print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
+    print *,'*******************************************************************************'
+    print *
+
+    endif
+
+  else
+
+    ! set to a dummy very large value
+    NT_DUMP_ATTENUATION_optimal = 100000000
+
+  endif
 
   ! copy number of elements and points in an include file for the solver
   open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown',iostat=ier)
