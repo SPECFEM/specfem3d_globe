@@ -148,85 +148,80 @@
 
 !! DK DK for UNDO_ATTENUATION
 
-  print *,'*******************************************************************************'
-  print *,'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
-  print *,'*******************************************************************************'
-  print *
+  if(UNDO_ATTENUATION) then
+
+    print *,'*******************************************************************************'
+    print *,'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
+    print *,'*******************************************************************************'
+    print *
 
 ! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
 ! thus set it to that value here in this serial code even if it has a different value in the Par_file
-  saved_SIMULATION_TYPE = SIMULATION_TYPE
-  SIMULATION_TYPE = 3
+    saved_SIMULATION_TYPE = SIMULATION_TYPE
+    SIMULATION_TYPE = 3
 
 ! evaluate the amount of static memory needed by the solver, but imposing that SIMULATION_TYPE = 3
 ! because that is by far the most expensive setup for runs in terms of memory usage, thus that is
 ! the type of run for which we need to make sure that everything fits in memory
-  call memory_eval(doubling_index,this_region_has_a_doubling, &
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   ratio_sampling_array,NPROCTOT, &
-                   NSPEC,NGLOB, &
-                   NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                   NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                   NSPEC_INNER_CORE_ATTENUATION, &
-                   NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                   NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                   NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                   NSPEC_CRUST_MANTLE_ADJOINT, &
-                   NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                   NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                   NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                   NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
-                   NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                   static_memory_size)
+    call memory_eval(doubling_index,this_region_has_a_doubling, &
+                     ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                     ratio_sampling_array,NPROCTOT,NSPEC,NGLOB, &
+                     NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                     NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                     NSPEC_INNER_CORE_ATTENUATION, &
+                     NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                     NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                     NSPEC_CRUST_MANTLE_ADJOINT, &
+                     NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                     NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                     NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
 
-  call compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
-                 static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
+    call compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
+                     static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
 
 ! restore the simulation type that we have temporarily erased
-  SIMULATION_TYPE = saved_SIMULATION_TYPE
+    SIMULATION_TYPE = saved_SIMULATION_TYPE
 
-  print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
-  print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
+    print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
+    print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
 
-  print *
-  print *,'each time step to store in memory to undo attenuation will require storing ', &
-                size_to_store_at_each_time_step,' GB per core'
-  print *
-  print *,'*******************************************************************************'
-  print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
-  print *,'*******************************************************************************'
-
-  print *
-  print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
-
-  print *
-  print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
-
-  print *
-  print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
-
-  print *
-  print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
-
-  print *
-  print *,'*******************************************************************************'
-  print *,'ALL dumpings on the disk will require storing ', &
-                 disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
-  print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
-  print *,'*******************************************************************************'
-  print *
-
-  if(.not. UNDO_ATTENUATION) then
+    print *
+    print *,'each time step to store in memory to undo attenuation will require storing ', &
+                  size_to_store_at_each_time_step,' GB per core'
     print *
     print *,'*******************************************************************************'
-    print *,'BEWARE, UNDO_ATTENUATION is .false. and thus exact undoing of attenuation is currently'
-    print *,'turned off, i.e. the above related estimates are currently UNUSED.'
+    print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
+    print *,'*******************************************************************************'
+
+    print *
+    print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
+
+    print *
+    print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
+
+    print *
+    print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
+
+    print *
+    print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+
+    print *
+    print *,'*******************************************************************************'
+    print *,'ALL dumpings on the disk will require storing ', &
+                   disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+    print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
     print *,'*******************************************************************************'
     print *
+
+  else
 
     ! set to a dummy very large value
     NT_DUMP_ATTENUATION_optimal = 100000000
+
   endif
 
 ! create include file for the solver
