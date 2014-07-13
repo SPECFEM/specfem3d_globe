@@ -95,7 +95,10 @@
   print *,'total elements per slice = ',sum(NSPEC)
   print *,'total points per slice = ',sum(nglob)
   print *
-  print *,'time-stepping of the solver will be: ',DT
+  print *,'the total number of time steps will be NSTEP = ',NSTEP
+  print *,'the time step of the solver will be DT = ',sngl(DT)
+  print *,'the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
+  print *,'                    i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
   print *
   if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
     print *,'MOVIE_VOLUME :',MOVIE_VOLUME
