@@ -1,4 +1,4 @@
-#include <python3.3m/Python.h>
+#include <Python.h>
 
 #include "ocl_helper.h"
 #include "cuda_helper.h"
@@ -33,7 +33,6 @@ static void init_helper(void) {
   PyObject *pDict, *pModule;
   
   Py_Initialize();
-  //PySys_SetPath(LSTR(PYTHON_MOD_PATH));
 
   PyObject *sys_path;
   PyObject *path;
