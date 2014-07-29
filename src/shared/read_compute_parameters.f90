@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine read_compute_parameters()
 
   use constants,only: &
@@ -33,8 +32,7 @@
     SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
     DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    NGLLX,NGLLY,NGLLZ
-
+    NGLLX,NGLLY,NGLLZ,ATTENUATION_1D_WITH_3D_STORAGE
 
   use shared_parameters
 
@@ -121,13 +119,7 @@
     NSTEP = 2*NSTEP-1
   endif
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-  endif
-
-  ! subsets used to save seismograms must not be larger than the whole time series,
-  ! otherwise we waste memory
+  ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
   if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
   ! computes a default hdur_movie that creates nice looking movies.
@@ -306,6 +298,7 @@
   if( UNDO_ATTENUATION .and. NUMBER_OF_RUNS /= 1) &
     stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATTENUATION'
 
+  !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
   if(UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
 
@@ -366,4 +359,110 @@
   endif
 
   end subroutine rcp_check_parameters
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! compute the optimal interval at which to dump restart files to disk to undo attenuation in an exact way
+
+! Dimitri Komatitsch and Zhinan Xie, CNRS Marseille, France, June 2013.
+
+  subroutine compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
+                 static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
+
+  use shared_parameters
+  use constants
+
+  implicit none
+
+  double precision, intent(in) :: static_memory_size
+  integer, intent(out) :: NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do
+  double precision, intent(out) :: static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping
+
+  double precision :: what_we_can_use_in_GB
+
+  if(MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
+       stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
+  if(MEMORY_INSTALLED_PER_CORE_IN_GB > 200.d0) &
+       stop 'more than 200 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
+
+  if(PERCENT_OF_MEM_TO_USE_PER_CORE < 50.d0) &
+       stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
+  if(PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0) &
+       stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE is risky; exiting...'
+
+  what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
+
+! convert static memory size to GB
+  static_memory_size_GB = static_memory_size / 1.d9
+
+!! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
+!! DK DK June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
+!! DK DK June 2014:
+! in the case of GPUs, the buffers remain on the host i.e. on the CPU, thus static_memory_size_GB could be set to zero here
+! because the solver uses almost no permanent host memory, since all calculations are performed and stored on the device;
+! however we prefer not to do that here because we probably have some temporary copies of all the arrays created on the host first,
+! and it is not clear if they are then suppressed when the time loop of the solver starts because static memory allocation
+! is used for big arrays on the host rather than dynamic, thus there is no way of freeing it dynamically.
+! Thus for now we prefer not to set static_memory_size_GB to zero here.
+!
+! if(GPU_MODE) static_memory_size_GB = 0.d0
+
+  if(static_memory_size_GB >= MEMORY_INSTALLED_PER_CORE_IN_GB) &
+    stop 'you are using more memory than what you told us is installed!!! there is an error'
+
+  if(static_memory_size_GB >= what_we_can_use_in_GB) &
+    stop 'you are using more memory than what you allowed us to use!!! there is an error'
+
+! compute the size to store in memory at each time step
+  size_to_store_at_each_time_step = 0
+
+! displ_crust_mantle
+  size_to_store_at_each_time_step = size_to_store_at_each_time_step + dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+
+! displ_inner_core
+  size_to_store_at_each_time_step = size_to_store_at_each_time_step + dble(NDIM)*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+
+! displ_outer_core and accel_outer_core (both being scalar arrays)
+  size_to_store_at_each_time_step = size_to_store_at_each_time_step + 2.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+
+! convert to GB
+  size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
+
+  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step)
+
+! compute the size of files to dump to disk
+  disk_size_of_each_dumping = 0
+
+! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
+  disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+
+! displ_inner_core, veloc_inner_core, accel_inner_core
+  disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+
+! displ_outer_core, veloc_outer_core, accel_outer_core (all scalar arrays)
+  disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+
+! A_array_rotation,B_array_rotation
+  if (ROTATION) disk_size_of_each_dumping = disk_size_of_each_dumping + &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*2.d0*dble(CUSTOM_REAL)
+
+  if (ATTENUATION) then
+! R_memory_crust_mantle
+    disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
+      dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+
+! R_memory_inner_core
+    disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
+      dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+  endif
+
+! convert to GB
+  disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
+
+!! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
+  number_of_dumpings_to_do = nint(NSTEP / dble(NT_DUMP_ATTENUATION_optimal))
+
+  end subroutine compute_optimized_dumping
 

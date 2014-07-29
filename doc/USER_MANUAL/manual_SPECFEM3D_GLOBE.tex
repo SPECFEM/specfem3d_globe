@@ -106,8 +106,11 @@ Version 6.0}
 The SPECFEM3D\_GLOBE package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at Institut de Physique du Globe (IPGP) in Paris, France
 from 1995 to 1997 and then by Dimitri Komatitsch and Jeroen Tromp at Harvard University and Caltech, USA, starting in 1998.
 The story started on March 28, 1995, when Prof. Yvon Maday from CNRS and University of Paris, France, gave a lecture to
-Dimitri Komatitsch and Jean-Pierre Vilotte at IPG about the nice properties of the spectral-element method that he had used for
+Dimitri Komatitsch and Jean-Pierre Vilotte at IPG about the nice properties of the Legendre spectral-element method with diagonal mass matrix that he had used for
 other equations. We are deeply indebted and thankful to him for that.
+That followed a visit by Dimitri Komatitsch to OGS (Istituto Nazionale di Oceanografia e di Geofisica Sperimentale) in Trieste, Italy, in February 1995
+to meet with G\'eza Seriani and Enrico Priolo, who introduced him to their 2D Chebyshev version of the spectral-element method with a non-diagonal mass matrix.
+We are deeply indebted and thankful to them for that.
 
 Since then it has been developed and maintained by a development team: in alphabetical order,
 Ebru Bozda\u{g},
@@ -645,6 +648,12 @@ scheduling policy, which will slow down the job quite a bit.
 Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
 \texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
 
+\section{Becoming a developer of the code, or making small modifications in the source code}
+
+If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem3dglobe/wiki/Using-Hub}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \chapter{\label{cha:Running-the-Mesher}Running the Mesher \texttt{xmeshfem3D}}
 
 You are now ready to compile the mesher. In the directory with the
@@ -865,8 +874,9 @@ Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. 
 As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. en.wikipedia.org/wiki/World\_Geodetic\_System) has $f = 1/298.2572236$.
 %
 \item [{\texttt{TOPOGRAPHY}}] Set to \texttt{.true.} if topography and
-bathymetry should be incorporated based upon model ETOPO5 \citep{Etopo5}.
+bathymetry should be incorporated based upon model ETOPO4 \citep{Etopo5}.
 This feature adds no cost to the simulation.
+It you want to use other topographic models, use the script download\_the\_whole\_topography\_database\_if\_you\_want\_other\_topographic\_models.bash provided in the root directory of the code and change the name of the topographic model to use in file \texttt{setup/constants.h.in} before configuring the code with the \texttt{configure} script.
 \item [{\texttt{GRAVITY}}] Set to \texttt{.true.} if self-gravitation should
 be incorporated in the Cowling approximation \citep{KoTr02b,DaTr98}.
 Turning this feature on is relatively inexpensive, both from the perspective
@@ -2003,6 +2013,22 @@ for traveltime measurements
 xcreate\_adjsrc\_amplitude~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz].
 \end{lyxcode}
 \end{itemize}
+
+For adjoint runs (SIMULATION\_TYPE = 3), the adjoint sources need to be put in the "SEM" sub-directory in the root directory of the code.
+
+If your adjoint source have names of the following form for instance:
+
+STA00.NET.MXZ.sem.ascii.adj
+STA00.NET.MXZ.sem.ascii.adj
+
+you will need to rename them to:
+
+STA00.NET.MXZ.adj
+STA00.NET.MXZ.adj
+
+i.e. suppress ".sem.ascii".
+
+You will also need to create a file called STATIONS\_ADJOINT in the "DATA" directory in the root directory of the code. That file can be identical to the DATA/STATIONS file if you had a single station in STATIONS.
 
 \item \textbf{Run the kernel simulation}
 

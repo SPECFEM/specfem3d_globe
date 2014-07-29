@@ -1,0 +1,46 @@
+----------------------------------------------------------------
+README for the heterogen model
+
+06/11/08
+Laura Alisic, Caltech
+alisic [at] gps [dot] caltech [dot] edu
+----------------------------------------------------------------
+
+
+The option 'heterogen' for the parameter MODEL in the Par_file
+allows the user to read in a density model created by the user. 
+It should be located in this directory, 
+SPECFEM3D_GLOBE/DATA/heterogen/. It uses the subroutine 
+'heterogen_mantle_model.f90'.
+
+The file must be named 'heterogen.dat', and be in
+direct access, formatted form with record length 20. The 
+number of points in radial, longitudinal and latitudinal
+direction has to be specified in 'constants.h.in' (N_R,
+N_THETA, N_PHI).
+NOTE: currently only N_R = N_THETA = N_PHI is supported.
+
+The subroutine then interpolates the value of the density
+anomaly field (which should be the fractional perturbation
+to the background model) onto the locations of the gll points.
+
+In the subroutine 'heterogen_mantle_model.f90', one can 
+specify the radial domain where the anomalous density model
+is applied, using 'r_inner' and 'r_outer' in meters.
+NOTE: currently, r_outer HAS to be < R_EARTH due to the used
+interpolation scheme. r_outer = R_EARTH-1.0 meter works fine.
+
+In 'read_compute_parameters.f90', one can modify the model that
+the heterogeneity model is applied to by changing the flags.
+
+For copying .bin files from the nodes to a local machine, use
+the script 'copy_m_globe_database_dvp.pl' instead of the normal
+script 'copy_m_globe_database.pl'. One can then visualize the
+applied density perturbations with 'xcombine_vol_data' and 
+Paraview. If the .bin output is unwanted, the user can modify
+'save_arrays_solver.f90'.
+
+
+Please email me with any problems or questions!
+
+----------------------------------------------------------------

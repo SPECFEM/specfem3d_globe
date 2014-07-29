@@ -143,6 +143,7 @@
   print *
 
   ! checks options
+  if( it1 < 1 ) stop 'the first time step must be >= 1'
   if( it2 == -1 ) it2 = NSTEP
 
 ! --------------------------------------
@@ -847,6 +848,8 @@
 
   implicit none
 
+  include "OUTPUT_FILES/values_from_mesher.h"
+
   print *
   print *,'reading parameter file'
   print *
@@ -854,10 +857,17 @@
   ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
+!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
+  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
+    if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  endif
+
   ! checks
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
-
-!  if(MOVIE_COARSE) stop 'create_movie_AVS_DX does not work with MOVIE_COARSE'
 
   end subroutine read_AVS_DX_parameters
 

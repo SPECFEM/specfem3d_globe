@@ -1,0 +1,15 @@
+
+From: Dimitri Komatitsch
+
+trick that can be used to easily create weak scaling curves:
+
+- use a single chunk, of size 90 degrees in one of its two directions
+
+- set NEX_XI to the value you want for that size of 90 degrees, and keep it constant for all the weak scaling runs; same thing for NPROC_XI
+
+- then, set the other dimension of the chunk to alpha degrees (alpha is a value you choose), and set NEX_ETA = NEX_XI * (alpha / 90), and set NPROC_ETA = NPROC_XI * (alpha / 90)
+
+and you are all set (make alpha vary to get a bunch of weak scaling points, making sure alpha / 90 gives you integer values for NPROC_ETA and NEX_ETA.
+
+Dimitri.
+

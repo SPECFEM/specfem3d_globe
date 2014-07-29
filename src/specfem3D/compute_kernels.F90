@@ -38,6 +38,9 @@
   ! crust mantle
   call compute_kernels_crust_mantle()
 
+  ! only information to compute the crust_mantle kernels was saved to disk
+  if(EXACT_UNDOING_TO_DISK) return
+
   ! outer core
   call compute_kernels_outer_core(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
               displ_outer_core,accel_outer_core,b_displ_outer_core,b_accel_outer_core, &
@@ -87,6 +90,7 @@
   integer :: i,j,k,ispec,iglob
 
   if( .not. GPU_MODE ) then
+
     ! on CPU
     ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE
@@ -174,6 +178,11 @@
       else
 
         ! isotropic kernels
+
+        ! if EXACT_UNDOING_TO_DISK is set, currently the rho and beta kernels below will be computed but will be equal
+        ! to zero everywhere because the backward field is then not computed, and only the alpha kernel
+        ! will be computed correctly based on the values of the forward run saved to disk in the first run
+        ! and read back at the beginning of this routine
 
         do k = 1, NGLLZ
           do j = 1, NGLLY

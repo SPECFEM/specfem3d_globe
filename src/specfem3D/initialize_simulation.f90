@@ -50,6 +50,15 @@
   if (myrank == 0) then
     ! read the parameter file and compute additional parameters
     call read_compute_parameters()
+
+!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
+!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
+    if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+      NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+      ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
+      if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+    endif
   endif
 
   ! distributes parameters from master to all processes
@@ -353,13 +362,16 @@
     call exit_MPI(myrank,'cannot have both UNDO_ATTENUATION and PARTIAL_PHYS_DISPERSION_ONLY, please check Par_file...')
 
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
-      if(.not. UNDO_ATTENUATION )then
-        if(.not. PARTIAL_PHYS_DISPERSION_ONLY) then
-          call exit_MPI(myrank, &
+      if(.not. EXACT_UNDOING_TO_DISK)then
+        if(.not. UNDO_ATTENUATION )then
+          if(.not. PARTIAL_PHYS_DISPERSION_ONLY) then
+            call exit_MPI(myrank, &
                     'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
+          endif
         endif
       endif
 

@@ -104,8 +104,8 @@
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.dat'
-  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.bin'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin'
 
 !--- ETOPO2 2-minute model
 ! size of topography and bathymetry file
@@ -114,11 +114,11 @@
 ! integer, parameter :: RESOLUTION_TOPO_FILE = 2
 ! pathname of the topography file
 ! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
-!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.dat'
+!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.bin'
 ! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
-!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_smoothed_window_3.dat'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_original_unmodified_unsmoothed.dat'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_smoothed_window_3.dat'
+!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_smoothed_window_3.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_original_unmodified_unsmoothed.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_smoothed_window_3.bin'
 
 !--- ETOPO1 1-minute model
 ! size of topography and bathymetry file
@@ -126,8 +126,8 @@
 ! resolution of topography file in minutes
 ! integer, parameter :: RESOLUTION_TOPO_FILE = 1
 ! pathname of the topography file
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.dat'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.dat'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.bin'
 
 
 ! For the reference ellipsoid to convert geographic latitudes to geocentric:
@@ -265,6 +265,17 @@
 
 !!-----------------------------------------------------------
 !!
+!! for attenuation
+!!
+!!-----------------------------------------------------------
+
+! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
+! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
+  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
+
+
+!!-----------------------------------------------------------
+!!
 !! mesh optimization
 !!
 !!-----------------------------------------------------------
@@ -375,37 +386,10 @@
 
 !!-----------------------------------------------------------
 !!
-!! debugging flags
-!!
-!!-----------------------------------------------------------
-
-! flags to actually assemble with MPI or not
-! and to actually match fluid and solid regions of the Earth or not
-! should always be set to true except when debugging code
-  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_SLICES = .true.
-  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_CHUNKS = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
-
-! flag to turn off the conversion of geographic to geocentric coordinates for
-! the seismic source and the stations; i.e. assume a perfect sphere, which
-! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
-  logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
-
-! flags to do benchmark runs to measure scaling of the code
-! for a limited number of time steps only, setting the initial field to 1
-! to make sure gradual underflow trapping does not slow down the code
-  logical, parameter :: DO_BENCHMARK_RUN_ONLY = .false.
-  integer, parameter :: NSTEP_FOR_BENCHMARK = 300
-  logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
-
-!!-----------------------------------------------------------
-!!
 !! for Roland_Sylvain integrals
 !!
 !!-----------------------------------------------------------
 
-!! DK DK for Roland_Sylvain
   logical, parameter :: ROLAND_SYLVAIN = .false.
 
 ! reuse an existing observation surface created in another run and stored to disk,
@@ -456,6 +440,46 @@
 
 ! for the FORCE_VECTORIZATION 1D version of some loops
   integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
+
+
+!!-----------------------------------------------------------
+!!
+!! debugging flags
+!!
+!!-----------------------------------------------------------
+
+! flags to actually assemble with MPI or not
+! and to actually match fluid and solid regions of the Earth or not
+! should always be set to true except when debugging code
+  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_SLICES = .true.
+  logical, parameter :: ACTUALLY_ASSEMBLE_MPI_CHUNKS = .true.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
+
+! flag to turn off the conversion of geographic to geocentric coordinates for
+! the seismic source and the stations; i.e. assume a perfect sphere, which
+! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
+  logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
+
+! flags to do benchmark runs to measure scaling of the code
+! for a limited number of time steps only, setting the initial field to 1
+! to make sure gradual underflow trapping does not slow down the code
+  logical, parameter :: DO_BENCHMARK_RUN_ONLY = .false.
+  integer, parameter :: NSTEP_FOR_BENCHMARK = 300
+  logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
+
+! compute an alpha sensitivity kernel directly by dumping the whole forward
+! run to disk instead of rebuilding it backwards from the final time step in a second stage;
+! used for debugging and validation purposes only, in order to have an exact reference for the sensitivity kernels.
+! use wisely, this requires several terabytes (yes, tera) of disk space.
+! In the future that option should become standard at some point though.
+! For now, in order to save disk space, it is implemented for the alpha kernel only
+! (because it only requires saving a scalar: the trace of epsilon) and for surface wave
+! kernels only, this way we can save the upper mantle only and ignore the rest.
+! In the future it will be easy to generalize this though.
+  logical, parameter :: EXACT_UNDOING_TO_DISK = .false.
+  ! ID of the huge file in which we dump all the time steps of the simulation
+  integer, parameter :: IFILE_FOR_EXACT_UNDOING = 244
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------

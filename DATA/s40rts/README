@@ -1,0 +1,33 @@
+!--------------------------------------------------------------------------------------------------
+! S40rts
+!
+! 3D mantle model S40RTS [Ritsema et al., 2010]
+!
+! Note that S40RTS uses transversely isotropic PREM as a background
+! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated.
+!--------------------------------------------------------------------------------------------------
+
+comment by Jeroen Ritsema:
+
+"(..)
+I have attached our s40rts model. It is parameterized up to spherical harmonic order 40 but the vertical parametrization is exactly the same as used in s20rts. So, it should be easy to implement it.
+
+Like s20, s40 is referenced to the (anisotropic) prem model and contains only Vs perturbations.
+We use a 0.5 dVs versus drho scaling factor but density is not inverted for.
+For dVp I suggest you use the P12 or P20 model that Jeroen T already has.
+(..)"
+
+
+The 1st line of the sph file is a header: 
+
+            40 11111111111111111111111111111111111111111 24 000111111111111111111111
+
+It indicates that we use angular order 40 and 24 splines of which the first three (for the crust) are zero.
+The floats that follow (line 2 onwards) are the model coeffcients.
+
+
+note:
+  - S40RTS.dat is the same file as s40rts.sph without the header line
+  - the implementation uses S40RTS combined with P12
+
+(december 2010)

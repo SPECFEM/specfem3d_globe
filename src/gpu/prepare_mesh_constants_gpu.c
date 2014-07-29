@@ -3522,7 +3522,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_wgllwgll_xz.ocl);
     clReleaseMemObject (mp->d_wgllwgll_yz.ocl);
     clReleaseMemObject (mp->d_wgll_cube.ocl);
-    
+
     if (mp->simulation_type == 1 || mp->simulation_type == 3) {
       clReleaseMemObject (mp->d_sourcearrays.ocl);
       clReleaseMemObject (mp->d_stf_pre_compute.ocl);

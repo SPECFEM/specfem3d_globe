@@ -1,0 +1,9 @@
+This directory contains files for reading 3D attenuation model QRFSI12, developed by Colleen Dalton, Goran Ekstrom and Adam Dziewonski.
+
+The model is obtained from fundamental mode Rayleigh wave amplitudes and the data are corrected for Focusing, Source and Instrument effects.  It is a degree 12 spherical harmonic model horizontally with 8 cubic B splines in the radial direction.  It includes a 1D reference model (ref_QRFSI12: columns are depth and 1/Qmu) defined in the whole mantle, and a 3D perturbation model QRFSI12.dat defined at depths between 24.4 km and 650km (read by attenuation_model_QRFSI12.f90 in trunk directory).
+
+Please cite the following references if you use this model:
+Dalton, C.A., G. Ekstrom, A.M. Dziewonski
+The global attenuation structure of the upper mantle
+JGR (in press 2008).
+

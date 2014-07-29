@@ -347,8 +347,6 @@
           else
 
           ! do not use transverse isotropy except if element is between d220 and Moho
-!            if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
-
             if( .not. ispec_is_tiso(ispec) ) then
 
               ! isotropic element

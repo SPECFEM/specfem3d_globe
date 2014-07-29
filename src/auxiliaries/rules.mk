@@ -145,7 +145,7 @@ $O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
 ##
 ## auxiliaries
 ##
-$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o
+$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.auxsolver.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
