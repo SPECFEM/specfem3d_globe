@@ -51,6 +51,9 @@
 
   integer :: ixval,iyval,ichunkval
 
+  integer :: NT_DUMP_ATTENUATION_optimal
+  logical, parameter :: PRINT_INFO_TO_SCREEN = .false.
+
   if(ROLAND_SYLVAIN) then
 
     ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
@@ -333,7 +336,10 @@
     write(IMAIN,*)
 
     write(IMAIN,*)
-    write(IMAIN,*) 'time-stepping of the solver will be: ',DT
+    write(IMAIN,*) 'the total number of time steps will be NSTEP = ',NSTEP
+    write(IMAIN,*) 'the time step of the solver will be DT = ',sngl(DT)
+    write(IMAIN,*) 'the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
+    write(IMAIN,*) '                    i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
     write(IMAIN,*)
 
     ! write information about precision used for floating-point operations
@@ -346,6 +352,25 @@
     write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
     write(IMAIN,*)
     call flush_IMAIN()
+
+    ! create include file for the solver
+    call save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
+                          static_memory_size, &
+                          NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                          NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                          NSPEC_INNER_CORE_ATTENUATION, &
+                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                          NSPEC_CRUST_MANTLE_ADJOINT, &
+                          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
+                          PRINT_INFO_TO_SCREEN)
 
   endif   ! end of section executed by main process only
 

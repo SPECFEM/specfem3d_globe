@@ -1,0 +1,17 @@
+
+For adjoint runs (SIMULATION_TYPE = 3), the adjoint sources need to be put in the "SEM" sub-directory in the root directory of the code.
+
+If your adjoint source have names of the following form for instance:
+
+STA00.NET.MXZ.sem.ascii.adj
+STA00.NET.MXZ.sem.ascii.adj
+
+you will need to rename them to:
+
+STA00.NET.MXZ.adj
+STA00.NET.MXZ.adj
+
+i.e. suppress ".sem.ascii".
+
+You will also need to create a file called STATIONS_ADJOINT in the "DATA" directory in the root directory of the code. That file can be identical to the DATA/STATIONS file if you had a single station in STATIONS.
+

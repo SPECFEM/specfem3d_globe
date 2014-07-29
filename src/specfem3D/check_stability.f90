@@ -225,7 +225,7 @@
     endif
 
     write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
     if (SHOW_SEPARATE_RUN_INFORMATION) then
@@ -239,11 +239,11 @@
     endif
 
     write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
-    write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+    write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_remain,iminutes_remain,iseconds_remain
 
     write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
-    write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+    write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_total,iminutes_total,iseconds_total
     write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
@@ -468,7 +468,7 @@
     write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
 
     write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
     if (SHOW_SEPARATE_RUN_INFORMATION) then
@@ -574,7 +574,7 @@
   endif
 
   write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-  write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+  write(IOUT,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
   write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
   write(IOUT,*)
 
@@ -590,12 +590,12 @@
   endif
 
   write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-  write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+  write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
            ihours_remain,iminutes_remain,iseconds_remain
   write(IOUT,*)
 
   write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-  write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+  write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
            ihours_total,iminutes_total,iseconds_total
   write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
   write(IOUT,*)
@@ -662,7 +662,7 @@
     iseconds = int_tCPU - 3600*ihours - 60*iminutes
     write(IMAIN,*) 'Time-Loop Complete. Timing info:'
     write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     call flush_IMAIN()
   endif
 
