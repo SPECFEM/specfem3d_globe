@@ -71,20 +71,20 @@ __global__ void compute_coupling_fluid_CMB_kernel(const float * displ_crust_mant
   j = threadIdx.y;
   iface = blockIdx.x + (gridDim.x) * (blockIdx.y);
   if(iface < NSPEC2D_TOP_OC){
-    ispec = ibelm_top_outer_core[iface - 0] - (1);
-    ispec_selected = ibelm_bottom_crust_mantle[iface - 0] - (1);
+    ispec = ibelm_top_outer_core[iface - (0)] - (1);
+    ispec_selected = ibelm_bottom_crust_mantle[iface - (0)] - (1);
     k = NGLLX - (1);
     k_corresp = 0;
-    iglob_cm = ibool_crust_mantle[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - 0] - (1);
-    displ_x = displ_crust_mantle[(iglob_cm) * (3) + 0 - 0];
-    displ_y = displ_crust_mantle[(iglob_cm) * (3) + 1 - 0];
-    displ_z = displ_crust_mantle[(iglob_cm) * (3) + 2 - 0];
-    nx = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - 0];
-    ny = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - 0];
-    nz = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - 0];
+    iglob_cm = ibool_crust_mantle[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - (0)] - (1);
+    displ_x = displ_crust_mantle[(iglob_cm) * (3) + 0 - (0)];
+    displ_y = displ_crust_mantle[(iglob_cm) * (3) + 1 - (0)];
+    displ_z = displ_crust_mantle[(iglob_cm) * (3) + 2 - (0)];
+    nx = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - (0)];
+    ny = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - (0)];
+    nz = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];
     displ_n = (displ_x) * (nx) + (displ_y) * (ny) + (displ_z) * (nz);
-    weight = (jacobian2D_top_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - 0]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - 0]);
-    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
+    weight = (jacobian2D_top_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
     atomicAdd(accel_outer_core + iglob_oc, (weight) * (displ_n));
   }
 }
