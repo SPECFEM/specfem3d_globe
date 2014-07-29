@@ -67,10 +67,10 @@ __kernel void assemble_boundary_potential_on_device(__global float * d_potential
   int iinterface;\n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
   for(iinterface=0; iinterface<=num_interfaces - (1); iinterface+=1){\n\
-    if(id < d_nibool_interfaces[iinterface - 0]){\n\
+    if(id < d_nibool_interfaces[iinterface - (0)]){\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\
-      iglob = d_ibool_interfaces[iloc - 0] - (1);\n\
-      atomicAdd(d_potential_dot_dot_acoustic + iglob, d_send_potential_dot_dot_buffer[iloc - 0]);\n\
+      iglob = d_ibool_interfaces[iloc - (0)] - (1);\n\
+      atomicAdd(d_potential_dot_dot_acoustic + iglob, d_send_potential_dot_dot_buffer[iloc - (0)]);\n\
     }\n\
   }\n\
 }\n\

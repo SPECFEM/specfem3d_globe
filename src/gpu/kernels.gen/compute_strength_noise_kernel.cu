@@ -61,14 +61,14 @@ __global__ void compute_strength_noise_kernel(const float * displ, const int * i
   float eta;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if(iface < nspec_top){
-    ispec = ibelm_top[iface - 0] - (1);
+    ispec = ibelm_top[iface - (0)] - (1);
     igll = threadIdx.x;
     ipoin = igll + (NGLL2) * (iface);
     k = NGLLX - (1);
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
-    eta = (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0]) * (normal_x_noise[ipoin - 0]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0]) * (normal_y_noise[ipoin - 0]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0]) * (normal_z_noise[ipoin - 0]);
-    Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] = Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] + ((deltat) * (eta)) * ((normal_x_noise[ipoin - 0]) * (displ[0 - 0 + (iglob - (0)) * (3)]) + (normal_y_noise[ipoin - 0]) * (displ[1 - 0 + (iglob - (0)) * (3)]) + (normal_z_noise[ipoin - 0]) * (displ[2 - 0 + (iglob - (0)) * (3)]));
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+    eta = (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]) * (normal_x_noise[ipoin - (0)]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]) * (normal_y_noise[ipoin - (0)]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]) * (normal_z_noise[ipoin - (0)]);
+    Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] = Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] + ((deltat) * (eta)) * ((normal_x_noise[ipoin - (0)]) * (displ[0 - (0) + (iglob - (0)) * (3)]) + (normal_y_noise[ipoin - (0)]) * (displ[1 - (0) + (iglob - (0)) * (3)]) + (normal_z_noise[ipoin - (0)]) * (displ[2 - (0) + (iglob - (0)) * (3)]));
   }
 }

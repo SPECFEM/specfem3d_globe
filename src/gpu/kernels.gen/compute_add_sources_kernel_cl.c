@@ -75,13 +75,13 @@ __kernel void compute_add_sources_kernel(__global float * accel, const __global 
   k = get_local_id(2);\n\
   isource = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
   if(isource < NSOURCES){\n\
-    if(myrank == islice_selected_source[isource - 0]){\n\
-      ispec = ispec_selected_source[isource - 0] - (1);\n\
-      stf = stf_pre_compute[isource - 0];\n\
-      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
-      atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource) - 0]) * (stf));\n\
-      atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource) - 0]) * (stf));\n\
-      atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource) - 0]) * (stf));\n\
+    if(myrank == islice_selected_source[isource - (0)]){\n\
+      ispec = ispec_selected_source[isource - (0)] - (1);\n\
+      stf = stf_pre_compute[isource - (0)];\n\
+      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+      atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource) - (0)]) * (stf));\n\
+      atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource) - (0)]) * (stf));\n\
+      atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource) - (0)]) * (stf));\n\
     }\n\
   }\n\
 }\n\

@@ -71,14 +71,14 @@ __kernel void noise_transfer_surface_to_host_kernel(const __global int * ibelm_t
     int k;\n\
     int ispec;\n\
     int iglob;\n\
-    ispec = ibelm_top[iface - 0] - (1);\n\
+    ispec = ibelm_top[iface - (0)] - (1);\n\
     k = NGLLX - (1);\n\
     j = (igll) / (NGLLX);\n\
     i = igll - ((j) * (NGLLX));\n\
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0] = displ[(iglob) * (3) - 0];\n\
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0] = displ[(iglob) * (3) - 0];\n\
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0] = displ[(iglob) * (3) - 0];\n\
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)] = displ[(iglob) * (3) - (0)];\n\
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)] = displ[(iglob) * (3) - (0)];\n\
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)] = displ[(iglob) * (3) - (0)];\n\
   }\n\
 }\n\
 ";

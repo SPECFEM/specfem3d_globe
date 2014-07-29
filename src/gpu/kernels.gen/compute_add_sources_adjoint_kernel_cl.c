@@ -70,15 +70,15 @@ __kernel void compute_add_sources_adjoint_kernel(__global float * accel, const i
   int k;\n\
   irec_local = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
   if(irec_local < nadj_rec_local){\n\
-    irec = pre_computed_irec[irec_local - 0];\n\
-    ispec = ispec_selected_rec[irec - 0] - (1);\n\
+    irec = pre_computed_irec[irec_local - (0)];\n\
+    ispec = ispec_selected_rec[irec - (0)] - (1);\n\
     i = get_local_id(0);\n\
     j = get_local_id(1);\n\
     k = get_local_id(2);\n\
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
-    atomicAdd(accel + (iglob) * (3) + 0, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, irec_local) - 0]);\n\
-    atomicAdd(accel + (iglob) * (3) + 1, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, irec_local) - 0]);\n\
-    atomicAdd(accel + (iglob) * (3) + 2, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, irec_local) - 0]);\n\
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+    atomicAdd(accel + (iglob) * (3) + 0, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, irec_local) - (0)]);\n\
+    atomicAdd(accel + (iglob) * (3) + 1, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, irec_local) - (0)]);\n\
+    atomicAdd(accel + (iglob) * (3) + 2, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, irec_local) - (0)]);\n\
   }\n\
 }\n\
 ";

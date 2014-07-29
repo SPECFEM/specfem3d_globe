@@ -69,12 +69,12 @@ __kernel void write_seismograms_transfer_from_device_kernel(const __global int *
   blockID = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   tx = get_local_id(0);\n\
   if(blockID < nrec_local){\n\
-    irec = number_receiver_global[blockID - 0] - (1);\n\
-    ispec = ispec_selected_rec[irec - 0] - (1);\n\
-    iglob = ibool[tx + (NGLL3) * (ispec) - 0] - (1);\n\
-    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 0 - 0] = d_field[(iglob) * (3) + 0 - 0];\n\
-    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 1 - 0] = d_field[(iglob) * (3) + 1 - 0];\n\
-    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 2 - 0] = d_field[(iglob) * (3) + 2 - 0];\n\
+    irec = number_receiver_global[blockID - (0)] - (1);\n\
+    ispec = ispec_selected_rec[irec - (0)] - (1);\n\
+    iglob = ibool[tx + (NGLL3) * (ispec) - (0)] - (1);\n\
+    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 0 - (0)] = d_field[(iglob) * (3) + 0 - (0)];\n\
+    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 1 - (0)] = d_field[(iglob) * (3) + 1 - (0)];\n\
+    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 2 - (0)] = d_field[(iglob) * (3) + 2 - (0)];\n\
   }\n\
 }\n\
 ";

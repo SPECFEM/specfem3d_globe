@@ -156,7 +156,7 @@ module BOAST
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")
-        l = Int("l")
+        decl l = Int("l")
         decl active = Int("active", :size => 2, :signed => false)
         decl offset = Int("offset"), iglob = Int("iglob")
         decl working_element = Int("working_element")
@@ -237,7 +237,6 @@ module BOAST
           @@output.puts "#ifdef #{manually_unrolled_loops}"
             for_loop.unroll
           @@output.puts "#else"
-            decl l
             print for_loop
           @@output.puts "#endif"
           print offset === working_element*ngll3_padded + tx

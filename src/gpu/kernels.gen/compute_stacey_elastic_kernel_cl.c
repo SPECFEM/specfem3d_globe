@@ -85,91 +85,91 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if(iface < num_abs_boundary_faces){\n\
-    ispec = abs_boundary_ispec[iface - 0] - (1);\n\
+    ispec = abs_boundary_ispec[iface - (0)] - (1);\n\
     switch(interface_type){\n\
       case 0 :\n\
-        if(nkmin_xi[INDEX2(2, 0, iface) - 0] == 0 || njmin[INDEX2(2, 0, iface) - 0] == 0){\n\
+        if(nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         i = 0;\n\
         k = (igll) / (NGLLX);\n\
         j = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_xi[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(j < njmin[INDEX2(2, 0, iface) - 0] - (1) || j > NGLLX - (1)){\n\
+        if(j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        fac1 = wgllwgll[(k) * (NGLLX) + j - 0];\n\
+        fac1 = wgllwgll[(k) * (NGLLX) + j - (0)];\n\
         break;\n\
       case 1 :\n\
-        if(nkmin_xi[INDEX2(2, 1, iface) - 0] == 0 || njmin[INDEX2(2, 1, iface) - 0] == 0){\n\
+        if(nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         i = NGLLX - (1);\n\
         k = (igll) / (NGLLX);\n\
         j = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_xi[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(j < njmin[INDEX2(2, 1, iface) - 0] - (1) || j > njmax[INDEX2(2, 1, iface) - 0] - (1)){\n\
+        if(j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)){\n\
            return ;\n\
         }\n\
-        fac1 = wgllwgll[(k) * (NGLLX) + j - 0];\n\
+        fac1 = wgllwgll[(k) * (NGLLX) + j - (0)];\n\
         break;\n\
       case 2 :\n\
-        if(nkmin_eta[INDEX2(2, 0, iface) - 0] == 0 || nimin[INDEX2(2, 0, iface) - 0] == 0){\n\
+        if(nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         j = 0;\n\
         k = (igll) / (NGLLX);\n\
         i = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_eta[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(i < nimin[INDEX2(2, 0, iface) - 0] - (1) || i > nimax[INDEX2(2, 0, iface) - 0] - (1)){\n\
+        if(i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)){\n\
            return ;\n\
         }\n\
-        fac1 = wgllwgll[(k) * (NGLLX) + i - 0];\n\
+        fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];\n\
         break;\n\
       case 3 :\n\
-        if(nkmin_eta[INDEX2(2, 1, iface) - 0] == 0 || nimin[INDEX2(2, 1, iface) - 0] == 0){\n\
+        if(nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         j = NGLLX - (1);\n\
         k = (igll) / (NGLLX);\n\
         i = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_eta[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(i < nimin[INDEX2(2, 1, iface) - 0] - (1) || i > nimax[INDEX2(2, 1, iface) - 0] - (1)){\n\
+        if(i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)){\n\
            return ;\n\
         }\n\
-        fac1 = wgllwgll[(k) * (NGLLX) + i - 0];\n\
+        fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];\n\
         break;\n\
       }\n\
   }\n\
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
-  vx = veloc[(iglob) * (3) + 0 - 0];\n\
-  vy = veloc[(iglob) * (3) + 1 - 0];\n\
-  vz = veloc[(iglob) * (3) + 2 - 0];\n\
-  nx = abs_boundary_normal[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0];\n\
-  ny = abs_boundary_normal[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0];\n\
-  nz = abs_boundary_normal[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0];\n\
+  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+  vx = veloc[(iglob) * (3) + 0 - (0)];\n\
+  vy = veloc[(iglob) * (3) + 1 - (0)];\n\
+  vz = veloc[(iglob) * (3) + 2 - (0)];\n\
+  nx = abs_boundary_normal[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)];\n\
+  ny = abs_boundary_normal[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)];\n\
+  nz = abs_boundary_normal[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)];\n\
   vn = (vx) * (nx) + (vy) * (ny) + (vz) * (nz);\n\
-  rho_vp_temp = rho_vp[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0];\n\
-  rho_vs_temp = rho_vs[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0];\n\
+  rho_vp_temp = rho_vp[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];\n\
+  rho_vs_temp = rho_vs[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];\n\
   tx = ((rho_vp_temp) * (vn)) * (nx) + (rho_vs_temp) * (vx - ((vn) * (nx)));\n\
   ty = ((rho_vp_temp) * (vn)) * (ny) + (rho_vs_temp) * (vy - ((vn) * (ny)));\n\
   tz = ((rho_vp_temp) * (vn)) * (nz) + (rho_vs_temp) * (vz - ((vn) * (nz)));\n\
-  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - 0]) * (fac1);\n\
+  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);\n\
   atomicAdd(accel + (iglob) * (3) + 0, ( -(tx)) * (jacobianw));\n\
   atomicAdd(accel + (iglob) * (3) + 1, ( -(ty)) * (jacobianw));\n\
   atomicAdd(accel + (iglob) * (3) + 2, ( -(tz)) * (jacobianw));\n\
   if(SAVE_FORWARD){\n\
-    b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0] = (tx) * (jacobianw);\n\
-    b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0] = (ty) * (jacobianw);\n\
-    b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0] = (tz) * (jacobianw);\n\
+    b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)] = (tx) * (jacobianw);\n\
+    b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)] = (ty) * (jacobianw);\n\
+    b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)] = (tz) * (jacobianw);\n\
   }\n\
 }\n\
 ";
