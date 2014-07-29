@@ -53,6 +53,6 @@ __global__ void update_accel_acoustic_kernel(float * accel, const int size, cons
   int id;
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
   if(id < size){
-    accel[id - 0] = (accel[id - 0]) * (rmass[id - 0]);
+    accel[id - (0)] = (accel[id - (0)]) * (rmass[id - (0)]);
   }
 }

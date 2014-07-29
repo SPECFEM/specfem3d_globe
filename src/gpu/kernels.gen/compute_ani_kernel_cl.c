@@ -66,29 +66,29 @@ void compute_strain_product(float * prod, const float eps_trace_over_3, const fl
   int p;\n\
   int i;\n\
   int j;\n\
-  eps[0 - 0] = epsdev[0 - 0] + eps_trace_over_3;\n\
-  eps[1 - 0] = epsdev[1 - 0] + eps_trace_over_3;\n\
-  eps[2 - 0] =  -(eps[0 - 0] + eps[1 - 0]) + (eps_trace_over_3) * (3.0f);\n\
-  eps[3 - 0] = epsdev[4 - 0];\n\
-  eps[4 - 0] = epsdev[3 - 0];\n\
-  eps[5 - 0] = epsdev[2 - 0];\n\
-  b_eps[0 - 0] = b_epsdev[0 - 0] + b_eps_trace_over_3;\n\
-  b_eps[1 - 0] = b_epsdev[1 - 0] + b_eps_trace_over_3;\n\
-  b_eps[2 - 0] =  -(b_eps[0 - 0] + b_eps[1 - 0]) + (b_eps_trace_over_3) * (3.0f);\n\
-  b_eps[3 - 0] = b_epsdev[4 - 0];\n\
-  b_eps[4 - 0] = b_epsdev[3 - 0];\n\
-  b_eps[5 - 0] = b_epsdev[2 - 0];\n\
+  eps[0 - (0)] = epsdev[0 - (0)] + eps_trace_over_3;\n\
+  eps[1 - (0)] = epsdev[1 - (0)] + eps_trace_over_3;\n\
+  eps[2 - (0)] =  -(eps[0 - (0)] + eps[1 - (0)]) + (eps_trace_over_3) * (3.0f);\n\
+  eps[3 - (0)] = epsdev[4 - (0)];\n\
+  eps[4 - (0)] = epsdev[3 - (0)];\n\
+  eps[5 - (0)] = epsdev[2 - (0)];\n\
+  b_eps[0 - (0)] = b_epsdev[0 - (0)] + b_eps_trace_over_3;\n\
+  b_eps[1 - (0)] = b_epsdev[1 - (0)] + b_eps_trace_over_3;\n\
+  b_eps[2 - (0)] =  -(b_eps[0 - (0)] + b_eps[1 - (0)]) + (b_eps_trace_over_3) * (3.0f);\n\
+  b_eps[3 - (0)] = b_epsdev[4 - (0)];\n\
+  b_eps[4 - (0)] = b_epsdev[3 - (0)];\n\
+  b_eps[5 - (0)] = b_epsdev[2 - (0)];\n\
   p = 0;\n\
   for(i=0; i<=5; i+=1){\n\
     for(j=0; j<=5; j+=1){\n\
-      prod[p - 0] = (eps[i - 0]) * (b_eps[j - 0]);\n\
+      prod[p - (0)] = (eps[i - (0)]) * (b_eps[j - (0)]);\n\
       if(j > i){\n\
-        prod[p - 0] = prod[p - 0] + (eps[j - 0]) * (b_eps[i - 0]);\n\
+        prod[p - (0)] = prod[p - (0)] + (eps[j - (0)]) * (b_eps[i - (0)]);\n\
         if(j > 2 && i < 3){\n\
-          prod[p - 0] = (prod[p - 0]) * (2.0f);\n\
+          prod[p - (0)] = (prod[p - (0)]) * (2.0f);\n\
         }\n\
         if(i > 2){\n\
-          prod[p - 0] = (prod[p - 0]) * (4.0f);\n\
+          prod[p - (0)] = (prod[p - (0)]) * (4.0f);\n\
         }\n\
         p = p + 1;\n\
       }\n\
@@ -107,21 +107,21 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if(ispec < NSPEC){\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
-    epsdev[0 - 0] = epsilondev_xx[ijk_ispec - 0];\n\
-    epsdev[1 - 0] = epsilondev_yy[ijk_ispec - 0];\n\
-    epsdev[2 - 0] = epsilondev_xy[ijk_ispec - 0];\n\
-    epsdev[3 - 0] = epsilondev_xz[ijk_ispec - 0];\n\
-    epsdev[4 - 0] = epsilondev_yz[ijk_ispec - 0];\n\
-    epsdev[0 - 0] = b_epsilondev_xx[ijk_ispec - 0];\n\
-    epsdev[1 - 0] = b_epsilondev_yy[ijk_ispec - 0];\n\
-    epsdev[2 - 0] = b_epsilondev_xy[ijk_ispec - 0];\n\
-    epsdev[3 - 0] = b_epsilondev_xz[ijk_ispec - 0];\n\
-    epsdev[4 - 0] = b_epsilondev_yz[ijk_ispec - 0];\n\
-    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - 0];\n\
-    b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec - 0];\n\
+    epsdev[0 - (0)] = epsilondev_xx[ijk_ispec - (0)];\n\
+    epsdev[1 - (0)] = epsilondev_yy[ijk_ispec - (0)];\n\
+    epsdev[2 - (0)] = epsilondev_xy[ijk_ispec - (0)];\n\
+    epsdev[3 - (0)] = epsilondev_xz[ijk_ispec - (0)];\n\
+    epsdev[4 - (0)] = epsilondev_yz[ijk_ispec - (0)];\n\
+    epsdev[0 - (0)] = b_epsilondev_xx[ijk_ispec - (0)];\n\
+    epsdev[1 - (0)] = b_epsilondev_yy[ijk_ispec - (0)];\n\
+    epsdev[2 - (0)] = b_epsilondev_xy[ijk_ispec - (0)];\n\
+    epsdev[3 - (0)] = b_epsilondev_xz[ijk_ispec - (0)];\n\
+    epsdev[4 - (0)] = b_epsilondev_yz[ijk_ispec - (0)];\n\
+    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - (0)];\n\
+    b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec - (0)];\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
     for(i=0; i<=20; i+=1){\n\
-      cijkl_kl[i - 0 + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - 0 + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - 0]);\n\
+      cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - (0)]);\n\
     }\n\
   }\n\
 }\n\

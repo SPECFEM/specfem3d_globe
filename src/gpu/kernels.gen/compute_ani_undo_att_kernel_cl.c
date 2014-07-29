@@ -112,29 +112,29 @@ void compute_element_strain_undo_att(const int ispec, const int ijk_ispec, const
   tempz2l = 0.0f;\n\
   tempz3l = 0.0f;\n\
   for(l=0; l<=NGLLX - (1); l+=1){\n\
-    fac1 = sh_hprime_xx[(l) * (NGLLX) + I - 0];\n\
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);\n\
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);\n\
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);\n\
-    fac2 = sh_hprime_xx[(l) * (NGLLX) + J - 0];\n\
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (fac2);\n\
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (fac2);\n\
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (fac2);\n\
-    fac3 = sh_hprime_xx[(l) * (NGLLX) + K - 0];\n\
-    tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);\n\
-    tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);\n\
-    tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(l) * (NGLLX) + I - (0)];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(l) * (NGLLX) + J - (0)];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(l) * (NGLLX) + K - (0)];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
   }\n\
   offset = (ispec) * (NGLL3_PADDED) + tx;\n\
-  xixl = d_xix[offset - 0];\n\
-  etaxl = d_etax[offset - 0];\n\
-  gammaxl = d_gammax[offset - 0];\n\
-  xiyl = d_xiy[offset - 0];\n\
-  etayl = d_etay[offset - 0];\n\
-  gammayl = d_gammay[offset - 0];\n\
-  xizl = d_xiz[offset - 0];\n\
-  etazl = d_etaz[offset - 0];\n\
-  gammazl = d_gammaz[offset - 0];\n\
+  xixl = d_xix[offset - (0)];\n\
+  etaxl = d_etax[offset - (0)];\n\
+  gammaxl = d_gammax[offset - (0)];\n\
+  xiyl = d_xiy[offset - (0)];\n\
+  etayl = d_etay[offset - (0)];\n\
+  gammayl = d_gammay[offset - (0)];\n\
+  xizl = d_xiz[offset - (0)];\n\
+  etazl = d_etaz[offset - (0)];\n\
+  gammazl = d_gammaz[offset - (0)];\n\
   duxdxl = (xixl) * (tempx1l) + (etaxl) * (tempx2l) + (gammaxl) * (tempx3l);\n\
   duxdyl = (xiyl) * (tempx1l) + (etayl) * (tempx2l) + (gammayl) * (tempx3l);\n\
   duxdzl = (xizl) * (tempx1l) + (etazl) * (tempx2l) + (gammazl) * (tempx3l);\n\
@@ -145,11 +145,11 @@ void compute_element_strain_undo_att(const int ispec, const int ijk_ispec, const
   duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);\n\
   duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);\n\
   templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);\n\
-  epsilondev_loc[0 - 0] = duxdxl - (templ);\n\
-  epsilondev_loc[1 - 0] = duydyl - (templ);\n\
-  epsilondev_loc[2 - 0] = (duxdyl + duydxl) * (0.5f);\n\
-  epsilondev_loc[3 - 0] = (duzdxl + duxdzl) * (0.5f);\n\
-  epsilondev_loc[4 - 0] = (duzdyl + duydzl) * (0.5f);\n\
+  epsilondev_loc[0 - (0)] = duxdxl - (templ);\n\
+  epsilondev_loc[1 - (0)] = duydyl - (templ);\n\
+  epsilondev_loc[2 - (0)] = (duxdyl + duydxl) * (0.5f);\n\
+  epsilondev_loc[3 - (0)] = (duzdxl + duxdzl) * (0.5f);\n\
+  epsilondev_loc[4 - (0)] = (duzdyl + duydzl) * (0.5f);\n\
   *(epsilon_trace_over_3) = templ;\n\
 }\n\
 void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
@@ -158,29 +158,29 @@ void compute_strain_product(float * prod, const float eps_trace_over_3, const fl
   int p;\n\
   int i;\n\
   int j;\n\
-  eps[0 - 0] = epsdev[0 - 0] + eps_trace_over_3;\n\
-  eps[1 - 0] = epsdev[1 - 0] + eps_trace_over_3;\n\
-  eps[2 - 0] =  -(eps[0 - 0] + eps[1 - 0]) + (eps_trace_over_3) * (3.0f);\n\
-  eps[3 - 0] = epsdev[4 - 0];\n\
-  eps[4 - 0] = epsdev[3 - 0];\n\
-  eps[5 - 0] = epsdev[2 - 0];\n\
-  b_eps[0 - 0] = b_epsdev[0 - 0] + b_eps_trace_over_3;\n\
-  b_eps[1 - 0] = b_epsdev[1 - 0] + b_eps_trace_over_3;\n\
-  b_eps[2 - 0] =  -(b_eps[0 - 0] + b_eps[1 - 0]) + (b_eps_trace_over_3) * (3.0f);\n\
-  b_eps[3 - 0] = b_epsdev[4 - 0];\n\
-  b_eps[4 - 0] = b_epsdev[3 - 0];\n\
-  b_eps[5 - 0] = b_epsdev[2 - 0];\n\
+  eps[0 - (0)] = epsdev[0 - (0)] + eps_trace_over_3;\n\
+  eps[1 - (0)] = epsdev[1 - (0)] + eps_trace_over_3;\n\
+  eps[2 - (0)] =  -(eps[0 - (0)] + eps[1 - (0)]) + (eps_trace_over_3) * (3.0f);\n\
+  eps[3 - (0)] = epsdev[4 - (0)];\n\
+  eps[4 - (0)] = epsdev[3 - (0)];\n\
+  eps[5 - (0)] = epsdev[2 - (0)];\n\
+  b_eps[0 - (0)] = b_epsdev[0 - (0)] + b_eps_trace_over_3;\n\
+  b_eps[1 - (0)] = b_epsdev[1 - (0)] + b_eps_trace_over_3;\n\
+  b_eps[2 - (0)] =  -(b_eps[0 - (0)] + b_eps[1 - (0)]) + (b_eps_trace_over_3) * (3.0f);\n\
+  b_eps[3 - (0)] = b_epsdev[4 - (0)];\n\
+  b_eps[4 - (0)] = b_epsdev[3 - (0)];\n\
+  b_eps[5 - (0)] = b_epsdev[2 - (0)];\n\
   p = 0;\n\
   for(i=0; i<=5; i+=1){\n\
     for(j=0; j<=5; j+=1){\n\
-      prod[p - 0] = (eps[i - 0]) * (b_eps[j - 0]);\n\
+      prod[p - (0)] = (eps[i - (0)]) * (b_eps[j - (0)]);\n\
       if(j > i){\n\
-        prod[p - 0] = prod[p - 0] + (eps[j - 0]) * (b_eps[i - 0]);\n\
+        prod[p - (0)] = prod[p - (0)] + (eps[j - (0)]) * (b_eps[i - (0)]);\n\
         if(j > 2 && i < 3){\n\
-          prod[p - 0] = (prod[p - 0]) * (2.0f);\n\
+          prod[p - (0)] = (prod[p - (0)]) * (2.0f);\n\
         }\n\
         if(i > 2){\n\
-          prod[p - 0] = (prod[p - 0]) * (4.0f);\n\
+          prod[p - (0)] = (prod[p - (0)]) * (4.0f);\n\
         }\n\
         p = p + 1;\n\
       }\n\
@@ -206,26 +206,26 @@ __kernel void compute_ani_undo_att_kernel(const __global float * epsilondev_xx, 
   ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
   tx = get_local_id(0);\n\
   if(tx < NGLL2){\n\
-    sh_hprime_xx[tx - 0] = d_hprime_xx[tx - 0];\n\
+    sh_hprime_xx[tx - (0)] = d_hprime_xx[tx - (0)];\n\
   }\n\
   if(ispec < NSPEC){\n\
-    iglob = d_ibool[ijk_ispec - 0] - (1);\n\
-    s_dummyx_loc[tx - 0] = d_b_displ[0 - 0 + (iglob - (0)) * (3)];\n\
-    s_dummyy_loc[tx - 0] = d_b_displ[1 - 0 + (iglob - (0)) * (3)];\n\
-    s_dummyz_loc[tx - 0] = d_b_displ[2 - 0 + (iglob - (0)) * (3)];\n\
+    iglob = d_ibool[ijk_ispec - (0)] - (1);\n\
+    s_dummyx_loc[tx - (0)] = d_b_displ[0 - (0) + (iglob - (0)) * (3)];\n\
+    s_dummyy_loc[tx - (0)] = d_b_displ[1 - (0) + (iglob - (0)) * (3)];\n\
+    s_dummyz_loc[tx - (0)] = d_b_displ[2 - (0) + (iglob - (0)) * (3)];\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
   if(ispec < NSPEC){\n\
-    epsdev[0 - 0] = epsilondev_xx[ijk_ispec - 0];\n\
-    epsdev[1 - 0] = epsilondev_yy[ijk_ispec - 0];\n\
-    epsdev[2 - 0] = epsilondev_xy[ijk_ispec - 0];\n\
-    epsdev[3 - 0] = epsilondev_xz[ijk_ispec - 0];\n\
-    epsdev[4 - 0] = epsilondev_yz[ijk_ispec - 0];\n\
-    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - 0];\n\
+    epsdev[0 - (0)] = epsilondev_xx[ijk_ispec - (0)];\n\
+    epsdev[1 - (0)] = epsilondev_yy[ijk_ispec - (0)];\n\
+    epsdev[2 - (0)] = epsilondev_xy[ijk_ispec - (0)];\n\
+    epsdev[3 - (0)] = epsilondev_xz[ijk_ispec - (0)];\n\
+    epsdev[4 - (0)] = epsilondev_yz[ijk_ispec - (0)];\n\
+    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - (0)];\n\
     compute_element_strain_undo_att(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
     for(i=0; i<=20; i+=1){\n\
-      cijkl_kl[i - 0 + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - 0 + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - 0]);\n\
+      cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - (0)]);\n\
     }\n\
   }\n\
 }\n\

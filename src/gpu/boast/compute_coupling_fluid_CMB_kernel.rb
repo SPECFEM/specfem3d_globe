@@ -41,7 +41,7 @@ module BOAST
       ibelm_1               = Int( "ibelm_top_outer_core",      :dir => :in,    :dim => [ Dim() ])
       rho_oc                = Real("RHO_TOP_OC",                :dir => :in)
       minus_g               = Real("minus_g_cmb",               :dir => :in)
-      gravity               = Int( "GRAVITY")
+      gravity               = Int( "GRAVITY",                   :dir => :in)
       nspec2D               = Int( "NSPEC2D_BOTTOM_CM",         :dir => :in)
     elsif type == :ICB_fluid then
       function_name = "compute_coupling_ICB_fluid_kernel"
@@ -56,7 +56,7 @@ module BOAST
       ibelm_1               = Int( "ibelm_bottom_outer_core",   :dir => :in,    :dim => [ Dim() ])
       rho_oc                = Real("RHO_BOTTOM_OC",             :dir => :in)
       minus_g               = Real("minus_g_icb",               :dir => :in)
-      gravity               = Int( "GRAVITY")
+      gravity               = Int( "GRAVITY",                   :dir => :in)
       nspec2D               = Int( "NSPEC2D_TOP_IC",            :dir => :in)
     else
      raise "Unsupported coupling_fluid_type!"

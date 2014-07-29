@@ -66,22 +66,22 @@ __global__ void noise_add_surface_movie_kernel(float * accel, const int * ibool,
     float normal_x;
     float normal_y;
     float normal_z;
-    ispec = ibelm_top[iface - 0] - (1);
+    ispec = ibelm_top[iface - (0)] - (1);
     k = NGLLX - (1);
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
     ipoin = (NGLL2) * (iface) + igll;
-    normal_x = normal_x_noise[ipoin - 0];
-    normal_y = normal_y_noise[ipoin - 0];
-    normal_z = normal_z_noise[ipoin - 0];
+    normal_x = normal_x_noise[ipoin - (0)];
+    normal_y = normal_y_noise[ipoin - (0)];
+    normal_z = normal_z_noise[ipoin - (0)];
     eta = 0.0f;
-    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0]) * (normal_x);
-    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0]) * (normal_y);
-    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0]) * (normal_z);
-    jacobianw = (wgllwgll[(k) * (NGLLX) + i - 0]) * (jacobian2D[igll + (NGLL2) * (iface) - 0]);
-    atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin - 0])) * (normal_x)) * (jacobianw));
-    atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin - 0])) * (normal_y)) * (jacobianw));
-    atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin - 0])) * (normal_z)) * (jacobianw));
+    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]) * (normal_x);
+    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]) * (normal_y);
+    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]) * (normal_z);
+    jacobianw = (wgllwgll[(k) * (NGLLX) + i - (0)]) * (jacobian2D[igll + (NGLL2) * (iface) - (0)]);
+    atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin - (0)])) * (normal_x)) * (jacobianw));
+    atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin - (0)])) * (normal_y)) * (jacobianw));
+    atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin - (0)])) * (normal_z)) * (jacobianw));
   }
 }

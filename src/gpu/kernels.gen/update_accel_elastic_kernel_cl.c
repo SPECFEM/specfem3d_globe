@@ -64,9 +64,9 @@ __kernel void update_accel_elastic_kernel(__global float * accel, const __global
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
   if(id < size){\n\
-    accel[(id) * (3) - 0] = (accel[(id) * (3) - 0]) * (rmassx[id - 0]) + (two_omega_earth) * (veloc[(id) * (3) + 1 - 0]);\n\
-    accel[(id) * (3) + 1 - 0] = (accel[(id) * (3) + 1 - 0]) * (rmassy[id - 0]) - ((two_omega_earth) * (veloc[(id) * (3) - 0]));\n\
-    accel[(id) * (3) + 2 - 0] = (accel[(id) * (3) + 2 - 0]) * (rmassz[id - 0]);\n\
+    accel[(id) * (3) - (0)] = (accel[(id) * (3) - (0)]) * (rmassx[id - (0)]) + (two_omega_earth) * (veloc[(id) * (3) + 1 - (0)]);\n\
+    accel[(id) * (3) + 1 - (0)] = (accel[(id) * (3) + 1 - (0)]) * (rmassy[id - (0)]) - ((two_omega_earth) * (veloc[(id) * (3) - (0)]));\n\
+    accel[(id) * (3) + 2 - (0)] = (accel[(id) * (3) + 2 - (0)]) * (rmassz[id - (0)]);\n\
   }\n\
 }\n\
 ";

@@ -71,69 +71,69 @@ __kernel void compute_stacey_elastic_backward_kernel(__global float * b_accel, c
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if(iface < num_abs_boundary_faces){\n\
-    ispec = abs_boundary_ispec[iface - 0] - (1);\n\
+    ispec = abs_boundary_ispec[iface - (0)] - (1);\n\
     switch(interface_type){\n\
       case 0 :\n\
-        if(nkmin_xi[INDEX2(2, 0, iface) - 0] == 0 || njmin[INDEX2(2, 0, iface) - 0] == 0){\n\
+        if(nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         i = 0;\n\
         k = (igll) / (NGLLX);\n\
         j = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_xi[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(j < njmin[INDEX2(2, 0, iface) - 0] - (1) || j > NGLLX - (1)){\n\
+        if(j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > NGLLX - (1)){\n\
            return ;\n\
         }\n\
         break;\n\
       case 1 :\n\
-        if(nkmin_xi[INDEX2(2, 1, iface) - 0] == 0 || njmin[INDEX2(2, 1, iface) - 0] == 0){\n\
+        if(nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         i = NGLLX - (1);\n\
         k = (igll) / (NGLLX);\n\
         j = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_xi[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(j < njmin[INDEX2(2, 1, iface) - 0] - (1) || j > njmax[INDEX2(2, 1, iface) - 0] - (1)){\n\
+        if(j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)){\n\
            return ;\n\
         }\n\
         break;\n\
       case 2 :\n\
-        if(nkmin_eta[INDEX2(2, 0, iface) - 0] == 0 || nimin[INDEX2(2, 0, iface) - 0] == 0){\n\
+        if(nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         j = 0;\n\
         k = (igll) / (NGLLX);\n\
         i = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_eta[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(i < nimin[INDEX2(2, 0, iface) - 0] - (1) || i > nimax[INDEX2(2, 0, iface) - 0] - (1)){\n\
+        if(i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)){\n\
            return ;\n\
         }\n\
         break;\n\
       case 3 :\n\
-        if(nkmin_eta[INDEX2(2, 1, iface) - 0] == 0 || nimin[INDEX2(2, 1, iface) - 0] == 0){\n\
+        if(nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0){\n\
            return ;\n\
         }\n\
         j = NGLLX - (1);\n\
         k = (igll) / (NGLLX);\n\
         i = igll - ((k) * (NGLLX));\n\
-        if(k < nkmin_eta[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){\n\
+        if(k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){\n\
            return ;\n\
         }\n\
-        if(i < nimin[INDEX2(2, 1, iface) - 0] - (1) || i > nimax[INDEX2(2, 1, iface) - 0] - (1)){\n\
+        if(i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)){\n\
            return ;\n\
         }\n\
         break;\n\
       }\n\
   }\n\
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
-  atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0]));\n\
-  atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0]));\n\
-  atomicAdd(b_accel + (iglob) * (3) + 2,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0]));\n\
+  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+  atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]));\n\
+  atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]));\n\
+  atomicAdd(b_accel + (iglob) * (3) + 2,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]));\n\
 }\n\
 ";

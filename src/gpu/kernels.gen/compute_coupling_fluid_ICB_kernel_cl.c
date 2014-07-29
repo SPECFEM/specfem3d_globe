@@ -82,20 +82,20 @@ __kernel void compute_coupling_fluid_ICB_kernel(const __global float * displ_inn
   j = get_local_id(1);\n\
   iface = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
   if(iface < NSPEC2D_BOTTOM_OC){\n\
-    ispec = ibelm_bottom_outer_core[iface - 0] - (1);\n\
-    ispec_selected = ibelm_top_inner_core[iface - 0] - (1);\n\
+    ispec = ibelm_bottom_outer_core[iface - (0)] - (1);\n\
+    ispec_selected = ibelm_top_inner_core[iface - (0)] - (1);\n\
     k = 0;\n\
     k_corresp = NGLLX - (1);\n\
-    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - 0] - (1);\n\
-    displ_x = displ_inner_core[(iglob_ic) * (3) + 0 - 0];\n\
-    displ_y = displ_inner_core[(iglob_ic) * (3) + 1 - 0];\n\
-    displ_z = displ_inner_core[(iglob_ic) * (3) + 2 - 0];\n\
-    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - 0];\n\
-    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - 0];\n\
-    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - 0];\n\
+    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - (0)] - (1);\n\
+    displ_x = displ_inner_core[(iglob_ic) * (3) + 0 - (0)];\n\
+    displ_y = displ_inner_core[(iglob_ic) * (3) + 1 - (0)];\n\
+    displ_z = displ_inner_core[(iglob_ic) * (3) + 2 - (0)];\n\
+    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - (0)];\n\
+    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - (0)];\n\
+    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];\n\
     displ_n = (displ_x) * (nx) + (displ_y) * (ny) + (displ_z) * (nz);\n\
-    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - 0]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - 0]);\n\
-    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
+    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);\n\
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
     atomicAdd(accel_outer_core + iglob_oc, ( -(weight)) * (displ_n));\n\
   }\n\
 }\n\

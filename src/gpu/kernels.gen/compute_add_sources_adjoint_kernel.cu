@@ -59,14 +59,14 @@ __global__ void compute_add_sources_adjoint_kernel(float * accel, const int nrec
   int k;
   irec_local = blockIdx.x + (gridDim.x) * (blockIdx.y);
   if(irec_local < nadj_rec_local){
-    irec = pre_computed_irec[irec_local - 0];
-    ispec = ispec_selected_rec[irec - 0] - (1);
+    irec = pre_computed_irec[irec_local - (0)];
+    ispec = ispec_selected_rec[irec - (0)] - (1);
     i = threadIdx.x;
     j = threadIdx.y;
     k = threadIdx.z;
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
-    atomicAdd(accel + (iglob) * (3) + 0, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, irec_local) - 0]);
-    atomicAdd(accel + (iglob) * (3) + 1, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, irec_local) - 0]);
-    atomicAdd(accel + (iglob) * (3) + 2, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, irec_local) - 0]);
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+    atomicAdd(accel + (iglob) * (3) + 0, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, irec_local) - (0)]);
+    atomicAdd(accel + (iglob) * (3) + 1, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, irec_local) - (0)]);
+    atomicAdd(accel + (iglob) * (3) + 2, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, irec_local) - (0)]);
   }
 }

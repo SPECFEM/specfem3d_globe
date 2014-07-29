@@ -58,19 +58,19 @@ __global__ void get_maximum_scalar_kernel(const float * array, const int size, f
   tid = threadIdx.x;
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   i = tid + (bx) * (blockDim.x);
-  sdata[tid - 0] = (i < size ? fabs(array[i - 0]) : 0.0f);
+  sdata[tid - (0)] = (i < size ? fabs(array[i - (0)]) : 0.0f);
   __syncthreads();
   s = (blockDim.x) / (2);
   while(s > 0){
     if(tid < s){
-      if(sdata[tid - 0] < sdata[tid + s - 0]){
-        sdata[tid - 0] = sdata[tid + s - 0];
+      if(sdata[tid - (0)] < sdata[tid + s - (0)]){
+        sdata[tid - (0)] = sdata[tid + s - (0)];
       }
     }
     s = s >> 1;
     __syncthreads();
   }
   if(tid == 0){
-    d_max[bx - 0] = sdata[0 - 0];
+    d_max[bx - (0)] = sdata[0 - (0)];
   }
 }

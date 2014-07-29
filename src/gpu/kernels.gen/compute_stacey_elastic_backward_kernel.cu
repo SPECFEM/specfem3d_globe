@@ -60,68 +60,68 @@ __global__ void compute_stacey_elastic_backward_kernel(float * b_accel, const fl
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if(iface < num_abs_boundary_faces){
-    ispec = abs_boundary_ispec[iface - 0] - (1);
+    ispec = abs_boundary_ispec[iface - (0)] - (1);
     switch(interface_type){
       case 0 :
-        if(nkmin_xi[INDEX2(2, 0, iface) - 0] == 0 || njmin[INDEX2(2, 0, iface) - 0] == 0){
+        if(nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0){
            return ;
         }
         i = 0;
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(j < njmin[INDEX2(2, 0, iface) - 0] - (1) || j > NGLLX - (1)){
+        if(j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > NGLLX - (1)){
            return ;
         }
         break;
       case 1 :
-        if(nkmin_xi[INDEX2(2, 1, iface) - 0] == 0 || njmin[INDEX2(2, 1, iface) - 0] == 0){
+        if(nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0){
            return ;
         }
         i = NGLLX - (1);
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(j < njmin[INDEX2(2, 1, iface) - 0] - (1) || j > njmax[INDEX2(2, 1, iface) - 0] - (1)){
+        if(j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)){
            return ;
         }
         break;
       case 2 :
-        if(nkmin_eta[INDEX2(2, 0, iface) - 0] == 0 || nimin[INDEX2(2, 0, iface) - 0] == 0){
+        if(nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0){
            return ;
         }
         j = 0;
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 0, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(i < nimin[INDEX2(2, 0, iface) - 0] - (1) || i > nimax[INDEX2(2, 0, iface) - 0] - (1)){
+        if(i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)){
            return ;
         }
         break;
       case 3 :
-        if(nkmin_eta[INDEX2(2, 1, iface) - 0] == 0 || nimin[INDEX2(2, 1, iface) - 0] == 0){
+        if(nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0){
            return ;
         }
         j = NGLLX - (1);
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 1, iface) - 0] - (1) || k > NGLLX - (1)){
+        if(k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
            return ;
         }
-        if(i < nimin[INDEX2(2, 1, iface) - 0] - (1) || i > nimax[INDEX2(2, 1, iface) - 0] - (1)){
+        if(i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)){
            return ;
         }
         break;
       }
   }
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
-  atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0]));
-  atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0]));
-  atomicAdd(b_accel + (iglob) * (3) + 2,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0]));
+  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+  atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]));
+  atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]));
+  atomicAdd(b_accel + (iglob) * (3) + 2,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]));
 }

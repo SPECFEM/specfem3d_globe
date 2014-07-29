@@ -53,8 +53,8 @@ __global__ void update_disp_veloc_kernel(float * displ, float * veloc, float * a
   int id;
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
   if(id < size){
-    displ[id - 0] = displ[id - 0] + (deltat) * (veloc[id - 0]) + (deltatsqover2) * (accel[id - 0]);
-    veloc[id - 0] = veloc[id - 0] + (deltatover2) * (accel[id - 0]);
-    accel[id - 0] = 0.0f;
+    displ[id - (0)] = displ[id - (0)] + (deltat) * (veloc[id - (0)]) + (deltatsqover2) * (accel[id - (0)]);
+    veloc[id - (0)] = veloc[id - (0)] + (deltatover2) * (accel[id - (0)]);
+    accel[id - (0)] = 0.0f;
   }
 }
