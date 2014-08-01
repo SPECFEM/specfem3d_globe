@@ -161,10 +161,7 @@
   print *,'total elements per slice = ',sum(NSPEC)
   print *,'total points per slice = ',sum(nglob)
   print *
-  print *,'the total number of time steps will be NSTEP = ',NSTEP
   print *,'the time step of the solver will be DT = ',sngl(DT)
-  print *,'the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
-  print *,'                    i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
   print *
   if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
     print *,'MOVIE_VOLUME :',MOVIE_VOLUME
@@ -339,10 +336,7 @@
   write(IOUT,*) '! total elements per slice = ',sum(NSPEC)
   write(IOUT,*) '! total points per slice = ',sum(NGLOB)
   write(IOUT,*) '!'
-  write(IOUT,*) '! the total number of time steps will be NSTEP = ',NSTEP
   write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT)
-  write(IOUT,*) '! the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
-  write(IOUT,*) '!        i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'

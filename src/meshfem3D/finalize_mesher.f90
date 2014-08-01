@@ -339,10 +339,7 @@
     write(IMAIN,*)
 
     write(IMAIN,*)
-    write(IMAIN,*) 'the total number of time steps will be NSTEP = ',NSTEP
     write(IMAIN,*) 'the time step of the solver will be DT = ',sngl(DT)
-    write(IMAIN,*) 'the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
-    write(IMAIN,*) '                    i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
     write(IMAIN,*)
 
     ! write information about precision used for floating-point operations
