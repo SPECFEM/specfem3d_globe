@@ -16,7 +16,18 @@
 ###########################################################################################################################
 ###########################################################################################################################
 ###########################################################################################################################
+
+# if you want to compile with OpenMP, add this to the flags listed below, depending on the compiler you use:
 #
+#   -fopenmp for GNU gfortran
+#   -openmp for Intel ifort
+#   -mp for Portland pgf90
+#   -qsmp=omp for IBM xlf
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+
 # If you run very large meshes on a relatively small number
 # of processors, the static memory size needed on each processor might become
 # greater than 2 gigabytes, which is the upper limit for 32-bit addressing
@@ -25,7 +36,7 @@
 # or -mcmodel=medium -shared-intel (if you use the Intel ifort / icc compiler)
 # to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 # message (for instance 'relocation truncated to fit: R\_X86\_64\_PC32 against .bss' or something similar);
-#
+
 ###########################################################################################################################
 ###########################################################################################################################
 ###########################################################################################################################
