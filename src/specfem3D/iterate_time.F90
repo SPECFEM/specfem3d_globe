@@ -117,10 +117,6 @@
       enddo
     enddo
 
-!    print *,'myrank, counter, NGLOB, ratio = ',myrank, counter, NGLOB_CRUST_MANTLE, &
-!                 real(counter) / NGLOB_CRUST_MANTLE
-!   print *,'myrank, R670, ratioR670surR_EARTH = ',myrank, R670, R670 / R_EARTH
-
     ! allocate the buffer used to dump a single time step
     allocate(buffer_for_disk(counter))
 
