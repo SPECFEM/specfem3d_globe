@@ -78,7 +78,7 @@ subroutine save_intermediate_forward_arrays_adios()
 
   ! Open an ADIOS handler to the restart file.
   call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
-      outputname, "w", comm, adios_err);
+                   outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
@@ -150,7 +150,7 @@ subroutine save_forward_arrays_adios()
 
   ! Open an ADIOS handler to the restart file.
   call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
-      outputname, "w", comm, adios_err);
+                   outputname, "w", comm, adios_err);
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
@@ -632,7 +632,8 @@ subroutine save_forward_arrays_undoatt_adios()
   !endif
 
   ! Open an ADIOS handler to the restart file.
-  call adios_open (adios_handle, group_name, & outputname, "w", comm, adios_err)
+  call adios_open (adios_handle, group_name, & 
+                   outputname, "w", comm, adios_err)
   call adios_group_size (adios_handle, group_size_inc, &
                          adios_totalsize, adios_err)
 
