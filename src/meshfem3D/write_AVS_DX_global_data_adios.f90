@@ -179,16 +179,15 @@ end subroutine define_AVS_DX_global_data_adios
 !! \param avs_dx_adios The structure to be filled.
 !!
 !! Create AVS or DX 3D data for the slice, to be recombined in postprocessing.
-subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
-    nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
-    mask_ibool, npointot, avs_dx_adios)
+  subroutine prepare_AVS_DX_global_data_adios(myrank, &
+                                              nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
+                                              mask_ibool, npointot, avs_dx_adios)
 
   use constants
   use adios_write_mod
 
   implicit none
 
-  integer(kind=8), intent(in)    :: adios_handle
   integer nspec,myrank
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
@@ -343,7 +342,8 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
     avs_dx_adios%iglob8 = num_ibool_AVS_DX(iglob8)
   enddo
   avs_dx_adios%idoubling = idoubling
-end subroutine prepare_AVS_DX_global_data_adios
+
+  end subroutine prepare_AVS_DX_global_data_adios
 
 !===============================================================================
 !> Schedule write to ADIOS file for global AVS/DX data

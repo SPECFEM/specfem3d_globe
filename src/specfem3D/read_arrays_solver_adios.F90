@@ -99,7 +99,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   character(len=256) :: file_name
 
   ! local parameters
-  integer :: ierr, comm, lnspec, lnglob, local_dim
+  integer :: comm, lnspec, lnglob, local_dim
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle
@@ -122,11 +122,14 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call world_duplicate(comm)
 
   ! Setup the ADIOS library to read the file
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! read coordinates of the mesh
   sel_num = sel_num+1

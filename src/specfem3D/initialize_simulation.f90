@@ -251,7 +251,7 @@
     if(myrank == 0 ) call initialize_vtkwindow(GPU_MODE)
   endif
 
-  if (ADIOS_ENABLED) then
+  if (ADIOS_ENABLED .or. OUTPUT_SEISMOS_ASDF) then
     call adios_setup()
   endif
   !if (ADIOS_ENABLED) then

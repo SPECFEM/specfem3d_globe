@@ -49,7 +49,7 @@ subroutine read_intermediate_forward_arrays_adios()
 
   implicit none
   ! Local parameters
-  integer :: comm, ierr
+  integer :: comm
   character(len=256) :: file_name
   integer :: local_dim
   ! ADIOS variables
@@ -62,12 +62,14 @@ subroutine read_intermediate_forward_arrays_adios()
 
   call world_duplicate(comm)
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
 
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   local_dim = NDIM * NGLOB_CRUST_MANTLE
   start(1) = local_dim*myrank; count(1) = local_dim
@@ -249,7 +251,7 @@ subroutine read_forward_arrays_adios()
 
   implicit none
   ! Local parameters
-  integer :: comm, ierr
+  integer :: comm
   character(len=256) :: file_name
   integer :: local_dim
   ! ADIOS variables
@@ -262,11 +264,14 @@ subroutine read_forward_arrays_adios()
   call world_duplicate(comm)
 
   ! opens adios file
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! reads in arrays
   local_dim = NDIM * NGLOB_CRUST_MANTLE
@@ -453,7 +458,7 @@ subroutine read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
   ! Arguments
   integer, intent(in) :: iteration_on_subset_tmp
   ! Local parameters
-  integer :: comm, ierr
+  integer :: comm
   character(len=256) :: file_name
   integer :: local_dim
   ! ADIOS variables
@@ -468,11 +473,14 @@ subroutine read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
   call world_duplicate(comm)
 
   ! opens adios file
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! reads in arrays
   local_dim = NDIM * NGLOB_CRUST_MANTLE

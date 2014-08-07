@@ -97,7 +97,12 @@ subroutine define_kernel_adios_variables(adios_handle)
 
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, "", 0, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   if (SIMULATION_TYPE == 3) then
     ! crust mantle
@@ -300,10 +305,11 @@ subroutine define_kernel_adios_variables(adios_handle)
 
   ! Open the handle to file containing all the ADIOS variables
   ! previously defined
-  call adios_open (adios_handle, group_name, &
-      outputname, "w", comm, adios_err);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+  call adios_open (adios_handle, group_name, outputname, "w", comm, adios_err);
+  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
+
+  call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
 end subroutine define_kernel_adios_variables
 

@@ -125,8 +125,8 @@ subroutine init_adios(value_file_name, mesh_file_name, &
   ! Variables
   integer :: ier
 
-  call adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD, &
-                              "verbose=1", ier)
+  call adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD, "verbose=1", ier)
+
   call adios_read_open_file(mesh_handle, trim(mesh_file_name), 0, &
                             MPI_COMM_WORLD, ier)
   call adios_read_open_file(value_handle, trim(value_file_name), 0, &

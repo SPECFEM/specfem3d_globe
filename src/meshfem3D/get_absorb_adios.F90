@@ -109,11 +109,15 @@ subroutine get_absorb_adios(myrank, iregion, &
   ! set the adios group size to 0 before incremented by calls to
   ! helpers functions.
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-                           "", 0, adios_err)
+  call adios_declare_group(adios_group, group_name, "", 0, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,ier)
+
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   !--- Define ADIOS variables -----------------------------
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX
@@ -133,12 +137,12 @@ subroutine get_absorb_adios(myrank, iregion, &
                                    region_name, STRINGIFY_VAR(nkmin_eta))
 
   !--- Open an ADIOS handler to the restart file. ---------
-  !call adios_open (adios_handle, group_name, &
-  !    outputname, "w", comm, adios_err);
   if (num_regions_written == 0) then
     call adios_open (adios_handle, group_name, outputname, "w", comm, adios_err)
+    call check_adios_err(myrank,adios_err)
   else
-    call adios_open (adios_handle, group_name, outputname, "a", comm, adios_err);
+    call adios_open (adios_handle, group_name, outputname, "a", comm, adios_err)
+    call check_adios_err(myrank,adios_err)
   endif
 
   call adios_group_size (adios_handle, group_size_inc, &

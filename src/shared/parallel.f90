@@ -759,6 +759,47 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine recv_ch(recvbuf, recvcount, dest, recvtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  character(len=recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_CHARACTER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_ch
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_ch(sendbuf, sendcount, dest, sendtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  character(len=sendcount) :: sendbuf
+
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_CHARACTER,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_ch
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine send_i(sendbuf, sendcount, dest, sendtag)
 
   use mpi
@@ -1069,6 +1110,28 @@
                   0,MPI_COMM_WORLD,ier)
 
   end subroutine gatherv_all_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine scatter_all_singlei(sendbuf, recvbuf, NPROC)
+
+  use mpi
+
+  implicit none
+
+  integer :: NPROC
+  integer, dimension(0:NPROC-1) :: sendbuf
+  integer :: recvbuf
+
+  integer :: ier
+
+  call MPI_Scatter(sendbuf, 1, MPI_INTEGER, &
+                   recvbuf, 1, MPI_INTEGER, &
+                   0, MPI_COMM_WORLD, ier)
+
+  end subroutine scatter_all_singlei
 
 !
 !-------------------------------------------------------------------------------------------------

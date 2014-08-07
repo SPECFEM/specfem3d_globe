@@ -133,10 +133,16 @@ subroutine define_adios_double_scalar (adios_group, group_size_inc,  &
   real(kind=8),     intent(in)    :: var
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
+  integer :: idummy
 
   ! adios: 6 == real(kind=8)
   call adios_define_var (adios_group, trim(name), trim(path), 6,  "", "", "", varid)
+
   group_size_inc = group_size_inc + 8
+
+  ! to avoid compiler warnings
+  idummy = int(var)
+
 end subroutine define_adios_double_scalar
 
 
@@ -164,10 +170,16 @@ subroutine define_adios_float_scalar(adios_group, group_size_inc,  &
   real(kind=4),     intent(in)    :: var
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
+  integer :: idummy
 
   ! adios: 6 == real(kind=8)
   call adios_define_var (adios_group, trim(name), trim(path), 5,  "", "", "", varid)
+
   group_size_inc = group_size_inc + 4
+
+  ! to avoid compiler warnings
+  idummy = sizeof(var)
+
 end subroutine define_adios_float_scalar
 
 
@@ -195,12 +207,18 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc,  &
   integer(kind=4),     intent(in)  :: var
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
+  integer :: idummy
 
   ! adios: 2 ~ integer(kind=4)
   !write (*,'("--- adios_define_var scalar path=",a20," name=",a20)') path, name
   call adios_define_var (adios_group, trim(name), trim(path), adios_integer,  &
-      "", "", "", varid)
+                         "", "", "", varid)
+
   group_size_inc = group_size_inc + 4
+
+  ! to avoid compiler warnings
+  idummy = sizeof(var)
+
 end subroutine define_adios_integer_scalar
 
 !===============================================================================
@@ -227,10 +245,16 @@ subroutine define_adios_byte_scalar (adios_group, group_size_inc, &
   byte,     intent(in)             :: var
   ! Local Variables
   integer(kind=8)                  :: varid ! dummy variable, adios use var name
+  integer :: idummy
 
   ! adios: 0 == byte == any_data_type(kind=1)
   call adios_define_var (adios_group, trim(name), trim(path), 0,  "", "", "", varid)
+
   group_size_inc = group_size_inc + 1
+
+  ! to avoid compiler warnings
+  idummy = sizeof(var)
+
 end subroutine define_adios_byte_scalar
 
 
@@ -251,12 +275,10 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, &
   integer, intent(in) :: local_dim
   integer(kind=8), intent(inout) :: group_size_inc
 
-  call define_adios_integer_scalar (adios_group, &
-      group_size_inc, trim(array_name), "local_dim", local_dim)
-  call define_adios_integer_scalar (adios_group, &
-      group_size_inc, trim(array_name), "global_dim", local_dim)
-  call define_adios_integer_scalar (adios_group, &
-      group_size_inc, trim(array_name), "offset", local_dim)
+  call define_adios_integer_scalar (adios_group,group_size_inc, trim(array_name), "local_dim", local_dim)
+  call define_adios_integer_scalar (adios_group,group_size_inc, trim(array_name), "global_dim", local_dim)
+  call define_adios_integer_scalar (adios_group,group_size_inc, trim(array_name), "offset", local_dim)
+
 end subroutine define_adios_global_dims_1d
 
 
@@ -282,14 +304,15 @@ subroutine define_adios_global_1d_real_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
-      local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name,local_dim)
 
   !write (*,'("--- adios_define_var 1d_real path=",a20,"/array")') trim(array_name)
   call adios_define_var(adios_group, "array", trim(array_name), 5, &
-      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
-      trim(array_name) // "/offset", var_id)
+                        trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
+                        trim(array_name) // "/offset", var_id)
+
   group_size_inc = group_size_inc + local_dim*4
+
 end subroutine define_adios_global_1d_real_generic
 
 !===============================================================================
@@ -317,12 +340,16 @@ subroutine define_adios_global_1d_real_1d(adios_group, group_size_inc, &
   real, dimension(:), intent(in) :: var
   ! Local vars
   character(len=256) :: full_name
+  integer :: idummy
 
   full_name = trim(path) // trim(array_name)
   !print *, "in define:", trim(full_name)
 
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
+  call define_adios_global_1d_real_generic(adios_group, group_size_inc,full_name, local_dim)
+
+  ! to avoid compiler warnings
+  idummy = size(var)
+
 end subroutine define_adios_global_1d_real_1d
 
 
@@ -339,58 +366,26 @@ end subroutine define_adios_global_1d_real_1d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_real_2d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real, dimension(:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_real_2d
-
-
-!===============================================================================
-!> Define a global ADIOS 1D real array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \param local_dim The local dimension of the array.
-!! \param path The path where array name lie.
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param var The variable to define. Used for type and shape inference.
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_1d_real_3d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real, dimension(:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_real_3d
-
+! unused so far..
+!subroutine define_adios_global_1d_real_2d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real, dimension(:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_real_2d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D real array and autoincrement the adios
@@ -405,25 +400,26 @@ end subroutine define_adios_global_1d_real_3d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_real_4d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real, dimension(:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_real_4d
-
+! unused so far..
+!subroutine define_adios_global_1d_real_3d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real, dimension(:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_real_3d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D real array and autoincrement the adios
@@ -438,25 +434,60 @@ end subroutine define_adios_global_1d_real_4d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_real_5d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real, dimension(:,:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
+! unused so far..
+!subroutine define_adios_global_1d_real_4d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real, dimension(:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_real_4d
+!
 
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_real_5d
-
+!===============================================================================
+!> Define a global ADIOS 1D real array and autoincrement the adios
+!! group size.
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \param local_dim The local dimension of the array.
+!! \param path The path where array name lie.
+!! \param array_name The variable to be defined. This is actually the path for
+!!                   ADIOS. The values are stored in array_name/array
+!! \param var The variable to define. Used for type and shape inference.
+!! \note This function define local, global and offset sizes as well as the
+!!       array to store the values in.
+! unused so far..
+!subroutine define_adios_global_1d_real_5d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real, dimension(:,:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_real_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_real_5d
+!
 
 !===============================================================================
 !> Define a double global array in ADIOS regardless of the array shape
@@ -480,13 +511,14 @@ subroutine define_adios_global_1d_double_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
-      local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name,local_dim)
 
   call adios_define_var(adios_group, "array", array_name, 6, &
-      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
-      trim(array_name) // "/offset", var_id)
+                        trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
+                        trim(array_name) // "/offset", var_id)
+
   group_size_inc = group_size_inc + local_dim*8
+
 end subroutine define_adios_global_1d_double_generic
 
 !===============================================================================
@@ -514,11 +546,15 @@ subroutine define_adios_global_1d_double_1d(adios_group, group_size_inc, &
   real(kind=8), dimension(:), intent(in) :: var
   ! Local vars
   character(len=256) :: full_name
+  integer :: idummy
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
+  call define_adios_global_1d_double_generic(adios_group, group_size_inc,full_name, local_dim)
+
+  ! to avoid compilation warnings
+  idummy = size(var)
+
 end subroutine define_adios_global_1d_double_1d
 
 
@@ -535,58 +571,26 @@ end subroutine define_adios_global_1d_double_1d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_double_2d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real(kind=8), dimension(:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_double_2d
-
-
-!===============================================================================
-!> Define a global ADIOS 1D double array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \param local_dim The local dimension of the array.
-!! \param path The path where array name lie.
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param var The variable to define. Used for type and shape inference.
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_1d_double_3d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real(kind=8), dimension(:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_double_3d
-
+! unused so far..
+!subroutine define_adios_global_1d_double_2d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real(kind=8), dimension(:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_double_2d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D double array and autoincrement the adios
@@ -601,25 +605,26 @@ end subroutine define_adios_global_1d_double_3d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_double_4d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real(kind=8), dimension(:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_double_4d
-
+! unused so far..
+!subroutine define_adios_global_1d_double_3d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real(kind=8), dimension(:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_double_3d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D double array and autoincrement the adios
@@ -634,25 +639,60 @@ end subroutine define_adios_global_1d_double_4d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_double_5d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  real(kind=8), dimension(:,:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
+! unused so far..
+!subroutine define_adios_global_1d_double_4d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real(kind=8), dimension(:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_double_4d
+!
 
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_double_5d
-
+!===============================================================================
+!> Define a global ADIOS 1D double array and autoincrement the adios
+!! group size.
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \param local_dim The local dimension of the array.
+!! \param path The path where array name lie.
+!! \param array_name The variable to be defined. This is actually the path for
+!!                   ADIOS. The values are stored in array_name/array
+!! \param var The variable to define. Used for type and shape inference.
+!! \note This function define local, global and offset sizes as well as the
+!!       array to store the values in.
+! unused so far..
+!subroutine define_adios_global_1d_double_5d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  real(kind=8), dimension(:,:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_double_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_double_5d
+!
 
 !===============================================================================
 !> Define a integer global array in ADIOS regardless of the array shape
@@ -676,14 +716,15 @@ subroutine define_adios_global_1d_int_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
-      local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name,local_dim)
 
   !write (*,'("--- adios_define_var 1d_int path=[",a,"] name=/array, path len=",i3)') trim(array_name)
   call adios_define_var(adios_group, "array", array_name, 2, &
-      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
-      trim(array_name) // "/offset", var_id)
+                        trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
+                        trim(array_name) // "/offset", var_id)
+
   group_size_inc = group_size_inc + local_dim*4
+
 end subroutine define_adios_global_1d_int_generic
 
 !===============================================================================
@@ -711,11 +752,15 @@ subroutine define_adios_global_1d_int_1d(adios_group, group_size_inc, &
   integer(kind=4), dimension(:), intent(in) :: var
   ! Local vars
   character(len=256) :: full_name
+  integer :: idummy
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
+  call define_adios_global_1d_int_generic(adios_group, group_size_inc,full_name, local_dim)
+
+  ! to avoid compiler warnings
+  idummy = size(var)
+
 end subroutine define_adios_global_1d_int_1d
 
 
@@ -732,58 +777,26 @@ end subroutine define_adios_global_1d_int_1d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_int_2d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=4), dimension(:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_int_2d
-
-
-!===============================================================================
-!> Define a global ADIOS 1D int array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \param local_dim The local dimension of the array.
-!! \param path The path where array name lie.
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param var The variable to define. Used for type and shape inference.
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_1d_int_3d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=4), dimension(:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_int_3d
-
+! unused so far..
+!subroutine define_adios_global_1d_int_2d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=4), dimension(:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_int_2d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D int array and autoincrement the adios
@@ -798,25 +811,26 @@ end subroutine define_adios_global_1d_int_3d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_int_4d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=4), dimension(:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_int_4d
-
+! unused so far..
+!subroutine define_adios_global_1d_int_3d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=4), dimension(:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_int_3d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D int array and autoincrement the adios
@@ -831,25 +845,60 @@ end subroutine define_adios_global_1d_int_4d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_int_5d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=4), dimension(:,:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
+! unused so far..
+!subroutine define_adios_global_1d_int_4d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=4), dimension(:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_int_4d
+!
 
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_int_5d
-
+!===============================================================================
+!> Define a global ADIOS 1D int array and autoincrement the adios
+!! group size.
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \param local_dim The local dimension of the array.
+!! \param path The path where array name lie.
+!! \param array_name The variable to be defined. This is actually the path for
+!!                   ADIOS. The values are stored in array_name/array
+!! \param var The variable to define. Used for type and shape inference.
+!! \note This function define local, global and offset sizes as well as the
+!!       array to store the values in.
+! unused so far..
+!subroutine define_adios_global_1d_int_5d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=4), dimension(:,:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_int_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_int_5d
+!
 
 !===============================================================================
 !> Define a long integer global array in ADIOS regardless of the array shape
@@ -873,13 +922,14 @@ subroutine define_adios_global_1d_long_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
-      local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name,local_dim)
 
   call adios_define_var(adios_group, "array", array_name, adios_long, &
-      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
-      trim(array_name) // "/offset", var_id)
+                        trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
+                        trim(array_name) // "/offset", var_id)
+
   group_size_inc = group_size_inc + local_dim*8
+
 end subroutine define_adios_global_1d_long_generic
 
 !===============================================================================
@@ -907,11 +957,15 @@ subroutine define_adios_global_1d_long_1d(adios_group, group_size_inc, &
   integer(kind=8), dimension(:), intent(in) :: var
   ! Local vars
   character(len=256) :: full_name
+  integer :: idummy
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
+  call define_adios_global_1d_long_generic(adios_group, group_size_inc,full_name, local_dim)
+
+  ! to avoid compiler warnings
+  idummy = size(var)
+
 end subroutine define_adios_global_1d_long_1d
 
 
@@ -928,58 +982,26 @@ end subroutine define_adios_global_1d_long_1d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_long_2d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=8), dimension(:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_long_2d
-
-
-!===============================================================================
-!> Define a global ADIOS 1D int array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \param local_dim The local dimension of the array.
-!! \param path The path where array name lie.
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param var The variable to define. Used for type and shape inference.
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_1d_long_3d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=8), dimension(:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_long_3d
-
+! unused so far..
+!subroutine define_adios_global_1d_long_2d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=8), dimension(:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_long_2d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D int array and autoincrement the adios
@@ -994,25 +1016,60 @@ end subroutine define_adios_global_1d_long_3d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_long_4d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=8), dimension(:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
+! unused so far..
+!subroutine define_adios_global_1d_long_3d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=8), dimension(:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_long_3d
+!
 
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_long_4d
-
+!===============================================================================
+!> Define a global ADIOS 1D int array and autoincrement the adios
+!! group size.
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \param local_dim The local dimension of the array.
+!! \param path The path where array name lie.
+!! \param array_name The variable to be defined. This is actually the path for
+!!                   ADIOS. The values are stored in array_name/array
+!! \param var The variable to define. Used for type and shape inference.
+!! \note This function define local, global and offset sizes as well as the
+!!       array to store the values in.
+! unused so far..
+!subroutine define_adios_global_1d_long_4d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=8), dimension(:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_long_4d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D long array and autoincrement the adios
@@ -1027,25 +1084,26 @@ end subroutine define_adios_global_1d_long_4d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_long_5d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  integer(kind=8), dimension(:,:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_long_5d
-
+! unused so far..
+!subroutine define_adios_global_1d_long_5d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  integer(kind=8), dimension(:,:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_long_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_long_5d
+!
 !===============================================================================
 !> Define a logical global array in ADIOS regardless of the array shape
 !! \param adios_group The adios group where the variables belongs
@@ -1068,17 +1126,18 @@ subroutine define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
-      local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name,local_dim)
 
   ! The Fortran standard does not specify how variables of LOGICAL type are
   ! represented, beyond requiring that LOGICAL variables of default kind
   ! have the same storage size as default INTEGER and REAL variables.
   ! Hence the 'adios_integer' (2) data type to store logical values
   call adios_define_var(adios_group, "array", array_name, 2, &
-      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
-      trim(array_name) // "/offset", var_id)
+                        trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
+                        trim(array_name) // "/offset", var_id)
+
   group_size_inc = group_size_inc + local_dim*4
+
 end subroutine define_adios_global_1d_logical_generic
 
 !===============================================================================
@@ -1106,11 +1165,15 @@ subroutine define_adios_global_1d_logical_1d(adios_group, group_size_inc, &
   logical, dimension(:), intent(in) :: var
   ! Local vars
   character(len=256) :: full_name
+  integer :: idummy
 
   full_name = trim(path) // trim(array_name)
 
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
+  call define_adios_global_1d_logical_generic(adios_group, group_size_inc,full_name, local_dim)
+
+  ! to avoid compiler warnings
+  idummy = size(var)
+
 end subroutine define_adios_global_1d_logical_1d
 
 
@@ -1127,58 +1190,26 @@ end subroutine define_adios_global_1d_logical_1d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_logical_2d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  logical, dimension(:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_logical_2d
-
-
-!===============================================================================
-!> Define a global ADIOS 1D logical array and autoincrement the adios
-!! group size.
-!! \param adios_group The adios group where the variables belongs
-!! \param group_size_inc The inout adios group size to increment
-!!                       with the size of the variable
-!! \param local_dim The local dimension of the array.
-!! \param path The path where array name lie.
-!! \param array_name The variable to be defined. This is actually the path for
-!!                   ADIOS. The values are stored in array_name/array
-!! \param var The variable to define. Used for type and shape inference.
-!! \note This function define local, global and offset sizes as well as the
-!!       array to store the values in.
-subroutine define_adios_global_1d_logical_3d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  logical, dimension(:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_logical_3d
-
+! unused so far..
+!subroutine define_adios_global_1d_logical_2d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  logical, dimension(:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_logical_2d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D logical array and autoincrement the adios
@@ -1193,25 +1224,26 @@ end subroutine define_adios_global_1d_logical_3d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_logical_4d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  logical, dimension(:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
-
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_logical_4d
-
+! unused so far..
+!subroutine define_adios_global_1d_logical_3d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  logical, dimension(:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_logical_3d
+!
 
 !===============================================================================
 !> Define a global ADIOS 1D logical array and autoincrement the adios
@@ -1226,25 +1258,60 @@ end subroutine define_adios_global_1d_logical_4d
 !! \param var The variable to define. Used for type and shape inference.
 !! \note This function define local, global and offset sizes as well as the
 !!       array to store the values in.
-subroutine define_adios_global_1d_logical_5d(adios_group, group_size_inc, &
-    local_dim, path, array_name, var)
-  use adios_write_mod
-  implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: adios_group
-  character(len=*), intent(in) :: path, array_name
-  integer, intent(in) :: local_dim
-  integer(kind=8), intent(inout) :: group_size_inc
-  logical, dimension(:,:,:,:,:), intent(in) :: var
-  ! Local vars
-  character(len=256) :: full_name
+! unused so far..
+!subroutine define_adios_global_1d_logical_4d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  logical, dimension(:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_logical_4d
+!
 
-  full_name = trim(path) // trim(array_name)
-
-  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
-end subroutine define_adios_global_1d_logical_5d
-
+!===============================================================================
+!> Define a global ADIOS 1D logical array and autoincrement the adios
+!! group size.
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \param local_dim The local dimension of the array.
+!! \param path The path where array name lie.
+!! \param array_name The variable to be defined. This is actually the path for
+!!                   ADIOS. The values are stored in array_name/array
+!! \param var The variable to define. Used for type and shape inference.
+!! \note This function define local, global and offset sizes as well as the
+!!       array to store the values in.
+! unused so far..
+!subroutine define_adios_global_1d_logical_5d(adios_group, group_size_inc, &
+!    local_dim, path, array_name, var)
+!  use adios_write_mod
+!  implicit none
+!  ! Parameters
+!  integer(kind=8), intent(in) :: adios_group
+!  character(len=*), intent(in) :: path, array_name
+!  integer, intent(in) :: local_dim
+!  integer(kind=8), intent(inout) :: group_size_inc
+!  logical, dimension(:,:,:,:,:), intent(in) :: var
+!  ! Local vars
+!  character(len=256) :: full_name
+!
+!  full_name = trim(path) // trim(array_name)
+!
+!  call define_adios_global_1d_logical_generic(adios_group, group_size_inc, &
+!      full_name, local_dim)
+!end subroutine define_adios_global_1d_logical_5d
+!
 !string added
 subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, &
     array_name, local_dim)
@@ -1260,13 +1327,14 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, &
 
   ! Define the dimensions of the array. local_dim used as a dummy
   ! variable to call the integer routine.
-  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name, &
-      local_dim)
+  call define_adios_global_dims_1d(adios_group, group_size_inc, array_name,local_dim)
 
   call adios_define_var(adios_group, "array", array_name, 9, &
-      trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
-      trim(array_name) // "/offset", var_id)
+                        trim(array_name) // "/local_dim", trim(array_name) // "/global_dim", &
+                        trim(array_name) // "/offset", var_id)
+
   group_size_inc = group_size_inc + local_dim*1
+
 end subroutine define_adios_global_1d_string_generic
 
 subroutine define_adios_global_1d_string_1d(adios_group, group_size_inc, &
@@ -1281,12 +1349,16 @@ subroutine define_adios_global_1d_string_1d(adios_group, group_size_inc, &
   character(len=*), intent(in) :: var
   ! Local vars
   character(len=256) :: full_name
+  integer :: idummy
 
   full_name = trim(path) // trim(array_name)
   print *,"full name", trim(full_name),"local_dim:",local_dim
 
-  call define_adios_global_1d_string_generic(adios_group, group_size_inc, &
-      full_name, local_dim)
+  call define_adios_global_1d_string_generic(adios_group, group_size_inc,full_name, local_dim)
+
+  ! to avoid compiler warnings
+  idummy = len(var)
+
 end subroutine define_adios_global_1d_string_1d
 
 subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
@@ -1302,11 +1374,16 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, &
   ! Local
   character(len=256) :: full_name
   integer(kind=8) :: var_id
+  integer :: idummy
 
   full_name = trim(path)//trim(array_name)
 
   call adios_define_var(adios_group, array_name, path, 9, "", "", "", var_id )
+
   group_size_inc = group_size_inc + 1*local_dim
+
+  ! to avoid compiler warnings
+  idummy = len(var)
 
 end subroutine define_adios_local_1d_string_1d
 

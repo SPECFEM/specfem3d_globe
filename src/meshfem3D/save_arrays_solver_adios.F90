@@ -150,11 +150,16 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   ! set the adios group size to 0 before incremented by calls to
   ! helpers functions.
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-      "", 1, adios_err)
+
+  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   !--- Define ADIOS variables -----------------------------
   ! save nspec and nglob, to be used in combine_paraview_data
@@ -402,13 +407,19 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   !--- Open an ADIOS handler to the restart file. ---------
   outputname = trim(LOCAL_PATH) // "/solver_data.bp"
+  ! user output
+  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
   if (num_regions_written == 0) then
     call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   endif
-  call adios_group_size (handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+
+  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   ! mesh topology
 
@@ -416,14 +427,11 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   ! and for anisotropy and gravity, save in single precision
   ! use tmp_array for temporary storage to perform conversion
   allocate(tmp_array_x(nglob),stat=ier)
-  if( ier /=0 ) call exit_MPI(myrank,&
-      'error allocating temporary array for mesh topology')
+  if( ier /=0 ) call exit_MPI(myrank,'error allocating temporary x array for mesh topology')
   allocate(tmp_array_y(nglob),stat=ier)
-  if( ier /=0 ) call exit_MPI(myrank,&
-      'error allocating temporary array for mesh topology')
+  if( ier /=0 ) call exit_MPI(myrank,'error allocating temporary y array for mesh topology')
   allocate(tmp_array_z(nglob),stat=ier)
-  if( ier /=0 ) call exit_MPI(myrank,&
-      'error allocating temporary array for mesh topology')
+  if( ier /=0 ) call exit_MPI(myrank,'error allocating temporary z array for mesh topology')
 
   !--- x coordinate
   tmp_array_x(:) = 0._CUSTOM_REAL
@@ -699,9 +707,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   ! set the adios group size to 0 before incremented by calls to
   ! helpers functions.
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-      "", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   !--- Define ADIOS variables -----------------------------
   call define_adios_scalar (adios_group, group_size_inc, &
@@ -800,13 +812,19 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   !--- Open an ADIOS handler to the restart file. ---------
   outputname = trim(LOCAL_PATH) // "/boundary.bp"
+  ! user output
+  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
   if (num_regions_written == 0) then
     call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   endif
-  call adios_group_size (handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+
+  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   !--- Schedule writes for the previously defined ADIOS variables
   call adios_write(handle, trim(region_name) // "nspec2D_xmin", nspec2D_xmin, adios_err)
@@ -894,9 +912,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   if(ATTENUATION) then
     write(group_name,"('SPECFEM3D_GLOBE_ATTENUATION_reg',i1)") iregion_code
     group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
+    call adios_declare_group(adios_group, group_name, "", 0, adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
+
+    call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
 
     !--- Define ADIOS variables -----------------------------
     call define_adios_scalar (adios_group, group_size_inc, &
@@ -917,17 +939,22 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
     !--- Open an ADIOS handler to the restart file. ---------
     outputname = trim(LOCAL_PATH) // "/attenuation.bp"
+    ! user output
+    if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
     if (num_regions_written == 0) then
       call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+      if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
     else
-      call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+      call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+      if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
     endif
-    call adios_group_size (handle, group_size_inc, &
-                           adios_totalsize, adios_err)
+
+    call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
     !--- Schedule writes for the previously defined ADIOS variables
-    call adios_write(handle, trim(region_name) // "T_c_source", &
-                     T_c_source, adios_err)
+    call adios_write(handle, trim(region_name) // "T_c_source", T_c_source, adios_err)
 
     local_dim = size (tau_s)
     call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
@@ -950,9 +977,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     write(group_name,"('SPECFEM3D_GLOBE_DVP_reg',i1)") iregion_code
     group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, &
-        "", 0, adios_err)
-    call adios_select_method(adios_group, "MPI", "", "", adios_err)
+    call adios_declare_group(adios_group, group_name, "", 0, adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
+
+    call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
 
     !--- Define ADIOS variables -----------------------------
     local_dim = size (dvpstore)
@@ -961,15 +992,21 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                      "dvp", dvpstore)
     !--- Open an ADIOS handler to the restart file. ---------
     outputname = trim(LOCAL_PATH) // "/dvp.bp"
+    ! user output
+    if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
     if (num_regions_written == 0) then
       call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+      if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
     else
-      call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+      call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+      if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
     endif
-    call adios_group_size (handle, group_size_inc, &
-                           adios_totalsize, adios_err)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                                     trim(region_name) // "dvp", dvpstore)
+
+    call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
+
+    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "dvp", dvpstore)
 
     !--- Reset the path to zero and perform the actual write to disk
     call adios_close(handle, adios_err)
@@ -982,8 +1019,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   if( SAVE_MESH_FILES ) then
     ! outputs model files in binary format
     if( ADIOS_FOR_SOLVER_MESHFILES) then
-      call save_arrays_solver_meshfiles_adios(myrank,iregion_code, &
-                                              reg_name, nspec)
+      call save_arrays_solver_meshfiles_adios(myrank,iregion_code,nspec)
     else
       call save_arrays_solver_meshfiles(myrank,nspec)
     endif
@@ -1001,8 +1037,7 @@ end subroutine save_arrays_solver_adios
 !! \param iregion_code Code of the region considered. See constant.h for details
 !! \param reg_name Output file prefix with the name of the region included
 !! \param nspec Number of GLL points per spectral elements
-subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
-                                              reg_name, nspec)
+subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
 
   ! outputs model files in binary format
   use adios_write_mod
@@ -1018,12 +1053,11 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
 
   use create_regions_mesh_par2,only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    Qmu_store !,prname
+    Qmu_store
 
   implicit none
 
   integer :: myrank, nspec, iregion_code
-  character(len=150) :: reg_name
 
   ! local parameters
   integer :: i,j,k,ispec
@@ -1062,9 +1096,13 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
 
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, group_name, &
-      "", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   !--- Define ADIOS variables -----------------------------
   !--- vp arrays -------------------------------------------
@@ -1121,13 +1159,20 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, &
 
   !--- Open an ADIOS handler to the restart file. ---------
   outputname = trim(LOCAL_PATH) // "/solver_meshfiles.bp"
+  ! user output
+  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
   if (num_regions_written == 0) then
     call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   endif
-  call adios_group_size (handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+
+  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
+
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! TODO Try the new write helpers routines
@@ -1301,7 +1346,6 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   ! create the name for the database of the current slide and region
   call create_name_database_adios(prname,iregion_code,LOCAL_PATH)
 
-  outputname = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
   write(group_name,"('SPECFEM3D_GLOBE_MPI_ARRAYS_reg',i1)") iregion_code
@@ -1309,9 +1353,13 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   call world_duplicate(comm)
 
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-                           "", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   !--- Define ADIOS variables -----------------------------
   !! MPI interfaces
@@ -1361,13 +1409,20 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   endif
 
   !--- Open an ADIOS handler to the restart file. ---------
+  outputname = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
+  ! user output
+  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
   if (num_regions_written == 0) then
     call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   endif
-  call adios_group_size (handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+
+  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! MPI interfaces
@@ -1525,7 +1580,6 @@ subroutine save_arrays_solver_boundary_adios()
   if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
            call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
-  outputname = trim(LOCAL_PATH) // "/boundary_disc.bp"
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
   group_name = "SPECFEM3D_GLOBE_BOUNDARY_DISC"
@@ -1533,9 +1587,13 @@ subroutine save_arrays_solver_boundary_adios()
   call world_duplicate(comm)
 
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-      "", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   !--- Define ADIOS variables -----------------------------
   call define_adios_scalar (adios_group, group_size_inc, &
@@ -1580,13 +1638,20 @@ subroutine save_arrays_solver_boundary_adios()
                                    STRINGIFY_VAR(normal_670))
 
   !--- Open an ADIOS handler to the restart file. ---------
+  outputname = trim(LOCAL_PATH) // "/boundary_disc.bp"
+  ! user output
+  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
   if (num_regions_written == 0) then
     call adios_open (handle, group_name, outputname, "w", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err);
+    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
   endif
-  call adios_group_size (handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+
+  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   !--- Schedule writes for the previously defined ADIOS variables
   call adios_write(handle, trim(region_name) // "NSPEC2D_MOHO", &

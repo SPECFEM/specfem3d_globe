@@ -123,7 +123,6 @@ contains
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
-  use asdf_data
   use constants_solver
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
@@ -136,6 +135,7 @@ contains
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
           WRITE_SEISMOGRAMS_BY_MASTER
+  use asdf_data,only: asdf_event
 
   implicit none
 
@@ -145,12 +145,14 @@ contains
 
   integer :: iproc,sender,irec_local,iorientation,irec,ier,receiver
   integer :: nrec_local_received
-  integer :: total_seismos,total_seismos_local
+  integer :: total_seismos
   integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=256) :: sisname
   ! timing
   double precision, external :: wtime
   type(asdf_event) :: asdf_container
+  ! ASDF
+  integer :: total_seismos_local
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -186,45 +188,45 @@ contains
       endif
     endif
 
-   ! initializes the ASDF data structure by allocating arrays
-   if (OUTPUT_SEISMOS_ASDF) then
+    ! initializes the ASDF data structure by allocating arrays
+    if (OUTPUT_SEISMOS_ASDF) then
       total_seismos_local = 0
       do irec_local = 1, nrec_local
         do iorientation = 1, 3
-          total_seismos_local=total_seismos_local+1
+          total_seismos_local = total_seismos_local + 1
         enddo
       enddo
       call init_asdf_data(asdf_container, total_seismos_local)
     endif
 
-    total_seismos_local = 0
     ! loop on all the local receivers
     do irec_local = 1,nrec_local
 
       ! get global number of that receiver
       irec = number_receiver_global(irec_local)
 
-      total_seismos_local = total_seismos_local + 1
-
       one_seismogram = seismograms(:,irec_local,:)
 
       ! write this seismogram
-      ! ASDF data structure is passed as an argument
-      call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
+      if (OUTPUT_SEISMOS_ASDF) then
+        ! note: ASDF data structure is passed as an argument
+        ! stores all traces into ASDF container
+        call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
+      else
+        call write_one_seismogram(one_seismogram,irec,irec_local)
+      endif
     enddo
 
-    ! write ASDF container to the file
+    ! writes out ASDF container to the file
     if (OUTPUT_SEISMOS_ASDF) then
-      call synchronize_all()
       call write_asdf(asdf_container)
+
       ! deallocate the container
       call close_asdf_data(asdf_container, total_seismos_local)
     endif
 
     ! create one large file instead of one small file per station to avoid file system overload
     if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
-
-    !if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
     ! user output
     if(myrank == 0) then
@@ -369,7 +371,6 @@ contains
 
   subroutine write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
 
-  use asdf_data
   use constants_solver
   use specfem_par,only: &
           myrank, &
@@ -381,11 +382,14 @@ contains
 
   use specfem_par,only: &
           cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
+  use asdf_data,only: asdf_event
 
   implicit none
 
   integer :: irec,irec_local
   real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
+
+  type(asdf_event), optional :: asdf_container
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
@@ -402,7 +406,6 @@ contains
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
-  type(asdf_event), optional :: asdf_container
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL

@@ -52,7 +52,7 @@ subroutine write_specfem_header_adios()
   use adios_helpers_mod
   use adios_write_mod
 
-  use specfem_par, only : myrank, NSOURCES
+  use specfem_par, only : myrank, NSOURCES,ADIOS_TRANSPORT_METHOD
 
   implicit none
 
@@ -79,7 +79,7 @@ subroutine write_specfem_header_adios()
 
   ! Adios variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, adios_handle !, varid
+  integer(kind=8)         :: adios_group, adios_handle
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   ! TODO: find a better name once the use of ADIOS is more completely
   !       implemented
@@ -91,9 +91,13 @@ subroutine write_specfem_header_adios()
 
   ! only the master needs to read the values to be written
   if(myrank == 0) then
-    call adios_declare_group (adios_group, "SPECFEM3D_GLOBE_HEADER",           &
-                              "", 0, adios_err)
-    call adios_select_method (adios_group, "MPI", "", "", adios_err)
+    call adios_declare_group (adios_group, "SPECFEM3D_GLOBE_HEADER","", 0, adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
+
+    call adios_select_method (adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
 
     group_size_inc = 0 ! Adios group size. Incremented by adios_helpers
 
@@ -123,12 +127,13 @@ subroutine write_specfem_header_adios()
 
     call world_get_comm_self(comm)
     ! open the file where the headers have to be written
-    call adios_open (adios_handle, "SPECFEM3D_GLOBE_HEADER", filename, "w",    &
-                     comm, adios_err);
+    call adios_open (adios_handle, "SPECFEM3D_GLOBE_HEADER", filename, "w",comm, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_open() routine failed for SPECFEM3D_GLOBE_HEADER'
+
     ! The group size have been auto-incremented
     adios_groupsize = group_size_inc
-    call adios_group_size (adios_handle, adios_groupsize,                      &
-                           adios_totalsize, adios_err)
+    call adios_group_size (adios_handle, adios_groupsize,adios_totalsize, adios_err)
+    if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
     ! Write variables from 'config.h'
     call write_adios_solver_info_variables (adios_handle)
@@ -548,14 +553,15 @@ subroutine write_adios_solver_info_variables (adios_handle)
   integer(kind=8), intent(in)    :: adios_handle
   ! Variables
   integer :: pkg_str_len, conf_flags_len, adios_err
-  character(len=:), allocatable :: pkg_str
-  character(len=:), allocatable :: conf_flags
+  character(len=len_trim(PACKAGE_STRING)) :: pkg_str
+  character(len=len_trim(CONFIGURE_FLAGS)) :: conf_flags
 
   pkg_str    = trim(PACKAGE_STRING)
   conf_flags = trim(CONFIGURE_FLAGS)
 
   pkg_str_len    = len_trim(PACKAGE_STRING)
   conf_flags_len = len_trim(CONFIGURE_FLAGS)
+
   call adios_write (adios_handle, "package_string_length", pkg_str_len, adios_err)
   call adios_write (adios_handle, "package_name", pkg_str, adios_err)
   call adios_write (adios_handle, "conf_flags_len", conf_flags_len, adios_err)

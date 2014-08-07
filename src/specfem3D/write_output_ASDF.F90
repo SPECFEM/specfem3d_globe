@@ -134,13 +134,12 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   use specfem_par,only: &
           station_name,network_name,stlat,stlon,stele,stbur,                   &
           DT,t0,                                                               &
-          seismo_offset,seismo_current,it_end,                                 &
+          seismo_offset,seismo_current,                                        &
           NTSTEP_BETWEEN_OUTPUT_SEISMOS,                                       &
           yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC,          &
-          tshift_cmt=>t_cmt_SAC,t_shift=>t_shift_SAC,                          &
-          elat=>elat_SAC,elon=>elon_SAC,depth=>depth_SAC,                      &
-          event_name=>event_name_SAC,cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,&
-          cmt_depth=>cmt_depth_SAC,cmt_hdur=>cmt_hdur_SAC
+          tshift_cmt=>t_cmt_SAC,                                               &
+          cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,                           &
+          cmt_depth=>cmt_depth_SAC
 
   use specfem_par, only: myrank
   use constants
@@ -148,18 +147,19 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   implicit none
 
   ! Parameters
+  type(asdf_event),intent(inout) :: asdf_container
   character(len=4),intent(in) :: chn
   integer,intent(in) :: irec_local, irec
-  real(kind=CUSTOM_REAL),dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS), &
-      intent(in) :: seismogram_tmp
+  real(kind=CUSTOM_REAL),dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: seismogram_tmp
   integer,intent(in) :: iorientation
-  type(asdf_event),intent(inout) :: asdf_container
   double precision,intent(in) :: phi
-  ! Variables
+  ! local Variables
   integer :: length_station_name, length_network_name
   integer :: ier, i
 
+  ! trace index
   i = (irec_local-1)*(3) + (iorientation)
+
   asdf_container%npoints(i) = seismo_current
   asdf_container%gmt_year(i) = yr
   asdf_container%gmt_day(i) = jda
@@ -176,6 +176,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%receiver_dpt(i) = stbur(irec_local)
   asdf_container%begin_value(i) = seismo_offset*DT-t0+tshift_cmt
   asdf_container%end_value(i) = -12345
+
   ! instrument orientation
   if(iorientation == 1) then !N
     asdf_container%cmp_azimuth(i)  = 0.00
@@ -193,6 +194,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
     asdf_container%cmp_azimuth(i) = sngl(modulo(phi+90.0,360.0d+0))
     asdf_container%cmp_incident_ang(i) =90.00
   endif
+
   asdf_container%sample_rate(i) = DT
   asdf_container%scale_factor(i) = 1000000000
   asdf_container%ev_to_sta_AZ(i) = -12345
@@ -201,16 +203,19 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%dist(i) = -12345
   asdf_container%P_pick(i) = -12345
   asdf_container%S_pick(i) = -12345
+
   length_station_name = len_trim(station_name(irec))
   length_network_name = len_trim(network_name(irec))
-  asdf_container%receiver_name_array(i) &
-      = station_name(irec)(1:length_station_name)
+  asdf_container%receiver_name_array(i) = station_name(irec)(1:length_station_name)
   asdf_container%network_array(i) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn
+
+  ! note: this array of strings is not set with other new values yet...
   asdf_container%receiver_id_array(i) = ""
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
 
 end subroutine store_asdf_data
@@ -300,27 +305,35 @@ end subroutine close_asdf_data
 !! \param asdf_container The ASDF data structure
 subroutine write_asdf(asdf_container)
 
-  use asdf_data
+  use asdf_data,only: asdf_event
   use adios_write_mod
-  use specfem_par, only : event_name_SAC,myrank
+  use specfem_par, only : event_name_SAC,myrank,ADIOS_TRANSPORT_METHOD
 
   implicit none
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
   ! Variables
-  integer :: adios_err, comm, ierr, sizeprocs
+  integer :: adios_err, comm, sizeprocs
   integer(kind=8) :: adios_group
   character(len=200) :: ASDF_FN
 
+  ! alias mpi communicator for ADIOS
   call world_duplicate(comm)
   call world_size(sizeprocs)
+
   ! declare new group that uses MPI
   call adios_declare_group (adios_group, "EVENTS", "iter", 1, adios_err)
-  call adios_select_method (adios_group, "MPI", "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
+  call adios_select_method (adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  ! output file name
   ASDF_FN="OUTPUT_FILES/"//trim(event_name_SAC)//"_sem.bp"
-  call write_asdf_data (ASDF_FN, asdf_container, adios_group, myrank, &
-                        sizeprocs, comm, ierr)
+
+  call write_asdf_data (ASDF_FN, asdf_container, adios_group, myrank, sizeprocs, comm)
 
 end subroutine write_asdf
 
@@ -332,18 +345,17 @@ end subroutine write_asdf
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
 !! \param comm The communication group of processors
-!! \param ierr The error for adios subroutine calls
-subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, &
-                           nproc, comm, ierr)
+subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, nproc, comm)
 
-  use asdf_data
+  use asdf_data,only: asdf_event
   use adios_write_mod
+  use adios_helpers_mod,only: check_adios_err
 
   ! Parameters
   character(len=*),intent(inout) :: asdf_fn
   type(asdf_event),intent(inout) :: asdf_container
   integer(kind=8),intent(inout) :: adios_group
-  integer,intent(inout) :: rank, nproc, comm, ierr
+  integer,intent(inout) :: rank, nproc, comm
   ! Variables
   integer         :: adios_err
   integer(kind=8) :: adios_groupsize, adios_totalsize
@@ -351,18 +363,24 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, &
 
   !calculate size
   adios_groupsize = 0
-  call define_asdf_data (adios_group, adios_groupsize, asdf_container,&
-                                                rank, nproc, comm, ierr)
-  call adios_open (adios_handle, "EVENTS", asdf_fn, "w", comm, adios_err)
-  call adios_group_size (adios_handle, adios_groupsize, adios_totalsize, &
-                         adios_err)
+  call define_asdf_data(adios_group, adios_groupsize, asdf_container,rank, nproc)
+
+  ! Open the handle to file containing all the ADIOS variables
+  call adios_open(adios_handle, "EVENTS", asdf_fn, "w", comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error: rank ',rank,' could not open adios file ',trim(asdf_fn)
+    stop 'error calling adios_open() routine failed for EVENTS'
+  endif
+
+  call adios_group_size(adios_handle, adios_groupsize, adios_totalsize,adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   !call the write sub
-  call write_asdf_data_sub (asdf_container, adios_handle, rank, nproc, &
-                            comm, ierr)
+  call write_asdf_data_sub (asdf_container, adios_handle, rank, nproc)
 
   !adios close
   call adios_close(adios_handle, adios_err)
+  call check_adios_err(rank,adios_err)
 
 end subroutine write_asdf_data
 
@@ -373,32 +391,27 @@ end subroutine write_asdf_data
 !! \param asdf_container The ASDF data structure
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
-!! \param comm The communication group of processors
-!! \param ierr The error for adios subroutine calls
-subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
-                             rank, nproc, comm, ierr)
+subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, nproc)
 
   use adios_write_mod
   use asdf_helpers_mod
   use asdf_data
-  use specfem_par,only: nrec
 
   implicit none
 
   ! Parameters
   integer(kind=8), intent(inout) :: adios_group, my_group_size
   type(asdf_event), intent(inout) :: asdf_container
-  integer, intent(in) :: rank, nproc, comm
-  integer, intent(inout) :: ierr
+  integer, intent(in) :: rank, nproc
 
   ! Variables
-  integer :: i, string_total_length
+  integer :: i,string_total_length
   integer, parameter :: STRING_COMMON_LENGTH = 20
   integer :: adios_err
 
   integer :: nrecords
 
-  character(len=32)            :: record
+  character(len=80)            :: str_record
   character(len=10)            :: i_string
   character(len=200)           :: dummy
 
@@ -410,7 +423,7 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
 
   !gather info. Here, we only need nrecords_total
   nrecords=asdf_container%nrecords
-  call gather_offset_info(nrecords,nrecords_total,offset,rank,nproc,comm,ierr)
+  call gather_offset_info(nrecords,nrecords_total,offset,rank,nproc)
 
   call define_adios_local_string_1d_array (adios_group, my_group_size, &
                                            13,"", "event", dummy)
@@ -502,12 +515,13 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, &
   !DISPLACEMENT
   do i = 1, nrecords
     write(i_string, '(I10)' ) i+offset
-    record=trim(asdf_container%receiver_name_array(i))//"."// &
-           trim(asdf_container%network_array(i))//"."//       &
-           trim(asdf_container%component_array(i))//"."//     &
-           trim(asdf_container%receiver_id_array(i))
+    str_record = trim(asdf_container%receiver_name_array(i))//"."// &
+                 trim(asdf_container%network_array(i))//"."//       &
+                 trim(asdf_container%component_array(i))//"."//     &
+                 trim(asdf_container%receiver_id_array(i))
+
     call define_adios_global_real_1d_array (adios_group, my_group_size,&
-         asdf_container%npoints(i), "", trim(record), real_array)
+                                            asdf_container%npoints(i), "", trim(str_record), real_array)
   enddo
 
   !define attribute
@@ -618,39 +632,42 @@ end subroutine define_asdf_data
 !! \param adios_groupsize The adios group size
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
-!! \param comm The communication group of processors
-!! \param ierr The error for adios subroutine calls
-subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
-                                nproc, comm, ierr)
+subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 
   use adios_write_mod
   use asdf_data
   use asdf_helpers_writers_mod
-  use mpi
 
   implicit none
 
-  integer                       :: adios_err, i
+  type(asdf_event),intent(inout) :: asdf_container
   integer(kind=8),intent(in)    :: adios_handle
-  integer,intent(in)            :: rank, nproc, comm
-  integer,intent(inout)         :: ierr
+  integer,intent(in)            :: rank, nproc
+
+  ! local parameters
+  integer :: adios_err,i,ierr
   integer :: nrecords_total, offset, nreceivers
   integer :: receiver_name_len, network_len, component_len, receiver_id_len
   integer :: rn_len_total, nw_len_total, rid_len_total, comp_len_total
   integer :: rn_offset, nw_offset, rid_offset, comp_offset
-  character(len=32)              :: loc_string
+  character(len=32) :: loc_string
 
+  ! note: this is fortran 2003 standard
+  !       and works e.g. by intel ifort compilers and newer gfortran versions;
+  !       gfortran 4.7 complains about the allocate statement later on (a gfortran bug which needs a constant at compile time)
   character(len=:), allocatable :: receiver_name, network, component, receiver_id
   character(len=:), allocatable :: receiver_name_total, network_total, &
                                   component_total, receiver_id_total
-
-  type(asdf_event),intent(inout) :: asdf_container
+  ! fortran 95 workaround
+!  character(len=1),dimension(:),allocatable :: receiver_name, network, component, receiver_id
+!  character(len=1),dimension(:),allocatable :: receiver_name_total, network_total, &
+!                                               component_total, receiver_id_total
 
   !gather array offset info
-  call gather_offset_info(asdf_container%nrecords,nrecords_total,offset,&
-                                        rank, nproc, comm, ierr)
+  call gather_offset_info(asdf_container%nrecords,nrecords_total,offset,rank, nproc)
 
   !ensemble the string for receiver_name, network, component and receiver_id
+  ! fortran 2003
   allocate(character(len=6*asdf_container%nrecords) :: receiver_name, STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: network, STAT=ierr)
@@ -659,6 +676,18 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   allocate(character(len=6*asdf_container%nrecords) :: receiver_id, STAT=ierr)
   if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+
+  ! fortran 95
+!  allocate(receiver_name(6*asdf_container%nrecords), STAT=ierr)
+!  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+!  allocate(network(6*asdf_container%nrecords), STAT=ierr)
+!  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+!  allocate(component(6*asdf_container%nrecords), STAT=ierr)
+!  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+!  allocate(receiver_id(6*asdf_container%nrecords), STAT=ierr)
+!  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+
+  ! initializes strings
   receiver_name=''
   network=''
   component=''
@@ -677,15 +706,13 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
   receiver_id_len = len_trim(receiver_id)
 
   call synchronize_all()
+
   !get global dimensions for strings
-  call gather_string_total_length(receiver_name_len, rn_len_total,&
-                                          rank, nproc, comm, ierr)
-  call gather_string_total_length(network_len, nw_len_total,&
-                                          rank, nproc, comm, ierr)
-  call gather_string_total_length(receiver_id_len, rid_len_total,&
-                                          rank, nproc, comm, ierr)
-  call gather_string_total_length(component_len, comp_len_total,&
-                                          rank, nproc, comm, ierr)
+  call gather_string_total_length(receiver_name_len, rn_len_total,rank, nproc)
+  call gather_string_total_length(network_len, nw_len_total,rank, nproc)
+  call gather_string_total_length(receiver_id_len, rid_len_total,rank, nproc)
+  call gather_string_total_length(component_len, comp_len_total,rank, nproc)
+
   if (rank == 0) then
     allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
@@ -695,22 +722,28 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  else
+    ! dummy allocation
+    allocate( character(len=1) :: receiver_name_total )
+    allocate( character(len=1) :: network_total )
+    allocate( character(len=1) :: receiver_id_total )
+    allocate( character(len=1) :: component_total )
   endif
 
   call synchronize_all()
   !write all local strings into global string
   call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset,  &
                                       receiver_name, receiver_name_total,  &
-                                      rank, nproc, comm, ierr)
+                                      rank, nproc)
   call gather_string_offset_info(network_len, nw_len_total, nw_offset,       &
                                       network, network_total,              &
-                                      rank, nproc, comm, ierr)
+                                      rank, nproc)
   call gather_string_offset_info(component_len, comp_len_total, comp_offset, &
                                       component, component_total,          &
-                                      rank, nproc, comm, ierr)
+                                      rank, nproc)
   call gather_string_offset_info(receiver_id_len, rid_len_total,rid_offset,  &
                                       receiver_id, receiver_id_total,      &
-                                      rank, nproc, comm, ierr)
+                                      rank, nproc)
   !==========================
   !write out the string info
   if(rank==0)then
@@ -720,11 +753,12 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
     call adios_write(adios_handle, "component",trim(component_total), adios_err)
     call adios_write(adios_handle, "receiver_id", trim(receiver_id_total), &
                      adios_err)
-    deallocate(receiver_name_total)
-    deallocate(network_total)
-    deallocate(receiver_id_total)
-    deallocate(component_total)
   endif
+
+  deallocate(receiver_name_total)
+  deallocate(network_total)
+  deallocate(receiver_id_total)
+  deallocate(component_total)
 
   !===========================
   ! write seismic records
@@ -836,14 +870,11 @@ subroutine write_asdf_data_sub (asdf_container, adios_handle, rank, &
       asdf_container%nrecords,                                             &
       nrecords_total, offset, "S_pick", asdf_container%S_pick)
 
-  deallocate(receiver_name, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-  deallocate(network, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-  deallocate(receiver_id, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-  deallocate(component, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
+  deallocate(receiver_name)
+  deallocate(network)
+  deallocate(receiver_id)
+  deallocate(component)
+
 end subroutine write_asdf_data_sub
 
 
@@ -853,36 +884,30 @@ end subroutine write_asdf_data_sub
 !! \param The offset for the processor
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
-!! \param comm The communication group of processors
-!! \param ierr The error for adios subroutine calls
-subroutine gather_offset_info(local_dim, global_dim, offset,&
-                              rank, nproc, comm, ierr)
-
-  use mpi
+subroutine gather_offset_info(local_dim, global_dim, offset, rank, nproc)
 
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim, offset
-  integer,intent(in) :: rank, nproc, comm
-  integer,intent(inout) :: ierr
+  integer,intent(in) :: rank, nproc
 
+  ! local parameters
   integer, allocatable :: dim_all_proc(:)
   integer, allocatable :: offset_proc(:)
-  integer :: i
+  integer :: i,ierr
 
-  allocate(dim_all_proc(nproc), STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(offset_proc(nproc), STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  if( rank == 0 ) then
+    allocate(dim_all_proc(nproc), STAT=ierr)
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+    allocate(offset_proc(nproc), STAT=ierr)
+    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  else
+    ! dummy allocation
+    allocate(dim_all_proc(1))
+    allocate(offset_proc(1))
+  endif
 
-  call synchronize_all()
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-  call MPI_Gather(local_dim, 1, MPI_INTEGER, dim_all_proc, 1, MPI_INTEGER, 0, comm, ierr)
+  call gather_all_singlei(local_dim,dim_all_proc,nproc)
 
   if(rank==0)then
     offset_proc(1)=0
@@ -892,23 +917,12 @@ subroutine gather_offset_info(local_dim, global_dim, offset,&
     global_dim=sum(dim_all_proc(1:nproc))
   endif
 
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-  call MPI_Scatter(offset_proc, 1, MPI_INTEGER, offset, 1, MPI_INTEGER, 0, comm, ierr)
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!! DK DK you should use the MPI subroutines in src/shared/parallel.f90 here instead !!!!!!!!!!!!!!!!!
-  call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
+  call scatter_all_singlei(offset_proc,offset,nproc)
 
-  deallocate(dim_all_proc, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-  deallocate(offset_proc, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
+  call bcast_all_singlei(global_dim)
+
+  deallocate(dim_all_proc)
+  deallocate(offset_proc)
 
 end subroutine gather_offset_info
 
@@ -918,35 +932,32 @@ end subroutine gather_offset_info
 !! \param global_dim The global dimension of the array
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
-!! \param comm The communication group of processors
-!! \param ierr The error for adios subroutine calls
-subroutine gather_string_total_length(local_dim, global_dim,&
-                                          rank, nproc, comm, ierr)
-
-  use mpi
+subroutine gather_string_total_length(local_dim, global_dim, rank, nproc)
 
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim
-  integer,intent(in) :: rank, nproc, comm
-  integer,intent(inout) :: ierr
+  integer,intent(in) :: rank, nproc
 
+  ! local parameters
   integer, allocatable :: local_dim_all_proc(:)
+  integer :: ierr
 
   if(rank==0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  else
+    ! dummy allocation
+    allocate(local_dim_all_proc(1))
   endif
 
-  call synchronize_all()
-  call MPI_Gather(local_dim, 1, MPI_INTEGER, local_dim_all_proc, 1, &
-                                        MPI_INTEGER, 0, comm, ierr)
-  call synchronize_all()
+  call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
+
   if(rank==0)then
     global_dim=sum(local_dim_all_proc(1:nproc))
-    deallocate(local_dim_all_proc,STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
   endif
+
+  deallocate(local_dim_all_proc)
 
 end subroutine gather_string_total_length
 
@@ -959,35 +970,40 @@ end subroutine gather_string_total_length
 !! \param string_total The combined string from all processors
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
-!! \param comm The communication group of processors
-!! \param ierr The error
 subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
                                      string_piece, string_total, &
-                                     rank, nproc, comm, ierr)
-  use mpi
+                                     rank, nproc)
+
+  use constants,only: itag
 
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim, offset
   character(len=*),intent(inout) :: string_piece, string_total
-  character(len=10000) :: buffer_string
-  integer,intent(in) :: rank, nproc, comm
-  integer,intent(inout) :: ierr
+  integer,intent(in) :: rank, nproc
+
+  ! local parameters
+  integer,parameter :: BUFFER_LENGTH = 10000
+  character(len=BUFFER_LENGTH) :: buffer_string
 
   integer, allocatable :: local_dim_all_proc(:)
   integer, allocatable :: offset_all_proc(:)
-  integer :: i, mpi_status(MPI_STATUS_SIZE)
+  integer :: i,ierr
 
   if(rank==0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(offset_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  else
+    ! dummy allocation
+    allocate(local_dim_all_proc(1))
+    allocate(offset_all_proc(1))
   endif
 
   call synchronize_all()
-  call MPI_Gather(local_dim, 1, MPI_INTEGER, local_dim_all_proc, 1, &
-                                        MPI_INTEGER, 0, comm, ierr)
+
+  call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
 
   call synchronize_all()
   if(rank==0)then
@@ -996,7 +1012,6 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
       offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
     enddo
     string_total=''
-    buffer_string=''
     string_total=trim(string_total)//trim(string_piece(1:local_dim))
   endif
 
@@ -1007,31 +1022,31 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
       offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
     enddo
     string_total=''
-    buffer_string=''
     string_total=trim(string_total)//trim(string_piece(1:local_dim))
   endif
 
   if(rank==0)then
     do i=1,nproc-1
-      call MPI_Recv(buffer_string, local_dim_all_proc(i+1),MPI_CHARACTER,&
-                    i, 1, comm, mpi_status,ierr)
+      ! checks if buffer length is sufficient
+      if( local_dim_all_proc(i+1) > BUFFER_LENGTH) &
+        stop 'error buffer length too small in gather_string_offset_info() routine'
+
+      ! receives string
+      buffer_string=''
+      call recv_ch(buffer_string,local_dim_all_proc(i+1),i,itag)
+
+      ! appends string
       string_total=trim(string_total)//buffer_string(1:local_dim_all_proc(i+1))
     enddo
   else
-   call MPI_Send(string_piece, local_dim, MPI_CHARACTER,&
-                 0, 1, comm, ierr)
+    call send_ch(string_piece, local_dim, 0, itag)
   endif
 
-  call synchronize_all()
-  call MPI_Scatter(offset_all_proc, 1, MPI_INTEGER, offset, &
-                   1, MPI_INTEGER, 0, comm, ierr)
-  call MPI_Bcast(global_dim, 1, MPI_INTEGER, 0, comm, ierr)
+  call scatter_all_singlei(offset_all_proc,offset,nproc)
 
-  if (rank==0) then
-    deallocate(local_dim_all_proc,STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-    deallocate(offset_all_proc,STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Deallocate failed.')
-  endif
+  call bcast_all_singlei(global_dim)
+
+  deallocate(local_dim_all_proc)
+  deallocate(offset_all_proc)
 
 end subroutine gather_string_offset_info

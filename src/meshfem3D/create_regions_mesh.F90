@@ -411,6 +411,7 @@
       endif
       ! saves boundary file
       if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+        if( myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_solver_boundary_adios()
       else
         call save_arrays_solver_boundary()

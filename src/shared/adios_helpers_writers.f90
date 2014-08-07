@@ -920,6 +920,7 @@ subroutine write_1D_string_array_adios_dims(adios_handle, myrank, &
   character(len=*), intent(in) :: path
 
   integer :: adios_err
+  integer :: idummy
 
   call adios_write(adios_handle, trim(path)// "/local_dim", &
                    local_dim, adios_err)
@@ -927,6 +928,11 @@ subroutine write_1D_string_array_adios_dims(adios_handle, myrank, &
                    global_dim, adios_err)
   call adios_write(adios_handle, trim(path)// "/offset", &
                    offset, adios_err)
+
+  ! to avoid compiler warnings
+  idummy = myrank
+  idummy = sizeprocs
+
 end subroutine write_1D_string_array_adios_dims
 
 !===============================================================================

@@ -45,13 +45,11 @@ contains
 
 
 subroutine define_AVS_DX_global_chunks_data(adios_group, &
-    myrank,prname,nspec,iboun,ibool, &
-    idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-    npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN,iregion_code, &
-    group_size_inc, avs_dx_adios)
+                                            myrank,nspec,iboun,ibool, &
+                                            mask_ibool, &
+                                            npointot, &
+                                            ISOTROPIC_3D_MANTLE, &
+                                            group_size_inc, avs_dx_adios)
 
   use constants
   use adios_write_mod
@@ -60,42 +58,21 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
   implicit none
 
   integer(kind=8), intent(in) :: adios_group
-  integer(kind=8), intent(inout) :: group_size_inc
 
   integer :: myrank
-
-  ! processor identification
-  character(len=150) :: prname
-
   integer :: nspec
 
-  logical iboun(6,nspec)
-
+  logical :: iboun(6,nspec)
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  integer idoubling(nspec)
-
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
   integer :: npointot
-  ! numbering of global AVS or DX points
-  integer num_ibool_AVS_DX(npointot)
   ! logical mask used to output global points only once
-  logical mask_ibool(npointot)
+  logical :: mask_ibool(npointot)
 
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
+  logical :: ISOTROPIC_3D_MANTLE
 
-  ! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
-
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
-    R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
-
-  integer iregion_code
+  integer(kind=8), intent(inout) :: group_size_inc
+  type(avs_dx_global_chunks_t), intent(inout) :: avs_dx_adios
 
   ! local parameters
   integer ispec
@@ -108,9 +85,6 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
   !double precision vpv,vph,vsv,vsh !,eta_aniso
   !double precision x,y,z,theta,phi_dummy,p20 !,ell,factor,cost
   !real(kind=CUSTOM_REAL) dvp,dvs
-
-  type(avs_dx_global_chunks_t), intent(inout) :: avs_dx_adios
-
   integer :: ierr
 
   ! Dummy arrays for type inference inside adios helpers
@@ -252,13 +226,13 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
 end subroutine define_AVS_DX_global_chunks_data
 
 !===============================================================================
-subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
-    iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-    npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN,iregion_code, &
-    avs_dx_adios)
+  subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
+                                                     iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+                                                     npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                                     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                                     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                                     RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                                     avs_dx_adios)
 
   use constants
 
@@ -314,6 +288,10 @@ subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
 
   type(avs_dx_global_chunks_t), intent(inout) :: avs_dx_adios ! out for adios_write
 
+  integer :: idummy
+
+  ! to avoid compiler warnings
+  idummy = len_trim(prname)
 
   ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
