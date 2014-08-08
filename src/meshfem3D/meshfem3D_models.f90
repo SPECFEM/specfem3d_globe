@@ -442,9 +442,10 @@
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
         ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
-        if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
-            .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
-          if(r_used > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
+        if(theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+          .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+        ! makes sure radius is fine
+        if(r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv=vpv*(1.0d0+dvp)
             vph=vph*(1.0d0+dvp)
@@ -461,9 +462,9 @@
 
       case(THREE_D_MODEL_JP3D)
         ! jp3d1994
-        if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
-            .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
-          if(r_used > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
+        if(theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+            .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+          if(r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv=vpv*(1.0d0+dvp)
             vph=vph*(1.0d0+dvp)
@@ -672,11 +673,11 @@
 
     case(THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
-      if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
-        .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
+      if(theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+        .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
         ! makes sure radius is fine
-        if(r > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
-          call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
+        if(r > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
+                  call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
         endif
       else
         ! default crust

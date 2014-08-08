@@ -730,14 +730,23 @@
 !        longitude: 130-145 E
 !        depth    : 0  - 500 km
 ! The deepest Moho beneath Japan is 40 km
-  double precision,parameter :: LAT_MAX = 45.d0
-  double precision,parameter :: LAT_MIN = 32.d0
-  double precision,parameter :: LON_MAX = 145.d0
-  double precision,parameter :: LON_MIN = 130.d0
-  double precision,parameter :: DEP_MAX = 500.d0
+  double precision,parameter :: JP3D_LAT_MAX = 45.d0
+  double precision,parameter :: JP3D_LAT_MIN = 32.d0
+  double precision,parameter :: JP3D_LON_MAX = 145.d0
+  double precision,parameter :: JP3D_LON_MIN = 130.d0
+  double precision,parameter :: JP3D_DEP_MAX = 500.d0
+
+!!-----------------------------------------------------------
+!!
+!! GLL model constants
+!!
+!!-----------------------------------------------------------
 
 ! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
+
+! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
+  logical,parameter :: USE_1D_REFERENCE = .false.
 
   integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
   integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
