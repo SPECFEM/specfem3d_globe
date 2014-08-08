@@ -29,7 +29,8 @@
   subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
-  use adios_write_mod
+  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+
   use adios_helpers_mod
 
   use meshfem3d_par,only: &

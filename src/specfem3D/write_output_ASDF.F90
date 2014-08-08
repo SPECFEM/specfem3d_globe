@@ -214,7 +214,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%receiver_id_array(i) = ""
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
-  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
 
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
 
@@ -305,8 +305,10 @@ end subroutine close_asdf_data
 !! \param asdf_container The ASDF data structure
 subroutine write_asdf(asdf_container)
 
+  use adios_write_mod,only: adios_declare_group,adios_select_method
+
   use asdf_data,only: asdf_event
-  use adios_write_mod
+
   use specfem_par, only : event_name_SAC,myrank,ADIOS_TRANSPORT_METHOD
 
   implicit none
@@ -347,10 +349,13 @@ end subroutine write_asdf
 !! \param comm The communication group of processors
 subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, nproc, comm)
 
-  use asdf_data,only: asdf_event
-  use adios_write_mod
+  use adios_write_mod, only: adios_open,adios_group_size
+
   use adios_helpers_mod,only: check_adios_err
 
+  use asdf_data,only: asdf_event
+
+  implicit none
   ! Parameters
   character(len=*),intent(inout) :: asdf_fn
   type(asdf_event),intent(inout) :: asdf_container
@@ -393,9 +398,12 @@ end subroutine write_asdf_data
 !! \param nproc The number of processors
 subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, nproc)
 
-  use adios_write_mod
-  use asdf_helpers_mod
-  use asdf_data
+  use adios_write_mod,only: adios_string
+  
+  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_integer_1d_array, &
+    define_adios_global_real_1d_array,define_adios_local_string_1d_array !,check_adios_err
+
+  use asdf_data,only: asdf_event
 
   implicit none
 
@@ -421,6 +429,9 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
 
   integer :: nrecords_total, offset
 
+  integer,parameter :: nparam_desc = 32
+  character(len=200),dimension(2,nparam_desc) :: description
+
   !gather info. Here, we only need nrecords_total
   nrecords=asdf_container%nrecords
   call gather_offset_info(nrecords,nrecords_total,offset,rank,nproc)
@@ -428,89 +439,52 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
   call define_adios_local_string_1d_array (adios_group, my_group_size, &
                                            13,"", "event", dummy)
   !nrecords info
-  call define_adios_scalar (adios_group, my_group_size, "", "nreceivers",&
-                           dum_int)
-  call define_adios_scalar (adios_group, my_group_size, "", "nrecords",&
-                            dum_int)
+  call define_adios_scalar (adios_group, my_group_size, "", "nreceivers", dum_int)
+  call define_adios_scalar (adios_group, my_group_size, "", "nrecords", dum_int)
   !frequency(period) info
-  call define_adios_scalar (adios_group, my_group_size, "", "min_period", &
-                            dum_real)
-  call define_adios_scalar (adios_group, my_group_size, "", "max_period", &
-                            dum_real)
+  call define_adios_scalar (adios_group, my_group_size, "", "min_period", dum_real)
+  call define_adios_scalar (adios_group, my_group_size, "", "max_period", dum_real)
 
   !string info
-  call define_adios_scalar (adios_group, my_group_size, "", &
-                            "receiver_name_len", dum_int)
-  call define_adios_scalar (adios_group, my_group_size, "", &
-                            "network_len", dum_int)
-  call define_adios_scalar (adios_group, my_group_size, "", &
-                            "receiver_id_len", dum_int)
-  call define_adios_scalar (adios_group, my_group_size, "", &
-                            "component_len", dum_int)
+  call define_adios_scalar (adios_group, my_group_size, "", "receiver_name_len", dum_int)
+  call define_adios_scalar (adios_group, my_group_size, "", "network_len", dum_int)
+  call define_adios_scalar (adios_group, my_group_size, "", "receiver_id_len", dum_int)
+  call define_adios_scalar (adios_group, my_group_size, "", "component_len", dum_int)
 
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "npoints", int_array)
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "gmt_year", int_array)
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "gmt_day", int_array)
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "gmt_hour", int_array)
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "gmt_min", int_array)
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "gmt_sec", int_array)
-  call define_adios_global_integer_1d_array (adios_group, my_group_size,&
-                   nrecords, "", "gmt_msec", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "npoints", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "gmt_year", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "gmt_day", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "gmt_hour", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "gmt_min", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "gmt_sec", int_array)
+  call define_adios_global_integer_1d_array (adios_group, my_group_size, nrecords, "", "gmt_msec", int_array)
 
   string_total_length = STRING_COMMON_LENGTH * nrecords_total
-  call define_adios_local_string_1d_array (adios_group, my_group_size,&
-                    string_total_length, "", "receiver_name", dum_string)
-  call define_adios_local_string_1d_array (adios_group, my_group_size,&
-                    string_total_length, "", "network", dum_string)
-  call define_adios_local_string_1d_array (adios_group, my_group_size,&
-                    string_total_length, "", "component", dum_string)
-  call define_adios_local_string_1d_array (adios_group, my_group_size,&
-                    string_total_length, "", "receiver_id", dum_string)
 
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "event_lat", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "event_lo", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "event_dpt", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "receiver_lat", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "receiver_lo", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "receiver_el", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "receiver_dpt", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "begin_value", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "end_value", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "cmp_azimuth", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "cmp_incident_ang", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "sample_rate", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "scale_factor", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "ev_to_sta_AZ", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "sta_to_ev_AZ", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "great_circle_arc", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "dist", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "P_pick", real_array)
-  call define_adios_global_real_1d_array (adios_group, my_group_size, &
-                   nrecords, "", "S_pick", real_array)
+  call define_adios_local_string_1d_array (adios_group, my_group_size, string_total_length, "", "receiver_name", dum_string)
+  call define_adios_local_string_1d_array (adios_group, my_group_size, string_total_length, "", "network", dum_string)
+  call define_adios_local_string_1d_array (adios_group, my_group_size, string_total_length, "", "component", dum_string)
+  call define_adios_local_string_1d_array (adios_group, my_group_size, string_total_length, "", "receiver_id", dum_string)
+
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "event_lat", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "event_lo", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "event_dpt", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "receiver_lat", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "receiver_lo", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "receiver_el", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "receiver_dpt", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "begin_value", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "end_value", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "cmp_azimuth", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "cmp_incident_ang", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "sample_rate", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "scale_factor", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "ev_to_sta_AZ", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "sta_to_ev_AZ", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "great_circle_arc", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "dist", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "P_pick", real_array)
+  call define_adios_global_real_1d_array (adios_group, my_group_size, nrecords, "", "S_pick", real_array)
 
   !DISPLACEMENT
   do i = 1, nrecords
@@ -524,103 +498,48 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
                                             asdf_container%npoints(i), "", trim(str_record), real_array)
   enddo
 
-  !define attribute
-  call adios_define_attribute ( adios_group , "nreceivers", "desc",      &
-      adios_string, "Number of receivers ", "" , adios_err )
-  call adios_define_attribute ( adios_group , "nrecords", "desc",        &
-      adios_string, "Number of records ", "" , adios_err )
-  call adios_define_attribute ( adios_group , "min_period", "desc",      &
-      adios_string, "Low pass filter in Hz (0 if none applied)  ", "",   &
-      adios_err)
-  call adios_define_attribute ( adios_group , "max_period", "desc",      &
-      adios_string, "High pass filter in Hz (0 if none applied)  ", "" , &
-      adios_err )
-  call adios_define_attribute (adios_group , "event_lat", "desc",adios_string, &
-                               "Event CMT latitude (degrees, north positive) ",&
-                               "", adios_err )
-  call adios_define_attribute (adios_group , "event_lo", "desc", adios_string, &
-                               "Event CMT longitude (degrees, east positive) ",&
-                               "", adios_err )
-  call adios_define_attribute (adios_group , "event_dpt", "desc", adios_string,&
-                               "Event CMT depth (km) ", "" , adios_err )
-  call adios_define_attribute (adios_group , "event_dpt", "desc", adios_string,&
-                               "Event CMT depth (km) ", "" , adios_err )
-  call adios_define_attribute (adios_group , "component", "desc", adios_string,&
-                               "Record component ", "" , adios_err)
-  call adios_define_attribute (adios_group, "gmt_year", "desc", adios_string,  &
-                  "GMT year corresponding to reference (zero) time in file. ", &
-                               "" , adios_err)
-  call adios_define_attribute (adios_group, "gmt_day", "desc", adios_string,   &
-            "GMT julian day corresponding to reference (zero) time in file. ", &
-                              "" , adios_err)
-  call adios_define_attribute (adios_group, "gmt_hour", "desc", adios_string,  &
-                  "GMT hour corresponding to reference (zero) time in file. ", &
-                              "" , adios_err)
-  call adios_define_attribute (adios_group, "gmt_min", "desc", adios_string,   &
-                "GMT minute corresponding to reference (zero) time in file. ", &
-                              "" , adios_err)
-  call adios_define_attribute (adios_group, "gmt_sec", "desc", adios_string,   &
-                "GMT second corresponding to reference (zero) time in file. ", &
-                               "" , adios_err)
-  call adios_define_attribute (adios_group, "gmt_msec", "desc", adios_string,  &
-           "GMT millisecond corresponding to reference (zero) time in file. ", &
-                               "" , adios_err)
-  call adios_define_attribute (adios_group , "receiver_lat", "desc",           &
-                               adios_string,                                   &
-                               "Receiver latitude (degrees, north positive)  ",&
-                               "" , adios_err )
-  call adios_define_attribute (adios_group , "receiver_lo", "desc",            &
-                               adios_string,                                   &
-                               "Receiver longitude (degrees, east positive) ", &
-                               "" , adios_err )
-  call adios_define_attribute (adios_group , "receiver_dpt", "desc",           &
-                               adios_string,                                   &
-                               "Receiver depth below surface (meters) ", "" ,  &
-                               adios_err )
-  call adios_define_attribute (adios_group , "receiver_el", "desc",            &
-                               adios_string,                                   &
-                               "Receiver elevation (meters) ", "" , adios_err )
-  call adios_define_attribute (adios_group , "begin_value", "desc",            &
-                               adios_string,                                   &
-                              "Beginning value of time array ", "" , adios_err )
-  call adios_define_attribute (adios_group , "end_value", "desc", adios_string,&
-        "End value of time array ", "" , adios_err )
-  call adios_define_attribute (adios_group , "cmp_azimuth", "desc",            &
-                               adios_string,                                   &
-                          "Component azimuth (degrees clockwise from north) ", &
-                               "", adios_err )
-  call adios_define_attribute (adios_group , "cmp_incident_ang", "desc",       &
-                               adios_string,                                   &
-                          "Component incident angle (degrees from vertical) ", &
-                               "", adios_err )
-  call adios_define_attribute (adios_group , "sample_rate", "desc",            &
-                               adios_string,                                   &
-                               "Sampling rate (s) ", "" , adios_err )
-  call adios_define_attribute (adios_group , "scale_factor", "desc",           &
-                               adios_string,                                   &
-   "Scale factor to convert the unit of synthetics from meters to nanometer ", &
-                               "" , adios_err )
-  call adios_define_attribute (adios_group , "ev_to_sta_AZ", "desc",           &
-                               adios_string,                                   &
-                               "Event to station azimuth (degrees) ", "" ,     &
-                               adios_err )
-  call adios_define_attribute (adios_group , "sta_to_ev_AZ", "desc",           &
-                               adios_string,                                   &
-                           "Station to event azimuth (backazimuth, degrees) ", &
-                               "", adios_err )
-  call adios_define_attribute (adios_group , "great_circle_dist", "desc",      &
-                               adios_string,                                   &
-                 "Great circle distance between event and station (degrees) ", &
-                               "", adios_err )
-  call adios_define_attribute (adios_group , "receiver_name", "desc",          &
-                               adios_string,                                   &
-                               "Receiver name ", "" , adios_err )
-  call adios_define_attribute(adios_group , "network", "desc", adios_string,   &
-                              "Receiver network name ", "" , adios_err )
-  call adios_define_attribute(adios_group , "receiver_id", "desc",             &
-                              adios_string, "Receiver number ", "", adios_err)
-  call adios_define_attribute (adios_group , "component", "desc", adios_string,&
-                               "Receiver component name ", "" , adios_err )
+  ! defines attributes descriptions
+
+  DATA description  / &
+    "nreceivers", "Number of receivers ", &
+    "nrecords"  , "Number of records ", &
+    "min_period", "Low pass filter in Hz (0 if none applied)  ", &
+    "max_period", "High pass filter in Hz (0 if none applied)  ", &
+    "event_lat" , "Event CMT latitude (degrees, north positive) ", &
+    "event_lo"  , "Event CMT longitude (degrees, east positive) ", &
+    "event_dpt" , "Event CMT depth (km) ", &
+    "event_dpt" , "Event CMT depth (km) ", &
+    "component" , "Record component ", &
+    "gmt_year"  , "GMT year corresponding to reference (zero) time in file. ", &
+    "gmt_day"   , "GMT julian day corresponding to reference (zero) time in file. ", &
+    "gmt_hour"  , "GMT hour corresponding to reference (zero) time in file. ", &
+    "gmt_min"   , "GMT minute corresponding to reference (zero) time in file. ", &
+    "gmt_sec"   , "GMT second corresponding to reference (zero) time in file. ", &
+    "gmt_msec"  , "GMT millisecond corresponding to reference (zero) time in file. ", &
+    "receiver_lat", "Receiver latitude (degrees, north positive)  ", &
+    "receiver_lo" , "Receiver longitude (degrees, east positive) ", &
+    "receiver_dpt", "Receiver depth below surface (meters) ", &
+    "receiver_el" , "Receiver elevation (meters) ", &
+    "begin_value" , "Beginning value of time array ", &
+    "end_value"   , "End value of time array ", &
+    "cmp_azimuth" , "Component azimuth (degrees clockwise from north) ", &
+    "cmp_incident_ang", "Component incident angle (degrees from vertical) ", &
+    "sample_rate"     , "Sampling rate (s) ", &
+    "scale_factor"    , "Scale factor to convert the unit of synthetics from meters to nanometer ", &
+    "ev_to_sta_AZ"    , "Event to station azimuth (degrees) ", &
+    "sta_to_ev_AZ"    , "Station to event azimuth (backazimuth, degrees) ", &
+    "great_circle_dist" , "Great circle distance between event and station (degrees) ", &
+    "receiver_name"     , "Receiver name ", &
+    "network"           , "Receiver network name ", &
+    "receiver_id"       , "Receiver number ", &
+    "component"         , "Receiver component name " &
+  /
+
+  do i = 1,nparam_desc
+    call adios_define_attribute(adios_group,trim(description(1,i)),"desc",adios_string,trim(description(2,i)),"",adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(rank,adios_err)
+  enddo
 
 end subroutine define_asdf_data
 
@@ -634,9 +553,12 @@ end subroutine define_asdf_data
 !! \param nproc The number of processors
 subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 
-  use adios_write_mod
-  use asdf_data
-  use asdf_helpers_writers_mod
+  use adios_write_mod,only:adios_string,adios_write
+
+  use adios_helpers_mod,only: write_adios_global_1d_array_offset, &
+    write_adios_global_integer_1d_array_offset,write_adios_global_real_1d_array_offset
+
+  use asdf_data,only: asdf_event
 
   implicit none
 
@@ -645,7 +567,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
   integer,intent(in)            :: rank, nproc
 
   ! local parameters
-  integer :: adios_err,i,ierr
+  integer :: adios_err,i !,ierr
   integer :: nrecords_total, offset, nreceivers
   integer :: receiver_name_len, network_len, component_len, receiver_id_len
   integer :: rn_len_total, nw_len_total, rid_len_total, comp_len_total
@@ -654,38 +576,38 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 
   ! note: this is fortran 2003 standard
   !       and works e.g. by intel ifort compilers and newer gfortran versions;
+  !
   !       gfortran 4.7 complains about the allocate statement later on (a gfortran bug which needs a constant at compile time)
-  character(len=:), allocatable :: receiver_name, network, component, receiver_id
-  character(len=:), allocatable :: receiver_name_total, network_total, &
-                                  component_total, receiver_id_total
-  ! fortran 95 workaround
-!  character(len=1),dimension(:),allocatable :: receiver_name, network, component, receiver_id
-!  character(len=1),dimension(:),allocatable :: receiver_name_total, network_total, &
-!                                               component_total, receiver_id_total
+  !       which is needed on Titan, thus we provide an alternative way of a character array
+  ! way 1
+!  character(len=:), allocatable :: receiver_name, network, component, receiver_id
+!  character(len=:), allocatable :: receiver_name_total, network_total, &
+!                                  component_total, receiver_id_total
+  !
+  ! way 2: fortran 95 workaround, static buffers
+  integer,parameter :: BUFFER_LENGTH = 100000
+  integer,parameter :: BUFFER_LENGTH_TOTAL = 600000
+  character(len=BUFFER_LENGTH) :: receiver_name, network,component, receiver_id
+  character(len=BUFFER_LENGTH_TOTAL) :: receiver_name_total,network_total,component_total,receiver_id_total
 
   !gather array offset info
   call gather_offset_info(asdf_container%nrecords,nrecords_total,offset,rank, nproc)
 
   !ensemble the string for receiver_name, network, component and receiver_id
-  ! fortran 2003
-  allocate(character(len=6*asdf_container%nrecords) :: receiver_name, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(character(len=6*asdf_container%nrecords) :: network, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(character(len=6*asdf_container%nrecords) :: component, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-  allocate(character(len=6*asdf_container%nrecords) :: receiver_id, STAT=ierr)
-  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-
-  ! fortran 95
-!  allocate(receiver_name(6*asdf_container%nrecords), STAT=ierr)
+  ! way 1: fortran 2003
+!  allocate(character(len=6*asdf_container%nrecords) :: receiver_name, STAT=ierr)
 !  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-!  allocate(network(6*asdf_container%nrecords), STAT=ierr)
+!  allocate(character(len=6*asdf_container%nrecords) :: network, STAT=ierr)
 !  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-!  allocate(component(6*asdf_container%nrecords), STAT=ierr)
+!  allocate(character(len=6*asdf_container%nrecords) :: component, STAT=ierr)
 !  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-!  allocate(receiver_id(6*asdf_container%nrecords), STAT=ierr)
+!  allocate(character(len=6*asdf_container%nrecords) :: receiver_id, STAT=ierr)
 !  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+  ! way 2: fortran 95
+  if( 6*asdf_container%nrecords > BUFFER_LENGTH ) then
+    print*,'error: buffer length too small - minimum length is ',6*asdf_container%nrecords
+    stop 'error in write_asdf_data_sub() routine, BUFFER_LENGTH too small'
+  endif
 
   ! initializes strings
   receiver_name=''
@@ -693,18 +615,21 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
   component=''
   receiver_id=''
 
+  ! appends all strings
   do i=1, asdf_container%nrecords
-    receiver_name=trim(receiver_name) // &
-                  trim(asdf_container%receiver_name_array(i)) // '.'
-    network=trim(network)//trim(asdf_container%network_array(i))//'.'
-    component=trim(component)//trim(asdf_container%component_array(i))//'.'
-    receiver_id=trim(receiver_id)//trim(asdf_container%receiver_id_array(i))//'.'
+    receiver_name = trim(receiver_name) // trim(asdf_container%receiver_name_array(i))  // '.'
+    network       = trim(network)       // trim(asdf_container%network_array(i))        // '.'
+    component     = trim(component)     // trim(asdf_container%component_array(i))      // '.'
+    receiver_id   = trim(receiver_id)   // trim(asdf_container%receiver_id_array(i))    // '.'
   enddo
+
+  ! local string lengths
   receiver_name_len = len_trim(receiver_name)
   network_len = len_trim(network)
   component_len = len_trim(component)
   receiver_id_len = len_trim(receiver_id)
 
+  ! synchronize processes
   call synchronize_all()
 
   !get global dimensions for strings
@@ -714,63 +639,72 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
   call gather_string_total_length(component_len, comp_len_total,rank, nproc)
 
   if (rank == 0) then
-    allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-    allocate(character(len=nw_len_total) :: network_total, STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-    allocate(character(len=rid_len_total) :: receiver_id_total, STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
-    allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
-    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+    ! way 1: fortran 2003
+!    allocate(character(len=rn_len_total) :: receiver_name_total, STAT=ierr)
+!    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+!    allocate(character(len=nw_len_total) :: network_total, STAT=ierr)
+!    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+!    allocate(character(len=rid_len_total) :: receiver_id_total, STAT=ierr)
+!    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+!    allocate(character(len=comp_len_total) :: component_total, STAT=ierr)
+!    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
+
+    ! way 2: fortran 95
+    if( rn_len_total > BUFFER_LENGTH_TOTAL .or. nw_len_total > BUFFER_LENGTH_TOTAL .or. &
+        rid_len_total > BUFFER_LENGTH_TOTAL .or. comp_len_total > BUFFER_LENGTH_TOTAL ) then
+      print*,'error: buffer length total too small - lengths are ',rn_len_total,nw_len_total,rid_len_total,comp_len_total
+      stop 'error in write_asdf_data_sub() routine, BUFFER_LENGTH_TOTAL too small'
+    endif
   else
     ! dummy allocation
-    allocate( character(len=1) :: receiver_name_total )
-    allocate( character(len=1) :: network_total )
-    allocate( character(len=1) :: receiver_id_total )
-    allocate( character(len=1) :: component_total )
+    ! way 1: fortran 2003
+!    allocate( character(len=1) :: receiver_name_total )
+!    allocate( character(len=1) :: network_total )
+!    allocate( character(len=1) :: receiver_id_total )
+!    allocate( character(len=1) :: component_total )
   endif
-
   call synchronize_all()
+
   !write all local strings into global string
-  call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset,  &
-                                      receiver_name, receiver_name_total,  &
-                                      rank, nproc)
-  call gather_string_offset_info(network_len, nw_len_total, nw_offset,       &
-                                      network, network_total,              &
-                                      rank, nproc)
+  call gather_string_offset_info(receiver_name_len, rn_len_total,rn_offset, &
+                                 receiver_name, receiver_name_total, &
+                                 rank, nproc)
+  call gather_string_offset_info(network_len, nw_len_total, nw_offset, &
+                                 network, network_total, &
+                                 rank, nproc)
   call gather_string_offset_info(component_len, comp_len_total, comp_offset, &
-                                      component, component_total,          &
-                                      rank, nproc)
-  call gather_string_offset_info(receiver_id_len, rid_len_total,rid_offset,  &
-                                      receiver_id, receiver_id_total,      &
-                                      rank, nproc)
+                                 component, component_total, &
+                                 rank, nproc)
+  call gather_string_offset_info(receiver_id_len, rid_len_total,rid_offset, &
+                                 receiver_id, receiver_id_total, &
+                                 rank, nproc)
   !==========================
   !write out the string info
   if(rank==0)then
-    call adios_write(adios_handle, "receiver_name", trim(receiver_name_total), &
-                     adios_err)
+    call adios_write(adios_handle, "receiver_name", trim(receiver_name_total),adios_err)
     call adios_write(adios_handle, "network", trim(network_total), adios_err)
     call adios_write(adios_handle, "component",trim(component_total), adios_err)
-    call adios_write(adios_handle, "receiver_id", trim(receiver_id_total), &
-                     adios_err)
+    call adios_write(adios_handle, "receiver_id", trim(receiver_id_total), adios_err)
   endif
 
-  deallocate(receiver_name_total)
-  deallocate(network_total)
-  deallocate(receiver_id_total)
-  deallocate(component_total)
+  ! way 1: fortran 2003
+!  deallocate(receiver_name_total)
+!  deallocate(network_total)
+!  deallocate(receiver_id_total)
+!  deallocate(component_total)
 
   !===========================
   ! write seismic records
   do i = 1, asdf_container%nrecords
     write( loc_string, '(I10)' ) i+offset
-    loc_string=trim(asdf_container%receiver_name_array(i))//"."// &
-               trim(asdf_container%network_array(i))//"."//       &
-               trim(asdf_container%component_array(i))//"."//     &
+    loc_string=trim(asdf_container%receiver_name_array(i))  // "." // &
+               trim(asdf_container%network_array(i))        // "." // &
+               trim(asdf_container%component_array(i))      // "." // &
                trim(asdf_container%receiver_id_array(i))
-     call write_adios_global_1d_array(adios_handle, rank, nproc,  &
-         asdf_container%npoints(i), asdf_container%npoints(i), 0, &
-         loc_string, asdf_container%records(i)%record)
+
+    call write_adios_global_1d_array_offset(adios_handle, rank, nproc,  &
+                                            asdf_container%npoints(i), asdf_container%npoints(i), 0, &
+                                            loc_string, asdf_container%records(i)%record)
   enddo
 
   !===========================
@@ -787,93 +721,69 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
     call adios_write(adios_handle, "event", asdf_container%event, adios_err)
   endif
 
- !===========================
-  !write out the array
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "npoints", asdf_container%npoints)
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "gmt_year", asdf_container%gmt_year)
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "gmt_day", asdf_container%gmt_day)
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "gmt_hour", asdf_container%gmt_hour)
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "gmt_min", asdf_container%gmt_min)
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "gmt_sec", asdf_container%gmt_sec)
-  call write_adios_global_integer_1d_array(adios_handle, rank, nproc, &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "gmt_msec", asdf_container%gmt_msec)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,    &
-      asdf_container%nrecords,                                        &
-      nrecords_total, offset, "event_lat", asdf_container%event_lat)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "event_lo", asdf_container%event_lo)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "event_dpt", asdf_container%event_dpt)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "receiver_lat", asdf_container%receiver_lat)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "receiver_lo", asdf_container%receiver_lo)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "receiver_el", asdf_container%receiver_el)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "receiver_dpt", asdf_container%receiver_dpt)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "begin_value", asdf_container%begin_value)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "end_value", asdf_container%end_value)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "cmp_azimuth", asdf_container%cmp_azimuth)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "cmp_incident_ang",                          &
-      asdf_container%cmp_incident_ang)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "sample_rate", asdf_container%sample_rate)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "scale_factor", asdf_container%scale_factor)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "ev_to_sta_AZ", asdf_container%ev_to_sta_AZ)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "sta_to_ev_AZ", asdf_container%sta_to_ev_AZ)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "great_circle_arc",                          &
-      asdf_container%great_circle_arc)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "dist", asdf_container%dist)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "P_pick", asdf_container%P_pick)
-  call write_adios_global_real_1d_array(adios_handle, rank, nproc,         &
-      asdf_container%nrecords,                                             &
-      nrecords_total, offset, "S_pick", asdf_container%S_pick)
+  !===========================
+  !write out the array values
+  ! integer values
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,npoints) )
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,gmt_year) )
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,gmt_day) )
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,gmt_hour) )
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,gmt_min) )
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,gmt_sec) )
+  call write_adios_global_integer_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                                  STRINGIFY_VAR_TYPE(asdf_container,gmt_msec) )
 
-  deallocate(receiver_name)
-  deallocate(network)
-  deallocate(receiver_id)
-  deallocate(component)
+  ! real values
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,event_lat) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,event_lo) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,event_dpt) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,receiver_lat) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,receiver_lo) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,receiver_el) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,receiver_dpt) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,begin_value) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,end_value) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,cmp_azimuth) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,cmp_incident_ang) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,sample_rate) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,scale_factor) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,ev_to_sta_AZ) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,sta_to_ev_AZ) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,great_circle_arc) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,dist) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,P_pick) )
+  call write_adios_global_real_1d_array_offset(adios_handle, rank, nproc,asdf_container%nrecords,nrecords_total,offset, &
+                                               STRINGIFY_VAR_TYPE(asdf_container,S_pick) )
+
+  ! way 1: fortran 2003
+!  deallocate(receiver_name)
+!  deallocate(network)
+!  deallocate(receiver_id)
+!  deallocate(component)
 
 end subroutine write_asdf_data_sub
 
@@ -979,17 +889,22 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
   implicit none
 
   integer,intent(inout) :: local_dim, global_dim, offset
-  character(len=*),intent(inout) :: string_piece, string_total
+  character(len=*),intent(in) :: string_piece
+  character(len=*),intent(inout) :: string_total
+
   integer,intent(in) :: rank, nproc
 
   ! local parameters
-  integer,parameter :: BUFFER_LENGTH = 10000
+  integer,parameter :: BUFFER_LENGTH = 100000
   character(len=BUFFER_LENGTH) :: buffer_string
 
-  integer, allocatable :: local_dim_all_proc(:)
-  integer, allocatable :: offset_all_proc(:)
+  integer,dimension(:),allocatable :: local_dim_all_proc,offset_all_proc
   integer :: i,ierr
 
+  ! checks local string
+  if( len_trim(string_piece) /= local_dim ) stop 'error local string and local dim have different lengths'
+
+  ! temporary arrays
   if(rank==0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
@@ -1000,27 +915,17 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
     allocate(local_dim_all_proc(1))
     allocate(offset_all_proc(1))
   endif
-
   call synchronize_all()
 
+  ! master gets all local string lengths
   call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
 
-  call synchronize_all()
   if(rank==0)then
     offset_all_proc(1)=0
     do i=2, nproc
       offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
     enddo
-    string_total=''
-    string_total=trim(string_total)//trim(string_piece(1:local_dim))
-  endif
-
-  call synchronize_all()
-  if(rank==0)then
-    offset_all_proc(1)=0
-    do i=2, nproc
-      offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
-    enddo
+    ! adds strings from master process 0
     string_total=''
     string_total=trim(string_total)//trim(string_piece(1:local_dim))
   endif
@@ -1029,23 +934,27 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
     do i=1,nproc-1
       ! checks if buffer length is sufficient
       if( local_dim_all_proc(i+1) > BUFFER_LENGTH) &
-        stop 'error buffer length too small in gather_string_offset_info() routine'
+        stop 'error send/recv buffer length too small in gather_string_offset_info() routine'
 
       ! receives string
       buffer_string=''
       call recv_ch(buffer_string,local_dim_all_proc(i+1),i,itag)
 
       ! appends string
-      string_total=trim(string_total)//buffer_string(1:local_dim_all_proc(i+1))
+      string_total = trim(string_total) // buffer_string(1:local_dim_all_proc(i+1))
     enddo
   else
+    ! sends string
     call send_ch(string_piece, local_dim, 0, itag)
   endif
 
+  ! master sends offset values to corresponding processes
   call scatter_all_singlei(offset_all_proc,offset,nproc)
 
+  ! broadcasts global length
   call bcast_all_singlei(global_dim)
 
+  ! frees temporary arrays
   deallocate(local_dim_all_proc)
   deallocate(offset_all_proc)
 

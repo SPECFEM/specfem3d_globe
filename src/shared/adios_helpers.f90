@@ -43,9 +43,6 @@ module adios_helpers_mod
 
   private
 
-  ! from this module. No 'imports'
-  public :: check_adios_err
-
   ! from adios_helpers_definitions_mod
   public :: define_adios_scalar
   public :: define_adios_global_real_1d_array
@@ -65,22 +62,12 @@ module adios_helpers_mod
   public :: write_adios_global_logical_1d_array
   public :: write_adios_global_string_1d_array
   public :: write_adios_global_1d_array
-contains
 
-!===============================================================================
-!> Get the ADIOS error message from an adios error number if there is an error.
-!! \param adios_err The error code considered.
-subroutine check_adios_err(myrank, adios_err)
-  use adios_read_mod
-  implicit none
-  integer, intent(in) :: myrank, adios_err
-  character(len=1024) :: msg
+  public :: write_adios_global_1d_array_offset
+  public :: write_adios_global_real_1d_array_offset
+  public :: write_adios_global_integer_1d_array_offset
 
-  if (adios_err /= 0) then
-    call adios_errmsg(msg)
-    print *, "process: ", myrank, ", error: ", trim(msg)
-    stop 'adios error'
-  endif
-end subroutine check_adios_err
+  ! new from adios_helpers_writers_mod
+  public :: check_adios_err
 
 end module adios_helpers_mod

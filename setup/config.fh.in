@@ -50,6 +50,15 @@
 #else
 #define STRINGIFY_VAR(a) "a", a
 #endif
+!> \def STRINGIFY_VAR_TYPE(t,a)
+!! STRINGIFY_VAR_TYPE(type,x) expand as:
+!!   "x", type%x
+!! x being the variable name inside the code. type being the type variable.
+#ifdef __INTEL_COMPILER
+#define STRINGIFY_VAR_TYPE(t,a) #a, t%a
+#else
+#define STRINGIFY_VAR_TYPE(t,a) "a", t%a
+#endif
 
 !-----------------------------------------------------------------------
 !

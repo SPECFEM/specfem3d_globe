@@ -57,10 +57,12 @@ subroutine get_absorb_adios(myrank, iregion, &
                             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
   use constants
-  use adios_write_mod
-  use adios_helpers_mod
-  use meshfem3D_par, only: &
-    LOCAL_PATH
+
+  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
+
+  use meshfem3D_par, only: LOCAL_PATH
 
   ! Stacey, define flags for absorbing boundaries
   implicit none

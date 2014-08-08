@@ -53,8 +53,12 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                     NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                                     NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
-  use adios_helpers_mod
-  use adios_write_mod
+
+  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+    define_adios_global_real_1d_array,define_adios_scalar, &
+    check_adios_err
 
   use constants
 
@@ -482,11 +486,11 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   local_dim = nglob
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                                   trim(region_name) //"x_global", tmp_array_x)
+                                   trim(region_name) // "x_global", tmp_array_x)
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                                   trim(region_name) //"y_global", tmp_array_y)
+                                   trim(region_name) // "y_global", tmp_array_y)
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
-                                   trim(region_name) //"z_global", tmp_array_z)
+                                   trim(region_name) // "z_global", tmp_array_z)
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
   call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(xstore))
@@ -1040,8 +1044,10 @@ end subroutine save_arrays_solver_adios
 subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
 
   ! outputs model files in binary format
-  use adios_write_mod
-  use adios_helpers_mod
+  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
+
   use constants
 
   use meshfem3D_par, only: &
@@ -1281,9 +1287,12 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
    ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
    phase_ispec_inner, num_colors_outer,num_colors_inner, num_elem_colors)
 
+  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+    define_adios_scalar,check_adios_err
+
   use constants
-  use adios_helpers_mod
-  use adios_write_mod
 
   implicit none
 
@@ -1546,7 +1555,8 @@ subroutine save_arrays_solver_boundary_adios()
     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
     ispec2D_670_top,ispec2D_670_bot ! prname
 
-  use adios_helpers_mod
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+    define_adios_scalar,check_adios_err
 
   implicit none
 
