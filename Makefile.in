@@ -246,6 +246,7 @@ help:
 	@echo "    xcombine_vol_data_adios"
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
+	@echo "    xcombine_paraview_strain_data"
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
