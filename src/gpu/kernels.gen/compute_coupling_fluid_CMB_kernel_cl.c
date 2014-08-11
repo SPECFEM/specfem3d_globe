@@ -1,3 +1,35 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 const char * compute_coupling_fluid_CMB_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
@@ -21,6 +53,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef INDEX5\n\
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
+\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
 #endif\n\
@@ -60,6 +93,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
 __kernel void compute_coupling_fluid_CMB_kernel(const __global float * displ_crust_mantle, __global float * accel_outer_core, const __global int * ibool_crust_mantle, const __global int * ibelm_bottom_crust_mantle, const __global float * normal_top_outer_core, const __global float * jacobian2D_top_outer_core, const __global float * wgllwgll_xy, const __global int * ibool_outer_core, const __global int * ibelm_top_outer_core, const int NSPEC2D_TOP_OC){\n\
   int i;\n\
   int j;\n\

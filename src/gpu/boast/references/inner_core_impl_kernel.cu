@@ -445,41 +445,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
 
   if (active) {
 
-#ifndef MANUALLY_UNROLLED_LOOPS
-    tempx1l = 0.f;
-    tempx2l = 0.f;
-    tempx3l = 0.f;
-
-    tempy1l = 0.f;
-    tempy2l = 0.f;
-    tempy3l = 0.f;
-
-    tempz1l = 0.f;
-    tempz2l = 0.f;
-    tempz3l = 0.f;
-
-    for (l=0;l<NGLLX;l++) {
-        fac1 = sh_hprime_xx[l*NGLLX+I];
-        offset = K*NGLL2+J*NGLLX+l;
-        tempx1l += s_dummyx_loc[offset]*fac1;
-        tempy1l += s_dummyy_loc[offset]*fac1;
-        tempz1l += s_dummyz_loc[offset]*fac1;
-
-        fac2 = sh_hprime_xx[l*NGLLX+J];
-        offset = K*NGLL2+l*NGLLX+I;
-        tempx2l += s_dummyx_loc[offset]*fac2;
-        tempy2l += s_dummyy_loc[offset]*fac2;
-        tempz2l += s_dummyz_loc[offset]*fac2;
-
-        fac3 = sh_hprime_xx[l*NGLLX+K];
-        offset = l*NGLL2+J*NGLLX+I;
-        tempx3l += s_dummyx_loc[offset]*fac3;
-        tempy3l += s_dummyy_loc[offset]*fac3;
-        tempz3l += s_dummyz_loc[offset]*fac3;
-    }
-
-#else
-
+#ifdef MANUALLY_UNROLLED_LOOPS
     tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
             + s_dummyx_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
             + s_dummyx_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
@@ -533,7 +499,38 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
             + s_dummyz_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
             + s_dummyz_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
             + s_dummyz_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
+#else
+    tempx1l = 0.f;
+    tempx2l = 0.f;
+    tempx3l = 0.f;
 
+    tempy1l = 0.f;
+    tempy2l = 0.f;
+    tempy3l = 0.f;
+
+    tempz1l = 0.f;
+    tempz2l = 0.f;
+    tempz3l = 0.f;
+
+    for (l=0;l<NGLLX;l++) {
+        fac1 = sh_hprime_xx[l*NGLLX+I];
+        offset = K*NGLL2+J*NGLLX+l;
+        tempx1l += s_dummyx_loc[offset]*fac1;
+        tempy1l += s_dummyy_loc[offset]*fac1;
+        tempz1l += s_dummyz_loc[offset]*fac1;
+
+        fac2 = sh_hprime_xx[l*NGLLX+J];
+        offset = K*NGLL2+l*NGLLX+I;
+        tempx2l += s_dummyx_loc[offset]*fac2;
+        tempy2l += s_dummyy_loc[offset]*fac2;
+        tempz2l += s_dummyz_loc[offset]*fac2;
+
+        fac3 = sh_hprime_xx[l*NGLLX+K];
+        offset = l*NGLL2+J*NGLLX+I;
+        tempx3l += s_dummyx_loc[offset]*fac3;
+        tempy3l += s_dummyy_loc[offset]*fac3;
+        tempz3l += s_dummyz_loc[offset]*fac3;
+    }
 #endif
 
 // compute derivatives of ux, uy and uz with respect to x, y and z
@@ -715,44 +712,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
 
   if (active) {
 
-#ifndef MANUALLY_UNROLLED_LOOPS
-
-    tempx1l = 0.f;
-    tempy1l = 0.f;
-    tempz1l = 0.f;
-
-    tempx2l = 0.f;
-    tempy2l = 0.f;
-    tempz2l = 0.f;
-
-    tempx3l = 0.f;
-    tempy3l = 0.f;
-    tempz3l = 0.f;
-
-    for (l=0;l<NGLLX;l++) {
-
-      fac1 = sh_hprimewgll_xx[I*NGLLX+l];
-      offset = K*NGLL2+J*NGLLX+l;
-      tempx1l += s_tempx1[offset]*fac1;
-      tempy1l += s_tempy1[offset]*fac1;
-      tempz1l += s_tempz1[offset]*fac1;
-
-      // assumes hprimewgll_xx == hprimewgll_yy == hprimewgll_zz
-      fac2 = sh_hprimewgll_xx[J*NGLLX+l];
-      offset = K*NGLL2+l*NGLLX+I;
-      tempx2l += s_tempx2[offset]*fac2;
-      tempy2l += s_tempy2[offset]*fac2;
-      tempz2l += s_tempz2[offset]*fac2;
-
-      fac3 = sh_hprimewgll_xx[K*NGLLX+l];
-      offset = l*NGLL2+J*NGLLX+I;
-      tempx3l += s_tempx3[offset]*fac3;
-      tempy3l += s_tempy3[offset]*fac3;
-      tempz3l += s_tempz3[offset]*fac3;
-
-    }
-#else
-
+#ifdef MANUALLY_UNROLLED_LOOPS
     tempx1l = s_tempx1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
             + s_tempx1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
             + s_tempx1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
@@ -806,7 +766,41 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
             + s_tempz3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
             + s_tempz3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
             + s_tempz3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
+#else
+    tempx1l = 0.f;
+    tempy1l = 0.f;
+    tempz1l = 0.f;
 
+    tempx2l = 0.f;
+    tempy2l = 0.f;
+    tempz2l = 0.f;
+
+    tempx3l = 0.f;
+    tempy3l = 0.f;
+    tempz3l = 0.f;
+
+    for (l=0;l<NGLLX;l++) {
+
+      fac1 = sh_hprimewgll_xx[I*NGLLX+l];
+      offset = K*NGLL2+J*NGLLX+l;
+      tempx1l += s_tempx1[offset]*fac1;
+      tempy1l += s_tempy1[offset]*fac1;
+      tempz1l += s_tempz1[offset]*fac1;
+
+      // assumes hprimewgll_xx == hprimewgll_yy == hprimewgll_zz
+      fac2 = sh_hprimewgll_xx[J*NGLLX+l];
+      offset = K*NGLL2+l*NGLLX+I;
+      tempx2l += s_tempx2[offset]*fac2;
+      tempy2l += s_tempy2[offset]*fac2;
+      tempz2l += s_tempz2[offset]*fac2;
+
+      fac3 = sh_hprimewgll_xx[K*NGLLX+l];
+      offset = l*NGLL2+J*NGLLX+I;
+      tempx3l += s_tempx3[offset]*fac3;
+      tempy3l += s_tempy3[offset]*fac3;
+      tempz3l += s_tempz3[offset]*fac3;
+
+    }
 #endif
 
     fac1 = d_wgllwgll_yz[K*NGLLX+J];

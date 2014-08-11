@@ -94,21 +94,36 @@ kerns.each { |kern|
   require "./#{kern.to_s}.rb"
   puts kern.to_s
   langs.each { |lang|
-    puts lang.to_s
+    puts "  " + lang.to_s
     BOAST::set_lang( BOAST::const_get(lang))
-    puts "REF" if lang == :CUDA
-    k = BOAST::method(kern).call
-    k.print if $options[:display]
+    # outputs reference cuda kernel
+    if $options[:display] && lang == :CUDA
+      puts "  REF"
+      k = BOAST::method(kern).call
+      k.print
+    end
+    # generates kernels
     if lang == :CUDA then
-      puts "Generated"
       k = BOAST::method(kern).call(false)
+      puts "  Generated"
       k.print if $options[:display]
       filename = "#{kern}.cu"
     elsif lang == :CL
+      k = BOAST::method(kern).call
+      puts "  Generated"
+      k.print if $options[:display]
       filename = "#{kern}_cl.c"
     end
+
+    # file name
     f = File::new("#{$options[:output_dir]}/#{filename}", "w+")
+    
+    # writes out specfem3d_globe info text at beginning of file
+    v = BOAST::specfem3d_globe_header_info()
+    
+    # writes out generate kernel
     if lang == :CUDA then
+      k = "#{v}" + k
       f.puts k
       k.build( :LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] ) if $options[:check]
     elsif lang == :CL then
@@ -118,9 +133,12 @@ kerns.each { |kern|
         res += line.sub("\n","\\n\\\n")
       }
       res += "\";\n"
+      res = "#{v}\n" + res
       f.print res
       k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] ) if $options[:check]
     end
+    
+    # regression testing
     if $options[:check] then
       inputs = k.load_ref_inputs("../kernels.test/")
       outputs_ref = k.load_ref_outputs("../kernels.test/")

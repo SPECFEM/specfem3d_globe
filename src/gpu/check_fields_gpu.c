@@ -694,6 +694,9 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max = h_max[0];
   int i;
   for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
+    // debug
+    printf("rank %i: maximum cm = %i %f\n",mp->myrank,i,h_max[i]);
+    // sets maximum
     if (max < h_max[i])
       max = h_max[i];
   }
@@ -790,7 +793,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 #endif
 
   free (h_max);
-
+  
   // return result
   max = MAX (max_inner_core, max_crust_mantle);
   *norm = max;

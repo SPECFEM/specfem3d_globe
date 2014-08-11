@@ -202,17 +202,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
 
   if (active) {
 
-#ifndef MANUALLY_UNROLLED_LOOPS
-    temp1l = 0.f;
-    temp2l = 0.f;
-    temp3l = 0.f;
-    for (l=0;l<NGLLX;l++) {
-      temp1l += s_dummy_loc[K*NGLL2+J*NGLLX+l]*sh_hprime_xx[l*NGLLX+I];
-      //assumes that hprime_xx = hprime_yy = hprime_zz
-      temp2l += s_dummy_loc[K*NGLL2+l*NGLLX+I]*sh_hprime_xx[l*NGLLX+J];
-      temp3l += s_dummy_loc[l*NGLL2+J*NGLLX+I]*sh_hprime_xx[l*NGLLX+K];
-    }
-#else
+#ifdef MANUALLY_UNROLLED_LOOPS
     temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
             + s_dummy_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
             + s_dummy_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
@@ -230,6 +220,16 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
             + s_dummy_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
             + s_dummy_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
             + s_dummy_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
+#else
+    temp1l = 0.f;
+    temp2l = 0.f;
+    temp3l = 0.f;
+    for (l=0;l<NGLLX;l++) {
+      temp1l += s_dummy_loc[K*NGLL2+J*NGLLX+l]*sh_hprime_xx[l*NGLLX+I];
+      //assumes that hprime_xx = hprime_yy = hprime_zz
+      temp2l += s_dummy_loc[K*NGLL2+l*NGLLX+I]*sh_hprime_xx[l*NGLLX+J];
+      temp3l += s_dummy_loc[l*NGLL2+J*NGLLX+I]*sh_hprime_xx[l*NGLLX+K];
+    }
 #endif
 
     // compute derivatives of ux, uy and uz with respect to x, y and z
@@ -357,17 +357,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
 
   if (active) {
 
-#ifndef MANUALLY_UNROLLED_LOOPS
-    temp1l = 0.f;
-    temp2l = 0.f;
-    temp3l = 0.f;
-    for (l=0;l<NGLLX;l++) {
-        temp1l += s_temp1[K*NGLL2+J*NGLLX+l]*sh_hprimewgll_xx[I*NGLLX+l];
-        //assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
-        temp2l += s_temp2[K*NGLL2+l*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+l];
-        temp3l += s_temp3[l*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+l];
-    }
-#else
+#ifdef MANUALLY_UNROLLED_LOOPS
     temp1l = s_temp1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
             + s_temp1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
             + s_temp1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
@@ -385,6 +375,16 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
             + s_temp3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
             + s_temp3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
             + s_temp3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
+#else
+    temp1l = 0.f;
+    temp2l = 0.f;
+    temp3l = 0.f;
+    for (l=0;l<NGLLX;l++) {
+        temp1l += s_temp1[K*NGLL2+J*NGLLX+l]*sh_hprimewgll_xx[I*NGLLX+l];
+        //assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
+        temp2l += s_temp2[K*NGLL2+l*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+l];
+        temp3l += s_temp3[l*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+l];
+    }
 #endif
 
     sum_terms = - ( wgllwgll_yz[K*NGLLX+J]*temp1l

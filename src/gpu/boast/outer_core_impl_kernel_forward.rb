@@ -156,7 +156,9 @@ module BOAST
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")
-        decl l = Int("l")
+        @@output.puts "#ifndef #{manually_unrolled_loops}"
+          decl l = Int("l")
+        @@output.puts "#endif"
         decl active = Int("active", :size => 2, :signed => false)
         decl offset = Int("offset"), iglob = Int("iglob")
         decl working_element = Int("working_element")

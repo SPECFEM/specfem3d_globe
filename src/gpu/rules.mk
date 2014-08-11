@@ -123,9 +123,13 @@ BUILD_VERSION_TXT += support
 CUDA_DEBUG := --cudart=shared
 
 boast_kernels :
-	cd boast ;\
-	mkdir ../$(BOAST_DIR_NAME) -p ;\
+	@echo ""
+	@echo "building boast kernels: in directory $(BOAST_DIR_NAME)"
+	@echo ""
+	cd src/gpu/boast ;\
+	mkdir -p ../$(BOAST_DIR_NAME);\
 	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
+	@echo ""
 
 ###
 ### compilation

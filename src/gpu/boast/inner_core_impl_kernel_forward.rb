@@ -8,15 +8,6 @@ module BOAST
     return BOAST::compute_element_att_stress( :crust_mantle, n_gll3, n_sls)
   end
 
-  require "./compute_element_gravity_helper.rb"
-  def BOAST::compute_element_ic_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
-    return BOAST::compute_element_gravity( :inner_core, n_gll3, r_earth_km )
-  end
-
-  def BOAST::compute_element_cm_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
-    return compute_element_gravity( :crust_mantle, n_gll3, r_earth_km )
-  end
-
   require "./compute_element_att_memory_helper.rb"
   def BOAST::compute_element_ic_att_memory(n_gll3 = 125, n_gll3_padded = 128, n_sls = 3 )
     return BOAST::compute_element_att_memory(:inner_core, n_gll3, n_gll3_padded, n_sls)
@@ -24,6 +15,15 @@ module BOAST
 
   def BOAST::compute_element_cm_att_memory( n_gll3 = 125, n_gll3_padded = 128, n_sls = 3 )
     return compute_element_att_memory( :crust_mantle, n_gll3, n_gll3_padded, n_sls )
+  end
+
+  require "./compute_element_gravity_helper.rb"
+  def BOAST::compute_element_ic_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
+    return BOAST::compute_element_gravity( :inner_core, n_gll3, r_earth_km )
+  end
+
+  def BOAST::compute_element_cm_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
+    return compute_element_gravity( :crust_mantle, n_gll3, r_earth_km )
   end
 
   def BOAST::compute_element_cm_aniso
@@ -579,16 +579,16 @@ module BOAST
 #      end
       if type == :inner_core then
         sub_compute_element_att_stress =  compute_element_ic_att_stress(n_gll3, n_sls)
-        sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3, r_earth_km)
         sub_compute_element_att_memory =  compute_element_ic_att_memory(n_gll3, n_gll3_padded, n_sls)
+        sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3, r_earth_km)
       elsif type == :crust_mantle then
         sub_compute_element_att_stress =  compute_element_cm_att_stress(n_gll3, n_sls)
-        sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3, r_earth_km)
         sub_compute_element_att_memory =  compute_element_cm_att_memory(n_gll3, n_gll3_padded, n_sls)
+        sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3, r_earth_km)
       end
       print sub_compute_element_att_stress
-      print sub_compute_element_gravity
       print sub_compute_element_att_memory
+      print sub_compute_element_gravity
       if type == :crust_mantle then
         sub_compute_element_cm_aniso = compute_element_cm_aniso
         print sub_compute_element_cm_aniso
@@ -610,7 +610,9 @@ module BOAST
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")
-        decl l = Int("l")
+        @@output.puts "#ifndef #{manually_unrolled_loops}"
+          decl l = Int("l")
+        @@output.puts "#endif"
         decl active = Int("active", :size => 2, :signed => false)
         decl offset = Int("offset"), iglob = Int("iglob")
         decl working_element = Int("working_element")

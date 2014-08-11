@@ -31,7 +31,15 @@ module BOAST
       decl r_xx_val = Real("R_xx_val")
       decl r_yy_val = Real("R_yy_val")
       print For( i_sls, 0, nsls - 1) {
-        print offset === i_sls + nsls*(tx + ngll3*working_element)
+        # index
+        # note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
+        #       see local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
+        # indexing examples:
+        #   (i,j,k,ispec,i_sls) -> offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls)
+        #   (i_sls,i,j,k,ispec) -> offset_sls = i_sls + N_SLS*(tx + NGLL3*working_element)
+        #   (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
+        print offset === tx + ngll3*(i_sls + nsls*working_element)
+
         print r_xx_val === r_xx[offset]
         print r_yy_val === r_yy[offset]
         print sigma_xx[0] === sigma_xx[0] - r_xx_val

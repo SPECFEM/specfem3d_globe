@@ -1,3 +1,35 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 const char * prepare_boundary_potential_on_device_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
@@ -21,6 +53,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef INDEX5\n\
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
+\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
 #endif\n\
@@ -60,6 +93,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
 __kernel void prepare_boundary_potential_on_device(const __global float * d_potential_dot_dot_acoustic, __global float * d_send_potential_dot_dot_buffer, const int num_interfaces, const int max_nibool_interfaces, const __global int * d_nibool_interfaces, const __global int * d_ibool_interfaces){\n\
   int id;\n\
   int iglob;\n\

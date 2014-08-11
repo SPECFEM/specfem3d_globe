@@ -1,3 +1,35 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 const char * crust_mantle_impl_kernel_adjoint_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
@@ -21,6 +53,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef INDEX5\n\
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
+\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
 #endif\n\
@@ -60,13 +93,14 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
 void compute_element_cm_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   int offset;\n\
   int i_sls;\n\
   float R_xx_val;\n\
   float R_yy_val;\n\
   for(i_sls=0; i_sls<=N_SLS - (1); i_sls+=1){\n\
-    offset = i_sls + (N_SLS) * (tx + (NGLL3) * (working_element));\n\
+    offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     R_xx_val = R_xx[offset - (0)];\n\
     R_yy_val = R_yy[offset - (0)];\n\
     sigma_xx[0 - (0)] = sigma_xx[0 - (0)] - (R_xx_val);\n\
@@ -75,6 +109,48 @@ void compute_element_cm_att_stress(const int tx, const int working_element, cons
     sigma_xy[0 - (0)] = sigma_xy[0 - (0)] - (R_xy[offset - (0)]);\n\
     sigma_xz[0 - (0)] = sigma_xz[0 - (0)] - (R_xz[offset - (0)]);\n\
     sigma_yz[0 - (0)] = sigma_yz[0 - (0)] - (R_yz[offset - (0)]);\n\
+  }\n\
+}\n\
+void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
+  int offset;\n\
+  int i_sls;\n\
+  float mul;\n\
+  float alphaval_loc;\n\
+  float betaval_loc;\n\
+  float gammaval_loc;\n\
+  float factor_loc;\n\
+  float sn;\n\
+  float snp1;\n\
+  if(ANISOTROPY){\n\
+    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element) - (0)];\n\
+  } else {\n\
+    mul = d_muv[tx + (NGLL3_PADDED) * (working_element) - (0)];\n\
+  }\n\
+  for(i_sls=0; i_sls<=N_SLS - (1); i_sls+=1){\n\
+    offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
+    if(USE_3D_ATTENUATION_ARRAYS){\n\
+      factor_loc = (mul) * (factor_common[offset - (0)]);\n\
+    } else {\n\
+      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element) - (0)]);\n\
+    }\n\
+    alphaval_loc = alphaval[i_sls - (0)];\n\
+    betaval_loc = betaval[i_sls - (0)];\n\
+    gammaval_loc = gammaval[i_sls - (0)];\n\
+    sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element) - (0)]);\n\
+    snp1 = (factor_loc) * (epsilondev_xx_loc);\n\
+    R_xx[offset - (0)] = (alphaval_loc) * (R_xx[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_yy[tx + (NGLL3) * (working_element) - (0)]);\n\
+    snp1 = (factor_loc) * (epsilondev_yy_loc);\n\
+    R_yy[offset - (0)] = (alphaval_loc) * (R_yy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_xy[tx + (NGLL3) * (working_element) - (0)]);\n\
+    snp1 = (factor_loc) * (epsilondev_xy_loc);\n\
+    R_xy[offset - (0)] = (alphaval_loc) * (R_xy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_xz[tx + (NGLL3) * (working_element) - (0)]);\n\
+    snp1 = (factor_loc) * (epsilondev_xz_loc);\n\
+    R_xz[offset - (0)] = (alphaval_loc) * (R_xz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element) - (0)]);\n\
+    snp1 = (factor_loc) * (epsilondev_yz_loc);\n\
+    R_yz[offset - (0)] = (alphaval_loc) * (R_yz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
 void compute_element_cm_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
@@ -154,48 +230,6 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
   rho_s_H1[0 - (0)] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
   rho_s_H2[0 - (0)] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
   rho_s_H3[0 - (0)] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
-}\n\
-void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
-  int offset;\n\
-  int i_sls;\n\
-  float mul;\n\
-  float alphaval_loc;\n\
-  float betaval_loc;\n\
-  float gammaval_loc;\n\
-  float factor_loc;\n\
-  float sn;\n\
-  float snp1;\n\
-  if(ANISOTROPY){\n\
-    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element) - (0)];\n\
-  } else {\n\
-    mul = d_muv[tx + (NGLL3_PADDED) * (working_element) - (0)];\n\
-  }\n\
-  for(i_sls=0; i_sls<=N_SLS - (1); i_sls+=1){\n\
-    offset = i_sls + (N_SLS) * (tx + (NGLL3) * (working_element));\n\
-    if(USE_3D_ATTENUATION_ARRAYS){\n\
-      factor_loc = (mul) * (factor_common[offset - (0)]);\n\
-    } else {\n\
-      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element) - (0)]);\n\
-    }\n\
-    alphaval_loc = alphaval[i_sls - (0)];\n\
-    betaval_loc = betaval[i_sls - (0)];\n\
-    gammaval_loc = gammaval[i_sls - (0)];\n\
-    sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element) - (0)]);\n\
-    snp1 = (factor_loc) * (epsilondev_xx_loc);\n\
-    R_xx[offset - (0)] = (alphaval_loc) * (R_xx[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_yy[tx + (NGLL3) * (working_element) - (0)]);\n\
-    snp1 = (factor_loc) * (epsilondev_yy_loc);\n\
-    R_yy[offset - (0)] = (alphaval_loc) * (R_yy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_xy[tx + (NGLL3) * (working_element) - (0)]);\n\
-    snp1 = (factor_loc) * (epsilondev_xy_loc);\n\
-    R_xy[offset - (0)] = (alphaval_loc) * (R_xy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_xz[tx + (NGLL3) * (working_element) - (0)]);\n\
-    snp1 = (factor_loc) * (epsilondev_xz_loc);\n\
-    R_xz[offset - (0)] = (alphaval_loc) * (R_xz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element) - (0)]);\n\
-    snp1 = (factor_loc) * (epsilondev_yz_loc);\n\
-    R_yz[offset - (0)] = (alphaval_loc) * (R_yz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-  }\n\
 }\n\
 void compute_element_cm_aniso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   float c11;\n\
@@ -426,7 +460,9 @@ __kernel  void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute, 
   int K;\n\
   int J;\n\
   int I;\n\
+#ifndef MANUALLY_UNROLLED_LOOPS\n\
   int l;\n\
+#endif\n\
   ushort active;\n\
   int offset;\n\
   int iglob;\n\

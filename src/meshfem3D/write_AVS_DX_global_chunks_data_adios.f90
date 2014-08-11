@@ -355,8 +355,11 @@ contains
   ! count global number of AVS or DX points
   npoin = count(mask_ibool(:))
 
+  ! safety check
+  if( npoin /= avs_dx_adios%npoin ) stop 'error npoin invalid in prepare_AVS_DX_global_chunks_data_adios() routine'
+
   ! number of points in AVS or DX file
-  write(10,*) npoin
+  !write(*,*) npoin
 
   ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
